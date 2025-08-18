@@ -140,7 +140,7 @@ absl::Status Win32ErrorToStatus(DWORD error_code, absl::string_view message) {
                       absl::StrCat(message, ": error_code=", error_code));
 }
 
-absl::StatusOr<DWORD> GetFileAttributes(const std::wstring &filename) {
+absl::StatusOr<DWORD> GetFileAttributes(const std::wstring& filename) {
   if (const DWORD attrs = ::GetFileAttributesW(filename.c_str());
       attrs != INVALID_FILE_ATTRIBUTES) {
     return attrs;
@@ -149,7 +149,7 @@ absl::StatusOr<DWORD> GetFileAttributes(const std::wstring &filename) {
   return Win32ErrorToStatus(error, "GetFileAttributesW failed");
 }
 
-absl::Status SetFileAttributes(const std::wstring &filename, DWORD attrs) {
+absl::Status SetFileAttributes(const std::wstring& filename, DWORD attrs) {
   if (::SetFileAttributesW(filename.c_str(), attrs)) {
     return absl::OkStatus();
   }
@@ -689,7 +689,7 @@ absl::Status FileUtil::SetContents(zstring_view filename,
   return absl::OkStatus();
 }
 
-void FileUtil::SetMockForUnitTest(FileUtilInterface *mock) {
+void FileUtil::SetMockForUnitTest(FileUtilInterface* mock) {
   FileUtilSingleton::SetMock(mock);
 }
 

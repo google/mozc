@@ -85,7 +85,7 @@ class UpdateUtilTestWin : public testing::Test {
     call_result_ = nullptr;
   }
 
-  static const CallResult &call_result() { return *call_result_; }
+  static const CallResult& call_result() { return *call_result_; }
 
  private:
   static LSTATUS WINAPI
@@ -101,11 +101,11 @@ class UpdateUtilTestWin : public testing::Test {
 
   static LSTATUS WINAPI HookRegSetValueExW(HKEY key, LPCTSTR value_name,
                                            DWORD reserved, DWORD type,
-                                           const BYTE *data, DWORD num_data) {
+                                           const BYTE* data, DWORD num_data) {
     call_result_->reg_set_value_ex_called = true;
     call_result_->written_value_name = value_name;
     call_result_->written_value =
-        std::wstring(reinterpret_cast<const wchar_t *>(data));
+        std::wstring(reinterpret_cast<const wchar_t*>(data));
     call_result_->written_type = type;
     return ERROR_SUCCESS;
   }
@@ -115,12 +115,12 @@ class UpdateUtilTestWin : public testing::Test {
     return ERROR_SUCCESS;
   }
 
-  static CallResult *call_result_;
-  static WinAPITestHelper::RestoreInfo *hook_restore_info_;
+  static CallResult* call_result_;
+  static WinAPITestHelper::RestoreInfo* hook_restore_info_;
 };
 
-UpdateUtilTestWin::CallResult *UpdateUtilTestWin::call_result_ = nullptr;
-WinAPITestHelper::RestoreInfo *UpdateUtilTestWin::hook_restore_info_ = nullptr;
+UpdateUtilTestWin::CallResult* UpdateUtilTestWin::call_result_ = nullptr;
+WinAPITestHelper::RestoreInfo* UpdateUtilTestWin::hook_restore_info_ = nullptr;
 
 // For official branding build on Windows
 TEST_F(UpdateUtilTestWin, WriteActiveUsageInfo) {

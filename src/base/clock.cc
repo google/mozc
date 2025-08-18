@@ -47,12 +47,12 @@ namespace {
 absl::TimeZone GetLocalTimeZone() {
 #ifdef MOZC_USE_ABSL_TIME_ZONE
   return absl::LocalTimeZone();
-#else  // MOZC_USE_ABSL_TIME_ZONE
+#else   // MOZC_USE_ABSL_TIME_ZONE
   // Do not use absl::LocalTimeZone() here because
   // - on Chrome OS, it returns UTC: b/196271425
   // - on Windows, it crashes: https://github.com/google/mozc/issues/856
   const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
-  const std::tm *offset = std::localtime(&epoch);
+  const std::tm* offset = std::localtime(&epoch);
   if (offset == nullptr) {
     return absl::FixedTimeZone(9 * 60 * 60);  // JST as fallback
   }
@@ -82,7 +82,7 @@ absl::TimeZone Clock::GetTimeZone() {
   return ClockSingleton::Get()->GetTimeZone();
 }
 
-void Clock::SetClockForUnitTest(ClockInterface *clock) {
+void Clock::SetClockForUnitTest(ClockInterface* clock) {
   ClockSingleton::SetMock(clock);
 }
 

@@ -284,7 +284,7 @@ TEST(FileUtilTest, CopyFile) {
     SCOPED_TRACE(test_label);
     CreateTestFile(from, test_label);
 
-    const TestData &kData = kTestDataList[i];
+    const TestData& kData = kTestDataList[i];
     const std::wstring wfrom = win32::Utf8ToWide(from);
     const std::wstring wto = win32::Utf8ToWide(to);
     EXPECT_NE(FALSE,
@@ -367,7 +367,7 @@ TEST(FileUtilTest, AtomicRename) {
     SCOPED_TRACE(test_label);
     CreateTestFile(from, test_label);
 
-    const TestData &kData = kTestDataList[i];
+    const TestData& kData = kTestDataList[i];
     const std::wstring wfrom = win32::Utf8ToWide(from);
     const std::wstring wto = win32::Utf8ToWide(to);
     EXPECT_NE(FALSE,
@@ -482,7 +482,7 @@ TEST(FileUtilTest, GetModificationTime) {
                    FileUtil::JoinPath(temp_dir.path(), "not_existent_file"))
                    .ok());
 
-  const std::string &path = FileUtil::JoinPath(temp_dir.path(), "testfile");
+  const std::string& path = FileUtil::JoinPath(temp_dir.path(), "testfile");
   CreateTestFile(path, "content");
   absl::StatusOr<FileTimeStamp> time_stamp1 =
       FileUtil::GetModificationTime(path);

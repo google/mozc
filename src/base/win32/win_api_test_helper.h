@@ -67,17 +67,17 @@ namespace mozc {
 class WinAPITestHelper {
  public:
   WinAPITestHelper() = delete;
-  WinAPITestHelper(const WinAPITestHelper &) = delete;
-  WinAPITestHelper &operator=(const WinAPITestHelper &) = delete;
+  WinAPITestHelper(const WinAPITestHelper&) = delete;
+  WinAPITestHelper& operator=(const WinAPITestHelper&) = delete;
 
   // An opaque data to restore API hook.
   class RestoreInfo;
-  typedef RestoreInfo *RestoreInfoHandle;
+  typedef RestoreInfo* RestoreInfoHandle;
 
-  typedef void *FunctionPointer;
+  typedef void* FunctionPointer;
   struct HookRequest {
    public:
-    HookRequest(const std::string &src_module, const std::string &src_proc_name,
+    HookRequest(const std::string& src_module, const std::string& src_proc_name,
                 FunctionPointer new_proc_addr);
     const std::string module_name;
     const std::string proc_name;
@@ -85,9 +85,9 @@ class WinAPITestHelper {
   };
 
   template <typename NewProcType>
-  static HookRequest MakeHookRequest(const std::string &module,
-                                     const std::string &proc_name,
-                                     const NewProcType &new_proc_ref) {
+  static HookRequest MakeHookRequest(const std::string& module,
+                                     const std::string& proc_name,
+                                     const NewProcType& new_proc_ref) {
     return HookRequest(module, proc_name, &new_proc_ref);
   }
 

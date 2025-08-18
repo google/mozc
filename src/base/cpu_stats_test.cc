@@ -80,7 +80,7 @@ TEST(CPUStats, MultiThreadTest) {
 
   cancel.Notify();
 
-  for (auto &thread : threads) {
+  for (auto& thread : threads) {
     thread.Join();
   }
 }

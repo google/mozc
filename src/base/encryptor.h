@@ -51,7 +51,7 @@ class Encryptor {
     // size must be iv_size().
     // if iv is nullptr, default iv is used.
     bool DeriveFromPassword(absl::string_view password, absl::string_view salt,
-                            const uint8_t *iv);
+                            const uint8_t* iv);
 
     // use default iv.
     bool DeriveFromPassword(const absl::string_view password,
@@ -68,7 +68,7 @@ class Encryptor {
     size_t block_size() const { return kBlockSize; }
 
     // return initialization vector
-    const uint8_t *iv() const { return iv_; }
+    const uint8_t* iv() const { return iv_; }
 
     // return the size of initialization vector
     // the result should be the same as block_size() with AES
@@ -94,25 +94,25 @@ class Encryptor {
   };
 
   Encryptor() = delete;
-  Encryptor(const Encryptor &) = delete;
-  Encryptor &operator=(const Encryptor &) = delete;
+  Encryptor(const Encryptor&) = delete;
+  Encryptor& operator=(const Encryptor&) = delete;
 
   // Encrypt character buffer. set the size of character buffer
   // in *buf_size. This function stores the size of result buffer in
   // *buf_size. Note that the capacity of buffer MUST BE LARGER
   // than the result of Encrypt::Key::GetEncryptedSize(*buf_size),
   // since this method will add an extra padding to the buffer.
-  static bool EncryptArray(const Key &key, char *buf, size_t *buf_size);
+  static bool EncryptArray(const Key& key, char* buf, size_t* buf_size);
 
   // Decrypt character buffer. set the size of character buffer
   // in *buf_size. This function stores the size of buffer in *buf_size.
-  static bool DecryptArray(const Key &key, char *buf, size_t *buf_size);
+  static bool DecryptArray(const Key& key, char* buf, size_t* buf_size);
 
   // Encrypt string with key.
-  static bool EncryptString(const Key &key, std::string *data);
+  static bool EncryptString(const Key& key, std::string* data);
 
   // Encrypt string with key.
-  static bool DecryptString(const Key &key, std::string *data);
+  static bool DecryptString(const Key& key, std::string* data);
 
   // Encrypt string to protect plain_text which may contain
   // sensitive data, like auth_token, password ..etc.
@@ -121,12 +121,12 @@ class Encryptor {
   // Basically, it uses a OS-specific encrpytor object to
   // encrypt/decrypt data
   static bool ProtectData(absl::string_view plain_text,
-                          std::string *cipher_text);
+                          std::string* cipher_text);
 
   // Decrpyt string to unprotect cipher_text.
   // It uses CryptUnprotectData API to decrypt data on Windows.
   static bool UnprotectData(absl::string_view cipher_text,
-                            std::string *plain_text);
+                            std::string* plain_text);
 };
 }  // namespace mozc
 #endif  // MOZC_BASE_ENCRYPTOR_H_

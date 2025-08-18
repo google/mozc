@@ -32,7 +32,6 @@
 
 #include <string>
 
-
 namespace mozc {
 
 class PasswordManagerInterface;
@@ -51,8 +50,8 @@ class PasswordManagerInterface;
 class PasswordManager {
  public:
   PasswordManager() = delete;
-  PasswordManager(const PasswordManager &) = delete;
-  PasswordManager &operator=(const PasswordManager &) = delete;
+  PasswordManager(const PasswordManager&) = delete;
+  PasswordManager& operator=(const PasswordManager&) = delete;
 
   // Initialize password.
   // If password is not found, make a random password internally.
@@ -62,13 +61,13 @@ class PasswordManager {
 
   // get current password
   // Call InitPassword() if need be
-  static bool GetPassword(std::string *password);
+  static bool GetPassword(std::string* password);
 
   // remove current password
   static bool RemovePassword();
 
   // set internal interface for unittesting
-  static void SetPasswordManagerHandler(PasswordManagerInterface *handler);
+  static void SetPasswordManagerHandler(PasswordManagerInterface* handler);
 };
 
 // Implements PasswordManager implementation.
@@ -76,8 +75,8 @@ class PasswordManagerInterface {
  public:
   virtual ~PasswordManagerInterface() = default;
 
-  virtual bool SetPassword(const std::string &password) const = 0;
-  virtual bool GetPassword(std::string *password) const = 0;
+  virtual bool SetPassword(const std::string& password) const = 0;
+  virtual bool GetPassword(std::string* password) const = 0;
   virtual bool RemovePassword() const = 0;
 };
 }  // namespace mozc

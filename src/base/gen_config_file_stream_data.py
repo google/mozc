@@ -69,7 +69,7 @@ def OutputConfigFileStreamData(path_list, output):
   for path in path_list:
     output.write('  {"%s", "' % os.path.basename(path))
     with open(path, 'rb') as stream:
-      while (byte := stream.read(1)):
+      while byte := stream.read(1):
         output.write(r'\x' + byte.hex())
     output.write('"},\n')
   output.write('};\n')

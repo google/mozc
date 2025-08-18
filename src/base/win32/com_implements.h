@@ -99,8 +99,8 @@ class ComImplements : public Interfaces... {
 
   ComImplements() { ++com_implements_internal::com_module_ref_count; }
   // Disallow copies and movies.
-  ComImplements(const ComImplements &) = delete;
-  ComImplements &operator=(const ComImplements &) = delete;
+  ComImplements(const ComImplements&) = delete;
+  ComImplements& operator=(const ComImplements&) = delete;
   virtual ~ComImplements() {
     Traits::OnObjectRelease(--com_implements_internal::com_module_ref_count);
   }
@@ -110,11 +110,11 @@ class ComImplements : public Interfaces... {
   // TODO(yuryu): Make these final by reorganizing implementation classes.
   STDMETHODIMP_(ULONG) AddRef() override;
   STDMETHODIMP_(ULONG) Release() override;
-  STDMETHODIMP QueryInterface(REFIID riid, void **out) override;
+  STDMETHODIMP QueryInterface(REFIID riid, void** out) override;
 
  protected:
   template <typename T, typename... Rest>
-  void *QueryInterfaceImpl(REFIID riid);
+  void* QueryInterfaceImpl(REFIID riid);
 
  private:
   std::atomic<ULONG> ref_count_{0};
@@ -146,7 +146,7 @@ ComImplements<Traits, Interfaces...>::Release() {
 
 template <typename Traits, typename... Interfaces>
 STDMETHODIMP ComImplements<Traits, Interfaces...>::QueryInterface(REFIID riid,
-                                                                  void **out) {
+                                                                  void** out) {
   if (out == nullptr) {
     return E_POINTER;
   }
@@ -160,14 +160,14 @@ STDMETHODIMP ComImplements<Traits, Interfaces...>::QueryInterface(REFIID riid,
 
 template <typename Traits, typename... Interfaces>
 template <typename T, typename... Rest>
-void *ComImplements<Traits, Interfaces...>::QueryInterfaceImpl(REFIID riid) {
+void* ComImplements<Traits, Interfaces...>::QueryInterfaceImpl(REFIID riid) {
   if (IsIIDOf<T>(riid)) {
-    return absl::implicit_cast<T *>(this);
+    return absl::implicit_cast<T*>(this);
   }
   if constexpr (sizeof...(Rest) == 0) {
     // This is the last QueryInterfaceImpl in the list. Check for IUnknown.
     if (IsIIDOf<IUnknown>(riid)) {
-      return absl::implicit_cast<IUnknown *>(absl::implicit_cast<T *>(this));
+      return absl::implicit_cast<IUnknown*>(absl::implicit_cast<T*>(this));
     }
     return nullptr;
   } else {

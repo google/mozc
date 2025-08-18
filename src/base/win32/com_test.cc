@@ -67,9 +67,7 @@ IMock2 : public IUnknown {
 };
 
 MIDL_INTERFACE("7CC0C082-8CA5-4A87-97C4-4FC14FBCE0B3")
-IDerived : public IMock1 {
-  STDMETHOD(Derived()) = 0;
-};
+IDerived : public IMock1 { STDMETHOD(Derived()) = 0; };
 
 }  // namespace
 
@@ -88,7 +86,7 @@ class Mock : public ComImplements<ComImplementsTraits, IMock2, IDerived> {
   Mock() { ++object_count; }
   ~Mock() override { --object_count; }
 
-  STDMETHODIMP QueryInterface(REFIID iid, void **out) override {
+  STDMETHODIMP QueryInterface(REFIID iid, void** out) override {
     qi_count_++;
     return ComImplements::QueryInterface(iid, out);
   }
@@ -166,7 +164,7 @@ TEST_F(ComTest, ComCopy) {
   EXPECT_THAT(ComCopy<IShellLink>(unknown), IsNull());
   EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 
-  IUnknown *null = nullptr;
+  IUnknown* null = nullptr;
   EXPECT_THAT(ComCopy<IUnknown>(null), IsNull());
 }
 
@@ -180,14 +178,14 @@ TEST(ComBSTRTest, MakeUniqueBSTR) {
 }
 
 TEST(SaveToOutParam, Nullptr) {
-  EXPECT_EQ(SaveToOutParam(0, static_cast<int *>(nullptr)), E_INVALIDARG);
-  EXPECT_EQ(SaveToOutParam(wil::unique_bstr(), static_cast<BSTR *>(nullptr)),
+  EXPECT_EQ(SaveToOutParam(0, static_cast<int*>(nullptr)), E_INVALIDARG);
+  EXPECT_EQ(SaveToOutParam(wil::unique_bstr(), static_cast<BSTR*>(nullptr)),
             E_INVALIDARG);
   EXPECT_EQ(
-      SaveToOutParam(static_cast<BSTR>(nullptr), static_cast<BSTR *>(nullptr)),
+      SaveToOutParam(static_cast<BSTR>(nullptr), static_cast<BSTR*>(nullptr)),
       E_INVALIDARG);
   EXPECT_EQ(SaveToOutParam(wil::com_ptr_nothrow<IMock1>(),
-                           static_cast<IMock1 **>(nullptr)),
+                           static_cast<IMock1**>(nullptr)),
             E_INVALIDARG);
 }
 
@@ -215,7 +213,7 @@ TEST(SaveToOutParam, Int) {
 }
 
 TEST(SaveToOptionalOutParam, Nullptr) {
-  SaveToOptionalOutParam(1, static_cast<int *>(nullptr));
+  SaveToOptionalOutParam(1, static_cast<int*>(nullptr));
 }
 
 TEST(SaveToOptionalOutParam, Int) {

@@ -123,7 +123,7 @@ size_t Encryptor::Key::GetEncryptedSize(size_t size) const {
 
 bool Encryptor::Key::DeriveFromPassword(const absl::string_view password,
                                         const absl::string_view salt,
-                                        const uint8_t *iv) {
+                                        const uint8_t* iv) {
   if (IsAvailable()) {
     LOG(WARNING) << "key is already set";
     return false;
@@ -152,7 +152,7 @@ bool Encryptor::Key::DeriveFromPassword(const absl::string_view password,
   return true;
 }
 
-bool Encryptor::EncryptString(const Encryptor::Key &key, std::string *data) {
+bool Encryptor::EncryptString(const Encryptor::Key& key, std::string* data) {
   if (data == nullptr || data->empty()) {
     LOG(ERROR) << "data is nullptr or empty";
     return false;
@@ -166,7 +166,7 @@ bool Encryptor::EncryptString(const Encryptor::Key &key, std::string *data) {
   return true;
 }
 
-bool Encryptor::DecryptString(const Encryptor::Key &key, std::string *data) {
+bool Encryptor::DecryptString(const Encryptor::Key& key, std::string* data) {
   if (data == nullptr || data->empty()) {
     LOG(ERROR) << "data is nullptr or empty";
     return false;
@@ -180,8 +180,8 @@ bool Encryptor::DecryptString(const Encryptor::Key &key, std::string *data) {
   return true;
 }
 
-bool Encryptor::EncryptArray(const Encryptor::Key &key, char *buf,
-                             size_t *buf_size) {
+bool Encryptor::EncryptArray(const Encryptor::Key& key, char* buf,
+                             size_t* buf_size) {
   if (!key.IsAvailable()) {
     LOG(ERROR) << "key is not available";
     return false;
@@ -203,14 +203,14 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key, char *buf,
 
   // For historical reasons, we are using AES256/CBC for obfuscation.
   internal::UnverifiedAES256::TransformCBC(key.key_, key.iv_,
-                                           reinterpret_cast<uint8_t *>(buf),
+                                           reinterpret_cast<uint8_t*>(buf),
                                            enc_size / kBlockSize);
   *buf_size = enc_size;
   return true;
 }
 
-bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
-                             size_t *buf_size) {
+bool Encryptor::DecryptArray(const Encryptor::Key& key, char* buf,
+                             size_t* buf_size) {
   if (!key.IsAvailable()) {
     LOG(ERROR) << "key is not available";
     return false;
@@ -230,7 +230,7 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
 
   // For historical reasons, we are using AES256/CBC for obfuscation.
   internal::UnverifiedAES256::InverseTransformCBC(
-      key.key_, key.iv_, reinterpret_cast<uint8_t *>(buf), size / kBlockSize);
+      key.key_, key.iv_, reinterpret_cast<uint8_t*>(buf), size / kBlockSize);
 
   // perform PKCS#5 un-padding
   // see. http://www.chilkatsoft.com/faq/PKCS5_Padding.html
@@ -260,11 +260,11 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
 #ifdef _WIN32
 // See. http://msdn.microsoft.com/en-us/library/aa380261.aspx
 bool Encryptor::ProtectData(const absl::string_view plain_text,
-                            std::string *cipher_text) {
+                            std::string* cipher_text) {
   DCHECK(cipher_text);
   DATA_BLOB input;
   input.pbData =
-      const_cast<BYTE *>(reinterpret_cast<const BYTE *>(plain_text.data()));
+      const_cast<BYTE*>(reinterpret_cast<const BYTE*>(plain_text.data()));
   input.cbData = static_cast<DWORD>(plain_text.size());
 
   DATA_BLOB output;
@@ -275,7 +275,7 @@ bool Encryptor::ProtectData(const absl::string_view plain_text,
     return false;
   }
 
-  cipher_text->assign(reinterpret_cast<char *>(output.pbData), output.cbData);
+  cipher_text->assign(reinterpret_cast<char*>(output.pbData), output.cbData);
 
   ::LocalFree(output.pbData);
 
@@ -284,11 +284,11 @@ bool Encryptor::ProtectData(const absl::string_view plain_text,
 
 // See. http://msdn.microsoft.com/en-us/library/aa380882(VS.85).aspx
 bool Encryptor::UnprotectData(const absl::string_view cipher_text,
-                              std::string *plain_text) {
+                              std::string* plain_text) {
   DCHECK(plain_text);
   DATA_BLOB input;
   input.pbData =
-      const_cast<BYTE *>(reinterpret_cast<const BYTE *>(cipher_text.data()));
+      const_cast<BYTE*>(reinterpret_cast<const BYTE*>(cipher_text.data()));
   input.cbData = static_cast<DWORD>(cipher_text.length());
 
   DATA_BLOB output;
@@ -300,7 +300,7 @@ bool Encryptor::UnprotectData(const absl::string_view cipher_text,
     return false;
   }
 
-  plain_text->assign(reinterpret_cast<char *>(output.pbData), output.cbData);
+  plain_text->assign(reinterpret_cast<char*>(output.pbData), output.cbData);
 
   ::LocalFree(output.pbData);
 
@@ -311,7 +311,7 @@ bool Encryptor::UnprotectData(const absl::string_view cipher_text,
 
 // ProtectData for Mac uses the serial number and the current pid as the key.
 bool Encryptor::ProtectData(const absl::string_view plain_text,
-                            std::string *cipher_text) {
+                            std::string* cipher_text) {
   DCHECK(cipher_text);
   Encryptor::Key key;
   const std::string serial_number = MacUtil::GetSerialNumber();
@@ -336,7 +336,7 @@ bool Encryptor::ProtectData(const absl::string_view plain_text,
 
 // Same as ProtectData.
 bool Encryptor::UnprotectData(const absl::string_view cipher_text,
-                              std::string *plain_text) {
+                              std::string* plain_text) {
   DCHECK(plain_text);
   Encryptor::Key key;
   const std::string serial_number = MacUtil::GetSerialNumber();
@@ -369,7 +369,7 @@ constexpr size_t kSaltSize = 32;
 
 // Use AES to emulate ProtectData
 bool Encryptor::ProtectData(const absl::string_view plain_text,
-                            std::string *cipher_text) {
+                            std::string* cipher_text) {
   std::string password;
   if (!PasswordManager::GetPassword(&password)) {
     LOG(ERROR) << "Cannot get password";
@@ -398,7 +398,7 @@ bool Encryptor::ProtectData(const absl::string_view plain_text,
 
 // Use AES to emulate UnprotectData
 bool Encryptor::UnprotectData(const absl::string_view cipher_text,
-                              std::string *plain_text) {
+                              std::string* plain_text) {
   if (cipher_text.size() < kSaltSize) {
     LOG(ERROR) << "encrypted message is too short";
     return false;

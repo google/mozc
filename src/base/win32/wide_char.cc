@@ -43,7 +43,7 @@
 namespace mozc::win32 {
 namespace wide_char_internal {
 
-void StrAppendWInternal(std::wstring *dest,
+void StrAppendWInternal(std::wstring* dest,
                         const std::initializer_list<std::wstring_view> slist) {
   size_t size = 0;
   for (const std::wstring_view view : slist) {

@@ -41,8 +41,8 @@ namespace mozc {
 class AndroidUtil {
  public:
   AndroidUtil() = delete;
-  AndroidUtil(const AndroidUtil &) = delete;
-  AndroidUtil &operator=(const AndroidUtil &) = delete;
+  AndroidUtil(const AndroidUtil&) = delete;
+  AndroidUtil& operator=(const AndroidUtil&) = delete;
 
   // Frequently used property names.
   static const char kSystemPropertyOsVersion[];
@@ -60,8 +60,8 @@ class AndroidUtil {
   //     "Nexus One");
   // Note : Using ::popen("getprop [property name]", "r") is better solution
   // but currently popen seems to be unstable.
-  static std::string GetSystemProperty(const std::string &key,
-                                       const std::string &default_value);
+  static std::string GetSystemProperty(const std::string& key,
+                                       const std::string& default_value);
 
  private:
   friend class AndroidUtilTestPeer;
@@ -71,15 +71,15 @@ class AndroidUtil {
   // returns true.
   // If something goes wrong (e.g. file system error, non-existent property
   // name), returns false. |output| is undefined.
-  static bool GetPropertyFromFile(const std::string &key, std::string *output);
+  static bool GetPropertyFromFile(const std::string& key, std::string* output);
 
   // Parses the line.
   // If the returned value is true, the property's key and value string are
   // returned as |lhs| and |rhs| respectively.
   // If false, |line| is malformed.
   // In this case |lhs| and |rhs| are not modified.
-  static bool ParseLine(const std::string &line, std::string *lhs,
-                        std::string *rhs);
+  static bool ParseLine(const std::string& line, std::string* lhs,
+                        std::string* rhs);
 
   static std::map<std::string, std::string> property_cache;
   static std::set<std::string> undefined_keys;

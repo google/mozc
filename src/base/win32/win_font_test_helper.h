@@ -34,7 +34,6 @@
 
 #include <string>
 
-
 namespace mozc {
 
 class WinFontTestHelper {

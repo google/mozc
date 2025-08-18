@@ -57,10 +57,10 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
   // Args:
   //   output_stream: The output stream to which generated code is written.
   explicit BasicCodeGenByteArrayStreamBuf(
-      std::ostream &output_stream ABSL_ATTRIBUTE_LIFETIME_BOUND);
+      std::ostream& output_stream ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
-  BasicCodeGenByteArrayStreamBuf(BasicCodeGenByteArrayStreamBuf &&) = default;
-  BasicCodeGenByteArrayStreamBuf &operator=(BasicCodeGenByteArrayStreamBuf &&) =
+  BasicCodeGenByteArrayStreamBuf(BasicCodeGenByteArrayStreamBuf&&) = default;
+  BasicCodeGenByteArrayStreamBuf& operator=(BasicCodeGenByteArrayStreamBuf&&) =
       default;
 
   // Writes the beginning of a variable definition.
@@ -75,7 +75,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 
   // Writes a given character sequence.  The implementation is expected to be
   // more efficient than the one of the base class.
-  std::streamsize xsputn(const char_type *s, std::streamsize n) override;
+  std::streamsize xsputn(const char_type* s, std::streamsize n) override;
 
   // Writes the data body of a variable definition.
   int overflow(int c) override;
@@ -85,10 +85,10 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
   static constexpr size_t kNumOfBytesOnOneLine = 20;
 
   // Converts a raw byte stream to C source code.
-  void WriteBytes(const char_type *begin, const char_type *end);
+  void WriteBytes(const char_type* begin, const char_type* end);
 
   std::vector<char_type> internal_output_buffer_;
-  std::ostream *output_stream_;
+  std::ostream* output_stream_;
   bool is_open_;
   std::string var_name_base_;
   size_t output_count_;
@@ -114,11 +114,11 @@ class CodeGenByteArrayOutputStream : public std::ostream {
   // Args:
   //   output_stream: The output stream to which generated code is written.
   explicit CodeGenByteArrayOutputStream(
-      std::ostream &output_stream ABSL_ATTRIBUTE_LIFETIME_BOUND);
+      std::ostream& output_stream ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
-  CodeGenByteArrayOutputStream(CodeGenByteArrayOutputStream &&other) noexcept;
-  CodeGenByteArrayOutputStream &operator=(
-      CodeGenByteArrayOutputStream &&other) noexcept;
+  CodeGenByteArrayOutputStream(CodeGenByteArrayOutputStream&& other) noexcept;
+  CodeGenByteArrayOutputStream& operator=(
+      CodeGenByteArrayOutputStream&& other) noexcept;
 
   // Writes the beginning of a variable definition.
   // A call to |OpenVarDef| must precede any output to the instance.

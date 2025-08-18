@@ -45,8 +45,8 @@ namespace internal {
 class UnverifiedAES256 {
  public:
   UnverifiedAES256() = delete;
-  UnverifiedAES256(const UnverifiedAES256 &) = delete;
-  UnverifiedAES256 &operator=(const UnverifiedAES256 &) = delete;
+  UnverifiedAES256(const UnverifiedAES256&) = delete;
+  UnverifiedAES256& operator=(const UnverifiedAES256&) = delete;
 
   static constexpr size_t kKeyBytes = 32;    // 256 bit
   static constexpr size_t kBlockBytes = 16;  // 128 bit
@@ -55,14 +55,14 @@ class UnverifiedAES256 {
   // Does AES256 CBC transformation.
   // CAVEATS: See the above comment.
   static void TransformCBC(const uint8_t (&key)[kKeyBytes],
-                           const uint8_t (&iv)[kBlockBytes], uint8_t *block,
+                           const uint8_t (&iv)[kBlockBytes], uint8_t* block,
                            size_t block_count);
 
   // Does AES256 CBC inverse transformation.
   // CAVEATS: See the above comment.
   static void InverseTransformCBC(const uint8_t (&key)[kKeyBytes],
                                   const uint8_t (&iv)[kBlockBytes],
-                                  uint8_t *block, size_t block_count);
+                                  uint8_t* block, size_t block_count);
 
  protected:
   // Does AES256 ECB transformation.

@@ -43,9 +43,7 @@ class EnvironMock : public EnvironInterface {
     env_vars_["HOME"] = "/home/mozcuser";
     Environ::SetMockForUnitTest(this);
   }
-  ~EnvironMock() override {
-    Environ::SetMockForUnitTest(nullptr);
-  }
+  ~EnvironMock() override { Environ::SetMockForUnitTest(nullptr); }
 
   std::string GetEnv(zstring_view env_var) override {
     auto it = env_vars_.find({env_var.data(), env_var.size()});
@@ -53,7 +51,7 @@ class EnvironMock : public EnvironInterface {
   }
 
   // This is not an override function.
-  void SetEnv(const std::string &env_var, const std::string &value) {
+  void SetEnv(const std::string& env_var, const std::string& value) {
     env_vars_[env_var] = value;
   }
 

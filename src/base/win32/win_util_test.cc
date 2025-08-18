@@ -64,7 +64,7 @@ class WinUtilLoaderLockTest : public testing::Test {
 TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
   ASSERT_NE(module_, nullptr);
 
-  using CheckProc = int(__stdcall *)();
+  using CheckProc = int(__stdcall*)();
 
   CheckProc is_lock_check_succeeded = reinterpret_cast<CheckProc>(
       ::GetProcAddress(module_.get(), "IsLockCheckSucceeded"));

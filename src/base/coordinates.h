@@ -51,7 +51,7 @@ struct Rect {
   Rect() = default;
   Rect(int newx, int newy, int newwidth, int newheight)
       : origin(newx, newy), size(newwidth, newheight) {}
-  Rect(const Point &o, const Size &s) : origin(o), size(s) {}
+  Rect(const Point& o, const Size& s) : origin(o), size(s) {}
 
   // Accessors
   inline int Width() const { return size.width; }
@@ -69,7 +69,7 @@ struct Rect {
     size.height -= t + b;
   }
   inline void DeflateRect(int x, int y) { DeflateRect(x, y, x, y); }
-  inline void DeflateRect(const Size &s) { DeflateRect(s.width, s.height); }
+  inline void DeflateRect(const Size& s) { DeflateRect(s.width, s.height); }
   // Returns true if the right side is less than or equal to the coordinate
   // of the left side, or the coordinate of the bottom side is less than or
   // equal to the coordinate of the top side.
@@ -78,7 +78,7 @@ struct Rect {
   inline bool IsRectEmpty() const {
     return size.width <= 0 || size.height <= 0;
   }
-  inline bool PtrInRect(const Point &p) const {
+  inline bool PtrInRect(const Point& p) const {
     return p.x >= origin.x && p.x <= origin.x + size.width && p.y >= origin.y &&
            p.y <= origin.y + size.height;
   }

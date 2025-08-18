@@ -56,7 +56,7 @@ std::string Environ::GetEnv(zstring_view env_var) {
   return EnvironSingleton::Get()->GetEnv(env_var.data());
 }
 
-void Environ::SetMockForUnitTest(EnvironInterface *mock) {
+void Environ::SetMockForUnitTest(EnvironInterface* mock) {
   EnvironSingleton::SetMock(mock);
 }
 

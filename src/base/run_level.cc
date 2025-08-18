@@ -213,7 +213,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
         // is removed by sandboxing so we should recover the permission here.
         // See http://b/2317718 for details.
         WinSandbox::AddKnownSidToKernelObject(
-            dir_handle.get(), static_cast<SID *>(ptoken_user->User.Sid),
+            dir_handle.get(), static_cast<SID*>(ptoken_user->User.Sid),
             SUB_CONTAINERS_AND_OBJECTS_INHERIT, GENERIC_ALL);
       }
     }
@@ -332,7 +332,7 @@ bool RunLevel::SetElevatedProcessDisabled(bool disable) {
   const DWORD value = disable ? 1 : 0;
   result =
       ::RegSetValueExW(key, kElevatedProcessDisabledName, 0, REG_DWORD,
-                       reinterpret_cast<const BYTE *>(&value), sizeof(value));
+                       reinterpret_cast<const BYTE*>(&value), sizeof(value));
   ::RegCloseKey(key);
 
   return ERROR_SUCCESS == result;
@@ -355,7 +355,7 @@ bool RunLevel::GetElevatedProcessDisabled() {
   DWORD value_type = 0;
   result =
       ::RegQueryValueEx(key, kElevatedProcessDisabledName, nullptr, &value_type,
-                        reinterpret_cast<BYTE *>(&value), &value_size);
+                        reinterpret_cast<BYTE*>(&value), &value_size);
   ::RegCloseKey(key);
 
   if (ERROR_SUCCESS != result || value_type != REG_DWORD ||

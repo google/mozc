@@ -33,7 +33,7 @@
 namespace mozc {
 
 // Initializes all the modules, such as flags and logging.
-void InitMozc(const char *arg0, int *argc, char ***argv);
+void InitMozc(const char* arg0, int* argc, char*** argv);
 
 }  // namespace mozc
 

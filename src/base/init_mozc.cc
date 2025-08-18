@@ -68,7 +68,7 @@ namespace mozc {
 namespace {
 
 #ifdef _WIN32
-LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
+LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS* ExceptionInfo) {
   // Currently, we haven't found a good way to perform both
   // "send mininump" and "exit the process gracefully".
   ::ExitProcess(static_cast<UINT>(-1));
@@ -76,7 +76,7 @@ LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
 }
 #endif  // _WIN32
 
-std::string GetLogFilePathFromProgramName(const std::string &program_name) {
+std::string GetLogFilePathFromProgramName(const std::string& program_name) {
   const std::string basename = FileUtil::Basename(program_name) + ".log";
   if (absl::GetFlag(FLAGS_log_dir).empty()) {
 #ifdef MOZC_BUILDTOOL_BUILD
@@ -88,7 +88,7 @@ std::string GetLogFilePathFromProgramName(const std::string &program_name) {
   return FileUtil::JoinPath(absl::GetFlag(FLAGS_log_dir), basename);
 }
 
-void ParseCommandLineFlags(int argc, char **argv) {
+void ParseCommandLineFlags(int argc, char** argv) {
   absl::flags_internal::ParseCommandLineImpl(
       argc, argv,
       // Suppress help messages invoked by --help and others.
@@ -99,7 +99,7 @@ void ParseCommandLineFlags(int argc, char **argv) {
 
 }  // namespace
 
-void InitMozc(const char *arg0, int *argc, char ***argv) {
+void InitMozc(const char* arg0, int* argc, char*** argv) {
   absl::SetFlag(&FLAGS_program_invocation_name, *argv[0]);
 #ifdef _WIN32
   // InitMozc() is supposed to be used for code generator or

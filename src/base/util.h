@@ -56,9 +56,9 @@ class Util {
   // Util::AppendUtf8Chars(str, output);
   // EXPECT_THAT(output, ElementsAre("漢", "あ", "a", "1"));
   static void AppendUtf8Chars(absl::string_view str,
-                              std::vector<std::string> &output);
+                              std::vector<std::string>& output);
   static void AppendUtf8Chars(absl::string_view str,
-                              std::vector<absl::string_view> &output);
+                              std::vector<absl::string_view>& output);
 
   // Split `str` to graphemes.
   // A grapheme may contain multiple characters such as modifiers and variation
@@ -66,17 +66,17 @@ class Util {
   // Note, this function does not support full requirements of the grapheme
   // specifications defined by Unicode.
   static void SplitStringToUtf8Graphemes(absl::string_view str,
-                                         std::vector<std::string> *graphemes);
+                                         std::vector<std::string>* graphemes);
 
   static void SplitCSV(absl::string_view input,
-                       std::vector<std::string> *output);
+                       std::vector<std::string>* output);
 
-  static void LowerString(std::string *str);
-  static void UpperString(std::string *str);
+  static void LowerString(std::string* str);
+  static void UpperString(std::string* str);
 
   // Transforms the first character to the upper case and tailing characters to
   // the lower cases.  ex. "abCd" => "Abcd".
-  static void CapitalizeString(std::string *str);
+  static void CapitalizeString(std::string* str);
 
   // Returns true if the characters in [first, last) are all in lower case
   // ASCII.
@@ -99,8 +99,8 @@ class Util {
 
   // Converts the first character of UTF8 string starting at |begin| to UCS4.
   // The read byte length is stored to |mblen|.
-  static char32_t Utf8ToCodepoint(const char *begin, const char *end,
-                                  size_t *mblen);
+  static char32_t Utf8ToCodepoint(const char* begin, const char* end,
+                                  size_t* mblen);
   static char32_t Utf8ToCodepoint(absl::string_view s) {
     size_t mblen = 0;
     return Utf8ToCodepoint(s.data(), s.data() + s.size(), &mblen);
@@ -111,28 +111,28 @@ class Util {
 
   // Converts a UCS4 code point to UTF8 string and appends it to |output|, i.e.,
   // |output| is not cleared.
-  static void CodepointToUtf8Append(char32_t c, std::string *output);
+  static void CodepointToUtf8Append(char32_t c, std::string* output);
 
   // Converts a UCS4 code point to UTF8 and stores it to char array.  The result
   // is terminated by '\0'.  Returns the byte length of converted UTF8 string.
   // REQUIRES: The output buffer must be longer than 7 bytes.
-  static size_t CodepointToUtf8(char32_t c, char *output);
+  static size_t CodepointToUtf8(char32_t c, char* output);
 
   // Returns true if |s| is split into |first_char32| + |rest|.
   // You can pass nullptr to |first_char32| and/or |rest| to ignore the matched
   // value.
   // Returns false if an invalid UTF-8 sequence is prefixed. That is, |rest| may
   // contain any invalid sequence even when this method returns true.
-  static bool SplitFirstChar32(absl::string_view s, char32_t *first_char32,
-                               absl::string_view *rest);
+  static bool SplitFirstChar32(absl::string_view s, char32_t* first_char32,
+                               absl::string_view* rest);
 
   // Returns true if |s| is split into |rest| + |last_char32|.
   // You can pass nullptr to |rest| and/or |last_char32| to ignore the matched
   // value.
   // Returns false if an invalid UTF-8 sequence is suffixed. That is, |rest| may
   // contain any invalid sequence even when this method returns true.
-  static bool SplitLastChar32(absl::string_view s, absl::string_view *rest,
-                              char32_t *last_char32);
+  static bool SplitLastChar32(absl::string_view s, absl::string_view* rest,
+                              char32_t* last_char32);
 
   // Returns true if |s| is a valid UTF8.
   static bool IsValidUtf8(absl::string_view s);
@@ -148,7 +148,7 @@ class Util {
   // Extracts a substring of length |length| starting at |start|.
   // Note: |start| is the start position in UTF8, not byte position.
   static void Utf8SubString(absl::string_view src, size_t start, size_t length,
-                            std::string *result);
+                            std::string* result);
 
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
   static absl::string_view StripUtf8Bom(absl::string_view line);
@@ -158,7 +158,7 @@ class Util {
 
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.
-  static bool ChopReturns(std::string *line);
+  static bool ChopReturns(std::string* line);
 
   // Returns true if all chars in input are both defined
   // in full width and half-width-katakana area
@@ -176,13 +176,13 @@ class Util {
   // Returns true if key is an open bracket.  If key is an open bracket,
   // corresponding close bracket is assigned.
   static bool IsOpenBracket(absl::string_view key,
-                            absl::string_view *close_bracket);
+                            absl::string_view* close_bracket);
 
   // Returns true if key is a close bracket.  If key is a close bracket,
   // corresponding open bracket is assigned.
   // Note, `open_bracket` is not terminated with '\0'.
   static bool IsCloseBracket(absl::string_view key,
-                             absl::string_view *open_bracket);
+                             absl::string_view* open_bracket);
 
   // Returns true if input is a bracket pair text (e.g. "「」").
   static bool IsBracketPairText(absl::string_view input);
@@ -206,7 +206,7 @@ class Util {
   // This function calls GetScriptType(char32_t) internally.
   // Also sets the UTF-8 byte size of the chracter to `*mblen` if it's given.
   static ScriptType GetFirstScriptType(absl::string_view str,
-                                       size_t *mblen = nullptr);
+                                       size_t* mblen = nullptr);
 
   // Returns the script type of a string. All chars in str must be
   // KATAKANA/HIRAGANA/KANJI/NUMBER or ALPHABET.
@@ -252,7 +252,7 @@ class Util {
 
   // Deserializes a string serialized by SerializeUint64.  Returns false if the
   // length of s is not eight or s is in an invalid format.
-  static bool DeserializeUint64(absl::string_view s, uint64_t *x);
+  static bool DeserializeUint64(absl::string_view s, uint64_t* x);
 
   // Checks whether the letter is ucs 4 is appropriate target to be shown as
   // candidate. This function is based on mozc internal logics, rather than
@@ -272,8 +272,8 @@ class Util {
 class ConstChar32Iterator {
  public:
   explicit ConstChar32Iterator(absl::string_view utf8_string);
-  ConstChar32Iterator(const ConstChar32Iterator &) = delete;
-  ConstChar32Iterator &operator=(const ConstChar32Iterator &) = delete;
+  ConstChar32Iterator(const ConstChar32Iterator&) = delete;
+  ConstChar32Iterator& operator=(const ConstChar32Iterator&) = delete;
   char32_t Get() const;
   void Next();
   bool Done() const;
@@ -296,8 +296,8 @@ class ConstChar32Iterator {
 class ConstChar32ReverseIterator {
  public:
   explicit ConstChar32ReverseIterator(absl::string_view utf8_string);
-  ConstChar32ReverseIterator(const ConstChar32ReverseIterator &) = delete;
-  ConstChar32ReverseIterator &operator=(const ConstChar32ReverseIterator &) =
+  ConstChar32ReverseIterator(const ConstChar32ReverseIterator&) = delete;
+  ConstChar32ReverseIterator& operator=(const ConstChar32ReverseIterator&) =
       delete;
   char32_t Get() const;
   void Next();

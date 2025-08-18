@@ -87,7 +87,7 @@ class UserProfileDirectoryImpl final {
   ~UserProfileDirectoryImpl() = default;
 
   std::string GetDir();
-  void SetDir(const std::string &dir);
+  void SetDir(const std::string& dir);
 
  private:
   std::string GetUserProfileDirectory() const;
@@ -114,7 +114,7 @@ std::string UserProfileDirectoryImpl::GetDir() {
   return dir_;
 }
 
-void UserProfileDirectoryImpl::SetDir(const std::string &dir) {
+void UserProfileDirectoryImpl::SetDir(const std::string& dir) {
   absl::MutexLock l(&mutex_);
   dir_ = dir;
 }
@@ -128,7 +128,7 @@ class LocalAppDataDirectoryCache {
   }
   HRESULT result() const { return result_; }
   const bool succeeded() const { return SUCCEEDED(result_); }
-  const std::string &path() const { return path_; }
+  const std::string& path() const { return path_; }
 
  private:
   // b/5707813 implies that TryGetLocalAppData causes an exception and makes
@@ -141,7 +141,7 @@ class LocalAppDataDirectoryCache {
   // Since Mozc uses /EHs option in common.gypi, we must admit potential
   // memory leakes when any non-C++ exception occues in TryGetLocalAppData.
   // See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
-  static HRESULT __declspec(nothrow) SafeTryGetLocalAppData(std::string *dir) {
+  static HRESULT __declspec(nothrow) SafeTryGetLocalAppData(std::string* dir) {
     __try {
       return TryGetLocalAppData(dir);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -149,7 +149,7 @@ class LocalAppDataDirectoryCache {
     }
   }
 
-  static HRESULT TryGetLocalAppData(std::string *dir) {
+  static HRESULT TryGetLocalAppData(std::string* dir) {
     if (dir == nullptr) {
       return E_FAIL;
     }
@@ -166,7 +166,7 @@ class LocalAppDataDirectoryCache {
     return TryGetLocalAppDataLow(dir);
   }
 
-  static HRESULT TryGetLocalAppDataForAppContainer(std::string *dir) {
+  static HRESULT TryGetLocalAppDataForAppContainer(std::string* dir) {
     // User profiles for processes running under AppContainer seem to be as
     // follows, while the scheme is not officially documented.
     //   "%LOCALAPPDATA%\Packages\<package sid>\..."
@@ -194,13 +194,13 @@ class LocalAppDataDirectoryCache {
     return S_OK;
   }
 
-  static HRESULT TryGetLocalAppDataLow(std::string *dir) {
+  static HRESULT TryGetLocalAppDataLow(std::string* dir) {
     if (dir == nullptr) {
       return E_FAIL;
     }
     dir->clear();
 
-    wchar_t *task_mem_buffer = nullptr;
+    wchar_t* task_mem_buffer = nullptr;
     const HRESULT result = ::SHGetKnownFolderPath(FOLDERID_LocalAppDataLow, 0,
                                                   nullptr, &task_mem_buffer);
     if (FAILED(result)) {
@@ -334,7 +334,7 @@ std::string SystemUtil::GetLoggingDirectory() {
 #endif  // __APPLE__
 }
 
-void SystemUtil::SetUserProfileDirectory(const std::string &path) {
+void SystemUtil::SetUserProfileDirectory(const std::string& path) {
   Singleton<UserProfileDirectoryImpl>::get()->SetDir(path);
 }
 
@@ -348,7 +348,7 @@ class ProgramFilesX86Cache {
   }
   const bool succeeded() const { return SUCCEEDED(result_); }
   const HRESULT result() const { return result_; }
-  const std::string &path() const { return path_; }
+  const std::string& path() const { return path_; }
 
  private:
   // b/5707813 implies that the Shell API causes an exception in some cases.
@@ -361,7 +361,7 @@ class ProgramFilesX86Cache {
   // memory leakes when any non-C++ exception occues in TryProgramFilesPath.
   // See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
   static HRESULT __declspec(nothrow) SafeTryProgramFilesPath(
-      std::string *path) {
+      std::string* path) {
     __try {
       return TryProgramFilesPath(path);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -369,7 +369,7 @@ class ProgramFilesX86Cache {
     }
   }
 
-  static HRESULT TryProgramFilesPath(std::string *path) {
+  static HRESULT TryProgramFilesPath(std::string* path) {
     if (path == nullptr) {
       return E_FAIL;
     }
@@ -411,8 +411,8 @@ std::string GetMozcInstallDirFromRegistry() {
   // TSF requires the path of "mozc_tip64.dll" to be registered in the registry,
   // which tells us Mozc's installation directory.
   HKEY key = nullptr;
-  LSTATUS result =::RegOpenKeyExW(
-      HKEY_LOCAL_MACHINE, kMozcTipClsid, 0, KEY_READ | KEY_WOW64_64KEY, &key);
+  LSTATUS result = ::RegOpenKeyExW(HKEY_LOCAL_MACHINE, kMozcTipClsid, 0,
+                                   KEY_READ | KEY_WOW64_64KEY, &key);
   if (result != ERROR_SUCCESS) {
     return "";
   }
@@ -420,9 +420,8 @@ std::string GetMozcInstallDirFromRegistry() {
   DWORD type = 0;
   wchar_t buffer[MAX_PATH] = {};
   DWORD buffer_size = sizeof(buffer);
-  result = ::RegQueryValueExW(
-      key, nullptr, nullptr, &type, reinterpret_cast<LPBYTE>(buffer),
-      &buffer_size);
+  result = ::RegQueryValueExW(key, nullptr, nullptr, &type,
+                              reinterpret_cast<LPBYTE>(buffer), &buffer_size);
   ::RegCloseKey(key);
   if (result != ERROR_SUCCESS || type != REG_SZ) {
     return "";
@@ -545,7 +544,7 @@ namespace {
 class UserSidImpl {
  public:
   UserSidImpl();
-  const std::string &get() { return sid_; }
+  const std::string& get() { return sid_; }
 
  private:
   std::string sid_;
@@ -631,13 +630,13 @@ std::string GetObjectNameAsString(HANDLE handle) {
     return "";
   }
 
-  char *result = buf.get();
+  char* result = buf.get();
   result[return_size - 1] = '\0';  // just make sure nullptr terminated
 
   return result;
 }
 
-bool GetCurrentSessionId(uint32_t *session_id) {
+bool GetCurrentSessionId(uint32_t* session_id) {
   DCHECK(session_id);
   *session_id = 0;
   DWORD id = 0;
@@ -700,19 +699,19 @@ std::string SystemUtil::GetDesktopNameAsString() {
 #endif  // __APPLE__
 
 #if defined(_WIN32)
-  const std::string &session_id = GetSessionIdString();
+  const std::string& session_id = GetSessionIdString();
   if (session_id.empty()) {
     DLOG(ERROR) << "Failed to retrieve session id";
     return "";
   }
 
-  const std::string &window_station_name = GetProcessWindowStationName();
+  const std::string& window_station_name = GetProcessWindowStationName();
   if (window_station_name.empty()) {
     DLOG(ERROR) << "Failed to retrieve window station name";
     return "";
   }
 
-  const std::string &desktop_name = GetInputDesktopName();
+  const std::string& desktop_name = GetInputDesktopName();
   if (desktop_name.empty()) {
     DLOG(ERROR) << "Failed to retrieve desktop name";
     return "";
@@ -739,11 +738,11 @@ class SystemDirectoryCache {
     system_dir_ = path_buffer_;
   }
   const bool succeeded() const { return system_dir_ != nullptr; }
-  const wchar_t *system_dir() const { return system_dir_; }
+  const wchar_t* system_dir() const { return system_dir_; }
 
  private:
   wchar_t path_buffer_[MAX_PATH];
-  wchar_t *system_dir_;
+  wchar_t* system_dir_;
 };
 
 }  // namespace
@@ -762,7 +761,7 @@ bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
   return true;
 }
 
-const wchar_t *SystemUtil::GetSystemDir() {
+const wchar_t* SystemUtil::GetSystemDir() {
   DCHECK(Singleton<SystemDirectoryCache>::get()->succeeded());
   return Singleton<SystemDirectoryCache>::get()->system_dir();
 }
@@ -775,7 +774,7 @@ std::string SystemUtil::GetOSVersionString() {
   std::string ret = "Windows";
   OSVERSIONINFOEX osvi = {0};
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-  if (GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&osvi))) {
+  if (GetVersionEx(reinterpret_cast<OSVERSIONINFO*>(&osvi))) {
     ret += ".";
     ret += std::to_string(static_cast<uint32_t>(osvi.dwMajorVersion));
     ret += ".";

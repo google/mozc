@@ -53,7 +53,7 @@ bool UpdateUtil::WriteActiveUsageInfo() {
   const wchar_t kDidRunName[] = L"dr";
   const wchar_t kDidRunValue[] = L"1";
   result = RegSetValueExW(key, kDidRunName, 0, REG_SZ,
-                          reinterpret_cast<const BYTE *>(kDidRunValue),
+                          reinterpret_cast<const BYTE*>(kDidRunValue),
                           sizeof(kDidRunValue));
   RegCloseKey(key);
   return ERROR_SUCCESS == result;

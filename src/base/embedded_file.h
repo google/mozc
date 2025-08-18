@@ -63,13 +63,13 @@ namespace mozc {
 // embed_file.py.  The first address of embedded file data is aligned at 64 bit
 // boundary, so we can embed data that requires normal alignment (8, 16, etc.).
 struct EmbeddedFile {
-  const uint64_t *const data;
+  const uint64_t* const data;
   const size_t size;
 };
 
 // Interprets EmbeddedFile as a byte array.
 inline absl::string_view LoadEmbeddedFile(EmbeddedFile f) {
-  return absl::string_view(reinterpret_cast<const char *>(f.data), f.size);
+  return absl::string_view(reinterpret_cast<const char*>(f.data), f.size);
 }
 
 }  // namespace mozc

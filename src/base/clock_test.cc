@@ -66,7 +66,7 @@ TEST(ClockTest, TimeZone) {
   const int absl_offset = ci.offset;
 
   const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
-  const std::tm *offset = std::localtime(&epoch);
+  const std::tm* offset = std::localtime(&epoch);
   const int tm_offset =
       (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
       + offset->tm_hour * 60 * 60           // hour offset from 00 am.

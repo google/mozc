@@ -46,8 +46,8 @@ using ::testing::AssertionResult;
 using ::testing::AssertionSuccess;
 
 AssertionResult AssertEqualHashWithFormat(
-    const char *expected_expression, const char *actual_expression,
-    const uint8_t (&expected)[kDigestLength], const std::string &actual) {
+    const char* expected_expression, const char* actual_expression,
+    const uint8_t (&expected)[kDigestLength], const std::string& actual) {
   if (kDigestLength != actual.size()) {
     return AssertionFailure() << "Wrong hash size is " << actual.size();
   }

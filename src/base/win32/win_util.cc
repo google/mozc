@@ -66,7 +66,7 @@ absl::once_flag g_aux_lib_initialized;
 
 void CallAuxUlibInitialize() { ::AuxUlibInitialize(); }
 
-bool EqualLuid(const LUID &L1, const LUID &L2) {
+bool EqualLuid(const LUID& L1, const LUID& L2) {
   return (L1.LowPart == L2.LowPart && L1.HighPart == L2.HighPart);
 }
 
@@ -91,13 +91,13 @@ bool IsProcessSandboxedImpl() {
 // A workaround until we improve the method signature of
 // ShellExecuteInSystemDir.
 // TODO(b/290998032): Remove this.
-constexpr std::wstring_view to_wstring_view(const wchar_t *ptr) {
+constexpr std::wstring_view to_wstring_view(const wchar_t* ptr) {
   return ptr == nullptr ? std::wstring_view() : std::wstring_view(ptr);
 }
 
 }  // namespace
 
-bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
+bool WinUtil::IsDLLSynchronizationHeld(bool* lock_status) {
   absl::call_once(g_aux_lib_initialized, &CallAuxUlibInitialize);
 
   if (lock_status == nullptr) {
@@ -132,7 +132,7 @@ bool WinUtil::SystemEqualString(const std::wstring_view lhs,
   return compare_result == CSTR_EQUAL;
 }
 
-bool WinUtil::IsServiceUser(HANDLE hToken, bool *is_service) {
+bool WinUtil::IsServiceUser(HANDLE hToken, bool* is_service) {
   if (is_service == nullptr) {
     return false;
   }
@@ -161,7 +161,7 @@ bool WinUtil::IsServiceUser(HANDLE hToken, bool *is_service) {
   return true;
 }
 
-bool WinUtil::IsServiceProcess(bool *is_service) {
+bool WinUtil::IsServiceProcess(bool* is_service) {
   if (is_service == nullptr) {
     return false;
   }
@@ -190,7 +190,7 @@ bool WinUtil::IsServiceProcess(bool *is_service) {
   return true;
 }
 
-bool WinUtil::IsServiceThread(bool *is_service) {
+bool WinUtil::IsServiceThread(bool* is_service) {
   if (is_service == nullptr) {
     return false;
   }
@@ -216,7 +216,7 @@ bool WinUtil::IsServiceThread(bool *is_service) {
   return true;
 }
 
-bool WinUtil::IsServiceAccount(bool *is_service) {
+bool WinUtil::IsServiceAccount(bool* is_service) {
   if (is_service == nullptr) {
     return false;
   }
@@ -249,7 +249,7 @@ bool WinUtil::IsServiceAccount(bool *is_service) {
   return true;
 }
 
-bool WinUtil::IsProcessImmersive(HANDLE process_handle, bool *is_immersive) {
+bool WinUtil::IsProcessImmersive(HANDLE process_handle, bool* is_immersive) {
   if (is_immersive == nullptr) {
     return false;
   }
@@ -257,7 +257,7 @@ bool WinUtil::IsProcessImmersive(HANDLE process_handle, bool *is_immersive) {
   return true;
 }
 
-bool WinUtil::IsProcessRestricted(HANDLE process_handle, bool *is_restricted) {
+bool WinUtil::IsProcessRestricted(HANDLE process_handle, bool* is_restricted) {
   if (is_restricted == nullptr) {
     return false;
   }
@@ -281,7 +281,7 @@ bool WinUtil::IsProcessRestricted(HANDLE process_handle, bool *is_restricted) {
 }
 
 bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
-                                      bool *in_appcontainer) {
+                                      bool* in_appcontainer) {
   if (in_appcontainer == nullptr) {
     return false;
   }
@@ -308,7 +308,7 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
 }
 
 bool WinUtil::GetFileSystemInfoFromPath(zwstring_view path,
-                                        BY_HANDLE_FILE_INFORMATION *info) {
+                                        BY_HANDLE_FILE_INFORMATION* info) {
   // no read access is required.
   wil::unique_hfile handle(::CreateFileW(
       path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -335,7 +335,7 @@ bool WinUtil::AreEqualFileSystemObject(zwstring_view left_path,
          (left_info.nFileIndexHigh == right_info.nFileIndexHigh);
 }
 
-bool WinUtil::GetNtPath(zwstring_view dos_path, std::wstring *nt_path) {
+bool WinUtil::GetNtPath(zwstring_view dos_path, std::wstring* nt_path) {
   if (nt_path == nullptr) {
     return false;
   }
@@ -366,7 +366,7 @@ bool WinUtil::GetNtPath(zwstring_view dos_path, std::wstring *nt_path) {
   return true;
 }
 
-bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
+bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring* nt_path) {
   if (nt_path == nullptr) {
     return false;
   }
@@ -402,7 +402,7 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
 bool WinUtil::IsPerUserInputSettingsEnabled() {
   BOOL is_thread_local = FALSE;
   if (::SystemParametersInfo(SPI_GETTHREADLOCALINPUTSETTINGS, 0,
-                             static_cast<void *>(&is_thread_local),
+                             static_cast<void*>(&is_thread_local),
                              0) == FALSE) {
     return false;
   }
@@ -415,8 +415,8 @@ bool WinUtil::IsProcessSandboxed() {
   return sandboxed;
 }
 
-bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
-                                      const wchar_t *parameters) {
+bool WinUtil::ShellExecuteInSystemDir(const wchar_t* verb, const wchar_t* file,
+                                      const wchar_t* parameters) {
   const auto result =
       static_cast<uint32_t>(reinterpret_cast<uintptr_t>(::ShellExecuteW(
           0, verb, file, parameters, SystemUtil::GetSystemDir(), SW_SHOW)));

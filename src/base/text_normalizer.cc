@@ -72,63 +72,65 @@ std::pair<int, int> ConvertJaCjkCompatToSvs(char32_t cjk_compat_char) {
   // value (2N):   codepoint of CJK compatibility character.
   // value (2N+1): codepoint of SVS base character.
   constexpr std::array<int, 16> exceptions = {
-    0xF91D, 0x6B04,  // {欄, 欄} defined in KS X 1001.
-    0xF928, 0x5ECA,  // {廊, 廊} defined in KS X 1001.
-    0xF929, 0x6717,  // {朗, 朗} defined in KS X 1001.
-    0xF936, 0x865C,  // {虜, 虜} defined in KS X 1001.
-    0xF970, 0x6BBA,  // {殺, 殺} defined in KS X 1001.
-    0xF9D0, 0x985E,  // {類, 類} defined in KS X 1001.
-    0xF9DC, 0x9686,  // {隆, 隆} defined in KS X 1001.
-    0xFA6C, 0x242EE,  // {𤋮, 𤋮} value is more than 16bits.
+      0xF91D, 0x6B04,   // {欄, 欄} defined in KS X 1001.
+      0xF928, 0x5ECA,   // {廊, 廊} defined in KS X 1001.
+      0xF929, 0x6717,   // {朗, 朗} defined in KS X 1001.
+      0xF936, 0x865C,   // {虜, 虜} defined in KS X 1001.
+      0xF970, 0x6BBA,   // {殺, 殺} defined in KS X 1001.
+      0xF9D0, 0x985E,   // {類, 類} defined in KS X 1001.
+      0xF9DC, 0x9686,   // {隆, 隆} defined in KS X 1001.
+      0xFA6C, 0x242EE,  // {𤋮, 𤋮} value is more than 16bits.
   };
 
   // value: codepoint of CJK compatibility character
   //        to be converted to SVS character with FE01.
   constexpr std::array<uint16_t, 3> fe01_chars = {
-    0xFA57,  // 練 → 7DF4 FE01 練
-    0xFA5E,  // 艹 → 8279 FE01 艹
-    0xFA67,  // 逸 → 8279 FE01 艹
+      0xFA57,  // 練 → 7DF4 FE01 練
+      0xFA5E,  // 艹 → 8279 FE01 艹
+      0xFA67,  // 逸 → 8279 FE01 艹
   };
 
   // index: codepoint of CJK compatibility character - 0xFA10.
   // value: codepoint of SVS base character.
   constexpr std::array<uint16_t, 94> conv_table = {
-    // FA10
-    //  塚     (﨑)     晴     (﨓)    (﨔)     凞      猪      益
-    0x585A, 0x0000, 0x6674, 0x0000, 0x0000, 0x51DE, 0x732A, 0x76CA,
-    // FA18
-    //  礼      神      祥      福      靖      精      羽     (﨟)
-    0x793C, 0x795E, 0x7965, 0x798F, 0x9756, 0x7CBE, 0x7FBD, 0x0000,
-    // FA20
-    //  蘒     (﨡)     諸     (﨣)    (﨤)     逸      都     (﨧)
-    0x8612, 0x0000, 0x8AF8, 0x0000, 0x0000, 0x9038, 0x90FD, 0x0000,
-    // FA28
-    // (﨨)    (﨩)     飯      飼      館      鶴     (郞)    (隷)
-    0x0000, 0x0000, 0x98EF, 0x98FC, 0x9928, 0x9DB4, 0x90DE, 0x96B7,
-    // FA30
-    //  侮      僧      免      勉      勤      卑      喝      嘆
-    0x4FAE, 0x50E7, 0x514D, 0x52C9, 0x52E4, 0x5351, 0x559D, 0x5606,
-    // FA38
-    //  器      塀      墨      層      屮      悔      慨      憎
-    0x5668, 0x5840, 0x58A8, 0x5C64, 0x5C6E, 0x6094, 0x6168, 0x618E,
-    // FA40
-    //  懲      敏      既      暑      梅      海      渚      漢
-    0x61F2, 0x654F, 0x65E2, 0x6691, 0x6885, 0x6D77, 0x6E1A, 0x6F22,
-    // FA48
-    //  煮      爫      琢      碑      社      祉      祈      祐
-    0x716E, 0x722B, 0x7422, 0x7891, 0x793E, 0x7949, 0x7948, 0x7950,
-    // FA50
-    //  祖      祝      禍      禎      穀      突      節      練
-    0x7956, 0x795D, 0x798D, 0x798E, 0x7A40, 0x7A81, 0x7BC0, 0x7DF4,
-    // FA58
-    //  縉      繁      署      者      臭      艹      艹      著
-    0x7E09, 0x7E41, 0x7F72, 0x8005, 0x81ED, 0x8279, 0x8279, 0x8457,
-    // FA60
-    //  褐      視      謁      謹      賓      贈      辶      逸
-    0x8910, 0x8996, 0x8B01, 0x8B39, 0x8CD3, 0x8D08, 0x8FB6, 0x8279,
-    // FA68 - FA6D
-    //  難      響      頻      恵     (𤋮)     舘
-    0x96E3, 0x97FF, 0x983B, 0x6075, 0x0000, 0x8218,
+      // clang-format off
+      // FA10
+      //  塚     (﨑)     晴     (﨓)    (﨔)     凞      猪      益
+      0x585A, 0x0000, 0x6674, 0x0000, 0x0000, 0x51DE, 0x732A, 0x76CA,
+      // FA18
+      //  礼      神      祥      福      靖      精      羽     (﨟)
+      0x793C, 0x795E, 0x7965, 0x798F, 0x9756, 0x7CBE, 0x7FBD, 0x0000,
+      // FA20
+      //  蘒     (﨡)     諸     (﨣)    (﨤)     逸      都     (﨧)
+      0x8612, 0x0000, 0x8AF8, 0x0000, 0x0000, 0x9038, 0x90FD, 0x0000,
+      // FA28
+      // (﨨)    (﨩)     飯      飼      館      鶴     (郞)    (隷)
+      0x0000, 0x0000, 0x98EF, 0x98FC, 0x9928, 0x9DB4, 0x90DE, 0x96B7,
+      // FA30
+      //  侮      僧      免      勉      勤      卑      喝      嘆
+      0x4FAE, 0x50E7, 0x514D, 0x52C9, 0x52E4, 0x5351, 0x559D, 0x5606,
+      // FA38
+      //  器      塀      墨      層      屮      悔      慨      憎
+      0x5668, 0x5840, 0x58A8, 0x5C64, 0x5C6E, 0x6094, 0x6168, 0x618E,
+      // FA40
+      //  懲      敏      既      暑      梅      海      渚      漢
+      0x61F2, 0x654F, 0x65E2, 0x6691, 0x6885, 0x6D77, 0x6E1A, 0x6F22,
+      // FA48
+      //  煮      爫      琢      碑      社      祉      祈      祐
+      0x716E, 0x722B, 0x7422, 0x7891, 0x793E, 0x7949, 0x7948, 0x7950,
+      // FA50
+      //  祖      祝      禍      禎      穀      突      節      練
+      0x7956, 0x795D, 0x798D, 0x798E, 0x7A40, 0x7A81, 0x7BC0, 0x7DF4,
+      // FA58
+      //  縉      繁      署      者      臭      艹      艹      著
+      0x7E09, 0x7E41, 0x7F72, 0x8005, 0x81ED, 0x8279, 0x8279, 0x8457,
+      // FA60
+      //  褐      視      謁      謹      賓      贈      辶      逸
+      0x8910, 0x8996, 0x8B01, 0x8B39, 0x8CD3, 0x8D08, 0x8FB6, 0x8279,
+      // FA68 - FA6D
+      //  難      響      頻      恵     (𤋮)     舘
+      0x96E3, 0x97FF, 0x983B, 0x6075, 0x0000, 0x8218,
+      // clang-format on
   };
 
   // If the char is out of all data range, return kNoValue.
@@ -145,7 +147,7 @@ std::pair<int, int> ConvertJaCjkCompatToSvs(char32_t cjk_compat_char) {
   // Check the value in `exceptions`.
   for (int i = 0; i < exceptions.size(); i += 2) {
     if (cjk_compat_char == exceptions[i]) {
-      svs_base = exceptions[i+1];
+      svs_base = exceptions[i + 1];
       // svs_extend for all values in `exceptions` is 0xFE00;
       return std::make_pair(svs_base, svs_extend);
     }
@@ -187,7 +189,7 @@ std::string TextNormalizer::NormalizeTextWithFlag(absl::string_view input,
   if (flag == TextNormalizer::kDefault) {
 #ifdef _WIN32
     flag = TextNormalizer::kAll;
-#else  // _WIN32
+#else   // _WIN32
     flag = TextNormalizer::kNone;
 #endif  // _WIN32
   }
@@ -200,7 +202,7 @@ std::string TextNormalizer::NormalizeTextWithFlag(absl::string_view input,
 }
 
 bool TextNormalizer::NormalizeTextToSvs(absl::string_view input,
-                                        std::string *output) {
+                                        std::string* output) {
   std::u32string codepoints = Util::Utf8ToUtf32(input);
   std::u32string normalized;
   bool modified = false;

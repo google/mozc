@@ -45,10 +45,10 @@
 namespace mozc {
 class Sid {
  public:
-  explicit Sid(const SID *sid);
+  explicit Sid(const SID* sid);
   explicit Sid(WELL_KNOWN_SID_TYPE type);
-  const SID *GetPSID() const;
-  SID *GetPSID();
+  const SID* GetPSID() const;
+  SID* GetPSID();
   std::wstring GetName() const;
   std::wstring GetAccountName() const;
 
@@ -59,8 +59,8 @@ class Sid {
 class WinSandbox {
  public:
   WinSandbox() = delete;
-  WinSandbox(const WinSandbox &) = delete;
-  WinSandbox &operator=(const WinSandbox &) = delete;
+  WinSandbox(const WinSandbox&) = delete;
+  WinSandbox& operator=(const WinSandbox&) = delete;
 
   // This emum is not compatible with the same name enum in Chromium sandbox
   // library.  This num has INTEGRITY_LEVEL_MEDIUM_PLUS and lacks of
@@ -130,7 +130,7 @@ class WinSandbox {
     kIPCServerProcess,
   };
   static bool MakeSecurityAttributes(ObjectSecurityType shareble_object_type,
-                                     SECURITY_ATTRIBUTES *security_attributes);
+                                     SECURITY_ATTRIBUTES* security_attributes);
 
   // Adds an ACE represented by |known_sid| and |access| to the dacl of the
   // kernel object referenced by |object|. |inheritance_flag| is a set of bit
@@ -138,7 +138,7 @@ class WinSandbox {
   // ACE from the primary object to which the ACL is attached.
   // This method is basically compatible with the same name function in the
   // Chromium sandbox library except for |inheritance_flag|.
-  static bool AddKnownSidToKernelObject(HANDLE object, const SID *known_sid,
+  static bool AddKnownSidToKernelObject(HANDLE object, const SID* known_sid,
                                         DWORD inheritance_flag,
                                         ACCESS_MASK access_mask);
 
@@ -159,7 +159,7 @@ class WinSandbox {
   // if pid is specified, pid of child process is set.
   static bool SpawnSandboxedProcess(absl::string_view path,
                                     absl::string_view arg,
-                                    const SecurityInfo &info, DWORD *pid);
+                                    const SecurityInfo& info, DWORD* pid);
 
   // Following three methods returns corresponding list of SID or LUID for
   // CreateRestrictedToken API, depending on given |effective_token| and

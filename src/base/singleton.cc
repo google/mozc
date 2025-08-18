@@ -41,8 +41,7 @@ namespace internal {
 namespace {
 
 constinit absl::Mutex mu(absl::kConstInit);
-constinit std::array<void (*)(void), 256> finalizers
-    ABSL_GUARDED_BY(mu) = {};
+constinit std::array<void (*)(void), 256> finalizers ABSL_GUARDED_BY(mu) = {};
 constinit int size ABSL_GUARDED_BY(mu) = 0;
 
 }  // namespace

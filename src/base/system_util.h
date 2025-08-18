@@ -45,8 +45,8 @@ namespace mozc {
 class SystemUtil {
  public:
   SystemUtil() = delete;
-  SystemUtil(const SystemUtil &) = delete;
-  SystemUtil &operator=(const SystemUtil &) = delete;
+  SystemUtil(const SystemUtil&) = delete;
+  SystemUtil& operator=(const SystemUtil&) = delete;
   // return "~/.mozc" for Unix/Mac
   // return "%USERPROFILE%\\AppData\\LocalLow\\"
   //        "Google\\Google Japanese Input" for Windows Vista and later.
@@ -64,7 +64,7 @@ class SystemUtil {
   // - some tests use this.
   // TODO(mukai,taku): find better way to hide this method in the release
   // build but available from those tests.
-  static void SetUserProfileDirectory(const std::string &path);
+  static void SetUserProfileDirectory(const std::string& path);
 
   // return the directory name where the mozc server exist.
   static std::string GetServerDirectory();
@@ -124,7 +124,7 @@ class SystemUtil {
   // return system directory. If failed, return nullptr.
   // You need not to delete the returned pointer.
   // This function is thread safe.
-  static const wchar_t *GetSystemDir();
+  static const wchar_t* GetSystemDir();
 #endif  // _WIN32
 
   // return string representing os version

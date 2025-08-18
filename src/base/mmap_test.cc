@@ -138,7 +138,7 @@ TEST(MmapTest, FailsIfMapSizeIsZero) {
 
 TEST(MmapTest, MaybeMLockTest) {
   constexpr size_t kDataLen = 32;
-  std::unique_ptr<void, void (*)(void *)> addr(malloc(kDataLen), &free);
+  std::unique_ptr<void, void (*)(void*)> addr(malloc(kDataLen), &free);
   if (Mmap::IsMLockSupported()) {
     ASSERT_EQ(Mmap::MaybeMLock(addr.get(), kDataLen), 0);
     EXPECT_EQ(Mmap::MaybeMUnlock(addr.get(), kDataLen), 0);

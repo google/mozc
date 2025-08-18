@@ -111,7 +111,7 @@ absl::StatusOr<SyscallParams> GetSyscallParams(Mmap::Mode mode) {
 }
 
 absl::StatusOr<FileDescriptor> OpenFile(zstring_view filename,
-                                        const SyscallParams &params) {
+                                        const SyscallParams& params) {
   const std::wstring filename_w = win32::Utf8ToWide(filename);
   if (filename_w.empty()) {
     return absl::InvalidArgumentError(
@@ -156,8 +156,8 @@ constexpr std::pair<DWORD, DWORD> GetHiAndLo(size_t value) {
   }
 }
 
-absl::StatusOr<void *> MapFile(FileDescriptor fd, size_t offset, size_t size,
-                               const SyscallParams &params) {
+absl::StatusOr<void*> MapFile(FileDescriptor fd, size_t offset, size_t size,
+                              const SyscallParams& params) {
   const auto [max_size_hi, max_size_lo] = GetHiAndLo(size);
   wil::unique_handle handle(::CreateFileMapping(
       fd, 0, params.protect, max_size_hi, max_size_lo, nullptr));
@@ -176,7 +176,7 @@ absl::StatusOr<void *> MapFile(FileDescriptor fd, size_t offset, size_t size,
   return ptr;
 }
 
-void Unmap(void *ptr, size_t /*unused_size*/) {
+void Unmap(void* ptr, size_t /*unused_size*/) {
   if (::UnmapViewOfFile(ptr) == 0) {
     LOG(ERROR) << "Failed to unmap a view of file";
   }
@@ -195,11 +195,11 @@ class FdCloser final {
  public:
   explicit FdCloser(FileDescriptor fd) : fd_{fd} {}
 
-  FdCloser(const FdCloser &) = delete;
-  FdCloser &operator=(const FdCloser &) = delete;
+  FdCloser(const FdCloser&) = delete;
+  FdCloser& operator=(const FdCloser&) = delete;
 
-  FdCloser(FdCloser &&) = delete;
-  FdCloser &operator=(FdCloser &&) = delete;
+  FdCloser(FdCloser&&) = delete;
+  FdCloser& operator=(FdCloser&&) = delete;
 
   ~FdCloser() { ::close(fd_); }
 
@@ -230,7 +230,7 @@ absl::StatusOr<SyscallParams> GetSyscallParams(Mmap::Mode mode) {
 }
 
 absl::StatusOr<FileDescriptor> OpenFile(zstring_view filename,
-                                        const SyscallParams &params) {
+                                        const SyscallParams& params) {
   const FileDescriptor fd = ::open(filename.c_str(), params.flags);
   if (fd == -1) {
     const int err = errno;
@@ -257,16 +257,16 @@ absl::StatusOr<size_t> GetPageSize() {
   return size;
 }
 
-absl::StatusOr<void *> MapFile(FileDescriptor fd, size_t offset, size_t size,
-                               const SyscallParams &params) {
-  void *const ptr = mmap(nullptr, size, params.prot, MAP_SHARED, fd, offset);
+absl::StatusOr<void*> MapFile(FileDescriptor fd, size_t offset, size_t size,
+                              const SyscallParams& params) {
+  void* const ptr = mmap(nullptr, size, params.prot, MAP_SHARED, fd, offset);
   if (ptr == MAP_FAILED) {
     return absl::ErrnoToStatus(errno, "mmap() failed");
   }
   return ptr;
 }
 
-void Unmap(void *ptr, size_t size) {
+void Unmap(void* ptr, size_t size) {
   if (munmap(ptr, size) == -1) {
     LOG(ERROR) << absl::ErrnoToStatus(errno, "munmap() failed");
   }
@@ -317,7 +317,7 @@ absl::StatusOr<Mmap> Mmap::Map(zstring_view filename, size_t offset,
   const size_t map_offset = offset - adjust;
   const size_t map_size = *size + adjust;
 
-  absl::StatusOr<void *> ptr = MapFile(*fd, map_offset, map_size, *params);
+  absl::StatusOr<void*> ptr = MapFile(*fd, map_offset, map_size, *params);
   if (!ptr.ok()) {
     return std::move(ptr).status();
   }
@@ -325,17 +325,17 @@ absl::StatusOr<Mmap> Mmap::Map(zstring_view filename, size_t offset,
   MaybeMLock(*ptr, map_size);
 
   Mmap mmap;
-  mmap.data_ = absl::MakeSpan(static_cast<char *>(*ptr) + adjust, *size);
+  mmap.data_ = absl::MakeSpan(static_cast<char*>(*ptr) + adjust, *size);
   mmap.adjust_ = adjust;
   return mmap;
 }
 
-Mmap::Mmap(Mmap &&x) : data_{x.data_}, adjust_{x.adjust_} {
+Mmap::Mmap(Mmap&& x) : data_{x.data_}, adjust_{x.adjust_} {
   x.data_ = absl::Span<char>();
   x.adjust_ = 0;
 }
 
-Mmap &Mmap::operator=(Mmap &&x) {
+Mmap& Mmap::operator=(Mmap&& x) {
   Close();
   data_ = x.data_;
   adjust_ = x.adjust_;
@@ -346,7 +346,7 @@ Mmap &Mmap::operator=(Mmap &&x) {
 
 void Mmap::Close() {
   if (data_.data() != nullptr) {
-    void *const ptr = data_.data() - adjust_;
+    void* const ptr = data_.data() - adjust_;
     const size_t map_size = data_.size() + adjust_;
     MaybeMUnlock(ptr, map_size);
     Unmap(ptr, map_size);
@@ -372,9 +372,9 @@ void Mmap::Close() {
 #if MOZC_HAVE_MLOCK
 bool Mmap::IsMLockSupported() { return true; }
 
-int Mmap::MaybeMLock(const void *addr, size_t len) { return mlock(addr, len); }
+int Mmap::MaybeMLock(const void* addr, size_t len) { return mlock(addr, len); }
 
-int Mmap::MaybeMUnlock(const void *addr, size_t len) {
+int Mmap::MaybeMUnlock(const void* addr, size_t len) {
   return munlock(addr, len);
 }
 
@@ -382,9 +382,9 @@ int Mmap::MaybeMUnlock(const void *addr, size_t len) {
 
 bool Mmap::IsMLockSupported() { return false; }
 
-int Mmap::MaybeMLock(const void *addr, size_t len) { return -1; }
+int Mmap::MaybeMLock(const void* addr, size_t len) { return -1; }
 
-int Mmap::MaybeMUnlock(const void *addr, size_t len) { return -1; }
+int Mmap::MaybeMUnlock(const void* addr, size_t len) { return -1; }
 #endif  // MOZC_HAVE_MLOCK
 
 #undef MOZC_HAVE_MLOCK

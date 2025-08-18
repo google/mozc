@@ -46,7 +46,7 @@ namespace {
 
 HANDLE g_font_handle_ = nullptr;
 
-HANDLE LoadPrivateFont(const wchar_t *font_name) {
+HANDLE LoadPrivateFont(const wchar_t* font_name) {
   wchar_t w_path[MAX_PATH] = {};
   const DWORD char_size =
       ::GetModuleFileNameW(nullptr, w_path, std::size(w_path));

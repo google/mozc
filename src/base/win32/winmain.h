@@ -65,7 +65,7 @@ namespace mozc {
 class WinCommandLine {
  public:
   WinCommandLine() {
-    wil::unique_any<wchar_t **, decltype(&::LocalFree), ::LocalFree> argvw(
+    wil::unique_any<wchar_t**, decltype(&::LocalFree), ::LocalFree> argvw(
         ::CommandLineToArgvW(::GetCommandLineW(), &argc_));
     if (argvw == nullptr) {
       return;
@@ -80,18 +80,18 @@ class WinCommandLine {
   }
 
   int argc() const { return argc_; }
-  char **argv() { return argv_.data(); }
+  char** argv() { return argv_.data(); }
 
  private:
   int argc_;
-  std::vector<char *> argv_;
+  std::vector<char*> argv_;
   std::vector<std::string> args_;
 };
 }  // namespace mozc
 // force to use WinMain.
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 
-int WinMainToMain(int argc, char *argv[]);
+int WinMainToMain(int argc, char* argv[]);
 
 // Replace the main() function with WinMainToMain
 // in order to disable the entry point main()
@@ -110,9 +110,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     HKEY hKey = 0;
     if (ERROR_SUCCESS == ::RegOpenKeyExW(HKEY_CURRENT_USER, mozc::kMozcRegKey,
                                          0, KEY_READ, &hKey)) {
-      if (ERROR_SUCCESS == ::RegQueryValueExW(
-                               hKey, L"debug_sleep_time", nullptr, &vt,
-                               reinterpret_cast<BYTE *>(&sleep_time), &size) &&
+      if (ERROR_SUCCESS ==
+              ::RegQueryValueExW(hKey, L"debug_sleep_time", nullptr, &vt,
+                                 reinterpret_cast<BYTE*>(&sleep_time), &size) &&
           vt == REG_DWORD && sleep_time > 0) {
         ::Sleep(sleep_time * 1000);
       }
@@ -123,7 +123,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   mozc::WinCommandLine cmd;
   int argc = cmd.argc();
-  char **argv = cmd.argv();
+  char** argv = cmd.argv();
 
   // call main()
   return WinMainToMain(argc, argv);

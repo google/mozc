@@ -54,7 +54,7 @@ InputMultiFile::InputMultiFile(const absl::string_view filenames,
   }
 }
 
-bool InputMultiFile::ReadLine(std::string *line) {
+bool InputMultiFile::ReadLine(std::string* line) {
   if (ifs_ == nullptr) {
     return false;
   }

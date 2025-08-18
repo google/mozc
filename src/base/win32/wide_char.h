@@ -69,13 +69,13 @@ namespace wide_char_internal {
 // inlined into StrAppendW.
 template <typename... Ts>
   requires(... && std::same_as<Ts, std::wstring_view>)
-ABSL_ATTRIBUTE_NOINLINE void StrAppendWInternal(std::wstring *dest,
+ABSL_ATTRIBUTE_NOINLINE void StrAppendWInternal(std::wstring* dest,
                                                 const Ts... args) {
   dest->reserve(dest->size() + (0 + ... + args.size()));
   (dest->append(args), ...);
 }
 
-void StrAppendWInternal(std::wstring *dest,
+void StrAppendWInternal(std::wstring* dest,
                         std::initializer_list<std::wstring_view> slist);
 }  // namespace wide_char_internal
 
@@ -88,8 +88,8 @@ void StrAppendWInternal(std::wstring *dest,
 // There is no portable way to efficiently append multiple strings in C++ yet:
 // http://wg21.link/P1072R10
 template <typename... Ts>
-  requires(... && std::constructible_from<std::wstring_view, Ts &>)
-void StrAppendW(std::wstring *dest, const Ts &...args) {
+  requires(... && std::constructible_from<std::wstring_view, Ts&>)
+void StrAppendW(std::wstring* dest, const Ts&... args) {
   if constexpr (sizeof...(Ts) == 1) {
     // No need to call reserve() for one string.
     dest->append(args...);
@@ -103,12 +103,12 @@ void StrAppendW(std::wstring *dest, const Ts &...args) {
   }
 }
 
-inline void StrAppendW(std::wstring *dest) {}
+inline void StrAppendW(std::wstring* dest) {}
 
 // Simplified absl::StrCat. Same restrictions apply as StrAppendW.
 template <typename... Ts>
-  requires(... && std::constructible_from<std::wstring_view, Ts &>)
-[[nodiscard]] std::wstring StrCatW(const Ts &...args) {
+  requires(... && std::constructible_from<std::wstring_view, Ts&>)
+[[nodiscard]] std::wstring StrCatW(const Ts&... args) {
   if constexpr (sizeof...(Ts) <= 1) {
     return std::wstring(args...);
   } else {

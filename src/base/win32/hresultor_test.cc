@@ -100,8 +100,8 @@ TEST(HResultOr, Int) {
 
 TEST(HResultOr, String) {
   TestHResultOrTypeAttributes<std::string>();
-  TestHResultOrTypeAttributes<std::string *>();
-  TestHResultOrTypeAttributes<const std::string *>();
+  TestHResultOrTypeAttributes<std::string*>();
+  TestHResultOrTypeAttributes<const std::string*>();
   TestHResultOrTypeAttributes<absl::string_view>();
 
   constexpr absl::string_view kTestStr = "hello";
@@ -134,8 +134,8 @@ TEST(HResultOr, String) {
 TEST(HResultOr, Vector) {
   using vector_t = std::vector<int>;
   TestHResultOrTypeAttributes<vector_t>();
-  TestHResultOrTypeAttributes<vector_t *>();
-  TestHResultOrTypeAttributes<const vector_t *>();
+  TestHResultOrTypeAttributes<vector_t*>();
+  TestHResultOrTypeAttributes<const vector_t*>();
 
   const HResultOr<vector_t> v(std::in_place, {1, 2, 3});
   EXPECT_TRUE(v.has_value());
@@ -189,19 +189,19 @@ TEST(HResultOr, Conversions) {
 class NonCopyableMock {
  public:
   explicit NonCopyableMock(int v) : v_(v) {}
-  NonCopyableMock(const NonCopyableMock &) = delete;
-  NonCopyableMock &operator=(const NonCopyableMock &) = delete;
-  NonCopyableMock(NonCopyableMock &&) = default;
-  NonCopyableMock &operator=(NonCopyableMock &&) = default;
+  NonCopyableMock(const NonCopyableMock&) = delete;
+  NonCopyableMock& operator=(const NonCopyableMock&) = delete;
+  NonCopyableMock(NonCopyableMock&&) = default;
+  NonCopyableMock& operator=(NonCopyableMock&&) = default;
 
   constexpr int operator*() { return v_; }
   constexpr int lvalue() & { return v_; }
   constexpr int rvalue() && { return v_; }
-  constexpr int clvalue() const & { return v_; }
-  constexpr int crvalue() const && { return v_; }
+  constexpr int clvalue() const& { return v_; }
+  constexpr int crvalue() const&& { return v_; }
 
-  friend constexpr bool operator==(const NonCopyableMock &a,
-                                   const NonCopyableMock &b) {
+  friend constexpr bool operator==(const NonCopyableMock& a,
+                                   const NonCopyableMock& b) {
     return a.v_ == b.v_;
   }
 
@@ -232,8 +232,8 @@ TEST(HResultOr, HResultOk) {
 
 TEST(HResultOr, LValueRValue) {
   TestHResultOrTypeAttributes<NonCopyableMock>();
-  TestHResultOrTypeAttributes<NonCopyableMock *>();
-  TestHResultOrTypeAttributes<const NonCopyableMock *>();
+  TestHResultOrTypeAttributes<NonCopyableMock*>();
+  TestHResultOrTypeAttributes<const NonCopyableMock*>();
 
   // Copy-free operators
   HResultOr<NonCopyableMock> implicit_direct_ctor = NonCopyableMock(1);
@@ -325,14 +325,14 @@ TEST(HResultOr, ReturnIfErrorHResult) {
 
 struct TriviallyCopyableNotTriviallyMovable {
   TriviallyCopyableNotTriviallyMovable(
-      const TriviallyCopyableNotTriviallyMovable &) = default;
-  TriviallyCopyableNotTriviallyMovable &operator=(
-      const TriviallyCopyableNotTriviallyMovable &) = default;
+      const TriviallyCopyableNotTriviallyMovable&) = default;
+  TriviallyCopyableNotTriviallyMovable& operator=(
+      const TriviallyCopyableNotTriviallyMovable&) = default;
 
   TriviallyCopyableNotTriviallyMovable(
-      TriviallyCopyableNotTriviallyMovable &&) noexcept {}
-  TriviallyCopyableNotTriviallyMovable &operator=(
-      TriviallyCopyableNotTriviallyMovable &&) {
+      TriviallyCopyableNotTriviallyMovable&&) noexcept {}
+  TriviallyCopyableNotTriviallyMovable& operator=(
+      TriviallyCopyableNotTriviallyMovable&&) {
     return *this;
   }
 };
@@ -340,11 +340,11 @@ struct TriviallyCopyableNotTriviallyMovable {
 struct NotTriviallyDestructible {
   NotTriviallyDestructible() = default;
   ~NotTriviallyDestructible() { ++destructor_count; }
-  NotTriviallyDestructible(const NotTriviallyDestructible &) = default;
-  NotTriviallyDestructible &operator=(const NotTriviallyDestructible &) =
+  NotTriviallyDestructible(const NotTriviallyDestructible&) = default;
+  NotTriviallyDestructible& operator=(const NotTriviallyDestructible&) =
       default;
-  NotTriviallyDestructible(NotTriviallyDestructible &&) = default;
-  NotTriviallyDestructible &operator=(NotTriviallyDestructible &&) = default;
+  NotTriviallyDestructible(NotTriviallyDestructible&&) = default;
+  NotTriviallyDestructible& operator=(NotTriviallyDestructible&&) = default;
 
   static int destructor_count;
 };
@@ -352,16 +352,16 @@ struct NotTriviallyDestructible {
 int NotTriviallyDestructible::destructor_count = 0;
 
 struct ConstructibleNotAssignable {
-  ConstructibleNotAssignable(const ConstructibleNotAssignable &) = default;
-  ConstructibleNotAssignable &operator=(const ConstructibleNotAssignable &) =
+  ConstructibleNotAssignable(const ConstructibleNotAssignable&) = default;
+  ConstructibleNotAssignable& operator=(const ConstructibleNotAssignable&) =
       delete;
-  ConstructibleNotAssignable(ConstructibleNotAssignable &&) = default;
-  ConstructibleNotAssignable &operator=(ConstructibleNotAssignable &&) = delete;
+  ConstructibleNotAssignable(ConstructibleNotAssignable&&) = default;
+  ConstructibleNotAssignable& operator=(ConstructibleNotAssignable&&) = delete;
 };
 
 struct NotCopyableOrMovable {
-  NotCopyableOrMovable(const NotCopyableOrMovable &) = delete;
-  NotCopyableOrMovable &operator=(const NotCopyableOrMovable &) = delete;
+  NotCopyableOrMovable(const NotCopyableOrMovable&) = delete;
+  NotCopyableOrMovable& operator=(const NotCopyableOrMovable&) = delete;
 };
 
 TEST(HResultOr, TypeAttributeTest) {

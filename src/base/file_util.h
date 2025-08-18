@@ -184,7 +184,7 @@ class FileUtil {
       std::ios_base::openmode mode = std::ios::binary);
 
   // Sets a mock for unittest.
-  static void SetMockForUnitTest(FileUtilInterface *mock);
+  static void SetMockForUnitTest(FileUtilInterface* mock);
 };
 
 // RAII wrapper for a file. Unlinks the file when this instance goes out of
@@ -193,8 +193,8 @@ class FileUnlinker final {
  public:
   explicit FileUnlinker(absl::string_view filename) : filename_(filename) {}
 
-  FileUnlinker(const FileUnlinker &) = delete;
-  FileUnlinker &operator=(const FileUnlinker &) = delete;
+  FileUnlinker(const FileUnlinker&) = delete;
+  FileUnlinker& operator=(const FileUnlinker&) = delete;
 
   ~FileUnlinker() { FileUtil::UnlinkOrLogError(filename_); }
 

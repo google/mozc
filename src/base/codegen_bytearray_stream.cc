@@ -48,7 +48,7 @@
 namespace mozc {
 
 BasicCodeGenByteArrayStreamBuf::BasicCodeGenByteArrayStreamBuf(
-    std::ostream &output_stream)
+    std::ostream& output_stream)
     : internal_output_buffer_(kDefaultInternalBufferSize),
       output_stream_(&output_stream),
       is_open_(false),
@@ -96,7 +96,7 @@ int BasicCodeGenByteArrayStreamBuf::sync() {
 
 // Writes a given character sequence.  The implementation is expected to be
 // more efficient than the one of the base class.
-std::streamsize BasicCodeGenByteArrayStreamBuf::xsputn(const char_type *s,
+std::streamsize BasicCodeGenByteArrayStreamBuf::xsputn(const char_type* s,
                                                        std::streamsize n) {
   if (n <= this->epptr() - this->pptr()) {
     traits_type::copy(this->pptr(), s, n);
@@ -131,8 +131,8 @@ int BasicCodeGenByteArrayStreamBuf::overflow(int c) {
 }
 
 // Converts a raw byte stream to C source code.
-void BasicCodeGenByteArrayStreamBuf::WriteBytes(const char_type *begin,
-                                                const char_type *end) {
+void BasicCodeGenByteArrayStreamBuf::WriteBytes(const char_type* begin,
+                                                const char_type* end) {
   while (begin < end) {
     if (output_count_ % kNumOfBytesOnOneLine == 0) {
       *output_stream_ << absl::StreamFormat("\n0x%02X,", *begin);
@@ -149,18 +149,18 @@ void BasicCodeGenByteArrayStreamBuf::WriteBytes(const char_type *begin,
 //   own_output_stream: The object pointed to by |output_stream| will be
 //       destroyed if |own_output_stream| equals to |OWN_STREAM|.
 CodeGenByteArrayOutputStream::CodeGenByteArrayOutputStream(
-    std::ostream &output_stream)
+    std::ostream& output_stream)
     : std::ostream(&streambuf_), streambuf_(output_stream) {}
 
 CodeGenByteArrayOutputStream::CodeGenByteArrayOutputStream(
-    CodeGenByteArrayOutputStream &&other) noexcept
-    : std::ostream(std::move(static_cast<std::ostream &&>(other))),
+    CodeGenByteArrayOutputStream&& other) noexcept
+    : std::ostream(std::move(static_cast<std::ostream&&>(other))),
       streambuf_(std::move(other.streambuf_)) {
   set_rdbuf(&streambuf_);
 }
-CodeGenByteArrayOutputStream &CodeGenByteArrayOutputStream::operator=(
-    CodeGenByteArrayOutputStream &&other) noexcept {
-  std::ostream::operator=(std::move(static_cast<std::ostream &&>(other)));
+CodeGenByteArrayOutputStream& CodeGenByteArrayOutputStream::operator=(
+    CodeGenByteArrayOutputStream&& other) noexcept {
+  std::ostream::operator=(std::move(static_cast<std::ostream&&>(other)));
   streambuf_ = std::move(other.streambuf_);
   set_rdbuf(&streambuf_);
   return *this;

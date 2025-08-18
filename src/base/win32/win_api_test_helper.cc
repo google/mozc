@@ -59,14 +59,14 @@ struct Thunk {
 
 class ThunkRewriter {
  public:
-  ThunkRewriter(const Thunk *thunk, FunctionPointer proc)
+  ThunkRewriter(const Thunk* thunk, FunctionPointer proc)
       : thunk_(thunk), proc_(proc) {}
 
   bool Rewrite() const {
     // Note: There is a race condition between the first VirtualProtect and
     // second VirtualProtect.
 
-    auto *writable_thunk = const_cast<Thunk *>(thunk_);
+    auto* writable_thunk = const_cast<Thunk*>(thunk_);
 
     DWORD original_protect = 0;
     auto result = ::VirtualProtect(writable_thunk, sizeof(*writable_thunk),
@@ -93,7 +93,7 @@ class ThunkRewriter {
 
  private:
   // Represents the memory address of API thunk.
-  const Thunk *thunk_;
+  const Thunk* thunk_;
   // Represents the true address of API implementation.
   FunctionPointer proc_;
 };
@@ -103,7 +103,7 @@ class HookTargetInfo {
   explicit HookTargetInfo(
       absl::Span<const WinAPITestHelper::HookRequest> requests) {
     for (size_t i = 0; i < requests.size(); ++i) {
-      const auto &request = requests[i];
+      const auto& request = requests[i];
       HMODULE module_handle = nullptr;
       const auto result =
           ::GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_PIN,
@@ -126,13 +126,13 @@ class HookTargetInfo {
     }
   }
 
-  bool IsTargetModule(const std::string &module_name) const {
+  bool IsTargetModule(const std::string& module_name) const {
     std::string lower_module_name(module_name);
     Util::LowerString(&lower_module_name);
     return info_.find(lower_module_name) != info_.end();
   }
 
-  FunctionPointer GetNewProc(const std::string &module_name,
+  FunctionPointer GetNewProc(const std::string& module_name,
                              FunctionPointer original_proc) const {
     std::string lower_module_name(module_name);
     Util::LowerString(&lower_module_name);
@@ -140,7 +140,7 @@ class HookTargetInfo {
     if (module_iterator == info_.end()) {
       return nullptr;
     }
-    const auto &proc_map = module_iterator->second;
+    const auto& proc_map = module_iterator->second;
     const auto proc_iterator = proc_map.find(original_proc);
     if (proc_iterator == proc_map.end()) {
       return nullptr;
@@ -160,12 +160,12 @@ class PortableExecutableImage {
       is_invalid_image_ = true;
       return;
     }
-    const auto *dos_header = At<IMAGE_DOS_HEADER>(0);
+    const auto* dos_header = At<IMAGE_DOS_HEADER>(0);
     if (dos_header->e_magic != IMAGE_DOS_SIGNATURE) {
       is_invalid_image_ = true;
       return;
     }
-    const auto *nt_header = At<IMAGE_NT_HEADERS>(dos_header->e_lfanew);
+    const auto* nt_header = At<IMAGE_NT_HEADERS>(dos_header->e_lfanew);
     if (nt_header->Signature != IMAGE_NT_SIGNATURE) {
       is_invalid_image_ = true;
       return;
@@ -173,14 +173,14 @@ class PortableExecutableImage {
   }
 
   template <typename T>
-  const T *At(DWORD offset) const {
+  const T* At(DWORD offset) const {
     static_assert(std::is_pod<T>::value, "T should be POD.");
 
     CHECK(!is_invalid_image_);
 
     // TODO(yukawa): Validate if this memory range is safe to be accessed.
-    return reinterpret_cast<const T *>(
-        reinterpret_cast<const uint8_t *>(module_handle_) + offset);
+    return reinterpret_cast<const T*>(
+        reinterpret_cast<const uint8_t*>(module_handle_) + offset);
   }
 
   bool IsValid() const { return !is_invalid_image_; }
@@ -192,7 +192,7 @@ class PortableExecutableImage {
 
 class ImageImportDescriptorIterator {
  public:
-  explicit ImageImportDescriptorIterator(const PortableExecutableImage &image)
+  explicit ImageImportDescriptorIterator(const PortableExecutableImage& image)
       : image_(image),
         import_directory_(nullptr),
         descriptor_index_(0),
@@ -200,16 +200,16 @@ class ImageImportDescriptorIterator {
     if (!image_.IsValid()) {
       return;
     }
-    const auto *dos_header = image_.At<IMAGE_DOS_HEADER>(0);
-    const auto *nt_header = image_.At<IMAGE_NT_HEADERS>(dos_header->e_lfanew);
+    const auto* dos_header = image_.At<IMAGE_DOS_HEADER>(0);
+    const auto* nt_header = image_.At<IMAGE_NT_HEADERS>(dos_header->e_lfanew);
     import_directory_ =
         &nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
     descriptor_index_max_ =
         import_directory_->Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
   }
 
-  const IMAGE_IMPORT_DESCRIPTOR &Get() const {
-    const auto *desc = GetInternal();
+  const IMAGE_IMPORT_DESCRIPTOR& Get() const {
+    const auto* desc = GetInternal();
     CHECK_NE(0, desc->Name);
     return *desc;
   }
@@ -230,7 +230,7 @@ class ImageImportDescriptorIterator {
   }
 
  private:
-  const IMAGE_IMPORT_DESCRIPTOR *GetInternal() const {
+  const IMAGE_IMPORT_DESCRIPTOR* GetInternal() const {
     CHECK_LT(descriptor_index_, descriptor_index_max_);
     const DWORD import_descriptor_offset =
         import_directory_->VirtualAddress +
@@ -238,22 +238,22 @@ class ImageImportDescriptorIterator {
     return image_.At<IMAGE_IMPORT_DESCRIPTOR>(import_descriptor_offset);
   }
 
-  const PortableExecutableImage &image_;
-  const IMAGE_DATA_DIRECTORY *import_directory_;
+  const PortableExecutableImage& image_;
+  const IMAGE_DATA_DIRECTORY* import_directory_;
   size_t descriptor_index_;
   size_t descriptor_index_max_;
 };
 
 class ImageThunkDataIterator {
  public:
-  ImageThunkDataIterator(const PortableExecutableImage &image,
-                         const IMAGE_IMPORT_DESCRIPTOR &import_descriptor)
+  ImageThunkDataIterator(const PortableExecutableImage& image,
+                         const IMAGE_IMPORT_DESCRIPTOR& import_descriptor)
       : image_(image), import_descriptor_(import_descriptor), thunk_index_(0) {}
 
-  const Thunk *Get() const {
+  const Thunk* Get() const {
     CHECK(!Done());
-    const auto *raw_thunk = GetInternal();
-    return reinterpret_cast<const Thunk *>(&raw_thunk->u1.Function);
+    const auto* raw_thunk = GetInternal();
+    return reinterpret_cast<const Thunk*>(&raw_thunk->u1.Function);
   }
 
   void Next() { ++thunk_index_; }
@@ -261,14 +261,14 @@ class ImageThunkDataIterator {
   bool Done() const { return GetInternal()->u1.Function == 0; }
 
  private:
-  const IMAGE_THUNK_DATA *GetInternal() const {
+  const IMAGE_THUNK_DATA* GetInternal() const {
     const DWORD thunk_offset =
         import_descriptor_.FirstThunk + thunk_index_ * sizeof(IMAGE_THUNK_DATA);
     return image_.At<IMAGE_THUNK_DATA>(thunk_offset);
   }
 
-  const PortableExecutableImage &image_;
-  const IMAGE_IMPORT_DESCRIPTOR &import_descriptor_;
+  const PortableExecutableImage& image_;
+  const IMAGE_IMPORT_DESCRIPTOR& import_descriptor_;
   size_t thunk_index_;
 };
 
@@ -279,8 +279,8 @@ class WinAPITestHelper::RestoreInfo {
   std::vector<ThunkRewriter> rewrites;
 };
 
-WinAPITestHelper::HookRequest::HookRequest(const std::string &src_module,
-                                           const std::string &src_proc_name,
+WinAPITestHelper::HookRequest::HookRequest(const std::string& src_module,
+                                           const std::string& src_proc_name,
                                            FunctionPointer new_proc_addr)
     : module_name(src_module),
       proc_name(src_proc_name),
@@ -300,14 +300,14 @@ WinAPITestHelper::RestoreInfoHandle WinAPITestHelper::DoHook(
   std::unique_ptr<RestoreInfo> restore_info(new RestoreInfo());
   for (ImageImportDescriptorIterator descriptor_iterator(image);
        !descriptor_iterator.Done(); descriptor_iterator.Next()) {
-    const auto &descriptor = descriptor_iterator.Get();
+    const auto& descriptor = descriptor_iterator.Get();
     const std::string module_name(image.At<char>(descriptor.Name));
     if (!target_info.IsTargetModule(module_name)) {
       continue;
     }
     for (ImageThunkDataIterator thunk_iterator(image, descriptor);
          !thunk_iterator.Done(); thunk_iterator.Next()) {
-      const auto *thunk = thunk_iterator.Get();
+      const auto* thunk = thunk_iterator.Get();
       const auto original_proc_address = thunk->proc;
       const auto target_proc_address =
           target_info.GetNewProc(module_name, original_proc_address);
@@ -330,7 +330,7 @@ void WinAPITestHelper::RestoreHook(
   std::unique_ptr<RestoreInfo> info(restore_info);  // takes ownership
 
   for (size_t i = 0; i < info->rewrites.size(); ++i) {
-    const auto &rewrite = info->rewrites[i];
+    const auto& rewrite = info->rewrites[i];
     CHECK(rewrite.Rewrite());
   }
 }

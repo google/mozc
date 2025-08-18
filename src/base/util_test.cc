@@ -321,8 +321,8 @@ TEST(UtilTest, Utf32ToUtf8) {
 
 void VerifyUtf8ToCodepoint(absl::string_view text, char32_t expected_codepoint,
                            size_t expected_len) {
-  const char *begin = text.data();
-  const char *end = begin + text.size();
+  const char* begin = text.data();
+  const char* end = begin + text.size();
   size_t mblen = 0;
   char32_t result = Util::Utf8ToCodepoint(begin, end, &mblen);
   EXPECT_EQ(result, expected_codepoint)
@@ -559,7 +559,7 @@ TEST(UtilTest, BracketTest) {
   }};
 
   absl::string_view pair;
-  for (const BracketPair &bracket : kBracketType) {
+  for (const BracketPair& bracket : kBracketType) {
     EXPECT_TRUE(Util::IsOpenBracket(bracket.first, &pair));
     EXPECT_EQ(pair, bracket.second);
     EXPECT_TRUE(Util::IsCloseBracket(bracket.second, &pair));
@@ -1261,7 +1261,7 @@ TEST(UtilTest, IsAcceptableCharacterAsCandidate) {
 
 TEST(UtilTest, SerializeAndDeserializeUint64) {
   struct {
-    const char *str;
+    const char* str;
     uint64_t value;
   } kCorrectPairs[] = {
       {"\x00\x00\x00\x00\x00\x00\x00\x00", 0},
@@ -1286,7 +1286,7 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
   }
 
   // Invalid patterns for DeserializeUint64.
-  const char *kFalseCases[] = {
+  const char* kFalseCases[] = {
       "",
       "abc",
       "helloworld",

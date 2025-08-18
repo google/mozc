@@ -61,8 +61,8 @@ namespace mozc {
 class ProcessMutex {
  public:
   explicit ProcessMutex(absl::string_view name);
-  ProcessMutex(const ProcessMutex &) = delete;
-  ProcessMutex &operator=(const ProcessMutex &) = delete;
+  ProcessMutex(const ProcessMutex&) = delete;
+  ProcessMutex& operator=(const ProcessMutex&) = delete;
   ~ProcessMutex();
 
   // return false if the process is already locked
@@ -76,7 +76,7 @@ class ProcessMutex {
 
   // return lock filename
   // filename: <user_profile>/.lock.<name>
-  const std::string &lock_filename() const { return filename_; }
+  const std::string& lock_filename() const { return filename_; }
 
   void set_lock_filename(std::string filename) {
     filename_ = std::move(filename);

@@ -93,7 +93,7 @@ std::string HResult::ToStringSlow() const {
       FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
           FORMAT_MESSAGE_IGNORE_INSERTS,
       nullptr, hr_, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      reinterpret_cast<wchar_t *>(message.put()), 0, nullptr);
+      reinterpret_cast<wchar_t*>(message.put()), 0, nullptr);
   if (result == 0) {
     return absl::StrFormat(
         "Failure: 0x%08x, additional error during message formatting (0x%08x)",

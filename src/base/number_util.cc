@@ -199,7 +199,7 @@ constexpr absl::string_view kOldTwenty = "廿";
 }  // namespace
 
 bool NumberUtil::ArabicToKanji(absl::string_view input_num,
-                               std::vector<NumberString> *output) {
+                               std::vector<NumberString>* output) {
   DCHECK(output);
   constexpr absl::string_view kNumZero = "零";
   constexpr int kDigitsInBigRank = 4;
@@ -244,7 +244,7 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
 
   for (size_t variation_index = 0;
        variation_index < std::size(kKanjiVariations); ++variation_index) {
-    const NumberStringVariation &variation = kKanjiVariations[variation_index];
+    const NumberStringVariation& variation = kKanjiVariations[variation_index];
     const absl::Span<const absl::string_view> digits = variation.digits;
     const NumberString::Style style = variation.style;
 
@@ -334,7 +334,7 @@ constexpr NumberStringVariation kNumDigitsVariations[] = {
 }  // namespace
 
 bool NumberUtil::ArabicToSeparatedArabic(absl::string_view input_num,
-                                         std::vector<NumberString> *output) {
+                                         std::vector<NumberString>* output) {
   DCHECK(output);
 
   if (!IsDecimalNumber(input_num)) {
@@ -357,7 +357,7 @@ bool NumberUtil::ArabicToSeparatedArabic(absl::string_view input_num,
   }
 
   for (size_t i = 0; i < std::size(kNumDigitsVariations); ++i) {
-    const NumberStringVariation &variation = kNumDigitsVariations[i];
+    const NumberStringVariation& variation = kNumDigitsVariations[i];
     const absl::Span<const absl::string_view> digits = variation.digits;
     std::string result;
 
@@ -403,7 +403,7 @@ constexpr NumberStringVariation kSingleDigitsVariations[] = {
 }  // namespace
 
 bool NumberUtil::ArabicToWideArabic(absl::string_view input_num,
-                                    std::vector<NumberString> *output) {
+                                    std::vector<NumberString>* output) {
   DCHECK(output);
 
   if (!IsDecimalInteger(input_num)) {
@@ -411,7 +411,7 @@ bool NumberUtil::ArabicToWideArabic(absl::string_view input_num,
   }
 
   for (size_t i = 0; i < std::size(kSingleDigitsVariations); ++i) {
-    const NumberStringVariation &variation = kSingleDigitsVariations[i];
+    const NumberStringVariation& variation = kSingleDigitsVariations[i];
     std::string result;
     for (absl::string_view::size_type j = 0; j < input_num.size(); ++j) {
       absl::StrAppend(
@@ -446,7 +446,7 @@ constexpr NumberStringVariation kSpecialNumericVariations[] = {
 }  // namespace
 
 bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
-                                    std::vector<NumberString> *output) {
+                                    std::vector<NumberString>* output) {
   DCHECK(output);
 
   if (!IsDecimalInteger(input_num)) {
@@ -476,7 +476,7 @@ bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
 
   // Special forms
   for (size_t i = 0; i < std::size(kSpecialNumericVariations); ++i) {
-    const NumberStringVariation &variation = kSpecialNumericVariations[i];
+    const NumberStringVariation& variation = kSpecialNumericVariations[i];
     if (n < variation.numbers_size && !variation.digits[n].empty()) {
       output->emplace_back(std::string(variation.digits[n]),
                            variation.description, variation.style);
@@ -488,7 +488,7 @@ bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
 }
 
 bool NumberUtil::ArabicToOtherRadixes(absl::string_view input_num,
-                                      std::vector<NumberString> *output) {
+                                      std::vector<NumberString>* output) {
   DCHECK(output);
 
   if (!IsDecimalInteger(input_num)) {
@@ -535,7 +535,7 @@ namespace {
 // *output = arg1 + arg2
 // return false when an integer overflow happens.
 constexpr bool AddAndCheckOverflow(uint64_t arg1, uint64_t arg2,
-                                   uint64_t &output) {
+                                   uint64_t& output) {
   output = arg1 + arg2;
   if (arg2 > (std::numeric_limits<uint64_t>::max() - arg1)) {
     // overflow happens
@@ -547,7 +547,7 @@ constexpr bool AddAndCheckOverflow(uint64_t arg1, uint64_t arg2,
 // *output = arg1 * arg2
 // return false when an integer overflow happens.
 constexpr bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2,
-                                        uint64_t &output) {
+                                        uint64_t& output) {
   output = arg1 * arg2;
   if (arg1 != 0 && arg2 > (std::numeric_limits<uint64_t>::max() / arg1)) {
     // overflow happens
@@ -558,7 +558,7 @@ constexpr bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2,
 
 template <typename SrcType, typename DestType>
   requires(std::integral<SrcType> && std::integral<DestType>)
-constexpr bool SafeCast(SrcType src, DestType *dest) {
+constexpr bool SafeCast(SrcType src, DestType* dest) {
   if (std::numeric_limits<SrcType>::is_signed &&
       !std::numeric_limits<DestType>::is_signed && src < 0) {
     return false;
@@ -573,7 +573,7 @@ constexpr bool SafeCast(SrcType src, DestType *dest) {
 
 }  // namespace
 
-bool NumberUtil::SafeStrToInt16(absl::string_view str, int16_t *value) {
+bool NumberUtil::SafeStrToInt16(absl::string_view str, int16_t* value) {
   int32_t tmp;
   // SimpleAtoi doesn't support 16-bit integers.
   if (!absl::SimpleAtoi(str, &tmp)) {
@@ -582,7 +582,7 @@ bool NumberUtil::SafeStrToInt16(absl::string_view str, int16_t *value) {
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeStrToUInt16(absl::string_view str, uint16_t *value) {
+bool NumberUtil::SafeStrToUInt16(absl::string_view str, uint16_t* value) {
   uint32_t tmp;
   // SimpleAtoi doesn't support 16-bit integers.
   if (!absl::SimpleAtoi(str, &tmp)) {
@@ -591,7 +591,7 @@ bool NumberUtil::SafeStrToUInt16(absl::string_view str, uint16_t *value) {
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeStrToDouble(absl::string_view str, double *value) {
+bool NumberUtil::SafeStrToDouble(absl::string_view str, double* value) {
   DCHECK(value);
   if (!absl::SimpleAtod(str, value)) {
     return false;
@@ -611,9 +611,9 @@ using UInt64Span = absl::Span<const uint64_t>;
 // Reduces leading digits less than 10 as their base10 interpretation, e.g.,
 //   [1, 2, 3, 10, 100] => begin points to [10, 100], output = 123
 // Returns false when overflow happened.
-bool ReduceLeadingNumbersAsBase10System(UInt64Span::const_iterator &begin,
+bool ReduceLeadingNumbersAsBase10System(UInt64Span::const_iterator& begin,
                                         const UInt64Span::const_iterator end,
-                                        uint64_t &output) {
+                                        uint64_t& output) {
   output = 0;
   for (; begin < end; ++begin) {
     if (*begin >= 10) {
@@ -633,7 +633,7 @@ bool ReduceLeadingNumbersAsBase10System(UInt64Span::const_iterator &begin,
 //   [1, 2, 3, 10] => false
 // Returns false if a number greater than 10 was found or overflow happened.
 bool InterpretNumbersAsBase10System(const UInt64Span numbers,
-                                    uint64_t &output) {
+                                    uint64_t& output) {
   auto begin = numbers.begin();
   const bool success =
       ReduceLeadingNumbersAsBase10System(begin, numbers.end(), output);
@@ -643,8 +643,8 @@ bool InterpretNumbersAsBase10System(const UInt64Span numbers,
 
 // Reads a leading number in a sequence and advances the iterator. Returns false
 // if the range is empty or the leading number is not less than 10.
-bool ReduceOnesDigit(UInt64Span::const_iterator &begin,
-                     const UInt64Span::const_iterator end, uint64_t &num) {
+bool ReduceOnesDigit(UInt64Span::const_iterator& begin,
+                     const UInt64Span::const_iterator end, uint64_t& num) {
   if (begin == end || *begin >= 10) {
     return false;
   }
@@ -671,9 +671,9 @@ bool ReduceOnesDigit(UInt64Span::const_iterator &begin,
 //     [2, 1000, ...] => 2000
 //     [1, 1000, ...] => 1000
 //     [1, 2, 3, 4, ...] => 1234
-bool ReduceDigitsHelper(UInt64Span::const_iterator &begin,
+bool ReduceDigitsHelper(UInt64Span::const_iterator& begin,
                         const UInt64Span::const_iterator end,
-                        const uint64_t expected_base, uint64_t &num) {
+                        const uint64_t expected_base, uint64_t& num) {
   // Skip leading zero(s).
   while (begin != end && *begin == 0) {
     ++begin;
@@ -724,20 +724,20 @@ bool ReduceDigitsHelper(UInt64Span::const_iterator &begin,
   return false;
 }
 
-inline bool ReduceTensDigit(UInt64Span::const_iterator &begin,
+inline bool ReduceTensDigit(UInt64Span::const_iterator& begin,
                             const UInt64Span::const_iterator end,
-                            uint64_t &num) {
+                            uint64_t& num) {
   return ReduceDigitsHelper(begin, end, 10, num);
 }
 
-inline bool ReduceHundredsDigit(UInt64Span::const_iterator &begin,
+inline bool ReduceHundredsDigit(UInt64Span::const_iterator& begin,
                                 const UInt64Span::const_iterator end,
-                                uint64_t &num) {
+                                uint64_t& num) {
   return ReduceDigitsHelper(begin, end, 100, num);
 }
-inline bool ReduceThousandsDigit(UInt64Span::const_iterator &begin,
+inline bool ReduceThousandsDigit(UInt64Span::const_iterator& begin,
                                  const UInt64Span::const_iterator end,
-                                 uint64_t &num) {
+                                 uint64_t& num) {
   return ReduceDigitsHelper(begin, end, 1000, num);
 }
 
@@ -747,9 +747,9 @@ inline bool ReduceThousandsDigit(UInt64Span::const_iterator &begin,
 //        => begin points to [10000, ...], num = 1234
 //   [3, 100, 4, 100]
 //        => error because same base number appears twice
-bool ReduceNumberLessThan10000(UInt64Span::const_iterator &begin,
+bool ReduceNumberLessThan10000(UInt64Span::const_iterator& begin,
                                const UInt64Span::const_iterator end,
-                               uint64_t &num) {
+                               uint64_t& num) {
   num = 0;
   bool success = false;
   uint64_t n = 0;
@@ -780,7 +780,7 @@ bool ReduceNumberLessThan10000(UInt64Span::const_iterator &begin,
 //   "一万二千三百四十五" = [1, 10000, 2, 1000, 3, 100, 4, 10, 5] => 12345
 // Base-10 numbers must be decreasing, i.e.,
 //   "一十二百" = [1, 10, 2, 100] => error
-bool InterpretNumbersInJapaneseWay(const UInt64Span numbers, uint64_t &output) {
+bool InterpretNumbersInJapaneseWay(const UInt64Span numbers, uint64_t& output) {
   uint64_t last_base = std::numeric_limits<uint64_t>::max();
   auto begin = numbers.begin();
   output = 0;
@@ -809,7 +809,7 @@ bool InterpretNumbersInJapaneseWay(const UInt64Span numbers, uint64_t &output) {
 
 // Interprets a sequence of numbers directly or in a Japanese reading way
 // depending on the maximum number in the sequence.
-bool NormalizeNumbersHelper(const UInt64Span numbers, uint64_t &number_output) {
+bool NormalizeNumbersHelper(const UInt64Span numbers, uint64_t& number_output) {
   const auto itr_max = std::max_element(numbers.begin(), numbers.end());
   if (itr_max == numbers.end()) {
     return false;  // numbers is empty
@@ -825,8 +825,8 @@ bool NormalizeNumbersHelper(const UInt64Span numbers, uint64_t &number_output) {
 
 // TODO(peria): Do refactoring this method.
 bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
-                              bool allow_suffix, std::string *kanji_output,
-                              std::string *arabic_output, std::string *suffix) {
+                              bool allow_suffix, std::string* kanji_output,
+                              std::string* arabic_output, std::string* suffix) {
   DCHECK(kanji_output);
   DCHECK(arabic_output);
   std::vector<uint64_t> numbers;
@@ -901,8 +901,8 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
 // e.g. "百二十万" -> 1200000
 bool NumberUtil::NormalizeNumbers(absl::string_view input,
                                   bool trim_leading_zeros,
-                                  std::string *kanji_output,
-                                  std::string *arabic_output) {
+                                  std::string* kanji_output,
+                                  std::string* arabic_output) {
   return NormalizeNumbersInternal(input, trim_leading_zeros,
                                   false,  // allow_suffix
                                   kanji_output, arabic_output, nullptr);
@@ -910,9 +910,9 @@ bool NumberUtil::NormalizeNumbers(absl::string_view input,
 
 bool NumberUtil::NormalizeNumbersWithSuffix(absl::string_view input,
                                             bool trim_leading_zeros,
-                                            std::string *kanji_output,
-                                            std::string *arabic_output,
-                                            std::string *suffix) {
+                                            std::string* kanji_output,
+                                            std::string* arabic_output,
+                                            std::string* suffix) {
   return NormalizeNumbersInternal(input, trim_leading_zeros,
                                   true,  // allow_suffix
                                   kanji_output, arabic_output, suffix);

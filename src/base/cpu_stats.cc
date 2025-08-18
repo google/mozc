@@ -50,20 +50,20 @@ namespace mozc {
 namespace {
 
 #ifdef _WIN32
-uint64_t FileTimeToInt64(const FILETIME &file_time) {
+uint64_t FileTimeToInt64(const FILETIME& file_time) {
   return (static_cast<uint64_t>(file_time.dwHighDateTime) << 32) |
          (static_cast<uint64_t>(file_time.dwLowDateTime));
 }
 #endif  // _WIN32
 
 #ifdef __APPLE__
-uint64_t TimeValueTToInt64(const time_value_t &time_value) {
+uint64_t TimeValueTToInt64(const time_value_t& time_value) {
   return 1000000ULL * time_value.seconds + time_value.microseconds;
 }
 #endif  // __APPLE__
 
 float UpdateCPULoad(uint64_t current_total_times, uint64_t current_cpu_times,
-                    uint64_t *prev_total_times, uint64_t *prev_cpu_times) {
+                    uint64_t* prev_total_times, uint64_t* prev_cpu_times) {
   float result = 0.0;
   if (current_total_times < *prev_total_times ||
       current_cpu_times < *prev_cpu_times) {

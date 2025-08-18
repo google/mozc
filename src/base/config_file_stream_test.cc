@@ -49,7 +49,7 @@ namespace {
 // the end of the stream but |input_stream| instance has not observed it
 // yet. In other words, this method may change the internal state of
 // |input_stream| as a side effect.
-bool IsEof(std::istream *input_stream) {
+bool IsEof(std::istream* input_stream) {
   return (input_stream->peek() == std::istream::traits_type::eof() &&
           // On some environment (e.g. Mac OS 10.8 w/ Xcode 4.5),
           // peek() does not flip eofbit.  So calling get() is also
@@ -112,7 +112,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   // At first, generate a binary data file in (temporary) user directory
   // so that we can load it as "user://my_binary_file.dat"
   constexpr char kTestFileName[] = "my_binary_file.dat";
-  const std::string &test_file_path =
+  const std::string& test_file_path =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), kTestFileName);
 
   constexpr char kBinaryData[] = {
@@ -140,7 +140,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   // At first, generate a binary data file in (temporary) user directory
   // so that we can load it as "user://my_binary_file.dat"
   constexpr absl::string_view kTestFileName = "my_text_file.dat";
-  const std::string &test_file_path =
+  const std::string& test_file_path =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), kTestFileName);
 
   constexpr absl::string_view kSourceTextData = "ab\rc\nd\r\ne";
@@ -152,7 +152,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
 #else  // _WIN32
 #define TRAILING_CARRIAGE_RETURN "\r"
 #endif  // _WIN32
-  const char *kExpectedLines[] = {
+  const char* kExpectedLines[] = {
       "ab\rc",
       "d" TRAILING_CARRIAGE_RETURN,
       "e",

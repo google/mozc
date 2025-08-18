@@ -204,7 +204,7 @@ class FileLockManager {
     return fd;
   }
 
-  absl::Status UnLock(const std::string &filename) {
+  absl::Status UnLock(const std::string& filename) {
     absl::MutexLock l(&mutex_);
     auto node = fdmap_.extract(filename);
     if (node.empty()) {
@@ -219,7 +219,7 @@ class FileLockManager {
   FileLockManager() = default;
 
   ~FileLockManager() {
-    for (const auto &[filename, fd] : fdmap_) {
+    for (const auto& [filename, fd] : fdmap_) {
       ::close(fd);
     }
   }

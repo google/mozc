@@ -65,7 +65,7 @@ void FinalizeSingletons();
 template <typename T>
 class Singleton {
  public:
-  static T *get() ABSL_LOCKS_EXCLUDED(mutex_) {
+  static T* get() ABSL_LOCKS_EXCLUDED(mutex_) {
     {
       absl::ReaderMutexLock lock(&mutex_);  // NOLINT: In the program's steady
                                             // state there's no write lock.
@@ -90,9 +90,8 @@ class Singleton {
   }
 
  private:
-  constinit static inline absl::Mutex mutex_ =
-      absl::Mutex(absl::kConstInit);
-  constinit static inline T *instance_ ABSL_GUARDED_BY(mutex_) = nullptr;
+  constinit static inline absl::Mutex mutex_ = absl::Mutex(absl::kConstInit);
+  constinit static inline T* instance_ ABSL_GUARDED_BY(mutex_) = nullptr;
 };
 
 // SingletonMockable class.
@@ -110,8 +109,8 @@ class Singleton {
 template <class Interface, class Impl>
 class SingletonMockable {
  public:
-  static Interface *Get() {
-    if (Interface *mock = mock_.load(std::memory_order_acquire);
+  static Interface* Get() {
+    if (Interface* mock = mock_.load(std::memory_order_acquire);
         mock != nullptr) {
       return mock;
     }
@@ -119,12 +118,12 @@ class SingletonMockable {
     return impl.get();
   }
 
-  static void SetMock(Interface *mock) {
+  static void SetMock(Interface* mock) {
     mock_.store(mock, std::memory_order_release);
   }
 
  private:
-  constinit static inline std::atomic<Interface *> mock_ = nullptr;
+  constinit static inline std::atomic<Interface*> mock_ = nullptr;
 };
 
 }  // namespace mozc

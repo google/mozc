@@ -32,13 +32,12 @@
 
 #include <string>
 
-
 namespace mozc {
 
 class Version {
  public:
-  Version(const Version &) = delete;
-  Version &operator=(const Version &) = delete;
+  Version(const Version&) = delete;
+  Version& operator=(const Version&) = delete;
 
   // Get current mozc version (former called MOZC_VERSION)
   static std::string GetMozcVersion();
@@ -52,13 +51,13 @@ class Version {
   static int GetMozcVersionMinor();
   static int GetMozcVersionBuildNumber();
   static int GetMozcVersionRevision();
-  static const char *GetMozcEngineVersion();
+  static const char* GetMozcEngineVersion();
 
   // Returns true if lhs is less than rhs in the lexical order.
   // CompareVersion("1.2.3.4", "1.2.3.4") => false
   // CompareVersion("1.2.3.4", "5.2.3.4") => true
   // CompareVersion("1.25.3.4", "1.2.3.4") => false
-  static bool CompareVersion(const std::string &lhs, const std::string &rhs);
+  static bool CompareVersion(const std::string& lhs, const std::string& rhs);
 };
 
 }  // namespace mozc

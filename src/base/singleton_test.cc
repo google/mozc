@@ -65,9 +65,9 @@ std::atomic<int> ThreadInstance::counter = 0;
 // since it affects other tests using Singleton objects.
 TEST(SingletonTest, BasicTest) {
   TestInstance::counter = 0;
-  TestInstance *t1 = Singleton<TestInstance>::get();
-  TestInstance *t2 = Singleton<TestInstance>::get();
-  TestInstance *t3 = Singleton<TestInstance>::get();
+  TestInstance* t1 = Singleton<TestInstance>::get();
+  TestInstance* t2 = Singleton<TestInstance>::get();
+  TestInstance* t3 = Singleton<TestInstance>::get();
   EXPECT_EQ(t1, t2);
   EXPECT_EQ(t2, t3);
   EXPECT_EQ(TestInstance::counter, 1);
@@ -80,9 +80,9 @@ TEST(SingletonTest, ThreadTest) {
 
   ThreadInstance::counter.store(0);
 
-  ThreadInstance *t1;
-  ThreadInstance *t2;
-  ThreadInstance *t3;
+  ThreadInstance* t1;
+  ThreadInstance* t2;
+  ThreadInstance* t3;
   Thread thread1([&t1] { t1 = Singleton<ThreadInstance>::get(); });
   Thread thread2([&t2] { t2 = Singleton<ThreadInstance>::get(); });
   Thread thread3([&t3] { t3 = Singleton<ThreadInstance>::get(); });
@@ -103,25 +103,25 @@ class ValueHolder {
   ~ValueHolder() { *dtor_called_ = true; }
 
   int value_ = 0;
-  bool *dtor_called_ = nullptr;
+  bool* dtor_called_ = nullptr;
 };
 
 TEST(SingletonTest, Reset) {
   bool dtor_called = false;
   {
-    auto *ptr = Singleton<ValueHolder>::get();
+    auto* ptr = Singleton<ValueHolder>::get();
     ptr->value_ = 12345;
     ptr->dtor_called_ = &dtor_called;
   }
   {
-    auto *ptr = Singleton<ValueHolder>::get();
+    auto* ptr = Singleton<ValueHolder>::get();
     EXPECT_EQ(ptr->value_, 12345);
     EXPECT_FALSE(dtor_called);
   }
   {
     Singleton<ValueHolder>::Delete();
     EXPECT_TRUE(dtor_called);
-    auto *ptr = Singleton<ValueHolder>::get();
+    auto* ptr = Singleton<ValueHolder>::get();
     // Reconstructed value, so the it's not equal to 12345.
     EXPECT_EQ(ptr->value_, 0);
   }

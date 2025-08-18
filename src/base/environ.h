@@ -60,7 +60,7 @@ class Environ {
   static std::string GetEnv(zstring_view env_var);
 
   // sets a mock for unit test.
-  static void SetMockForUnitTest(EnvironInterface *mock);
+  static void SetMockForUnitTest(EnvironInterface* mock);
 };
 
 }  // namespace mozc

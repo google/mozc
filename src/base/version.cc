@@ -73,11 +73,11 @@ int Version::GetMozcVersionBuildNumber() {
 
 int Version::GetMozcVersionRevision() { return version::kMozcVersionRevision; }
 
-const char *Version::GetMozcEngineVersion() {
+const char* Version::GetMozcEngineVersion() {
   return version::kMozcEngineVersion;
 }
 
-bool Version::CompareVersion(const std::string &lhs, const std::string &rhs) {
+bool Version::CompareVersion(const std::string& lhs, const std::string& rhs) {
   if (lhs == rhs) {
     return false;
   }

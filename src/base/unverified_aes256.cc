@@ -142,14 +142,14 @@ void InvMixColumnsImpl(uint8_t column[4]) {
 
 void UnverifiedAES256::TransformCBC(const uint8_t (&key)[kKeyBytes],
                                     const uint8_t (&iv)[kBlockBytes],
-                                    uint8_t *block, size_t block_count) {
+                                    uint8_t* block, size_t block_count) {
   uint8_t w[kKeyScheduleBytes];
   MakeKeySchedule(key, w);
 
   uint8_t vec[kBlockBytes];
   std::copy_n(iv, kBlockBytes, vec);
   for (size_t i = 0; i < block_count; ++i) {
-    uint8_t *src = block + (i * kBlockBytes);
+    uint8_t* src = block + (i * kBlockBytes);
     for (size_t j = 0; j < kBlockBytes; ++j) {
       src[j] ^= vec[j];
     }
@@ -160,7 +160,7 @@ void UnverifiedAES256::TransformCBC(const uint8_t (&key)[kKeyBytes],
 
 void UnverifiedAES256::InverseTransformCBC(const uint8_t (&key)[kKeyBytes],
                                            const uint8_t (&iv)[kBlockBytes],
-                                           uint8_t *block, size_t block_count) {
+                                           uint8_t* block, size_t block_count) {
   uint8_t w[kKeyScheduleBytes];
   MakeKeySchedule(key, w);
 
@@ -168,7 +168,7 @@ void UnverifiedAES256::InverseTransformCBC(const uint8_t (&key)[kKeyBytes],
   std::copy_n(iv, kBlockBytes, prev_block);
   for (size_t i = 0; i < block_count; ++i) {
     uint8_t original_current_block[kBlockBytes];
-    uint8_t *current_block = block + (i * kBlockBytes);
+    uint8_t* current_block = block + (i * kBlockBytes);
     std::copy_n(current_block, kBlockBytes, original_current_block);
     InverseTransformECB(w, current_block);
     for (size_t j = 0; j < kBlockBytes; ++j) {
@@ -182,8 +182,8 @@ void UnverifiedAES256::MakeKeySchedule(const uint8_t (&key)[kKeyBytes],
                                        uint8_t w[kKeyScheduleBytes]) {
   std::copy_n(key, kKeyBytes, w);
   for (size_t base = 1;; ++base) {
-    uint8_t *k = &w[base * kKeyBytes];
-    uint8_t *prev = k - kKeyBytes;
+    uint8_t* k = &w[base * kKeyBytes];
+    uint8_t* prev = k - kKeyBytes;
     // Note: Although the following equation is not always satisfied,
     // it is valid at least when 1 <= |base| <= 7.
     DCHECK_LE(1, base);

@@ -46,16 +46,16 @@ class CopyCounter {
  public:
   explicit CopyCounter() : count_(std::make_shared<std::atomic<int>>()) {}
 
-  CopyCounter(const CopyCounter &other) { *this = other; }
-  CopyCounter(CopyCounter &&other) = default;
+  CopyCounter(const CopyCounter& other) { *this = other; }
+  CopyCounter(CopyCounter&& other) = default;
 
-  CopyCounter &operator=(const CopyCounter &other) {
+  CopyCounter& operator=(const CopyCounter& other) {
     this->count_ = other.count_;
 
     count_->fetch_add(1);
     return *this;
   }
-  CopyCounter &operator=(CopyCounter &&other) = default;
+  CopyCounter& operator=(CopyCounter&& other) = default;
 
   std::shared_ptr<std::atomic<int>> get() const { return count_; }
 

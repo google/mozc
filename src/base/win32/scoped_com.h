@@ -39,8 +39,8 @@ namespace mozc {
 class ScopedCOMInitializer {
  public:
   ScopedCOMInitializer() : hr_(::CoInitialize(nullptr)) {}
-  ScopedCOMInitializer(const ScopedCOMInitializer &) = delete;
-  ScopedCOMInitializer &operator=(const ScopedCOMInitializer &) = delete;
+  ScopedCOMInitializer(const ScopedCOMInitializer&) = delete;
+  ScopedCOMInitializer& operator=(const ScopedCOMInitializer&) = delete;
   ~ScopedCOMInitializer() {
     if (SUCCEEDED(hr_)) {
       ::CoUninitialize();

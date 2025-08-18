@@ -77,7 +77,7 @@ struct FileData {
 
 class OnMemoryFileMap {
  public:
-  const std::string &get(const absl::string_view key) const {
+  const std::string& get(const absl::string_view key) const {
     auto it = map_.find(key);
     if (it != map_.end()) {
       return it->second;

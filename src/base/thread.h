@@ -58,7 +58,7 @@ class Thread {
   Thread() noexcept = default;
 
   template <class Function, class... Args>
-  explicit Thread(Function &&f, Args &&...args)
+  explicit Thread(Function&& f, Args&&... args)
       : thread_(std::forward<Function>(f), std::forward<Args>(args)...) {}
 
   ~Thread() {
@@ -67,11 +67,11 @@ class Thread {
     }
   }
 
-  Thread(const Thread &) = delete;
-  Thread &operator=(const Thread &) = delete;
+  Thread(const Thread&) = delete;
+  Thread& operator=(const Thread&) = delete;
 
-  Thread(Thread &&) noexcept = default;
-  Thread &operator=(Thread &&other) noexcept {
+  Thread(Thread&&) noexcept = default;
+  Thread& operator=(Thread&& other) noexcept {
     if (Joinable()) {
       Join();
     }
@@ -102,19 +102,19 @@ class BackgroundFuture {
   // Spawns a dedicated thread to invoke `f(args...)`, and eventually fulfills
   // the future.
   template <class F, class... Args>
-  explicit BackgroundFuture(F &&f, Args &&...args);
+  explicit BackgroundFuture(F&& f, Args&&... args);
 
-  BackgroundFuture(const BackgroundFuture &) = delete;
-  BackgroundFuture &operator=(const BackgroundFuture &) = delete;
+  BackgroundFuture(const BackgroundFuture&) = delete;
+  BackgroundFuture& operator=(const BackgroundFuture&) = delete;
 
-  BackgroundFuture(BackgroundFuture &&) = default;
-  BackgroundFuture &operator=(BackgroundFuture &&);
+  BackgroundFuture(BackgroundFuture&&) = default;
+  BackgroundFuture& operator=(BackgroundFuture&&);
 
   ~BackgroundFuture() = default;
 
   // Blocks until the future becomes ready, and returns the computed value by
   // reference.
-  const R &Get() const &ABSL_LOCKS_EXCLUDED(state_->mutex);
+  const R& Get() const& ABSL_LOCKS_EXCLUDED(state_->mutex);
 
   // Blocks until the future becomes ready, and returns the computed value by
   // move.
@@ -148,13 +148,13 @@ class BackgroundFuture<void> {
   //
   // This is essentially equivalent to `Thread` along with "done" notification.
   template <class F, class... Args>
-  explicit BackgroundFuture(F &&f, Args &&...args);
+  explicit BackgroundFuture(F&& f, Args&&... args);
 
-  BackgroundFuture(const BackgroundFuture &) = delete;
-  BackgroundFuture &operator=(const BackgroundFuture &) = delete;
+  BackgroundFuture(const BackgroundFuture&) = delete;
+  BackgroundFuture& operator=(const BackgroundFuture&) = delete;
 
-  BackgroundFuture(BackgroundFuture &&) = default;
-  BackgroundFuture &operator=(BackgroundFuture &&);
+  BackgroundFuture(BackgroundFuture&&) = default;
+  BackgroundFuture& operator=(BackgroundFuture&&);
 
   ~BackgroundFuture() = default;
 
@@ -175,7 +175,7 @@ class BackgroundFuture<void> {
 
 template <class R>
 template <class F, class... Args>
-BackgroundFuture<R>::BackgroundFuture(F &&f, Args &&...args)
+BackgroundFuture<R>::BackgroundFuture(F&& f, Args&&... args)
     : state_(std::make_unique<State>()),
       thread_([&state = *state_,
                f = std::bind_front(std::forward<F>(f),
@@ -187,7 +187,7 @@ BackgroundFuture<R>::BackgroundFuture(F &&f, Args &&...args)
       }) {}
 
 template <class R>
-BackgroundFuture<R> &BackgroundFuture<R>::operator=(BackgroundFuture &&other) {
+BackgroundFuture<R>& BackgroundFuture<R>::operator=(BackgroundFuture&& other) {
   // Move `thread_` first to ensure its associated thread (if any) is stopped
   // and joined.
   thread_ = std::move(other.thread_);
@@ -196,11 +196,11 @@ BackgroundFuture<R> &BackgroundFuture<R>::operator=(BackgroundFuture &&other) {
 }
 
 template <class R>
-const R &BackgroundFuture<R>::Get() const & {
+const R& BackgroundFuture<R>::Get() const& {
   absl::MutexLock lock(
       &state_->mutex,
       absl::Condition(
-          +[](std::optional<R> *v) { return v->has_value(); }, &state_->value));
+          +[](std::optional<R>* v) { return v->has_value(); }, &state_->value));
   return *state_->value;
 }
 
@@ -209,7 +209,7 @@ R BackgroundFuture<R>::Get() && {
   absl::MutexLock lock(
       &state_->mutex,
       absl::Condition(
-          +[](std::optional<R> *v) { return v->has_value(); }, &state_->value));
+          +[](std::optional<R>* v) { return v->has_value(); }, &state_->value));
   R r = *std::move(state_->value);
   state_->value.reset();
   return r;
@@ -226,11 +226,11 @@ void BackgroundFuture<R>::Wait() const {
   absl::MutexLock lock(
       &state_->mutex,
       absl::Condition(
-          +[](std::optional<R> *v) { return v->has_value(); }, &state_->value));
+          +[](std::optional<R>* v) { return v->has_value(); }, &state_->value));
 }
 
 template <class F, class... Args>
-BackgroundFuture<void>::BackgroundFuture(F &&f, Args &&...args)
+BackgroundFuture<void>::BackgroundFuture(F&& f, Args&&... args)
     : done_(std::make_unique<absl::Notification>()),
       thread_([&done = *done_,
                f = std::bind_front(std::forward<F>(f),
@@ -239,8 +239,8 @@ BackgroundFuture<void>::BackgroundFuture(F &&f, Args &&...args)
         done.Notify();
       }) {}
 
-inline BackgroundFuture<void> &BackgroundFuture<void>::operator=(
-    BackgroundFuture &&other) {
+inline BackgroundFuture<void>& BackgroundFuture<void>::operator=(
+    BackgroundFuture&& other) {
   // Move `thread_` first to ensure its associated thread (if any) is stopped
   // and joined.
   thread_ = std::move(other.thread_);
@@ -268,8 +268,8 @@ class AtomicSharedPtr {
   AtomicSharedPtr() = default;
   ~AtomicSharedPtr() = default;
   explicit AtomicSharedPtr(std::shared_ptr<T> ptr) : ptr_(std::move(ptr)) {}
-  AtomicSharedPtr(const AtomicSharedPtr &) = delete;
-  AtomicSharedPtr &operator=(const AtomicSharedPtr &) = delete;
+  AtomicSharedPtr(const AtomicSharedPtr&) = delete;
+  AtomicSharedPtr& operator=(const AtomicSharedPtr&) = delete;
 
   std::shared_ptr<T> load() const ABSL_LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock gurad(&mutex_);
@@ -292,16 +292,16 @@ class CopyableAtomic : public std::atomic<T> {
  public:
   CopyableAtomic() = default;
   explicit CopyableAtomic(T val) : std::atomic<T>(val) {}
-  CopyableAtomic(const CopyableAtomic<T> &other) {
+  CopyableAtomic(const CopyableAtomic<T>& other) {
     std::atomic<T>::store(other.load(std::memory_order_relaxed),
                           std::memory_order_relaxed);
   }
-  CopyableAtomic &operator=(const CopyableAtomic<T> &other) {
+  CopyableAtomic& operator=(const CopyableAtomic<T>& other) {
     std::atomic<T>::store(other.load(std::memory_order_relaxed),
                           std::memory_order_relaxed);
     return *this;
   }
-  CopyableAtomic &operator=(T val) {
+  CopyableAtomic& operator=(T val) {
     std::atomic<T>::store(val, std::memory_order_relaxed);
     return *this;
   }

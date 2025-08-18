@@ -39,8 +39,8 @@ namespace mozc {
 class Process {
  public:
   Process() = delete;
-  Process(const Process &) = delete;
-  Process &operator=(const Process &) = delete;
+  Process(const Process&) = delete;
+  Process& operator=(const Process&) = delete;
 
   // Opens the URL with the default browser.  If this function is not
   // supported on the OS or failed, false is returned.
@@ -57,12 +57,12 @@ class Process {
   // specifies a directory ending with ".app", an application is
   // spawned in the OSX way.
   static bool SpawnProcess(zstring_view path, zstring_view arg,
-                           size_t *pid = nullptr);
+                           size_t* pid = nullptr);
 
   // A SpawnProcess wrapper to run an executable which is installed in
   // the Mozc server directory.
   static bool SpawnMozcProcess(zstring_view filename, zstring_view arg,
-                               size_t *pid = nullptr);
+                               size_t* pid = nullptr);
 
   // Waits for process |pid| to terminate up to |timeout|.
   // If |timeout| is negative, waits forever.

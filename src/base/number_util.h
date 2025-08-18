@@ -44,8 +44,8 @@ namespace mozc {
 class NumberUtil {
  public:
   NumberUtil() = delete;
-  NumberUtil(const NumberUtil &) = delete;
-  NumberUtil &operator=(const NumberUtil &) = delete;
+  NumberUtil(const NumberUtil&) = delete;
+  NumberUtil& operator=(const NumberUtil&) = delete;
   // Converts the string to a number and return it.
   static int SimpleAtoi(absl::string_view str);
 
@@ -122,44 +122,44 @@ class NumberUtil {
   // value, desc and style are stored same size and same order.
   // if invalid string is set, this function do nothing.
   static bool ArabicToKanji(absl::string_view input_num,
-                            std::vector<NumberString> *output);
+                            std::vector<NumberString>* output);
 
   // Converts half-width Arabic number string to Separated Arabic string.
   // (e.g. 1234567890 are converted to 1,234,567,890)
   // Arguments are same as ArabicToKanji (above).
   static bool ArabicToSeparatedArabic(absl::string_view input_num,
-                                      std::vector<NumberString> *output);
+                                      std::vector<NumberString>* output);
 
   // Converts half-width Arabic number string to full-width Arabic number
   // string.
   // Arguments are same as ArabicToKanji (above).
   static bool ArabicToWideArabic(absl::string_view input_num,
-                                 std::vector<NumberString> *output);
+                                 std::vector<NumberString>* output);
 
   // Converts half-width Arabic number to various styles.
   // Arguments are same as ArabicToKanji (above).
   //   - Roman style (i) (ii) ...
   static bool ArabicToOtherForms(absl::string_view input_num,
-                                 std::vector<NumberString> *output);
+                                 std::vector<NumberString>* output);
 
   // Converts half-width Arabic number to various radices (2,8,16).
   // Arguments are same as ArabicToKanji (above).
   // Excepted number of input digits is smaller than 20, but it can be
   // converted only if it can be stored in an unsigned 64-bit integer.
   static bool ArabicToOtherRadixes(absl::string_view input_num,
-                                   std::vector<NumberString> *output);
+                                   std::vector<NumberString>* output);
 
   // Converts the string to a 32-/64-bit signed/unsigned int.  Returns true if
   // success or false if the string is in the wrong format.
-  static bool SafeStrToInt16(absl::string_view str, int16_t *value);
-  static bool SafeStrToUInt16(absl::string_view str, uint16_t *value);
+  static bool SafeStrToInt16(absl::string_view str, int16_t* value);
+  static bool SafeStrToUInt16(absl::string_view str, uint16_t* value);
 
   // Converts the string to a double.  Returns true if success or false if the
   // string is in the wrong format.
   // If |str| is a hexadecimal number like "0x1234", the result depends on
   // compiler.  It returns false when compiled by VisualC++.  On the other hand
   // it returns true and sets correct value when compiled by gcc.
-  static bool SafeStrToDouble(absl::string_view str, double *value);
+  static bool SafeStrToDouble(absl::string_view str, double* value);
 
   // Convert Kanji numeric into Arabic numeric.
   // When the trim_leading_zeros is true, leading zeros for arabic_output
@@ -174,14 +174,14 @@ class NumberUtil {
   // NormalizeNumbersWithSuffix() skips trailing non-number characters and
   // return them in "suffix".
   static bool NormalizeNumbers(absl::string_view input, bool trim_leading_zeros,
-                               std::string *kanji_output,
-                               std::string *arabic_output);
+                               std::string* kanji_output,
+                               std::string* arabic_output);
 
   static bool NormalizeNumbersWithSuffix(absl::string_view input,
                                          bool trim_leading_zeros,
-                                         std::string *kanji_output,
-                                         std::string *arabic_output,
-                                         std::string *suffix);
+                                         std::string* kanji_output,
+                                         std::string* arabic_output,
+                                         std::string* suffix);
 
   // Note: this function just does charcter-by-character conversion
   // "百二十" -> 10020

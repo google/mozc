@@ -42,9 +42,9 @@ namespace mozc {
 class TextNormalizer {
  public:
   enum Flag {
-    kNone = 0,  // No normalization.
+    kNone = 0,     // No normalization.
     kDefault = 1,  // Default behavior (different per platform).
-    kAll = 2,  // All normalizations.
+    kAll = 2,      // All normalizations.
   };
 
   TextNormalizer() = delete;
@@ -61,7 +61,7 @@ class TextNormalizer {
 
   // Normalizes Japanese CJK compatibility ideographs to SVS characters.
   // Returns false and keeps output as is, if no character is normalized.
-  static bool NormalizeTextToSvs(absl::string_view input, std::string *output);
+  static bool NormalizeTextToSvs(absl::string_view input, std::string* output);
   static std::string NormalizeTextToSvs(absl::string_view input);
 };
 

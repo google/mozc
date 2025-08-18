@@ -46,8 +46,8 @@ class ClockMock : public ClockInterface {
  public:
   explicit ClockMock(absl::Time time) : time_(time) {}
 
-  ClockMock(const ClockMock &) = delete;
-  ClockMock &operator=(const ClockMock &) = delete;
+  ClockMock(const ClockMock&) = delete;
+  ClockMock& operator=(const ClockMock&) = delete;
 
   ~ClockMock() override = default;
 
@@ -77,13 +77,13 @@ class ScopedClockMock {
     Clock::SetClockForUnitTest(&mock_);
   }
 
-  ScopedClockMock(const ScopedClockMock &) = delete;
-  ScopedClockMock &operator=(const ScopedClockMock &) = delete;
+  ScopedClockMock(const ScopedClockMock&) = delete;
+  ScopedClockMock& operator=(const ScopedClockMock&) = delete;
 
   ~ScopedClockMock() { Clock::SetClockForUnitTest(nullptr); }
 
-  constexpr ClockMock *operator->() { return &mock_; }
-  constexpr const ClockMock *operator->() const { return &mock_; }
+  constexpr ClockMock* operator->() { return &mock_; }
+  constexpr const ClockMock* operator->() const { return &mock_; }
 
  private:
   ClockMock mock_;

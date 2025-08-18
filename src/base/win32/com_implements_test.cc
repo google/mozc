@@ -143,7 +143,7 @@ TEST_F(ComImplementsTest, QueryInterface) {
       unknown->QueryInterface(IID_PPV_ARGS(derived_derived.put())));
   EXPECT_TRUE(derived_derived);
 
-  void *p = mock.get();
+  void* p = mock.get();
   EXPECT_EQ(mock->QueryInterface(IID_IShellItem, &p), E_NOINTERFACE);
   EXPECT_EQ(mock->QueryInterface(IID_IUnknown, nullptr), E_POINTER);
   wil::com_ptr_nothrow<IDerived> derived;

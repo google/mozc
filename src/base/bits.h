@@ -61,7 +61,7 @@
 namespace mozc {
 namespace bits_internal {
 template <typename T, typename Iterator>
-inline constexpr void Advance(Iterator &iter);
+inline constexpr void Advance(Iterator& iter);
 #ifndef __cpp_lib_byteswap
 inline MOZC_BITS_BYTESWAP_CONSTEXPR uint16_t ByteSwap16(uint16_t n);
 inline MOZC_BITS_BYTESWAP_CONSTEXPR uint32_t ByteSwap32(uint32_t n);
@@ -126,7 +126,7 @@ inline T LoadUnaligned(Iterator iter) {
 //    values.push_back(LoadUnalignedAdvance<uint32_t>(iter));
 //  }
 template <typename T, typename Iterator>
-inline T LoadUnalignedAdvance(Iterator &iter) {
+inline T LoadUnalignedAdvance(Iterator& iter) {
   const T result = LoadUnaligned<T>(iter);
   bits_internal::Advance<T>(iter);
   return result;
@@ -199,7 +199,7 @@ inline T LittleToHost(const T n) {
 namespace bits_internal {
 
 template <typename T, typename Iterator>
-inline constexpr void Advance(Iterator &iter) {
+inline constexpr void Advance(Iterator& iter) {
   using IterValue = typename std::iterator_traits<Iterator>::value_type;
   constexpr size_t iterator_value_size = sizeof(IterValue);
 

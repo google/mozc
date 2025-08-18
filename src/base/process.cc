@@ -78,12 +78,12 @@
 // in Mac Framework/dynamic libraries.  Instead call _NSGetEnviron().
 // See the "PROGRAMMING" section of http://goo.gl/4Hq0D for the
 // detailed information.
-static char **environ = *_NSGetEnviron();
+static char** environ = *_NSGetEnviron();
 #elif !defined(_WIN32)
 // Defined somewhere in libc. We can't pass nullptr as the 6th argument of
 // posix_spawn() since Qt applications use (at least) DISPLAY and QT_IM_MODULE
 // environment variables.
-extern char **environ;
+extern char** environ;
 #endif  // !__APPLE__ && !_WIN32
 
 namespace mozc {
@@ -118,7 +118,7 @@ bool Process::OpenBrowser(zstring_view url) {
   return false;
 }
 
-bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t *pid) {
+bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t* pid) {
 #ifdef _WIN32
   std::wstring wpath = win32::Utf8ToWide(path);
   wpath = L"\"" + wpath + L"\"";
@@ -167,7 +167,7 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t *pid) {
 
   const std::vector<std::string> arg_tmp =
       absl::StrSplit(arg.view(), ' ', absl::SkipEmpty());
-  auto argv = std::make_unique<const char *[]>(arg_tmp.size() + 2);
+  auto argv = std::make_unique<const char*[]>(arg_tmp.size() + 2);
   argv[0] = path.c_str();
   for (size_t i = 0; i < arg_tmp.size(); ++i) {
     argv[i + 1] = arg_tmp[i].c_str();
@@ -222,7 +222,7 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t *pid) {
   // by the return value of fork().
   const int result =
       ::posix_spawn(&tmp_pid, path.c_str(), nullptr, nullptr,
-                    const_cast<char *const *>(argv.get()), environ);
+                    const_cast<char* const*>(argv.get()), environ);
   if (result == 0) {
     MOZC_VLOG(1) << "posix_spawn: child pid is " << tmp_pid;
   } else {
@@ -237,7 +237,7 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t *pid) {
 }
 
 bool Process::SpawnMozcProcess(zstring_view filename, zstring_view arg,
-                               size_t *pid) {
+                               size_t* pid) {
   return Process::SpawnProcess(
       FileUtil::JoinPath(SystemUtil::GetServerDirectory(), filename), arg, pid);
 }

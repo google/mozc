@@ -45,8 +45,8 @@ class ClockInterface {
 class Clock {
  public:
   Clock() = delete;
-  Clock(const Clock &) = delete;
-  Clock &operator=(const Clock &) = delete;
+  Clock(const Clock&) = delete;
+  Clock& operator=(const Clock&) = delete;
 
   // Returns the current time in absl::Time.
   static absl::Time GetAbslTime();
@@ -57,7 +57,7 @@ class Clock {
   // TESTONLY: The behavior of global system clock can be overridden by using
   // this method.  Set to nullptr to restore the default clock.  This method
   // doesn't take the ownership of |clock|.
-  static void SetClockForUnitTest(ClockInterface *clock);
+  static void SetClockForUnitTest(ClockInterface* clock);
 };
 
 }  // namespace mozc

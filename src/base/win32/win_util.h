@@ -52,7 +52,7 @@ class WinUtil {
   // Otherwise, the state of loader lock is unknown.
   // NOTE: |lock_held| may be false if the DLL is loaded as
   // implicit link.
-  static bool IsDLLSynchronizationHeld(bool *lock_held);
+  static bool IsDLLSynchronizationHeld(bool* lock_held);
 
   // Encapsulates the process of converting HWND into a fixed-size integer.
   static uint32_t EncodeWindowHandle(HWND window_handle);
@@ -68,40 +68,40 @@ class WinUtil {
   // Returns true if succeeds to determine whether the current process has
   // a process token which seems to be one for service process.  Otherwise,
   // returns false.
-  static bool IsServiceProcess(bool *is_service);
+  static bool IsServiceProcess(bool* is_service);
 
   // Returns true if succeeds to determine whether the current process has
   // a thread token which seems to be one for service thread.  Otherwise,
   // returns false.
-  static bool IsServiceThread(bool *is_service);
+  static bool IsServiceThread(bool* is_service);
 
   // This is a utility function to check IsServiceProcess and IsServiceThread
   // for the current process and thread.
-  static bool IsServiceAccount(bool *is_service);
+  static bool IsServiceAccount(bool* is_service);
 
   // Returns true if succeeds to determine whether the |hToken| is one of the
   // known service or not.  Otherwise, returns false.
-  static bool IsServiceUser(HANDLE hToken, bool *is_service);
+  static bool IsServiceUser(HANDLE hToken, bool* is_service);
 
   // Returns true if succeeds to determine whether the process specified by
   // |process_handle| is in immersive mode or not. Otherwise, returns false.
-  static bool IsProcessImmersive(HANDLE process_handle, bool *is_immersive);
+  static bool IsProcessImmersive(HANDLE process_handle, bool* is_immersive);
 
   // Returns true if succeeds to determine whether the process specified by
   // |process_handle| is running with RestrictedToken or not. Otherwise,
   // returns false.
-  static bool IsProcessRestricted(HANDLE process_handle, bool *is_restricted);
+  static bool IsProcessRestricted(HANDLE process_handle, bool* is_restricted);
 
   // Returns true if succeeds to determine whether the process specified by
   // |process_handle| is running under AppContainer sandbox environment or not.
   // Otherwise, returns false.
   static bool IsProcessInAppContainer(HANDLE process_handle,
-                                      bool *in_appcontainer);
+                                      bool* in_appcontainer);
 
   // Returns true if |info| is filled with a valid file information that
   // describes |path|. |path| can be a directory or a file.
   static bool GetFileSystemInfoFromPath(zwstring_view path,
-                                        BY_HANDLE_FILE_INFORMATION *info);
+                                        BY_HANDLE_FILE_INFORMATION* info);
 
   // Returns true if |left_path| and |right_path| are the same file system
   // object. This method takes hard-link into consideration.
@@ -113,13 +113,13 @@ class WinUtil {
   // Returns true if the file or directory specified by |dos_path| exists and
   // its NT path is retrieved as |nt_path|. This function can work only on
   // Vista and later.
-  static bool GetNtPath(zwstring_view dos_path, std::wstring *nt_path);
+  static bool GetNtPath(zwstring_view dos_path, std::wstring* nt_path);
 
   // Returns true if the process specified by |pid| exists and its *initial*
   // NT path is retrieved as |nt_path|. Note that even when the process path is
   // renamed after the process is launched, the *initial* path is retrieved.
   // This is important when MSI changes paths of executables.
-  static bool GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path);
+  static bool GetProcessInitialNtPath(DWORD pid, std::wstring* nt_path);
 
   // Returns true if input settings is shared among applications on Windows 8.
   // Returns false otherwise.
@@ -134,8 +134,8 @@ class WinUtil {
   // which is expected to be more appropriate than tha directory where the
   // executable exist, because installer can rename the executable to another
   // directory and delete the application directory.
-  static bool ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
-                                      const wchar_t *parameters);
+  static bool ShellExecuteInSystemDir(const wchar_t* verb, const wchar_t* file,
+                                      const wchar_t* parameters);
 };
 
 }  // namespace mozc

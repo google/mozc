@@ -48,7 +48,7 @@ uint32_t ToUint32(char a, char b, char c, char d) {
 }
 
 template <class T>
-void Mix(T &a, T &b, T &c) {
+void Mix(T& a, T& b, T& c) {
   a -= b;
   a -= c;
   a ^= (c >> 13);

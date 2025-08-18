@@ -52,13 +52,13 @@ class Random {
   // absl::BitGen can construct from.
   template <typename Rng>
     requires(!std::same_as<std::remove_cvref_t<Rng>, Random>)
-  explicit Random(Rng &&rng) : bitgen_(std::forward<Rng>(rng)) {}
+  explicit Random(Rng&& rng) : bitgen_(std::forward<Rng>(rng)) {}
 
   // Disallow copy, allow move.
-  Random(const Random &) = delete;
-  Random &operator=(const Random &) = delete;
-  Random(Random &&) = default;
-  Random &operator=(Random &&) = default;
+  Random(const Random&) = delete;
+  Random& operator=(const Random&) = delete;
+  Random(Random&&) = default;
+  Random& operator=(Random&&) = default;
 
   // Pass through the underlying absl::BitGen UBRG attributes.
   static constexpr result_type min() { return absl::BitGen::min(); }
