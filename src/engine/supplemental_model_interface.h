@@ -51,10 +51,10 @@ class SupplementalModelInterface {
 
   // Loads supplemental model asynchronously defined in the `request`.
   // Returns false if the LoadAsync is already running.
-  virtual bool LoadAsync(const EngineReloadRequest &request) { return false; }
+  virtual bool LoadAsync(const EngineReloadRequest& request) { return false; }
 
   // Loads supplemental model defined in the `request`.
-  virtual EngineReloadResponse Load(const EngineReloadRequest &request) {
+  virtual EngineReloadResponse Load(const EngineReloadRequest& request) {
     return EngineReloadResponse();
   }
 
@@ -63,28 +63,28 @@ class SupplementalModelInterface {
   // Returns std::nullopt when the composition spellchecker is not
   // enabled/available.
   virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
-  CorrectComposition(const ConversionRequest &request) const {
+  CorrectComposition(const ConversionRequest& request) const {
     return std::nullopt;
   }
 
   // Populates the typing correction penalty and attribute to `results`.
   virtual void PopulateTypeCorrectedQuery(
-      const ConversionRequest &request,
+      const ConversionRequest& request,
       absl::Span<prediction::Result> results) const {}
 
   // Performs general post correction on `results`.
-  virtual void PostCorrect(const ConversionRequest &request,
-                           std::vector<prediction::Result> &results) const {}
+  virtual void PostCorrect(const ConversionRequest& request,
+                           std::vector<prediction::Result>& results) const {}
 
   // Performs rescoring for `results` given the context `results`.
-  virtual void RescoreResults(const ConversionRequest &request,
+  virtual void RescoreResults(const ConversionRequest& request,
                               absl::Span<prediction::Result> results) const {}
 
   // Performs next word/phrase prediction given the context in `request`.
   // Results are appended to `results`. Returns true if prediction was
   // performed.
-  virtual bool Predict(const ConversionRequest &request,
-                       std::vector<prediction::Result> &results) const {
+  virtual bool Predict(const ConversionRequest& request,
+                       std::vector<prediction::Result>& results) const {
     return false;
   }
 

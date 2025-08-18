@@ -87,18 +87,18 @@ absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules) {
 }
 
 absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules) {
-  auto immutable_converter_factory = [](const engine::Modules &modules) {
+  auto immutable_converter_factory = [](const engine::Modules& modules) {
     return std::make_unique<ImmutableConverter>(modules);
   };
 
   auto predictor_factory =
-      [](const engine::Modules &modules, const ConverterInterface &converter,
-         const ImmutableConverterInterface &immutable_converter) {
+      [](const engine::Modules& modules, const ConverterInterface& converter,
+         const ImmutableConverterInterface& immutable_converter) {
         return std::make_unique<prediction::Predictor>(modules, converter,
                                                        immutable_converter);
       };
 
-  auto rewriter_factory = [](const engine::Modules &modules) {
+  auto rewriter_factory = [](const engine::Modules& modules) {
     return std::make_unique<Rewriter>(modules);
   };
 
@@ -138,7 +138,7 @@ bool Engine::ClearUnusedUserPrediction() {
   return converter_ && converter_->predictor().ClearUnusedHistory();
 }
 
-bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
+bool Engine::MaybeReloadEngine(EngineReloadResponse* response) {
   if (!converter_ || always_wait_for_testing_) {
     loader_.Wait();
   }
@@ -159,7 +159,7 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
   return reload_status.ok();
 }
 
-bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
+bool Engine::SendEngineReloadRequest(const EngineReloadRequest& request) {
   return loader_.StartNewDataBuildTask(
       request, [this](std::unique_ptr<DataLoader::Response> response) {
         loader_response_ = std::move(response);
@@ -168,7 +168,7 @@ bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
 }
 
 bool Engine::SendSupplementalModelReloadRequest(
-    const EngineReloadRequest &request) {
+    const EngineReloadRequest& request) {
   if (converter_) {
     converter_->modules().GetSupplementalModel().LoadAsync(request);
   }
@@ -176,8 +176,8 @@ bool Engine::SendSupplementalModelReloadRequest(
 }
 
 bool Engine::EvaluateUserDictionaryCommand(
-    const user_dictionary::UserDictionaryCommand &command,
-    user_dictionary::UserDictionaryCommandStatus *status) {
+    const user_dictionary::UserDictionaryCommand& command,
+    user_dictionary::UserDictionaryCommandStatus* status) {
   return user_dictionary_session_handler_.Evaluate(command, status);
 }
 

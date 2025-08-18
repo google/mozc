@@ -85,11 +85,11 @@ class Candidate final {
     return (attributes_ & attributes) == attributes;
   }
 
-  const CandidateList &subcandidate_list() const {
+  const CandidateList& subcandidate_list() const {
     DCHECK(subcandidate_list_);
     return *subcandidate_list_;
   }
-  CandidateList *mutable_subcandidate_list() {
+  CandidateList* mutable_subcandidate_list() {
     if (!subcandidate_list_) {
       subcandidate_list_ = std::make_unique<CandidateList>();
     }
@@ -115,23 +115,23 @@ class CandidateList final {
   // TODO(all): Support full copy operation of CandidateList as EngineConverter
   // is currently copyable. Since the CandidateList contractor is
   // initialized with `rotate`, `rotate_` is copied in the copy operator.
-  CandidateList &operator=(const CandidateList &candidate_list) {
+  CandidateList& operator=(const CandidateList& candidate_list) {
     rotate_ = candidate_list.rotate_;
     return *this;
   }
 
   void Clear();
 
-  const Candidate &GetDeepestFocusedCandidate() const;
+  const Candidate& GetDeepestFocusedCandidate() const;
   void AddCandidate(int id, absl::string_view value) {
     AddCandidateWithAttributes(id, value, NO_ATTRIBUTES);
   }
   void AddCandidateWithAttributes(int id, absl::string_view value,
                                   Attributes attributes);
-  CandidateList *AddSubCandidateList();
+  CandidateList* AddSubCandidateList();
 
   void set_name(std::string name) { name_ = std::move(name); }
-  const std::string &name() const { return name_; }
+  const std::string& name() const { return name_; }
 
   void set_page_size(size_t page_size) { page_size_ = page_size; }
   size_t page_size() const { return page_size_; }
@@ -139,8 +139,8 @@ class CandidateList final {
   // Accessors
   size_t size() const { return candidates_.size(); }
   size_t last_index() const { return size() - 1; }
-  const Candidate &candidate(size_t index) const { return candidates_[index]; }
-  const Candidate &focused_candidate() const {
+  const Candidate& candidate(size_t index) const { return candidates_[index]; }
+  const Candidate& focused_candidate() const {
     return candidate(focused_index_);
   }
   int focused_id() const;
@@ -181,7 +181,7 @@ class CandidateList final {
   bool MoveToPageIndex(size_t index);
 
  private:
-  CandidateList *mutable_focused_subcandidate_list();
+  CandidateList* mutable_focused_subcandidate_list();
 
   static bool IsFirst(size_t index) { return index == 0; }
   bool IsLast(size_t index) const { return index == size() - 1; }

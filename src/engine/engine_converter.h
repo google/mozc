@@ -62,7 +62,7 @@ class EngineConverter : public EngineConverterInterface {
                   std::shared_ptr<const commands::Request> request,
                   std::shared_ptr<const config::Config> config);
   explicit EngineConverter(std::shared_ptr<const ConverterInterface> converter);
-  EngineConverter(const EngineConverter &) = delete;
+  EngineConverter(const EngineConverter&) = delete;
 
   // Checks if the current state is in the state bitmap.
   bool CheckState(States) const override;
@@ -74,43 +74,43 @@ class EngineConverter : public EngineConverterInterface {
 
   // Returns the default conversion preferences to be used for custom
   // conversion.
-  const ConversionPreferences &conversion_preferences() const override;
+  const ConversionPreferences& conversion_preferences() const override;
 
   // Sends a conversion request to the converter.
-  bool Convert(const composer::Composer &composer) override;
+  bool Convert(const composer::Composer& composer) override;
   bool ConvertWithPreferences(
-      const composer::Composer &composer,
-      const ConversionPreferences &preferences) override;
+      const composer::Composer& composer,
+      const ConversionPreferences& preferences) override;
 
   // Gets reading text (e.g. from "猫" to "ねこ").
   bool GetReadingText(absl::string_view source_text,
-                      std::string *reading) override;
+                      std::string* reading) override;
 
   // Sends a transliteration request to the converter.
   bool ConvertToTransliteration(
-      const composer::Composer &composer,
+      const composer::Composer& composer,
       transliteration::TransliterationType type) override;
 
   // Converts the current composition to half-width characters.
   // NOTE(komatsu): This function might be merged to ConvertToTransliteration.
-  bool ConvertToHalfWidth(const composer::Composer &composer) override;
+  bool ConvertToHalfWidth(const composer::Composer& composer) override;
 
   // Switches the composition to Hiragana, full-width Katakana or
   // half-width Katakana by rotation.
-  bool SwitchKanaType(const composer::Composer &composer) override;
+  bool SwitchKanaType(const composer::Composer& composer) override;
 
   // Sends a suggestion request to the converter.
-  bool Suggest(const composer::Composer &composer,
-               const commands::Context &context) override;
+  bool Suggest(const composer::Composer& composer,
+               const commands::Context& context) override;
   bool SuggestWithPreferences(
-      const composer::Composer &composer, const commands::Context &context,
-      const ConversionPreferences &preferences) override;
+      const composer::Composer& composer, const commands::Context& context,
+      const ConversionPreferences& preferences) override;
 
   // Sends a prediction request to the converter.
-  bool Predict(const composer::Composer &composer) override;
+  bool Predict(const composer::Composer& composer) override;
   bool PredictWithPreferences(
-      const composer::Composer &composer,
-      const ConversionPreferences &preferences) override;
+      const composer::Composer& composer,
+      const ConversionPreferences& preferences) override;
 
   // Clears conversion segments, but keep the context.
   void Cancel() override;
@@ -119,8 +119,8 @@ class EngineConverter : public EngineConverterInterface {
   void Reset() override;
 
   // Fixes the conversion with the current status.
-  void Commit(const composer::Composer &composer,
-              const commands::Context &context) override;
+  void Commit(const composer::Composer& composer,
+              const commands::Context& context) override;
 
   // Fixes the suggestion candidate. Stores the number of characters in the key
   // of the committed candidate to committed_key_size.
@@ -149,16 +149,16 @@ class EngineConverter : public EngineConverterInterface {
   //   Typing correction.
   //   The value クエリ corresponds to raw composition "じゅえり".
   // True is returned if the suggestion is successfully committed.
-  bool CommitSuggestionByIndex(size_t index, const composer::Composer &composer,
-                               const commands::Context &context,
-                               size_t *consumed_key_size) override;
+  bool CommitSuggestionByIndex(size_t index, const composer::Composer& composer,
+                               const commands::Context& context,
+                               size_t* consumed_key_size) override;
 
   // Selects a candidate and commit the selected candidate.  True is
   // returned if the suggestion is successfully committed.
   // c.f. CommitSuggestionInternal
-  bool CommitSuggestionById(int id, const composer::Composer &composer,
-                            const commands::Context &context,
-                            size_t *consumed_key_size) override;
+  bool CommitSuggestionById(int id, const composer::Composer& composer,
+                            const commands::Context& context,
+                            size_t* consumed_key_size) override;
 
   // Fixes only the conversion of the first segment, and keep the rest.
   // The caller should delete characters from composer based on returned
@@ -167,19 +167,19 @@ class EngineConverter : public EngineConverterInterface {
   // so Commit() method is called instead. In this case, the caller
   // should not delete any characters.
   // c.f. CommitSuggestionInternal
-  void CommitFirstSegment(const composer::Composer &composer,
-                          const commands::Context &context,
-                          size_t *consumed_key_size) override;
+  void CommitFirstSegment(const composer::Composer& composer,
+                          const commands::Context& context,
+                          size_t* consumed_key_size) override;
 
   // Does almost the same thing as CommitFirstSegment.
   // The only difference is to fix the segments from the head to the focused.
-  void CommitHeadToFocusedSegments(const composer::Composer &composer,
-                                   const commands::Context &context,
-                                   size_t *consumed_key_size) override;
+  void CommitHeadToFocusedSegments(const composer::Composer& composer,
+                                   const commands::Context& context,
+                                   size_t* consumed_key_size) override;
 
   // Commits the preedit string represented by Composer.
-  void CommitPreedit(const composer::Composer &composer,
-                     const commands::Context &context) override;
+  void CommitPreedit(const composer::Composer& composer,
+                     const commands::Context& context) override;
 
   // Commits the specified number of characters at the head of the preedit
   // string represented by Composer.
@@ -187,8 +187,8 @@ class EngineConverter : public EngineConverterInterface {
   // |consumed_key_size|.
   // c.f. CommitSuggestionInternal
   // TODO(yamaguchi): Enhance to support the conversion mode.
-  void CommitHead(size_t count, const composer::Composer &composer,
-                  size_t *consumed_key_size) override;
+  void CommitHead(size_t count, const composer::Composer& composer,
+                  size_t* consumed_key_size) override;
 
   // Reverts the last "Commit" operation
   void Revert() override;
@@ -205,16 +205,16 @@ class EngineConverter : public EngineConverterInterface {
   void SegmentFocusLeftEdge() override;
 
   // Resizes the focused segment.
-  void SegmentWidthExpand(const composer::Composer &composer) override;
-  void SegmentWidthShrink(const composer::Composer &composer) override;
+  void SegmentWidthExpand(const composer::Composer& composer) override;
+  void SegmentWidthShrink(const composer::Composer& composer) override;
 
   // Moves the focus of candidates.
-  void CandidateNext(const composer::Composer &composer) override;
+  void CandidateNext(const composer::Composer& composer) override;
   void CandidateNextPage() override;
   void CandidatePrev() override;
   void CandidatePrevPage() override;
   // Moves the focus to the candidate represented by the id.
-  void CandidateMoveToId(int id, const composer::Composer &composer) override;
+  void CandidateMoveToId(int id, const composer::Composer& composer) override;
   // Moves the focus to the index from the beginning of the current page.
   void CandidateMoveToPageIndex(size_t index) override;
   // Moves the focus to the candidate represented by the shortcut.  If
@@ -225,16 +225,16 @@ class EngineConverter : public EngineConverterInterface {
   void SetCandidateListVisible(bool visible) override;
 
   // Fills protocol buffers and update the internal status.
-  void PopOutput(const composer::Composer &composer,
-                 commands::Output *output) override;
+  void PopOutput(const composer::Composer& composer,
+                 commands::Output* output) override;
 
   // Fills preedit
-  void FillPreedit(const composer::Composer &composer,
-                   commands::Preedit *preedit) const override;
+  void FillPreedit(const composer::Composer& composer,
+                   commands::Preedit* preedit) const override;
 
   // Fills protocol buffers
-  void FillOutput(const composer::Composer &composer,
-                  commands::Output *output) const override;
+  void FillOutput(const composer::Composer& composer,
+                  commands::Output* output) const override;
 
   // Sets setting by the request;
   void SetRequest(std::shared_ptr<const commands::Request> request) override;
@@ -243,10 +243,10 @@ class EngineConverter : public EngineConverterInterface {
   void SetConfig(std::shared_ptr<const config::Config> config) override;
 
   // Set setting by the context.
-  void OnStartComposition(const commands::Context &context) override;
+  void OnStartComposition(const commands::Context& context) override;
 
   // Copies EngineConverter
-  EngineConverter *Clone() const override;
+  EngineConverter* Clone() const override;
 
   void set_selection_shortcut(
       config::Config::SelectionShortcut selection_shortcut) override {
@@ -264,7 +264,7 @@ class EngineConverter : public EngineConverterInterface {
 
  private:
   // Uses default copy operator to simply copy all members.
-  EngineConverter &operator=(const EngineConverter &) = default;
+  EngineConverter& operator=(const EngineConverter&) = default;
 
   friend class EngineConverterTest;
 
@@ -284,15 +284,15 @@ class EngineConverter : public EngineConverterInterface {
   // and keep the rest.
   // Internal implementation for CommitFirstSegment and
   // CommitHeadToFocusedSegment.
-  void CommitSegmentsInternal(const composer::Composer &composer,
-                              const commands::Context &context,
+  void CommitSegmentsInternal(const composer::Composer& composer,
+                              const commands::Context& context,
                               size_t segments_to_commit,
-                              size_t *consumed_key_size);
+                              size_t* consumed_key_size);
 
   // Gets preedit from segment(index) to segment(index + size).
-  void GetPreedit(size_t index, size_t size, std::string *preedit) const;
+  void GetPreedit(size_t index, size_t size, std::string* preedit) const;
   // Gets conversion from segment(index) to segment(index + size).
-  void GetConversion(size_t index, size_t size, std::string *conversion) const;
+  void GetConversion(size_t index, size_t size, std::string* conversion) const;
   // Gets consumed size of the preedit characters.
   // c.f. CommitSuggestionInternal
   size_t GetConsumedPreeditSize(size_t index, size_t size) const;
@@ -302,7 +302,7 @@ class EngineConverter : public EngineConverterInterface {
   bool MaybePerformCommandCandidate(size_t index, size_t size);
 
   // Updates internal states and fill result_.
-  bool UpdateResult(size_t index, size_t size, size_t *consumed_key_size);
+  bool UpdateResult(size_t index, size_t size, size_t* consumed_key_size);
 
   // Updates ResultTokens of result_.
   void UpdateResultTokens(size_t index, size_t size);
@@ -321,44 +321,44 @@ class EngineConverter : public EngineConverterInterface {
 
   // If focus_id is pointing to the last of suggestions,
   // call StartPrediction().
-  void MaybeExpandPrediction(const composer::Composer &composer);
+  void MaybeExpandPrediction(const composer::Composer& composer);
 
   // Returns the value of candidate to be used by the converter.
   std::string GetSelectedCandidateValue(size_t segment_index) const;
 
   // Returns the candidate to be used by the converter.
-  const converter::Candidate &GetSelectedCandidate(size_t segment_index) const;
+  const converter::Candidate& GetSelectedCandidate(size_t segment_index) const;
 
   // Returns the length of committed candidate's key in characters.
   // True is returned if the selected candidate is successfully committed.
-  bool CommitSuggestionInternal(const composer::Composer &composer,
-                                const commands::Context &context,
-                                size_t *consumed_key_size);
+  bool CommitSuggestionInternal(const composer::Composer& composer,
+                                const commands::Context& context,
+                                size_t* consumed_key_size);
 
   void SegmentFocusInternal(size_t segment_index);
-  void ResizeSegmentWidth(const composer::Composer &composer, int delta);
+  void ResizeSegmentWidth(const composer::Composer& composer, int delta);
 
-  void FillConversion(commands::Preedit *preedit) const;
-  void FillResult(commands::Result *result) const;
-  void FillCandidateWindow(commands::CandidateWindow *candidate_window) const;
+  void FillConversion(commands::Preedit* preedit) const;
+  void FillResult(commands::Result* result) const;
+  void FillCandidateWindow(commands::CandidateWindow* candidate_window) const;
 
   // Fills protocol buffers with all flatten candidate words.
-  void FillAllCandidateWords(commands::CandidateList *candidates) const;
-  void FillIncognitoCandidateWords(commands::CandidateList *candidates) const;
+  void FillAllCandidateWords(commands::CandidateList* candidates) const;
+  void FillIncognitoCandidateWords(commands::CandidateList* candidates) const;
 
-  bool IsEmptySegment(const Segment &segment) const;
+  bool IsEmptySegment(const Segment& segment) const;
 
   // Handles selected_indices for usage stats.
   void InitializeSelectedCandidateIndices();
   void UpdateSelectedCandidateIndex();
   void UpdateCandidateStats(absl::string_view base_name, int32_t index);
   void CommitSegmentsSize(EngineConverterInterface::State commit_state,
-                          const commands::Context &context);
+                          const commands::Context& context);
   void CommitSegmentsSize(size_t commit_segments_size);
 
   // Sets request type and update the engine_converter's state
   void SetRequestType(ConversionRequest::RequestType request_type,
-                      ConversionRequest::Options &options);
+                      ConversionRequest::Options& options);
 
   std::shared_ptr<const ConverterInterface> converter_;
 

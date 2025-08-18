@@ -49,8 +49,8 @@ namespace mozc {
 // well as Kana-Kanji converter/predictor, etc.
 class EngineInterface {
  public:
-  EngineInterface(const EngineInterface &) = delete;
-  EngineInterface &operator=(const EngineInterface &) = delete;
+  EngineInterface(const EngineInterface&) = delete;
+  EngineInterface& operator=(const EngineInterface&) = delete;
 
   virtual ~EngineInterface() = default;
 
@@ -93,21 +93,21 @@ class EngineInterface {
   virtual std::vector<std::string> GetPosList() const { return {}; }
 
   // Maybe reload a new data manager. Returns true if reloaded.
-  virtual bool MaybeReloadEngine(EngineReloadResponse *response) {
+  virtual bool MaybeReloadEngine(EngineReloadResponse* response) {
     return false;
   }
-  virtual bool SendEngineReloadRequest(const EngineReloadRequest &request) {
+  virtual bool SendEngineReloadRequest(const EngineReloadRequest& request) {
     return false;
   }
   virtual bool SendSupplementalModelReloadRequest(
-      const EngineReloadRequest &request) {
+      const EngineReloadRequest& request) {
     return false;
   }
 
   // Evaluates user dictionary command.
   virtual bool EvaluateUserDictionaryCommand(
-      const user_dictionary::UserDictionaryCommand &command,
-      user_dictionary::UserDictionaryCommandStatus *status) {
+      const user_dictionary::UserDictionaryCommand& command,
+      user_dictionary::UserDictionaryCommandStatus* status) {
     return false;
   }
 

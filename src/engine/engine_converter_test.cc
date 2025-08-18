@@ -95,11 +95,11 @@ constexpr char kChars_Mozukusu[] = "もずくす";
 constexpr char kChars_Momonga[] = "ももんが";
 }  // namespace
 
-void AddSegmentWithSingleCandidate(Segments *segments, absl::string_view key,
+void AddSegmentWithSingleCandidate(Segments* segments, absl::string_view key,
                                    absl::string_view value) {
-  Segment *seg = segments->add_segment();
+  Segment* seg = segments->add_segment();
   seg->set_key(key);
-  converter::Candidate *cand = seg->add_candidate();
+  converter::Candidate* cand = seg->add_candidate();
   cand->key.assign(key.data(), key.size());
   cand->content_key = cand->key;
   cand->value.assign(value.data(), value.size());
@@ -124,73 +124,73 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     composer_.reset();
   }
 
-  static void GetSegments(const EngineConverter &converter, Segments *dest) {
+  static void GetSegments(const EngineConverter& converter, Segments* dest) {
     CHECK(dest);
     *dest = converter.segments_;
   }
 
-  static const Segments &GetSegments(const EngineConverter &converter) {
+  static const Segments& GetSegments(const EngineConverter& converter) {
     return converter.segments_;
   }
 
-  static void SetSegments(const Segments &src, EngineConverter *converter) {
+  static void SetSegments(const Segments& src, EngineConverter* converter) {
     CHECK(converter);
     converter->segments_ = src;
   }
 
-  static const commands::Result &GetResult(const EngineConverter &converter) {
+  static const commands::Result& GetResult(const EngineConverter& converter) {
     return converter.result_;
   }
 
-  static const CandidateList &GetCandidateList(
-      const EngineConverter &converter) {
+  static const CandidateList& GetCandidateList(
+      const EngineConverter& converter) {
     return converter.candidate_list_;
   }
 
   static EngineConverterInterface::State GetState(
-      const EngineConverter &converter) {
+      const EngineConverter& converter) {
     return converter.state_;
   }
 
   static void SetState(EngineConverterInterface::State state,
-                       EngineConverter *converter) {
+                       EngineConverter* converter) {
     converter->state_ = state;
   }
 
-  static size_t GetSegmentIndex(const EngineConverter &converter) {
+  static size_t GetSegmentIndex(const EngineConverter& converter) {
     return converter.segment_index_;
   }
 
-  static bool IsCandidateListVisible(const EngineConverter &converter) {
+  static bool IsCandidateListVisible(const EngineConverter& converter) {
     return converter.candidate_list_visible_;
   }
 
-  static const commands::Request &GetRequest(const EngineConverter &converter) {
+  static const commands::Request& GetRequest(const EngineConverter& converter) {
     return *converter.request_;
   }
 
-  static void GetPreedit(const EngineConverter &converter, size_t index,
-                         size_t size, std::string *conversion) {
+  static void GetPreedit(const EngineConverter& converter, size_t index,
+                         size_t size, std::string* conversion) {
     converter.GetPreedit(index, size, conversion);
   }
 
-  static void GetConversion(const EngineConverter &converter, size_t index,
-                            size_t size, std::string *conversion) {
+  static void GetConversion(const EngineConverter& converter, size_t index,
+                            size_t size, std::string* conversion) {
     converter.GetConversion(index, size, conversion);
   }
 
   static void AppendCandidateList(ConversionRequest::RequestType request_type,
-                                  EngineConverter *converter) {
+                                  EngineConverter* converter) {
     ConversionRequest::Options unused_options;
     converter->SetRequestType(request_type, unused_options);
     converter->AppendCandidateList();
   }
 
   // set result for "あいうえお"
-  static void SetAiueo(Segments *segments) {
+  static void SetAiueo(Segments* segments) {
     segments->Clear();
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segment = segments->add_segment();
     segment->set_key("あいうえお");
@@ -207,9 +207,9 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   }
 
   // set result for "かまぼこのいんぼう"
-  static void SetKamaboko(Segments *segments) {
-    Segment *segment;
-    converter::Candidate *candidate;
+  static void SetKamaboko(Segments* segments) {
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segments->Clear();
     segment = segments->add_segment();
@@ -239,7 +239,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     candidate->content_value = candidate->value;
 
     // Set dummy T13Ns
-    std::vector<converter::Candidate> *meta_candidates =
+    std::vector<converter::Candidate>* meta_candidates =
         segment->mutable_meta_candidates();
     meta_candidates->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
@@ -250,15 +250,15 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   }
 
   // set T13N candidates to segments using composer
-  static void FillT13Ns(Segments *segments,
-                        const composer::Composer *composer) {
+  static void FillT13Ns(Segments* segments,
+                        const composer::Composer* composer) {
     size_t composition_pos = 0;
-    for (Segment &segment : segments->conversion_segments()) {
+    for (Segment& segment : segments->conversion_segments()) {
       const size_t composition_len = Util::CharsLen(segment.key());
       std::vector<std::string> t13ns;
       composer->GetSubTransliterations(composition_pos, composition_len,
                                        &t13ns);
-      std::vector<converter::Candidate> *meta_candidates =
+      std::vector<converter::Candidate>* meta_candidates =
           segment.mutable_meta_candidates();
       meta_candidates->resize(transliteration::NUM_T13N_TYPES);
       for (size_t j = 0; j < transliteration::NUM_T13N_TYPES; ++j) {
@@ -272,12 +272,12 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   }
 
   // Sets the result for "like"
-  void SetLike(Segments *segments) {
+  void SetLike(Segments* segments) {
     composer_->InsertCharacterKeyAndPreedit("li", "ぃ");
     composer_->InsertCharacterKeyAndPreedit("ke", "け");
 
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segments->Clear();
     segment = segments->add_segment();
@@ -301,8 +301,8 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
 
   static Segments GetSegmentsTest() {
     Segments segments;
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key("てすと");
     candidate = segment->add_candidate();
     candidate->value = "テスト";
@@ -311,8 +311,8 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     return segments;
   }
 
-  static void InsertASCIISequence(const std::string &text,
-                                  composer::Composer *composer) {
+  static void InsertASCIISequence(const std::string& text,
+                                  composer::Composer* composer) {
     for (size_t i = 0; i < text.size(); ++i) {
       commands::KeyEvent key;
       key.set_key_code(text[i]);
@@ -320,8 +320,8 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     }
   }
 
-  static void ExpectSameEngineConverter(const EngineConverter &lhs,
-                                        const EngineConverter &rhs) {
+  static void ExpectSameEngineConverter(const EngineConverter& lhs,
+                                        const EngineConverter& rhs) {
     EXPECT_EQ(lhs.IsActive(), rhs.IsActive());
     EXPECT_EQ(IsCandidateListVisible(lhs), IsCandidateListVisible(rhs));
     EXPECT_EQ(GetSegmentIndex(lhs), GetSegmentIndex(rhs));
@@ -335,16 +335,16 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     GetSegments(rhs, &segments_rhs);
     EXPECT_EQ(segments_lhs.segments_size(), segments_rhs.segments_size());
     for (size_t i = 0; i < segments_lhs.segments_size(); ++i) {
-      const Segment &segment_lhs = segments_lhs.segment(i);
-      const Segment &segment_rhs = segments_rhs.segment(i);
+      const Segment& segment_lhs = segments_lhs.segment(i);
+      const Segment& segment_rhs = segments_rhs.segment(i);
       EXPECT_EQ(segment_lhs.key(), segment_rhs.key()) << " i=" << i;
       EXPECT_EQ(segment_lhs.segment_type(), segment_rhs.segment_type())
           << " i=" << i;
       EXPECT_EQ(segment_lhs.candidates_size(), segment_rhs.candidates_size());
     }
 
-    const CandidateList &candidate_list_lhs = GetCandidateList(lhs);
-    const CandidateList &candidate_list_rhs = GetCandidateList(rhs);
+    const CandidateList& candidate_list_lhs = GetCandidateList(lhs);
+    const CandidateList& candidate_list_rhs = GetCandidateList(rhs);
     EXPECT_EQ(candidate_list_lhs.name(), candidate_list_rhs.name());
     EXPECT_EQ(candidate_list_lhs.page_size(), candidate_list_rhs.page_size());
     EXPECT_EQ(candidate_list_lhs.size(), candidate_list_rhs.size());
@@ -355,8 +355,8 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     EXPECT_EQ(candidate_list_lhs.focused(), candidate_list_rhs.focused());
 
     for (int i = 0; i < candidate_list_lhs.size(); ++i) {
-      const Candidate &candidate_lhs = candidate_list_lhs.candidate(i);
-      const Candidate &candidate_rhs = candidate_list_rhs.candidate(i);
+      const Candidate& candidate_lhs = candidate_list_lhs.candidate(i);
+      const Candidate& candidate_rhs = candidate_list_rhs.candidate(i);
       EXPECT_EQ(candidate_lhs.id(), candidate_rhs.id());
       EXPECT_EQ(candidate_lhs.attributes(), candidate_rhs.attributes());
       EXPECT_EQ(candidate_lhs.HasSubcandidateList(),
@@ -372,7 +372,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   }
 
   static ::testing::AssertionResult ExpectSelectedCandidateIndices(
-      const char *, const char *, const EngineConverter &converter,
+      const char*, const char*, const EngineConverter& converter,
       absl::Span<const int> expected) {
     absl::Span<const int> actual = converter.selected_candidate_indices_;
 
@@ -395,7 +395,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     return ::testing::AssertionSuccess();
   }
 
-  static void SetCommandCandidate(Segments *segments, int segment_index,
+  static void SetCommandCandidate(Segments* segments, int segment_index,
                                   int candidate_index,
                                   converter::Candidate::Command command) {
     segments->mutable_conversion_segment(segment_index)
@@ -445,7 +445,7 @@ TEST_F(EngineConverterTest, Convert) {
   EXPECT_TRUE(output.has_preedit());
   EXPECT_FALSE(output.has_candidate_window());
 
-  const commands::Preedit &conversion = output.preedit();
+  const commands::Preedit& conversion = output.preedit();
   EXPECT_EQ(conversion.segment_size(), 1);
   EXPECT_EQ(conversion.segment(0).annotation(),
             commands::Preedit::Segment::HIGHLIGHT);
@@ -466,7 +466,7 @@ TEST_F(EngineConverterTest, Convert) {
   expected_indices.clear();
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
-  const commands::Result &result = output.result();
+  const commands::Result& result = output.result();
   EXPECT_EQ(result.value(), kChars_Aiueo);
   EXPECT_EQ(result.key(), kChars_Aiueo);
 
@@ -518,7 +518,7 @@ TEST_F(EngineConverterTest, ConvertToTransliteration) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "aiueo");
     EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -534,7 +534,7 @@ TEST_F(EngineConverterTest, ConvertToTransliteration) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "AIUEO");
     EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -550,7 +550,7 @@ TEST_F(EngineConverterTest, ConvertToTransliteration) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "ＡＩＵＥＯ");
     EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -581,7 +581,7 @@ TEST_F(EngineConverterTest, ConvertToTransliterationWithMultipleSegments) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 2);
     EXPECT_EQ(conversion.segment(0).value(), "ぃ");
     EXPECT_EQ(conversion.segment(1).value(), "家");
@@ -599,7 +599,7 @@ TEST_F(EngineConverterTest, ConvertToTransliterationWithMultipleSegments) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 2);
     EXPECT_EQ(conversion.segment(0).value(), "li");
     EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -613,8 +613,8 @@ TEST_F(EngineConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
   {
     Segments segments;
     {
-      Segment *segment;
-      converter::Candidate *candidate;
+      Segment* segment;
+      converter::Candidate* candidate;
       segment = segments.add_segment();
       segment->set_key("dvd");
       candidate = segment->add_candidate();
@@ -643,7 +643,7 @@ TEST_F(EngineConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "ｄｖｄ");
     EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -659,7 +659,7 @@ TEST_F(EngineConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "ＤＶＤ");
     EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -675,7 +675,7 @@ TEST_F(EngineConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "Ｄｖｄ");
     EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -709,7 +709,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     ASSERT_EQ(conversion.segment_size(), 2);
     EXPECT_EQ(conversion.segment(0).annotation(),
               commands::Preedit::Segment::HIGHLIGHT);
@@ -746,7 +746,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     ASSERT_EQ(candidate_window.size(),
               3);  // two candidates + one t13n sub list.
@@ -770,7 +770,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_candidate_window());
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.focused_index(), 0);
     ASSERT_EQ(candidate_window.size(),
@@ -795,7 +795,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.focused_index(), 0);
     ASSERT_EQ(candidate_window.size(),
@@ -823,7 +823,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.focused_index(), 0);
     ASSERT_EQ(candidate_window.size(),
@@ -851,7 +851,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.focused_index(), 0);
     ASSERT_EQ(candidate_window.size(),
@@ -876,7 +876,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_candidate_window());
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.focused_index(), 1);
     ASSERT_EQ(candidate_window.size(),
@@ -886,7 +886,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_EQ(candidate_window.candidate(1).value(), "印房");
     EXPECT_EQ(candidate_window.candidate(2).value(), "そのほかの文字種");
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment(0).value(), kKamabokono);
     EXPECT_EQ(conversion.segment(1).value(), "印房");
   }
@@ -923,7 +923,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.focused_index(), 0);
     ASSERT_EQ(candidate_window.size(),
@@ -935,7 +935,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
 
     EXPECT_EQ(candidate_window.candidate(2).value(), "そのほかの文字種");
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment(0).value(), kKamabokono);
     EXPECT_EQ(conversion.segment(1).value(), "印房");
   }
@@ -953,7 +953,7 @@ TEST_F(EngineConverterTest, MultiSegmentsConversion) {
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Result &result = output.result();
+    const commands::Result& result = output.result();
     EXPECT_EQ(result.value(), "かまぼこの印房");
     EXPECT_EQ(result.key(), "かまぼこのいんぼう");
     EXPECT_FALSE(converter.IsActive());
@@ -968,7 +968,7 @@ TEST_F(EngineConverterTest, Transliterations) {
 
   Segments segments;
   {  // Initialize segments.
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("くま");
     segment->add_candidate()->value = "クマー";
   }
@@ -994,7 +994,7 @@ TEST_F(EngineConverterTest, Transliterations) {
   EXPECT_TRUE(output.has_preedit());
   EXPECT_TRUE(output.has_candidate_window());
 
-  const commands::CandidateWindow &candidate_window = output.candidate_window();
+  const commands::CandidateWindow& candidate_window = output.candidate_window();
   EXPECT_EQ(candidate_window.size(), 2);  // one candidate + one t13n sub list.
   EXPECT_EQ(candidate_window.focused_index(), 1);
   EXPECT_EQ(candidate_window.candidate(1).value(), "そのほかの文字種");
@@ -1018,8 +1018,8 @@ TEST_F(EngineConverterTest, T13NWithResegmentation) {
   EngineConverter converter(mock_converter, request_, config_);
   {
     Segments segments;
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     CHECK(segment);
     segment->set_key("かまぼこの");
     candidate = segment->add_candidate();
@@ -1049,8 +1049,8 @@ TEST_F(EngineConverterTest, T13NWithResegmentation) {
   // Shrink segment
   {
     Segments segments;
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segments.Clear();
     segment = segments.add_segment();
@@ -1089,7 +1089,7 @@ TEST_F(EngineConverterTest, T13NWithResegmentation) {
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
-    const commands::Preedit &preedit = output.preedit();
+    const commands::Preedit& preedit = output.preedit();
     EXPECT_EQ(preedit.segment_size(), 3);
     EXPECT_EQ(preedit.segment(1).value(), "ｲﾝﾎﾞ");
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1106,7 +1106,7 @@ TEST_F(EngineConverterTest, ConvertToHalfWidth) {
 
   Segments segments;
   {  // Initialize segments.
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("あｂｃ");
     segment->add_candidate()->value = "あべし";
   }
@@ -1125,7 +1125,7 @@ TEST_F(EngineConverterTest, ConvertToHalfWidth) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "ｱbc");
   }
@@ -1141,7 +1141,7 @@ TEST_F(EngineConverterTest, ConvertToHalfWidth) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "ａｂｃ");
   }
@@ -1156,7 +1156,7 @@ TEST_F(EngineConverterTest, ConvertToHalfWidth) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "abc");
   }
@@ -1171,7 +1171,7 @@ TEST_F(EngineConverterTest, ConvertToHalfWidth) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "ABC");
   }
@@ -1188,7 +1188,7 @@ TEST_F(EngineConverterTest, ConvertToHalfWidth2) {
 
   Segments segments;
   {  // Initialize segments.
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("ｑ、。");
     segment->add_candidate()->value = "q,.";
     segment->add_candidate()->value = "q､｡";
@@ -1209,7 +1209,7 @@ TEST_F(EngineConverterTest, ConvertToHalfWidth2) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "q､｡");
   }
@@ -1224,7 +1224,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromCompositionMode) {
 
   Segments segments;
   {  // Initialize segments.
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("あｂｃ");
     segment->add_candidate()->value = "あべし";
   }
@@ -1243,7 +1243,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromCompositionMode) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "アｂｃ");
   }
@@ -1258,7 +1258,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromCompositionMode) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "ｱbc");
   }
@@ -1273,7 +1273,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromCompositionMode) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "あｂｃ");
   }
@@ -1289,7 +1289,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromConversionMode) {
 
   Segments segments;
   {  // Initialize segments.
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("かんじ");
     segment->add_candidate()->value = "漢字";
   }
@@ -1308,7 +1308,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "漢字");
   }
@@ -1323,7 +1323,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "かんじ");
   }
@@ -1338,7 +1338,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "カンジ");
   }
@@ -1353,7 +1353,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "ｶﾝｼﾞ");
   }
@@ -1368,7 +1368,7 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "かんじ");
   }
@@ -1427,7 +1427,7 @@ TEST_F(EngineConverterTest, CommitFirstSegment) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment(0).value(), kKamabokono);
     EXPECT_EQ(conversion.segment(1).value(), "陰謀");
   }
@@ -1447,14 +1447,14 @@ TEST_F(EngineConverterTest, CommitFirstSegment) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment(0).value(), "カマボコの");
     EXPECT_EQ(conversion.segment(1).value(), "陰謀");
   }
 
   {  // Initialization of CommitSegments.
     Segments segments_after_submit;
-    Segment *segment = segments_after_submit.add_segment();
+    Segment* segment = segments_after_submit.add_segment();
     segment->set_key("いんぼう");
     segment->add_candidate()->value = "陰謀";
     segment->add_candidate()->value = "印房";
@@ -1479,8 +1479,8 @@ TEST_F(EngineConverterTest, CommitHeadToFocusedSegments) {
   const std::string kItadaita = "いただいた";
   {  // Three segments as the result of conversion.
     Segments segments;
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segment = segments.add_segment();
     segment->set_key(kIberiko);
@@ -1513,8 +1513,8 @@ TEST_F(EngineConverterTest, CommitHeadToFocusedSegments) {
 
   {  // Initialization of CommitSegments.
     Segments segments;
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segment = segments.add_segment();
     segment->set_key(kItadaita);
@@ -1568,8 +1568,8 @@ TEST_F(EngineConverterTest, CommitConvertedBracketPairText) {
 
   {  // Initialize segments.
     segments.Clear();
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kKakko);
     candidate = segment->add_candidate();
     candidate->value = "（）";
@@ -1598,11 +1598,11 @@ TEST_F(EngineConverterTest, CommitConvertedBracketPairText) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::Preedit &preedit = output.preedit();
+    const commands::Preedit& preedit = output.preedit();
     EXPECT_EQ(preedit.segment_size(), 1);
     EXPECT_EQ(preedit.segment(0).value(), kKakko);
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.size(), 2);
     EXPECT_EQ(candidate_window.candidate(0).value(), "（）");
@@ -1632,7 +1632,7 @@ TEST_F(EngineConverterTest, CommitConvertedBracketPairText) {
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Result &result = output.result();
+    const commands::Result& result = output.result();
     EXPECT_EQ(result.value(), "「」");
     EXPECT_EQ(result.key(), kKakko);
     EXPECT_EQ(result.cursor_offset(), -1);
@@ -1663,7 +1663,7 @@ TEST_F(EngineConverterTest, CommitPreedit) {
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Result &result = output.result();
+    const commands::Result& result = output.result();
     EXPECT_EQ(result.value(), kChars_Aiueo);
     EXPECT_EQ(result.key(), kChars_Aiueo);
 
@@ -1696,7 +1696,7 @@ TEST_F(EngineConverterTest, CommitPreeditBracketPairText) {
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Result &result = output.result();
+    const commands::Result& result = output.result();
     EXPECT_EQ(result.value(), "（）");
     EXPECT_EQ(result.key(), "（）");
     EXPECT_EQ(result.cursor_offset(), -1);
@@ -1710,7 +1710,7 @@ TEST_F(EngineConverterTest, ClearSegmentsBeforeSuggest) {
   EngineConverter converter(mock_converter, request_, config_);
 
   // Call Suggest() and sets the segments of converter to the following one.
-  const Segments &segments = GetSegmentsTest();
+  const Segments& segments = GetSegmentsTest();
   EXPECT_CALL(*mock_converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   composer_->InsertCharacterPreedit("てすと");
@@ -1731,7 +1731,7 @@ TEST_F(EngineConverterTest, PredictIsNotCalledInPredictionState) {
 
   // Call Predict() and sets the segments of converter to the following one. By
   // calling Predict(), converter enters PREDICTION state.
-  const Segments &segments = GetSegmentsTest();
+  const Segments& segments = GetSegmentsTest();
   EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
       .WillOnce(DoAll(SetArgPointee<2>(segments), Return(true)));
   composer_->InsertCharacterPreedit("てすと");
@@ -1751,8 +1751,8 @@ TEST_F(EngineConverterTest, CommitSuggestionByIndex) {
   EngineConverter converter(mock_converter, request_, config_);
   Segments segments;
   {  // Initialize mock segments for suggestion
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -1780,11 +1780,11 @@ TEST_F(EngineConverterTest, CommitSuggestionByIndex) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::Preedit &preedit = output.preedit();
+    const commands::Preedit& preedit = output.preedit();
     EXPECT_EQ(preedit.segment_size(), 1);
     EXPECT_EQ(preedit.segment(0).value(), kChars_Mo);
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.size(), 2);
     EXPECT_EQ(candidate_window.candidate(0).value(), kChars_Mozukusu);
@@ -1814,7 +1814,7 @@ TEST_F(EngineConverterTest, CommitSuggestionByIndex) {
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Result &result = output.result();
+    const commands::Result& result = output.result();
     EXPECT_EQ(result.value(), kChars_Momonga);
     EXPECT_EQ(result.key(), kChars_Momonga);
     EXPECT_EQ(GetState(converter), EngineConverterInterface::COMPOSITION);
@@ -1827,8 +1827,8 @@ TEST_F(EngineConverterTest, CommitSuggestionById) {
   EngineConverter converter(mock_converter, request_, config_);
   Segments segments;
   {  // Initialize mock segments for suggestion
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -1877,7 +1877,7 @@ TEST_F(EngineConverterTest, CommitSuggestionById) {
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Result &result = output.result();
+    const commands::Result& result = output.result();
     EXPECT_EQ(result.value(), kChars_Momonga);
     EXPECT_EQ(result.key(), kChars_Momonga);
     EXPECT_EQ(GetState(converter), EngineConverterInterface::COMPOSITION);
@@ -1894,8 +1894,8 @@ TEST_F(EngineConverterTest, PartialPrediction) {
   const std::string kChars_Hakimonowo = "はきものを";
 
   {  // Initialize mock segments for partial prediction
-    Segment *segment = segments1.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments1.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Kokode);
     candidate = segment->add_candidate();
     candidate->value = "此処では";
@@ -1908,8 +1908,8 @@ TEST_F(EngineConverterTest, PartialPrediction) {
   // Suggestion that matches to the same key by its prefix.
   // Should not be used by partial prediction.
   {
-    Segment *segment = suggestion_segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = suggestion_segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Kokode);
     candidate = segment->add_candidate();
     candidate->value = "ここでは着物を";
@@ -1919,8 +1919,8 @@ TEST_F(EngineConverterTest, PartialPrediction) {
   }
 
   {  // Initialize mock segments for prediction
-    Segment *segment = segments2.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments2.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Hakimonowo);
     candidate = segment->add_candidate();
     candidate->value = "此処では";
@@ -1982,7 +1982,7 @@ TEST_F(EngineConverterTest, PartialPrediction) {
     converter.FillOutput(*composer_, &output);
     EXPECT_TRUE(output.has_result());
 
-    const commands::Result &result = output.result();
+    const commands::Result& result = output.result();
     EXPECT_EQ(result.value(), "此処では");
     EXPECT_EQ(result.key(), kChars_Kokode);
     EXPECT_EQ(GetState(converter), EngineConverterInterface::SUGGESTION);
@@ -1995,8 +1995,8 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
   const Segments suggest_segments = []() {
     // Initialize mock segments for suggestion
     Segments segments;
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -2038,7 +2038,7 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_FALSE(output.candidate_window().footer().index_visible());
     EXPECT_FALSE(output.candidate_window().footer().logo_visible());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.size(), 2);
     EXPECT_EQ(candidate_window.candidate(0).value(), kChars_Mozukusu);
@@ -2077,12 +2077,12 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_TRUE(output.candidate_window().footer().logo_visible());
 
     // Check the conversion
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), kChars_Mozukusu);
 
     // Check the candidate list
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     // Candidates should be the same as suggestion
     EXPECT_EQ(candidate_window.size(), 2);
@@ -2113,8 +2113,8 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
   const Segments expanded_segments = []() {
     Segments segments;
     // Initialize mock segments for prediction
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Mo);
     // From previous suggestion
     candidate = segment->add_candidate();
@@ -2152,7 +2152,7 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     // Candidates should be merged with the previous suggestions.
     EXPECT_EQ(candidate_window.size(), 4);
@@ -2189,7 +2189,7 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Result &result = output.result();
+    const commands::Result& result = output.result();
     EXPECT_EQ(result.value(), "モンドリアン");
     EXPECT_EQ(result.key(), "もんどりあん");
   }
@@ -2200,8 +2200,8 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
   const Segment kEmptySegment;
   const Segments nwp_segments = []() {
     Segments segments;
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     candidate = segment->add_candidate();
     candidate->value = "が";
     candidate->content_key = "が";
@@ -2226,12 +2226,12 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_TRUE(output.has_candidate_window());
 
     // Check the composition
-    const commands::Preedit &composition = output.preedit();
+    const commands::Preedit& composition = output.preedit();
     EXPECT_EQ(composition.segment_size(), 1);
     EXPECT_EQ(composition.segment(0).value(), "が");
 
     // Check the candidate list
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     // Candidates should NOT be merged with the previous suggestions.
     EXPECT_EQ(candidate_window.size(), 2);
@@ -2244,8 +2244,8 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
 TEST_F(EngineConverterTest, SuggestFillIncognitoCandidateWords) {
   Segments segments;
   {  // Initialize mock segments for suggestion
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -2301,8 +2301,8 @@ TEST_F(EngineConverterTest, OnePhaseSuggestion) {
   request_->set_mixed_conversion(true);
   Segments segments;
   {  // Initialize mock segments for suggestion (internally prediction)
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozuku;
@@ -2332,7 +2332,7 @@ TEST_F(EngineConverterTest, OnePhaseSuggestion) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.size(), 3);
     EXPECT_EQ(candidate_window.candidate(0).value(), kChars_Mozuku);
@@ -2390,7 +2390,7 @@ TEST_F(EngineConverterTest, AppendCandidateList) {
 
     SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::CONVERSION, &converter);
-    const CandidateList &candidate_list = GetCandidateList(converter);
+    const CandidateList& candidate_list = GetCandidateList(converter);
     // 3 == hiragana cand, katakana cand and sub candidate list.
     EXPECT_EQ(candidate_list.size(), 3);
     EXPECT_TRUE(candidate_list.focused());
@@ -2404,12 +2404,12 @@ TEST_F(EngineConverterTest, AppendCandidateList) {
     EXPECT_EQ(sub_cand_list_count, 1);
   }
   {
-    Segment *segment = segments.mutable_conversion_segment(0);
-    converter::Candidate *candidate = segment->add_candidate();
+    Segment* segment = segments.mutable_conversion_segment(0);
+    converter::Candidate* candidate = segment->add_candidate();
     candidate->value = "あいうえお_2";
     // New meta candidates.
     // They should be ignored.
-    std::vector<converter::Candidate> *meta_candidates =
+    std::vector<converter::Candidate>* meta_candidates =
         segment->mutable_meta_candidates();
     meta_candidates->clear();
     meta_candidates->resize(1);
@@ -2419,7 +2419,7 @@ TEST_F(EngineConverterTest, AppendCandidateList) {
 
     SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::CONVERSION, &converter);
-    const CandidateList &candidate_list = GetCandidateList(converter);
+    const CandidateList& candidate_list = GetCandidateList(converter);
     // 4 == hiragana cand, katakana cand, hiragana cand2
     // and sub candidate list.
     EXPECT_EQ(candidate_list.size(), 4);
@@ -2455,7 +2455,7 @@ TEST_F(EngineConverterTest, AppendCandidateListForRequestTypes) {
     FillT13Ns(&segments, composer_.get());
     SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::SUGGESTION, &converter);
-    const CandidateList &candidate_list = GetCandidateList(converter);
+    const CandidateList& candidate_list = GetCandidateList(converter);
     EXPECT_FALSE(candidate_list.focused());
   }
 
@@ -2466,7 +2466,7 @@ TEST_F(EngineConverterTest, AppendCandidateListForRequestTypes) {
     FillT13Ns(&segments, composer_.get());
     SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::PARTIAL_SUGGESTION, &converter);
-    const CandidateList &candidate_list = GetCandidateList(converter);
+    const CandidateList& candidate_list = GetCandidateList(converter);
     EXPECT_FALSE(candidate_list.focused());
   }
 
@@ -2477,7 +2477,7 @@ TEST_F(EngineConverterTest, AppendCandidateListForRequestTypes) {
     FillT13Ns(&segments, composer_.get());
     SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::PARTIAL_PREDICTION, &converter);
-    const CandidateList &candidate_list = GetCandidateList(converter);
+    const CandidateList& candidate_list = GetCandidateList(converter);
     EXPECT_FALSE(candidate_list.focused());
   }
 }
@@ -2508,7 +2508,7 @@ TEST_F(EngineConverterTest, ReloadConfig) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(), "1");
     EXPECT_EQ(candidate_window.candidate(1).annotation().shortcut(), "2");
@@ -2525,7 +2525,7 @@ TEST_F(EngineConverterTest, ReloadConfig) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_TRUE(candidate_window.candidate(0).annotation().shortcut().empty());
     EXPECT_TRUE(candidate_window.candidate(1).annotation().shortcut().empty());
@@ -2613,8 +2613,8 @@ TEST_F(EngineConverterTest, OutputAllCandidateWords) {
 TEST_F(EngineConverterTest, GetPreeditAndGetConversion) {
   Segments segments;
 
-  Segment *segment;
-  converter::Candidate *candidate;
+  Segment* segment;
+  converter::Candidate* candidate;
 
   segment = segments.add_segment();
   segment->set_segment_type(Segment::HISTORY);
@@ -2708,9 +2708,9 @@ TEST_F(EngineConverterTest, GetAndSetSegments) {
   // Set history segments.
   const std::string kHistoryInput[] = {"車で", "行く"};
   for (size_t i = 0; i < std::size(kHistoryInput); ++i) {
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_segment_type(Segment::HISTORY);
-    converter::Candidate *candidate = segment->add_candidate();
+    converter::Candidate* candidate = segment->add_candidate();
     candidate->value = kHistoryInput[i];
   }
   EXPECT_CALL(*mock_converter, FinishConversion(_, _))
@@ -2724,9 +2724,9 @@ TEST_F(EngineConverterTest, GetAndSetSegments) {
   EXPECT_EQ(src.history_segment(1).candidate(0).value, "行く");
 
   src.mutable_history_segment(0)->mutable_candidate(0)->value = "歩いて";
-  Segment *segment = src.add_segment();
+  Segment* segment = src.add_segment();
   segment->set_segment_type(Segment::FREE);
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "?";
 
   SetSegments(src, &converter);
@@ -2790,8 +2790,8 @@ TEST_F(EngineConverterTest, Issue1948334) {
   EngineConverter converter(mock_converter, request_, config_);
   Segments segments;
   {  // Initialize mock segments for the first suggestion
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -2811,8 +2811,8 @@ TEST_F(EngineConverterTest, Issue1948334) {
 
   segments.Clear();
   {  // Initialize mock segments for the second suggestion
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key("もず");
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -2834,7 +2834,7 @@ TEST_F(EngineConverterTest, Issue1948334) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     // Candidates should be merged with the previous suggestions.
     EXPECT_EQ(candidate_window.size(), 1);
@@ -2862,8 +2862,8 @@ TEST_F(EngineConverterTest, Issue1960362) {
 
   Segments segments;
   {
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segment = segments.add_segment();
     segment->set_key("ZYU");
@@ -2880,8 +2880,8 @@ TEST_F(EngineConverterTest, Issue1960362) {
 
   Segments resized_segments;
   {
-    Segment *segment = resized_segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = resized_segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key("ZYUt");
     candidate = segment->add_candidate();
     candidate->value = "[ZYUt]";
@@ -2904,7 +2904,7 @@ TEST_F(EngineConverterTest, Issue1960362) {
   EXPECT_TRUE(output.has_preedit());
   EXPECT_FALSE(output.has_candidate_window());
 
-  const commands::Preedit &conversion = output.preedit();
+  const commands::Preedit& conversion = output.preedit();
   EXPECT_EQ(conversion.segment(0).value(), "jyut");
 }
 
@@ -2916,8 +2916,8 @@ TEST_F(EngineConverterTest, Issue1978201) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   {  // Initialize mock segments for prediction
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozuku;
@@ -2941,7 +2941,7 @@ TEST_F(EngineConverterTest, Issue1978201) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), kChars_Mozuku);
   }
@@ -2958,7 +2958,7 @@ TEST_F(EngineConverterTest, Issue1978201) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), kChars_Mozuku);
   }
@@ -3008,9 +3008,9 @@ TEST_F(EngineConverterTest, Issue2029557) {
 
   // Transliteration (as <F6>)
   segments.Clear();
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("a");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "a";
 
   FillT13Ns(&segments, composer_.get());
@@ -3029,9 +3029,9 @@ TEST_F(EngineConverterTest, Issue2031986) {
 
   {  // Initialize a suggest result triggered by "aaaa".
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("aaaa");
-    converter::Candidate *candidate;
+    converter::Candidate* candidate;
     candidate = segment->add_candidate();
     candidate->value = "AAAA";
     candidate = segment->add_candidate();
@@ -3046,7 +3046,7 @@ TEST_F(EngineConverterTest, Issue2031986) {
 
   {  // Initialize no suggest result triggered by "aaaaa".
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("aaaaa");
     EXPECT_CALL(*mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
@@ -3071,7 +3071,7 @@ TEST_F(EngineConverterTest, Issue2040116) {
   {
     // Initialize no predict result.
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("G");
     EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
         .WillOnce(DoAll(SetArgPointee<2>(segments), Return(false)));
@@ -3084,9 +3084,9 @@ TEST_F(EngineConverterTest, Issue2040116) {
   {
     // Initialize a suggest result triggered by "G".
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("G");
-    converter::Candidate *candidate;
+    converter::Candidate* candidate;
     candidate = segment->add_candidate();
     candidate->value = "GoogleSuggest";
     EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
@@ -3104,7 +3104,7 @@ TEST_F(EngineConverterTest, Issue2040116) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "GoogleSuggest");
   }
@@ -3113,7 +3113,7 @@ TEST_F(EngineConverterTest, Issue2040116) {
     // Initialize no predict result triggered by "G".  It's possible
     // by Google Suggest.
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("G");
     EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
         .Times(0);
@@ -3131,11 +3131,11 @@ TEST_F(EngineConverterTest, Issue2040116) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 1);
     EXPECT_EQ(conversion.segment(0).value(), "GoogleSuggest");
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.candidate_size(), 1);
   }
@@ -3145,13 +3145,13 @@ TEST_F(EngineConverterTest, GetReadingText) {
   auto mock_converter = std::make_shared<MockConverter>();
   EngineConverter converter(mock_converter, request_, config_);
 
-  const char *kKanjiAiueo = "阿伊宇江於";
+  const char* kKanjiAiueo = "阿伊宇江於";
   // Set up Segments for reverse conversion.
   Segments reverse_segments;
-  Segment *segment;
+  Segment* segment;
   segment = reverse_segments.add_segment();
   segment->set_key(kKanjiAiueo);
-  converter::Candidate *candidate;
+  converter::Candidate* candidate;
   candidate = segment->add_candidate();
   // For reverse conversion, key is the original kanji string.
   candidate->key = kKanjiAiueo;
@@ -3170,7 +3170,7 @@ TEST_F(EngineConverterTest, ZeroQuerySuggestion) {
 
   // Set up a mock suggestion result.
   Segments segments;
-  Segment *segment;
+  Segment* segment;
   segment = segments.add_segment();
   segment->set_key("");
   segment->add_candidate()->value = "search";
@@ -3190,7 +3190,7 @@ TEST_F(EngineConverterTest, ZeroQuerySuggestion) {
     EXPECT_FALSE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         output.candidate_window();
     EXPECT_EQ(candidate_window.size(), 2);
     EXPECT_EQ(candidate_window.candidate(0).value(), "search");
@@ -3255,7 +3255,7 @@ TEST_F(EngineConverterTest, CommitHead) {
   EXPECT_TRUE(output.has_result());
   EXPECT_FALSE(output.has_candidate_window());
 
-  const commands::Result &result = output.result();
+  const commands::Result& result = output.result();
   EXPECT_EQ(result.value(), "あ");
   EXPECT_EQ(result.key(), "あ");
   std::string preedit = composer_->GetStringForPreedit();
@@ -3270,7 +3270,7 @@ TEST_F(EngineConverterTest, CommitHead) {
   EXPECT_TRUE(output.has_result());
   EXPECT_FALSE(output.has_candidate_window());
 
-  const commands::Result &result2 = output.result();
+  const commands::Result& result2 = output.result();
   EXPECT_EQ(result2.value(), "いうえ");
   EXPECT_EQ(result2.key(), "いうえ");
   preedit = composer_->GetStringForPreedit();
@@ -3626,7 +3626,7 @@ TEST_F(EngineConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (Segment &segment : segments) {
+    for (Segment& segment : segments) {
       segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
@@ -3641,7 +3641,7 @@ TEST_F(EngineConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (Segment &segment : segments) {
+    for (Segment& segment : segments) {
       segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
@@ -3658,7 +3658,7 @@ TEST_F(EngineConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (Segment &segment : segments) {
+    for (Segment& segment : segments) {
       segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
@@ -3677,7 +3677,7 @@ TEST_F(EngineConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (Segment &segment : segments) {
+    for (Segment& segment : segments) {
       segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
@@ -3693,7 +3693,7 @@ TEST_F(EngineConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (Segment &segment : segments) {
+    for (Segment& segment : segments) {
       segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
@@ -3713,10 +3713,10 @@ TEST_F(EngineConverterTest, ReconstructHistoryByPrecedingText) {
   // Set up the result which mock_converter.ReconstructHistory() returns.
   Segments mock_result;
   {
-    Segment *segment = mock_result.add_segment();
+    Segment* segment = mock_result.add_segment();
     segment->set_key(kKey);
     segment->set_segment_type(Segment::HISTORY);
-    converter::Candidate *candidate = segment->push_back_candidate();
+    converter::Candidate* candidate = segment->push_back_candidate();
     candidate->rid = kId;
     candidate->lid = kId;
     candidate->content_key = kKey;
@@ -3788,8 +3788,8 @@ TEST_F(EngineConverterTest, ResultTokens) {
 
   Segments segments;
   {
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key("きょうは");
     candidate = segment->add_candidate();
     candidate->key = "きょうは";
@@ -3800,8 +3800,8 @@ TEST_F(EngineConverterTest, ResultTokens) {
     candidate->rid = 101;
   }
   {
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key("はれ");
     candidate = segment->add_candidate();
     candidate->key = "はれ";
@@ -3846,8 +3846,8 @@ TEST_F(EngineConverterTest, ResultTokensWithInnerSegements) {
 
   Segments segments;
   {
-    Segment *segment = segments.add_segment();
-    converter::Candidate *candidate;
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
     segment->set_key("きょうははれ");
     candidate = segment->add_candidate();
     candidate->key = "きょうははれ";

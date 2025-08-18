@@ -72,8 +72,8 @@ class Engine : public EngineInterface {
   // Creates an engine with no initialization.
   static std::unique_ptr<Engine> CreateEngine();
 
-  Engine(const Engine &) = delete;
-  Engine &operator=(const Engine &) = delete;
+  Engine(const Engine&) = delete;
+  Engine& operator=(const Engine&) = delete;
 
   std::shared_ptr<const ConverterInterface> GetConverter() const {
     return converter_ ? converter_ : minimal_converter_;
@@ -115,20 +115,20 @@ class Engine : public EngineInterface {
   }
 
   // For testing only.
-  engine::Modules &GetModulesForTesting() const {
+  engine::Modules& GetModulesForTesting() const {
     DCHECK(converter_);
     return converter_->modules();
   }
 
   // Maybe reload a new data manager. Returns true if reloaded.
-  bool MaybeReloadEngine(EngineReloadResponse *response) override;
-  bool SendEngineReloadRequest(const EngineReloadRequest &request) override;
+  bool MaybeReloadEngine(EngineReloadResponse* response) override;
+  bool SendEngineReloadRequest(const EngineReloadRequest& request) override;
   bool SendSupplementalModelReloadRequest(
-      const EngineReloadRequest &request) override;
+      const EngineReloadRequest& request) override;
 
   bool EvaluateUserDictionaryCommand(
-      const user_dictionary::UserDictionaryCommand &command,
-      user_dictionary::UserDictionaryCommandStatus *status) override;
+      const user_dictionary::UserDictionaryCommand& command,
+      user_dictionary::UserDictionaryCommandStatus* status) override;
 
   void SetAlwaysWaitForTesting(bool value) { always_wait_for_testing_ = value; }
 

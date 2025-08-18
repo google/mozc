@@ -87,42 +87,42 @@ class EngineConverterInterface {
 
   // Return the default conversion preferences to be used for custom
   // conversion.
-  virtual const ConversionPreferences &conversion_preferences() const = 0;
+  virtual const ConversionPreferences& conversion_preferences() const = 0;
 
   // Send a conversion request to the converter.
-  virtual bool Convert(const composer::Composer &composer) = 0;
+  virtual bool Convert(const composer::Composer& composer) = 0;
   virtual bool ConvertWithPreferences(
-      const composer::Composer &composer,
-      const ConversionPreferences &preferences) = 0;
+      const composer::Composer& composer,
+      const ConversionPreferences& preferences) = 0;
 
   // Get reading text (e.g. from "猫" to "ねこ").
-  virtual bool GetReadingText(absl::string_view str, std::string *reading) = 0;
+  virtual bool GetReadingText(absl::string_view str, std::string* reading) = 0;
 
   // Send a transliteration request to the converter.
   virtual bool ConvertToTransliteration(
-      const composer::Composer &composer,
+      const composer::Composer& composer,
       transliteration::TransliterationType type) = 0;
 
   // Convert the current composition to half-width characters.
   // NOTE(komatsu): This function might be merged to ConvertToTransliteration.
-  virtual bool ConvertToHalfWidth(const composer::Composer &composer) = 0;
+  virtual bool ConvertToHalfWidth(const composer::Composer& composer) = 0;
 
   // Switch the composition to Hiragana, full-width Katakana or
   // half-width Katakana by rotation.
-  virtual bool SwitchKanaType(const composer::Composer &composer) = 0;
+  virtual bool SwitchKanaType(const composer::Composer& composer) = 0;
 
   // Send a suggestion request to the converter.
-  virtual bool Suggest(const composer::Composer &composer,
-                       const commands::Context &context) = 0;
+  virtual bool Suggest(const composer::Composer& composer,
+                       const commands::Context& context) = 0;
   virtual bool SuggestWithPreferences(
-      const composer::Composer &composer, const commands::Context &context,
-      const ConversionPreferences &preferences) = 0;
+      const composer::Composer& composer, const commands::Context& context,
+      const ConversionPreferences& preferences) = 0;
 
   // Send a prediction request to the converter.
-  virtual bool Predict(const composer::Composer &composer) = 0;
+  virtual bool Predict(const composer::Composer& composer) = 0;
   virtual bool PredictWithPreferences(
-      const composer::Composer &composer,
-      const ConversionPreferences &preferences) = 0;
+      const composer::Composer& composer,
+      const ConversionPreferences& preferences) = 0;
 
   // Clear conversion segments, but keep the context.
   virtual void Cancel() = 0;
@@ -131,45 +131,45 @@ class EngineConverterInterface {
   virtual void Reset() = 0;
 
   // Fix the conversion with the current status.
-  virtual void Commit(const composer::Composer &composer,
-                      const commands::Context &context) = 0;
+  virtual void Commit(const composer::Composer& composer,
+                      const commands::Context& context) = 0;
 
   // Fix the suggestion candidate.  True is returned if the selected
   // candidate is successfully committed.
   virtual bool CommitSuggestionByIndex(size_t index,
-                                       const composer::Composer &composer,
-                                       const commands::Context &context,
-                                       size_t *committed_key_size) = 0;
+                                       const composer::Composer& composer,
+                                       const commands::Context& context,
+                                       size_t* committed_key_size) = 0;
 
   // Select a candidate and commit the selected candidate.  True is
   // returned if the selected candidate is successfully committed.
-  virtual bool CommitSuggestionById(int id, const composer::Composer &composer,
-                                    const commands::Context &context,
-                                    size_t *committed_key_size) = 0;
+  virtual bool CommitSuggestionById(int id, const composer::Composer& composer,
+                                    const commands::Context& context,
+                                    size_t* committed_key_size) = 0;
 
   // Fix only the conversion of the first segment, and keep the rest.
   // The caller should delete characters from composer based on returned
   // |committed_key_size|.
-  virtual void CommitFirstSegment(const composer::Composer &composer,
-                                  const commands::Context &context,
-                                  size_t *committed_key_size) = 0;
+  virtual void CommitFirstSegment(const composer::Composer& composer,
+                                  const commands::Context& context,
+                                  size_t* committed_key_size) = 0;
 
   // Fix only the [0, focused] conversion segments, and keep the rest.
   // The caller should delete characters from composer based on returned
   // |committed_key_size|.
-  virtual void CommitHeadToFocusedSegments(const composer::Composer &composer,
-                                           const commands::Context &context,
-                                           size_t *committed_key_size) = 0;
+  virtual void CommitHeadToFocusedSegments(const composer::Composer& composer,
+                                           const commands::Context& context,
+                                           size_t* committed_key_size) = 0;
 
   // Commit the preedit string represented by Composer.
-  virtual void CommitPreedit(const composer::Composer &composer,
-                             const commands::Context &context) = 0;
+  virtual void CommitPreedit(const composer::Composer& composer,
+                             const commands::Context& context) = 0;
 
   // Commit prefix of the preedit string represented by Composer.
   // The caller should delete characters from composer based on returned
   // |committed_size|.
-  virtual void CommitHead(size_t count, const composer::Composer &composer,
-                          size_t *committed_size) = 0;
+  virtual void CommitHead(size_t count, const composer::Composer& composer,
+                          size_t* committed_size) = 0;
 
   // Revert the last "Commit" operation
   virtual void Revert() = 0;
@@ -186,17 +186,17 @@ class EngineConverterInterface {
   virtual void SegmentFocusLeftEdge() = 0;
 
   // Resize the focused segment.
-  virtual void SegmentWidthExpand(const composer::Composer &composer) = 0;
-  virtual void SegmentWidthShrink(const composer::Composer &composer) = 0;
+  virtual void SegmentWidthExpand(const composer::Composer& composer) = 0;
+  virtual void SegmentWidthShrink(const composer::Composer& composer) = 0;
 
   // Move the focus of candidates.
-  virtual void CandidateNext(const composer::Composer &composer) = 0;
+  virtual void CandidateNext(const composer::Composer& composer) = 0;
   virtual void CandidateNextPage() = 0;
   virtual void CandidatePrev() = 0;
   virtual void CandidatePrevPage() = 0;
   // Move the focus to the candidate represented by the id.
   virtual void CandidateMoveToId(int id,
-                                 const composer::Composer &composer) = 0;
+                                 const composer::Composer& composer) = 0;
   // Move the focus to the index from the beginning of the current page.
   virtual void CandidateMoveToPageIndex(size_t index) = 0;
   // Move the focus to the candidate represented by the shortcut.  If
@@ -207,16 +207,16 @@ class EngineConverterInterface {
   virtual void SetCandidateListVisible(bool visible) = 0;
 
   // Fill protocol buffers and update internal status.
-  virtual void PopOutput(const composer::Composer &composer,
-                         commands::Output *output) = 0;
+  virtual void PopOutput(const composer::Composer& composer,
+                         commands::Output* output) = 0;
 
   // Fill preedit
-  virtual void FillPreedit(const composer::Composer &composer,
-                           commands::Preedit *preedit) const = 0;
+  virtual void FillPreedit(const composer::Composer& composer,
+                           commands::Preedit* preedit) const = 0;
 
   // Fill protocol buffers
-  virtual void FillOutput(const composer::Composer &composer,
-                          commands::Output *output) const = 0;
+  virtual void FillOutput(const composer::Composer& composer,
+                          commands::Output* output) const = 0;
 
   // Set setting by the request.
   // Currently this is especially for EngineConverter.
@@ -227,11 +227,11 @@ class EngineConverterInterface {
   virtual void SetConfig(std::shared_ptr<const config::Config> config) = 0;
 
   // Update the internal state by the context.
-  virtual void OnStartComposition(const commands::Context &context) = 0;
+  virtual void OnStartComposition(const commands::Context& context) = 0;
 
   // Clone instance.
   // Callee object doesn't have the ownership of the cloned instance.
-  virtual EngineConverterInterface *Clone() const = 0;
+  virtual EngineConverterInterface* Clone() const = 0;
 
   virtual void set_selection_shortcut(
       config::Config::SelectionShortcut selection_shortcut) = 0;

@@ -61,21 +61,21 @@ TEST(ModulesTest, PresetTest) {
   // PosMatcher
   auto pos_matcher = std::make_unique<dictionary::PosMatcher>(
       mock_data_manager.GetPosMatcherData());
-  const dictionary::PosMatcher *pos_matcher_ptr = pos_matcher.get();
+  const dictionary::PosMatcher* pos_matcher_ptr = pos_matcher.get();
 
   // UserDictionary
   auto user_dictionary = std::make_unique<dictionary::MockUserDictionary>();
-  const dictionary::MockUserDictionary *user_dictionary_ptr =
+  const dictionary::MockUserDictionary* user_dictionary_ptr =
       user_dictionary.get();
 
   // SuffixDictionary
   auto suffix_dictionary = std::make_unique<dictionary::MockDictionary>();
-  const dictionary::DictionaryInterface *suffix_dictionary_ptr =
+  const dictionary::DictionaryInterface* suffix_dictionary_ptr =
       suffix_dictionary.get();
 
   // Dictionary
   auto dictionary = std::make_unique<dictionary::MockDictionary>();
-  const dictionary::DictionaryInterface *dictionary_ptr = dictionary.get();
+  const dictionary::DictionaryInterface* dictionary_ptr = dictionary.get();
 
   std::unique_ptr<const engine::Modules> modules =
       ModulesPresetBuilder()
@@ -105,7 +105,7 @@ TEST(ModulesTest, SupplementalModelTest) {
 
   auto supplemental_model = std::make_unique<SupplementalModelStub>();
   // TODO(taku): Avoid sharing the pointer of std::unique_ptr.
-  const SupplementalModelInterface *supplemental_model_ptr =
+  const SupplementalModelInterface* supplemental_model_ptr =
       supplemental_model.get();
   std::unique_ptr<Modules> modules3 =
       ModulesPresetBuilder()

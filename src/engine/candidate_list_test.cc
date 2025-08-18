@@ -77,9 +77,9 @@ class CandidateListTest : public testing::Test {
 
   std::unique_ptr<CandidateList> main_list_;
   // sub_list_1_ will be initialized on the fly.
-  CandidateList *sub_list_1_ = nullptr;
-  CandidateList *sub_list_2_ = nullptr;
-  CandidateList *sub_sub_list_2_1_ = nullptr;
+  CandidateList* sub_list_1_ = nullptr;
+  CandidateList* sub_list_2_ = nullptr;
+  CandidateList* sub_sub_list_2_1_ = nullptr;
 };
 
 TEST_F(CandidateListTest, MoveToId) {
@@ -255,7 +255,7 @@ TEST_F(CandidateListTest, Duplication) {
   main_list.AddCandidate(3, "0");  // dup
   main_list.AddCandidate(4, "0");  // dup
   main_list.AddCandidate(5, "1");  // dup
-  CandidateList *sub_list = main_list.AddSubCandidateList();
+  CandidateList* sub_list = main_list.AddSubCandidateList();
   sub_list->AddCandidate(6, "0");  // not dup
   sub_list->AddCandidate(7, "7");
   sub_list->AddCandidate(8, "7");  // dup
@@ -407,7 +407,7 @@ TEST_F(CandidateListTest, AttributesWithSubList) {
   CandidateList main_list(true);
   main_list.AddCandidate(0, "kanji");
 
-  CandidateList *sub_list = main_list.AddSubCandidateList();
+  CandidateList* sub_list = main_list.AddSubCandidateList();
   sub_list->AddCandidateWithAttributes(1, "hiragana", HIRAGANA);
   sub_list->AddCandidateWithAttributes(2, "f_katakana", FULL_WIDTH | KATAKANA);
   sub_list->AddCandidateWithAttributes(3, "h_ascii",
@@ -449,7 +449,7 @@ TEST_F(CandidateListTest, GetDeepestFocusedCandidate) {
   EXPECT_EQ(main_list_->focused_candidate().id(), 0);
   EXPECT_TRUE(main_list_->focused_candidate().HasSubcandidateList());
 
-  const Candidate &deepest_candidate = main_list_->GetDeepestFocusedCandidate();
+  const Candidate& deepest_candidate = main_list_->GetDeepestFocusedCandidate();
   EXPECT_EQ(deepest_candidate.id(), -1);
   EXPECT_FALSE(deepest_candidate.HasSubcandidateList());
 }

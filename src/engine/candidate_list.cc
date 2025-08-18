@@ -58,7 +58,7 @@ void CandidateList::Clear() {
   alternative_ids_.clear();
 }
 
-const Candidate &CandidateList::GetDeepestFocusedCandidate() const {
+const Candidate& CandidateList::GetDeepestFocusedCandidate() const {
   if (focused_candidate().HasSubcandidateList()) {
     return focused_candidate().subcandidate_list().GetDeepestFocusedCandidate();
   }
@@ -92,13 +92,13 @@ void CandidateList::AddCandidateWithAttributes(const int id,
     return;
   }
 
-  Candidate &new_candidate = candidates_.emplace_back();
+  Candidate& new_candidate = candidates_.emplace_back();
 
   new_candidate.set_id(id);
   new_candidate.set_attributes(attributes);
 }
 
-CandidateList *CandidateList::AddSubCandidateList() {
+CandidateList* CandidateList::AddSubCandidateList() {
   return candidates_.emplace_back().mutable_subcandidate_list();
 }
 
@@ -256,7 +256,7 @@ bool CandidateList::MoveToAttributes(const Attributes attributes) {
     // Shift the index to make the first index focused_index_.
     const size_t index = (focused_index_ + i) % cand_size;
 
-    Candidate &cand = candidates_[index];
+    Candidate& cand = candidates_[index];
 
     // If the candidate is a subcandidate list, the subcandidate list is
     // traversed recursively.
@@ -287,7 +287,7 @@ bool CandidateList::MoveToId(const int base_id) {
   // of N is less than kMaxCandidateSize (= 200).  So it would not be
   // a problem.
   for (size_t i = 0; i < size(); ++i) {
-    Candidate &cand = candidates_[i];
+    Candidate& cand = candidates_[i];
     // If the candidate is a subcandidate list, the subcandidate list is
     // traversed recursively.
     if (cand.HasSubcandidateList() &&
@@ -314,7 +314,7 @@ bool CandidateList::MoveToPageIndex(const size_t page_index) {
   return true;
 }
 
-CandidateList *CandidateList::mutable_focused_subcandidate_list() {
+CandidateList* CandidateList::mutable_focused_subcandidate_list() {
   CHECK(focused_candidate().HasSubcandidateList());
   return candidates_[focused_index_].mutable_subcandidate_list();
 }
