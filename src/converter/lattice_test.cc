@@ -29,10 +29,8 @@
 
 #include "converter/lattice.h"
 
-#include <cstddef>
 #include <string>
 
-#include "absl/container/btree_set.h"
 #include "converter/node.h"
 #include "testing/gunit.h"
 
@@ -98,18 +96,5 @@ TEST(LatticeTest, InsertTest) {
     EXPECT_EQ(size, 2);
   }
 }
-
-namespace {
-
-// add nodes whose key is key.substr(i, key.size() - i)
-void InsertNodes(Lattice* lattice) {
-  const size_t key_size = lattice->key().size();
-  for (size_t i = 0; i < key_size; ++i) {
-    Node* node = lattice->NewNode();
-    node->key.assign(lattice->key(), i, key_size - i);
-    lattice->Insert(i, node);
-  }
-}
-}  // namespace
 
 }  // namespace mozc
