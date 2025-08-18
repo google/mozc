@@ -48,17 +48,17 @@ namespace mozc::prediction {
 class Predictor : public PredictorInterface {
  public:
   Predictor() = default;
-  Predictor(const engine::Modules &modules, const ConverterInterface &converter,
-            const ImmutableConverterInterface &immutable_converters);
+  Predictor(const engine::Modules& modules, const ConverterInterface& converter,
+            const ImmutableConverterInterface& immutable_converters);
   Predictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
             std::unique_ptr<PredictorInterface> user_history_predictor);
 
-  std::vector<Result> Predict(const ConversionRequest &request) const;
+  std::vector<Result> Predict(const ConversionRequest& request) const;
 
   absl::string_view GetPredictorName() const override { return "Predictor"; }
 
   // Hook(s) for all mutable operations.
-  void Finish(const ConversionRequest &request,
+  void Finish(const ConversionRequest& request,
               absl::Span<const Result> results, uint32_t revert_id) override;
 
   // Reverts the last Finish operation.
@@ -84,10 +84,10 @@ class Predictor : public PredictorInterface {
   bool Wait() override;
 
  private:
-  std::vector<Result> PredictForDesktop(const ConversionRequest &request) const;
+  std::vector<Result> PredictForDesktop(const ConversionRequest& request) const;
 
   std::vector<Result> PredictForMixedConversion(
-      const ConversionRequest &request) const;
+      const ConversionRequest& request) const;
 
   std::unique_ptr<PredictorInterface> dictionary_predictor_;
   std::unique_ptr<PredictorInterface> user_history_predictor_;

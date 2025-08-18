@@ -47,20 +47,20 @@ namespace mozc::prediction {
 class SingleKanjiDecoder {
  public:
   SingleKanjiDecoder(
-      const dictionary::PosMatcher &pos_matcher ABSL_ATTRIBUTE_LIFETIME_BOUND,
-      const dictionary::SingleKanjiDictionary &single_kanji_dictionary
+      const dictionary::PosMatcher& pos_matcher ABSL_ATTRIBUTE_LIFETIME_BOUND,
+      const dictionary::SingleKanjiDictionary& single_kanji_dictionary
           ABSL_ATTRIBUTE_LIFETIME_BOUND);
   virtual ~SingleKanjiDecoder();
 
-  virtual std::vector<Result> Decode(const ConversionRequest &request) const;
+  virtual std::vector<Result> Decode(const ConversionRequest& request) const;
 
  private:
   void AppendResults(absl::string_view kanji_key,
                      absl::string_view original_request_key,
                      absl::Span<const std::string> kanji_list, int offset,
-                     std::vector<Result> *results) const;
+                     std::vector<Result>* results) const;
 
-  const dictionary::SingleKanjiDictionary &single_kanji_dictionary_;
+  const dictionary::SingleKanjiDictionary& single_kanji_dictionary_;
   const uint16_t general_symbol_id_ = 0;
 };
 

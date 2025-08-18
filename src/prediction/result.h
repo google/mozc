@@ -91,13 +91,13 @@ enum PredictionType {
 using PredictionTypes = int32_t;
 
 struct Result {
-  void InitializeByTokenAndTypes(const dictionary::Token &token,
+  void InitializeByTokenAndTypes(const dictionary::Token& token,
                                  PredictionTypes types);
   void SetTypesAndTokenAttributes(
       PredictionTypes prediction_types,
       dictionary::Token::AttributesBitfield token_attr);
 
-  inline static const Result &DefaultResult() {
+  inline static const Result& DefaultResult() {
     static const absl::NoDestructor<Result> kResult;
     return *kResult;
   }
@@ -158,7 +158,7 @@ struct Result {
   inline static constexpr int kInvalidCost = (2 << 20);
 
   template <typename S>
-  friend void AbslStringify(S &sink, const Result &r) {
+  friend void AbslStringify(S& sink, const Result& r) {
     absl::Format(
         &sink,
         "key: %s, value: %s, types: %d, wcost: %d, cost: %d, cost_before: %d, "
@@ -193,7 +193,7 @@ bool ValueLess(absl::string_view lhs, absl::string_view rhs);
 // If we have words A and AB, for example "六本木" and "六本木ヒルズ",
 // assume that cost(A) < cost(AB).
 struct ResultWCostLess {
-  bool operator()(const Result &lhs, const Result &rhs) const {
+  bool operator()(const Result& lhs, const Result& rhs) const {
     if (lhs.wcost == rhs.wcost) {
       return result_internal::ValueLess(lhs.value, rhs.value);
     }
@@ -203,7 +203,7 @@ struct ResultWCostLess {
 
 // Returns true if `lhs` is less than `rhs`
 struct ResultCostLess {
-  bool operator()(const Result &lhs, const Result &rhs) const {
+  bool operator()(const Result& lhs, const Result& rhs) const {
     if (lhs.cost == rhs.cost) {
       return result_internal::ValueLess(lhs.value, rhs.value);
     }
@@ -214,8 +214,8 @@ struct ResultCostLess {
 // Populates the typing correction result in `query` to prediction::Result
 // TODO(taku): rename `query` as it is not a query.
 void PopulateTypeCorrectedQuery(
-    const composer::TypeCorrectedQuery &typing_corrected_result,
-    Result *absl_nonnull result);
+    const composer::TypeCorrectedQuery& typing_corrected_result,
+    Result* absl_nonnull result);
 
 // Makes debug string from `types`.
 std::string GetPredictionTypeDebugString(PredictionTypes types);

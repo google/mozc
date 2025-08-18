@@ -8,25 +8,24 @@
 
 Candidate words while text composing.
 
-Note, in mobile config (i.e. Gboard with virtual keyboard), prediction is
-always used instead of suggestion.
+Note, in mobile config (i.e. Gboard with virtual keyboard), prediction is always
+used instead of suggestion.
 
 ### prediction
 
-Candidate words after the `predict` command.
-The `predict` command is typically assigned to the candidate expansion button
-in virtual keyboard, and the TAB key in physical keyboard.
+Candidate words after the `predict` command. The `predict` command is typically
+assigned to the candidate expansion button in virtual keyboard, and the TAB key
+in physical keyboard.
 
-Note, in mobile config (i.e. Gboard with virtual keyboard), prediction is
-always used instead of suggestion.
+Note, in mobile config (i.e. Gboard with virtual keyboard), prediction is always
+used instead of suggestion.
 
 ### zero query suggestion
 
-Candidate words after the `commit` command.
-(e.g. "hello" → "world", "あけまして" → "おめでとう").
+Candidate words after the `commit` command. (e.g. "hello" → "world", "あけまして" →
+"おめでとう").
 
 This is the same meaning with "next word prediction".
-
 
 ## Tools
 

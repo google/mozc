@@ -48,30 +48,30 @@ namespace mozc::prediction {
 class RealtimeDecoder {
  public:
   RealtimeDecoder() = default;
-  RealtimeDecoder(const ImmutableConverterInterface &immutable_converter,
-                  const ConverterInterface &converter)
+  RealtimeDecoder(const ImmutableConverterInterface& immutable_converter,
+                  const ConverterInterface& converter)
       : immutable_converter_(std::cref(immutable_converter)),
         converter_(std::cref(converter)) {}
   virtual ~RealtimeDecoder() = default;
 
   // Decodes `request`. The request type must not be CONVERSION because
   // we assume that Decode doesn't return multiple-segments.
-  virtual std::vector<Result> Decode(const ConversionRequest &request) const;
+  virtual std::vector<Result> Decode(const ConversionRequest& request) const;
 
   // value is reading, key is the input.
   virtual std::vector<Result> ReverseDecode(
-      const ConversionRequest &request) const;
+      const ConversionRequest& request) const;
 
  private:
-  bool PushBackTopConversionResult(const ConversionRequest &request,
-                                   std::vector<Result> *results) const;
+  bool PushBackTopConversionResult(const ConversionRequest& request,
+                                   std::vector<Result>* results) const;
 
-  const ImmutableConverterInterface &immutable_converter() const {
+  const ImmutableConverterInterface& immutable_converter() const {
     DCHECK(immutable_converter_.has_value());
     return immutable_converter_.value().get();
   }
 
-  const ConverterInterface &converter() const {
+  const ConverterInterface& converter() const {
     DCHECK(converter_.has_value());
     return converter_.value().get();
   }

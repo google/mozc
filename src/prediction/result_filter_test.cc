@@ -85,7 +85,7 @@ TEST(ResultFilterTest, RemoveRedundantResultsTest) {
 
   auto find_result_by_value = [](absl::Span<const Result> results,
                                  absl::string_view value) {
-    return absl::c_find_if(results, [&](const Result &result) {
+    return absl::c_find_if(results, [&](const Result& result) {
              return result.value == value && !result.removed;
            }) != results.end();
   };
@@ -94,7 +94,7 @@ TEST(ResultFilterTest, RemoveRedundantResultsTest) {
   EXPECT_TRUE(find_result_by_value(results, "東京宇"));
 
   int prefix_count = 0;
-  for (const auto &result : results) {
+  for (const auto& result : results) {
     if (result.value.starts_with("東京")) {
       ++prefix_count;
     }

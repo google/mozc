@@ -65,8 +65,10 @@ def GetReadingsFromDescription(description):
   #  - 電話１（プッシュホン）
   #  - ビル・建物
   # \xE3\x83\xBB : "・"
-  return [RemoveTrailingNumber(token) for token
-          in re.split(r'(?:\(|\)|/|\xE3\x83\xBB|・)+', normalized)]
+  return [
+      RemoveTrailingNumber(token)
+      for token in re.split(r'(?:\(|\)|/|\xE3\x83\xBB|・)+', normalized)
+  ]
 
 
 def ReadEmojiTsv(stream):
@@ -100,7 +102,8 @@ def ReadEmojiTsv(stream):
       if not description:
         continue
       zero_query_dict[description].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOJI, emoji))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOJI, emoji)
+      )
 
   # Sort emoji for each reading.
   for key in zero_query_dict.keys():
@@ -126,7 +129,8 @@ def ReadZeroQueryRuleData(input_stream):
 
     for value in values:
       zero_query_dict[key].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, value))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, value)
+      )
   return zero_query_dict
 
 
@@ -146,7 +150,8 @@ def ReadEmoticonTsv(stream):
       if not reading:
         continue
       zero_query_dict[reading].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOTICON, emoticon))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOTICON, emoticon)
+      )
 
   return zero_query_dict
 
@@ -178,18 +183,21 @@ def ReadSymbolTsv(stream):
       if not reading:
         continue
       zero_query_dict[reading].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol)
+      )
 
     if len(columns) >= 4 and columns[3]:
       # description: "天気", etc.
       description = columns[3]
       zero_query_dict[description].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol)
+      )
     if len(columns) >= 5 and columns[4]:
       # additional_description: "傘", etc.
       additional_description = columns[4]
       zero_query_dict[additional_description].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol)
+      )
 
   return zero_query_dict
 
@@ -238,23 +246,25 @@ def ParseOptions() -> argparse.Namespace:
   parser = argparse.ArgumentParser()
   parser.add_argument('--input_rule', dest='input_rule', help='rule file')
   parser.add_argument(
-      '--input_symbol', dest='input_symbol', help='symbol data file')
+      '--input_symbol', dest='input_symbol', help='symbol data file'
+  )
   parser.add_argument(
-      '--input_emoji', dest='input_emoji', help='emoji data file')
+      '--input_emoji', dest='input_emoji', help='emoji data file'
+  )
   parser.add_argument(
-      '--input_emoticon', dest='input_emoticon', help='emoticon data file')
-  parser.add_argument(
-      '--output_tsv',
-      dest='output_tsv',
-      help='output tsv file')
+      '--input_emoticon', dest='input_emoticon', help='emoticon data file'
+  )
+  parser.add_argument('--output_tsv', dest='output_tsv', help='output tsv file')
   parser.add_argument(
       '--output_token_array',
       dest='output_token_array',
-      help='output token array file')
+      help='output token array file',
+  )
   parser.add_argument(
       '--output_string_array',
       dest='output_string_array',
-      help='output string array file')
+      help='output string array file',
+  )
   return parser.parse_args()
 
 
@@ -274,18 +284,24 @@ def main():
     zero_query_emoticon_dict = ReadEmoticonTsv(input_stream)
 
   merged_zero_query_dict = MergeZeroQueryData(
-      zero_query_rule_dict, zero_query_symbol_dict,
-      zero_query_emoji_dict, zero_query_emoticon_dict)
+      zero_query_rule_dict,
+      zero_query_symbol_dict,
+      zero_query_emoji_dict,
+      zero_query_emoticon_dict,
+  )
 
-  util.WriteZeroQueryData(merged_zero_query_dict,
-                          options.output_token_array,
-                          options.output_string_array)
+  util.WriteZeroQueryData(
+      merged_zero_query_dict,
+      options.output_token_array,
+      options.output_string_array,
+  )
 
   if options.output_tsv:
     with codecs.open(options.output_tsv, 'w', encoding='utf-8') as f:
       for key, values in merged_zero_query_dict.items():
         for value in values:
           f.write(key + '\t' + value.value + '\n')
+
 
 if __name__ == '__main__':
   main()

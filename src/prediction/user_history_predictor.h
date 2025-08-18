@@ -74,8 +74,8 @@ class UserHistoryStorage {
   // Saves history into encrypted file.
   bool Save();
 
-  mozc::user_history_predictor::UserHistory &GetProto() { return proto_; }
-  const mozc::user_history_predictor::UserHistory &GetProto() const {
+  mozc::user_history_predictor::UserHistory& GetProto() { return proto_; }
+  const mozc::user_history_predictor::UserHistory& GetProto() const {
     return proto_;
   }
 
@@ -91,13 +91,13 @@ class UserHistoryStorage {
 // called by multiple-threads at the same time
 class UserHistoryPredictor : public PredictorInterface {
  public:
-  explicit UserHistoryPredictor(const engine::Modules &modules);
+  explicit UserHistoryPredictor(const engine::Modules& modules);
   ~UserHistoryPredictor() override;
 
-  std::vector<Result> Predict(const ConversionRequest &request) const override;
+  std::vector<Result> Predict(const ConversionRequest& request) const override;
 
   // Hook(s) for all mutable operations.
-  void Finish(const ConversionRequest &request,
+  void Finish(const ConversionRequest& request,
               absl::Span<const Result> results, uint32_t revert_id) override;
 
   // Revert last Finish operation.
@@ -137,8 +137,8 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Returns fingerprints from various object.
   static uint32_t Fingerprint(absl::string_view key, absl::string_view value);
-  static uint32_t EntryFingerprint(const Entry &entry);
-  static uint32_t ResultFingerprint(const Result &result);
+  static uint32_t EntryFingerprint(const Entry& entry);
+  static uint32_t ResultFingerprint(const Result& result);
 
   // Returns the size of cache.
   static uint32_t cache_size();
@@ -160,11 +160,11 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Fingerprint of key/value.
   static uint32_t LearningSegmentFingerprint(
-      const SegmentForLearning &learning_segment);
+      const SegmentForLearning& learning_segment);
 
   // Fingerprints of key/value and content_key/content_value.
   std::vector<uint32_t> LearningSegmentFingerprints(
-      const SegmentForLearning &learning_segment) const;
+      const SegmentForLearning& learning_segment) const;
 
   struct SegmentsForLearning {
     std::string conversion_segments_key;
@@ -201,13 +201,13 @@ class UserHistoryPredictor : public PredictorInterface {
   };
 
   // Returns true if this predictor should return results for the input.
-  bool ShouldPredict(const ConversionRequest &request) const;
+  bool ShouldPredict(const ConversionRequest& request) const;
 
   // Loads user history data to an on-memory LRU from the local file.
   bool Load();
 
   // Loads user history data to an on-memory LRU.
-  bool Load(UserHistoryStorage &&history);
+  bool Load(UserHistoryStorage&& history);
 
   // Saves user history data in LRU to local file
   bool Save();
@@ -229,41 +229,41 @@ class UserHistoryPredictor : public PredictorInterface {
   // Gets match type with ambiguity expansion
   static MatchType GetMatchTypeFromInput(absl::string_view request_key,
                                          absl::string_view key_base,
-                                         const Trie<std::string> *key_expanded,
+                                         const Trie<std::string>* key_expanded,
                                          absl::string_view target);
 
   // Uint32 <=> string conversion
   static std::string Uint32ToString(uint32_t fp);
 
   // Returns true if prev_entry has a next_fp link to entry
-  static bool HasBigramEntry(const Entry &entry, const Entry &prev_entry);
+  static bool HasBigramEntry(const Entry& entry, const Entry& prev_entry);
 
   // Returns true |result_entry| can be handled as
   // a valid result if the length of user input is |prefix_len|.
-  static bool IsValidSuggestion(const ConversionRequest &request,
-                                uint32_t prefix_len, const Entry &entry);
+  static bool IsValidSuggestion(const ConversionRequest& request,
+                                uint32_t prefix_len, const Entry& entry);
 
   // IsValidSuggestion used in mixed conversion (mobile).
   static bool IsValidSuggestionForMixedConversion(
-      const ConversionRequest &request, uint32_t prefix_len,
-      const Entry &entry);
+      const ConversionRequest& request, uint32_t prefix_len,
+      const Entry& entry);
 
-  static ResultType GetResultType(const ConversionRequest &request,
+  static ResultType GetResultType(const ConversionRequest& request,
                                   bool is_top_candidate,
-                                  uint32_t request_key_len, const Entry &entry);
+                                  uint32_t request_key_len, const Entry& entry);
 
   // Returns true if entry is DEFAULT_ENTRY, satisfies certain conditions, and
   // doesn't have removed flag.
-  bool IsValidEntry(const Entry &entry) const;
+  bool IsValidEntry(const Entry& entry) const;
   // The same as IsValidEntry except that removed field is ignored.
-  bool IsValidEntryIgnoringRemovedField(const Entry &entry) const;
+  bool IsValidEntryIgnoringRemovedField(const Entry& entry) const;
 
   // Returns "tweaked" score of result_entry.
   // the score is basically determined by "last_access_time", (a.k.a,
   // LRU policy), but we want to slightly change the score
   // with different signals, including the length of value and/or
   // bigram_boost flags.
-  static uint32_t GetScore(const Entry &result_entry);
+  static uint32_t GetScore(const Entry& result_entry);
 
   // Priority Queue class for entry. New item is sorted by
   // |score| internally. By calling Pop() in sequence, you
@@ -272,12 +272,12 @@ class UserHistoryPredictor : public PredictorInterface {
    public:
     EntryPriorityQueue() : pool_(kEntryPoolSize) {}
     size_t size() const { return agenda_.size(); }
-    bool Push(Entry *entry);
-    Entry *absl_nullable Pop();
-    Entry *NewEntry();
+    bool Push(Entry* entry);
+    Entry* absl_nullable Pop();
+    Entry* NewEntry();
 
    private:
-    using QueueElement = std::pair<uint32_t, Entry *>;
+    using QueueElement = std::pair<uint32_t, Entry*>;
     using Agenda = std::priority_queue<QueueElement>;
 
     friend class UserHistoryPredictor;
@@ -300,11 +300,11 @@ class UserHistoryPredictor : public PredictorInterface {
   // |request_key|. |prev_entry| is an optional field. If set nullptr, this
   // field is just ignored. This method adds a new result entry with score,
   // pair<score, entry>, to |entry_queue|.
-  bool LookupEntry(const ConversionRequest &request,
+  bool LookupEntry(const ConversionRequest& request,
                    absl::string_view request_key, absl::string_view key_base,
-                   const Trie<std::string> *key_expanded, const Entry *entry,
-                   const Entry *prev_entry,
-                   EntryPriorityQueue *entry_queue) const;
+                   const Trie<std::string>* key_expanded, const Entry* entry,
+                   const Entry* prev_entry,
+                   EntryPriorityQueue* entry_queue) const;
 
   // For the EXACT and RIGHT_PREFIX match, we will generate joined
   // candidates by looking up the history link.
@@ -315,39 +315,39 @@ class UserHistoryPredictor : public PredictorInterface {
   // |left_last_access_time| and |left_most_last_access_time| will be updated
   // according to the entry lookup.
   bool GetKeyValueForExactAndRightPrefixMatch(
-      absl::string_view request_key, const Entry *entry,
-      const Entry **result_last_entry, uint64_t *left_last_access_time,
-      uint64_t *left_most_last_access_time, std::string *result_key,
-      std::string *result_value) const;
+      absl::string_view request_key, const Entry* entry,
+      const Entry** result_last_entry, uint64_t* left_last_access_time,
+      uint64_t* left_most_last_access_time, std::string* result_key,
+      std::string* result_value) const;
 
-  const Entry *absl_nullable LookupPrevEntry(
-      const ConversionRequest &request) const;
+  const Entry* absl_nullable LookupPrevEntry(
+      const ConversionRequest& request) const;
 
   // Adds an entry to a priority queue.
-  Entry *AddEntry(const Entry &entry, EntryPriorityQueue *entry_queue) const;
+  Entry* AddEntry(const Entry& entry, EntryPriorityQueue* entry_queue) const;
 
   // Adds the entry whose key and value are modified to a priority queue.
-  Entry *AddEntryWithNewKeyValue(std::string key, std::string value,
+  Entry* AddEntryWithNewKeyValue(std::string key, std::string value,
                                  Entry entry,
-                                 EntryPriorityQueue *entry_queue) const;
+                                 EntryPriorityQueue* entry_queue) const;
 
   EntryPriorityQueue GetEntry_QueueFromHistoryDictionary(
-      const ConversionRequest &request, const Entry *prev_entry,
+      const ConversionRequest& request, const Entry* prev_entry,
       size_t max_entry_queue_size) const;
 
   // Gets input data from segments.
   // These input data include ambiguities.
   static void GetInputKeyFromRequest(
-      const ConversionRequest &request, std::string *request_key,
-      std::string *base, std::unique_ptr<Trie<std::string>> *expanded);
+      const ConversionRequest& request, std::string* request_key,
+      std::string* base, std::unique_ptr<Trie<std::string>>* expanded);
 
-  std::vector<Result> MakeResults(const ConversionRequest &request,
+  std::vector<Result> MakeResults(const ConversionRequest& request,
                                   size_t max_prediction_size,
                                   size_t max_prediction_char_coverage,
-                                  EntryPriorityQueue *entry_queue) const;
+                                  EntryPriorityQueue* entry_queue) const;
 
   SegmentsForLearning MakeLearningSegments(
-      const ConversionRequest &request, absl::Span<const Result> results) const;
+      const ConversionRequest& request, absl::Span<const Result> results) const;
 
   // Returns true if |prefix| is a fuzzy-prefix of |str|.
   // 'Fuzzy' means that
@@ -361,11 +361,11 @@ class UserHistoryPredictor : public PredictorInterface {
   // composer() if composer is available. If not, use the key
   // directory. It also use MaybeRomanMisspelledKey() defined
   // below to check the preedit looks misspelled or not.
-  static std::string GetRomanMisspelledKey(const ConversionRequest &request);
+  static std::string GetRomanMisspelledKey(const ConversionRequest& request);
 
   // Returns the typing corrected queries.
   std::vector<::mozc::composer::TypeCorrectedQuery> GetTypingCorrectedQueries(
-      const ConversionRequest &request) const;
+      const ConversionRequest& request) const;
 
   // Returns true if |key| may contain miss spelling.
   // Currently, this function returns true if
@@ -378,15 +378,15 @@ class UserHistoryPredictor : public PredictorInterface {
   // This method adds a new result entry with score, pair<score, entry>, to
   // |entry_queue|.
   bool RomanFuzzyLookupEntry(absl::string_view roman_request_key,
-                             const Entry *entry,
-                             EntryPriorityQueue *entry_queue) const;
+                             const Entry* entry,
+                             EntryPriorityQueue* entry_queue) const;
 
   // if `prev_entry` is the prefix of `entry`, add the suffix part as
   // zero-query suggestion.
-  bool ZeroQueryLookupEntry(const ConversionRequest &request,
-                            absl::string_view request_key, const Entry *entry,
-                            const Entry *prev_entry,
-                            EntryPriorityQueue *entry_queue) const;
+  bool ZeroQueryLookupEntry(const ConversionRequest& request,
+                            absl::string_view request_key, const Entry* entry,
+                            const Entry* prev_entry,
+                            EntryPriorityQueue* entry_queue) const;
 
   struct RevertEntries {
     // The result committed.
@@ -399,19 +399,19 @@ class UserHistoryPredictor : public PredictorInterface {
     std::vector<std::tuple<int32_t, int32_t, Entry>> entries;
   };
 
-  void InsertHistory(const ConversionRequest &request,
-                     const SegmentsForLearning &learning_segments,
-                     RevertEntries *revert_entries);
+  void InsertHistory(const ConversionRequest& request,
+                     const SegmentsForLearning& learning_segments,
+                     RevertEntries* revert_entries);
 
   void InsertHistoryForHistorySegments(
-      const ConversionRequest &request, bool is_suggestion_selected,
-      uint64_t last_access_time, const SegmentsForLearning &learning_segments,
-      RevertEntries *revert_entries);
+      const ConversionRequest& request, bool is_suggestion_selected,
+      uint64_t last_access_time, const SegmentsForLearning& learning_segments,
+      RevertEntries* revert_entries);
 
   void InsertHistoryForConversionSegments(
-      const ConversionRequest &request, bool is_suggestion_selected,
-      uint64_t last_access_time, const SegmentsForLearning &learning_segments,
-      RevertEntries *revert_entries);
+      const ConversionRequest& request, bool is_suggestion_selected,
+      uint64_t last_access_time, const SegmentsForLearning& learning_segments,
+      RevertEntries* revert_entries);
 
   // Inserts |key,value,description| to the internal dictionary database.
   // |key_begin,value_begin|: string byte offset on result.(key|value).
@@ -421,34 +421,34 @@ class UserHistoryPredictor : public PredictorInterface {
   void Insert(int32_t key_begin, int32_t value_begin, absl::string_view key,
               absl::string_view value, absl::string_view description,
               bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
-              uint64_t last_access_time, RevertEntries *revert_entries);
+              uint64_t last_access_time, RevertEntries* revert_entries);
 
   // Called by TryInsert to check the Entry to insert.
-  bool ShouldInsert(const ConversionRequest &request, absl::string_view key,
+  bool ShouldInsert(const ConversionRequest& request, absl::string_view key,
                     absl::string_view value,
                     absl::string_view description) const;
 
   // Tries to insert entry.
   // Entry's contents and request_type will be checked before insertion.
-  void TryInsert(const ConversionRequest &request, int32_t key_begin,
+  void TryInsert(const ConversionRequest& request, int32_t key_begin,
                  int32_t value_begin, absl::string_view key,
                  absl::string_view value, absl::string_view description,
                  bool is_suggestion_selected,
                  absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
-                 RevertEntries *revert_entries);
+                 RevertEntries* revert_entries);
 
   // Inserts a new |next_entry| into |entry|.
   // it makes a bigram connection from entry to next_entry.
-  void InsertNextEntry(const NextEntry &next_entry, Entry *entry) const;
+  void InsertNextEntry(const NextEntry& next_entry, Entry* entry) const;
 
-  static void EraseNextEntries(uint32_t fp, Entry *entry);
+  static void EraseNextEntries(uint32_t fp, Entry* entry);
 
   // Recursively removes a chain of Entries in |dic_|. See the comment in
   // implementation for details.
   RemoveNgramChainResult RemoveNgramChain(
       absl::string_view target_key, absl::string_view target_value,
-      Entry *entry, std::vector<absl::string_view> *key_ngrams,
-      size_t key_ngrams_len, std::vector<absl::string_view> *value_ngrams,
+      Entry* entry, std::vector<absl::string_view>* key_ngrams,
+      size_t key_ngrams_len, std::vector<absl::string_view>* value_ngrams,
       size_t value_ngrams_len);
 
   // Returns true if the input first candidate seems to be a privacy sensitive
@@ -459,7 +459,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // Selected ratio:
   //  (# of candidate committed) / (# of candidate shown on commit event)
   void MaybeRemoveUnselectedHistory(absl::Span<const Result> results,
-                                    RevertEntries *revert_entries);
+                                    RevertEntries* revert_entries);
 
   // Returns the value string byte offset on `reverted_value` with the context
   // information populated from the client. When all characters in
@@ -479,7 +479,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Re-commits the reverted entries using the left context information.
   // Users may use the backspace key just to remove the last few characters.
-  void MaybeProcessPartialRevertEntry(const ConversionRequest &request) const;
+  void MaybeProcessPartialRevertEntry(const ConversionRequest& request) const;
 
   // Default entry lifetime period.
   // Entries will be automatically purged after this period.
@@ -491,8 +491,8 @@ class UserHistoryPredictor : public PredictorInterface {
 
   void SetCacheStoreSize(int size) const { cache_store_size_.store(size); }
 
-  const dictionary::DictionaryInterface &dictionary_;
-  const dictionary::UserDictionaryInterface &user_dictionary_;
+  const dictionary::DictionaryInterface& dictionary_;
+  const dictionary::UserDictionaryInterface& user_dictionary_;
 
   mutable std::atomic<bool> updated_;
 
@@ -513,7 +513,7 @@ class UserHistoryPredictor : public PredictorInterface {
   mutable std::unique_ptr<DicCache> dic_;
 
   mutable std::optional<BackgroundFuture<void>> sync_;
-  const engine::Modules &modules_;
+  const engine::Modules& modules_;
 
   mutable std::atomic<int> entry_lifetime_days_ = kDefaultEntryLifetimeDays;
 

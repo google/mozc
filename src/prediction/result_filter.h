@@ -48,11 +48,11 @@ namespace mozc::prediction::filter {
 class ResultFilter {
  public:
   ResultFilter(
-      const ConversionRequest &request, dictionary::PosMatcher pos_matcher,
-      const Connector &connector ABSL_ATTRIBUTE_LIFETIME_BOUND,
-      const SuggestionFilter &suggestion_filter ABSL_ATTRIBUTE_LIFETIME_BOUND);
+      const ConversionRequest& request, dictionary::PosMatcher pos_matcher,
+      const Connector& connector ABSL_ATTRIBUTE_LIFETIME_BOUND,
+      const SuggestionFilter& suggestion_filter ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
-  bool ShouldRemove(const Result &result, int added_num);
+  bool ShouldRemove(const Result& result, int added_num);
 
  private:
   absl::string_view request_key_;
@@ -60,8 +60,8 @@ class ResultFilter {
   std::string history_value_;
   const size_t request_key_len_;
   const dictionary::PosMatcher pos_matcher_;
-  const Connector &connector_;
-  const SuggestionFilter &suggestion_filter_;
+  const Connector& connector_;
+  const SuggestionFilter& suggestion_filter_;
   const bool is_mixed_conversion_;
   const bool auto_partial_suggestion_;
   const bool include_exact_key_;
@@ -101,7 +101,7 @@ size_t GetMissSpelledPosition(absl::string_view key, absl::string_view value);
 //   "redundant" results to the end of the `results` vector.
 // TODO(taku): Better to pass the function object to define the redundant
 // condition of two results.
-void RemoveRedundantResults(std::vector<Result> *results);
+void RemoveRedundantResults(std::vector<Result>* results);
 
 }  // namespace mozc::prediction::filter
 #endif  // MOZC_PREDICTION_RESULT_FILTER_H_

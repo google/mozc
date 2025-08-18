@@ -103,7 +103,7 @@ constexpr int kRevertId = 1234;
 class UserHistoryPredictorTestPeer
     : public testing::TestPeer<UserHistoryPredictor> {
  public:
-  explicit UserHistoryPredictorTestPeer(UserHistoryPredictor &predictor)
+  explicit UserHistoryPredictorTestPeer(UserHistoryPredictor& predictor)
       : testing::TestPeer<UserHistoryPredictor>(predictor) {}
 
   PEER_STATIC_METHOD(GetScore);
@@ -190,7 +190,7 @@ class SegmentsProxy {
   }
 
   void MoveCandidate(int segment_index, int src, int dst) {
-    auto &results = segments_[segment_index].results;
+    auto& results = segments_[segment_index].results;
     auto it_old = results.begin() + src;
     auto it_new = results.begin() + dst;
     std::rotate(it_new, it_old, it_old + 1);
@@ -228,13 +228,13 @@ class SegmentsProxy {
   }
 
   absl::string_view key() const {
-    for (const auto &segment : segments_) {
+    for (const auto& segment : segments_) {
       if (!segment.is_history) return segment.key;
     }
     return "";
   }
 
-  const Result &history_result() const { return history_result_; }
+  const Result& history_result() const { return history_result_; }
 
   std::vector<Result> MakeLearningResults() const {
     return MakeResults(false /* is_history */);
@@ -247,8 +247,8 @@ class SegmentsProxy {
     std::vector<Result> results;
     if (segments_.empty()) return results;
 
-    std::vector<const Segment *> sub_segments;
-    for (const auto &segment : segments_) {
+    std::vector<const Segment*> sub_segments;
+    for (const auto& segment : segments_) {
       if (segment.is_history != is_history) continue;
       if (segment.results.empty()) return results;
       sub_segments.emplace_back(&segment);
@@ -258,8 +258,8 @@ class SegmentsProxy {
       return sub_segments.front()->results;
     } else {
       Result result;
-      for (const auto *segment : sub_segments) {
-        const Result &top_result = segment->results.front();
+      for (const auto* segment : sub_segments) {
+        const Result& top_result = segment->results.front();
         absl::StrAppend(&result.key, top_result.key);
         absl::StrAppend(&result.value, top_result.value);
         absl::StrAppend(&result.description, top_result.description);
@@ -309,8 +309,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   void TearDown() override {}
 
   ConversionRequest CreateConversionRequestWithOptions(
-      const composer::Composer &composer, ConversionRequest::Options options,
-      const SegmentsProxy &segments_proxy) const {
+      const composer::Composer& composer, ConversionRequest::Options options,
+      const SegmentsProxy& segments_proxy) const {
     return ConversionRequestBuilder()
         .SetComposer(composer_)
         .SetRequestView(request_)
@@ -323,8 +323,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   ConversionRequest CreateConversionRequest(
-      const composer::Composer &composer,
-      const SegmentsProxy &segments_proxy) const {
+      const composer::Composer& composer,
+      const SegmentsProxy& segments_proxy) const {
     ConversionRequest::Options options = {
         .max_user_history_prediction_candidates_size = 10,
         .max_user_history_prediction_candidates_size_for_zero_query = 10,
@@ -340,27 +340,27 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
         .Build();
   }
 
-  UserHistoryPredictor *GetUserHistoryPredictor() {
+  UserHistoryPredictor* GetUserHistoryPredictor() {
     return data_and_predictor_->predictor.get();
   }
 
-  void WaitForSyncer(UserHistoryPredictor *predictor) {
+  void WaitForSyncer(UserHistoryPredictor* predictor) {
     predictor->WaitForSyncer();
   }
 
-  UserHistoryPredictor *GetUserHistoryPredictorWithClearedHistory() {
-    UserHistoryPredictor *predictor = data_and_predictor_->predictor.get();
+  UserHistoryPredictor* GetUserHistoryPredictorWithClearedHistory() {
+    UserHistoryPredictor* predictor = data_and_predictor_->predictor.get();
     predictor->WaitForSyncer();
     predictor->ClearAllHistory();
     predictor->WaitForSyncer();
     return predictor;
   }
 
-  UserDictionaryInterface &GetUserDictionary() {
+  UserDictionaryInterface& GetUserDictionary() {
     return data_and_predictor_->modules->GetUserDictionary();
   }
 
-  bool IsSuggested(const UserHistoryPredictor *predictor,
+  bool IsSuggested(const UserHistoryPredictor* predictor,
                    const absl::string_view key, const absl::string_view value) {
     composer::Composer composer;
     composer.SetPreeditTextForTestOnly(key);
@@ -376,7 +376,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     return !results.empty() && FindCandidateByValue(value, results);
   }
 
-  bool IsPredicted(const UserHistoryPredictor *predictor,
+  bool IsPredicted(const UserHistoryPredictor* predictor,
                    const absl::string_view key, const absl::string_view value) {
     composer::Composer composer;
     composer.SetPreeditTextForTestOnly(key);
@@ -393,17 +393,17 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     return !results.empty() && FindCandidateByValue(value, results);
   }
 
-  bool IsSuggestedAndPredicted(const UserHistoryPredictor *predictor,
+  bool IsSuggestedAndPredicted(const UserHistoryPredictor* predictor,
                                const absl::string_view key,
                                const absl::string_view value) {
     return IsSuggested(predictor, key, value) &&
            IsPredicted(predictor, key, value);
   }
 
-  static UserHistoryPredictor::Entry *InsertEntry(
-      UserHistoryPredictor *predictor, const absl::string_view key,
+  static UserHistoryPredictor::Entry* InsertEntry(
+      UserHistoryPredictor* predictor, const absl::string_view key,
       const absl::string_view value) {
-    UserHistoryPredictor::Entry *e =
+    UserHistoryPredictor::Entry* e =
         &predictor->dic_->Insert(predictor->Fingerprint(key, value))->value;
     e->set_key(std::string(key));
     e->set_value(std::string(value));
@@ -411,25 +411,25 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     return e;
   }
 
-  static UserHistoryPredictor::Entry *AppendEntry(
-      UserHistoryPredictor *predictor, const absl::string_view key,
-      const absl::string_view value, UserHistoryPredictor::Entry *prev) {
+  static UserHistoryPredictor::Entry* AppendEntry(
+      UserHistoryPredictor* predictor, const absl::string_view key,
+      const absl::string_view value, UserHistoryPredictor::Entry* prev) {
     prev->add_next_entries()->set_entry_fp(predictor->Fingerprint(key, value));
-    UserHistoryPredictor::Entry *e = InsertEntry(predictor, key, value);
+    UserHistoryPredictor::Entry* e = InsertEntry(predictor, key, value);
     return e;
   }
 
-  static size_t EntrySize(const UserHistoryPredictor &predictor) {
+  static size_t EntrySize(const UserHistoryPredictor& predictor) {
     return predictor.dic_->Size();
   }
 
-  static bool LoadStorage(UserHistoryPredictor *predictor,
-                          UserHistoryStorage &&history) {
+  static bool LoadStorage(UserHistoryPredictor* predictor,
+                          UserHistoryStorage&& history) {
     return predictor->Load(std::move(history));
   }
 
-  static bool IsConnected(const UserHistoryPredictor::Entry &prev,
-                          const UserHistoryPredictor::Entry &next) {
+  static bool IsConnected(const UserHistoryPredictor::Entry& prev,
+                          const UserHistoryPredictor::Entry& next) {
     const uint32_t fp =
         UserHistoryPredictor::Fingerprint(next.key(), next.value());
     for (size_t i = 0; i < prev.next_entries_size(); ++i) {
@@ -441,10 +441,10 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   // Helper function to create a test case for bigram history deletion.
-  void InitHistory_JapaneseInput(UserHistoryPredictor *predictor,
-                                 UserHistoryPredictor::Entry **japaneseinput,
-                                 UserHistoryPredictor::Entry **japanese,
-                                 UserHistoryPredictor::Entry **input) {
+  void InitHistory_JapaneseInput(UserHistoryPredictor* predictor,
+                                 UserHistoryPredictor::Entry** japaneseinput,
+                                 UserHistoryPredictor::Entry** japanese,
+                                 UserHistoryPredictor::Entry** input) {
     // Make the history for ("japaneseinput", "JapaneseInput"). It's assumed
     // that this sentence consists of two segments, "japanese" and "input". So,
     // the following history entries are constructed:
@@ -465,11 +465,11 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   // Helper function to create a test case for trigram history deletion.
   void InitHistory_JapaneseInputMethod(
-      UserHistoryPredictor *predictor,
-      UserHistoryPredictor::Entry **japaneseinputmethod,
-      UserHistoryPredictor::Entry **japanese,
-      UserHistoryPredictor::Entry **input,
-      UserHistoryPredictor::Entry **method) {
+      UserHistoryPredictor* predictor,
+      UserHistoryPredictor::Entry** japaneseinputmethod,
+      UserHistoryPredictor::Entry** japanese,
+      UserHistoryPredictor::Entry** input,
+      UserHistoryPredictor::Entry** method) {
     // Make the history for ("japaneseinputmethod", "JapaneseInputMethod"). It's
     // assumed that this sentence consists of three segments, "japanese",
     // "input" and "method". So, the following history entries are constructed:
@@ -495,16 +495,16 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
   }
 
-  void SetUpInput(absl::string_view key, composer::Composer *composer,
-                  SegmentsProxy *segments_proxy) const {
+  void SetUpInput(absl::string_view key, composer::Composer* composer,
+                  SegmentsProxy* segments_proxy) const {
     composer->Reset();
     composer->SetPreeditTextForTestOnly(key);
     segments_proxy->MakeSegments(key);
   }
 
   ConversionRequest SetUpInputForSuggestion(
-      absl::string_view key, composer::Composer *composer,
-      SegmentsProxy *segments_proxy) const {
+      absl::string_view key, composer::Composer* composer,
+      SegmentsProxy* segments_proxy) const {
     SetUpInput(key, composer, segments_proxy);
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::SUGGESTION};
@@ -514,8 +514,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   ConversionRequest SetUpInputForSuggestionWithHistory(
       absl::string_view key, absl::string_view hist_key,
-      absl::string_view hist_value, composer::Composer *composer,
-      SegmentsProxy *segments_proxy) const {
+      absl::string_view hist_value, composer::Composer* composer,
+      SegmentsProxy* segments_proxy) const {
     const ConversionRequest convreq =
         SetUpInputForSuggestion(key, composer, segments_proxy);
     segments_proxy->PrependHistory(hist_key, hist_value);
@@ -523,8 +523,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   ConversionRequest SetUpInputForPrediction(
-      absl::string_view key, composer::Composer *composer,
-      SegmentsProxy *segments_proxy) const {
+      absl::string_view key, composer::Composer* composer,
+      SegmentsProxy* segments_proxy) const {
     SetUpInput(key, composer, segments_proxy);
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::PREDICTION};
@@ -534,8 +534,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   ConversionRequest SetUpInputForPredictionWithHistory(
       absl::string_view key, absl::string_view hist_key,
-      absl::string_view hist_value, composer::Composer *composer,
-      SegmentsProxy *segments_proxy) const {
+      absl::string_view hist_value, composer::Composer* composer,
+      SegmentsProxy* segments_proxy) const {
     const ConversionRequest convreq =
         SetUpInputForPrediction(key, composer, segments_proxy);
     segments_proxy->PrependHistory(hist_key, hist_value);
@@ -543,8 +543,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   ConversionRequest SetUpInputForConversion(
-      absl::string_view key, composer::Composer *composer,
-      SegmentsProxy *segments_proxy) const {
+      absl::string_view key, composer::Composer* composer,
+      SegmentsProxy* segments_proxy) const {
     SetUpInput(key, composer, segments_proxy);
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::CONVERSION};
@@ -554,8 +554,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   ConversionRequest SetUpInputForConversionWithHistory(
       absl::string_view key, absl::string_view hist_key,
-      absl::string_view hist_value, composer::Composer *composer,
-      SegmentsProxy *segments_proxy) const {
+      absl::string_view hist_value, composer::Composer* composer,
+      SegmentsProxy* segments_proxy) const {
     const ConversionRequest convreq =
         SetUpInputForConversion(key, composer, segments_proxy);
     segments_proxy->PrependHistory(hist_key, hist_value);
@@ -563,8 +563,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   ConversionRequest InitSegmentsFromInputSequence(
-      const absl::string_view text, composer::Composer *composer,
-      SegmentsProxy *segments_proxy) const {
+      const absl::string_view text, composer::Composer* composer,
+      SegmentsProxy* segments_proxy) const {
     DCHECK(composer);
     DCHECK(segments_proxy);
     for (const UnicodeChar ch : Utf8AsUnicodeChar(text)) {
@@ -626,7 +626,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
 
     std::vector<Result> results;
@@ -709,7 +709,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
   // reload
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
     SegmentsProxy segments_proxy;
     std::vector<Result> results;
@@ -813,7 +813,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
   // nothing happen
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
     SegmentsProxy segments_proxy;
     std::vector<Result> results;
@@ -832,7 +832,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
   // nothing happen
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
     SegmentsProxy segments_proxy;
     std::vector<Result> results;
@@ -853,14 +853,14 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
   request_test_util::FillMobileRequest(&request_);
 
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   WaitForSyncer(predictor);
 
   std::vector<Result> results;
 
   auto make_segments = [](absl::Span<const Result> results,
-                          SegmentsProxy *segments_proxy) {
-    for (const auto &result : results) {
+                          SegmentsProxy* segments_proxy) {
+    for (const auto& result : results) {
       segments_proxy->AddCandidate(0, result.value);
     }
   };
@@ -967,7 +967,7 @@ TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
 // has type != CONVERSION.
 // To support such Segments, this test case is created separately.
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   // Register input histories via Finish method.
@@ -981,11 +981,11 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
     predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
 
     // All added items must be suggestion entries.
-    for (const auto &element : *predictor_peer.dic_()) {
+    for (const auto& element : *predictor_peer.dic_()) {
       if (!element.next) {
         break;  // Except the last one.
       }
-      const user_history_predictor::UserHistory::Entry &entry = element.value;
+      const user_history_predictor::UserHistory::Entry& entry = element.value;
       EXPECT_EQ(entry.suggestion_freq(), 1);
     }
   }
@@ -1010,7 +1010,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPreprocessInput) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   {
     // Commit can be triggered by space in alphanumeric keyboard layout.
@@ -1046,7 +1046,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
   std::vector<Result> results;
 
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
 
     // Insert two items
@@ -1081,7 +1081,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 
   // reload
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
     SegmentsProxy segments_proxy;
 
@@ -1151,7 +1151,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 
   // nothing happen
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
     SegmentsProxy segments_proxy;
 
@@ -1169,7 +1169,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 
   // nothing happen
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
     SegmentsProxy segments_proxy;
 
@@ -1193,7 +1193,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
   constexpr absl::string_view kValue = "私の名前は中野です";
 
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
 
     SegmentsProxy segments_proxy;
@@ -1207,7 +1207,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
   }
 
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     UserHistoryPredictorTestPeer predictor_peer(*predictor);
     WaitForSyncer(predictor);
     SegmentsProxy segments_proxy;
@@ -1219,7 +1219,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
     EXPECT_EQ(results[0].value, "私の名前は中野です");
 
     // Generates unused entry.
-    UserHistoryPredictor::Entry *entry =
+    UserHistoryPredictor::Entry* entry =
         predictor_peer.dic_()->MutableLookupWithoutInsert(
             UserHistoryPredictor::Fingerprint(kKey, kValue));
     ASSERT_TRUE(entry);
@@ -1229,7 +1229,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
   }
 
   {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     predictor->ClearUnusedHistory();
     WaitForSyncer(predictor);
 
@@ -1244,7 +1244,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   std::vector<Result> results;
 
@@ -1275,7 +1275,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   std::vector<Result> results;
@@ -1289,7 +1289,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest) {
   segments_proxy.AddCandidate(0, kValue);
 
   auto freq_eq = [&](int expected_freq) {
-    auto *entry = predictor_peer.dic_()->MutableLookupWithoutInsert(
+    auto* entry = predictor_peer.dic_()->MutableLookupWithoutInsert(
         UserHistoryPredictor::Fingerprint(kKey, kValue));
     if (expected_freq == 0) {
       EXPECT_TRUE(!entry || entry->suggestion_freq() == expected_freq);
@@ -1321,7 +1321,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
   WaitForSyncer(predictor);
 
   std::vector<Result> results;
@@ -1364,7 +1364,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -1399,7 +1399,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
 }
 
 TEST_F(UserHistoryPredictorTest, TrailingPunctuationMobile) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   request_test_util::FillMobileRequest(&request_);
   SegmentsProxy segments_proxy;
 
@@ -1419,7 +1419,7 @@ TEST_F(UserHistoryPredictorTest, TrailingPunctuationMobile) {
 }
 
 TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -1486,7 +1486,7 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPrecedingPunctuation) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -1520,13 +1520,13 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPrecedingPunctuation) {
 
 namespace {
 struct StartsWithPunctuationsTestData {
-  const char *first_character;
+  const char* first_character;
   bool expected_result;
 };
 }  // namespace
 
 TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
   const StartsWithPunctuationsTestData kTestCases[] = {
       {"。", false}, {"、", false},    {"？", false},
       {"！", false}, {"あああ", true},
@@ -1584,7 +1584,7 @@ TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
 }
 
 TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   request_.set_zero_query_suggestion(true);
 
@@ -1652,7 +1652,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     EXPECT_EQ(results[0].value, "大阪");
     EXPECT_EQ(results[0].key, "おおさか");
 
-    for (const char *key : {"は", "た", "き", "お"}) {
+    for (const char* key : {"は", "た", "き", "お"}) {
       const ConversionRequest convreq = SetUpInputForSuggestionWithHistory(
           key, "たろうは", "太郎は", &composer_, &segments_proxy);
       results = predictor->Predict(convreq);
@@ -1720,7 +1720,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -1825,7 +1825,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
 }
 
 TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -1920,7 +1920,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -1970,7 +1970,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371Case2) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -2026,7 +2026,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case2) {
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371Case3) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -2088,7 +2088,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case3) {
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843775) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -2113,7 +2113,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
 }
 
 TEST_F(UserHistoryPredictorTest, DuplicateString) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -2183,7 +2183,7 @@ struct Command {
 };
 
 TEST_F(UserHistoryPredictorTest, SyncTest) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
   WaitForSyncer(predictor);
 
   std::vector<Result> results;
@@ -2344,7 +2344,7 @@ TEST_F(UserHistoryPredictorTest, GetScore) {
 }
 
 TEST_F(UserHistoryPredictorTest, IsValidEntry) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   UserHistoryPredictor::Entry entry;
@@ -2388,7 +2388,7 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   // Set up suppression dictionary
   {
     user_dictionary::UserDictionaryStorage storage;
-    auto *entry = storage.add_dictionaries()->add_entries();
+    auto* entry = storage.add_dictionaries()->add_entries();
     entry->set_key("foo");
     entry->set_value("bar");
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
@@ -2459,9 +2459,9 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
 
   {
     UserHistoryPredictorTestPeer::EntryPriorityQueue queue;
-    std::vector<UserHistoryPredictor::Entry *> expected;
+    std::vector<UserHistoryPredictor::Entry*> expected;
     for (int i = 0; i < kSize; ++i) {
-      UserHistoryPredictor::Entry *entry = queue.NewEntry();
+      UserHistoryPredictor::Entry* entry = queue.NewEntry();
       entry->set_key("test" + std::to_string(i));
       entry->set_value("test" + std::to_string(i));
       entry->set_last_access_time(i + 1000);
@@ -2471,7 +2471,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
 
     int n = kSize - 1;
     while (true) {
-      const UserHistoryPredictor::Entry *entry = queue.Pop();
+      const UserHistoryPredictor::Entry* entry = queue.Pop();
       if (entry == nullptr) {
         break;
       }
@@ -2484,7 +2484,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
   {
     UserHistoryPredictorTestPeer::EntryPriorityQueue queue;
     for (int i = 0; i < 5; ++i) {
-      UserHistoryPredictor::Entry *entry = queue.NewEntry();
+      UserHistoryPredictor::Entry* entry = queue.NewEntry();
       entry->set_key("test");
       entry->set_value("test");
       queue.Push(entry);
@@ -2492,7 +2492,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
     EXPECT_EQ(queue.size(), 1);
 
     for (int i = 0; i < 5; ++i) {
-      UserHistoryPredictor::Entry *entry = queue.NewEntry();
+      UserHistoryPredictor::Entry* entry = queue.NewEntry();
       entry->set_key("foo");
       entry->set_value("bar");
       queue.Push(entry);
@@ -2522,9 +2522,9 @@ std::string RemoveLastCodepointCharacter(const absl::string_view input) {
 
 struct PrivacySensitiveTestData {
   bool is_sensitive;
-  const char *scenario_description;
-  const char *input;
-  const char *output;
+  const char* scenario_description;
+  const char* input;
+  const char* output;
 };
 
 constexpr bool kSensitive = true;
@@ -2609,10 +2609,10 @@ const PrivacySensitiveTestData kNonSensitiveCases[] = {
 }  // namespace
 
 TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
   std::vector<Result> results;
 
-  for (const PrivacySensitiveTestData &data : kNonSensitiveCases) {
+  for (const PrivacySensitiveTestData& data : kNonSensitiveCases) {
     predictor->ClearAllHistory();
     WaitForSyncer(predictor);
 
@@ -2694,7 +2694,7 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, PrivacySensitiveMultiSegmentsTest) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
   WaitForSyncer(predictor);
   std::vector<Result> results;
 
@@ -2744,7 +2744,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
 
   UserHistoryStorage storage1(filename);
 
-  UserHistoryPredictor::Entry *entry = storage1.GetProto().add_entries();
+  UserHistoryPredictor::Entry* entry = storage1.GetProto().add_entries();
   CHECK(entry);
   entry->set_key("key");
   entry->set_key("value");
@@ -2766,7 +2766,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
   user_history_predictor::UserHistory history;
 
   // Invalid UTF8.
-  for (const char *value : {
+  for (const char* value : {
            "\xC2\xC2 ",
            "\xE0\xE0\xE0 ",
            "\xF0\xF0\xF0\xF0 ",
@@ -2778,7 +2778,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
            "\xEF",
            "\xBC\x91\xE5",
        }) {
-    auto *entry = history.add_entries();
+    auto* entry = history.add_entries();
     entry->set_key("key");
     entry->set_value(value);
   }
@@ -2797,7 +2797,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
     // Only the valid entries are loaded.
     EXPECT_EQ(storage.GetProto().entries_size(), 9);
 
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
     EXPECT_TRUE(LoadStorage(predictor, std::move(storage)));
     EXPECT_EQ(EntrySize(*predictor), 0);
   }
@@ -2921,7 +2921,7 @@ TEST_F(UserHistoryPredictorTest, GetRomanMisspelledKey) {
 }
 
 TEST_F(UserHistoryPredictorTest, RomanFuzzyLookupEntry) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
   UserHistoryPredictor::Entry entry;
   UserHistoryPredictorTestPeer::EntryPriorityQueue results;
@@ -2957,7 +2957,7 @@ struct LookupTestData {
 }  // namespace
 
 TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
   UserHistoryPredictor::Entry entry;
   UserHistoryPredictorTestPeer::EntryPriorityQueue results;
@@ -3012,7 +3012,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
 }
 
 TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
   UserHistoryPredictor::Entry entry;
   UserHistoryPredictorTestPeer::EntryPriorityQueue results;
@@ -3387,7 +3387,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
 
 TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
   for (bool mixed_conversion : {true, false}) {
-    UserHistoryPredictor *predictor =
+    UserHistoryPredictor* predictor =
         GetUserHistoryPredictorWithClearedHistory();
 
     SegmentsProxy segments_proxy;
@@ -3445,7 +3445,7 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
 }
 
 TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   request_.set_mixed_conversion(true);
 
   SegmentsProxy segments_proxy;
@@ -3481,7 +3481,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
 }
 
 TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   request_test_util::FillMobileRequest(&request_);
   std::vector<Result> results;
@@ -3532,18 +3532,18 @@ TEST_F(UserHistoryPredictorTest, EraseNextEntries) {
 }
 
 TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   // Set up the following chain of next entries:
   // ("abc", "ABC")
   // (  "a",   "A") --- ("b", "B") --- ("c", "C")
-  UserHistoryPredictor::Entry *abc = InsertEntry(predictor, "abc", "ABC");
-  UserHistoryPredictor::Entry *a = InsertEntry(predictor, "a", "A");
-  UserHistoryPredictor::Entry *b = AppendEntry(predictor, "b", "B", a);
-  UserHistoryPredictor::Entry *c = AppendEntry(predictor, "c", "C", b);
+  UserHistoryPredictor::Entry* abc = InsertEntry(predictor, "abc", "ABC");
+  UserHistoryPredictor::Entry* a = InsertEntry(predictor, "a", "A");
+  UserHistoryPredictor::Entry* b = AppendEntry(predictor, "b", "B", a);
+  UserHistoryPredictor::Entry* c = AppendEntry(predictor, "c", "C", b);
 
-  std::vector<UserHistoryPredictor::Entry *> entries;
+  std::vector<UserHistoryPredictor::Entry*> entries;
   entries.push_back(abc);
   entries.push_back(a);
   entries.push_back(b);
@@ -3610,10 +3610,10 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryUnigram) {
   ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for unigram history.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Add a unigram history ("japanese", "Japanese").
-  UserHistoryPredictor::Entry *e =
+  UserHistoryPredictor::Entry* e =
       InsertEntry(predictor, "japanese", "Japanese");
   e->set_last_access_time(1);
 
@@ -3639,16 +3639,16 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteWhole) {
 
   // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
   // of whole sentence.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Make the history for ("japaneseinput", "JapaneseInput"). It's assumed that
   // this sentence consists of two segments, "japanese" and "input". So, the
   // following history entries are constructed:
   //   ("japaneseinput", "JapaneseInput")  // Unigram
   //   ("japanese", "Japanese") --- ("input", "Input")  // Bigram chain
-  UserHistoryPredictor::Entry *japaneseinput;
-  UserHistoryPredictor::Entry *japanese;
-  UserHistoryPredictor::Entry *input;
+  UserHistoryPredictor::Entry* japaneseinput;
+  UserHistoryPredictor::Entry* japanese;
+  UserHistoryPredictor::Entry* input;
   InitHistory_JapaneseInput(predictor, &japaneseinput, &japanese, &input);
 
   // Check the predictor functionality for the above history structure.
@@ -3682,13 +3682,13 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteFirst) {
 
   // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
   // of the first node of the bigram chain.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Make the history for ("japaneseinput", "JapaneseInput"), i.e., the same
   // history structure as ClearHistoryEntry_Bigram_DeleteWhole is constructed.
-  UserHistoryPredictor::Entry *japaneseinput;
-  UserHistoryPredictor::Entry *japanese;
-  UserHistoryPredictor::Entry *input;
+  UserHistoryPredictor::Entry* japaneseinput;
+  UserHistoryPredictor::Entry* japanese;
+  UserHistoryPredictor::Entry* input;
   InitHistory_JapaneseInput(predictor, &japaneseinput, &japanese, &input);
 
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
@@ -3723,13 +3723,13 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteSecond) {
 
   // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
   // of the first node of the bigram chain.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Make the history for ("japaneseinput", "JapaneseInput"), i.e., the same
   // history structure as ClearHistoryEntry_Bigram_DeleteWhole is constructed.
-  UserHistoryPredictor::Entry *japaneseinput;
-  UserHistoryPredictor::Entry *japanese;
-  UserHistoryPredictor::Entry *input;
+  UserHistoryPredictor::Entry* japaneseinput;
+  UserHistoryPredictor::Entry* japanese;
+  UserHistoryPredictor::Entry* input;
   InitHistory_JapaneseInput(predictor, &japaneseinput, &japanese, &input);
 
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
@@ -3762,17 +3762,17 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteWhole) {
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the whole sentence.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Make the history for ("japaneseinputmethod", "JapaneseInputMethod"). It's
   // assumed that this sentence consists of three segments, "japanese", "input"
   // and "method". So, the following history entries are constructed:
   //   ("japaneseinputmethod", "JapaneseInputMethod")  // Unigram
   //   ("japanese", "Japanese") -- ("input", "Input") -- ("method", "Method")
-  UserHistoryPredictor::Entry *japaneseinputmethod;
-  UserHistoryPredictor::Entry *japanese;
-  UserHistoryPredictor::Entry *input;
-  UserHistoryPredictor::Entry *method;
+  UserHistoryPredictor::Entry* japaneseinputmethod;
+  UserHistoryPredictor::Entry* japanese;
+  UserHistoryPredictor::Entry* input;
+  UserHistoryPredictor::Entry* method;
   InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod, &japanese,
                                   &input, &method);
 
@@ -3823,13 +3823,13 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirst) {
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the first node of trigram.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
-  UserHistoryPredictor::Entry *japaneseinputmethod;
-  UserHistoryPredictor::Entry *japanese;
-  UserHistoryPredictor::Entry *input;
-  UserHistoryPredictor::Entry *method;
+  UserHistoryPredictor::Entry* japaneseinputmethod;
+  UserHistoryPredictor::Entry* japanese;
+  UserHistoryPredictor::Entry* input;
+  UserHistoryPredictor::Entry* method;
   InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod, &japanese,
                                   &input, &method);
 
@@ -3876,13 +3876,13 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecond) {
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the second node of trigram.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
-  UserHistoryPredictor::Entry *japaneseinputmethod;
-  UserHistoryPredictor::Entry *japanese;
-  UserHistoryPredictor::Entry *input;
-  UserHistoryPredictor::Entry *method;
+  UserHistoryPredictor::Entry* japaneseinputmethod;
+  UserHistoryPredictor::Entry* japanese;
+  UserHistoryPredictor::Entry* input;
+  UserHistoryPredictor::Entry* method;
   InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod, &japanese,
                                   &input, &method);
 
@@ -3929,13 +3929,13 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteThird) {
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the third node of trigram.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
-  UserHistoryPredictor::Entry *japaneseinputmethod;
-  UserHistoryPredictor::Entry *japanese;
-  UserHistoryPredictor::Entry *input;
-  UserHistoryPredictor::Entry *method;
+  UserHistoryPredictor::Entry* japaneseinputmethod;
+  UserHistoryPredictor::Entry* japanese;
+  UserHistoryPredictor::Entry* input;
+  UserHistoryPredictor::Entry* method;
   InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod, &japanese,
                                   &input, &method);
 
@@ -3982,13 +3982,13 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirstBigram) {
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the first bigram of trigram.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
-  UserHistoryPredictor::Entry *japaneseinputmethod;
-  UserHistoryPredictor::Entry *japanese;
-  UserHistoryPredictor::Entry *input;
-  UserHistoryPredictor::Entry *method;
+  UserHistoryPredictor::Entry* japaneseinputmethod;
+  UserHistoryPredictor::Entry* japanese;
+  UserHistoryPredictor::Entry* input;
+  UserHistoryPredictor::Entry* method;
   InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod, &japanese,
                                   &input, &method);
 
@@ -4037,13 +4037,13 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecondBigram) {
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the latter bigram of trigram.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Make the same history structure as ClearHistoryEntry_Trigram_DeleteWhole.
-  UserHistoryPredictor::Entry *japaneseinputmethod;
-  UserHistoryPredictor::Entry *japanese;
-  UserHistoryPredictor::Entry *input;
-  UserHistoryPredictor::Entry *method;
+  UserHistoryPredictor::Entry* japaneseinputmethod;
+  UserHistoryPredictor::Entry* japanese;
+  UserHistoryPredictor::Entry* input;
+  UserHistoryPredictor::Entry* method;
   InitHistory_JapaneseInputMethod(predictor, &japaneseinputmethod, &japanese,
                                   &input, &method);
 
@@ -4088,7 +4088,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecondBigram) {
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario1) {
   // Tests a common scenario: First, a user accidentally inputs an incomplete
   // romaji sequence and the predictor learns it.  Then, the user deletes it.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Set up history. Convert "ぐーぐｒ" to "グーグr" 3 times.  This emulates a
   // case that a user accidentally input incomplete sequence.
@@ -4116,7 +4116,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
   // Tests a common scenario: First, a user inputs a sentence ending with a
   // symbol and it's learned by the predictor.  Then, the user deletes the
   // history containing the symbol.
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Set up history. Convert "きょうもいいてんき！" to "今日もいい天気!" 3 times
   // so that the predictor learns the sentence. We assume that this sentence
@@ -4157,7 +4157,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
 }
 
 TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   request_.set_mixed_conversion(true);
 
@@ -4202,7 +4202,7 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
 }
 
 TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestMobile) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   request_test_util::FillMobileRequest(&request_);
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -4243,7 +4243,7 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestMobile) {
 }
 
 TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -4286,7 +4286,7 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
 }
 
 TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   request_test_util::FillMobileRequest(&request_);
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -4422,7 +4422,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
 }
 
 TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
@@ -4572,7 +4572,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
 }
 
 TEST_F(UserHistoryPredictorTest, EntriesMaxTrialSize) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   // Insert one entry per day.
@@ -4612,7 +4612,7 @@ TEST_F(UserHistoryPredictorTest, EntriesAreDeletedAtSync) {
   for (const int mode : {0, 1}) {
     for (const int limit : {10, 20, 30, 40}) {
       ScopedClockMock clock(absl::FromUnixSeconds(1));
-      UserHistoryPredictor *predictor =
+      UserHistoryPredictor* predictor =
           GetUserHistoryPredictorWithClearedHistory();
       UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
@@ -4669,7 +4669,7 @@ TEST_F(UserHistoryPredictorTest, EntriesAreDeletedAtSync) {
 TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
   ScopedClockMock clock(absl::FromUnixSeconds(1));
 
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
   std::vector<Result> results;
 
@@ -4725,7 +4725,7 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
 
   // Verify also that on-memory data structure doesn't contain node for 中野.
   bool found_takahashi = false;
-  for (const auto &elem : *predictor_peer.dic_()) {
+  for (const auto& elem : *predictor_peer.dic_()) {
     EXPECT_EQ(elem.value.value().find("中野"), std::string::npos);
     if (elem.value.value().find("高橋")) {
       found_takahashi = true;
@@ -4738,7 +4738,7 @@ TEST_F(UserHistoryPredictorTest, FutureTimestamp) {
   // Test the case where history has "future" timestamps.
   ScopedClockMock clock(absl::FromUnixSeconds(10000));
 
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Let the predictor learn "私の名前は中野です".
   SegmentsProxy segments_proxy;
@@ -4769,7 +4769,7 @@ TEST_F(UserHistoryPredictorTest, FutureTimestamp) {
 }
 
 TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
   {
@@ -4866,7 +4866,7 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
 }
 
 TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   request_test_util::FillMobileRequest(&request_);
   SegmentsProxy segments_proxy;
   std::vector<Result> results;
@@ -4952,7 +4952,7 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
 TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   auto mock = std::make_unique<engine::MockSupplementalModel>();
   // TODO(taku): Avoid sharing the pointer of std::unique_ptr.
-  engine::MockSupplementalModel *mock_ptr = mock.get();
+  engine::MockSupplementalModel* mock_ptr = mock.get();
 
   std::unique_ptr<engine::Modules> modules =
       engine::ModulesPresetBuilder()
@@ -5007,7 +5007,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   EXPECT_TRUE(results.empty());
 
   std::vector<TypeCorrectedQuery> expected;
-  auto add_expected = [&](const std::string &key) {
+  auto add_expected = [&](const std::string& key) {
     expected.emplace_back(
         TypeCorrectedQuery{key, TypeCorrectedQuery::CORRECTION, 1.0});
   };
@@ -5057,7 +5057,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
 }
 
 TEST_F(UserHistoryPredictorTest, MaxCharCoverage) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   SegmentsProxy segments_proxy;
 
   {
@@ -5087,7 +5087,7 @@ TEST_F(UserHistoryPredictorTest, MaxCharCoverage) {
       {1, 1}, {2, 1}, {3, 1}, {4, 1},  {5, 1}, {6, 2},
       {7, 2}, {8, 2}, {9, 2}, {10, 3}, {11, 3}};
 
-  for (const auto &[coverage, candidates_size] : kTestCases) {
+  for (const auto& [coverage, candidates_size] : kTestCases) {
     request_.mutable_decoder_experiment_params()
         ->set_user_history_prediction_max_char_coverage(coverage);
     segments_proxy.MakeSegments("てすと");
@@ -5107,7 +5107,7 @@ TEST_F(UserHistoryPredictorTest, RemoveRedundantCandidates) {
   auto run_test = [this](absl::Span<const absl::string_view> candidates,
                          absl::Span<const absl::string_view> expected) {
     ScopedClockMock clock(absl::FromUnixSeconds(1));
-    UserHistoryPredictor *predictor =
+    UserHistoryPredictor* predictor =
         GetUserHistoryPredictorWithClearedHistory();
     SegmentsProxy segments_proxy;
     // Insert in reverse order to emulate LRU.
@@ -5146,7 +5146,7 @@ TEST_F(UserHistoryPredictorTest, RemoveRedundantCandidates) {
 }
 
 TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Remember 私の名前は中野です
   SegmentsProxy segments_proxy;
@@ -5173,7 +5173,7 @@ TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
                         {"なかの", "中野", "です"},
                         {"わたしの", "私の", "名前"},
                         {"なまえは", "名前は", "中野"}};
-  for (const auto &[hist_key, hist_value, suggestion] : kZeroQueryTest) {
+  for (const auto& [hist_key, hist_value, suggestion] : kZeroQueryTest) {
     segments_proxy.Clear();
     const ConversionRequest convreq1 =
         SetUpInputForConversion(hist_key, &composer_, &segments_proxy);
@@ -5267,7 +5267,7 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
 
   auto has_entry = [&](absl::string_view key, absl::string_view value) {
     UserHistoryPredictorTestPeer predictor_peer(*predictor);
-    const UserHistoryPredictor::Entry *entry =
+    const UserHistoryPredictor::Entry* entry =
         predictor_peer.dic_()->LookupWithoutInsert(
             UserHistoryPredictor::Fingerprint(key, value));
     return entry && entry->suggestion_freq() > 0 &&

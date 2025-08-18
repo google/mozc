@@ -60,7 +60,7 @@ namespace {
 using ::mozc::storage::ExistenceFilter;
 using ::mozc::storage::ExistenceFilterBuilder;
 
-void ReadHashList(const std::string &name, std::vector<uint64_t> *words) {
+void ReadHashList(const std::string& name, std::vector<uint64_t>* words) {
   std::string line;
   mozc::InputFileStream input(name);
   while (std::getline(input, line)) {
@@ -73,7 +73,7 @@ void ReadHashList(const std::string &name, std::vector<uint64_t> *words) {
 }
 
 void ReadSafeWords(const absl::string_view safe_list_files,
-                   std::vector<std::string> *safe_word_list) {
+                   std::vector<std::string>* safe_word_list) {
   if (safe_list_files.empty()) {
     return;
   }
@@ -103,10 +103,10 @@ ExistenceFilterBuilder GetFilter(const size_t num_bytes,
   return filter;
 }
 
-bool TestFilter(const ExistenceFilterBuilder &builder,
+bool TestFilter(const ExistenceFilterBuilder& builder,
                 absl::Span<const std::string> safe_word_list) {
   ExistenceFilter filter = builder.Build();
-  for (const std::string &word : safe_word_list) {
+  for (const std::string& word : safe_word_list) {
     if (filter.Exists(mozc::Fingerprint(word))) {
       LOG(WARNING) << "Safe word, " << word
                    << " is determined as bad suggestion.";
@@ -136,7 +136,7 @@ ExistenceFilterBuilder SetupFilter(
 
 // read per-line word list and generate
 // bloom filter in raw byte array or header file format
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   if ((absl::GetFlag(FLAGS_input).empty() ||

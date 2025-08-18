@@ -55,8 +55,8 @@ namespace mozc::prediction::filter {
 namespace {
 
 // Returns true if the |target| may be redundant result.
-bool MaybeRedundant(const Result &reference_result,
-                    const Result &target_result) {
+bool MaybeRedundant(const Result& reference_result,
+                    const Result& target_result) {
   const absl::string_view reference = reference_result.value;
   const absl::string_view target = target_result.value;
 
@@ -85,10 +85,10 @@ bool MaybeRedundant(const Result &reference_result,
 
 }  // namespace
 
-ResultFilter::ResultFilter(const ConversionRequest &request,
+ResultFilter::ResultFilter(const ConversionRequest& request,
                            dictionary::PosMatcher pos_matcher,
-                           const Connector &connector,
-                           const SuggestionFilter &suggestion_filter)
+                           const Connector& connector,
+                           const SuggestionFilter& suggestion_filter)
     : request_key_(request.key()),
       history_key_(request.converter_history_key(1)),
       history_value_(request.converter_history_value(1)),
@@ -107,7 +107,7 @@ ResultFilter::ResultFilter(const ConversionRequest &request,
               .suffix_nwp_transition_cost_threshold()),
       history_rid_(request.converter_history_rid()) {}
 
-bool ResultFilter::ShouldRemove(const Result &result, int added_num) {
+bool ResultFilter::ShouldRemove(const Result& result, int added_num) {
   if (result.removed) {
     return true;
   }
@@ -244,7 +244,7 @@ size_t GetMissSpelledPosition(const absl::string_view key,
   return position;
 }
 
-void RemoveRedundantResults(std::vector<Result> *results) {
+void RemoveRedundantResults(std::vector<Result>* results) {
   constexpr size_t kDeleteTrialNum = 5;
   DCHECK(results);
 
@@ -261,7 +261,7 @@ void RemoveRedundantResults(std::vector<Result> *results) {
     std::iter_swap(min_iter,
                    std::min_element(min_iter, max_iter, ResultWCostLess()));
 
-    const Result &reference_result = *min_iter;
+    const Result& reference_result = *min_iter;
 
     // Preserve the reference result.
     ++min_iter;

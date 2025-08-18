@@ -92,7 +92,7 @@ struct State {
   std::optional<NumberDecoderResult> Result() const;
 
   template <typename Sink>
-  friend void AbslStringify(Sink &sink, const State &state) {
+  friend void AbslStringify(Sink& sink, const State& state) {
     absl::Format(
         &sink,
         "small_digit_num: %d, num_str: %s, sd: %d, bd: %d, consumed_blen: %d",
@@ -134,7 +134,7 @@ struct NumberDecoderResult {
         digit_num(digit_num) {}
 
   template <typename Sink>
-  friend void AbslStringify(Sink &sink, const NumberDecoderResult &result) {
+  friend void AbslStringify(Sink& sink, const NumberDecoderResult& result) {
     absl::Format(&sink, "(%d,\" %s\", %d)", result.consumed_key_byte_len,
                  result.candidate, result.digit_num);
   }
@@ -144,43 +144,43 @@ struct NumberDecoderResult {
   int digit_num;  // 12万(=120000) → 6
 };
 
-constexpr bool operator==(const NumberDecoderResult &lhs,
-                          const NumberDecoderResult &rhs) {
+constexpr bool operator==(const NumberDecoderResult& lhs,
+                          const NumberDecoderResult& rhs) {
   return std::tie(lhs.consumed_key_byte_len, lhs.candidate, lhs.digit_num) ==
          std::tie(rhs.consumed_key_byte_len, rhs.candidate, rhs.digit_num);
 }
 
-std::ostream &operator<<(std::ostream &os, const NumberDecoderResult &r);
+std::ostream& operator<<(std::ostream& os, const NumberDecoderResult& r);
 
 class NumberDecoder {
  public:
   explicit NumberDecoder(
-      const dictionary::PosMatcher &pos_matcher ABSL_ATTRIBUTE_LIFETIME_BOUND);
+      const dictionary::PosMatcher& pos_matcher ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
-  NumberDecoder(NumberDecoder &&) = default;
-  NumberDecoder &operator=(NumberDecoder &&) = default;
+  NumberDecoder(NumberDecoder&&) = default;
+  NumberDecoder& operator=(NumberDecoder&&) = default;
 
   std::vector<NumberDecoderResult> Decode(absl::string_view key) const;
 
-  std::vector<Result> Decode(const ConversionRequest &request) const;
+  std::vector<Result> Decode(const ConversionRequest& request) const;
 
  private:
-  void DecodeAux(absl::string_view key, number_decoder_internal::State &state,
-                 std::vector<NumberDecoderResult> &results) const;
+  void DecodeAux(absl::string_view key, number_decoder_internal::State& state,
+                 std::vector<NumberDecoderResult>& results) const;
   bool HandleUnitEntry(absl::string_view key,
-                       const number_decoder_internal::Entry &entry,
-                       number_decoder_internal::State &state,
-                       std::vector<NumberDecoderResult> &results) const;
+                       const number_decoder_internal::Entry& entry,
+                       number_decoder_internal::State& state,
+                       std::vector<NumberDecoderResult>& results) const;
   bool HandleSmallDigitEntry(absl::string_view key,
-                             const number_decoder_internal::Entry &entry,
-                             number_decoder_internal::State &state,
-                             std::vector<NumberDecoderResult> &results) const;
+                             const number_decoder_internal::Entry& entry,
+                             number_decoder_internal::State& state,
+                             std::vector<NumberDecoderResult>& results) const;
   bool HandleBigDigitEntry(absl::string_view key,
-                           const number_decoder_internal::Entry &entry,
-                           number_decoder_internal::State &state,
-                           std::vector<NumberDecoderResult> &results) const;
+                           const number_decoder_internal::Entry& entry,
+                           number_decoder_internal::State& state,
+                           std::vector<NumberDecoderResult>& results) const;
 
-  const Trie<number_decoder_internal::Entry> &entries_;
+  const Trie<number_decoder_internal::Entry>& entries_;
 
   const uint16_t kanji_number_id_;
   const uint16_t number_id_;

@@ -85,7 +85,7 @@ using ::testing::StrictMock;
 class DictionaryPredictorTestPeer
     : public testing::TestPeer<DictionaryPredictor> {
  public:
-  explicit DictionaryPredictorTestPeer(DictionaryPredictor &predictor)
+  explicit DictionaryPredictorTestPeer(DictionaryPredictor& predictor)
       : testing::TestPeer<DictionaryPredictor>(predictor) {}
 
   PEER_STATIC_METHOD(IsAggressiveSuggestion);
@@ -102,20 +102,20 @@ class MockRealtimeDecoder : public RealtimeDecoder {
  public:
   ~MockRealtimeDecoder() override = default;
 
-  MOCK_METHOD(std::vector<Result>, Decode, (const ConversionRequest &request),
+  MOCK_METHOD(std::vector<Result>, Decode, (const ConversionRequest& request),
               (const, override));
 };
 
 class MockAggregator : public DictionaryPredictionAggregatorInterface {
  public:
   MOCK_METHOD(std::vector<prediction::Result>, AggregateResultsForDesktop,
-              (const ConversionRequest &request), (const, override));
+              (const ConversionRequest& request), (const, override));
   MOCK_METHOD(std::vector<prediction::Result>,
               AggregateResultsForMixedConversion,
-              (const ConversionRequest &request), (const, override));
+              (const ConversionRequest& request), (const, override));
   MOCK_METHOD(std::vector<prediction::Result>,
               AggregateTypingCorrectedResultsForMixedConversion,
-              (const ConversionRequest &request), (const, override));
+              (const ConversionRequest& request), (const, override));
 };
 
 // Helper class to hold predictor objects.
@@ -138,22 +138,22 @@ class MockDataAndPredictor {
         *modules_, std::move(mock_aggregator), std::move(mock_decoder)));
   }
 
-  MockAggregator *mutable_aggregator() { return mock_aggregator_; }
-  MockRealtimeDecoder *mutable_realtime_decoder() { return mock_decoder_; }
+  MockAggregator* mutable_aggregator() { return mock_aggregator_; }
+  MockRealtimeDecoder* mutable_realtime_decoder() { return mock_decoder_; }
 
-  const Connector &connector() { return modules_->GetConnector(); }
-  const PosMatcher &pos_matcher() { return modules_->GetPosMatcher(); }
+  const Connector& connector() { return modules_->GetConnector(); }
+  const PosMatcher& pos_matcher() { return modules_->GetPosMatcher(); }
 
-  const DictionaryPredictor &predictor() { return *predictor_; }
-  DictionaryPredictor *mutable_predictor() { return predictor_.get(); }
+  const DictionaryPredictor& predictor() { return *predictor_; }
+  DictionaryPredictor* mutable_predictor() { return predictor_.get(); }
 
   DictionaryPredictorTestPeer predictor_peer() {
     return DictionaryPredictorTestPeer(*predictor_);
   }
 
  private:
-  MockAggregator *mock_aggregator_ = nullptr;
-  MockRealtimeDecoder *mock_decoder_ = nullptr;
+  MockAggregator* mock_aggregator_ = nullptr;
+  MockRealtimeDecoder* mock_decoder_ = nullptr;
   std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<DictionaryPredictor> predictor_;
 };
@@ -204,7 +204,7 @@ Result CreateResult7(absl::string_view key, absl::string_view value, int wcost,
 
 void PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
                                   size_t content_key_len,
-                                  size_t content_value_len, Result *result) {
+                                  size_t content_value_len, Result* result) {
   result->inner_segment_boundary.push_back(
       converter::EncodeLengths(key_len, value_len, content_key_len,
                                content_value_len)
@@ -213,14 +213,14 @@ void PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
 
 bool FindCandidateByKeyValue(absl::Span<const Result> results,
                              absl::string_view key, absl::string_view value) {
-  return absl::c_find_if(results, [&](const auto &result) {
+  return absl::c_find_if(results, [&](const auto& result) {
            return (result.key == key && result.value == value);
          }) != results.end();
 }
 
 bool FindCandidateByValue(absl::Span<const Result> results,
                           absl::string_view value) {
-  return absl::c_find_if(results, [&](const auto &result) {
+  return absl::c_find_if(results, [&](const auto& result) {
            return (result.value == value);
          }) != results.end();
 }
@@ -247,7 +247,7 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   ConversionRequest CreateConversionRequestWithOptions(
-      ConversionRequest::Options &&options, absl::string_view key = "") const {
+      ConversionRequest::Options&& options, absl::string_view key = "") const {
     return ConversionRequestBuilder()
         .SetComposer(*composer_)
         .SetRequestView(*request_)
@@ -383,7 +383,7 @@ TEST_F(DictionaryPredictorTest, GetLMCost) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   DictionaryPredictorTestPeer predictor_peer =
       data_and_predictor->predictor_peer();
-  const Connector &connector = data_and_predictor->connector();
+  const Connector& connector = data_and_predictor->connector();
 
   Result result;
   result.wcost = 64;
@@ -516,8 +516,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
 TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
   EXPECT_CALL(*aggregator, AggregateResultsForDesktop(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
@@ -534,8 +534,8 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
 
 TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
   EXPECT_CALL(*aggregator, AggregateResultsForDesktop(_))
       .WillOnce(Return(std::vector<Result>{
@@ -554,8 +554,8 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
 
 TEST_F(DictionaryPredictorTest, MobileZeroQuery) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
   EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
       .WillOnce(Return(std::vector<Result>{
@@ -587,8 +587,8 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuery) {
 
 TEST_F(DictionaryPredictorTest, PredictivePenaltyForBigramResults) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
   EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
       .WillOnce(Return(std::vector<Result>{
@@ -624,9 +624,9 @@ TEST_F(DictionaryPredictorTest, PredictivePenaltyForBigramResults) {
 
 TEST_F(DictionaryPredictorTest, PropagateAttributes) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
-  MockRealtimeDecoder *realtime_decoder =
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
+  MockRealtimeDecoder* realtime_decoder =
       data_and_predictor->mutable_realtime_decoder();
 
   // Exact key will not be filtered in mobile request
@@ -641,8 +641,8 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
   }
 
   auto get_top_result = [&aggregator, &predictor, this](
-                            const Result &aggregator_result,
-                            PredictionTypes prediction_types, Result *result) {
+                            const Result& aggregator_result,
+                            PredictionTypes prediction_types, Result* result) {
     EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
         .WillOnce(Return(std::vector<Result>({aggregator_result})));
     const ConversionRequest convreq =
@@ -775,7 +775,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
   constexpr int kTestSize = 20;
   std::vector<Result> results(kTestSize);
   for (size_t i = 0; i < kTestSize; ++i) {
-    Result *result = &results[i];
+    Result* result = &results[i];
     result->key = std::string(1, 'a' + i);
     result->value = std::string(1, 'A' + i);
     result->wcost = i;
@@ -809,7 +809,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
   constexpr int kLowCostCandidateSize = 5;
   std::vector<Result> results(kTotalCandidateSize);
   for (size_t i = 0; i < kTotalCandidateSize; ++i) {
-    Result *result = &results[i];
+    Result* result = &results[i];
     result->key = std::string(1, 'a' + i);
     result->value = std::string(1, 'A' + i);
     result->wcost = i;
@@ -841,12 +841,12 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
 
 TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
   // turn on mobile mode
   request_test_util::FillMobileRequest(request_.get());
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
     EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
         .WillRepeatedly(Return(std::vector<Result>{
@@ -879,10 +879,10 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
 
 TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
     EXPECT_CALL(*aggregator, AggregateResultsForDesktop(_))
         .WillRepeatedly(Return(std::vector<Result>{
@@ -905,11 +905,11 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
 
 TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigramOnMobile) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
   request_test_util::FillMobileRequest(request_.get());
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
     std::vector<Result> results;
     for (int i = 0; i < 30; ++i) {
@@ -935,7 +935,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigramOnMobile) {
       "てすと");
   const std::vector<Result> results = predictor.Predict(convreq);
   int exact_count = 0;
-  for (const Result &result : results) {
+  for (const Result& result : results) {
     if (absl::StrContains(result.value, "テストE")) {
       exact_count++;
     }
@@ -945,7 +945,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigramOnMobile) {
 
 TEST_F(DictionaryPredictorTest, DoNotFilterUnigrmsForHandwriting) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
 
   // Destkop doesn't support handwriting.
   request_test_util::FillMobileRequest(request_.get());
@@ -958,7 +958,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterUnigrmsForHandwriting) {
     request_->set_auto_partial_suggestion(false);
 
     commands::SessionCommand command;
-    commands::SessionCommand::CompositionEvent *composition_event =
+    commands::SessionCommand::CompositionEvent* composition_event =
         command.add_composition_events();
     composition_event->set_composition_string("かん字");
     composition_event->set_probability(1.0);
@@ -966,7 +966,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterUnigrmsForHandwriting) {
   }
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
     std::vector<Result> results;
     for (int i = 0; i < 10; ++i) {
@@ -995,7 +995,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterUnigrmsForHandwriting) {
           "かん字");
   const std::vector<Result> results = predictor.Predict(convreq_for_prediction);
   int exact_count = 0;
-  for (const Result &result : results) {
+  for (const Result& result : results) {
     if (absl::StrContains(result.value, "漢字E")) {
       exact_count++;
     }
@@ -1005,11 +1005,11 @@ TEST_F(DictionaryPredictorTest, DoNotFilterUnigrmsForHandwriting) {
 
 TEST_F(DictionaryPredictorTest, DoNotFilterZeroQueryCandidatesOnMobile) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
   request_test_util::FillMobileRequest(request_.get());
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
     // Entries for zero query
     std::vector<Result> results;
@@ -1032,12 +1032,12 @@ TEST_F(DictionaryPredictorTest, DoNotFilterZeroQueryCandidatesOnMobile) {
 TEST_F(DictionaryPredictorTest,
        DoNotFilterOneSegmentRealtimeCandidatesOnMobile) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
   // turn on mobile mode
   request_test_util::FillMobileRequest(request_.get());
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
     std::vector<Result> results;
     results.push_back(CreateResult5(
         "かった", "買った", 300,
@@ -1077,12 +1077,12 @@ TEST_F(DictionaryPredictorTest,
 
 TEST_F(DictionaryPredictorTest, FixSRealtimeTopCandidatesCostOnMobile) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
   // turn on mobile mode
   request_test_util::FillMobileRequest(request_.get());
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
     std::vector<Result> results;
     results.push_back(CreateResult5(
         "かった", "買った", 1002,
@@ -1106,12 +1106,12 @@ TEST_F(DictionaryPredictorTest, FixSRealtimeTopCandidatesCostOnMobile) {
 
 TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
   // turn on mobile mode
   request_test_util::FillMobileRequest(request_.get());
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
     std::vector<Result> results;
     results.push_back(
         CreateResult5("さか", "坂", 400, prediction::REALTIME, Token::NONE));
@@ -1184,12 +1184,12 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
 
 TEST_F(DictionaryPredictorTest, SingleKanjiFallbackOffsetCost) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
   // turn on mobile mode
   request_test_util::FillMobileRequest(request_.get());
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
     std::vector<Result> results;
     results.push_back(
         CreateResult5("ああ", "ああ", 5000, prediction::UNIGRAM, Token::NONE));
@@ -1330,10 +1330,10 @@ TEST_F(DictionaryPredictorTest, SortResult) {
 
 TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
     EXPECT_CALL(*aggregator, AggregateResultsForDesktop(_))
         .WillOnce(Return(std::vector<Result>{
@@ -1357,9 +1357,9 @@ TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
 
 TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
-  MockRealtimeDecoder *realtime_decoder =
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
+  MockRealtimeDecoder* realtime_decoder =
       data_and_predictor->mutable_realtime_decoder();
 
   // Exact key will not be filtered in mobile request
@@ -1395,7 +1395,7 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
 
 TEST_F(DictionaryPredictorTest, AggregateTypingCorrectedResultsTest) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
   EXPECT_CALL(*aggregator, AggregateTypingCorrectedResultsForMixedConversion(_))
       .WillRepeatedly(Return(std::vector<Result>{
           CreateResult7("とうきょう", "東京", 100, 0,
@@ -1437,14 +1437,14 @@ TEST_F(DictionaryPredictorTest, Rescoring) {
   auto supplemental_model = std::make_unique<engine::MockSupplementalModel>();
   EXPECT_CALL(*supplemental_model, RescoreResults(_, _))
       .WillRepeatedly(Invoke(
-          [](const ConversionRequest &request, absl::Span<Result> results) {
-            for (Result &r : results) r.cost = 100;
+          [](const ConversionRequest& request, absl::Span<Result> results) {
+            for (Result& r : results) r.cost = 100;
           }));
 
   auto data_and_predictor =
       std::make_unique<MockDataAndPredictor>(std::move(supplemental_model));
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
   EXPECT_CALL(*aggregator, AggregateResultsForDesktop(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("こーひー", "コーヒー", 500, prediction::UNIGRAM,
@@ -1484,15 +1484,15 @@ TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
     request_->set_auto_partial_suggestion(false);
 
     commands::SessionCommand command;
-    commands::SessionCommand::CompositionEvent *composition_event =
+    commands::SessionCommand::CompositionEvent* composition_event =
         command.add_composition_events();
     composition_event->set_composition_string("かん字");
     composition_event->set_probability(1.0);
     composer_->SetCompositionsForHandwriting(command.composition_events());
   }
 
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
   EXPECT_CALL(*aggregator, AggregateResultsForDesktop(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("かんじ", "かん字", 0, prediction::UNIGRAM,
@@ -1513,8 +1513,8 @@ TEST_F(DictionaryPredictorTest, DoNotApplyPostCorrection) {
 
   config_->set_use_typing_correction(false);
 
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
   EXPECT_CALL(*aggregator, AggregateResultsForDesktop(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("かんじ", "かん字", 0, prediction::UNIGRAM,
@@ -1552,7 +1552,7 @@ TEST_F(DictionaryPredictorTest, MaybeGetPreviousTopResultTest) {
   cur_top.cost = 500;
   cur_already_consintent_top.cost = 500;
 
-  auto *params = request_->mutable_decoder_experiment_params();
+  auto* params = request_->mutable_decoder_experiment_params();
 
   auto create_request = [&](absl::string_view key) {
     return CreateConversionRequest(ConversionRequest::SUGGESTION, key);
@@ -1645,15 +1645,15 @@ TEST_F(DictionaryPredictorTest, MaybeGetPreviousTopResultTest) {
 
 TEST_F(DictionaryPredictorTest, FilterNwpSuffixCandidates) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictor &predictor = data_and_predictor->predictor();
-  const Connector &connector = data_and_predictor->connector();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  const Connector& connector = data_and_predictor->connector();
   request_test_util::FillMobileRequest(request_.get());
   constexpr int kThreshold = 1000;
   request_->mutable_decoder_experiment_params()
       ->set_suffix_nwp_transition_cost_threshold(kThreshold);
 
   {
-    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
 
     std::vector<Result> results;
     {

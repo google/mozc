@@ -54,7 +54,8 @@ def ReadZeroQueryNumberData(input_stream):
 
     for value in values:
       zero_query_dict[key].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NUMBER_SUFFIX, value))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NUMBER_SUFFIX, value)
+      )
   return zero_query_dict
 
 
@@ -62,10 +63,16 @@ def ParseOption():
   """Parses command line options."""
   parser = optparse.OptionParser()
   parser.add_option('--input', dest='input', help='Input file path')
-  parser.add_option('--output_token_array', dest='output_token_array',
-                    help='Output token array file path')
-  parser.add_option('--output_string_array', dest='output_string_array',
-                    help='Output string array file path')
+  parser.add_option(
+      '--output_token_array',
+      dest='output_token_array',
+      help='Output token array file path',
+  )
+  parser.add_option(
+      '--output_string_array',
+      dest='output_string_array',
+      help='Output string array file path',
+  )
   return parser.parse_args()[0]
 
 
@@ -73,9 +80,9 @@ def main():
   options = ParseOption()
   with codecs.open(options.input, 'r', encoding='utf-8') as input_stream:
     zero_query_dict = ReadZeroQueryNumberData(input_stream)
-  util.WriteZeroQueryData(zero_query_dict,
-                          options.output_token_array,
-                          options.output_string_array)
+  util.WriteZeroQueryData(
+      zero_query_dict, options.output_token_array, options.output_string_array
+  )
 
 
 if __name__ == '__main__':

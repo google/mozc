@@ -51,8 +51,9 @@ class ZeroQueryEntry(object):
     self.value = value
 
 
-def WriteZeroQueryData(zero_query_dict, output_token_array,
-                       output_string_array):
+def WriteZeroQueryData(
+    zero_query_dict, output_token_array, output_string_array
+):
   # Collect all the strings and assign index in ascending order
   string_index = {}
   for key, entry_list in zero_query_dict.items():
@@ -72,5 +73,6 @@ def WriteZeroQueryData(zero_query_dict, output_token_array,
         f.write(struct.pack('<H', 0))  # Set 0 for unused field.
         f.write(struct.pack('<I', 0))  # Set 0 for unused field.
 
-  serialized_string_array_builder.SerializeToFile(sorted_strings,
-                                                  output_string_array)
+  serialized_string_array_builder.SerializeToFile(
+      sorted_strings, output_string_array
+  )

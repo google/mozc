@@ -54,13 +54,13 @@
 namespace mozc::prediction {
 namespace {
 
-void SetUpInputWithKey(absl::string_view key, composer::Composer *composer) {
+void SetUpInputWithKey(absl::string_view key, composer::Composer* composer) {
   composer->SetPreeditTextForTestOnly(key);
 }
 
 bool FindResultByKey(absl::Span<const Result> results,
                      const absl::string_view key) {
-  for (const auto &result : results) {
+  for (const auto& result : results) {
     if (result.key == key && !result.removed) {
       return true;
     }
@@ -99,11 +99,11 @@ class SingleKanjiDecoderTest : public ::testing::Test {
         .Build();
   }
 
-  const dictionary::PosMatcher &pos_matcher() const {
+  const dictionary::PosMatcher& pos_matcher() const {
     return modules_->GetPosMatcher();
   }
 
-  const dictionary::SingleKanjiDictionary &single_kanji_dictionary() const {
+  const dictionary::SingleKanjiDictionary& single_kanji_dictionary() const {
     return modules_->GetSingleKanjiDictionary();
   }
 
@@ -155,7 +155,7 @@ TEST_F(SingleKanjiDecoderTest, Result) {
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.Decode(convreq);
   EXPECT_GT(results.size(), 1);
-  const auto &result = results[0];
+  const auto& result = results[0];
   EXPECT_EQ(result.key, "あけぼの");
   EXPECT_EQ(result.types, SINGLE_KANJI);
   EXPECT_EQ(result.lid, pos_matcher().GetGeneralSymbolId());
@@ -171,7 +171,7 @@ TEST_F(SingleKanjiDecoderTest, PrefixResult) {
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.Decode(convreq);
   EXPECT_GT(results.size(), 1);
-  const auto &result = results[0];
+  const auto& result = results[0];
   EXPECT_EQ(result.key, "あけぼの");
   EXPECT_EQ(result.types, SINGLE_KANJI);
   EXPECT_EQ(result.lid, pos_matcher().GetGeneralSymbolId());
@@ -200,7 +200,7 @@ TEST_F(SingleKanjiDecoderTest, SvsVariation) {
   EXPECT_GT(results.size(), 1);
 
   auto contains = [&](absl::string_view value) {
-    for (const auto &result : results) {
+    for (const auto& result : results) {
       if (result.value == value) {
         return true;
       }

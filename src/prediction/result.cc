@@ -76,7 +76,7 @@ bool ValueLess(absl::string_view lhs, absl::string_view rhs) {
 using ::mozc::converter::Attribute;
 using ::mozc::dictionary::Token;
 
-void Result::InitializeByTokenAndTypes(const Token &token,
+void Result::InitializeByTokenAndTypes(const Token& token,
                                        PredictionTypes types) {
   SetTypesAndTokenAttributes(types, token.attributes);
   key = token.key;
@@ -113,8 +113,8 @@ void Result::SetTypesAndTokenAttributes(PredictionTypes prediction_types,
 }
 
 void PopulateTypeCorrectedQuery(
-    const composer::TypeCorrectedQuery &typing_corrected_result,
-    Result *absl_nonnull result) {
+    const composer::TypeCorrectedQuery& typing_corrected_result,
+    Result* absl_nonnull result) {
   if (typing_corrected_result.type & composer::TypeCorrectedQuery::CORRECTION) {
     result->types |= TYPING_CORRECTION;
   }

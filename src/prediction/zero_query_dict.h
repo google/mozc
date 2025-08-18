@@ -87,39 +87,39 @@ class ZeroQueryDict {
     using iterator_category = std::random_access_iterator_tag;
     using value_type = uint32_t;
     using difference_type = std::ptrdiff_t;
-    using pointer = uint32_t *;
-    using reference = uint32_t &;
+    using pointer = uint32_t*;
+    using reference = uint32_t&;
 
-    iterator(const char *ptr, const SerializedStringArray *array)
+    iterator(const char* ptr, const SerializedStringArray* array)
         : ptr_(ptr), string_array_(array) {}
-    iterator(const iterator &x) = default;
-    iterator &operator=(const iterator &x) = default;
+    iterator(const iterator& x) = default;
+    iterator& operator=(const iterator& x) = default;
 
     uint32_t operator*() const { return key_index(); }
 
     uint32_t operator[](ptrdiff_t n) const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + n * kTokenByteSize);
+      return *reinterpret_cast<const uint32_t*>(ptr_ + n * kTokenByteSize);
     }
 
-    const iterator *operator->() const { return this; }
+    const iterator* operator->() const { return this; }
 
     uint32_t key_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_);
+      return *reinterpret_cast<const uint32_t*>(ptr_);
     }
 
     uint32_t value_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 4);
+      return *reinterpret_cast<const uint32_t*>(ptr_ + 4);
     }
 
     ZeroQueryType type() const {
-      const uint16_t val = *reinterpret_cast<const uint16_t *>(ptr_ + 8);
+      const uint16_t val = *reinterpret_cast<const uint16_t*>(ptr_ + 8);
       return static_cast<ZeroQueryType>(val);
     }
 
     absl::string_view key() const { return (*string_array_)[key_index()]; }
     absl::string_view value() const { return (*string_array_)[value_index()]; }
 
-    iterator &operator++() {
+    iterator& operator++() {
       ptr_ += kTokenByteSize;
       return *this;
     }
@@ -130,7 +130,7 @@ class ZeroQueryDict {
       return tmp;
     }
 
-    iterator &operator+=(ptrdiff_t n) {
+    iterator& operator+=(ptrdiff_t n) {
       ptr_ += n * kTokenByteSize;
       return *this;
     }
@@ -145,7 +145,7 @@ class ZeroQueryDict {
       return iter;
     }
 
-    iterator &operator--() {
+    iterator& operator--() {
       ptr_ -= kTokenByteSize;
       return *this;
     }
@@ -156,7 +156,7 @@ class ZeroQueryDict {
       return tmp;
     }
 
-    iterator &operator-=(ptrdiff_t n) {
+    iterator& operator-=(ptrdiff_t n) {
       ptr_ -= n * kTokenByteSize;
       return *this;
     }
@@ -183,8 +183,8 @@ class ZeroQueryDict {
     friend bool operator>=(iterator x, iterator y) { return x.ptr_ >= y.ptr_; }
 
    private:
-    const char *ptr_;
-    const SerializedStringArray *string_array_;
+    const char* ptr_;
+    const SerializedStringArray* string_array_;
   };
 
   void Init(absl::string_view token_array_data,

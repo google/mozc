@@ -66,7 +66,7 @@ class CheckCandSizeDictionaryPredictor : public PredictorInterface {
       : expected_cand_size_(expected_cand_size),
         predictor_name_("CheckCandSizeDictionaryPredictor") {}
 
-  std::vector<Result> Predict(const ConversionRequest &request) const override {
+  std::vector<Result> Predict(const ConversionRequest& request) const override {
     EXPECT_EQ(request.max_dictionary_prediction_candidates_size(),
               expected_cand_size_);
     return std::vector<Result>(1);
@@ -89,7 +89,7 @@ class CheckCandSizeUserHistoryPredictor : public PredictorInterface {
         expected_cand_size_for_zero_query_(expected_cand_size_for_zero_query),
         predictor_name_("CheckCandSizeUserHistoryPredictor") {}
 
-  std::vector<Result> Predict(const ConversionRequest &request) const override {
+  std::vector<Result> Predict(const ConversionRequest& request) const override {
     EXPECT_EQ(request.max_user_history_prediction_candidates_size(),
               expected_cand_size_);
     EXPECT_EQ(
@@ -115,7 +115,7 @@ class NullPredictor : public PredictorInterface {
         predict_called_(false),
         predictor_name_("NullPredictor") {}
 
-  std::vector<Result> Predict(const ConversionRequest &request) const override {
+  std::vector<Result> Predict(const ConversionRequest& request) const override {
     predict_called_ = true;
     std::vector<Result> results(return_value_ ? 1 : 0);
     return results;
@@ -139,7 +139,7 @@ class MockPredictor : public PredictorInterface {
  public:
   MockPredictor() = default;
   ~MockPredictor() override = default;
-  MOCK_METHOD(std::vector<Result>, Predict, (const ConversionRequest &request),
+  MOCK_METHOD(std::vector<Result>, Predict, (const ConversionRequest& request),
               (const, override));
   MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
 };
@@ -338,8 +338,8 @@ TEST_F(PredictorTest, CallPredictForRequest) {
 TEST_F(PredictorTest, DisableAllSuggestion) {
   auto predictor1 = std::make_unique<NullPredictor>(true);
   auto predictor2 = std::make_unique<NullPredictor>(true);
-  const auto *pred1 = predictor1.get();  // Keep the reference
-  const auto *pred2 = predictor2.get();  // Keep the reference
+  const auto* pred1 = predictor1.get();  // Keep the reference
+  const auto* pred2 = predictor2.get();  // Keep the reference
   auto predictor =
       std::make_unique<Predictor>(std::move(predictor1), std::move(predictor2));
   config_->set_presentation_mode(true);
@@ -363,7 +363,7 @@ TEST_F(MixedDecodingPredictorTest, FillPos) {
   auto mock_history_predictor = std::make_unique<MockPredictor>();
   auto add_candidate = [](absl::string_view key, absl::string_view value,
                           int lid, int rid, int cost,
-                          std::vector<Result> &results) {
+                          std::vector<Result>& results) {
     Result result;
     result.key = key;
     result.value = value;
@@ -392,7 +392,7 @@ TEST_F(MixedDecodingPredictorTest, FillPos) {
   const std::vector<Result> results = predictor->Predict(convreq);
 
   EXPECT_EQ(results.size(), 2);
-  const Result &result = results[0];
+  const Result& result = results[0];
   EXPECT_EQ(result.key, "key");
   EXPECT_EQ(result.value, "value");
   // lid and rid are filled from another result.

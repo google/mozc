@@ -68,13 +68,13 @@ constexpr char kTestTokenArray[] =
     "\x00\x00"
     "\x00\x00\x00\x00";
 
-const char *kTestStrings[] = {
+const char* kTestStrings[] = {
     "", "( •̀ㅁ•́;)", "❕", "❣", "あ", "ああ",
 };
 
 // Initializes a ZeroQueryDict from the above test data.  Note that the returned
 // buffer contains the internal data used by |dict|, so it must outlive |dict|.
-std::unique_ptr<uint32_t[]> InitTestZeroQueryDict(ZeroQueryDict *dict) {
+std::unique_ptr<uint32_t[]> InitTestZeroQueryDict(ZeroQueryDict* dict) {
   // kTestTokenArray contains a trailing '\0', so create a absl::string_view
   // that excludes it by subtracting 1.
   const absl::string_view token_array_data(kTestTokenArray,

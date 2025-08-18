@@ -51,12 +51,12 @@ class PredictorInterface {
   // PREDICTION: invoked only when user pushes "tab" key.
   // less aggressive than SUGGESTION mode.
   virtual std::vector<Result> Predict(
-      const ConversionRequest &request) const = 0;
+      const ConversionRequest& request) const = 0;
 
   // Finish the conversion. Stores the history for penalization.
   // results[0] stores the committed result.
   // We can revert the Finish operation with the revert_id and Revert method.
-  virtual void Finish(const ConversionRequest &request,
+  virtual void Finish(const ConversionRequest& request,
                       absl::Span<const Result> results, uint32_t revert_id) {}
 
   // Reverts the last Finish operation.

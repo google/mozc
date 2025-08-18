@@ -70,7 +70,7 @@
 namespace mozc::prediction {
 namespace {
 
-bool IsDebug(const ConversionRequest &request) {
+bool IsDebug(const ConversionRequest& request) {
 #ifndef NDEBUG
   return true;
 #else   // NDEBUG
@@ -78,33 +78,33 @@ bool IsDebug(const ConversionRequest &request) {
 #endif  // NDEBUG
 }
 
-bool IsLatinInputMode(const ConversionRequest &request) {
+bool IsLatinInputMode(const ConversionRequest& request) {
   return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
          request.composer().GetInputMode() == transliteration::FULL_ASCII;
 }
 
-bool IsMixedConversionEnabled(const ConversionRequest &request) {
+bool IsMixedConversionEnabled(const ConversionRequest& request) {
   return request.request().mixed_conversion();
 }
 
-bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
+bool IsTypingCorrectionEnabled(const ConversionRequest& request) {
   return request.config().use_typing_correction();
 }
 
 template <typename... Args>
-void AppendDescription(Result &result, Args &&...args) {
+void AppendDescription(Result& result, Args&&... args) {
   absl::StrAppend(&result.description, result.description.empty() ? "" : " ",
                   std::forward<Args>(args)...);
 }
 
-void MaybeFixRealtimeTopCost(const ConversionRequest &request,
+void MaybeFixRealtimeTopCost(const ConversionRequest& request,
                              absl::Span<Result> results) {
   // Remember the minimum cost among those REALTIME
   // candidates that have the same key length as |request_key| so that we can
   // set a slightly smaller cost to REALTIME_TOP than these.
   int realtime_cost_min = Result::kInvalidCost;
-  Result *realtime_top_result = nullptr;
-  for (Result &result : results) {
+  Result* realtime_top_result = nullptr;
+  for (Result& result : results) {
     if (result.types & PredictionType::REALTIME_TOP) {
       realtime_top_result = &result;
     }
@@ -129,7 +129,7 @@ void MaybeFixRealtimeTopCost(const ConversionRequest &request,
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor(
-    const engine::Modules &modules,
+    const engine::Modules& modules,
     std::unique_ptr<const RealtimeDecoder> decoder)
     : DictionaryPredictor(modules, nullptr, std::move(decoder)) {
   // Explicitly allocate aggregator_ as decoder is unique_ptr and cannot be
@@ -140,7 +140,7 @@ DictionaryPredictor::DictionaryPredictor(
 }
 
 DictionaryPredictor::DictionaryPredictor(
-    const engine::Modules &modules,
+    const engine::Modules& modules,
     std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
     std::unique_ptr<const RealtimeDecoder> decoder)
     : aggregator_(std::move(aggregator)),
@@ -153,7 +153,7 @@ DictionaryPredictor::DictionaryPredictor(
       modules_(modules) {}
 
 std::vector<Result> DictionaryPredictor::Predict(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   if (request.request_type() == ConversionRequest::CONVERSION) {
     MOZC_VLOG(2) << "request type is CONVERSION";
     return {};
@@ -182,7 +182,7 @@ std::vector<Result> DictionaryPredictor::Predict(
 }
 
 void DictionaryPredictor::RewriteResultsForPrediction(
-    const ConversionRequest &request, absl::Span<Result> results) const {
+    const ConversionRequest& request, absl::Span<Result> results) const {
   // Mixed conversion is the feature that mixes prediction and
   // conversion, meaning that results may include the candidates whose
   // key is exactly the same as the composition.  This mode is used in mobile.
@@ -203,7 +203,7 @@ void DictionaryPredictor::RewriteResultsForPrediction(
 
 std::vector<Result>
 DictionaryPredictor::AggregateTypingCorrectedResultsForMixedConversion(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   constexpr int kMinTypingCorrectionKeyLen = 3;
   if (!IsTypingCorrectionEnabled(request) ||
       Util::CharsLen(request.key()) < kMinTypingCorrectionKeyLen) {
@@ -215,7 +215,7 @@ DictionaryPredictor::AggregateTypingCorrectedResultsForMixedConversion(
 }
 
 std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
-    const ConversionRequest &request, std::vector<Result> results) const {
+    const ConversionRequest& request, std::vector<Result> results) const {
   const bool cursor_at_tail =
       request.composer().GetCursor() == request.composer().GetLength();
 
@@ -223,7 +223,7 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
   // This is done in linear time and
   // we can pop as many results as we need efficiently.
   std::make_heap(results.begin(), results.end(),
-                 [](const Result &lhs, const Result &rhs) {
+                 [](const Result& lhs, const Result& rhs) {
                    return ResultCostLess()(rhs, lhs);
                  });
 
@@ -235,7 +235,7 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
 
   absl::flat_hash_map<std::string, int32_t> merged_types;
   if (IsDebug(request)) {
-    for (const auto &result : results) {
+    for (const auto& result : results) {
       if (!result.removed) {
         merged_types[result.value] |= result.types;
       }
@@ -247,10 +247,10 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
 
   for (size_t i = 0; i < results.size(); ++i) {
     std::pop_heap(results.begin(), results.end() - i,
-                  [](const Result &lhs, const Result &rhs) {
+                  [](const Result& lhs, const Result& rhs) {
                     return ResultCostLess()(rhs, lhs);
                   });
-    Result &result = results[results.size() - i - 1];
+    Result& result = results[results.size() - i - 1];
     if (final_results.size() >= max_candidates_size ||
         result.cost >= Result::kInvalidCost) {
       break;
@@ -291,7 +291,7 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
   MaybeApplyPostCorrection(request, final_results);
 
   if (IsDebug(request)) {
-    for (auto &result : final_results) {
+    for (auto& result : final_results) {
       const auto it = merged_types.find(result.value);
       const int32_t types = it == merged_types.end() ? 0 : it->second;
       AppendDescription(result, GetPredictionTypeDebugString(types));
@@ -302,7 +302,7 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
 }
 
 void DictionaryPredictor::MaybeApplyPostCorrection(
-    const ConversionRequest &request, std::vector<Result> &results) const {
+    const ConversionRequest& request, std::vector<Result>& results) const {
   // b/363902660:
   // Stop applying post correction when handwriting mode.
   if (request_util::IsHandwriting(request)) {
@@ -312,9 +312,9 @@ void DictionaryPredictor::MaybeApplyPostCorrection(
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(
-    const ConversionRequest &request, uint16_t rid,
+    const ConversionRequest& request, uint16_t rid,
     absl::Span<const Result> results,
-    absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
+    absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const {
   // Make a map from reference value to min-cost result.
   // Reference entry:
   //  - single-char REALTIME or UNIGRAM entry
@@ -324,7 +324,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
   // as the fallback.
   absl::flat_hash_map<absl::string_view, int> min_cost_map;
   int fallback_cost = -1;
-  for (const auto &result : results) {
+  for (const auto& result : results) {
     if (result.removed) {
       continue;
     }
@@ -360,7 +360,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
   // Use the wcost of the highest cost to calculate the single kanji cost
   // offset.
   int single_kanji_max_cost = 0;
-  for (const auto &it : min_cost_map) {
+  for (const auto& it : min_cost_map) {
     single_kanji_max_cost = std::max(single_kanji_max_cost, it.second);
   }
   single_kanji_max_cost = std::max(single_kanji_max_cost, fallback_cost);
@@ -376,7 +376,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
 
 // Returns cost for |result| when it's transitioned from |rid|.  Suffix penalty
 // is also added for non-realtime results.
-int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
+int DictionaryPredictor::GetLMCost(const Result& result, int rid) const {
   const int cost_with_context = connector_.GetTransitionCost(rid, result.lid);
 
   int lm_cost = 0;
@@ -407,7 +407,7 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
   return lm_cost;
 }
 
-void DictionaryPredictor::SetPredictionCost(const ConversionRequest &request,
+void DictionaryPredictor::SetPredictionCost(const ConversionRequest& request,
                                             absl::Span<Result> results) const {
   const int history_rid = request.converter_history_rid();
 
@@ -421,7 +421,7 @@ void DictionaryPredictor::SetPredictionCost(const ConversionRequest &request,
       Util::CharsLen(request.converter_history_key(1));
   const size_t request_key_len = Util::CharsLen(request.key());
 
-  for (Result &result : results) {
+  for (Result& result : results) {
     const int cost = GetLMCost(result, history_rid);
     size_t query_len = request_key_len;
     size_t key_len = Util::CharsLen(result.key);
@@ -480,7 +480,7 @@ void DictionaryPredictor::SetPredictionCost(const ConversionRequest &request,
 }
 
 void DictionaryPredictor::SetPredictionCostForMixedConversion(
-    const ConversionRequest &request, absl::Span<Result> results) const {
+    const ConversionRequest& request, absl::Span<Result> results) const {
   // ranking for mobile
   const int history_rid =
       request.converter_history_rid();  // 0 (BOS) is default
@@ -496,7 +496,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   const int single_kanji_offset = CalculateSingleKanjiCostOffset(
       request, history_rid, results, &prefix_penalty_cache);
 
-  for (Result &result : results) {
+  for (Result& result : results) {
     int cost = GetLMCost(result, history_rid);
     MOZC_WORD_LOG(result, "GetLMCost: ", cost);
     if (result.lid == result.rid && !pos_matcher_.IsSuffixWord(result.rid) &&
@@ -608,7 +608,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
 
 // static
 void DictionaryPredictor::RemoveMissSpelledCandidates(
-    const ConversionRequest &request, absl::Span<Result> results) {
+    const ConversionRequest& request, absl::Span<Result> results) {
   const size_t request_key_len = Util::CharsLen(request.key());
 
   if (results.size() <= 1) {
@@ -617,7 +617,7 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
 
   int spelling_correction_size = 5;
   for (size_t i = 0; i < results.size(); ++i) {
-    const Result &result = results[i];
+    const Result& result = results[i];
     if (!(result.candidate_attributes &
           converter::Attribute::SPELLING_CORRECTION)) {
       continue;
@@ -634,7 +634,7 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
       if (i == j) {
         continue;
       }
-      const Result &target_result = results[j];
+      const Result& target_result = results[j];
       if (target_result.candidate_attributes &
           converter::Attribute::SPELLING_CORRECTION) {
         continue;
@@ -695,8 +695,8 @@ bool DictionaryPredictor::IsAggressiveSuggestion(size_t query_len,
 }
 
 int DictionaryPredictor::CalculatePrefixPenalty(
-    const ConversionRequest &request, const Result &result,
-    absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
+    const ConversionRequest& request, const Result& result,
+    absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const {
   if (request.key() == result.key) {
     LOG(WARNING) << "Invalid prefix key: " << result.key;
     return 0;
@@ -737,7 +737,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
 
   if (const std::vector<Result> results = decoder_->Decode(req);
       !results.empty()) {
-    const Result &top_result = results.front();
+    const Result& top_result = results.front();
     penalty = connector_.GetTransitionCost(result_rid, top_result.lid) +
               top_result.cost;
   }
@@ -755,14 +755,14 @@ int DictionaryPredictor::CalculatePrefixPenalty(
 }
 
 void DictionaryPredictor::MaybeRescoreResults(
-    const ConversionRequest &request, absl::Span<Result> results) const {
+    const ConversionRequest& request, absl::Span<Result> results) const {
   if (request_util::IsHandwriting(request)) {
     // We want to fix the first candidate for handwriting request.
     return;
   }
 
   if (IsDebug(request)) {
-    for (Result &r : results) r.cost_before_rescoring = r.cost;
+    for (Result& r : results) r.cost_before_rescoring = r.cost;
   }
 
   modules_.GetSupplementalModel().RescoreResults(request, results);
@@ -777,10 +777,10 @@ void DictionaryPredictor::AddRescoringDebugDescription(
   // the rescored costs. To get the true original ranking, we need to apply
   // `filter.ShouldRemove()` to the results ordered by the original cost.
   // This is just for debugging, so such difference won't matter.
-  std::vector<const Result *> cands;
+  std::vector<const Result*> cands;
   cands.reserve(results.size());
   int diff = 0;
-  for (const auto &result : results) {
+  for (const auto& result : results) {
     diff += std::abs(result.cost - result.cost_before_rescoring);
     cands.emplace_back(&result);
   }
@@ -788,10 +788,10 @@ void DictionaryPredictor::AddRescoringDebugDescription(
   if (diff == 0) {
     return;
   }
-  std::sort(cands.begin(), cands.end(), [](const auto *lhs, const auto *rhs) {
+  std::sort(cands.begin(), cands.end(), [](const auto* lhs, const auto* rhs) {
     return lhs->cost_before_rescoring < rhs->cost_before_rescoring;
   });
-  absl::flat_hash_map<const Result *, size_t> orig_rank;
+  absl::flat_hash_map<const Result*, size_t> orig_rank;
   for (size_t i = 0; i < cands.size(); ++i) {
     orig_rank[cands[i]] = i + 1;
   }
@@ -803,7 +803,7 @@ void DictionaryPredictor::AddRescoringDebugDescription(
 }
 
 std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
-    const Result &current_top_result, const ConversionRequest &request) const {
+    const Result& current_top_result, const ConversionRequest& request) const {
   const int32_t max_diff = request.request()
                                .decoder_experiment_params()
                                .candidate_consistency_cost_max_diff();

@@ -51,14 +51,14 @@ namespace mozc::prediction {
 
 namespace {
 
-bool UseSvs(const ConversionRequest &request) {
+bool UseSvs(const ConversionRequest& request) {
   return request.request()
              .decoder_experiment_params()
              .variation_character_types() &
          commands::DecoderExperimentParams::SVS_JAPANESE;
 }
 
-void StripLastChar(std::string *key) {
+void StripLastChar(std::string* key) {
   const size_t key_len = Util::CharsLen(*key);
   if (key_len <= 1) {
     *key = "";
@@ -70,15 +70,15 @@ void StripLastChar(std::string *key) {
 }  // namespace
 
 SingleKanjiDecoder::SingleKanjiDecoder(
-    const dictionary::PosMatcher &pos_matcher,
-    const dictionary::SingleKanjiDictionary &single_kanji_dictionary)
+    const dictionary::PosMatcher& pos_matcher,
+    const dictionary::SingleKanjiDictionary& single_kanji_dictionary)
     : single_kanji_dictionary_(single_kanji_dictionary),
       general_symbol_id_(pos_matcher.GetGeneralSymbolId()) {}
 
 SingleKanjiDecoder::~SingleKanjiDecoder() = default;
 
 std::vector<Result> SingleKanjiDecoder::Decode(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   std::vector<Result> results;
   constexpr int kMinSingleKanjiSize = 5;
 
@@ -115,8 +115,8 @@ void SingleKanjiDecoder::AppendResults(absl::string_view kanji_key,
                                        absl::string_view original_request_key,
                                        absl::Span<const std::string> kanji_list,
                                        const int offset,
-                                       std::vector<Result> *results) const {
-  for (const std::string &kanji : kanji_list) {
+                                       std::vector<Result>* results) const {
+  for (const std::string& kanji : kanji_list) {
     Result result;
     // Set the wcost to keep the `kanji_list` order.
     result.wcost = offset + results->size();

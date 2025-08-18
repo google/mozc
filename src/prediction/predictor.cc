@@ -62,14 +62,14 @@ constexpr int kPredictionSizeForDesktop = 100;
 // like as conversion so the limit is same as conversion's one.
 constexpr int kPredictionSizeForMixedConersion = 200;
 
-bool IsMixedConversionEnabled(const ConversionRequest &request) {
+bool IsMixedConversionEnabled(const ConversionRequest& request) {
   return request.request().mixed_conversion();
 }
 
 // Fills empty lid and rid of candidates with the candidates of the same value.
 void MaybeFillFallbackPos(absl::Span<Result> results) {
-  absl::flat_hash_map<absl::string_view, Result *> posless_results;
-  for (Result &result : results) {
+  absl::flat_hash_map<absl::string_view, Result*> posless_results;
+  for (Result& result : results) {
     // Candidates with empty POS come before candidates with filled POS.
     if (result.lid == 0 || result.rid == 0) {
       posless_results[result.value] = &result;
@@ -78,7 +78,7 @@ void MaybeFillFallbackPos(absl::Span<Result> results) {
     if (!posless_results.contains(result.value)) {
       continue;
     }
-    Result *posless_result = posless_results[result.value];
+    Result* posless_result = posless_results[result.value];
     if (posless_result->lid == 0) {
       posless_result->lid = result.lid;
     }
@@ -93,9 +93,9 @@ void MaybeFillFallbackPos(absl::Span<Result> results) {
 
 }  // namespace
 
-Predictor::Predictor(const engine::Modules &modules,
-                     const ConverterInterface &converter,
-                     const ImmutableConverterInterface &immutable_converter)
+Predictor::Predictor(const engine::Modules& modules,
+                     const ConverterInterface& converter,
+                     const ImmutableConverterInterface& immutable_converter)
     : dictionary_predictor_(std::make_unique<DictionaryPredictor>(
           modules,
           std::make_unique<RealtimeDecoder>(immutable_converter, converter))),
@@ -112,7 +112,7 @@ Predictor::Predictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
   DCHECK(user_history_predictor_);
 }
 
-std::vector<Result> Predictor::Predict(const ConversionRequest &request) const {
+std::vector<Result> Predictor::Predict(const ConversionRequest& request) const {
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION ||
          request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
@@ -131,7 +131,7 @@ std::vector<Result> Predictor::Predict(const ConversionRequest &request) const {
                                            : PredictForDesktop(request);
 }
 
-void Predictor::Finish(const ConversionRequest &request,
+void Predictor::Finish(const ConversionRequest& request,
                        absl::Span<const Result> results, uint32_t revert_id) {
   user_history_predictor_->Finish(request, results, revert_id);
 }
@@ -162,7 +162,7 @@ bool Predictor::Sync() { return user_history_predictor_->Sync(); }
 bool Predictor::Reload() { return user_history_predictor_->Reload(); }
 
 std::vector<Result> Predictor::PredictForDesktop(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   DCHECK(!IsMixedConversionEnabled(request));
 
   int prediction_size = kPredictionSizeForDesktop;
@@ -210,7 +210,7 @@ std::vector<Result> Predictor::PredictForDesktop(
 }
 
 std::vector<Result> Predictor::PredictForMixedConversion(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   DCHECK(IsMixedConversionEnabled(request));
 
   // No distinction between SUGGESTION and PREDICTION in mixed conversion mode.

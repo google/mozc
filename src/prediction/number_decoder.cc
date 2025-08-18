@@ -58,8 +58,8 @@ using ::mozc::prediction::number_decoder_internal::Entry;
 using ::mozc::prediction::number_decoder_internal::State;
 using ::mozc::prediction::number_decoder_internal::Type;
 
-void MaybeAppendResult(const State &state,
-                       std::vector<NumberDecoderResult> &results) {
+void MaybeAppendResult(const State& state,
+                       std::vector<NumberDecoderResult>& results) {
   std::optional<NumberDecoderResult> result = state.Result();
   if (!result.has_value()) {
     return;
@@ -192,13 +192,13 @@ std::unique_ptr<const Trie<Entry>> CreateDefaultEntries() {
       // 丁目
       "ちょうめ",
   };
-  for (const auto &key : kSuffixEntries) {
+  for (const auto& key : kSuffixEntries) {
     result->AddEntry(key, Entry());
   }
   return result;
 }
 
-const Trie<Entry> &InitEntries() {
+const Trie<Entry>& InitEntries() {
   // Returns a singleton enries.
   static const absl::NoDestructor<std::unique_ptr<const Trie<Entry>>>
       kDefaultEntries(CreateDefaultEntries());
@@ -207,22 +207,22 @@ const Trie<Entry> &InitEntries() {
 
 }  // namespace
 
-std::ostream &operator<<(std::ostream &os, const NumberDecoderResult &r) {
+std::ostream& operator<<(std::ostream& os, const NumberDecoderResult& r) {
   os << absl::StreamFormat("%v", r);
   return os;
 }
 
-NumberDecoder::NumberDecoder(const dictionary::PosMatcher &pos_matcher)
+NumberDecoder::NumberDecoder(const dictionary::PosMatcher& pos_matcher)
     : entries_(InitEntries()),
       kanji_number_id_(pos_matcher.GetKanjiNumberId()),
       number_id_(pos_matcher.GetNumberId()) {}
 
 std::vector<prediction::Result> NumberDecoder::Decode(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   std::vector<prediction::Result> results;
   absl::string_view request_key = request.key();
 
-  for (const auto &decode_result : Decode(request_key)) {
+  for (const auto& decode_result : Decode(request_key)) {
     Result result;
     const bool is_arabic =
         Util::GetScriptType(decode_result.candidate) == Util::NUMBER;
@@ -258,8 +258,8 @@ std::vector<NumberDecoderResult> NumberDecoder::Decode(
   return results;
 }
 
-void NumberDecoder::DecodeAux(absl::string_view key, State &state,
-                              std::vector<NumberDecoderResult> &results) const {
+void NumberDecoder::DecodeAux(absl::string_view key, State& state,
+                              std::vector<NumberDecoderResult>& results) const {
   if (key.empty()) {
     return;
   }
@@ -324,8 +324,8 @@ void NumberDecoder::DecodeAux(absl::string_view key, State &state,
 }
 
 bool NumberDecoder::HandleUnitEntry(
-    absl::string_view key, const Entry &entry, State &state,
-    std::vector<NumberDecoderResult> &results) const {
+    absl::string_view key, const Entry& entry, State& state,
+    std::vector<NumberDecoderResult>& results) const {
   results.clear();
   if (state.IsValid() && entry.number == 0) {
     // Supports 0 only as a dependent number.
@@ -354,8 +354,8 @@ bool NumberDecoder::HandleUnitEntry(
 }
 
 bool NumberDecoder::HandleSmallDigitEntry(
-    absl::string_view key, const Entry &entry, State &state,
-    std::vector<NumberDecoderResult> &results) const {
+    absl::string_view key, const Entry& entry, State& state,
+    std::vector<NumberDecoderResult>& results) const {
   results.clear();
   if (state.small_digit > 1 && entry.digit >= state.small_digit) {
     // Invalid: じゅうせん
@@ -384,8 +384,8 @@ bool NumberDecoder::HandleSmallDigitEntry(
 }
 
 bool NumberDecoder::HandleBigDigitEntry(
-    absl::string_view key, const Entry &entry, State &state,
-    std::vector<NumberDecoderResult> &results) const {
+    absl::string_view key, const Entry& entry, State& state,
+    std::vector<NumberDecoderResult>& results) const {
   results.clear();
   if (state.big_digit > 0 && entry.digit >= state.big_digit) {
     // Invalid: おくまん

@@ -62,7 +62,7 @@ struct TestParam {
       : key(key), expected(results) {}
 
   template <typename Sink>
-  friend void AbslStringify(Sink &sink, const TestParam &param) {
+  friend void AbslStringify(Sink& sink, const TestParam& param) {
     sink.Append(param.key);
   }
 
@@ -74,7 +74,7 @@ TestParam AllConsumed(
     const absl::string_view key,
     const std::initializer_list<std::pair<absl::string_view, int>> results) {
   TestParam param(key);
-  for (const auto &result : results) {
+  for (const auto& result : results) {
     param.expected.emplace_back(key.size(), std::string(result.first),
                                 result.second);
   }
@@ -88,7 +88,7 @@ class NumberDecoderTest : public ::testing::TestWithParam<TestParam> {
                      std::make_unique<testing::MockDataManager>())
                      .value()) {}
 
-  const dictionary::PosMatcher &pos_matcher() const {
+  const dictionary::PosMatcher& pos_matcher() const {
     return modules_->GetPosMatcher();
   }
 
@@ -209,7 +209,7 @@ TEST_F(NumberDecoderTest, Random) {
 
     const ConversionRequest request =
         ConversionRequestBuilder().SetKey(key).Build();
-    for (const Result &result : decoder.Decode(request)) {
+    for (const Result& result : decoder.Decode(request)) {
       EXPECT_TRUE(absl::StartsWith(key, result.key));
       if (result.key.size() < key.size()) {
         EXPECT_TRUE(result.candidate_attributes &
