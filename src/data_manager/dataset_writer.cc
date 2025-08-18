@@ -29,10 +29,10 @@
 
 #include "data_manager/dataset_writer.h"
 
+#include <bit>
 #include <ostream>
 #include <string>
 #include <utility>
-#include <bit>
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
@@ -54,25 +54,25 @@ bool IsValidAlignment(int a) {
 
 }  // namespace
 
-void DataSetWriter::Add(const std::string &name, int alignment,
+void DataSetWriter::Add(const std::string& name, int alignment,
                         absl::string_view data) {
   CHECK(seen_names_.insert(name).second) << name << " was already added";
   AppendPadding(alignment);
-  DataSetMetadata::Entry *entry = metadata_.add_entries();
+  DataSetMetadata::Entry* entry = metadata_.add_entries();
   entry->set_name(name);
   entry->set_offset(image_.size());
   entry->set_size(data.size());
   image_.append(data.data(), data.size());
 }
 
-void DataSetWriter::AddFile(const std::string &name, int alignment,
-                            const std::string &filepath) {
+void DataSetWriter::AddFile(const std::string& name, int alignment,
+                            const std::string& filepath) {
   absl::StatusOr<std::string> content = FileUtil::GetContents(filepath);
   CHECK_OK(content);
   Add(name, alignment, *content);
 }
 
-void DataSetWriter::Finish(std::ostream *output) {
+void DataSetWriter::Finish(std::ostream* output) {
   const std::string s = metadata_.SerializeAsString();
   image_.append(s);                                // Metadata
   image_.append(Util::SerializeUint64(s.size()));  // Metadata size

@@ -54,7 +54,7 @@ class DataSetReader {
 
   // Gets the byte data corresponding to |name|.  If the data for |name| doesn't
   // exist, returns false.
-  bool Get(absl::string_view name, absl::string_view *data) const;
+  bool Get(absl::string_view name, absl::string_view* data) const;
 
   // Gets the byte offset and size of the data corresponding to `name`.
   std::optional<std::pair<size_t, size_t>> GetOffsetAndSize(
@@ -63,7 +63,7 @@ class DataSetReader {
   // Verifies the checksum of binary image.
   static bool VerifyChecksum(absl::string_view memblock);
 
-  const absl::flat_hash_map<std::string, absl::string_view> &name_to_data_map()
+  const absl::flat_hash_map<std::string, absl::string_view>& name_to_data_map()
       const {
     return name_to_data_map_;
   }

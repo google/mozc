@@ -44,7 +44,7 @@ ABSL_FLAG(std::string, output_ltable, "", "LTable array");
 ABSL_FLAG(std::string, output_rtable, "", "RTable array");
 ABSL_FLAG(std::string, output_bitarray, "", "Segmenter bitarray");
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   mozc::SegmenterBitarrayGenerator::GenerateBitarray(
       kLSize, kRSize, &IsBoundaryInternal,

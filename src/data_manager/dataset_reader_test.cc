@@ -149,7 +149,7 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     e->set_name("google");
     e->set_offset(content.size() + 3);  // Invalid offset
     e->set_size(kGoogle.size());
-    const std::string &md_str = md.SerializeAsString();
+    const std::string& md_str = md.SerializeAsString();
     std::string image =
         absl::StrCat(content, md_str, Util::SerializeUint64(md_str.size()));
 
@@ -164,7 +164,7 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     e->set_name("google");
     e->set_offset(content.size());
     e->set_size(std::numeric_limits<uint64_t>::max());  // Too big size
-    const std::string &md_str = md.SerializeAsString();
+    const std::string& md_str = md.SerializeAsString();
     std::string image =
         absl::StrCat(content, md_str, Util::SerializeUint64(md_str.size()));
 

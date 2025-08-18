@@ -42,7 +42,7 @@
 namespace mozc {
 namespace {
 
-const char *kTestInput =
+const char* kTestInput =
     "key1\t10\t20\t3000\tvalue1\tdesc1\tadesc1\n"  // Entry 1
     "key1\t50\t60\t2000\tvalue2\tdesc2\tadesc2\n"  // Entry 2
     "key2\t50\t60\t2000\tvalue3\n";                // Entry 3
@@ -111,9 +111,8 @@ TEST_F(SerializedDictionaryTest, Compile) {
       "\x3c\x00"          // rid = 60
       "\xd0\x07"          // cost = 2000
       "\x00\x00";         // padding
-  ASSERT_EQ(
-      token_array_data_,
-      std::string(kExpectedTokenArray, std::size(kExpectedTokenArray) - 1));
+  ASSERT_EQ(token_array_data_, std::string(kExpectedTokenArray,
+                                           std::size(kExpectedTokenArray) - 1));
 }
 
 TEST_F(SerializedDictionaryTest, Iterator) {

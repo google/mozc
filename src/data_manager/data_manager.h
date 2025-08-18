@@ -60,8 +60,8 @@ class DataManager {
   // error status on failure.
   using DMStatusOr = absl::StatusOr<std::unique_ptr<const DataManager>>;
 
-  static DMStatusOr CreateFromFile(const std::string &path);
-  static DMStatusOr CreateFromFile(const std::string &path,
+  static DMStatusOr CreateFromFile(const std::string& path);
+  static DMStatusOr CreateFromFile(const std::string& path,
                                    absl::string_view magic);
 
   static DMStatusOr CreateFromArray(absl::string_view array);
@@ -72,17 +72,17 @@ class DataManager {
 
   static DMStatusOr CreateUserPosManagerDataFromArray(absl::string_view array,
                                                       absl::string_view magic);
-  static DMStatusOr CreateUserPosManagerDataFromFile(const std::string &path,
+  static DMStatusOr CreateUserPosManagerDataFromFile(const std::string& path,
                                                      absl::string_view magic);
 
-  DataManager(const DataManager &) = delete;
-  DataManager &operator=(const DataManager &) = delete;
+  DataManager(const DataManager&) = delete;
+  DataManager& operator=(const DataManager&) = delete;
   virtual ~DataManager() = default;
 
   virtual std::optional<std::string> GetFilename() const { return filename_; }
   virtual absl::Span<const uint16_t> GetPosMatcherData() const;
-  virtual void GetUserPosData(absl::string_view *token_array_data,
-                              absl::string_view *string_array_data) const;
+  virtual void GetUserPosData(absl::string_view* token_array_data,
+                              absl::string_view* string_array_data) const;
   virtual absl::string_view GetConnectorData() const;
   virtual absl::string_view GetSystemDictionaryData() const;
   virtual absl::Span<const uint32_t> GetCollocationData() const;
@@ -90,48 +90,48 @@ class DataManager {
   virtual absl::Span<const uint32_t> GetSuggestionFilterData() const;
   virtual absl::Span<const uint8_t> GetPosGroupData() const;
   virtual void GetSegmenterData(
-      size_t *l_num_elements, size_t *r_num_elements,
-      absl::Span<const uint16_t> *l_table, absl::Span<const uint16_t> *r_table,
-      absl::Span<const char> *bitarray_data,
-      absl::Span<const uint16_t> *boundary_data) const;
+      size_t* l_num_elements, size_t* r_num_elements,
+      absl::Span<const uint16_t>* l_table, absl::Span<const uint16_t>* r_table,
+      absl::Span<const char>* bitarray_data,
+      absl::Span<const uint16_t>* boundary_data) const;
   absl::string_view GetCounterSuffixSortedArray() const;
   virtual void GetSuffixDictionaryData(
-      absl::string_view *key_array, absl::string_view *value_array,
-      absl::Span<const uint32_t> *token_array) const;
+      absl::string_view* key_array, absl::string_view* value_array,
+      absl::Span<const uint32_t>* token_array) const;
   virtual void GetReadingCorrectionData(
-      absl::string_view *value_array_data, absl::string_view *error_array_data,
-      absl::string_view *correction_array_data) const;
+      absl::string_view* value_array_data, absl::string_view* error_array_data,
+      absl::string_view* correction_array_data) const;
   virtual void GetSymbolRewriterData(
-      absl::string_view *token_array_data,
-      absl::string_view *string_array_data) const;
+      absl::string_view* token_array_data,
+      absl::string_view* string_array_data) const;
   virtual void GetEmoticonRewriterData(
-      absl::string_view *token_array_data,
-      absl::string_view *string_array_data) const;
-  virtual void GetEmojiRewriterData(absl::string_view *token_array_data,
-                                    absl::string_view *string_array_data) const;
+      absl::string_view* token_array_data,
+      absl::string_view* string_array_data) const;
+  virtual void GetEmojiRewriterData(absl::string_view* token_array_data,
+                                    absl::string_view* string_array_data) const;
   virtual void GetSingleKanjiRewriterData(
-      absl::string_view *token_array_data, absl::string_view *string_array_data,
-      absl::string_view *variant_type_array_data,
-      absl::string_view *variant_token_array_data,
-      absl::string_view *variant_string_array_data,
-      absl::string_view *noun_prefix_token_array_data,
-      absl::string_view *noun_prefix_string_array_data) const;
+      absl::string_view* token_array_data, absl::string_view* string_array_data,
+      absl::string_view* variant_type_array_data,
+      absl::string_view* variant_token_array_data,
+      absl::string_view* variant_string_array_data,
+      absl::string_view* noun_prefix_token_array_data,
+      absl::string_view* noun_prefix_string_array_data) const;
   virtual void GetA11yDescriptionRewriterData(
-      absl::string_view *token_array_data,
-      absl::string_view *string_array_data) const;
+      absl::string_view* token_array_data,
+      absl::string_view* string_array_data) const;
   virtual void GetZeroQueryData(
-      absl::string_view *zero_query_token_array_data,
-      absl::string_view *zero_query_string_array_data,
-      absl::string_view *zero_query_number_token_array_data,
-      absl::string_view *zero_query_number_string_array_data) const;
+      absl::string_view* zero_query_token_array_data,
+      absl::string_view* zero_query_string_array_data,
+      absl::string_view* zero_query_number_token_array_data,
+      absl::string_view* zero_query_number_string_array_data) const;
 
 #ifndef NO_USAGE_REWRITER
   virtual void GetUsageRewriterData(
-      absl::string_view *base_conjugation_suffix_data,
-      absl::string_view *conjugation_suffix_data,
-      absl::string_view *conjugation_index_data,
-      absl::string_view *usage_items_data,
-      absl::string_view *string_array_data) const;
+      absl::string_view* base_conjugation_suffix_data,
+      absl::string_view* conjugation_suffix_data,
+      absl::string_view* conjugation_index_data,
+      absl::string_view* usage_items_data,
+      absl::string_view* string_array_data) const;
 #endif  // NO_USAGE_REWRITER
 
   virtual absl::string_view GetDataVersion() const;
@@ -154,8 +154,8 @@ class DataManager {
 
   // The same as above InitFromArray() but the data is loaded using mmap, which
   // is owned in this instance.
-  absl::Status InitFromFile(const std::string &path);
-  absl::Status InitFromFile(const std::string &path, absl::string_view magic);
+  absl::Status InitFromFile(const std::string& path);
+  absl::Status InitFromFile(const std::string& path, absl::string_view magic);
 
   // The same as above InitFromArray() but only parses data set for user pos
   // manager.  For mozc runtime modules, use InitFromArray() because this method
@@ -164,11 +164,11 @@ class DataManager {
   // partial data set).
   absl::Status InitUserPosManagerDataFromArray(absl::string_view array,
                                                absl::string_view magic);
-  absl::Status InitUserPosManagerDataFromFile(const std::string &path,
+  absl::Status InitUserPosManagerDataFromFile(const std::string& path,
                                               absl::string_view magic);
 
  private:
-  absl::Status InitFromReader(const DataSetReader &reader);
+  absl::Status InitFromReader(const DataSetReader& reader);
 
   std::optional<std::string> filename_ = std::nullopt;
   Mmap mmap_;

@@ -66,9 +66,9 @@ constexpr absl::string_view kDataSetMagicNumber = "\xEFMOZC\r\n";
 constexpr absl::string_view kDataSetMagicNumberOss = "\xEFMOZC\r\n";
 
 absl::Status InitUserPosManagerDataFromReader(
-    const DataSetReader &reader, absl::string_view *pos_matcher_data,
-    absl::string_view *user_pos_token_array_data,
-    absl::string_view *user_pos_string_array_data) {
+    const DataSetReader& reader, absl::string_view* pos_matcher_data,
+    absl::string_view* user_pos_token_array_data,
+    absl::string_view* user_pos_string_array_data) {
   if (!reader.Get("pos_matcher", pos_matcher_data)) {
     return absl::NotFoundError("Cannot find POS matcher rule ID table");
   }
@@ -90,7 +90,7 @@ absl::Status InitUserPosManagerDataFromReader(
 
 template <typename T>
 absl::Span<const T> MakeSpanFromAlignedBuffer(const absl::string_view buf) {
-  return absl::MakeSpan(std::launder(reinterpret_cast<const T *>(buf.data())),
+  return absl::MakeSpan(std::launder(reinterpret_cast<const T*>(buf.data())),
                         buf.size() / sizeof(T));
 }
 
@@ -106,13 +106,13 @@ absl::string_view DataManager::GetDataSetMagicNumber(absl::string_view type) {
 
 // static
 absl::StatusOr<std::unique_ptr<const DataManager>> DataManager::CreateFromFile(
-    const std::string &path) {
+    const std::string& path) {
   return CreateFromFile(path, kDataSetMagicNumber);
 }
 
 // static
 absl::StatusOr<std::unique_ptr<const DataManager>> DataManager::CreateFromFile(
-    const std::string &path, absl::string_view magic) {
+    const std::string& path, absl::string_view magic) {
   auto data_manager = std::make_unique<DataManager>();
   absl::Status status = data_manager->InitFromFile(path, magic);
   if (!status.ok()) {
@@ -168,7 +168,7 @@ DataManager::CreateUserPosManagerDataFromArray(absl::string_view array,
 
 // static
 absl::StatusOr<std::unique_ptr<const DataManager>>
-DataManager::CreateUserPosManagerDataFromFile(const std::string &path,
+DataManager::CreateUserPosManagerDataFromFile(const std::string& path,
                                               absl::string_view magic) {
   auto data_manager = std::make_unique<DataManager>();
   absl::Status status =
@@ -204,7 +204,7 @@ absl::Status DataManager::InitFromArray(absl::string_view array,
   return InitFromReader(reader);
 }
 
-absl::Status DataManager::InitFromReader(const DataSetReader &reader) {
+absl::Status DataManager::InitFromReader(const DataSetReader& reader) {
   absl::Status status = InitUserPosManagerDataFromReader(
       reader, &pos_matcher_data_, &user_pos_token_array_data_,
       &user_pos_string_array_data_);
@@ -431,11 +431,11 @@ absl::Status DataManager::InitFromReader(const DataSetReader &reader) {
   return absl::OkStatus();
 }
 
-absl::Status DataManager::InitFromFile(const std::string &path) {
+absl::Status DataManager::InitFromFile(const std::string& path) {
   return InitFromFile(path, kDataSetMagicNumber);
 }
 
-absl::Status DataManager::InitFromFile(const std::string &path,
+absl::Status DataManager::InitFromFile(const std::string& path,
                                        absl::string_view magic) {
   absl::StatusOr<Mmap> mmap = Mmap::Map(path, Mmap::READ_ONLY);
   if (!mmap.ok()) {
@@ -461,7 +461,7 @@ absl::Status DataManager::InitUserPosManagerDataFromArray(
 }
 
 absl::Status DataManager::InitUserPosManagerDataFromFile(
-    const std::string &path, absl::string_view magic) {
+    const std::string& path, absl::string_view magic) {
   absl::StatusOr<Mmap> mmap = Mmap::Map(path, Mmap::READ_ONLY);
   if (!mmap.ok()) {
     return absl::PermissionDeniedError(
@@ -492,8 +492,8 @@ absl::Span<const uint32_t> DataManager::GetSuggestionFilterData() const {
   return MakeSpanFromAlignedBuffer<uint32_t>(suggestion_filter_data_);
 }
 
-void DataManager::GetUserPosData(absl::string_view *token_array_data,
-                                 absl::string_view *string_array_data) const {
+void DataManager::GetUserPosData(absl::string_view* token_array_data,
+                                 absl::string_view* string_array_data) const {
   *token_array_data = user_pos_token_array_data_;
   *string_array_data = user_pos_string_array_data_;
 }
@@ -507,10 +507,10 @@ absl::Span<const uint8_t> DataManager::GetPosGroupData() const {
 }
 
 void DataManager::GetSegmenterData(
-    size_t *l_num_elements, size_t *r_num_elements,
-    absl::Span<const uint16_t> *l_table, absl::Span<const uint16_t> *r_table,
-    absl::Span<const char> *bitarray_data,
-    absl::Span<const uint16_t> *boundary_data) const {
+    size_t* l_num_elements, size_t* r_num_elements,
+    absl::Span<const uint16_t>* l_table, absl::Span<const uint16_t>* r_table,
+    absl::Span<const char>* bitarray_data,
+    absl::Span<const uint16_t>* boundary_data) const {
   *l_num_elements = segmenter_compressed_lsize_;
   *r_num_elements = segmenter_compressed_rsize_;
   *l_table = MakeSpanFromAlignedBuffer<uint16_t>(segmenter_ltable_);
@@ -520,49 +520,49 @@ void DataManager::GetSegmenterData(
 }
 
 void DataManager::GetSuffixDictionaryData(
-    absl::string_view *key_array_data, absl::string_view *value_array_data,
-    absl::Span<const uint32_t> *token_array) const {
+    absl::string_view* key_array_data, absl::string_view* value_array_data,
+    absl::Span<const uint32_t>* token_array) const {
   *key_array_data = suffix_key_array_data_;
   *value_array_data = suffix_value_array_data_;
   *token_array = MakeSpanFromAlignedBuffer<uint32_t>(suffix_token_array_data_);
 }
 
 void DataManager::GetReadingCorrectionData(
-    absl::string_view *value_array_data, absl::string_view *error_array_data,
-    absl::string_view *correction_array_data) const {
+    absl::string_view* value_array_data, absl::string_view* error_array_data,
+    absl::string_view* correction_array_data) const {
   *value_array_data = reading_correction_value_array_data_;
   *error_array_data = reading_correction_error_array_data_;
   *correction_array_data = reading_correction_correction_array_data_;
 }
 
 void DataManager::GetSymbolRewriterData(
-    absl::string_view *token_array_data,
-    absl::string_view *string_array_data) const {
+    absl::string_view* token_array_data,
+    absl::string_view* string_array_data) const {
   *token_array_data = symbol_token_array_data_;
   *string_array_data = symbol_string_array_data_;
 }
 
 void DataManager::GetEmoticonRewriterData(
-    absl::string_view *token_array_data,
-    absl::string_view *string_array_data) const {
+    absl::string_view* token_array_data,
+    absl::string_view* string_array_data) const {
   *token_array_data = emoticon_token_array_data_;
   *string_array_data = emoticon_string_array_data_;
 }
 
 void DataManager::GetEmojiRewriterData(
-    absl::string_view *token_array_data,
-    absl::string_view *string_array_data) const {
+    absl::string_view* token_array_data,
+    absl::string_view* string_array_data) const {
   *token_array_data = emoji_token_array_data_;
   *string_array_data = emoji_string_array_data_;
 }
 
 void DataManager::GetSingleKanjiRewriterData(
-    absl::string_view *token_array_data, absl::string_view *string_array_data,
-    absl::string_view *variant_type_array_data,
-    absl::string_view *variant_token_array_data,
-    absl::string_view *variant_string_array_data,
-    absl::string_view *noun_prefix_token_array_data,
-    absl::string_view *noun_prefix_string_array_data) const {
+    absl::string_view* token_array_data, absl::string_view* string_array_data,
+    absl::string_view* variant_type_array_data,
+    absl::string_view* variant_token_array_data,
+    absl::string_view* variant_string_array_data,
+    absl::string_view* noun_prefix_token_array_data,
+    absl::string_view* noun_prefix_string_array_data) const {
   *token_array_data = single_kanji_token_array_data_;
   *string_array_data = single_kanji_string_array_data_;
   *variant_type_array_data = single_kanji_variant_type_data_;
@@ -573,8 +573,8 @@ void DataManager::GetSingleKanjiRewriterData(
 }
 
 void DataManager::GetA11yDescriptionRewriterData(
-    absl::string_view *token_array_data,
-    absl::string_view *string_array_data) const {
+    absl::string_view* token_array_data,
+    absl::string_view* string_array_data) const {
   *token_array_data = a11y_description_token_array_data_;
   *string_array_data = a11y_description_string_array_data_;
 }
@@ -584,10 +584,10 @@ absl::string_view DataManager::GetCounterSuffixSortedArray() const {
 }
 
 void DataManager::GetZeroQueryData(
-    absl::string_view *zero_query_token_array_data,
-    absl::string_view *zero_query_string_array_data,
-    absl::string_view *zero_query_number_token_array_data,
-    absl::string_view *zero_query_number_string_array_data) const {
+    absl::string_view* zero_query_token_array_data,
+    absl::string_view* zero_query_string_array_data,
+    absl::string_view* zero_query_number_token_array_data,
+    absl::string_view* zero_query_number_string_array_data) const {
   *zero_query_token_array_data = zero_query_token_array_data_;
   *zero_query_string_array_data = zero_query_string_array_data_;
   *zero_query_number_token_array_data = zero_query_number_token_array_data_;
@@ -596,11 +596,11 @@ void DataManager::GetZeroQueryData(
 
 #ifndef NO_USAGE_REWRITER
 void DataManager::GetUsageRewriterData(
-    absl::string_view *base_conjugation_suffix_data,
-    absl::string_view *conjugation_suffix_data,
-    absl::string_view *conjugation_index_data,
-    absl::string_view *usage_items_data,
-    absl::string_view *string_array_data) const {
+    absl::string_view* base_conjugation_suffix_data,
+    absl::string_view* conjugation_suffix_data,
+    absl::string_view* conjugation_index_data,
+    absl::string_view* usage_items_data,
+    absl::string_view* string_array_data) const {
   *base_conjugation_suffix_data = usage_base_conjugation_suffix_data_;
   *conjugation_suffix_data = usage_conjugation_suffix_data_;
   *conjugation_index_data = usage_conjugation_index_data_;

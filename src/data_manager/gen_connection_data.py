@@ -82,7 +82,7 @@ def ParseConnectionFile(text_connection_file, pos_size, special_pos_size):
     stream = code_generator_util.SkipLineComment(stream)
     # The first line contains the matrix column/row size.
     size = next(stream).rstrip()
-    assert (int(size) == pos_size), '%s != %d' % (size, pos_size)
+    assert int(size) == pos_size, '%s != %d' % (size, pos_size)
 
     for array_index, cost in enumerate(stream):
       cost = int(cost.rstrip())
@@ -138,7 +138,7 @@ def OutputBitList(bit_list, stream):
     for bit_index, bit in enumerate(bits):
       if bit:
         # Fill in LSB to MSB order.
-        byte |= (1 << bit_index)
+        byte |= 1 << bit_index
     stream.write(struct.pack('B', byte))
 
 
@@ -267,11 +267,13 @@ def main():
   pos_size = GetPosSize(options.id_file)
   special_pos_size = GetPosSize(options.special_pos_file)
   matrix = ParseConnectionFile(
-      options.text_connection_file, pos_size, special_pos_size)
+      options.text_connection_file, pos_size, special_pos_size
+  )
   mode_value_list = CreateModeValueList(matrix)
   CompressMatrixByModeValue(matrix, mode_value_list)
   binary = BuildBinaryData(
-      matrix, mode_value_list, ParseBoolFlag(options.use_1byte_cost))
+      matrix, mode_value_list, ParseBoolFlag(options.use_1byte_cost)
+  )
 
   if options.binary_output_file:
     dirpath = os.path.dirname(options.binary_output_file)

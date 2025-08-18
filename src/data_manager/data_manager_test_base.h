@@ -47,17 +47,17 @@ class DataManagerTestBase : public ::testing::Test {
  protected:
   typedef bool (*IsBoundaryFunc)(uint16_t, uint16_t);
 
-  DataManagerTestBase(DataManager *data_manager,
+  DataManagerTestBase(DataManager* data_manager,
                       // The following three are used in segmenter test.
                       size_t lsize, size_t rsize, IsBoundaryFunc is_boundary,
                       // The following two are used in connector test.
-                      const std::string &connection_txt_file,
+                      const std::string& connection_txt_file,
                       int expected_resolution,
                       // The following two are used in suggestion filter test.
                       std::vector<std::string> dictionary_files,
                       std::vector<std::string> suggestion_filter_files);
-  DataManagerTestBase(const DataManagerTestBase &) = delete;
-  DataManagerTestBase &operator=(const DataManagerTestBase &) = delete;
+  DataManagerTestBase(const DataManagerTestBase&) = delete;
+  DataManagerTestBase& operator=(const DataManagerTestBase&) = delete;
 
   void RunAllTests();
 

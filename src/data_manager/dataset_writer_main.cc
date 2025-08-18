@@ -64,7 +64,7 @@
 ABSL_FLAG(std::string, magic, "", "Hex-encoded magic number to be embedded");
 ABSL_FLAG(std::string, output, "", "Output file");
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::string magic;
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
       << absl::GetFlag(FLAGS_magic);
 
   struct Input {
-    Input(const std::string &n, int a, const std::string &f)
+    Input(const std::string& n, int a, const std::string& f)
         : name(n), alignment(a), filename(f) {}
 
     std::string name;
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
   const std::string tmpfile = absl::GetFlag(FLAGS_output) + ".tmp";
   {
     mozc::DataSetWriter writer(magic);
-    for (const auto &input : inputs) {
+    for (const auto& input : inputs) {
       MOZC_VLOG(1) << "Writing " << input.name
                    << ", alignment = " << input.alignment
                    << ", file = " << input.filename;
