@@ -68,7 +68,7 @@ struct IPCClientParams {
 
 class TestIPCClient : public IPCClientInterface {
  public:
-  explicit TestIPCClient(IPCClientParams &params) : params_(params) {}
+  explicit TestIPCClient(IPCClientParams& params) : params_(params) {}
 
   bool Connected() const override { return params_.connected; }
 
@@ -76,14 +76,14 @@ class TestIPCClient : public IPCClientInterface {
     return params_.server_protocol_version;
   }
 
-  const std::string &GetServerProductVersion() const override {
+  const std::string& GetServerProductVersion() const override {
     return params_.server_product_version;
   }
 
   uint32_t GetServerProcessId() const override { return 0; }
 
   // just count up how many times Call is called.
-  bool Call(const std::string &request, std::string *response,
+  bool Call(const std::string& request, std::string* response,
             absl::Duration timeout) override {
     ++params_.counter;
     return true;
@@ -92,12 +92,12 @@ class TestIPCClient : public IPCClientInterface {
   IPCErrorType GetLastIPCError() const override { return IPC_NO_ERROR; }
 
  protected:
-  IPCClientParams &params_;
+  IPCClientParams& params_;
 };
 
 class TestIPCClientFactory : public IPCClientFactoryInterface {
  public:
-  explicit TestIPCClientFactory(IPCClientParams &client_params)
+  explicit TestIPCClientFactory(IPCClientParams& client_params)
       : client_params_(client_params) {}
 
   std::unique_ptr<IPCClientInterface> NewClient(
@@ -110,7 +110,7 @@ class TestIPCClientFactory : public IPCClientFactoryInterface {
   }
 
  private:
-  IPCClientParams &client_params_;
+  IPCClientParams& client_params_;
 };
 
 class TestRendererLauncher : public RendererLauncherInterface {
@@ -124,14 +124,14 @@ class TestRendererLauncher : public RendererLauncherInterface {
   // implement StartServer.
   // return true if server can launched successfully.
   void StartRenderer(
-      const std::string &name, const std::string &renderer_path,
+      const std::string& name, const std::string& renderer_path,
       bool disable_renderer_path_check,
-      IPCClientFactoryInterface *ipc_client_factory_interface) override {
+      IPCClientFactoryInterface* ipc_client_factory_interface) override {
     start_renderer_called_ = true;
     LOG(INFO) << name << " " << renderer_path;
   }
 
-  bool ForceTerminateRenderer(const std::string &name) override {
+  bool ForceTerminateRenderer(const std::string& name) override {
     force_terminate_renderer_called_ = true;
     return true;
   }
@@ -146,7 +146,7 @@ class TestRendererLauncher : public RendererLauncherInterface {
   // return true if client can make a IPC connection.
   bool CanConnect() const override { return can_connect_; }
 
-  void SetPendingCommand(const commands::RendererCommand &command) override {
+  void SetPendingCommand(const commands::RendererCommand& command) override {
     set_pending_command_called_ = true;
   }
 

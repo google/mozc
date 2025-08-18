@@ -42,11 +42,11 @@ class TableLayoutMock : public TableLayoutInterface {
   MOCK_METHOD(void, SetVScrollBar, (int width_in_pixels), (override));
   MOCK_METHOD(void, SetWindowBorder, (int width_in_pixels), (override));
   MOCK_METHOD(void, SetRowRectPadding, (int width_pixels), (override));
-  MOCK_METHOD(void, EnsureCellSize, (int column, const Size &size), (override));
+  MOCK_METHOD(void, EnsureCellSize, (int column, const Size& size), (override));
   MOCK_METHOD(void, EnsureColumnsWidth,
               (int from_column, int to_column, int width), (override));
-  MOCK_METHOD(void, EnsureFooterSize, (const Size &size_in_pixels), (override));
-  MOCK_METHOD(void, EnsureHeaderSize, (const Size &size_in_pixels), (override));
+  MOCK_METHOD(void, EnsureFooterSize, (const Size& size_in_pixels), (override));
+  MOCK_METHOD(void, EnsureHeaderSize, (const Size& size_in_pixels), (override));
   MOCK_METHOD(void, FreezeLayout, (), (override));
   MOCK_METHOD(bool, IsLayoutFrozen, (), (const, override));
   MOCK_METHOD(Rect, GetCellRect, (int row, int column), (const, override));

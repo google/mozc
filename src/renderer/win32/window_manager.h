@@ -49,19 +49,19 @@ namespace win32 {
 class WindowManager {
  public:
   WindowManager();
-  WindowManager(const WindowManager &) = delete;
-  WindowManager &operator=(const WindowManager &) = delete;
+  WindowManager(const WindowManager&) = delete;
+  WindowManager& operator=(const WindowManager&) = delete;
   ~WindowManager();
   void Initialize();
   void AsyncHideAllWindows();
   void AsyncQuitAllWindows();
   void DestroyAllWindows();
   void HideAllWindows();
-  void UpdateLayout(const commands::RendererCommand &command);
+  void UpdateLayout(const commands::RendererCommand& command);
   bool IsAvailable() const;
   void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface);
-  void PreTranslateMessage(const MSG &message);
+      client::SendCommandInterface* send_command_interface);
+  void PreTranslateMessage(const MSG& message);
 
  private:
   std::unique_ptr<CandidateWindow> main_window_;
@@ -69,7 +69,7 @@ class WindowManager {
   std::unique_ptr<IndicatorWindow> indicator_window_;
   std::unique_ptr<InfolistWindow> infolist_window_;
   std::unique_ptr<LayoutManager> layout_manager_;
-  client::SendCommandInterface *send_command_interface_;
+  client::SendCommandInterface* send_command_interface_;
   POINT last_position_;
   int candidates_finger_print_;
   DWORD thread_id_;

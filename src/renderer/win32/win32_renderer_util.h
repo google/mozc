@@ -57,18 +57,18 @@ class CandidateWindowLayout {
 
   // Initializes fields with given target position and exclude region and
   // sets true to |initialized_|.
-  void InitializeWithPositionAndExcludeRegion(const POINT &position,
-                                              const RECT &exclude_region);
+  void InitializeWithPositionAndExcludeRegion(const POINT& position,
+                                              const RECT& exclude_region);
 
   // Clears fields and sets false to |initialized_|.
   void Clear();
 
   // Returns target position in screen coordinate.
-  const POINT &position() const;
+  const POINT& position() const;
 
   // Returns exclude region in screen coordinate.  You can call this method
   // when |has_exclude_region| returns true.
-  const RECT &exclude_region() const;
+  const RECT& exclude_region() const;
 
  private:
   POINT position_;
@@ -86,7 +86,7 @@ struct IndicatorWindowLayout {
 };
 
 // Retrieves the working area that contains the specified |point|.
-bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area);
+bool GetWorkingAreaFromPoint(const POINT& point, RECT* working_area);
 
 // This interface is designed to hook API calls for unit test.
 class WindowPositionInterface {
@@ -98,17 +98,17 @@ class WindowPositionInterface {
   // physical space.  We do not declare this method as const method so
   // that a mock class can implement this method in non-const way.
   virtual bool LogicalToPhysicalPoint(HWND window_handle,
-                                      const POINT &logical_coordinate,
-                                      POINT *physical_coordinate) = 0;
+                                      const POINT& logical_coordinate,
+                                      POINT* physical_coordinate) = 0;
 
   // This method wraps API call of GetWindowRect.
-  virtual bool GetWindowRect(HWND window_handle, RECT *rect) = 0;
+  virtual bool GetWindowRect(HWND window_handle, RECT* rect) = 0;
 
   // This method wraps API call of GetClientRect.
-  virtual bool GetClientRect(HWND window_handle, RECT *rect) = 0;
+  virtual bool GetClientRect(HWND window_handle, RECT* rect) = 0;
 
   // This method wraps API call of ClientToScreen.
-  virtual bool ClientToScreen(HWND window_handle, POINT *point) = 0;
+  virtual bool ClientToScreen(HWND window_handle, POINT* point) = 0;
 
   // This method wraps API call of IsWindow.
   virtual bool IsWindow(HWND window_handle) = 0;
@@ -127,9 +127,9 @@ class WindowPositionEmulator : public WindowPositionInterface {
   // Returns a dummy window handle for this emulator.  You can call methods of
   // WindowPositionInterface with this dummy handle.  You need not to release
   // the returned handle.
-  virtual HWND RegisterWindow(const RECT &window_rect,
-                              const POINT &client_area_offset,
-                              const SIZE &client_area_size,
+  virtual HWND RegisterWindow(const RECT& window_rect,
+                              const POINT& client_area_offset,
+                              const SIZE& client_area_size,
                               double scale_factor) = 0;
 
   virtual void SetRoot(HWND child_window, HWND root_window) = 0;
@@ -138,8 +138,8 @@ class WindowPositionEmulator : public WindowPositionInterface {
 class LayoutManager {
  public:
   LayoutManager();
-  LayoutManager(const LayoutManager &) = delete;
-  LayoutManager &operator=(const LayoutManager &) = delete;
+  LayoutManager(const LayoutManager&) = delete;
+  LayoutManager& operator=(const LayoutManager&) = delete;
 
   // A special constructor for unit tests.  You can set a mock object which
   // emulates native APIs for unit test.  This class is responsible for
@@ -152,8 +152,8 @@ class LayoutManager {
   // account.  In other words, any positional field in |app_info| is stored in
   // virtualized screen coordinates for the target application window.
   bool LayoutCandidateWindow(
-      const commands::RendererCommand_ApplicationInfo &app_info,
-      CandidateWindowLayout *candidate_layout);
+      const commands::RendererCommand_ApplicationInfo& app_info,
+      CandidateWindowLayout* candidate_layout);
 
   // Converts a virtualized screen coordinate for the DPI-unaware application
   // specified by |window_handle| to the universal screen coordinate for
@@ -165,31 +165,31 @@ class LayoutManager {
   // See remarks of the following document for details about the limitations.
   // http://msdn.microsoft.com/en-us/library/ms633533.aspx
   // This method is thread-safe.
-  void GetPointInPhysicalCoords(HWND window_handle, const POINT &point,
-                                POINT *result) const;
+  void GetPointInPhysicalCoords(HWND window_handle, const POINT& point,
+                                POINT* result) const;
 
   // RECT version of GetPointInPhysicalCoords.  This method is thread-safe.
-  void GetRectInPhysicalCoords(HWND window_handle, const RECT &rect,
-                               RECT *result) const;
+  void GetRectInPhysicalCoords(HWND window_handle, const RECT& rect,
+                               RECT* result) const;
 
   // Converts a local coordinate into a logical screen coordinate assuming
   // |src_point| is the client coorinate in the window specified by
   // |src_window_handle|.
   // Returns false if fails.
-  bool ClientRectToScreen(HWND src_window_handle, const RECT &src_rect,
-                          RECT *dest_rect) const;
+  bool ClientRectToScreen(HWND src_window_handle, const RECT& src_rect,
+                          RECT* dest_rect) const;
 
   // Converts a local coordinate into a logical screen coordinate assuming
   // |src_point| is the client coorinate in the window specified by
   // |src_window_handle|.
   // Returns false if fails.
-  bool ClientPointToScreen(HWND src_window_handle, const POINT &src_point,
-                           POINT *dest_point) const;
+  bool ClientPointToScreen(HWND src_window_handle, const POINT& src_point,
+                           POINT* dest_point) const;
 
   // Returns true if the client rect of the target window specified by
   // |src_window_handle| is retrieved in a logical screen coordinate.
   // Returns false if fails.
-  bool GetClientRect(HWND window_handle, RECT *client_rect) const;
+  bool GetClientRect(HWND window_handle, RECT* client_rect) const;
 
   // Returns the scaling factor for DPI Virtualization.
   // Returns 1.0 if any error occurs.
@@ -207,12 +207,12 @@ class LayoutManager {
 
   // Returns writing direction.
   static WritingDirection GetWritingDirection(
-      const commands::RendererCommand_ApplicationInfo &app_info);
+      const commands::RendererCommand_ApplicationInfo& app_info);
 
   // Returns true when the target rect is successfully obtained.
   bool LayoutIndicatorWindow(
-      const commands::RendererCommand_ApplicationInfo &app_info,
-      IndicatorWindowLayout *indicator_layout);
+      const commands::RendererCommand_ApplicationInfo& app_info,
+      IndicatorWindowLayout* indicator_layout);
 
  private:
   std::unique_ptr<WindowPositionInterface> window_position_;

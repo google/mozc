@@ -59,21 +59,21 @@ struct CandidateWindowLayoutParams {
   std::optional<bool> vertical_writing;
 };
 
-bool IsValidRect(const commands::RendererCommand::Rectangle &rect) {
+bool IsValidRect(const commands::RendererCommand::Rectangle& rect) {
   return rect.has_left() && rect.has_top() && rect.has_right() &&
          rect.has_bottom();
 }
 
-CRect ToRect(const commands::RendererCommand::Rectangle &rect) {
+CRect ToRect(const commands::RendererCommand::Rectangle& rect) {
   DCHECK(IsValidRect(rect));
   return CRect(rect.left(), rect.top(), rect.right(), rect.bottom());
 }
 
-bool IsValidPoint(const commands::RendererCommand::Point &point) {
+bool IsValidPoint(const commands::RendererCommand::Point& point) {
   return point.has_x() && point.has_y();
 }
 
-CPoint ToPoint(const commands::RendererCommand::Point &point) {
+CPoint ToPoint(const commands::RendererCommand::Point& point) {
   DCHECK(IsValidPoint(point));
   return CPoint(point.x(), point.y());
 }
@@ -84,7 +84,7 @@ CPoint ToPoint(const commands::RendererCommand::Point &point) {
 // As for Japanese IME, the bottom-left (for horizontal writing) and
 // top-left (for vertical writing) corner of the target segment have been
 // used for many years.
-CPoint GetBasePositionFromExcludeRect(const CRect &exclude_rect,
+CPoint GetBasePositionFromExcludeRect(const CRect& exclude_rect,
                                       bool is_vertical) {
   if (is_vertical) {
     // Vertical
@@ -95,7 +95,7 @@ CPoint GetBasePositionFromExcludeRect(const CRect &exclude_rect,
   return CPoint(exclude_rect.left, exclude_rect.bottom);
 }
 
-CPoint GetBasePositionFromIMECHARPOSITION(const IMECHARPOSITION &char_pos,
+CPoint GetBasePositionFromIMECHARPOSITION(const IMECHARPOSITION& char_pos,
                                           bool is_vertical) {
   if (is_vertical) {
     return CPoint(char_pos.pt.x - char_pos.cLineHeight, char_pos.pt.y);
@@ -104,9 +104,9 @@ CPoint GetBasePositionFromIMECHARPOSITION(const IMECHARPOSITION &char_pos,
   return CPoint(char_pos.pt.x, char_pos.pt.y + char_pos.cLineHeight);
 }
 
-bool ExtractParams(LayoutManager *layout,
-                   const commands::RendererCommand::ApplicationInfo &app_info,
-                   CandidateWindowLayoutParams *params) {
+bool ExtractParams(LayoutManager* layout,
+                   const commands::RendererCommand::ApplicationInfo& app_info,
+                   CandidateWindowLayoutParams* params) {
   DCHECK_NE(nullptr, layout);
   DCHECK_NE(nullptr, params);
 
@@ -124,7 +124,7 @@ bool ExtractParams(LayoutManager *layout,
   params->window_handle = target_window;
 
   if (app_info.has_composition_target()) {
-    const commands::RendererCommand::CharacterPosition &char_pos =
+    const commands::RendererCommand::CharacterPosition& char_pos =
         app_info.composition_target();
     // Check the availability of optional fields.
     if (char_pos.has_position() && char_pos.has_top_left() &&
@@ -163,7 +163,7 @@ bool ExtractParams(LayoutManager *layout,
   return true;
 }
 
-bool GetWorkingAreaFromPointImpl(const POINT &point, RECT *working_area) {
+bool GetWorkingAreaFromPointImpl(const POINT& point, RECT* working_area) {
   if (working_area == nullptr) {
     return false;
   }
@@ -191,12 +191,12 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
  public:
   NativeWindowPositionAPI() = default;
 
-  NativeWindowPositionAPI(const NativeWindowPositionAPI &) = delete;
-  NativeWindowPositionAPI &operator=(const NativeWindowPositionAPI &) = delete;
+  NativeWindowPositionAPI(const NativeWindowPositionAPI&) = delete;
+  NativeWindowPositionAPI& operator=(const NativeWindowPositionAPI&) = delete;
 
   virtual bool LogicalToPhysicalPoint(HWND window_handle,
-                                      const POINT &logical_coordinate,
-                                      POINT *physical_coordinate) {
+                                      const POINT& logical_coordinate,
+                                      POINT* physical_coordinate) {
     if (physical_coordinate == nullptr) {
       return false;
     }
@@ -232,17 +232,17 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool GetWindowRect(HWND window_handle, RECT *rect) {
+  virtual bool GetWindowRect(HWND window_handle, RECT* rect) {
     return (::GetWindowRect(window_handle, rect) != FALSE);
   }
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool GetClientRect(HWND window_handle, RECT *rect) {
+  virtual bool GetClientRect(HWND window_handle, RECT* rect) {
     return (::GetClientRect(window_handle, rect) != FALSE);
   }
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool ClientToScreen(HWND window_handle, POINT *point) {
+  virtual bool ClientToScreen(HWND window_handle, POINT* point) {
     return (::ClientToScreen(window_handle, point) != FALSE);
   }
 
@@ -269,16 +269,16 @@ struct WindowInfo {
 class WindowPositionEmulatorImpl : public WindowPositionEmulator {
  public:
   WindowPositionEmulatorImpl() = default;
-  WindowPositionEmulatorImpl(const WindowPositionEmulatorImpl &) = delete;
-  WindowPositionEmulatorImpl &operator=(const WindowPositionEmulatorImpl &) =
+  WindowPositionEmulatorImpl(const WindowPositionEmulatorImpl&) = delete;
+  WindowPositionEmulatorImpl& operator=(const WindowPositionEmulatorImpl&) =
       delete;
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool GetWindowRect(HWND window_handle, RECT *rect) {
+  virtual bool GetWindowRect(HWND window_handle, RECT* rect) {
     if (rect == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInformation(window_handle);
+    const WindowInfo* info = GetWindowInformation(window_handle);
     if (info == nullptr) {
       return false;
     }
@@ -287,11 +287,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool GetClientRect(HWND window_handle, RECT *rect) {
+  virtual bool GetClientRect(HWND window_handle, RECT* rect) {
     if (rect == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInformation(window_handle);
+    const WindowInfo* info = GetWindowInformation(window_handle);
     if (info == nullptr) {
       return false;
     }
@@ -300,11 +300,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool ClientToScreen(HWND window_handle, POINT *point) {
+  virtual bool ClientToScreen(HWND window_handle, POINT* point) {
     if (point == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInformation(window_handle);
+    const WindowInfo* info = GetWindowInformation(window_handle);
     if (info == nullptr) {
       return false;
     }
@@ -314,7 +314,7 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool IsWindow(HWND window_handle) {
-    const WindowInfo *info = GetWindowInformation(window_handle);
+    const WindowInfo* info = GetWindowInformation(window_handle);
     if (info == nullptr) {
       return false;
     }
@@ -333,21 +333,21 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool LogicalToPhysicalPoint(HWND window_handle,
-                                      const POINT &logical_coordinate,
-                                      POINT *physical_coordinate) {
+                                      const POINT& logical_coordinate,
+                                      POINT* physical_coordinate) {
     if (physical_coordinate == nullptr) {
       return false;
     }
 
     DCHECK_NE(nullptr, physical_coordinate);
-    const WindowInfo *root_info =
+    const WindowInfo* root_info =
         GetWindowInformation(GetRootWindow(window_handle));
     if (root_info == nullptr) {
       return false;
     }
 
     // BottomRight is treated inside of the rect in this scenario.
-    const CRect &bottom_right_inflated_rect = CRect(
+    const CRect& bottom_right_inflated_rect = CRect(
         root_info->window_rect.left, root_info->window_rect.top,
         root_info->window_rect.right + 1, root_info->window_rect.bottom + 1);
     if (bottom_right_inflated_rect.PtInRect(logical_coordinate) == FALSE) {
@@ -358,9 +358,9 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
     return true;
   }
 
-  virtual HWND RegisterWindow(const RECT &window_rect,
-                              const POINT &client_area_offset,
-                              const SIZE &client_area_size,
+  virtual HWND RegisterWindow(const RECT& window_rect,
+                              const POINT& client_area_offset,
+                              const SIZE& client_area_size,
                               double scale_factor) {
     const HWND hwnd = GetNextWindowHandle();
     window_map_[hwnd].window_rect = window_rect;
@@ -385,7 +385,7 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  const WindowInfo *GetWindowInformation(HWND hwnd) {
+  const WindowInfo* GetWindowInformation(HWND hwnd) {
     if (window_map_.find(hwnd) == window_map_.end()) {
       return nullptr;
     }
@@ -396,7 +396,7 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   std::map<HWND, HWND> root_map_;
 };
 
-bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
+bool IsVerticalWriting(const CandidateWindowLayoutParams& params) {
   return params.vertical_writing.has_value() && params.vertical_writing.value();
 }
 
@@ -414,8 +414,8 @@ bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool LayoutCandidateWindowByCompositionTarget(
-    const CandidateWindowLayoutParams &params, LayoutManager *layout_manager,
-    CandidateWindowLayout *candidate_layout) {
+    const CandidateWindowLayoutParams& params, LayoutManager* layout_manager,
+    CandidateWindowLayout* candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
 
@@ -427,7 +427,7 @@ bool LayoutCandidateWindowByCompositionTarget(
   }
 
   const HWND target_window = params.window_handle.value();
-  const IMECHARPOSITION &char_pos = params.char_pos.value();
+  const IMECHARPOSITION& char_pos = params.char_pos.value();
 
   // From the behavior of MS Office, we assume that an application fills
   // members in IMECHARPOSITION as follows, even though other interpretations
@@ -490,8 +490,8 @@ bool LayoutCandidateWindowByCompositionTarget(
 }
 
 bool LayoutIndicatorWindowByCompositionTarget(
-    const CandidateWindowLayoutParams &params,
-    const LayoutManager &layout_manager, CRect *target_rect) {
+    const CandidateWindowLayoutParams& params,
+    const LayoutManager& layout_manager, CRect* target_rect) {
   DCHECK(target_rect);
   *target_rect = CRect();
 
@@ -503,7 +503,7 @@ bool LayoutIndicatorWindowByCompositionTarget(
   }
 
   const HWND target_window = params.window_handle.value();
-  const IMECHARPOSITION &char_pos = params.char_pos.value();
+  const IMECHARPOSITION& char_pos = params.char_pos.value();
 
   // From the behavior of MS Office, we assume that an application fills
   // members in IMECHARPOSITION as follows, even though other interpretations
@@ -546,9 +546,9 @@ bool LayoutIndicatorWindowByCompositionTarget(
   return true;
 }
 
-bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
-                               const LayoutManager &layout_manager,
-                               CRect *focus_rect) {
+bool GetTargetRectForIndicator(const CandidateWindowLayoutParams& params,
+                               const LayoutManager& layout_manager,
+                               CRect* focus_rect) {
   if (focus_rect == nullptr) {
     return false;
   }
@@ -565,7 +565,7 @@ bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
 
 }  // namespace
 
-bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
+bool GetWorkingAreaFromPoint(const POINT& point, RECT* working_area) {
   return GetWorkingAreaFromPointImpl(point, working_area);
 }
 
@@ -580,15 +580,15 @@ void CandidateWindowLayout::Clear() {
 }
 
 void CandidateWindowLayout::InitializeWithPositionAndExcludeRegion(
-    const POINT &position, const RECT &exclude_region) {
+    const POINT& position, const RECT& exclude_region) {
   position_ = position;
   exclude_region_ = exclude_region;
   initialized_ = true;
 }
 
-const POINT &CandidateWindowLayout::position() const { return position_; }
+const POINT& CandidateWindowLayout::position() const { return position_; }
 
-const RECT &CandidateWindowLayout::exclude_region() const {
+const RECT& CandidateWindowLayout::exclude_region() const {
   DCHECK(initialized_);
   return exclude_region_;
 }
@@ -605,8 +605,8 @@ void IndicatorWindowLayout::Clear() {
 }
 
 void LayoutManager::GetPointInPhysicalCoords(HWND window_handle,
-                                             const POINT &point,
-                                             POINT *result) const {
+                                             const POINT& point,
+                                             POINT* result) const {
   if (result == nullptr) {
     return;
   }
@@ -626,8 +626,8 @@ void LayoutManager::GetPointInPhysicalCoords(HWND window_handle,
 }
 
 void LayoutManager::GetRectInPhysicalCoords(HWND window_handle,
-                                            const RECT &rect,
-                                            RECT *result) const {
+                                            const RECT& rect,
+                                            RECT* result) const {
   if (result == nullptr) {
     return;
   }
@@ -651,8 +651,8 @@ LayoutManager::LayoutManager(
     : window_position_(std::move(mock_window_position)) {}
 
 bool LayoutManager::ClientPointToScreen(HWND src_window_handle,
-                                        const POINT &src_point,
-                                        POINT *dest_point) const {
+                                        const POINT& src_point,
+                                        POINT* dest_point) const {
   if (dest_point == nullptr) {
     return false;
   }
@@ -674,8 +674,8 @@ bool LayoutManager::ClientPointToScreen(HWND src_window_handle,
 }
 
 bool LayoutManager::ClientRectToScreen(HWND src_window_handle,
-                                       const RECT &src_rect,
-                                       RECT *dest_rect) const {
+                                       const RECT& src_rect,
+                                       RECT* dest_rect) const {
   if (dest_rect == nullptr) {
     return false;
   }
@@ -705,7 +705,7 @@ bool LayoutManager::ClientRectToScreen(HWND src_window_handle,
   return true;
 }
 
-bool LayoutManager::GetClientRect(HWND window_handle, RECT *client_rect) const {
+bool LayoutManager::GetClientRect(HWND window_handle, RECT* client_rect) const {
   return window_position_->GetClientRect(window_handle, client_rect);
 }
 
@@ -761,8 +761,8 @@ double LayoutManager::GetScalingFactor(HWND window_handle) const {
 }
 
 LayoutManager::WritingDirection LayoutManager::GetWritingDirection(
-    const commands::RendererCommand_ApplicationInfo &app_info) {
-  const commands::RendererCommand::CharacterPosition &composition_target =
+    const commands::RendererCommand_ApplicationInfo& app_info) {
+  const commands::RendererCommand::CharacterPosition& composition_target =
       app_info.composition_target();
   if (composition_target.has_vertical_writing()) {
     return composition_target.vertical_writing() ? VERTICAL_WRITING
@@ -772,8 +772,8 @@ LayoutManager::WritingDirection LayoutManager::GetWritingDirection(
 }
 
 bool LayoutManager::LayoutCandidateWindow(
-    const commands::RendererCommand::ApplicationInfo &app_info,
-    CandidateWindowLayout *candidate_layout) {
+    const commands::RendererCommand::ApplicationInfo& app_info,
+    CandidateWindowLayout* candidate_layout) {
   CandidateWindowLayoutParams params;
   if (!ExtractParams(this, app_info, &params)) {
     return false;
@@ -789,8 +789,8 @@ bool LayoutManager::LayoutCandidateWindow(
 }
 
 bool LayoutManager::LayoutIndicatorWindow(
-    const commands::RendererCommand_ApplicationInfo &app_info,
-    IndicatorWindowLayout *indicator_layout) {
+    const commands::RendererCommand_ApplicationInfo& app_info,
+    IndicatorWindowLayout* indicator_layout) {
   if (indicator_layout == nullptr) {
     return false;
   }

@@ -47,7 +47,7 @@ class WindowUtilTest : public testing::Test {
   void VerifyMainWindowWithPreeditRect(int preedit_left, int preedit_top,
                                        int preedit_width, int preedit_height,
                                        int expected_left, int expected_top,
-                                       const char *message) {
+                                       const char* message) {
     Rect preedit_rect(preedit_left, preedit_top, preedit_width, preedit_height);
     Rect result = WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
         preedit_rect, window_size_, zero_point_offset_, working_area_);
@@ -57,7 +57,7 @@ class WindowUtilTest : public testing::Test {
 
   void VerifyMainWindowWithTargetPoint(int target_point_x, int target_point_y,
                                        int expected_left, int expected_top,
-                                       const char *message) {
+                                       const char* message) {
     Point target_point(target_point_x, target_point_y);
     Rect result = WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
         target_point, window_size_, zero_point_offset_, working_area_);
@@ -68,7 +68,7 @@ class WindowUtilTest : public testing::Test {
   void VerifyMainWindowWithTargetPointAndPreeditHorizontal(
       int target_point_x, int target_point_y, int preedit_left, int preedit_top,
       int preedit_width, int preedit_height, int expected_left,
-      int expected_top, const char *message) {
+      int expected_top, const char* message) {
     Point target_point(target_point_x, target_point_y);
     Rect preedit_rect(preedit_left, preedit_top, preedit_width, preedit_height);
     Rect result =
@@ -82,7 +82,7 @@ class WindowUtilTest : public testing::Test {
   void VerifyMainWindowWithTargetPointAndPreeditVertical(
       int target_point_x, int target_point_y, int preedit_left, int preedit_top,
       int preedit_width, int preedit_height, int expected_left,
-      int expected_top, const char *message) {
+      int expected_top, const char* message) {
     Point target_point(target_point_x, target_point_y);
     Rect preedit_rect(preedit_left, preedit_top, preedit_width, preedit_height);
     Rect result =
@@ -95,7 +95,7 @@ class WindowUtilTest : public testing::Test {
 
   void VerifyCascadingWindow(int row_left, int row_top, int row_width,
                              int row_height, int expected_left,
-                             int expected_top, const char *message) {
+                             int expected_top, const char* message) {
     Rect selected_row(row_left, row_top, row_width, row_height);
     Rect result = WindowUtil::GetWindowRectForCascadingWindow(
         selected_row, window_size_, zero_point_offset_, working_area_);
@@ -107,7 +107,7 @@ class WindowUtilTest : public testing::Test {
                             int candidate_left, int candidate_top,
                             int candidate_width, int candidate_height,
                             int expected_left, int expected_top,
-                            const char *message) {
+                            const char* message) {
     Size window_size(infolist_width, infolist_height);
     Rect candidate_rect(candidate_left, candidate_top, candidate_width,
                         candidate_height);

@@ -93,7 +93,7 @@ const COLORREF kFooterBottomColor = RGB(0xee, 0xee, 0xee);
 // ------------------------------------------------------------------------
 // Utility functions
 // ------------------------------------------------------------------------
-CRect ToCRect(const Rect &rect) {
+CRect ToCRect(const Rect& rect) {
   return CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
 }
 
@@ -102,9 +102,9 @@ CRect ToCRect(const Rect &rect) {
 // This function returns the size of the given candidate list when there
 // aren't any candidates satisfying the above condition.
 int GetCandidateArrayIndexByCandidateIndex(
-    const commands::CandidateWindow &candidate_window, int candidate_index) {
+    const commands::CandidateWindow& candidate_window, int candidate_index) {
   for (size_t i = 0; i < candidate_window.candidate_size(); ++i) {
-    const commands::CandidateWindow::Candidate &candidate =
+    const commands::CandidateWindow::Candidate& candidate =
         candidate_window.candidate(i);
 
     if (candidate.index() == candidate_index) {
@@ -121,7 +121,7 @@ int GetCandidateArrayIndexByCandidateIndex(
 // candidates is "123"
 // Returns an empty string if index string should not be displayed.
 std::string GetIndexGuideString(
-    const commands::CandidateWindow &candidate_window) {
+    const commands::CandidateWindow& candidate_window) {
   if (!candidate_window.has_footer() ||
       !candidate_window.footer().index_visible()) {
     return "";
@@ -141,7 +141,7 @@ std::string GetIndexGuideString(
 // |candidates.focused_index| == |candidates.candidate(i).index()|.
 // This function returns the size of the given candidate list when there
 // aren't any candidates satisfying the above condition.
-int GetFocusedArrayIndex(const commands::CandidateWindow &candidate_window) {
+int GetFocusedArrayIndex(const commands::CandidateWindow& candidate_window) {
   const int invalid_index = candidate_window.candidate_size();
 
   if (!candidate_window.has_focused_index()) {
@@ -157,14 +157,14 @@ int GetFocusedArrayIndex(const commands::CandidateWindow &candidate_window) {
 // Retrieves the display string from the specified candidate for the specified
 // column and returns it.
 std::wstring GetDisplayStringByColumn(
-    const commands::CandidateWindow::Candidate &candidate,
+    const commands::CandidateWindow::Candidate& candidate,
     COLUMN_TYPE column_type) {
   std::wstring display_string;
 
   switch (column_type) {
     case COLUMN_SHORTCUT:
       if (candidate.has_annotation()) {
-        const commands::Annotation &annotation = candidate.annotation();
+        const commands::Annotation& annotation = candidate.annotation();
         if (annotation.has_shortcut()) {
           display_string = mozc::win32::Utf8ToWide(annotation.shortcut());
         }
@@ -175,7 +175,7 @@ std::wstring GetDisplayStringByColumn(
         display_string = mozc::win32::Utf8ToWide(candidate.value());
       }
       if (candidate.has_annotation()) {
-        const commands::Annotation &annotation = candidate.annotation();
+        const commands::Annotation& annotation = candidate.annotation();
         if (annotation.has_prefix()) {
           const std::wstring annotation_prefix =
               mozc::win32::Utf8ToWide(annotation.prefix());
@@ -190,7 +190,7 @@ std::wstring GetDisplayStringByColumn(
       break;
     case COLUMN_DESCRIPTION:
       if (candidate.has_annotation()) {
-        const commands::Annotation &annotation = candidate.annotation();
+        const commands::Annotation& annotation = candidate.annotation();
         if (annotation.has_description()) {
           display_string = mozc::win32::Utf8ToWide(annotation.description());
         }
@@ -218,7 +218,7 @@ HBITMAP LoadBitmapFromResource(HMODULE module, int resource_id) {
                   LR_CREATEDIBSECTION));
 }
 
-void FillSolidRect(HDC dc, const RECT *rect, COLORREF color) {
+void FillSolidRect(HDC dc, const RECT* rect, COLORREF color) {
   COLORREF old_color = ::SetBkColor(dc, color);
   if (old_color != CLR_INVALID) {
     ::ExtTextOut(dc, 0, 0, ETO_OPAQUE, rect, nullptr, 0, nullptr);
@@ -302,7 +302,7 @@ void CandidateWindow::OnDestroy() {
   ::PostQuitMessage(0);
 }
 
-void CandidateWindow::OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect) {
+void CandidateWindow::OnDpiChanged(UINT dpiX, UINT dpiY, RECT* rect) {
   metrics_changed_ = true;
 }
 
@@ -312,7 +312,7 @@ BOOL CandidateWindow::OnEraseBkgnd(HDC dc) {
   return TRUE;
 }
 
-void CandidateWindow::OnGetMinMaxInfo(MINMAXINFO *min_max_info) {
+void CandidateWindow::OnGetMinMaxInfo(MINMAXINFO* min_max_info) {
   // Do not restrict the window size in case the candidate window must be
   // very small size.
   min_max_info->ptMinTrackSize.x = 1;
@@ -320,7 +320,7 @@ void CandidateWindow::OnGetMinMaxInfo(MINMAXINFO *min_max_info) {
   SetMsgHandled(TRUE);
 }
 
-void CandidateWindow::HandleMouseEvent(UINT nFlags, const CPoint &point,
+void CandidateWindow::HandleMouseEvent(UINT nFlags, const CPoint& point,
                                        bool close_candidatewindow) {
   if (send_command_interface_ == nullptr) {
     LOG(ERROR) << "send_command_interface_ is nullptr";
@@ -330,7 +330,7 @@ void CandidateWindow::HandleMouseEvent(UINT nFlags, const CPoint &point,
   (void)GetFocusedArrayIndex(*candidate_window_);
 
   for (size_t i = 0; i < candidate_window_->candidate_size(); ++i) {
-    const commands::CandidateWindow::Candidate &candidate =
+    const commands::CandidateWindow::Candidate& candidate =
         candidate_window_->candidate(i);
 
     const CRect rect = ToCRect(table_layout_->GetRowRect(i));
@@ -451,7 +451,7 @@ void CandidateWindow::OnSettingChange(UINT uFlags, LPCTSTR /*lpszSection*/) {
 }
 
 void CandidateWindow::UpdateLayout(
-    const commands::CandidateWindow &candidates) {
+    const commands::CandidateWindow& candidates) {
   *candidate_window_ = candidates;
 
   // If we detect any change of font parameters, update text renderer
@@ -566,7 +566,7 @@ void CandidateWindow::UpdateLayout(
 
   // calculate table size.
   for (size_t i = 0; i < candidate_window_->candidate_size(); ++i) {
-    const commands::CandidateWindow::Candidate &candidate =
+    const commands::CandidateWindow::Candidate& candidate =
         candidate_window_->candidate(i);
     const std::wstring shortcut =
         GetDisplayStringByColumn(candidate, COLUMN_SHORTCUT);
@@ -608,7 +608,7 @@ void CandidateWindow::UpdateLayout(
 
   // Put a padding in COLUMN_GAP2.
   // We use wide padding if there is any description column.
-  const wchar_t *gap2_string = (description_found ? L"   " : L" ");
+  const wchar_t* gap2_string = (description_found ? L"   " : L" ");
   const Size gap2_size = text_renderer_->MeasureString(
       TextRenderer::FONTSET_CANDIDATE, gap2_string);
   table_layout_->EnsureCellSize(COLUMN_GAP2, gap2_size);
@@ -617,7 +617,7 @@ void CandidateWindow::UpdateLayout(
 }
 
 void CandidateWindow::SetSendCommandInterface(
-    client::SendCommandInterface *send_command_interface) {
+    client::SendCommandInterface* send_command_interface) {
   send_command_interface_ = send_command_interface;
 }
 
@@ -670,7 +670,7 @@ void CandidateWindow::DrawCells(HDC dc) {
 
     std::vector<TextRenderingInfo> display_list;
     for (size_t i = 0; i < candidate_window_->candidate_size(); ++i) {
-      const commands::CandidateWindow::Candidate &candidate =
+      const commands::CandidateWindow::Candidate& candidate =
           candidate_window_->candidate(i);
       const std::wstring display_string =
           GetDisplayStringByColumn(candidate, column_type);
@@ -682,7 +682,7 @@ void CandidateWindow::DrawCells(HDC dc) {
 }
 
 void CandidateWindow::DrawVScrollBar(HDC dc) {
-  const Rect &vscroll_rect = table_layout_->GetVScrollBarRect();
+  const Rect& vscroll_rect = table_layout_->GetVScrollBarRect();
 
   if (!vscroll_rect.IsRectEmpty() && candidate_window_->candidate_size() > 0) {
     const int begin_index = candidate_window_->candidate(0).index();
@@ -694,7 +694,7 @@ void CandidateWindow::DrawVScrollBar(HDC dc) {
     const CRect background_crect = ToCRect(vscroll_rect);
     FillSolidRect(dc, &background_crect, kIndicatorBackgroundColor);
 
-    const mozc::Rect &indicator_rect = table_layout_->GetVScrollIndicatorRect(
+    const mozc::Rect& indicator_rect = table_layout_->GetVScrollIndicatorRect(
         begin_index, end_index, candidates_total);
 
     const CRect indicator_crect = ToCRect(indicator_rect);
@@ -722,7 +722,7 @@ void CandidateWindow::DrawShortcutBackground(HDC dc) {
 }
 
 void CandidateWindow::DrawFooter(HDC dc) {
-  const Rect &footer_rect = table_layout_->GetFooterRect();
+  const Rect& footer_rect = table_layout_->GetFooterRect();
   if (!candidate_window_->has_footer() || footer_rect.IsRectEmpty()) {
     return;
   }

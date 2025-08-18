@@ -41,7 +41,7 @@ class RendererMock : public RendererInterface {
  public:
   MOCK_METHOD(bool, Activate, (), (override));
   MOCK_METHOD(bool, IsAvailable, (), (const, override));
-  MOCK_METHOD(bool, ExecCommand, (const commands::RendererCommand &command),
+  MOCK_METHOD(bool, ExecCommand, (const commands::RendererCommand& command),
               (override));
   MOCK_METHOD(void, SetSendCommandInterface,
               (client::SendCommandInterface * send_command_interface),

@@ -56,8 +56,8 @@ class Win32Server : public RendererServer, public RendererInterface {
  public:
   Win32Server();
 
-  Win32Server(const Win32Server &) = delete;
-  Win32Server &operator=(const Win32Server &) = delete;
+  Win32Server(const Win32Server&) = delete;
+  Win32Server& operator=(const Win32Server&) = delete;
 
   ~Win32Server() override;
 
@@ -65,9 +65,9 @@ class Win32Server : public RendererServer, public RendererInterface {
   void AsyncQuit() override;
   bool Activate() override;
   bool IsAvailable() const override;
-  bool ExecCommand(const commands::RendererCommand &command) override;
+  bool ExecCommand(const commands::RendererCommand& command) override;
   void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) override;
+      client::SendCommandInterface* send_command_interface) override;
   bool AsyncExecCommand(absl::string_view proto_message) override;
   int StartMessageLoop() override;
 

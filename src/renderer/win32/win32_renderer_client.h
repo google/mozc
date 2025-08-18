@@ -54,7 +54,7 @@ class Win32RendererClient {
   static void OnUIThreadUninitialized();
   // Passes the |command| to the renderer. This function returns
   // asynchronously and only the last call will be used.
-  static void OnUpdated(const commands::RendererCommand &command);
+  static void OnUpdated(const commands::RendererCommand& command);
 };
 
 }  // namespace win32

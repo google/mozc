@@ -55,7 +55,7 @@ class TestRenderer : public RendererInterface {
 
   bool IsAvailable() const override { return true; }
 
-  bool ExecCommand(const commands::RendererCommand &command) override {
+  bool ExecCommand(const commands::RendererCommand& command) override {
     if (finished_.load(std::memory_order_acquire)) {
       return false;
     }
@@ -90,13 +90,13 @@ class TestRendererServer : public RendererServer {
 class DummyRendererLauncher : public RendererLauncherInterface {
  public:
   void StartRenderer(
-      const std::string &name, const std::string &renderer_path,
+      const std::string& name, const std::string& renderer_path,
       bool disable_renderer_path_check,
-      IPCClientFactoryInterface *ipc_client_factory_interface) override {
+      IPCClientFactoryInterface* ipc_client_factory_interface) override {
     LOG(INFO) << name << " " << renderer_path;
   }
 
-  bool ForceTerminateRenderer(const std::string &name) override { return true; }
+  bool ForceTerminateRenderer(const std::string& name) override { return true; }
 
   void OnFatal(RendererErrorType type) override {
     LOG(ERROR) << static_cast<int>(type);
@@ -106,7 +106,7 @@ class DummyRendererLauncher : public RendererLauncherInterface {
 
   bool CanConnect() const override { return true; }
 
-  void SetPendingCommand(const commands::RendererCommand &command) override {}
+  void SetPendingCommand(const commands::RendererCommand& command) override {}
 
   void set_suppress_error_dialog(bool suppress) override {}
 };

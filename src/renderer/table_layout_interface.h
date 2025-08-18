@@ -37,18 +37,18 @@ namespace renderer {
 
 class TableLayoutInterface {
  public:
-  TableLayoutInterface(){};
+  TableLayoutInterface() {};
   virtual ~TableLayoutInterface() {}
 
   virtual void Initialize(int num_rows, int num_columns) = 0;
   virtual void SetVScrollBar(int width_in_pixels) = 0;
   virtual void SetWindowBorder(int width_in_pixels) = 0;
   virtual void SetRowRectPadding(int width_pixels) = 0;
-  virtual void EnsureCellSize(int column, const Size &size) = 0;
+  virtual void EnsureCellSize(int column, const Size& size) = 0;
   virtual void EnsureColumnsWidth(int from_column, int to_column,
                                   int width) = 0;
-  virtual void EnsureFooterSize(const Size &size_in_pixels) = 0;
-  virtual void EnsureHeaderSize(const Size &size_in_pixels) = 0;
+  virtual void EnsureFooterSize(const Size& size_in_pixels) = 0;
+  virtual void EnsureHeaderSize(const Size& size_in_pixels) = 0;
   virtual void FreezeLayout() = 0;
   virtual bool IsLayoutFrozen() const = 0;
   virtual Rect GetCellRect(int row, int column) const = 0;

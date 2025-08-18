@@ -62,7 +62,7 @@ namespace {
 const COLORREF kDefaultBackgroundColor = RGB(0xff, 0xff, 0xff);
 const UINT_PTR kIdDelayShowHideTimer = 100;
 
-void FillSolidRect(HDC dc, const RECT *rect, COLORREF color) {
+void FillSolidRect(HDC dc, const RECT* rect, COLORREF color) {
   COLORREF old_color = ::SetBkColor(dc, color);
   if (old_color != CLR_INVALID) {
     ::ExtTextOut(dc, 0, 0, ETO_OPAQUE, rect, nullptr, 0, nullptr);
@@ -95,7 +95,7 @@ void InfolistWindow::OnDestroy() {
   ::PostQuitMessage(0);
 }
 
-void InfolistWindow::OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect) {
+void InfolistWindow::OnDpiChanged(UINT dpiX, UINT dpiY, RECT* rect) {
   metrics_changed_ = true;
 }
 
@@ -105,7 +105,7 @@ BOOL InfolistWindow::OnEraseBkgnd(HDC dc) {
   return TRUE;
 }
 
-void InfolistWindow::OnGetMinMaxInfo(MINMAXINFO *min_max_info) {
+void InfolistWindow::OnGetMinMaxInfo(MINMAXINFO* min_max_info) {
   // Do not restrict the window size in case the candidate window must be
   // very small size.
   min_max_info->ptMinTrackSize.x = 1;
@@ -140,13 +140,13 @@ Size InfolistWindow::DoPaint(HDC dc) {
   if (dc != nullptr) {
     ::SetBkMode(dc, TRANSPARENT);
   }
-  const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
-  const InformationList &usages = candidate_window_->usages();
+  const RendererStyle::InfolistStyle& infostyle = style_->infolist_style();
+  const InformationList& usages = candidate_window_->usages();
 
   int ypos = infostyle.window_border();
 
   if ((dc != nullptr) && infostyle.has_caption_string()) {
-    const RendererStyle::TextStyle &caption_style = infostyle.caption_style();
+    const RendererStyle::TextStyle& caption_style = infostyle.caption_style();
     const int caption_height = infostyle.caption_height();
     const Rect backgrounnd_rect(
         infostyle.window_border(), ypos,
@@ -193,10 +193,10 @@ Size InfolistWindow::DoPaint(HDC dc) {
 }
 
 Size InfolistWindow::DoPaintRow(HDC dc, int row, int ypos) {
-  const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
-  const InformationList &usages = candidate_window_->usages();
-  const RendererStyle::TextStyle &title_style = infostyle.title_style();
-  const RendererStyle::TextStyle &desc_style = infostyle.description_style();
+  const RendererStyle::InfolistStyle& infostyle = style_->infolist_style();
+  const InformationList& usages = candidate_window_->usages();
+  const RendererStyle::TextStyle& title_style = infostyle.title_style();
+  const RendererStyle::TextStyle& desc_style = infostyle.description_style();
   const int title_width =
       infostyle.window_width() - title_style.left_padding() -
       title_style.right_padding() - infostyle.window_border() * 2 -
@@ -205,7 +205,7 @@ Size InfolistWindow::DoPaintRow(HDC dc, int row, int ypos) {
                          desc_style.right_padding() -
                          infostyle.window_border() * 2 -
                          infostyle.row_rect_padding() * 2;
-  const Information &info = usages.information(row);
+  const Information& info = usages.information(row);
 
   const std::wstring title_str = mozc::win32::Utf8ToWide(info.title());
   const Size title_size = text_renderer_->MeasureStringMultiLine(
@@ -336,7 +336,7 @@ void InfolistWindow::DelayHide(UINT mseconds) {
 }
 
 void InfolistWindow::UpdateLayout(
-    const commands::CandidateWindow &candidate_window) {
+    const commands::CandidateWindow& candidate_window) {
   *candidate_window_ = candidate_window;
 
   // If we detect any change of font parameters, update text renderer
@@ -347,7 +347,7 @@ void InfolistWindow::UpdateLayout(
 }
 
 void InfolistWindow::SetSendCommandInterface(
-    client::SendCommandInterface *send_command_interface) {
+    client::SendCommandInterface* send_command_interface) {
   send_command_interface_ = send_command_interface;
 }
 

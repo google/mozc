@@ -55,8 +55,8 @@ struct RGBColor {
   RGBColor();
   RGBColor(ValueType red, ValueType green, ValueType blue);
 
-  bool operator==(const RGBColor &that) const;
-  bool operator!=(const RGBColor &that) const;
+  bool operator==(const RGBColor& that) const;
+  bool operator!=(const RGBColor& that) const;
   static const RGBColor kBlack;
   static const RGBColor kWhite;
 };
@@ -72,10 +72,10 @@ struct ARGBColor {
   ValueType b;
   ARGBColor();
   ARGBColor(ValueType alpha, ValueType red, ValueType green, ValueType blue);
-  ARGBColor(const RGBColor &color, ValueType alpha);
+  ARGBColor(const RGBColor& color, ValueType alpha);
 
-  bool operator==(const ARGBColor &that) const;
-  bool operator!=(const ARGBColor &that) const;
+  bool operator==(const ARGBColor& that) const;
+  bool operator!=(const ARGBColor& that) const;
   static const ARGBColor kBlack;
   static const ARGBColor kWhite;
 };
@@ -141,15 +141,15 @@ class BalloonImage {
   };
 
   BalloonImage() = delete;
-  BalloonImage(const BalloonImage &) = delete;
-  BalloonImage &operator=(const BalloonImage &) = delete;
+  BalloonImage(const BalloonImage&) = delete;
+  BalloonImage& operator=(const BalloonImage&) = delete;
 
   // Returns a bitmap handle to a DIB section that contains generated balloon
   // image. Returns nullptr if fails.
   // |tail_offset| is an offset pixels from the top-left corner of the bitmap.
   // Note that the returned image is premultiplied-alpha format because GDI APIs
   // including Layered Window APIs expect this format.
-  static HBITMAP Create(const BalloonImageInfo &info, POINT *tail_offset);
+  static HBITMAP Create(const BalloonImageInfo& info, POINT* tail_offset);
 
  protected:
   // A variant of Create method only for unit test. You can specify the label
@@ -157,9 +157,9 @@ class BalloonImage {
   // |arbg_buffer| is not premultiplied-alpha format so that we can compare
   // the rendering result with expected ones more precisely than PBGRA format
   // used in the returned bitmap handle.
-  static HBITMAP CreateInternal(const BalloonImageInfo &info,
-                                POINT *tail_offset, SIZE *size,
-                                std::vector<ARGBColor> *arbg_buffer);
+  static HBITMAP CreateInternal(const BalloonImageInfo& info,
+                                POINT* tail_offset, SIZE* size,
+                                std::vector<ARGBColor>* arbg_buffer);
 };
 
 // Following types are declared in this header so that unit test can access
@@ -219,8 +219,8 @@ class SubdivisionalPixel {
   };
 
   SubdivisionalPixel();
-  SubdivisionalPixel(const SubdivisionalPixel &) = delete;
-  SubdivisionalPixel &operator=(const SubdivisionalPixel &) = delete;
+  SubdivisionalPixel(const SubdivisionalPixel&) = delete;
+  SubdivisionalPixel& operator=(const SubdivisionalPixel&) = delete;
 
   // Returns the coverage of this entire region as [0.0, 1.0].
   const double GetCoverage() const;
@@ -228,13 +228,13 @@ class SubdivisionalPixel {
   const ColorType GetPixelColor() const;
 
   // Sets |color| to all the sub-pixels.
-  void SetPixel(const ColorType &color);
+  void SetPixel(const ColorType& color);
 
   // Sets |color| to one sub-pixel specified by |frac|.
-  void SetSubdivisionalPixel(const Fraction2D &frac, const ColorType &color);
+  void SetSubdivisionalPixel(const Fraction2D& frac, const ColorType& color);
 
   // Sets |color| to all the filled sub-pixels.
-  void SetColorToFilledPixels(const ColorType &color);
+  void SetColorToFilledPixels(const ColorType& color);
 
  private:
   enum FillType {
@@ -244,7 +244,7 @@ class SubdivisionalPixel {
   };
   FillType GetFillType() const;
 
-  static size_t GetIndex(const Fraction2D &offset);
+  static size_t GetIndex(const Fraction2D& offset);
 
   // A bit vector that indicates each sub-pixel is filled or not.
   std::bitset<kTotalPixels> filled_;
@@ -259,8 +259,8 @@ class GaussianBlur {
   // blur effect.
   explicit GaussianBlur(double sigma);
 
-  GaussianBlur(const GaussianBlur &) = delete;
-  GaussianBlur &operator=(const GaussianBlur &) = delete;
+  GaussianBlur(const GaussianBlur&) = delete;
+  GaussianBlur& operator=(const GaussianBlur&) = delete;
 
   // Returns the cut-off length to construct the convolution matrix. If the
   // returned value is x, (2 * x + 1)^2 matrix will be used.
@@ -269,7 +269,7 @@ class GaussianBlur {
   // Returns the blurred value of |f(x, y)|, where |f| can be any function-like
   // object.
   template <typename Function>
-  double Apply(int x, int y, const Function &f) const {
+  double Apply(int x, int y, const Function& f) const {
     double sum = 0.0;
     for (Matrix::const_iterator it = matrix_.begin(); it != matrix_.end();
          ++it) {
@@ -302,10 +302,10 @@ class SafeFrameBuffer {
  public:
   // Initializes the frame buffer with real backing store as follows.
   //     [left, left + width) x [top, top + height)
-  explicit SafeFrameBuffer(const Rect &rect);
+  explicit SafeFrameBuffer(const Rect& rect);
 
-  SafeFrameBuffer(const SafeFrameBuffer &) = delete;
-  SafeFrameBuffer &operator=(const SafeFrameBuffer &) = delete;
+  SafeFrameBuffer(const SafeFrameBuffer&) = delete;
+  SafeFrameBuffer& operator=(const SafeFrameBuffer&) = delete;
 
   // Returns the color of the specified pixel. If the pixel is out-of-window,
   // returns a transparent black.
@@ -313,7 +313,7 @@ class SafeFrameBuffer {
 
   // Sets the color into the specified pixel. If it pixel out-of-window, does
   // nothing.
-  void SetPixel(int x, int y, const ARGBColor &color);
+  void SetPixel(int x, int y, const ARGBColor& color);
 
  private:
   bool IsInWindow(int x, int y) const;
@@ -331,18 +331,18 @@ class TextLabel {
       BinarySubdivisionalPixel;
 
   TextLabel(double left, double top, double width, double height,
-            const std::string &text, const std::string &font, size_t font_point,
+            const std::string& text, const std::string& font, size_t font_point,
             const RGBColor text_color);
-  TextLabel(const TextLabel &) = delete;
-  TextLabel &operator=(const TextLabel &) = delete;
+  TextLabel(const TextLabel&) = delete;
+  TextLabel& operator=(const TextLabel&) = delete;
   ~TextLabel();
 
   // Copies the pixel specified by |x| and |y| to |dest|. Does nothing if the
   // pixel is empty.
-  void RenderPixel(int x, int y, SubdivisionalPixel *dest) const;
+  void RenderPixel(int x, int y, SubdivisionalPixel* dest) const;
 
   // Returns bounding box.
-  const Rect &bounding_rect() const;
+  const Rect& bounding_rect() const;
 
  private:
   const std::vector<std::unique_ptr<BinarySubdivisionalPixel>> pixels_;

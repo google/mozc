@@ -30,8 +30,8 @@
 #include "renderer/renderer_style_handler.h"
 
 #if defined(_WIN32)
-#include <windows.h>
 #include <wil/resource.h>
+#include <windows.h>
 #endif  // _WIN32
 
 #include "base/singleton.h"
@@ -48,15 +48,15 @@ class RendererStyleHandlerImpl {
  public:
   RendererStyleHandlerImpl();
   ~RendererStyleHandlerImpl() = default;
-  bool GetRendererStyle(RendererStyle *style);
-  bool SetRendererStyle(const RendererStyle &style);
-  void GetDefaultRendererStyle(RendererStyle *style);
+  bool GetRendererStyle(RendererStyle* style);
+  bool SetRendererStyle(const RendererStyle& style);
+  void GetDefaultRendererStyle(RendererStyle* style);
 
  private:
   RendererStyle style_;
 };
 
-RendererStyleHandlerImpl *GetRendererStyleHandlerImpl() {
+RendererStyleHandlerImpl* GetRendererStyleHandlerImpl() {
   return Singleton<RendererStyleHandlerImpl>::get();
 }
 
@@ -66,15 +66,15 @@ RendererStyleHandlerImpl::RendererStyleHandlerImpl() {
   SetRendererStyle(style);
 }
 
-bool RendererStyleHandlerImpl::GetRendererStyle(RendererStyle *style) {
+bool RendererStyleHandlerImpl::GetRendererStyle(RendererStyle* style) {
   *style = this->style_;
   return true;
 }
-bool RendererStyleHandlerImpl::SetRendererStyle(const RendererStyle &style) {
+bool RendererStyleHandlerImpl::SetRendererStyle(const RendererStyle& style) {
   style_ = style;
   return true;
 }
-void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle *style) {
+void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle* style) {
   double scale_factor_x = 1.0;
   double scale_factor_y = 1.0;
   RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x, &scale_factor_y);
@@ -88,7 +88,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle *style) {
   style->mutable_border_color()->set_g(0x96);
   style->mutable_border_color()->set_b(0x96);
 
-  RendererStyle::TextStyle *shortcutStyle = style->add_text_styles();
+  RendererStyle::TextStyle* shortcutStyle = style->add_text_styles();
   shortcutStyle->set_font_size(14 * scale_factor_y);
   shortcutStyle->mutable_foreground_color()->set_r(0x77);
   shortcutStyle->mutable_foreground_color()->set_g(0x77);
@@ -99,13 +99,13 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle *style) {
   shortcutStyle->set_left_padding(8 * scale_factor_x);
   shortcutStyle->set_right_padding(8 * scale_factor_x);
 
-  RendererStyle::TextStyle *gap1Style = style->add_text_styles();
+  RendererStyle::TextStyle* gap1Style = style->add_text_styles();
   gap1Style->set_font_size(14 * scale_factor_y);
 
-  RendererStyle::TextStyle *candidateStyle = style->add_text_styles();
+  RendererStyle::TextStyle* candidateStyle = style->add_text_styles();
   candidateStyle->set_font_size(14 * scale_factor_y);
 
-  RendererStyle::TextStyle *descriptionStyle = style->add_text_styles();
+  RendererStyle::TextStyle* descriptionStyle = style->add_text_styles();
   descriptionStyle->set_font_size(12 * scale_factor_y);
   descriptionStyle->mutable_foreground_color()->set_r(0x88);
   descriptionStyle->mutable_foreground_color()->set_g(0x88);
@@ -120,7 +120,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle *style) {
   style->mutable_footer_style()->set_left_padding(4 * scale_factor_x);
   style->mutable_footer_style()->set_right_padding(4 * scale_factor_x);
 
-  RendererStyle::TextStyle *footer_sub_label_style =
+  RendererStyle::TextStyle* footer_sub_label_style =
       style->mutable_footer_sub_label_style();
   footer_sub_label_style->set_font_size(10 * scale_factor_y);
   footer_sub_label_style->mutable_foreground_color()->set_r(167);
@@ -129,7 +129,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle *style) {
   footer_sub_label_style->set_left_padding(4 * scale_factor_x);
   footer_sub_label_style->set_right_padding(4 * scale_factor_x);
 
-  RendererStyle::RGBAColor *color = style->add_footer_border_colors();
+  RendererStyle::RGBAColor* color = style->add_footer_border_colors();
   color->set_r(96);
   color->set_r(96);
   color->set_r(96);
@@ -160,7 +160,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle *style) {
   style->mutable_scrollbar_indicator_color()->set_g(0x90);
   style->mutable_scrollbar_indicator_color()->set_b(0xb8);
 
-  RendererStyle::InfolistStyle *infostyle = style->mutable_infolist_style();
+  RendererStyle::InfolistStyle* infostyle = style->mutable_infolist_style();
   infostyle->set_caption_string("用例");
   infostyle->set_caption_height(20 * scale_factor_y);
   infostyle->set_caption_padding(1);
@@ -189,17 +189,17 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle *style) {
 }
 }  // namespace
 
-bool RendererStyleHandler::GetRendererStyle(RendererStyle *style) {
+bool RendererStyleHandler::GetRendererStyle(RendererStyle* style) {
   return GetRendererStyleHandlerImpl()->GetRendererStyle(style);
 }
-bool RendererStyleHandler::SetRendererStyle(const RendererStyle &style) {
+bool RendererStyleHandler::SetRendererStyle(const RendererStyle& style) {
   return GetRendererStyleHandlerImpl()->SetRendererStyle(style);
 }
-void RendererStyleHandler::GetDefaultRendererStyle(RendererStyle *style) {
+void RendererStyleHandler::GetDefaultRendererStyle(RendererStyle* style) {
   return GetRendererStyleHandlerImpl()->GetDefaultRendererStyle(style);
 }
 
-void RendererStyleHandler::GetDPIScalingFactor(double *x, double *y) {
+void RendererStyleHandler::GetDPIScalingFactor(double* x, double* y) {
 #ifdef _WIN32
   wil::unique_hdc_window desktop_dc(::GetDC(nullptr));
   const int dpi_x = ::GetDeviceCaps(desktop_dc.get(), LOGPIXELSX);

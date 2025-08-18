@@ -48,11 +48,11 @@ class RendererServerSendCommand;
 class RendererServer : public IPCServer {
  public:
   RendererServer();
-  RendererServer(const RendererServer &) = delete;
-  RendererServer &operator=(const RendererServer &) = delete;
+  RendererServer(const RendererServer&) = delete;
+  RendererServer& operator=(const RendererServer&) = delete;
   ~RendererServer() override;
 
-  void SetRendererInterface(RendererInterface *renderer_interface);
+  void SetRendererInterface(RendererInterface* renderer_interface);
 
   // Enters the main event loop and waits UI events.
   // This method is basically initialize IPC server and
@@ -60,7 +60,7 @@ class RendererServer : public IPCServer {
   // The return value is suppose to be used for the arg of exit().
   int StartServer();
 
-  bool Process(absl::string_view request, std::string *response) override;
+  bool Process(absl::string_view request, std::string* response) override;
 
   // DEPRECATED: this functions is never called
   virtual void AsyncHide() {}
@@ -83,12 +83,12 @@ class RendererServer : public IPCServer {
 
   // Call ExecCommandInternal() from the implementation
   // of AsyncExecCommand()
-  bool ExecCommandInternal(const commands::RendererCommand &command);
+  bool ExecCommandInternal(const commands::RendererCommand& command);
 
   // return timeout (msec) passed by FLAGS_timeout
   uint32_t timeout() const;
 
-  RendererInterface *renderer_interface_ = nullptr;
+  RendererInterface* renderer_interface_ = nullptr;
 
  private:
   uint32_t timeout_;

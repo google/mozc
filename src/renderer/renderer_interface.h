@@ -55,12 +55,12 @@ class RendererInterface {
 
   // exec stateless rendering command
   // TODO(taku): RendererCommand should be stateless.
-  virtual bool ExecCommand(const commands::RendererCommand &command) = 0;
+  virtual bool ExecCommand(const commands::RendererCommand& command) = 0;
 
   // set mouse callback handler.
   // default implementation is empty
   virtual void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) {}
+      client::SendCommandInterface* send_command_interface) {}
 };
 }  // namespace renderer
 }  // namespace mozc

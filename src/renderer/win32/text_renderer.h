@@ -72,8 +72,8 @@ class TextRenderer {
   };
 
   TextRenderer() = default;
-  TextRenderer(TextRenderer &&) = default;
-  TextRenderer &operator=(TextRenderer &&) = default;
+  TextRenderer(TextRenderer&&) = default;
+  TextRenderer& operator=(TextRenderer&&) = default;
   virtual ~TextRenderer() = default;
 
   // Returns an instance of TextRenderer.
@@ -89,8 +89,8 @@ class TextRenderer {
                                       std::wstring_view str,
                                       int width) const = 0;
   // Renders the given |text|.
-  virtual void RenderText(HDC dc, std::wstring_view text,
-                          const Rect &rect, FONT_TYPE font_type) const = 0;
+  virtual void RenderText(HDC dc, std::wstring_view text, const Rect& rect,
+                          FONT_TYPE font_type) const = 0;
   virtual void RenderTextList(HDC dc,
                               absl::Span<const TextRenderingInfo> display_list,
                               FONT_TYPE font_type) const = 0;

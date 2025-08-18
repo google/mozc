@@ -51,7 +51,7 @@ namespace {
 using ::mozc::commands::RendererCommand;
 
 class SenderThread;
-SenderThread *g_sender_thread = nullptr;
+SenderThread* g_sender_thread = nullptr;
 
 // Used to lock |g_sender_thread|.
 constinit absl::Mutex g_mutex(absl::kConstInit);
@@ -77,12 +77,12 @@ class SenderThread {
       : command_event_(std::move(command_event)),
         quit_event_(std::move(quit_event)) {}
 
-  SenderThread(const SenderThread &) = delete;
-  SenderThread &operator=(const SenderThread &) = delete;
+  SenderThread(const SenderThread&) = delete;
+  SenderThread& operator=(const SenderThread&) = delete;
 
   void RequestQuit() { quit_event_.SetEvent(); }
 
-  void UpdateCommand(const RendererCommand &new_command) {
+  void UpdateCommand(const RendererCommand& new_command) {
     absl::MutexLock lock(&mutex_);
     renderer_command_ = new_command;
     command_event_.SetEvent();
@@ -143,8 +143,8 @@ class SenderThread {
   absl::Mutex mutex_;
 };
 
-static DWORD WINAPI ThreadProc(void * /*unused*/) {
-  SenderThread *thread = nullptr;
+static DWORD WINAPI ThreadProc(void* /*unused*/) {
+  SenderThread* thread = nullptr;
   {
     absl::MutexLock lock(&g_mutex);
     thread = g_sender_thread;
@@ -156,7 +156,7 @@ static DWORD WINAPI ThreadProc(void * /*unused*/) {
   ::FreeLibraryAndExitThread(g_module, 0);
 }
 
-SenderThread *CreateSenderThread() {
+SenderThread* CreateSenderThread() {
   // Here we directly use CreateThread API rather than _beginthreadex because
   // the command sender thread will be eventually terminated via
   // FreeLibraryAndExitThread API. Regarding CRT memory resources, this will
@@ -175,7 +175,7 @@ SenderThread *CreateSenderThread() {
   // will be decremented by FreeLibraryAndExitThread API in the thread routine.
   wil::unique_hmodule loaded_module;
   if (::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                           reinterpret_cast<const wchar_t *>(g_module),
+                           reinterpret_cast<const wchar_t*>(g_module),
                            loaded_module.put()) == FALSE) {
     ::TerminateThread(thread_handle.get(), 0);
     return nullptr;
@@ -208,7 +208,7 @@ SenderThread *CreateSenderThread() {
   return thread.release();
 }
 
-bool CanIgnoreRequest(const RendererCommand &command) {
+bool CanIgnoreRequest(const RendererCommand& command) {
   if (g_module_unloaded) {
     return true;
   }
@@ -243,7 +243,7 @@ bool EnsureUIThreadInitialized() {
     }
   }
   // Mark this thread is initialized.
-  ::TlsSetValue(g_tls_index, reinterpret_cast<void *>(1));
+  ::TlsSetValue(g_tls_index, reinterpret_cast<void*>(1));
   return true;
 }
 
@@ -287,14 +287,14 @@ void Win32RendererClient::OnUIThreadUninitialized() {
   ::TlsSetValue(g_tls_index, nullptr);
 }
 
-void Win32RendererClient::OnUpdated(const RendererCommand &command) {
+void Win32RendererClient::OnUpdated(const RendererCommand& command) {
   if (CanIgnoreRequest(command)) {
     return;
   }
   if (!EnsureUIThreadInitialized()) {
     return;
   }
-  SenderThread *thread = nullptr;
+  SenderThread* thread = nullptr;
   {
     absl::MutexLock lock(&g_mutex);
     thread = g_sender_thread;

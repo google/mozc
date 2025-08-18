@@ -119,7 +119,7 @@ void WindowManager::HideAllWindows() {
 // TODO(yukawa): Refactor this method by making a new method in LayoutManager
 //   with unit tests so that LayoutManager can handle both composition windows
 //   and candidate windows.
-void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
+void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
   typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 
   // Hide all UI elements if |command.visible()| is false.
@@ -134,13 +134,13 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
   // We assume |output| exists in the renderer command
   // for all |RendererCommand::UPDATE| renderer messages.
   DCHECK(command.has_output());
-  const commands::Output &output = command.output();
+  const commands::Output& output = command.output();
 
   // We assume |application_info| exists in the renderer command
   // for all |RendererCommand::UPDATE| renderer messages.
   DCHECK(command.has_application_info());
 
-  const commands::RendererCommand::ApplicationInfo &app_info =
+  const commands::RendererCommand::ApplicationInfo& app_info =
       command.application_info();
 
   (void)app_info.target_window_handle();
@@ -204,7 +204,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
     return;
   }
 
-  const commands::CandidateWindow &candidate_window = output.candidate_window();
+  const commands::CandidateWindow& candidate_window = output.candidate_window();
   if (candidate_window.candidate_size() == 0) {
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
@@ -337,7 +337,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
   }
 
   if (cascading_visible) {
-    const commands::CandidateWindow &sub_candidate_window =
+    const commands::CandidateWindow& sub_candidate_window =
         candidate_window.sub_candidate_window();
 
     if (candidate_changed) {
@@ -391,13 +391,13 @@ bool WindowManager::IsAvailable() const {
 }
 
 void WindowManager::SetSendCommandInterface(
-    client::SendCommandInterface *send_command_interface) {
+    client::SendCommandInterface* send_command_interface) {
   main_window_->SetSendCommandInterface(send_command_interface);
   cascading_window_->SetSendCommandInterface(send_command_interface);
   infolist_window_->SetSendCommandInterface(send_command_interface);
 }
 
-void WindowManager::PreTranslateMessage(const MSG &message) {
+void WindowManager::PreTranslateMessage(const MSG& message) {
   if (message.message != WM_MOUSEMOVE) {
     return;
   }

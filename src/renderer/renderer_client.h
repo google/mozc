@@ -50,13 +50,13 @@ class RendererLauncherInterface {
 
   // implement StartRenderer
   virtual void StartRenderer(
-      const std::string &name, const std::string &renderer_path,
+      const std::string& name, const std::string& renderer_path,
       bool disable_renderer_path_check,
-      IPCClientFactoryInterface *client_factory_intarface) = 0;
+      IPCClientFactoryInterface* client_factory_intarface) = 0;
 
   // force to terminate the renderer
   // do not use this method unless protocol version mismatch
-  virtual bool ForceTerminateRenderer(const std::string &name) = 0;
+  virtual bool ForceTerminateRenderer(const std::string& name) = 0;
 
   // called when fatal error occurred
   virtual void OnFatal(RendererErrorType type) = 0;
@@ -69,7 +69,7 @@ class RendererLauncherInterface {
 
   // |command| is sent to the server just after
   // renderer is launched.
-  virtual void SetPendingCommand(const commands::RendererCommand &command) = 0;
+  virtual void SetPendingCommand(const commands::RendererCommand& command) = 0;
 
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;
@@ -79,24 +79,24 @@ class RendererLauncherInterface {
 class RendererClient : public RendererInterface {
  public:
   RendererClient();
-  RendererClient(RendererClient &&) = default;
-  RendererClient &operator=(RendererClient &&) = default;
+  RendererClient(RendererClient&&) = default;
+  RendererClient& operator=(RendererClient&&) = default;
   ~RendererClient() override;
 
   // set IPC factory
   void SetIPCClientFactory(
-      IPCClientFactoryInterface *ipc_client_factory_interface);
+      IPCClientFactoryInterface* ipc_client_factory_interface);
 
   // set StartRendererInterface
   void SetRendererLauncherInterface(
-      RendererLauncherInterface *renderer_launcher_interface);
+      RendererLauncherInterface* renderer_launcher_interface);
 
   // send_command_interface is not used in the client.
   // Currently, mouse handling must be implemented in each
   // platform separately.
   // TODO(taku): move win32 code into RendererClient
   void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) override {}
+      client::SendCommandInterface* send_command_interface) override {}
 
   // activate renderer server
   bool Activate() override;
@@ -110,7 +110,7 @@ class RendererClient : public RendererInterface {
   // Otherwise command::RendererCommand::SHUDDOWN is used.
   bool Shutdown(bool force);
 
-  bool ExecCommand(const commands::RendererCommand &command) override;
+  bool ExecCommand(const commands::RendererCommand& command) override;
 
   // Don't check the renderer server path.
   // DO NOT call it except for testing
@@ -128,10 +128,10 @@ class RendererClient : public RendererInterface {
   std::string name_;
   std::string renderer_path_;
 
-  IPCClientFactoryInterface *ipc_client_factory_interface_;
+  IPCClientFactoryInterface* ipc_client_factory_interface_;
 
   std::unique_ptr<RendererLauncherInterface> renderer_launcher_;
-  RendererLauncherInterface *renderer_launcher_interface_;
+  RendererLauncherInterface* renderer_launcher_interface_;
 };
 
 }  // namespace renderer

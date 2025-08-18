@@ -84,14 +84,14 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   END_MSG_MAP()
 
   CandidateWindow();
-  CandidateWindow(const CandidateWindow &) = delete;
-  CandidateWindow &operator=(const CandidateWindow &) = delete;
+  CandidateWindow(const CandidateWindow&) = delete;
+  CandidateWindow& operator=(const CandidateWindow&) = delete;
   ~CandidateWindow();
   LRESULT OnCreate(LPCREATESTRUCT create_struct);
   void OnDestroy();
-  void OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect);
+  void OnDpiChanged(UINT dpiX, UINT dpiY, RECT* rect);
   BOOL OnEraseBkgnd(HDC dc);
-  void OnGetMinMaxInfo(MINMAXINFO *min_max_info);
+  void OnGetMinMaxInfo(MINMAXINFO* min_max_info);
   void OnLButtonDown(UINT nFlags, CPoint point);
   void OnLButtonUp(UINT nFlags, CPoint point);
   void OnMouseMove(UINT nFlags, CPoint point);
@@ -101,9 +101,9 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
 
   void set_mouse_moving(bool moving);
 
-  void UpdateLayout(const commands::CandidateWindow &candidate_window);
+  void UpdateLayout(const commands::CandidateWindow& candidate_window);
   void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface);
+      client::SendCommandInterface* send_command_interface);
 
   // Layout information for the WindowManager class.
   Size GetLayoutSize() const;
@@ -124,7 +124,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   void DrawFrame(HDC dc);
 
   // Handles candidate selection by mouse.
-  void HandleMouseEvent(UINT nFlags, const CPoint &point,
+  void HandleMouseEvent(UINT nFlags, const CPoint& point,
                         bool close_candidatewindow);
 
   // Even though the candidate window supports limited mouse operations, we
@@ -133,62 +133,62 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   void EnableOrDisableWindowForWorkaround();
 
   inline LRESULT OnCreate(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                          BOOL &handled) {
+                          BOOL& handled) {
     return static_cast<LRESULT>(
         OnCreate(reinterpret_cast<LPCREATESTRUCT>(lparam)));
   }
   inline LRESULT OnDestroy(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                           BOOL &handled) {
+                           BOOL& handled) {
     OnDestroy();
     return 0;
   }
   inline LRESULT OnDpiChanged(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                              BOOL &handled) {
+                              BOOL& handled) {
     OnDpiChanged(static_cast<UINT>(LOWORD(wparam)),
                  static_cast<UINT>(HIWORD(wparam)),
-                 reinterpret_cast<RECT *>(lparam));
+                 reinterpret_cast<RECT*>(lparam));
     return 0;
   }
   inline LRESULT OnEraseBkgnd(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                              BOOL &handled) {
+                              BOOL& handled) {
     return static_cast<LRESULT>(OnEraseBkgnd(reinterpret_cast<HDC>(wparam)));
   }
   inline LRESULT OnGetMinMaxInfo(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                                 BOOL &handled) {
-    OnGetMinMaxInfo(reinterpret_cast<MINMAXINFO *>(lparam));
+                                 BOOL& handled) {
+    OnGetMinMaxInfo(reinterpret_cast<MINMAXINFO*>(lparam));
     return 0;
   }
   inline LRESULT OnLButtonDown(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                               BOOL &handled) {
+                               BOOL& handled) {
     OnLButtonDown(static_cast<UINT>(wparam),
                   CPoint(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)));
     return 0;
   }
   inline LRESULT OnLButtonUp(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                             BOOL &handled) {
+                             BOOL& handled) {
     OnLButtonUp(static_cast<UINT>(wparam),
                 CPoint(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)));
     return 0;
   }
   inline LRESULT OnMouseMove(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                             BOOL &handled) {
+                             BOOL& handled) {
     OnMouseMove(static_cast<UINT>(wparam),
                 CPoint(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)));
     return 0;
   }
   inline LRESULT OnSettingChange(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                                 BOOL &handled) {
+                                 BOOL& handled) {
     OnSettingChange(static_cast<UINT>(wparam),
                     reinterpret_cast<LPCTSTR>(lparam));
     return 0;
   }
   inline LRESULT OnPaint(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                         BOOL &handled) {
+                         BOOL& handled) {
     OnPaint(reinterpret_cast<HDC>(wparam));
     return 0;
   }
   inline LRESULT OnPrintClient(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                               BOOL &handled) {
+                               BOOL& handled) {
     OnPrintClient(reinterpret_cast<HDC>(wparam), static_cast<UINT>(lparam));
     return 0;
   }
@@ -196,7 +196,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   std::unique_ptr<commands::CandidateWindow> candidate_window_;
   wil::unique_hbitmap footer_logo_;
   Size footer_logo_display_size_;
-  client::SendCommandInterface *send_command_interface_;
+  client::SendCommandInterface* send_command_interface_;
   std::unique_ptr<TableLayout> table_layout_;
   std::unique_ptr<TextRenderer> text_renderer_;
   int indicator_width_;

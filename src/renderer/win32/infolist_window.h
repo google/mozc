@@ -74,21 +74,21 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   END_MSG_MAP()
 
   InfolistWindow();
-  InfolistWindow(const InfolistWindow &) = delete;
-  InfolistWindow &operator=(const InfolistWindow &) = delete;
+  InfolistWindow(const InfolistWindow&) = delete;
+  InfolistWindow& operator=(const InfolistWindow&) = delete;
   ~InfolistWindow();
   void OnDestroy();
-  void OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect);
+  void OnDpiChanged(UINT dpiX, UINT dpiY, RECT* rect);
   BOOL OnEraseBkgnd(HDC dc);
-  void OnGetMinMaxInfo(MINMAXINFO *min_max_info);
+  void OnGetMinMaxInfo(MINMAXINFO* min_max_info);
   void OnPaint(HDC dc);
   void OnPrintClient(HDC dc, UINT uFlags);
   void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
   void OnTimer(UINT_PTR nIDEvent);
 
-  void UpdateLayout(const commands::CandidateWindow &candidates);
+  void UpdateLayout(const commands::CandidateWindow& candidates);
   void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface);
+      client::SendCommandInterface* send_command_interface);
 
   // Layout information for the WindowManager class.
   Size GetLayoutSize();
@@ -101,49 +101,49 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   Size DoPaintRow(HDC dc, int row, int ypos);
 
   inline LRESULT OnDestroy(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                           BOOL &handled) {
+                           BOOL& handled) {
     OnDestroy();
     return 0;
   }
   inline LRESULT OnDpiChanged(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                              BOOL &handled) {
+                              BOOL& handled) {
     OnDpiChanged(static_cast<UINT>(LOWORD(wparam)),
                  static_cast<UINT>(HIWORD(wparam)),
-                 reinterpret_cast<RECT *>(lparam));
+                 reinterpret_cast<RECT*>(lparam));
     return 0;
   }
   inline LRESULT OnEraseBkgnd(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                              BOOL &handled) {
+                              BOOL& handled) {
     return static_cast<LRESULT>(OnEraseBkgnd(reinterpret_cast<HDC>(wparam)));
   }
   inline LRESULT OnGetMinMaxInfo(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                                 BOOL &handled) {
-    OnGetMinMaxInfo(reinterpret_cast<MINMAXINFO *>(lparam));
+                                 BOOL& handled) {
+    OnGetMinMaxInfo(reinterpret_cast<MINMAXINFO*>(lparam));
     return 0;
   }
   inline LRESULT OnSettingChange(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                                 BOOL &handled) {
+                                 BOOL& handled) {
     OnSettingChange(static_cast<UINT>(wparam),
                     reinterpret_cast<LPCTSTR>(lparam));
     return 0;
   }
   inline LRESULT OnPaint(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                         BOOL &handled) {
+                         BOOL& handled) {
     OnPaint(reinterpret_cast<HDC>(wparam));
     return 0;
   }
   inline LRESULT OnPrintClient(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                               BOOL &handled) {
+                               BOOL& handled) {
     OnPrintClient(reinterpret_cast<HDC>(wparam), static_cast<UINT>(lparam));
     return 0;
   }
   inline LRESULT OnTimer(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                         BOOL &handled) {
+                         BOOL& handled) {
     OnTimer(static_cast<UINT_PTR>(wparam));
     return 0;
   }
 
-  client::SendCommandInterface *send_command_interface_;
+  client::SendCommandInterface* send_command_interface_;
   std::unique_ptr<commands::CandidateWindow> candidate_window_;
   std::unique_ptr<TextRenderer> text_renderer_;
   std::unique_ptr<renderer::RendererStyle> style_;

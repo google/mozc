@@ -110,7 +110,7 @@ void TableLayout::SetRowRectPadding(int width_pixels) {
   row_rect_padding_pixels_ = width_pixels;
 }
 
-void TableLayout::EnsureCellSize(int column, const Size &size) {
+void TableLayout::EnsureCellSize(int column, const Size& size) {
   if (layout_frozen_) {
     LOG(ERROR) << "Layout already frozen";
     return;
@@ -129,7 +129,7 @@ void TableLayout::EnsureColumnsWidth(int from_column, int to_column,
   ensure_width_ = width;
 }
 
-void TableLayout::EnsureFooterSize(const Size &size_in_pixels) {
+void TableLayout::EnsureFooterSize(const Size& size_in_pixels) {
   if (layout_frozen_) {
     LOG(ERROR) << "Layout already frozen";
     return;
@@ -140,7 +140,7 @@ void TableLayout::EnsureFooterSize(const Size &size_in_pixels) {
       std::max(minimum_footer_size_.width, size_in_pixels.width);
 }
 
-void TableLayout::EnsureHeaderSize(const Size &size_in_pixels) {
+void TableLayout::EnsureHeaderSize(const Size& size_in_pixels) {
   if (layout_frozen_) {
     LOG(ERROR) << "Layout already frozen";
     return;
@@ -301,7 +301,7 @@ Rect TableLayout::GetVScrollBarRect() const {
 
 Rect TableLayout::GetVScrollIndicatorRect(int begin_index, int end_index,
                                           int candidates_total) const {
-  const Rect &vscroll_rect = GetVScrollBarRect();
+  const Rect& vscroll_rect = GetVScrollBarRect();
 
   const float scroll_bar_height =
       static_cast<float>(vscroll_rect.Height()) / candidates_total;

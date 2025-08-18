@@ -35,9 +35,9 @@ namespace mozc {
 namespace renderer {
 namespace {
 Rect GetWindowRectForMainWindowFromPreeditRectHorizontal(
-    const Point &target_point, const Rect &preedit_rect,
-    const Size &window_size, const Point &zero_point_offset,
-    const Rect &working_area) {
+    const Point& target_point, const Rect& preedit_rect,
+    const Size& window_size, const Point& zero_point_offset,
+    const Rect& working_area) {
   Rect window_rect(target_point, window_size);
   window_rect.origin.x -= zero_point_offset.x;
   window_rect.origin.y -= zero_point_offset.y;
@@ -77,9 +77,9 @@ Rect GetWindowRectForMainWindowFromPreeditRectHorizontal(
 }
 
 Rect GetWindowRectForMainWindowFromPreeditRectVertical(
-    const Point &target_point, const Rect &preedit_rect,
-    const Size &window_size, const Point &zero_point_offset,
-    const Rect &working_area) {
+    const Point& target_point, const Rect& preedit_rect,
+    const Size& window_size, const Point& zero_point_offset,
+    const Rect& working_area) {
   Rect window_rect(target_point, window_size);
 
   // Currently |zero_point_offset| is ignored because the candidate renderer
@@ -119,8 +119,8 @@ Rect GetWindowRectForMainWindowFromPreeditRectVertical(
 }  // namespace
 
 Rect WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
-    const Rect &preedit_rect, const Size &window_size,
-    const Point &zero_point_offset, const Rect &working_area) {
+    const Rect& preedit_rect, const Size& window_size,
+    const Point& zero_point_offset, const Rect& working_area) {
   const Point preedit_bottom_left(preedit_rect.Left(), preedit_rect.Bottom());
 
   return GetWindowRectForMainWindowFromPreeditRectHorizontal(
@@ -129,8 +129,8 @@ Rect WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
 }
 
 Rect WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
-    const Point &target_point, const Size &window_size,
-    const Point &zero_point_offset, const Rect &working_area) {
+    const Point& target_point, const Size& window_size,
+    const Point& zero_point_offset, const Rect& working_area) {
   Rect window_rect(target_point, window_size);
   window_rect.origin.x -= zero_point_offset.x;
   window_rect.origin.y -= zero_point_offset.y;
@@ -160,9 +160,9 @@ Rect WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
 }
 
 Rect WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
-    const Point &target_point, const Rect &preedit_rect,
-    const Size &window_size, const Point &zero_point_offset,
-    const Rect &working_area, bool vertical) {
+    const Point& target_point, const Rect& preedit_rect,
+    const Size& window_size, const Point& zero_point_offset,
+    const Rect& working_area, bool vertical) {
   if (vertical) {
     return GetWindowRectForMainWindowFromPreeditRectVertical(
         target_point, preedit_rect, window_size, zero_point_offset,
@@ -173,10 +173,10 @@ Rect WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
       target_point, preedit_rect, window_size, zero_point_offset, working_area);
 }
 
-Rect WindowUtil::GetWindowRectForCascadingWindow(const Rect &selected_row,
-                                                 const Size &window_size,
-                                                 const Point &zero_point_offset,
-                                                 const Rect &working_area) {
+Rect WindowUtil::GetWindowRectForCascadingWindow(const Rect& selected_row,
+                                                 const Size& window_size,
+                                                 const Point& zero_point_offset,
+                                                 const Rect& working_area) {
   const Point row_top_right(selected_row.Right(), selected_row.Top());
 
   Rect window_rect(row_top_right, window_size);
@@ -212,9 +212,9 @@ Rect WindowUtil::GetWindowRectForCascadingWindow(const Rect &selected_row,
   return window_rect;
 }
 
-Rect WindowUtil::GetWindowRectForInfolistWindow(const Size &window_size,
-                                                const Rect &candidate_rect,
-                                                const Rect &working_area) {
+Rect WindowUtil::GetWindowRectForInfolistWindow(const Size& window_size,
+                                                const Rect& candidate_rect,
+                                                const Rect& working_area) {
   Point infolist_pos;
 
   if (working_area.Height() == 0 || working_area.Width() == 0) {

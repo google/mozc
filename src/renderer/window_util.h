@@ -46,8 +46,8 @@ class WindowUtil {
   // caller fails to obtain |working_area|, set its width or height as
   // 0.  Then it doesn't care the monitor.
   static Rect GetWindowRectForMainWindowFromPreeditRect(
-      const Rect &preedit_rect, const Size &window_size,
-      const Point &zero_point_offset, const Rect &working_area);
+      const Rect& preedit_rect, const Size& window_size,
+      const Point& zero_point_offset, const Rect& working_area);
 
   // Returns the appropriate candidate window position in the screen
   // coordinate.  |zero_point_offset| is the point in the candidate
@@ -56,8 +56,8 @@ class WindowUtil {
   // caller fails to obtain |working_area|, set its width or height as
   // 0.  Then it doesn't care the monitor.
   static Rect GetWindowRectForMainWindowFromTargetPoint(
-      const Point &target_point, const Size &window_size,
-      const Point &zero_point_offset, const Rect &working_area);
+      const Point& target_point, const Size& window_size,
+      const Point& zero_point_offset, const Rect& working_area);
 
   // Returns the appropriate candidate window position in the screen
   // coordinate.  |zero_point_offset| is the point in the candidate
@@ -66,9 +66,9 @@ class WindowUtil {
   // caller fails to obtain |working_area|, set its width or height as
   // 0.  Then it doesn't care the monitor.
   static Rect GetWindowRectForMainWindowFromTargetPointAndPreedit(
-      const Point &target_point, const Rect &preedit_rect,
-      const Size &window_size, const Point &zero_point_offset,
-      const Rect &working_area, bool vertical);
+      const Point& target_point, const Rect& preedit_rect,
+      const Size& window_size, const Point& zero_point_offset,
+      const Rect& working_area, bool vertical);
 
   // Returns the appropriate cascading window position in the screen
   // coordinate.  |zero_point_offset| is the point in the cascading
@@ -77,10 +77,10 @@ class WindowUtil {
   // |working_area| is the available area in the current monitor.  If
   // caller fails to obtain |working_area|, set its width or height as
   // 0.  Then it doesn't care the monitor.
-  static Rect GetWindowRectForCascadingWindow(const Rect &selected_row,
-                                              const Size &window_size,
-                                              const Point &zero_point_offset,
-                                              const Rect &working_area);
+  static Rect GetWindowRectForCascadingWindow(const Rect& selected_row,
+                                              const Size& window_size,
+                                              const Point& zero_point_offset,
+                                              const Rect& working_area);
 
   // Returns the appropriate infolist window position in the screen
   // coordinate.  |window_size| is the size of the infolist window.
@@ -88,9 +88,9 @@ class WindowUtil {
   // |working_area| is the available area in the current monitor.  If
   // caller fails to obtain |working_area|, set its width or height as
   // 0.  Then it doesn't care the monitor.
-  static Rect GetWindowRectForInfolistWindow(const Size &window_size,
-                                             const Rect &candidate_rect,
-                                             const Rect &working_area);
+  static Rect GetWindowRectForInfolistWindow(const Size& window_size,
+                                             const Rect& candidate_rect,
+                                             const Rect& working_area);
 };
 }  // namespace renderer
 }  // namespace mozc

@@ -72,8 +72,8 @@ constexpr size_t kMaxErrorTimes = 5;
 constexpr absl::Duration kRetryIntervalTime = absl::Seconds(30);
 constexpr char kServiceName[] = "renderer";
 
-inline void CallCommand(IPCClientInterface *client,
-                        const commands::RendererCommand &command) {
+inline void CallCommand(IPCClientInterface* client,
+                        const commands::RendererCommand& command) {
   std::string buf;
   command.SerializeToString(&buf);
 
@@ -104,9 +104,9 @@ class RendererLauncher : public RendererLauncherInterface {
   }
 
   void StartRenderer(
-      const std::string &name, const std::string &path,
+      const std::string& name, const std::string& path,
       bool disable_renderer_path_check,
-      IPCClientFactoryInterface *ipc_client_factory_interface) override {
+      IPCClientFactoryInterface* ipc_client_factory_interface) override {
     if (Status() == RendererStatus::RENDERER_LAUNCHING ||
         Status() == RendererStatus::RENDERER_READY ||
         Status() == RendererStatus::RENDERER_TIMEOUT) {
@@ -125,7 +125,7 @@ class RendererLauncher : public RendererLauncherInterface {
     launcher_.emplace([this] { ThreadMain(); });
   }
 
-  bool ForceTerminateRenderer(const std::string &name) override {
+  bool ForceTerminateRenderer(const std::string& name) override {
     return IPCClient::TerminateServer(name);
   }
 
@@ -181,7 +181,7 @@ class RendererLauncher : public RendererLauncherInterface {
     return false;
   }
 
-  void SetPendingCommand(const commands::RendererCommand &command) override
+  void SetPendingCommand(const commands::RendererCommand& command) override
       ABSL_LOCKS_EXCLUDED(mu_) {
     // ignore NOOP|SHUTDOWN
     if (command.type() == commands::RendererCommand::UPDATE) {
@@ -330,7 +330,7 @@ class RendererLauncher : public RendererLauncherInterface {
   std::string path_;
   absl::Time last_launch_time_ = absl::UnixEpoch();
   std::atomic<size_t> error_times_ = 0;
-  IPCClientFactoryInterface *ipc_client_factory_interface_ = nullptr;
+  IPCClientFactoryInterface* ipc_client_factory_interface_ = nullptr;
   mutable absl::Mutex mu_;
   std::optional<commands::RendererCommand> pending_command_
       ABSL_GUARDED_BY(mu_);
@@ -371,12 +371,12 @@ RendererClient::~RendererClient() {
 }
 
 void RendererClient::SetIPCClientFactory(
-    IPCClientFactoryInterface *ipc_client_factory_interface) {
+    IPCClientFactoryInterface* ipc_client_factory_interface) {
   ipc_client_factory_interface_ = ipc_client_factory_interface;
 }
 
 void RendererClient::SetRendererLauncherInterface(
-    RendererLauncherInterface *renderer_launcher_interface) {
+    RendererLauncherInterface* renderer_launcher_interface) {
   renderer_launcher_interface_ = renderer_launcher_interface;
 }
 
@@ -436,7 +436,7 @@ void RendererClient::set_suppress_error_dialog(bool suppress) {
   renderer_launcher_interface_->set_suppress_error_dialog(suppress);
 }
 
-bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
+bool RendererClient::ExecCommand(const commands::RendererCommand& command) {
   if (renderer_launcher_interface_ == nullptr) {
     LOG(ERROR) << "RendererLauncher is nullptr";
     return false;

@@ -104,8 +104,8 @@ class IndicatorWindow::WindowImpl
   WindowImpl() : alpha_(255), dpi_scaling_(GetDPIScaling()) {
     sprites_.resize(commands::NUM_OF_COMPOSITIONS);
   }
-  WindowImpl(const WindowImpl &) = delete;
-  WindowImpl &operator=(const WindowImpl &) = delete;
+  WindowImpl(const WindowImpl&) = delete;
+  WindowImpl& operator=(const WindowImpl&) = delete;
 
   BEGIN_MSG_MAP(WindowImpl)
   MESSAGE_HANDLER(WM_CREATE, OnCreate)
@@ -113,8 +113,8 @@ class IndicatorWindow::WindowImpl
   MESSAGE_HANDLER(WM_SETTINGCHANGE, OnSettingChange)
   END_MSG_MAP()
 
-  void OnUpdate(const commands::RendererCommand &command,
-                LayoutManager *layout_manager) {
+  void OnUpdate(const commands::RendererCommand& command,
+                LayoutManager* layout_manager) {
     KillTimer(kTimerEventFading);
     KillTimer(kTimerEventFadeStart);
 
@@ -124,7 +124,7 @@ class IndicatorWindow::WindowImpl
         command.has_application_info() &&
         command.application_info().has_indicator_info() &&
         command.application_info().indicator_info().has_status()) {
-      const ApplicationInfo &app_info = command.application_info();
+      const ApplicationInfo& app_info = command.application_info();
       visible =
           layout_manager->LayoutIndicatorWindow(app_info, &indicator_layout);
     }
@@ -135,7 +135,7 @@ class IndicatorWindow::WindowImpl
     DCHECK(command.has_application_info());
     DCHECK(command.application_info().has_indicator_info());
     DCHECK(command.application_info().indicator_info().has_status());
-    const Status &status = command.application_info().indicator_info().status();
+    const Status& status = command.application_info().indicator_info().status();
 
     alpha_ = 255;
     current_image_ = sprites_[commands::DIRECT].bitmap.get();
@@ -304,17 +304,17 @@ class IndicatorWindow::WindowImpl
   }
 
   inline LRESULT OnCreate(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                          BOOL &handled) {
+                          BOOL& handled) {
     return static_cast<LRESULT>(
         OnCreate(reinterpret_cast<LPCREATESTRUCT>(lparam)));
   }
   inline LRESULT OnTimer(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                         BOOL &handled) {
+                         BOOL& handled) {
     OnTimer(static_cast<UINT_PTR>(wparam));
     return 0;
   }
   inline LRESULT OnSettingChange(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                                 BOOL &handled) {
+                                 BOOL& handled) {
     OnSettingChange(static_cast<UINT>(wparam),
                     reinterpret_cast<LPCTSTR>(lparam));
     return 0;
@@ -338,8 +338,8 @@ void IndicatorWindow::Initialize() {
 
 void IndicatorWindow::Destroy() { impl_->DestroyWindow(); }
 
-void IndicatorWindow::OnUpdate(const commands::RendererCommand &command,
-                               LayoutManager *layout_manager) {
+void IndicatorWindow::OnUpdate(const commands::RendererCommand& command,
+                               LayoutManager* layout_manager) {
   impl_->OnUpdate(command, layout_manager);
 }
 

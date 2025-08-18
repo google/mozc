@@ -41,15 +41,15 @@ class RendererStyleHandler {
   RendererStyleHandler() = delete;
 
   // return current Style
-  static bool GetRendererStyle(RendererStyle *style);
+  static bool GetRendererStyle(RendererStyle* style);
   // set Style
-  static bool SetRendererStyle(const RendererStyle &style);
+  static bool SetRendererStyle(const RendererStyle& style);
   // get default Style
-  static void GetDefaultRendererStyle(RendererStyle *style);
+  static void GetDefaultRendererStyle(RendererStyle* style);
 
   // Returns DPI scaling factor on Windows.
   // On other platforms, always returns 1.0.
-  static void GetDPIScalingFactor(double *factor_x, double *factor_y);
+  static void GetDPIScalingFactor(double* factor_x, double* factor_y);
 };
 
 }  // namespace renderer

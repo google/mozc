@@ -133,7 +133,7 @@ bool ConvertMain() {
     return false;
   }
 
-  output_file.write(reinterpret_cast<const char *>(&header), sizeof(header));
+  output_file.write(reinterpret_cast<const char*>(&header), sizeof(header));
   for (size_t y = 0; y < height; ++y) {
     for (size_t x = 0; x < width; ++x) {
       Gdiplus::Color color;
@@ -149,7 +149,7 @@ bool ConvertMain() {
 
 }  // namespace
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   if (absl::GetFlag(FLAGS_src).empty()) {

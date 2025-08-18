@@ -110,8 +110,8 @@ namespace renderer {
 class TableLayout : public TableLayoutInterface {
  public:
   TableLayout();
-  TableLayout(const TableLayout &) = delete;
-  TableLayout &operator=(const TableLayout &) = delete;
+  TableLayout(const TableLayout&) = delete;
+  TableLayout& operator=(const TableLayout&) = delete;
 
   // Reset layout freeze and initialize the number of rows and columns.
   void Initialize(int num_rows, int num_columns) override;
@@ -125,7 +125,7 @@ class TableLayout : public TableLayoutInterface {
   // - size.width affects cells within the specified column.
   // - size.height affects all cells.
   // You should not call this function when the layout is frozen.
-  void EnsureCellSize(int column, const Size &size) override;
+  void EnsureCellSize(int column, const Size& size) override;
 
   // Ensure the total width from "from_column" to "to_width" is at
   // least "width" or larger.  If total width is smaller than the
@@ -139,8 +139,8 @@ class TableLayout : public TableLayoutInterface {
   // Ensure the size of header/footer is same to or larger than the
   // specified size.
   // You should not call this function when the layout is frozen.
-  void EnsureFooterSize(const Size &size_in_pixels) override;
-  void EnsureHeaderSize(const Size &size_in_pixels) override;
+  void EnsureFooterSize(const Size& size_in_pixels) override;
+  void EnsureHeaderSize(const Size& size_in_pixels) override;
 
   // Fix the layout and calculate the total size.
   void FreezeLayout() override;

@@ -43,14 +43,14 @@ namespace win32 {
 class IndicatorWindow {
  public:
   IndicatorWindow();
-  IndicatorWindow(const IndicatorWindow &) = delete;
-  IndicatorWindow &operator=(const IndicatorWindow &) = delete;
+  IndicatorWindow(const IndicatorWindow&) = delete;
+  IndicatorWindow& operator=(const IndicatorWindow&) = delete;
   ~IndicatorWindow();
 
   void Initialize();
   void Destroy();
-  void OnUpdate(const commands::RendererCommand &command,
-                LayoutManager *layout_manager);
+  void OnUpdate(const commands::RendererCommand& command,
+                LayoutManager* layout_manager);
   void Hide();
 
  private:

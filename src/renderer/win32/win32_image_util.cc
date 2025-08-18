@@ -122,10 +122,10 @@ class Balloon {
             left, top, width, height, balloon_tail_height, balloon_tail_width,
             balloon_tail)) {}
 
-  Balloon(const Balloon &) = delete;
-  Balloon &operator=(const Balloon &) = delete;
+  Balloon(const Balloon&) = delete;
+  Balloon& operator=(const Balloon&) = delete;
 
-  void RenderPixel(int x, int y, SubdivisionalPixel *pixel) const {
+  void RenderPixel(int x, int y, SubdivisionalPixel* pixel) const {
     {
       const PixelType fast_check_type = GetPixelTypeInternalFast(x, y);
       switch (fast_check_type) {
@@ -154,7 +154,7 @@ class Balloon {
     }
   }
 
-  const Rect &bounding_rect() const { return bounding_rect_; }
+  const Rect& bounding_rect() const { return bounding_rect_; }
 
   double GetTailX() const {
     switch (balloon_tail_) {
@@ -195,7 +195,7 @@ class Balloon {
 
   // Convert |x|, |y|, |width| and |height| as if the balloon tail is upside
   // and the center of the rectangle is at the origin.
-  void Normalize(double *x, double *y, double *width, double *height) const {
+  void Normalize(double* x, double* y, double* width, double* height) const {
     const double src_x = *x;
     const double src_y = *y;
     const double src_width = *width;
@@ -375,10 +375,10 @@ Rect GetBoundingRect(double left, double top, double width, double height) {
 // the ownerships of the returned pointers.
 std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
     double left, double top, double width, double height,
-    const std::string &text, const std::string &fontname, size_t font_point) {
+    const std::string& text, const std::string& fontname, size_t font_point) {
   constexpr size_t kDivision = SubdivisionalPixel::kDivision;
 
-  const Rect &bounding_rect = GetBoundingRect(left, top, width, height);
+  const Rect& bounding_rect = GetBoundingRect(left, top, width, height);
   const int pix_width = bounding_rect.Width();
   const int pix_height = bounding_rect.Height();
 
@@ -410,10 +410,10 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
   bitmap_info.color_palette[0] = kBackgroundColor;  // black
   bitmap_info.color_palette[1] = kForegroundColor;  // white
 
-  uint8_t *buffer = nullptr;
+  uint8_t* buffer = nullptr;
   wil::unique_hbitmap dib(::CreateDIBSection(
-      nullptr, reinterpret_cast<const BITMAPINFO *>(&bitmap_info),
-      DIB_RGB_COLORS, reinterpret_cast<void **>(&buffer), nullptr, 0));
+      nullptr, reinterpret_cast<const BITMAPINFO*>(&bitmap_info),
+      DIB_RGB_COLORS, reinterpret_cast<void**>(&buffer), nullptr, 0));
 
   wil::unique_hdc dc(::CreateCompatibleDC(nullptr));
   wil::unique_select_object old_bitmap(wil::SelectObject(dc.get(), dib.get()));
@@ -454,7 +454,7 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
   for (size_t pix_y = 0; pix_y < pix_height; ++pix_y) {
     for (size_t pix_x = 0; pix_x < pix_width; ++pix_x) {
       const size_t pix_index = pix_y * pix_width + pix_x;
-      TextLabel::BinarySubdivisionalPixel *sub_pixels = nullptr;
+      TextLabel::BinarySubdivisionalPixel* sub_pixels = nullptr;
       for (size_t subpix_y = 0; subpix_y < kDivision; ++subpix_y) {
         const size_t y = pix_y * kDivision + subpix_y;
         for (size_t subpix_x = 0; subpix_x < kDivision; ++subpix_x) {
@@ -491,11 +491,11 @@ RGBColor::RGBColor() : r(ValueType()), g(ValueType()), b(ValueType()) {}
 RGBColor::RGBColor(ValueType red, ValueType green, ValueType blue)
     : r(red), g(green), b(blue) {}
 
-bool RGBColor::operator==(const RGBColor &that) const {
+bool RGBColor::operator==(const RGBColor& that) const {
   return r == that.r && g == that.g && b == that.b;
 }
 
-bool RGBColor::operator!=(const RGBColor &that) const {
+bool RGBColor::operator!=(const RGBColor& that) const {
   return !(*this == that);
 }
 
@@ -508,14 +508,14 @@ ARGBColor::ARGBColor(ValueType alpha, ValueType red, ValueType green,
                      ValueType blue)
     : a(alpha), r(red), g(green), b(blue) {}
 
-ARGBColor::ARGBColor(const RGBColor &color, ValueType alpha)
+ARGBColor::ARGBColor(const RGBColor& color, ValueType alpha)
     : a(alpha), r(color.r), g(color.g), b(color.b) {}
 
-bool ARGBColor::operator==(const ARGBColor &that) const {
+bool ARGBColor::operator==(const ARGBColor& that) const {
   return a == that.a && r == that.r && g == that.g && b == that.b;
 }
 
-bool ARGBColor::operator!=(const ARGBColor &that) const {
+bool ARGBColor::operator!=(const ARGBColor& that) const {
   return !(*this == that);
 }
 
@@ -540,14 +540,14 @@ BalloonImage::BalloonImageInfo::BalloonImageInfo()
       blur_offset_y(0) {}
 
 // static
-HBITMAP BalloonImage::Create(const BalloonImageInfo &info, POINT *tail_offset) {
+HBITMAP BalloonImage::Create(const BalloonImageInfo& info, POINT* tail_offset) {
   return CreateInternal(info, tail_offset, nullptr, nullptr);
 }
 
 // static
-HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
-                                     POINT *tail_offset, SIZE *size,
-                                     std::vector<ARGBColor> *arbg_buffer) {
+HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo& info,
+                                     POINT* tail_offset, SIZE* size,
+                                     std::vector<ARGBColor>* arbg_buffer) {
   // Base point. You can set arbitrary position.
   constexpr double kLeft = 10.0;
   constexpr double kTop = 10.0;
@@ -566,7 +566,7 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
       info.label_font, info.label_size, info.label_color);
 
   // Render image into a temporary buffer |frame_buffer|.
-  const Rect &rect = balloon.bounding_rect();
+  const Rect& rect = balloon.bounding_rect();
   SafeFrameBuffer frame_buffer(rect);
   for (int y = rect.Top(); y < rect.Bottom(); ++y) {
     for (int x = rect.Left(); x < rect.Right(); ++x) {
@@ -630,14 +630,14 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
   bitmap_info.bmiHeader.biBitCount = 32;
   bitmap_info.bmiHeader.biCompression = BI_RGB;
   bitmap_info.bmiHeader.biSizeImage = 0;
-  PBGRA *buffer = nullptr;
+  PBGRA* buffer = nullptr;
   wil::unique_hbitmap dib(
       ::CreateDIBSection(nullptr, &bitmap_info, DIB_RGB_COLORS,
-                         reinterpret_cast<void **>(&buffer), nullptr, 0));
+                         reinterpret_cast<void**>(&buffer), nullptr, 0));
 
   struct Accessor {
    public:
-    Accessor(const SafeFrameBuffer &frame_buffer, int offset_x, int offset_y)
+    Accessor(const SafeFrameBuffer& frame_buffer, int offset_x, int offset_y)
         : frame_buffer_(frame_buffer),
           offset_x_(offset_x),
           offset_y_(offset_y) {}
@@ -646,7 +646,7 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
     }
 
    private:
-    const SafeFrameBuffer &frame_buffer_;
+    const SafeFrameBuffer& frame_buffer_;
     const int offset_x_;
     const int offset_y_;
   };
@@ -658,7 +658,7 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
       const int bmp_x = x - begin_x;
       const int bmp_y = y - begin_y;
       const size_t index = bmp_y * bmp_width + bmp_x;
-      PBGRA *dest = &buffer[index];
+      PBGRA* dest = &buffer[index];
       const ARGBColor fore_color = frame_buffer.GetPixel(x, y);
       double alpha = 0.0;
       double r = 0.0;
@@ -810,14 +810,14 @@ const SubdivisionalPixel::ColorType SubdivisionalPixel::GetPixelColor() const {
   }
 }
 
-void SubdivisionalPixel::SetPixel(const ColorType &color) {
+void SubdivisionalPixel::SetPixel(const ColorType& color) {
   filled_.set();
   colors_.reset();
   single_color_ = color;
 }
 
-void SubdivisionalPixel::SetSubdivisionalPixel(const Fraction2D &frac,
-                                               const ColorType &color) {
+void SubdivisionalPixel::SetSubdivisionalPixel(const Fraction2D& frac,
+                                               const ColorType& color) {
   const size_t index = GetIndex(frac);
   switch (GetFillType()) {
     case kEmpty:
@@ -845,7 +845,7 @@ void SubdivisionalPixel::SetSubdivisionalPixel(const Fraction2D &frac,
   }
 }
 
-void SubdivisionalPixel::SetColorToFilledPixels(const ColorType &color) {
+void SubdivisionalPixel::SetColorToFilledPixels(const ColorType& color) {
   switch (GetFillType()) {
     case kSingleColor:
       single_color_ = color;
@@ -870,7 +870,7 @@ SubdivisionalPixel::FillType SubdivisionalPixel::GetFillType() const {
 }
 
 // static
-size_t SubdivisionalPixel::GetIndex(const Fraction2D &offset) {
+size_t SubdivisionalPixel::GetIndex(const Fraction2D& offset) {
   return kDivision * offset.y + offset.x;
 }
 
@@ -892,7 +892,7 @@ GaussianBlur::GaussianBlur(double sigma)
   // To minimize the loss of trailing digits, sort coefficients just in case.
   // For most cases, this doesn't make a difference though.
   struct MatrixElementSorter {
-    bool operator()(const MatrixElement &l, const MatrixElement &r) const {
+    bool operator()(const MatrixElement& l, const MatrixElement& r) const {
       return l.coefficient < r.coefficient;
     }
   };
@@ -920,7 +920,7 @@ GaussianBlur::MatrixElement::MatrixElement(int x, int y, double c)
 
 size_t GaussianBlur::GetMatrixLength() const { return 2 * cutoff_length_ + 1; }
 
-SafeFrameBuffer::SafeFrameBuffer(const Rect &rect)
+SafeFrameBuffer::SafeFrameBuffer(const Rect& rect)
     : rect_(rect), buffer_(new ARGBColor[rect.Width() * rect.Height()]) {}
 
 ARGBColor SafeFrameBuffer::GetPixel(int x, int y) const {
@@ -930,7 +930,7 @@ ARGBColor SafeFrameBuffer::GetPixel(int x, int y) const {
   return buffer_[GetIndex(x, y)];
 }
 
-void SafeFrameBuffer::SetPixel(int x, int y, const ARGBColor &color) {
+void SafeFrameBuffer::SetPixel(int x, int y, const ARGBColor& color) {
   if (!IsInWindow(x, y)) {
     return;
   }
@@ -953,7 +953,7 @@ size_t SafeFrameBuffer::GetIndex(int x, int y) const {
 }
 
 TextLabel::TextLabel(double left, double top, double width, double height,
-                     const std::string &text, const std::string &font,
+                     const std::string& text, const std::string& font,
                      size_t font_point, const RGBColor text_color)
     : pixels_(Get1bitGlyph(left, top, width, height, text, font, font_point)),
       bounding_rect_(GetBoundingRect(left, top, width, height)),
@@ -961,7 +961,7 @@ TextLabel::TextLabel(double left, double top, double width, double height,
 
 TextLabel::~TextLabel() = default;
 
-void TextLabel::RenderPixel(int x, int y, SubdivisionalPixel *dest) const {
+void TextLabel::RenderPixel(int x, int y, SubdivisionalPixel* dest) const {
   if (x < bounding_rect_.Left() || bounding_rect_.Right() <= x ||
       y < bounding_rect_.Top() || bounding_rect_.Bottom() <= y) {
     return;
@@ -969,7 +969,7 @@ void TextLabel::RenderPixel(int x, int y, SubdivisionalPixel *dest) const {
   const int pix_width = bounding_rect_.Width();
   const size_t index =
       (y - bounding_rect_.Top()) * pix_width + (x - bounding_rect_.Left());
-  const BinarySubdivisionalPixel *sub_pixels = pixels_[index].get();
+  const BinarySubdivisionalPixel* sub_pixels = pixels_[index].get();
   if (sub_pixels == nullptr) {
     return;
   }
@@ -981,7 +981,7 @@ void TextLabel::RenderPixel(int x, int y, SubdivisionalPixel *dest) const {
   }
 }
 
-const Rect &TextLabel::bounding_rect() const { return bounding_rect_; }
+const Rect& TextLabel::bounding_rect() const { return bounding_rect_; }
 
 }  // namespace internal
 }  // namespace win32

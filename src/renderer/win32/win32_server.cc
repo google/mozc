@@ -45,7 +45,7 @@ namespace mozc {
 namespace renderer {
 namespace {
 
-bool IsTSFMessage(const commands::RendererCommand &command) {
+bool IsTSFMessage(const commands::RendererCommand& command) {
   if (!command.has_application_info()) {
     return false;
   }
@@ -100,7 +100,7 @@ bool Win32Server::IsAvailable() const {
   return true;
 }
 
-bool Win32Server::ExecCommand(const commands::RendererCommand &command) {
+bool Win32Server::ExecCommand(const commands::RendererCommand& command) {
   MOZC_VLOG(2) << command;
 
   switch (command.type()) {
@@ -127,7 +127,7 @@ bool Win32Server::ExecCommand(const commands::RendererCommand &command) {
 }
 
 void Win32Server::SetSendCommandInterface(
-    client::SendCommandInterface *send_command_interface) {
+    client::SendCommandInterface* send_command_interface) {
   window_manager_->SetSendCommandInterface(send_command_interface);
 }
 

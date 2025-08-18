@@ -30,8 +30,8 @@
 #ifndef MOZC_RENDERER_WIN32_WIN32_FONT_UTIL_H_
 #define MOZC_RENDERER_WIN32_WIN32_FONT_UTIL_H_
 
-#include <windows.h>
 #include <commctrl.h>  // for CCSIZEOF_STRUCT
+#include <windows.h>
 
 namespace mozc {
 namespace renderer {
