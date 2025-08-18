@@ -32,13 +32,10 @@
 namespace mozc {
 namespace commands {
 class KeyEvent;
-}  // namespace mozc::commands
+}  // namespace commands
 }  // namespace mozc
 
-enum InputMode {
-  ASCII,
-  KANA
-};
+enum InputMode { ASCII, KANA };
 
 @interface KeyCodeMap : NSObject {
  @private

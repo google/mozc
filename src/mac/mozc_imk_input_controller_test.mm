@@ -367,8 +367,7 @@ NSTimeInterval GetDoubleTapInterval() {
   return kDoubleTapInterval;
 }
 
-BOOL SendKeyEvent(unsigned short keyCode, MozcImkInputController *controller,
-                  MockClient *client) {
+BOOL SendKeyEvent(unsigned short keyCode, MozcImkInputController *controller, MockClient *client) {
   // tap Kana-key
   NSEvent *kanaKeyEvent = [NSEvent keyEventWithType:NSEventTypeKeyDown
                                            location:NSZeroPoint

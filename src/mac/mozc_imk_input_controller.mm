@@ -153,10 +153,9 @@ bool CanOpenLink(absl::string_view bundle_id) {
 bool CanSelectedRange(absl::string_view bundle_id) {
   // Do not call selectedRange: method for the following
   // applications because it could lead to application crash.
-  const bool is_supported =
-      bundle_id != "com.microsoft.Excel" &&
-      bundle_id != "com.microsoft.Powerpoint" &&
-      bundle_id != "com.microsoft.Word";
+  const bool is_supported = bundle_id != "com.microsoft.Excel" &&
+                            bundle_id != "com.microsoft.Powerpoint" &&
+                            bundle_id != "com.microsoft.Word";
   return is_supported;
 }
 
@@ -241,8 +240,7 @@ bool CanSurroundingText(absl::string_view bundle_id) {
     }
     [self setupClientBundle:inputClient];
     [self setupCapability];
-    RendererCommand::ApplicationInfo *applicationInfo =
-        rendererCommand_.mutable_application_info();
+    RendererCommand::ApplicationInfo *applicationInfo = rendererCommand_.mutable_application_info();
     applicationInfo->set_process_id(::getpid());
     // thread_id and receiver_handle are not used currently in Mac but
     // set some values to prevent warning.

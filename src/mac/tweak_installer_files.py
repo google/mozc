@@ -65,7 +65,8 @@ def RemoveQtFrameworks(app_dir: str, app_name: str) -> None:
 
   for framework in frameworks:
     shutil.rmtree(
-        os.path.join(app_dir, f'Contents/Frameworks/{framework}.framework/'))
+        os.path.join(app_dir, f'Contents/Frameworks/{framework}.framework/')
+    )
     cmd = [
         'install_name_tool',
         '-change',
@@ -84,8 +85,9 @@ def SymlinkQtFrameworks(app_dir: str) -> None:
     #   QtCore.framwwork/QtCore@ -> Versions/A/QtCore
     #   QtCore.framwwork/Resources@ -> Versions/A/Resources
     #   QtCore.framework/Versions/Current@ -> A
-    framework_dir = os.path.join(app_dir,
-                                 f'Contents/Frameworks/{framework}.framework/')
+    framework_dir = os.path.join(
+        app_dir, f'Contents/Frameworks/{framework}.framework/'
+    )
 
     # Restore symlinks. Bazel uses zip without consideration of symlinks.
     # It changes symlink files to normal files. The following logics remove
@@ -243,6 +245,7 @@ def main():
   else:
     with tempfile.TemporaryDirectory() as work_dir:
       TweakInstallerFiles(args, work_dir)
+
 
 if __name__ == '__main__':
   main()

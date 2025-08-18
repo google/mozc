@@ -259,5 +259,6 @@
  * This will be removed in the future when all clients are migrated to the new name and performed
  * relogin at least once.
  */
-@interface GoogleJapaneseInputController : MozcImkInputController {}
+@interface GoogleJapaneseInputController : MozcImkInputController {
+}
 @end

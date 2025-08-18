@@ -66,17 +66,23 @@ def main():
     os.chdir(os.path.join(tmp_dir, 'installer'))
     pkgbuild_commands = [
         'pkgbuild',
-        '--root', 'root',
-        '--identifier', identifier,
-        '--scripts', 'scripts/',
+        '--root',
+        'root',
+        '--identifier',
+        identifier,
+        '--scripts',
+        'scripts/',
         'Mozc.pkg',  # the name "Mozc.pkg" is configured in distribution.xml.
     ]
     util.RunOrDie(pkgbuild_commands)
     productbuild_commands = [
         'productbuild',
-        '--distribution', 'distribution.xml',
-        '--plugins', 'Plugins/',
-        '--resources', 'Resources/',
+        '--distribution',
+        'distribution.xml',
+        '--plugins',
+        'Plugins/',
+        '--resources',
+        'Resources/',
         'package.pkg',  # this name is only used within this script.
     ]
     util.RunOrDie(productbuild_commands)
