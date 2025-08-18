@@ -41,14 +41,14 @@ class SegmenterBitarrayGenerator {
  public:
   using IsBoundaryFunc = absl::AnyInvocable<bool(uint16_t, uint16_t)>;
 
-  SegmenterBitarrayGenerator(const SegmenterBitarrayGenerator &) = delete;
-  SegmenterBitarrayGenerator &operator=(const SegmenterBitarrayGenerator &) =
+  SegmenterBitarrayGenerator(const SegmenterBitarrayGenerator&) = delete;
+  SegmenterBitarrayGenerator& operator=(const SegmenterBitarrayGenerator&) =
       delete;
   static void GenerateBitarray(int lsize, int rsize, IsBoundaryFunc is_boundary,
-                               const std::string &output_size_info,
-                               const std::string &output_ltable,
-                               const std::string &output_rtable,
-                               const std::string &output_bitarray);
+                               const std::string& output_size_info,
+                               const std::string& output_ltable,
+                               const std::string& output_rtable,
+                               const std::string& output_bitarray);
 };
 
 }  // namespace mozc

@@ -69,7 +69,7 @@ using ::mozc::dictionary::UserDictionaryInterface;
 constexpr int kFreeListSize = 512;
 constexpr int kCostDiff = 3453;  // log prob of 1/1000
 
-bool IsBetweenAlphabetKeys(const Node &left, const Node &right) {
+bool IsBetweenAlphabetKeys(const Node& left, const Node& right) {
   return !left.key.empty() && !right.key.empty() &&
          absl::ascii_isalpha(left.key.back()) &&
          absl::ascii_isalpha(right.key.front());
@@ -77,12 +77,12 @@ bool IsBetweenAlphabetKeys(const Node &left, const Node &right) {
 
 }  // namespace
 
-const NBestGenerator::QueueElement *absl_nonnull
-NBestGenerator::CreateNewElement(const Node *absl_nonnull node,
-                                 const QueueElement *absl_nullable next,
+const NBestGenerator::QueueElement* absl_nonnull
+NBestGenerator::CreateNewElement(const Node* absl_nonnull node,
+                                 const QueueElement* absl_nullable next,
                                  int32_t fx, int32_t gx, int32_t structure_gx,
                                  int32_t w_gx) {
-  QueueElement *absl_nonnull elm = freelist_.Alloc();
+  QueueElement* absl_nonnull elm = freelist_.Alloc();
   elm->node = node;
   elm->next = next;
   elm->fx = fx;
@@ -93,7 +93,7 @@ NBestGenerator::CreateNewElement(const Node *absl_nonnull node,
 }
 
 void NBestGenerator::Agenda::Push(
-    const NBestGenerator::QueueElement *absl_nonnull element) {
+    const NBestGenerator::QueueElement* absl_nonnull element) {
   priority_queue_.push_back(element);
   std::push_heap(priority_queue_.begin(), priority_queue_.end(),
                  QueueElement::Comparator);
@@ -106,12 +106,12 @@ void NBestGenerator::Agenda::Pop() {
   priority_queue_.pop_back();
 }
 
-NBestGenerator::NBestGenerator(const UserDictionaryInterface &user_dictionary,
-                               const Segmenter &segmenter,
-                               const Connector &connector,
-                               const PosMatcher &pos_matcher,
-                               const Lattice &lattice,
-                               const SuggestionFilter &suggestion_filter)
+NBestGenerator::NBestGenerator(const UserDictionaryInterface& user_dictionary,
+                               const Segmenter& segmenter,
+                               const Connector& connector,
+                               const PosMatcher& pos_matcher,
+                               const Lattice& lattice,
+                               const SuggestionFilter& suggestion_filter)
     : user_dictionary_(user_dictionary),
       segmenter_(segmenter),
       connector_(connector),
@@ -126,8 +126,8 @@ NBestGenerator::NBestGenerator(const UserDictionaryInterface &user_dictionary,
   agenda_.Reserve(kFreeListSize);
 }
 
-void NBestGenerator::Reset(const Node *absl_nonnull begin_node,
-                           const Node *absl_nonnull end_node,
+void NBestGenerator::Reset(const Node* absl_nonnull begin_node,
+                           const Node* absl_nonnull end_node,
                            const Options options) {
   agenda_.Clear();
   freelist_.Free();
@@ -139,7 +139,7 @@ void NBestGenerator::Reset(const Node *absl_nonnull begin_node,
   begin_node_ = begin_node;
   end_node_ = end_node;
 
-  for (Node *node = lattice_.begin_nodes(end_node_->begin_pos); node != nullptr;
+  for (Node* node = lattice_.begin_nodes(end_node_->begin_pos); node != nullptr;
        node = node->bnext) {
     if (node == end_node_ ||
         (node->lid != end_node_->lid &&
@@ -156,8 +156,8 @@ void NBestGenerator::Reset(const Node *absl_nonnull begin_node,
 }
 
 void NBestGenerator::MakeCandidate(
-    Candidate &candidate, int32_t cost, int32_t structure_cost, int32_t wcost,
-    absl::Span<const Node *absl_nonnull const> nodes) const {
+    Candidate& candidate, int32_t cost, int32_t structure_cost, int32_t wcost,
+    absl::Span<const Node* absl_nonnull const> nodes) const {
   DCHECK(!nodes.empty());
 
   candidate.Clear();
@@ -169,7 +169,7 @@ void NBestGenerator::MakeCandidate(
 
   bool is_functional = false;
   for (size_t i = 0; i < nodes.size(); ++i) {
-    const Node *absl_nonnull node = nodes[i];
+    const Node* absl_nonnull node = nodes[i];
     if (!is_functional && !pos_matcher_.IsFunctional(node->lid)) {
       candidate.content_key += node->key;
       candidate.content_value += node->value;
@@ -217,8 +217,8 @@ void NBestGenerator::MakeCandidate(
 }
 
 void NBestGenerator::FillInnerSegmentInfo(
-    absl::Span<const Node *absl_nonnull const> nodes,
-    Candidate &candidate) const {
+    absl::Span<const Node* absl_nonnull const> nodes,
+    Candidate& candidate) const {
   size_t key_len = nodes[0]->key.size(), value_len = nodes[0]->value.size();
   size_t content_key_len = key_len, content_value_len = value_len;
   bool is_content_boundary = false;
@@ -231,8 +231,8 @@ void NBestGenerator::FillInnerSegmentInfo(
   converter::InnerSegmentBoundaryBuilder builder;
 
   for (size_t i = 1; i < nodes.size(); ++i) {
-    const Node *absl_nonnull lnode = nodes[i - 1];
-    const Node *absl_nonnull rnode = nodes[i];
+    const Node* absl_nonnull lnode = nodes[i - 1];
+    const Node* absl_nonnull rnode = nodes[i];
     constexpr bool kMultipleSegments = false;
     if (segmenter_.IsBoundary(*lnode, *rnode, kMultipleSegments)) {
       // Keep the consistency with the above logic for candidate.content_*.
@@ -278,16 +278,16 @@ void NBestGenerator::FillInnerSegmentInfo(
 }
 
 CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
-    const ConversionRequest &request, absl::string_view original_key,
-    const NBestGenerator::QueueElement &element, Candidate &candidate) {
-  std::vector<const Node *absl_nonnull> nodes;
+    const ConversionRequest& request, absl::string_view original_key,
+    const NBestGenerator::QueueElement& element, Candidate& candidate) {
+  std::vector<const Node* absl_nonnull> nodes;
 
   if (element.next == nullptr) {
     return CandidateFilter::BAD_CANDIDATE;
   }
   if (options_.candidate_mode &
       CandidateMode::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT) {
-    const QueueElement *absl_nonnull elm = element.next;
+    const QueueElement* absl_nonnull elm = element.next;
     for (; elm->next != nullptr; elm = elm->next) {
       nodes.push_back(elm->node);
       if (IsBetweenAlphabetKeys(*elm->node, *elm->next->node)) {
@@ -305,7 +305,7 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
     const int wcost = element.w_gx - elm->w_gx;
     MakeCandidate(candidate, cost, structure_cost, wcost, nodes);
   } else {
-    for (const QueueElement *absl_nonnull elm = element.next;
+    for (const QueueElement* absl_nonnull elm = element.next;
          elm->next != nullptr; elm = elm->next) {
       nodes.push_back(elm->node);
     }
@@ -322,10 +322,10 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
 }
 
 // Set candidates.
-void NBestGenerator::SetCandidates(const ConversionRequest &request,
+void NBestGenerator::SetCandidates(const ConversionRequest& request,
                                    absl::string_view original_key,
                                    const size_t expand_size,
-                                   Segment *absl_nonnull segment) {
+                                   Segment* absl_nonnull segment) {
   DCHECK(begin_node_);
   DCHECK(end_node_);
 
@@ -335,7 +335,7 @@ void NBestGenerator::SetCandidates(const ConversionRequest &request,
   }
 
   while (segment->candidates_size() < expand_size) {
-    Candidate *candidate = segment->push_back_candidate();
+    Candidate* candidate = segment->push_back_candidate();
     DCHECK(candidate);
 
     // if Next() returns false, no more entries are generated.
@@ -354,9 +354,9 @@ void NBestGenerator::SetCandidates(const ConversionRequest &request,
 #endif  // MOZC_CANDIDATE_DEBUG
 }
 
-bool NBestGenerator::Next(const ConversionRequest &request,
+bool NBestGenerator::Next(const ConversionRequest& request,
                           absl::string_view original_key,
-                          Candidate &candidate) {
+                          Candidate& candidate) {
   // |cost| and |structure_cost| are calculated as follows:
   //
   // Example:
@@ -409,9 +409,9 @@ bool NBestGenerator::Next(const ConversionRequest &request,
   int num_trials = 0;
 
   while (!agenda_.IsEmpty()) {
-    const QueueElement *absl_nonnull top = agenda_.Top();
+    const QueueElement* absl_nonnull top = agenda_.Top();
     agenda_.Pop();
-    const Node *absl_nonnull rnode = top->node;
+    const Node* absl_nonnull rnode = top->node;
 
     if (num_trials++ > KMaxTrial) {  // too many trials
       MOZC_VLOG(2) << "too many trials: " << num_trials;
@@ -442,7 +442,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
 
     DCHECK_NE(rnode->end_pos, begin_node_->end_pos);
 
-    const QueueElement *best_left_elm = nullptr;
+    const QueueElement* best_left_elm = nullptr;
     const bool is_right_edge = rnode->begin_pos == end_node_->begin_pos;
     const bool is_left_edge = rnode->begin_pos == begin_node_->end_pos;
     DCHECK(!(is_right_edge && is_left_edge));
@@ -451,7 +451,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
     // begin/end node regardless of its value.
     const bool is_edge = (is_right_edge || is_left_edge);
 
-    for (Node *lnode = lattice_.end_nodes(rnode->begin_pos); lnode != nullptr;
+    for (Node* lnode = lattice_.end_nodes(rnode->begin_pos); lnode != nullptr;
          lnode = lnode->enext) {
       // is_invalid_position is true if the lnode's location is invalid
       //  1.   |<-- begin_node_-->|
@@ -559,7 +559,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
 }
 
 NBestGenerator::BoundaryCheckResult NBestGenerator::BoundaryCheck(
-    const Node &lnode, const Node &rnode, bool is_edge) const {
+    const Node& lnode, const Node& rnode, bool is_edge) const {
   // Special case, no boundary check
   if (rnode.node_type == Node::CON_NODE || lnode.node_type == Node::CON_NODE) {
     return VALID;
@@ -586,7 +586,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::BoundaryCheck(
 }
 
 NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyMid(
-    const Node &lnode, const Node &rnode, bool is_edge) const {
+    const Node& lnode, const Node& rnode, bool is_edge) const {
   // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode.node_type == Node::HIS_NODE ||
@@ -606,7 +606,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyMid(
 }
 
 NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyEdge(
-    const Node &lnode, const Node &rnode, bool is_edge) const {
+    const Node& lnode, const Node& rnode, bool is_edge) const {
   // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode.node_type == Node::HIS_NODE ||
@@ -621,7 +621,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyEdge(
 }
 
 NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
-    const Node &lnode, const Node &rnode, bool is_edge) const {
+    const Node& lnode, const Node& rnode, bool is_edge) const {
   // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode.node_type == Node::HIS_NODE ||
@@ -636,10 +636,10 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
   }
 }
 
-bool NBestGenerator::MakeCandidateFromBestPath(Candidate &candidate) {
+bool NBestGenerator::MakeCandidateFromBestPath(Candidate& candidate) {
   top_nodes_.clear();
   int total_wcost = 0;
-  for (const Node *node = begin_node_->next; node != end_node_;
+  for (const Node* node = begin_node_->next; node != end_node_;
        node = node->next) {
     if (node != begin_node_->next) {
       if (IsBetweenAlphabetKeys(*top_nodes_.back(), *node)) {
@@ -664,11 +664,11 @@ bool NBestGenerator::MakeCandidateFromBestPath(Candidate &candidate) {
   return true;
 }
 
-void NBestGenerator::MakePrefixCandidateFromBestPath(Candidate &candidate) {
+void NBestGenerator::MakePrefixCandidateFromBestPath(Candidate& candidate) {
   top_nodes_.clear();
   int total_extra_wcost = 0;  // wcost sum excepting the first node
-  const Node *prev_node = begin_node_;
-  for (const Node *node = begin_node_->next; node != end_node_;
+  const Node* prev_node = begin_node_;
+  for (const Node* node = begin_node_->next; node != end_node_;
        node = node->next) {
     if (prev_node != begin_node_ &&
         segmenter_.IsBoundary(*prev_node, *node, false)) {
@@ -696,9 +696,9 @@ void NBestGenerator::MakePrefixCandidateFromBestPath(Candidate &candidate) {
   MakeCandidate(candidate, cost, structure_cost, wcost, top_nodes_);
 }
 
-int NBestGenerator::InsertTopResult(const ConversionRequest &request,
+int NBestGenerator::InsertTopResult(const ConversionRequest& request,
                                     absl::string_view original_key,
-                                    Candidate &candidate) {
+                                    Candidate& candidate) {
   if (options_.candidate_mode &
       CandidateMode::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT) {
     MakePrefixCandidateFromBestPath(candidate);
@@ -716,8 +716,8 @@ int NBestGenerator::InsertTopResult(const ConversionRequest &request,
   return result;
 }
 
-int NBestGenerator::GetTransitionCost(const Node &lnode,
-                                      const Node &rnode) const {
+int NBestGenerator::GetTransitionCost(const Node& lnode,
+                                      const Node& rnode) const {
   constexpr int kInvalidPenaltyCost = 100000;
   if (rnode.constrained_prev != nullptr && &lnode != rnode.constrained_prev) {
     return kInvalidPenaltyCost;

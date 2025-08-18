@@ -46,7 +46,7 @@ class Lattice {
  public:
   Lattice() : node_allocator_(std::make_unique<NodeAllocator>()) {}
 
-  NodeAllocator *node_allocator() const { return node_allocator_.get(); }
+  NodeAllocator* node_allocator() const { return node_allocator_.get(); }
 
   // set key and initializes lattice with key.
   void SetKey(std::string key);
@@ -55,26 +55,26 @@ class Lattice {
   absl::string_view key() const { return key_; }
 
   // allocate new node.
-  Node *NewNode() { return node_allocator_->NewNode(); }
+  Node* NewNode() { return node_allocator_->NewNode(); }
 
   // return nodes (linked list) starting with |pos|.
   // To traverse all nodes, use Node::bnext member.
-  Node *begin_nodes(size_t pos) const { return begin_nodes_[pos]; }
+  Node* begin_nodes(size_t pos) const { return begin_nodes_[pos]; }
 
   // return nodes (linked list) ending at |pos|.
   // To traverse all nodes, use Node::enext member.
-  Node *end_nodes(size_t pos) const { return end_nodes_[pos]; }
+  Node* end_nodes(size_t pos) const { return end_nodes_[pos]; }
 
   // return bos nodes.
   // alias of end_nodes(0).
-  Node *bos_nodes() const { return end_nodes_[0]; }
+  Node* bos_nodes() const { return end_nodes_[0]; }
 
   // return eos nodes.
   // alias of begin_nodes(key.size()).
-  Node *eos_nodes() const { return begin_nodes_[key_.size()]; }
+  Node* eos_nodes() const { return begin_nodes_[key_.size()]; }
 
   // inset nodes (linked list) to the position |pos|.
-  void Insert(size_t pos, Node *node);
+  void Insert(size_t pos, Node* node);
 
   // clear all lattice and nodes allocated with NewNode method.
   void Clear();
@@ -94,8 +94,8 @@ class Lattice {
 
  private:
   std::string key_;
-  std::vector<Node *> begin_nodes_;
-  std::vector<Node *> end_nodes_;
+  std::vector<Node*> begin_nodes_;
+  std::vector<Node*> end_nodes_;
   std::unique_ptr<NodeAllocator> node_allocator_;
 };
 

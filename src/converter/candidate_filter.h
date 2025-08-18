@@ -52,20 +52,20 @@ namespace converter {
 namespace candidate_filter_internal {
 // ID of the candidate for filtering.
 struct CandidateId {
-  explicit CandidateId(const converter::Candidate &candidate)
+  explicit CandidateId(const converter::Candidate& candidate)
       : value(candidate.value), lid(candidate.lid), rid(candidate.rid) {}
 
   template <typename H>
-  friend H AbslHashValue(H h, const CandidateId &c) {
+  friend H AbslHashValue(H h, const CandidateId& c) {
     return H::combine(std::move(h), c.value, c.lid, c.rid);
   }
 
-  friend bool operator==(const CandidateId &lhs, const CandidateId &rhs) {
+  friend bool operator==(const CandidateId& lhs, const CandidateId& rhs) {
     // Comparing the int values first for performance.
     return lhs.lid == rhs.lid && lhs.rid == rhs.rid && lhs.value == rhs.value;
   }
-  friend bool operator==(const CandidateId &lhs,
-                         const converter::Candidate &rhs) {
+  friend bool operator==(const CandidateId& lhs,
+                         const converter::Candidate& rhs) {
     return lhs.lid == rhs.lid && lhs.rid == rhs.rid && lhs.value == rhs.value;
   }
 
@@ -77,8 +77,8 @@ struct CandidateId {
 struct CandidateHasher {
   using is_transparent = void;
 
-  size_t operator()(const CandidateId &c) const { return absl::HashOf(c); }
-  size_t operator()(const converter::Candidate &c) const {
+  size_t operator()(const CandidateId& c) const { return absl::HashOf(c); }
+  size_t operator()(const converter::Candidate& c) const {
     return absl::HashOf(c.value, c.lid, c.rid);
   }
 };
@@ -87,11 +87,11 @@ struct CandidateHasher {
 
 class CandidateFilter {
  public:
-  CandidateFilter(const dictionary::UserDictionaryInterface &user_dictionary,
-                  const dictionary::PosMatcher &pos_matcher,
-                  const SuggestionFilter &suggestion_filter);
-  CandidateFilter(const CandidateFilter &) = delete;
-  CandidateFilter &operator=(const CandidateFilter &) = delete;
+  CandidateFilter(const dictionary::UserDictionaryInterface& user_dictionary,
+                  const dictionary::PosMatcher& pos_matcher,
+                  const SuggestionFilter& suggestion_filter);
+  CandidateFilter(const CandidateFilter&) = delete;
+  CandidateFilter& operator=(const CandidateFilter&) = delete;
 
   enum ResultType {
     GOOD_CANDIDATE,    // Can insert the candidate into the list
@@ -103,35 +103,35 @@ class CandidateFilter {
   //
   // top_nodes: Node vector for the top candidate for the segment.
   // nodes: Node vector for the target candidate
-  ResultType FilterCandidate(const ConversionRequest &request,
+  ResultType FilterCandidate(const ConversionRequest& request,
                              absl::string_view original_key,
-                             const converter::Candidate *candidate,
-                             absl::Span<const Node *const> top_nodes,
-                             absl::Span<const Node *const> nodes);
+                             const converter::Candidate* candidate,
+                             absl::Span<const Node* const> top_nodes,
+                             absl::Span<const Node* const> nodes);
 
   // Resets the internal state.
   void Reset();
 
  private:
-  ResultType CheckRequestType(const ConversionRequest &request,
+  ResultType CheckRequestType(const ConversionRequest& request,
                               absl::string_view original_key,
-                              const converter::Candidate &candidate,
-                              absl::Span<const Node *const> nodes) const;
-  ResultType FilterCandidateInternal(const ConversionRequest &request,
+                              const converter::Candidate& candidate,
+                              absl::Span<const Node* const> nodes) const;
+  ResultType FilterCandidateInternal(const ConversionRequest& request,
                                      absl::string_view original_key,
-                                     const converter::Candidate *candidate,
-                                     absl::Span<const Node *const> top_nodes,
-                                     absl::Span<const Node *const> nodes);
+                                     const converter::Candidate* candidate,
+                                     absl::Span<const Node* const> top_nodes,
+                                     absl::Span<const Node* const> nodes);
 
-  const dictionary::UserDictionaryInterface &user_dictionary_;
-  const dictionary::PosMatcher &pos_matcher_;
-  const SuggestionFilter &suggestion_filter_;
+  const dictionary::UserDictionaryInterface& user_dictionary_;
+  const dictionary::PosMatcher& pos_matcher_;
+  const SuggestionFilter& suggestion_filter_;
 
   absl::flat_hash_set<candidate_filter_internal::CandidateId,
                       candidate_filter_internal::CandidateHasher,
                       std::equal_to<>>
       seen_;
-  const converter::Candidate *top_candidate_;
+  const converter::Candidate* top_candidate_;
 };
 
 }  // namespace converter

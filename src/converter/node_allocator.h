@@ -42,11 +42,11 @@ class NodeAllocator {
  public:
   NodeAllocator()
       : node_freelist_(1024), max_nodes_size_(8192), node_count_(0) {}
-  NodeAllocator(const NodeAllocator &) = delete;
-  NodeAllocator &operator=(const NodeAllocator &) = delete;
+  NodeAllocator(const NodeAllocator&) = delete;
+  NodeAllocator& operator=(const NodeAllocator&) = delete;
 
-  Node *NewNode() {
-    Node *node = node_freelist_.Alloc();
+  Node* NewNode() {
+    Node* node = node_freelist_.Alloc();
     DCHECK(node);
     node->Init();
     ++node_count_;

@@ -42,7 +42,7 @@
 namespace mozc {
 
 std::unique_ptr<Segmenter> Segmenter::CreateFromDataManager(
-    const DataManager &data_manager) {
+    const DataManager& data_manager) {
   size_t l_num_elements = 0;
   size_t r_num_elements = 0;
   absl::Span<const uint16_t> l_table, r_table, boundary_data;
@@ -67,7 +67,7 @@ Segmenter::Segmenter(size_t l_num_elements, size_t r_num_elements,
   CHECK_LE(l_num_elements_ * r_num_elements_, bitarray_data_.size() * 8);
 }
 
-bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
+bool Segmenter::IsBoundary(const Node& lnode, const Node& rnode,
                            bool is_single_segment) const {
   if (lnode.node_type == Node::BOS_NODE || rnode.node_type == Node::EOS_NODE) {
     return true;

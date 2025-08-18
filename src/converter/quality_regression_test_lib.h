@@ -45,15 +45,15 @@ namespace mozc {
 class QualityRegressionTest : public testing::TestWithTempUserProfile {
  protected:
   static absl::Status RunTestForPlatform(
-      uint32_t platform, quality_regression::QualityRegressionUtil *util);
+      uint32_t platform, quality_regression::QualityRegressionUtil* util);
 
   // If |enabled| parameter is true, then actual conversion results are tested
   // and any failure is reported as test failure.  If false, actual conversion
   // results don't affect test results but closable issues are reported.
   static void ExamineResults(
       bool enabled, uint32_t platform,
-      absl::btree_map<std::string, std::vector<std::pair<float, std::string>>>
-          *results);
+      absl::btree_map<std::string, std::vector<std::pair<float, std::string>>>*
+          results);
 };
 
 }  // namespace mozc

@@ -88,7 +88,7 @@ def main():
 
   if args.version_file:
     version = mozc_version.MozcVersion(args.version_file)
-    use_build_oss = (args.data_type == 'oss')
+    use_build_oss = args.data_type == 'oss'
     version_string = version.GetShortVersionString(use_build_oss=use_build_oss)
   else:
     version_string = ''

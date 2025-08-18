@@ -103,7 +103,7 @@ TEST(ConnectorTest, BrokenData) {
   // Invalid magic number.
   {
     data.assign(cmmap->begin(), cmmap->size());
-    *reinterpret_cast<uint16_t *>(&data[0]) = 0;
+    *reinterpret_cast<uint16_t*>(&data[0]) = 0;
     const auto status = Connector::Create(data, 256).status();
     MOZC_VLOG(1) << status;
     EXPECT_FALSE(status.ok());
@@ -111,7 +111,7 @@ TEST(ConnectorTest, BrokenData) {
   // Not square.
   {
     data.assign(cmmap->begin(), cmmap->size());
-    uint16_t *array = reinterpret_cast<uint16_t *>(&data[0]);
+    uint16_t* array = reinterpret_cast<uint16_t*>(&data[0]);
     array[2] = 100;
     array[3] = 200;
     const auto status = Connector::Create(data, 256).status();

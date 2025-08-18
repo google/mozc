@@ -57,7 +57,7 @@ TEST(LatticeTest, LatticeTest) {
 
 TEST(LatticeTest, NewNodeTest) {
   Lattice lattice;
-  Node *node = lattice.NewNode();
+  Node* node = lattice.NewNode();
   EXPECT_TRUE(node != nullptr);
   EXPECT_EQ(node->lid, 0);
   EXPECT_EQ(node->rid, 0);
@@ -69,29 +69,29 @@ TEST(LatticeTest, InsertTest) {
   lattice.SetKey("test");
 
   {
-    Node *node = lattice.NewNode();
+    Node* node = lattice.NewNode();
     node->value = "ho";
     node->key = "es";
     lattice.Insert(1, node);
 
-    Node *node2 = lattice.begin_nodes(1);
+    Node* node2 = lattice.begin_nodes(1);
     EXPECT_EQ(node, node2);
 
-    Node *node3 = lattice.end_nodes(3);
+    Node* node3 = lattice.end_nodes(3);
     EXPECT_EQ(node, node3);
   }
 
   {
-    Node *node = lattice.NewNode();
+    Node* node = lattice.NewNode();
     node->value = "o";
     node->key = "s";
     lattice.Insert(2, node);
 
-    Node *node2 = lattice.begin_nodes(2);
+    Node* node2 = lattice.begin_nodes(2);
     EXPECT_EQ(node, node2);
 
     int size = 0;
-    Node *node3 = lattice.end_nodes(3);
+    Node* node3 = lattice.end_nodes(3);
     for (; node3 != nullptr; node3 = node3->enext) {
       ++size;
     }
@@ -102,10 +102,10 @@ TEST(LatticeTest, InsertTest) {
 namespace {
 
 // add nodes whose key is key.substr(i, key.size() - i)
-void InsertNodes(Lattice *lattice) {
+void InsertNodes(Lattice* lattice) {
   const size_t key_size = lattice->key().size();
   for (size_t i = 0; i < key_size; ++i) {
-    Node *node = lattice->NewNode();
+    Node* node = lattice->NewNode();
     node->key.assign(lattice->key(), i, key_size - i);
     lattice->Insert(i, node);
   }

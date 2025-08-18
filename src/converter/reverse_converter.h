@@ -40,12 +40,12 @@ namespace converter {
 class ReverseConverter {
  public:
   explicit ReverseConverter(
-      const ImmutableConverterInterface &immutable_converter);
+      const ImmutableConverterInterface& immutable_converter);
 
-  bool ReverseConvert(absl::string_view key, Segments *segments) const;
+  bool ReverseConvert(absl::string_view key, Segments* segments) const;
 
  private:
-  const ImmutableConverterInterface &immutable_converter_;
+  const ImmutableConverterInterface& immutable_converter_;
 };
 }  // namespace converter
 }  // namespace mozc

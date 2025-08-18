@@ -50,7 +50,7 @@ class Connector final {
   static constexpr int16_t kInvalidCost = 30000;
 
   static absl::StatusOr<Connector> CreateFromDataManager(
-      const DataManager &data_manager);
+      const DataManager& data_manager);
 
   static absl::StatusOr<Connector> Create(absl::string_view connection_data,
                                           int cache_size);
@@ -68,7 +68,7 @@ class Connector final {
   int LookupCost(uint16_t rid, uint16_t lid) const;
 
   std::vector<Row> rows_;
-  const uint16_t *default_cost_ = nullptr;
+  const uint16_t* default_cost_ = nullptr;
   int resolution_ = 0;
   uint32_t cache_hash_mask_ = 0;
   // Cache for transition cost.
@@ -82,16 +82,16 @@ class Connector::Row final {
       : chunk_bits_index_(sizeof(uint32_t)),
         compact_bits_index_(sizeof(uint32_t)) {}
 
-  void Init(const uint8_t *chunk_bits, size_t chunk_bits_size,
-            const uint8_t *compact_bits, size_t compact_bits_size,
-            const uint8_t *values, bool use_1byte_value);
+  void Init(const uint8_t* chunk_bits, size_t chunk_bits_size,
+            const uint8_t* compact_bits, size_t compact_bits_size,
+            const uint8_t* values, bool use_1byte_value);
   // Returns the value in the row if found.
   std::optional<uint16_t> GetValue(uint16_t index) const;
 
  private:
   storage::louds::SimpleSuccinctBitVectorIndex chunk_bits_index_;
   storage::louds::SimpleSuccinctBitVectorIndex compact_bits_index_;
-  const uint8_t *values_ = nullptr;
+  const uint8_t* values_ = nullptr;
   bool use_1byte_value_ = false;
 };
 

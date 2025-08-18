@@ -51,8 +51,8 @@ class PosIdPrinter {
  public:
   explicit PosIdPrinter(InputFileStream id_def);
   // Movable.
-  PosIdPrinter(PosIdPrinter &&) = default;
-  PosIdPrinter &operator=(PosIdPrinter &&) = default;
+  PosIdPrinter(PosIdPrinter&&) = default;
+  PosIdPrinter& operator=(PosIdPrinter&&) = default;
 
   ~PosIdPrinter() = default;
 

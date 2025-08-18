@@ -39,11 +39,11 @@ class ImmutableConverterFactory {
   ImmutableConverterFactory() = delete;
 
   // return singleton object
-  static ImmutableConverterInterface *GetImmutableConverter();
+  static ImmutableConverterInterface* GetImmutableConverter();
 
   // dependency injection for unittesting
   static void SetImmutableConverter(
-      ImmutableConverterInterface *immutable_converter);
+      ImmutableConverterInterface* immutable_converter);
 };
 
 }  // namespace mozc

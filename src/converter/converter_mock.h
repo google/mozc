@@ -48,28 +48,28 @@ class StrictMockConverter : public ConverterInterface {
   ~StrictMockConverter() override = default;
 
   MOCK_METHOD(bool, StartConversion,
-              (const ConversionRequest &request, Segments *segments),
+              (const ConversionRequest& request, Segments* segments),
               (const, override));
   MOCK_METHOD(bool, StartReverseConversion,
               (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartPrediction,
-              (const ConversionRequest &request, Segments *segments),
+              (const ConversionRequest& request, Segments* segments),
               (const, override));
   MOCK_METHOD(bool, StartPredictionWithPreviousSuggestion,
-              (const ConversionRequest &request,
-               const Segment &previous_segment, Segments *segments),
+              (const ConversionRequest& request,
+               const Segment& previous_segment, Segments* segments),
               (const, override));
   MOCK_METHOD(void, PrependCandidates,
-              (const ConversionRequest &request, const Segment &segment,
-               Segments *segments),
+              (const ConversionRequest& request, const Segment& segment,
+               Segments* segments),
               (const, override));
   MOCK_METHOD(void, FinishConversion,
-              (const ConversionRequest &request, Segments *segments),
+              (const ConversionRequest& request, Segments* segments),
               (const, override));
   MOCK_METHOD(void, CancelConversion, (Segments * segments), (const, override));
   MOCK_METHOD(void, ResetConversion, (Segments * segments), (const, override));
   MOCK_METHOD(void, RevertConversion, (Segments * segments), (const, override));
-  MOCK_METHOD(bool, DeleteCandidateFromHistory, (const Segments &, size_t, int),
+  MOCK_METHOD(bool, DeleteCandidateFromHistory, (const Segments&, size_t, int),
               (const));
   MOCK_METHOD(bool, ReconstructHistory,
               (Segments * segments, absl::string_view preceding_text),
@@ -89,11 +89,11 @@ class StrictMockConverter : public ConverterInterface {
               (Segments * segments, absl::Span<const size_t> candidate_index),
               (const, override));
   MOCK_METHOD(bool, ResizeSegment,
-              (Segments * segments, const ConversionRequest &request,
+              (Segments * segments, const ConversionRequest& request,
                size_t segment_index, int offset_length),
               (const, override));
   MOCK_METHOD(bool, ResizeSegments,
-              (Segments * segments, const ConversionRequest &request,
+              (Segments * segments, const ConversionRequest& request,
                size_t start_segment_index,
                absl::Span<const uint8_t> new_size_array),
               (const, override));

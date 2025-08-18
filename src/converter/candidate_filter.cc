@@ -94,9 +94,9 @@ constexpr int32_t kStopEnumerationCacheSize = 30;
 
 // Returns true if the given node sequence is noisy weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
-inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
-                                const dictionary::PosMatcher &pos_matcher,
-                                const Candidate *candidate) {
+inline bool IsNoisyWeakCompound(const absl::Span<const Node* const> nodes,
+                                const dictionary::PosMatcher& pos_matcher,
+                                const Candidate* candidate) {
   if (nodes.size() <= 1) {
     return false;
   }
@@ -142,9 +142,9 @@ inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
 
 // Returns true if the given node sequence is connected weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
-inline bool IsConnectedWeakCompound(const absl::Span<const Node *const> nodes,
-                                    const dictionary::PosMatcher &pos_matcher,
-                                    const Candidate *candidate) {
+inline bool IsConnectedWeakCompound(const absl::Span<const Node* const> nodes,
+                                    const dictionary::PosMatcher& pos_matcher,
+                                    const Candidate* candidate) {
   if (nodes.size() <= 1) {
     return false;
   }
@@ -167,16 +167,16 @@ inline bool IsConnectedWeakCompound(const absl::Span<const Node *const> nodes,
   return false;
 }
 
-bool IsIsolatedWordOrGeneralSymbol(const dictionary::PosMatcher &pos_matcher,
+bool IsIsolatedWordOrGeneralSymbol(const dictionary::PosMatcher& pos_matcher,
                                    uint16_t pos_id) {
   return pos_matcher.IsIsolatedWord(pos_id) ||
          pos_matcher.IsGeneralSymbol(pos_id);
 }
 
 bool ContainsIsolatedWordOrGeneralSymbol(
-    const dictionary::PosMatcher &pos_matcher,
-    const absl::Span<const Node *const> nodes) {
-  for (const Node *node : nodes) {
+    const dictionary::PosMatcher& pos_matcher,
+    const absl::Span<const Node* const> nodes) {
+  for (const Node* node : nodes) {
     if (IsIsolatedWordOrGeneralSymbol(pos_matcher, node->lid)) {
       return true;
     }
@@ -184,22 +184,22 @@ bool ContainsIsolatedWordOrGeneralSymbol(
   return false;
 }
 
-bool IsNormalOrConstrainedNode(const Node *node) {
+bool IsNormalOrConstrainedNode(const Node* node) {
   return node != nullptr && (node->node_type == Node::NOR_NODE ||
                              node->node_type == Node::CON_NODE);
 }
 
-bool IsCompoundCandidate(const absl::Span<const Node *const> nodes) {
+bool IsCompoundCandidate(const absl::Span<const Node* const> nodes) {
   return nodes.size() == 1 && nodes[0]->lid != nodes[0]->rid;
 }
 
-bool IsSuffixNode(const dictionary::PosMatcher &pos_matcher, const Node &node) {
+bool IsSuffixNode(const dictionary::PosMatcher& pos_matcher, const Node& node) {
   return pos_matcher.IsSuffixWord(node.lid) &&
          pos_matcher.IsSuffixWord(node.rid);
 }
 
-bool IsFunctionalNode(const dictionary::PosMatcher &pos_matcher,
-                      const Node &node) {
+bool IsFunctionalNode(const dictionary::PosMatcher& pos_matcher,
+                      const Node& node) {
   return pos_matcher.IsFunctional(node.lid) &&
          pos_matcher.IsFunctional(node.rid);
 }
@@ -207,8 +207,8 @@ bool IsFunctionalNode(const dictionary::PosMatcher &pos_matcher,
 // Returns true if the node structure is
 // content_word + suffix_word*N + (suffix_word|functional_word).
 // Example: "行き+ます", "山+が", etc.
-bool IsTypicalNodeStructure(const dictionary::PosMatcher &pos_matcher,
-                            const absl::Span<const Node *const> nodes) {
+bool IsTypicalNodeStructure(const dictionary::PosMatcher& pos_matcher,
+                            const absl::Span<const Node* const> nodes) {
   DCHECK_GT(nodes.size(), 1);
   if (IsSuffixNode(pos_matcher, *nodes[0])) {
     return false;
@@ -223,8 +223,8 @@ bool IsTypicalNodeStructure(const dictionary::PosMatcher &pos_matcher,
 }
 
 // Returns true if |lnodes| and |rnodes| have the same Pos structure.
-bool IsSameNodeStructure(const absl::Span<const Node *const> lnodes,
-                         const absl::Span<const Node *const> rnodes) {
+bool IsSameNodeStructure(const absl::Span<const Node* const> lnodes,
+                         const absl::Span<const Node* const> rnodes) {
   if (lnodes.size() != rnodes.size()) {
     return false;
   }
@@ -237,9 +237,9 @@ bool IsSameNodeStructure(const absl::Span<const Node *const> lnodes,
 }
 
 // Returns true if there is a number node that does not follow the
-bool IsNoisyNumberCandidate(const dictionary::PosMatcher &pos_matcher,
-                            const absl::Span<const Node *const> nodes) {
-  auto is_converted_number = [&](const Node &node) {
+bool IsNoisyNumberCandidate(const dictionary::PosMatcher& pos_matcher,
+                            const absl::Span<const Node* const> nodes) {
+  auto is_converted_number = [&](const Node& node) {
     if (node.lid != node.rid) {
       return false;
     }
@@ -268,9 +268,9 @@ bool IsNoisyNumberCandidate(const dictionary::PosMatcher &pos_matcher,
 
 }  // namespace
 
-CandidateFilter::CandidateFilter(const UserDictionaryInterface &user_dictionary,
-                                 const PosMatcher &pos_matcher,
-                                 const SuggestionFilter &suggestion_filter)
+CandidateFilter::CandidateFilter(const UserDictionaryInterface& user_dictionary,
+                                 const PosMatcher& pos_matcher,
+                                 const SuggestionFilter& suggestion_filter)
     : user_dictionary_(user_dictionary),
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
@@ -282,9 +282,9 @@ void CandidateFilter::Reset() {
 }
 
 CandidateFilter::ResultType CandidateFilter::CheckRequestType(
-    const ConversionRequest &request, const absl::string_view original_key,
-    const Candidate &candidate,
-    const absl::Span<const Node *const> nodes) const {
+    const ConversionRequest& request, const absl::string_view original_key,
+    const Candidate& candidate,
+    const absl::Span<const Node* const> nodes) const {
   // Filtering by the suggestion filter, which is applied only for the
   // PREDICTION and SUGGESTION modes.
   switch (request.request_type()) {
@@ -340,9 +340,9 @@ CandidateFilter::ResultType CandidateFilter::CheckRequestType(
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
-    const ConversionRequest &request, const absl::string_view original_key,
-    const Candidate *candidate, const absl::Span<const Node *const> top_nodes,
-    const absl::Span<const Node *const> nodes) {
+    const ConversionRequest& request, const absl::string_view original_key,
+    const Candidate* candidate, const absl::Span<const Node* const> top_nodes,
+    const absl::Span<const Node* const> nodes) {
   DCHECK(candidate);
 
   if (ResultType result =
@@ -628,7 +628,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   if (nodes.size() >= 2) {
     int number_nodes = 0;
     uint16_t prev_lid = 0;
-    for (const auto &node : nodes) {
+    for (const auto& node : nodes) {
       if (Util::IsScriptType(node->key, Util::NUMBER)) {
         continue;
       }
@@ -657,9 +657,9 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidate(
-    const ConversionRequest &request, const absl::string_view original_key,
-    const Candidate *candidate, const absl::Span<const Node *const> top_nodes,
-    const absl::Span<const Node *const> nodes) {
+    const ConversionRequest& request, const absl::string_view original_key,
+    const Candidate* candidate, const absl::Span<const Node* const> top_nodes,
+    const absl::Span<const Node* const> nodes) {
   if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
     // In reverse conversion, only remove duplicates because the filtering
     // criteria of FilterCandidateInternal() are completely designed for

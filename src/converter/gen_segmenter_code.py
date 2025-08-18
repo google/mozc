@@ -64,7 +64,7 @@ def ReadPOSID(id_file, special_pos_file):
     if len(line) <= 1 or line[0] == "#":
       continue
     fields = line.split()
-    pos[fields[0]] = ("%d" % max_id)
+    pos[fields[0]] = "%d" % max_id
     max_id = max_id + 1
 
   return pos
@@ -130,9 +130,11 @@ def main():
     rcond = GetRange(pos, r, "lid") or "true"
     print("  // %s %s %s" % (l, r, result), file=out)
     print(
-        "  if ((%s) && (%s)) { return %s; }" % (lcond, rcond, result), file=out)
+        "  if ((%s) && (%s)) { return %s; }" % (lcond, rcond, result), file=out
+    )
 
   print(FOOTER, file=out)
+
 
 if __name__ == "__main__":
   main()

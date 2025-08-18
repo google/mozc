@@ -47,20 +47,19 @@ using ::testing::Not;
 using ::testing::Pointee;
 using ::testing::StrEq;
 
-Candidate MakeCandidate(const std::string &key,
-                                 const std::string &value) {
+Candidate MakeCandidate(const std::string& key, const std::string& value) {
   Candidate cand;
   cand.key = key;
   cand.value = value;
   return cand;
 }
 
-Segment MakeSegment(const std::string &key,
+Segment MakeSegment(const std::string& key,
                     absl::Span<const std::string> values) {
   Segment seg;
   seg.set_key(key);
-  for (const std::string &val : values) {
-    Candidate *cand = seg.add_candidate();
+  for (const std::string& val : values) {
+    Candidate* cand = seg.add_candidate();
     cand->key = key;
     cand->value = val;
   }
@@ -96,10 +95,9 @@ TEST(SegmentsMatchersTest, CandidatesAreArray) {
 TEST(SegmentsMatchersTest, CandidatesAreArrayWithCustomMatcher) {
   const Segment x = MakeSegment("key", {"value1", "value2"});
   constexpr auto KeyAndValueAre =
-      [](const auto &key,
-         const auto &value) -> Matcher<const Candidate *> {
-    return Pointee(AllOf(Field(&Candidate::key, key),
-                         Field(&Candidate::value, value)));
+      [](const auto& key, const auto& value) -> Matcher<const Candidate*> {
+    return Pointee(
+        AllOf(Field(&Candidate::key, key), Field(&Candidate::value, value)));
   };
   EXPECT_THAT(x, CandidatesAreArray({
                      KeyAndValueAre("key", "value1"),
@@ -116,7 +114,7 @@ TEST(SegmentsMatchersTest, HasSingleCandidate) {
 
 TEST(SegmentsMatchersTest, ContainsCandidate) {
   const Segment x = MakeSegment("key", {"value1", "value2", "value3"});
-  constexpr auto ValueIs = [](const auto &value) {
+  constexpr auto ValueIs = [](const auto& value) {
     return Field(&Candidate::value, StrEq(value));
   };
   EXPECT_THAT(x, ContainsCandidate(ValueIs("value1")));

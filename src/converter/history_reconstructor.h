@@ -42,21 +42,21 @@ namespace converter {
 
 class HistoryReconstructor {
  public:
-  explicit HistoryReconstructor(const dictionary::PosMatcher &pos_matcher);
+  explicit HistoryReconstructor(const dictionary::PosMatcher& pos_matcher);
 
   [[nodiscard]]
   bool ReconstructHistory(absl::string_view preceding_text,
-                          Segments *segments) const;
+                          Segments* segments) const;
 
  private:
   friend class HistoryReconstructorTestPeer;
 
   // Returns the substring of |str|. This substring consists of similar script
   // type and you can use it as preceding text for conversion.
-  bool GetLastConnectivePart(absl::string_view preceding_text, std::string *key,
-                             std::string *value, uint16_t *id) const;
+  bool GetLastConnectivePart(absl::string_view preceding_text, std::string* key,
+                             std::string* value, uint16_t* id) const;
 
-  const dictionary::PosMatcher &pos_matcher_;
+  const dictionary::PosMatcher& pos_matcher_;
 };
 
 }  // namespace converter

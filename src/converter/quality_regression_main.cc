@@ -62,7 +62,7 @@ using ::mozc::Engine;
 using ::mozc::TempDirectory;
 using ::mozc::quality_regression::QualityRegressionUtil;
 
-absl::Status Run(std::ostream &out, const Engine &engine,
+absl::Status Run(std::ostream& out, const Engine& engine,
                  absl::string_view engine_type,
                  absl::Span<const QualityRegressionUtil::TestItem> items) {
   QualityRegressionUtil util(engine.GetConverter());
@@ -71,7 +71,7 @@ absl::Status Run(std::ostream &out, const Engine &engine,
     mozc::request_test_util::FillMobileRequest(&request);
     util.SetRequest(request);
   }
-  for (const QualityRegressionUtil::TestItem &item : items) {
+  for (const QualityRegressionUtil::TestItem& item : items) {
     std::string actual_value;
     const absl::StatusOr<bool> result =
         util.ConvertAndTest(item, &actual_value);
@@ -91,7 +91,7 @@ absl::Status Run(std::ostream &out, const Engine &engine,
 
 }  // namespace
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   absl::StatusOr<TempDirectory> temp_dir =
       TempDirectory::Default().CreateTempDirectory();

@@ -51,7 +51,7 @@ namespace converter {
 
 class SegmentsPoolAccessorTestPeer : testing::TestPeer<Segments> {
  public:
-  explicit SegmentsPoolAccessorTestPeer(Segments &segments)
+  explicit SegmentsPoolAccessorTestPeer(Segments& segments)
       : testing::TestPeer<Segments>(segments) {}
 
   size_t released_size() const { return value_.pool_.released_size(); }
@@ -60,9 +60,9 @@ class SegmentsPoolAccessorTestPeer : testing::TestPeer<Segments> {
 using ::testing::ElementsAre;
 
 template <typename T>
-static std::vector<absl::string_view> ToKeys(const T &segments) {
+static std::vector<absl::string_view> ToKeys(const T& segments) {
   std::vector<absl::string_view> keys;
-  for (const Segment &segment : segments) {
+  for (const Segment& segment : segments) {
     keys.push_back(segment.key());
   }
   return keys;
@@ -74,7 +74,7 @@ TEST(SegmentsTest, BasicTest) {
   EXPECT_EQ(segments.segments_size(), 0);
 
   constexpr int kSegmentsSize = 5;
-  Segment *seg[kSegmentsSize];
+  Segment* seg[kSegmentsSize];
   for (int i = 0; i < kSegmentsSize; ++i) {
     EXPECT_EQ(segments.segments_size(), i);
     seg[i] = segments.push_back_segment();
@@ -191,7 +191,7 @@ TEST(SegmentTest, CandidateTest) {
   EXPECT_EQ(segment.segment_type(), Segment::FIXED_BOUNDARY);
 
   constexpr int kCandidatesSize = 5;
-  Candidate *cand[kCandidatesSize];
+  Candidate* cand[kCandidatesSize];
   for (int i = 0; i < kCandidatesSize; ++i) {
     EXPECT_EQ(segment.candidates_size(), i);
     cand[i] = segment.push_back_candidate();
@@ -318,10 +318,10 @@ TEST(SegmentsTest, CopyTest) {
   constexpr int kCandidatesSize = 2;
 
   for (int i = 0; i < kSegmentsSize; ++i) {
-    Segment *segment = src.add_segment();
+    Segment* segment = src.add_segment();
     segment->set_key(absl::StrFormat("segment_%d", i));
     for (int j = 0; j < kCandidatesSize; ++j) {
-      Candidate *candidate = segment->add_candidate();
+      Candidate* candidate = segment->add_candidate();
       candidate->key = absl::StrFormat("candidate_%d", i);
     }
   }
@@ -352,7 +352,7 @@ TEST(SegmentsTest, InitForConvert) {
   EXPECT_EQ(segments.conversion_segment(0).segment_type(), Segment::FREE);
   EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
 
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("second");
   EXPECT_EQ(segments.conversion_segments_size(), 2);
 
@@ -366,7 +366,7 @@ TEST(SegmentsTest, InitForCommit) {
   Segments segments;
   segments.InitForCommit("key", "value");
   EXPECT_EQ(segments.conversion_segments_size(), 1);
-  const Segment &segment = segments.conversion_segment(0);
+  const Segment& segment = segments.conversion_segment(0);
   EXPECT_EQ(segment.key(), "key");
   EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
   ASSERT_EQ(segment.candidates_size(), 1);
@@ -385,14 +385,14 @@ TEST(SegmentsTest, PrependCandidates) {
   EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
   EXPECT_EQ(segments.conversion_segment(0).meta_candidates_size(), 0);
 
-  Candidate *candidate =
+  Candidate* candidate =
       segments.mutable_conversion_segment(0)->add_candidate();
   candidate->key = "key";
   candidate->value = "base";
 
-  std::vector<Candidate> *meta_candidates =
+  std::vector<Candidate>* meta_candidates =
       segments.mutable_conversion_segment(0)->mutable_meta_candidates();
-  Candidate &meta_candidate = meta_candidates->emplace_back();
+  Candidate& meta_candidate = meta_candidates->emplace_back();
   meta_candidate.key = "key";
   meta_candidate.value = "meta";
 
@@ -402,16 +402,16 @@ TEST(SegmentsTest, PrependCandidates) {
   Segment prepended_segment;
   {
     prepended_segment.set_key("key2");
-    Candidate *candidate1 = prepended_segment.add_candidate();
+    Candidate* candidate1 = prepended_segment.add_candidate();
     candidate1->key = "key2";
     candidate1->value = "prepended1";
-    Candidate *candidate2 = prepended_segment.add_candidate();
+    Candidate* candidate2 = prepended_segment.add_candidate();
     candidate2->key = "key2";
     candidate2->value = "prepended2";
 
-    std::vector<Candidate> *meta_candidates =
+    std::vector<Candidate>* meta_candidates =
         prepended_segment.mutable_meta_candidates();
-    Candidate &meta_candidate = meta_candidates->emplace_back();
+    Candidate& meta_candidate = meta_candidates->emplace_back();
     meta_candidate.key = "key2";
     meta_candidate.value = "prepended_meta";
   }
@@ -430,16 +430,16 @@ TEST(SegmentsTest, PrependCandidates) {
 }
 
 namespace {
-Segment &AddSegment(absl::string_view key, Segment::SegmentType type,
-                    Segments &segments) {
-  Segment *segment = segments.add_segment();
+Segment& AddSegment(absl::string_view key, Segment::SegmentType type,
+                    Segments& segments) {
+  Segment* segment = segments.add_segment();
   segment->set_key(key);
   segment->set_segment_type(type);
   return *segment;
 }
 
-void PushBackCandidate(absl::string_view text, Segment &segment) {
-  Candidate *cand = segment.push_back_candidate();
+void PushBackCandidate(absl::string_view text, Segment& segment) {
+  Candidate* cand = segment.push_back_candidate();
   cand->key = std::string(text);
   cand->content_key = cand->key;
   cand->value = cand->key;
@@ -484,9 +484,9 @@ TEST(SegmentsTest, Resize) {
     // Even if segments has histroy segments, arguments for ResizeSegment is not
     // changed.
     Segments segments;
-    Segment &history0 = AddSegment("やゆよ", Segment::HISTORY, segments);
+    Segment& history0 = AddSegment("やゆよ", Segment::HISTORY, segments);
     PushBackCandidate("ヤユヨ", history0);
-    Segment &history1 = AddSegment("わをん", Segment::HISTORY, segments);
+    Segment& history1 = AddSegment("わをん", Segment::HISTORY, segments);
     PushBackCandidate("ワヲン", history1);
     AddSegment("あいうえ", Segment::FREE, segments);
     // start_segment_index should skip history segments.
@@ -615,7 +615,7 @@ TEST(SegmentsTest, Resize) {
     // Since {"あいう", "えお"} may be modified too, the segment index for
     // "かきくけ" may be different from 2.
     const size_t resized_size = segments.conversion_segments_size();
-    const Segment &last_segment = segments.conversion_segment(resized_size - 1);
+    const Segment& last_segment = segments.conversion_segment(resized_size - 1);
     EXPECT_EQ(last_segment.key(), "かきくけ");
     EXPECT_EQ(last_segment.segment_type(), kFixedBoundary);
   }
@@ -634,11 +634,11 @@ TEST(SegmentTest, Copy) {
 
   src.set_key("key");
   src.set_segment_type(Segment::FIXED_VALUE);
-  Candidate *candidate1 = src.add_candidate();
+  Candidate* candidate1 = src.add_candidate();
   candidate1->key = "candidate1->key";
-  Candidate *candidate2 = src.add_candidate();
+  Candidate* candidate2 = src.add_candidate();
   candidate2->key = "candidate2->key";
-  Candidate *meta_candidate = src.add_meta_candidate();
+  Candidate* meta_candidate = src.add_meta_candidate();
   meta_candidate->key = "meta_candidate->key";
 
   // Test copy constructor.
@@ -676,7 +676,7 @@ TEST(SegmentTest, MetaCandidateTest) {
   // add_meta_candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
     EXPECT_EQ(segment.meta_candidates_size(), i);
-    Candidate *cand = segment.add_meta_candidate();
+    Candidate* cand = segment.add_meta_candidate();
     cand->value = values[i];
     EXPECT_EQ(segment.meta_candidates_size(), i + 1);
   }
@@ -684,32 +684,32 @@ TEST(SegmentTest, MetaCandidateTest) {
   // mutable_candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
     const int meta_idx = -static_cast<int>(i) - 1;
-    Candidate *cand = segment.mutable_candidate(meta_idx);
+    Candidate* cand = segment.mutable_candidate(meta_idx);
     EXPECT_EQ(cand->value, values[i]);
   }
 
   // mutable_meta_candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
-    Candidate *cand = segment.mutable_meta_candidate(i);
+    Candidate* cand = segment.mutable_meta_candidate(i);
     EXPECT_EQ(cand->value, values[i]);
   }
 
   // candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
     const int meta_idx = -static_cast<int>(i) - 1;
-    const Candidate &cand = segment.candidate(meta_idx);
+    const Candidate& cand = segment.candidate(meta_idx);
     EXPECT_EQ(cand.value, values[i]);
   }
 
   // meta_candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
-    const Candidate &cand = segment.meta_candidate(i);
+    const Candidate& cand = segment.meta_candidate(i);
     EXPECT_EQ(cand.value, values[i]);
   }
 
   // mutable_meta_candidates
   {
-    std::vector<Candidate> *meta_candidates = segment.mutable_meta_candidates();
+    std::vector<Candidate>* meta_candidates = segment.mutable_meta_candidates();
     EXPECT_EQ(meta_candidates->size(), kCandidatesSize);
     Candidate cand;
     cand.value = "Test";
@@ -735,28 +735,28 @@ TEST(SegmentTest, Iterator) {
   constexpr int kHistorySize = 2;
   constexpr int kConversionSize = 3;
   Segments segments;
-  std::vector<Segment *> segment_list;
+  std::vector<Segment*> segment_list;
   for (int i = 0; i < kHistorySize; ++i) {
-    Segment *segment = segments.push_back_segment();
+    Segment* segment = segments.push_back_segment();
     segment->set_segment_type(Segment::HISTORY);
     segment_list.push_back(segment);
   }
   for (int i = 0; i < kConversionSize; ++i) {
-    Segment *segment = segments.push_back_segment();
+    Segment* segment = segments.push_back_segment();
     segment->set_segment_type(Segment::FIXED_VALUE);
     segment_list.push_back(segment);
   }
 
   // Test the iterator for `Segments`.
   int i = 0;
-  for (const Segment &segment : segments) {
+  for (const Segment& segment : segments) {
     EXPECT_EQ(&segment, segment_list[i++]);
   }
   EXPECT_EQ(i, kHistorySize + kConversionSize);
 
   // Test the iterator for `Segments::history_segments()`.
   i = 0;
-  for (const Segment &segment : segments.history_segments()) {
+  for (const Segment& segment : segments.history_segments()) {
     EXPECT_EQ(&segment, segment_list[i++]);
   }
   EXPECT_EQ(i, kHistorySize);
@@ -764,7 +764,7 @@ TEST(SegmentTest, Iterator) {
   EXPECT_EQ(segments.history_segments().size(), kHistorySize);
 
   // Test the iterator for `Segments::conversion_segments()`.
-  for (const Segment &segment : segments.conversion_segments()) {
+  for (const Segment& segment : segments.conversion_segments()) {
     EXPECT_EQ(&segment, segment_list[i++]);
   }
   EXPECT_EQ(i, kHistorySize + kConversionSize);
@@ -775,7 +775,7 @@ TEST(SegmentTest, Iterator) {
 TEST(SegmentTest, IteratorConstness) {
   // Create a test `Segments`.
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_segment_type(Segment::FIXED_VALUE);
 
   // Dereferencing the iterator of non-const `Segments` should be non-const.
@@ -783,10 +783,10 @@ TEST(SegmentTest, IteratorConstness) {
       !std::is_const_v<std::remove_reference_t<decltype(*segments.begin())>>);
 
   // Dereferencing the iterator of const `Segments` should be const.
-  const Segments &segments_const_ref = segments;
+  const Segments& segments_const_ref = segments;
   auto it_const = segments_const_ref.begin();
   static_assert(std::is_const_v<std::remove_reference_t<decltype(*it_const)>>);
-  auto &value_const_ref = *it_const;
+  auto& value_const_ref = *it_const;
   static_assert(
       std::is_const_v<std::remove_reference_t<decltype(value_const_ref)>>);
 
@@ -796,7 +796,7 @@ TEST(SegmentTest, IteratorConstness) {
   static_assert(
       std::is_const_v<
           std::remove_reference_t<decltype(*it_const_conversion_segments)>>);
-  auto &value_const_conversion_segments = *it_const_conversion_segments;
+  auto& value_const_conversion_segments = *it_const_conversion_segments;
   static_assert(
       std::is_const_v<
           std::remove_reference_t<decltype(value_const_conversion_segments)>>);
@@ -804,7 +804,7 @@ TEST(SegmentTest, IteratorConstness) {
   // As per the STL requirements, `iterator` should be type convertible to
   // `const_iterator`.
   it_const = segments.begin();
-  auto &value_const_ref2 = *it_const;
+  auto& value_const_ref2 = *it_const;
   static_assert(
       std::is_const_v<std::remove_reference_t<decltype(value_const_ref2)>>);
 }
@@ -813,7 +813,7 @@ TEST(SegmentTest, IteratorRange) {
   // Create a test `Segments`.
   Segments segments;
   for (int i = 0; i < 5; ++i) {
-    Segment *segment = segments.push_back_segment();
+    Segment* segment = segments.push_back_segment();
     segment->set_segment_type(Segment::FIXED_VALUE);
     segment->set_key(std::to_string(i));
   }

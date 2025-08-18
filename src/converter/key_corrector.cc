@@ -50,8 +50,8 @@ namespace {
 // "んう" -> "んぬ"
 // "んえ" -> "んね"
 // "んお" -> "んの"
-bool RewriteNN(size_t key_pos, const char *begin, const char *end,
-               size_t *mblen, std::string *output) {
+bool RewriteNN(size_t key_pos, const char* begin, const char* end,
+               size_t* mblen, std::string* output) {
   if (key_pos == 0) {
     *mblen = 0;
     return false;
@@ -109,8 +109,8 @@ bool RewriteNN(size_t key_pos, const char *begin, const char *end,
 // "([^ん])んん[ん]" -> ignore
 // "([^ん])んん[あいうえお]" ->  $1 and leave "ん[あいうえお]"
 // "([^ん])んん[^あいうえお]" -> $1"ん" and leave "[^あいうえお]"
-bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
-                     size_t *mblen, std::string *output) {
+bool RewriteDoubleNN(size_t key_pos, const char* begin, const char* end,
+                     size_t* mblen, std::string* output) {
   // 0x3093: "ん"
   static const uint16_t kPattern[] = {0x0000, 0x3093, 0x3093};
 
@@ -176,8 +176,8 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
 // "にゃ" -> "んや"
 // "にゅ" -> "んゆ"
 // "にょ" -> "んよ"
-bool RewriteNI(size_t key_pos, const char *begin, const char *end,
-               size_t *mblen, std::string *output) {
+bool RewriteNI(size_t key_pos, const char* begin, const char* end,
+               size_t* mblen, std::string* output) {
   const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, mblen);
   if (codepoint != 0x306B) {  // "に"
     *mblen = 0;
@@ -223,8 +223,8 @@ bool RewriteNI(size_t key_pos, const char *begin, const char *end,
 
 // "m" Pattern (not BOS)
 // "m[ばびぶべぼぱぴぷぺぽ]" -> "ん[ばびぶべぼぱぴぷぺぽ]"
-bool RewriteM(size_t key_pos, const char *begin, const char *end, size_t *mblen,
-              std::string *output) {
+bool RewriteM(size_t key_pos, const char* begin, const char* end, size_t* mblen,
+              std::string* output) {
   if (key_pos == 0) {
     *mblen = 0;
     return false;
@@ -264,8 +264,8 @@ bool RewriteM(size_t key_pos, const char *begin, const char *end, size_t *mblen,
 // replace "([^っ])っっ([^っ])" => "$1っ$2"
 // Don't consider more that three "っっっ"
 // e.g., "かっっった" -> "かっっった"
-bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
-                     size_t *mblen, std::string *output) {
+bool RewriteSmallTSU(size_t key_pos, const char* begin, const char* end,
+                     size_t* mblen, std::string* output) {
   // 0x0000 is a place holder for "[^っ]"
   // "っ": 0x3063
   static const uint16_t kPattern[] = {0x0000, 0x3063, 0x3063, 0x0000};
@@ -315,8 +315,8 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
 // "にゅ[^う] -> にゅう"
 // "ひゅ[^う] -> ひゅう"
 // "りゅ[^う] -> りゅう"
-bool RewriteYu(size_t key_pos, const char *begin, const char *end,
-               size_t *mblen, std::string *output) {
+bool RewriteYu(size_t key_pos, const char* begin, const char* end,
+               size_t* mblen, std::string* output) {
   const char32_t first_char = Util::Utf8ToCodepoint(begin, end, mblen);
   if (first_char != 0x304D && first_char != 0x3057 && first_char != 0x3061 &&
       first_char != 0x306B && first_char != 0x3072 &&
@@ -399,9 +399,9 @@ bool KeyCorrector::CorrectKey(absl::string_view key, InputMode mode,
 
   original_key_ = key;
 
-  const char *begin = key.data();
-  const char *end = key.data() + key.size();
-  const char *input_begin = key.data() + history_size;
+  const char* begin = key.data();
+  const char* end = key.data() + key.size();
+  const char* input_begin = key.data() + history_size;
   size_t key_pos = 0;
 
   while (begin < end) {
@@ -456,8 +456,8 @@ bool KeyCorrector::CorrectKey(absl::string_view key, InputMode mode,
   return true;
 }
 
-const char *KeyCorrector::GetCorrectedPrefix(const size_t original_key_pos,
-                                             size_t *length) const {
+const char* KeyCorrector::GetCorrectedPrefix(const size_t original_key_pos,
+                                             size_t* length) const {
   if (!IsAvailable()) {
     *length = 0;
     return nullptr;
@@ -474,9 +474,9 @@ const char *KeyCorrector::GetCorrectedPrefix(const size_t original_key_pos,
     return nullptr;
   }
 
-  const char *corrected_substr = corrected_key_.data() + corrected_key_pos;
+  const char* corrected_substr = corrected_key_.data() + corrected_key_pos;
   const size_t corrected_length = corrected_key_.size() - corrected_key_pos;
-  const char *original_substr = original_key_.data() + original_key_pos;
+  const char* original_substr = original_key_.data() + original_key_pos;
   const size_t original_length = original_key_.size() - original_key_pos;
   // substrs are different
   if (original_length != corrected_length ||

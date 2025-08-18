@@ -80,16 +80,16 @@ constexpr char kSuggestionNotExpect[] = "Suggestion Not Expected";
 constexpr char kZeroQueryExpect[] = "ZeroQuery Expected";
 constexpr char kZeroQueryNotExpect[] = "ZeroQuery Not Expected";
 
-int GetRank(absl::string_view value, const Segments *segments,
+int GetRank(absl::string_view value, const Segments* segments,
             size_t current_segment) {
   if (current_segment == segments->segments_size()) {
     return value.empty() ? 0 : -1;
   }
-  const Segment &seg = segments->segment(current_segment);
+  const Segment& seg = segments->segment(current_segment);
   int rank = 0;
   absl::flat_hash_set<absl::string_view> dedup;
-  for (const Candidate *cand : seg.candidates()) {
-    const std::string &cand_value = cand->value;
+  for (const Candidate* cand : seg.candidates()) {
+    const std::string& cand_value = cand->value;
     const bool new_value = dedup.insert(cand_value).second;
     if (!new_value) {
       // The value is duplicated and already checked.
@@ -139,7 +139,7 @@ std::string QualityRegressionUtil::TestItem::OutputAsTSV() const {
 }
 
 absl::Status QualityRegressionUtil::TestItem::ParseFromTSV(
-    const std::string &line) {
+    const std::string& line) {
   std::vector<absl::string_view> tokens =
       absl::StrSplit(line, '\t', absl::SkipEmpty());
   if (tokens.size() < 4) {
@@ -193,8 +193,8 @@ QualityRegressionUtil::QualityRegressionUtil(
 
 namespace {
 absl::Status ParseFileInternal(
-    const std::string &filename,
-    std::vector<QualityRegressionUtil::TestItem> *outputs) {
+    const std::string& filename,
+    std::vector<QualityRegressionUtil::TestItem>* outputs) {
   // TODO(taku): support an XML file of Mozcsu.
   InputFileStream ifs(filename);
   if (!ifs.good()) {
@@ -217,17 +217,17 @@ absl::Status ParseFileInternal(
 }  // namespace
 
 // static
-absl::Status QualityRegressionUtil::ParseFile(const std::string &filename,
-                                              std::vector<TestItem> *outputs) {
+absl::Status QualityRegressionUtil::ParseFile(const std::string& filename,
+                                              std::vector<TestItem>* outputs) {
   outputs->clear();
   return ParseFileInternal(filename, outputs);
 }
 
 // static
 absl::Status QualityRegressionUtil::ParseFiles(
-    absl::Span<const std::string> filenames, std::vector<TestItem> *outputs) {
+    absl::Span<const std::string> filenames, std::vector<TestItem>* outputs) {
   outputs->clear();
-  for (const std::string &filename : filenames) {
+  for (const std::string& filename : filenames) {
     const absl::Status result = ParseFileInternal(filename, outputs);
     if (!result.ok()) {
       return result;
@@ -237,10 +237,10 @@ absl::Status QualityRegressionUtil::ParseFiles(
 }
 
 absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
-    const TestItem &item, std::string *actual_value) {
-  const std::string &key = item.key;
-  const std::string &expected_value = item.expected_value;
-  const std::string &command = item.command;
+    const TestItem& item, std::string* actual_value) {
+  const std::string& key = item.key;
+  const std::string& expected_value = item.expected_value;
+  const std::string& command = item.command;
   const int expected_rank = item.expected_rank;
 
   CHECK(actual_value);
@@ -356,7 +356,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     return true;
   }
 
-  for (const Segment &segment : segments_) {
+  for (const Segment& segment : segments_) {
     *actual_value += segment.candidate(0).value;
   }
 
@@ -381,11 +381,11 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
   return result;
 }
 
-void QualityRegressionUtil::SetRequest(const commands::Request &request) {
+void QualityRegressionUtil::SetRequest(const commands::Request& request) {
   request_ = request;
 }
 
-void QualityRegressionUtil::SetConfig(const config::Config &config) {
+void QualityRegressionUtil::SetConfig(const config::Config& config) {
   config_ = config;
 }
 

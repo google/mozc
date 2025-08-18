@@ -76,7 +76,7 @@ def LoadPatterns(file):
     label = fields[0]
     feature = fields[1]
     cost = int(fields[2])
-    if cost < 0 or cost > 0xffff:
+    if cost < 0 or cost > 0xFFFF:
       sys.exit(-1)
     if label == 'PREFIX':
       prefix.append([re.compile(PatternToRegexp(feature)), cost])
@@ -117,14 +117,14 @@ def CountSpecialPos(filename):
 
 def ParseOptions():
   parser = optparse.OptionParser()
-  parser.add_option('--boundary_def', dest='boundary_def',
-                    help='Boundary definition file')
-  parser.add_option('--id_def', dest='id_def',
-                    help='Boundary definition file')
-  parser.add_option('--special_pos', dest='special_pos',
-                    help='Special POS definition file')
-  parser.add_option('--output', dest='output',
-                    help='Output binary file')
+  parser.add_option(
+      '--boundary_def', dest='boundary_def', help='Boundary definition file'
+  )
+  parser.add_option('--id_def', dest='id_def', help='Boundary definition file')
+  parser.add_option(
+      '--special_pos', dest='special_pos', help='Special POS definition file'
+  )
+  parser.add_option('--output', dest='output', help='Output binary file')
   return parser.parse_args()[0]
 
 

@@ -99,23 +99,23 @@ class NBestGenerator {
   };
 
   // Try to enumerate N-best results between begin_node and end_node.
-  NBestGenerator(const dictionary::UserDictionaryInterface &user_dictionary,
-                 const Segmenter &segmenter, const Connector &connector,
-                 const dictionary::PosMatcher &pos_matcher,
-                 const Lattice &lattice,
-                 const SuggestionFilter &suggestion_filter);
-  NBestGenerator(const NBestGenerator &) = delete;
-  NBestGenerator &operator=(const NBestGenerator &) = delete;
+  NBestGenerator(const dictionary::UserDictionaryInterface& user_dictionary,
+                 const Segmenter& segmenter, const Connector& connector,
+                 const dictionary::PosMatcher& pos_matcher,
+                 const Lattice& lattice,
+                 const SuggestionFilter& suggestion_filter);
+  NBestGenerator(const NBestGenerator&) = delete;
+  NBestGenerator& operator=(const NBestGenerator&) = delete;
   ~NBestGenerator() = default;
 
   // Reset the iterator status.
-  void Reset(const Node *absl_nonnull begin_node,
-             const Node *absl_nonnull end_node, Options options);
+  void Reset(const Node* absl_nonnull begin_node,
+             const Node* absl_nonnull end_node, Options options);
 
   // Set candidates.
-  void SetCandidates(const ConversionRequest &request,
+  void SetCandidates(const ConversionRequest& request,
                      absl::string_view original_key, size_t expand_size,
-                     Segment *absl_nonnull segment);
+                     Segment* absl_nonnull segment);
 
  private:
   enum BoundaryCheckResult {
@@ -125,8 +125,8 @@ class NBestGenerator {
   };
 
   struct QueueElement {
-    const Node *absl_nonnull node;
-    const QueueElement *absl_nullable next;
+    const Node* absl_nonnull node;
+    const QueueElement* absl_nullable next;
     // f(x) = h(x) + g(x): cost function for A* search
     int32_t fx;
     // g(x): current cost
@@ -139,8 +139,8 @@ class NBestGenerator {
     int32_t structure_gx;
     int32_t w_gx;
 
-    static bool Comparator(const QueueElement *absl_nonnull q1,
-                           const QueueElement *absl_nonnull q2) {
+    static bool Comparator(const QueueElement* absl_nonnull q1,
+                           const QueueElement* absl_nonnull q2) {
       return q1->fx > q2->fx;
     }
   };
@@ -150,11 +150,11 @@ class NBestGenerator {
   class Agenda {
    public:
     Agenda() = default;
-    Agenda(const Agenda &) = delete;
-    Agenda &operator=(const Agenda &) = delete;
+    Agenda(const Agenda&) = delete;
+    Agenda& operator=(const Agenda&) = delete;
     ~Agenda() = default;
 
-    const QueueElement *absl_nonnull Top() const {
+    const QueueElement* absl_nonnull Top() const {
       return priority_queue_.front();
     }
 
@@ -162,67 +162,67 @@ class NBestGenerator {
     void Clear() { priority_queue_.clear(); }
     void Reserve(int size) { priority_queue_.reserve(size); }
 
-    void Push(const QueueElement *absl_nonnull element);
+    void Push(const QueueElement* absl_nonnull element);
     void Pop();
 
    private:
-    std::vector<const QueueElement *absl_nonnull> priority_queue_;
+    std::vector<const QueueElement* absl_nonnull> priority_queue_;
   };
 
   // Iterator:
   // Can obtain N-best results by calling Next() in sequence.
-  bool Next(const ConversionRequest &request, absl::string_view original_key,
-            converter::Candidate &candidate);
+  bool Next(const ConversionRequest& request, absl::string_view original_key,
+            converter::Candidate& candidate);
 
-  int InsertTopResult(const ConversionRequest &request,
+  int InsertTopResult(const ConversionRequest& request,
                       absl::string_view original_key,
-                      converter::Candidate &candidate);
+                      converter::Candidate& candidate);
 
-  bool MakeCandidateFromBestPath(converter::Candidate &candidate);
-  void MakePrefixCandidateFromBestPath(converter::Candidate &candidate);
+  bool MakeCandidateFromBestPath(converter::Candidate& candidate);
+  void MakePrefixCandidateFromBestPath(converter::Candidate& candidate);
 
-  void MakeCandidate(converter::Candidate &candidate, int32_t cost,
+  void MakeCandidate(converter::Candidate& candidate, int32_t cost,
                      int32_t structure_cost, int32_t wcost,
-                     absl::Span<const Node *absl_nonnull const> nodes) const;
+                     absl::Span<const Node* absl_nonnull const> nodes) const;
 
   converter::CandidateFilter::ResultType MakeCandidateFromElement(
-      const ConversionRequest &request, absl::string_view original_key,
-      const QueueElement &element, converter::Candidate &candidate);
+      const ConversionRequest& request, absl::string_view original_key,
+      const QueueElement& element, converter::Candidate& candidate);
 
-  void FillInnerSegmentInfo(absl::Span<const Node *absl_nonnull const> odes,
-                            converter::Candidate &candidate) const;
+  void FillInnerSegmentInfo(absl::Span<const Node* absl_nonnull const> odes,
+                            converter::Candidate& candidate) const;
 
   // Helper function for Next(). Checks node boundary conditions.
-  BoundaryCheckResult BoundaryCheck(const Node &lnode, const Node &rnode,
+  BoundaryCheckResult BoundaryCheck(const Node& lnode, const Node& rnode,
                                     bool is_edge) const;
   // Helper functions for BoundaryCheck.
-  BoundaryCheckResult CheckStrict(const Node &lnode, const Node &rnode,
+  BoundaryCheckResult CheckStrict(const Node& lnode, const Node& rnode,
                                   bool is_edge) const;
-  BoundaryCheckResult CheckOnlyMid(const Node &lnode, const Node &rnode,
+  BoundaryCheckResult CheckOnlyMid(const Node& lnode, const Node& rnode,
                                    bool is_edge) const;
-  BoundaryCheckResult CheckOnlyEdge(const Node &lnode, const Node &rnode,
+  BoundaryCheckResult CheckOnlyEdge(const Node& lnode, const Node& rnode,
                                     bool is_edge) const;
 
-  int GetTransitionCost(const Node &lnode, const Node &rnode) const;
+  int GetTransitionCost(const Node& lnode, const Node& rnode) const;
 
   // Create queue element from freelist
-  const QueueElement *absl_nonnull CreateNewElement(
-      const Node *absl_nonnull node, const QueueElement *absl_nullable next,
+  const QueueElement* absl_nonnull CreateNewElement(
+      const Node* absl_nonnull node, const QueueElement* absl_nullable next,
       int32_t fx, int32_t gx, int32_t structure_gx, int32_t w_gx);
 
   // References to relevant modules.
-  const dictionary::UserDictionaryInterface &user_dictionary_;
-  const Segmenter &segmenter_;
-  const Connector &connector_;
-  const dictionary::PosMatcher &pos_matcher_;
-  const Lattice &lattice_;
+  const dictionary::UserDictionaryInterface& user_dictionary_;
+  const Segmenter& segmenter_;
+  const Connector& connector_;
+  const dictionary::PosMatcher& pos_matcher_;
+  const Lattice& lattice_;
 
-  const Node *absl_nullable begin_node_ = nullptr;
-  const Node *absl_nullable end_node_ = nullptr;
+  const Node* absl_nullable begin_node_ = nullptr;
+  const Node* absl_nullable end_node_ = nullptr;
 
   Agenda agenda_;
   FreeList<QueueElement> freelist_;
-  std::vector<const Node *absl_nonnull> top_nodes_;
+  std::vector<const Node* absl_nonnull> top_nodes_;
   converter::CandidateFilter filter_;
   bool viterbi_result_checked_ = false;
   Options options_;

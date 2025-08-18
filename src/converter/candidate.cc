@@ -104,7 +104,7 @@ std::string Candidate::DebugString() const {
   }
   if (!inner_segment_boundary.empty()) {
     os << " segbdd=";
-    for (const auto &iter : inner_segments()) {
+    for (const auto& iter : inner_segments()) {
       os << absl::StreamFormat(
           "<%d,%d,%d,%d>", iter.GetKey().size(), iter.GetValue().size(),
           iter.GetContentKey().size(), iter.GetContentValue().size());

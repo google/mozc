@@ -44,7 +44,7 @@ namespace converter {
 using SVList = std::vector<absl::string_view>;
 
 std::tuple<SVList, SVList, SVList, SVList, SVList, SVList> GetSegments(
-    const InnerSegments &inner_segments) {
+    const InnerSegments& inner_segments) {
   SVList keys, values, content_keys, content_values, functional_keys,
       functional_values;
 
@@ -243,19 +243,19 @@ TEST(InnerSegment, InnerSegmentIteratorInvalid) {
 }
 
 TEST(InnerSegments, GetSuffixKeyAndValue) {
-  auto suffix_key_default = [](const InnerSegments &inner_segments) {
+  auto suffix_key_default = [](const InnerSegments& inner_segments) {
     return inner_segments.GetSuffixKeyAndValue().first;
   };
 
-  auto suffix_value_default = [](const InnerSegments &inner_segments) {
+  auto suffix_value_default = [](const InnerSegments& inner_segments) {
     return inner_segments.GetSuffixKeyAndValue().second;
   };
 
-  auto suffix_key = [](const InnerSegments &inner_segments, int size) {
+  auto suffix_key = [](const InnerSegments& inner_segments, int size) {
     return inner_segments.GetSuffixKeyAndValue(size).first;
   };
 
-  auto suffix_value = [](const InnerSegments &inner_segments, int size) {
+  auto suffix_value = [](const InnerSegments& inner_segments, int size) {
     return inner_segments.GetSuffixKeyAndValue(size).second;
   };
 

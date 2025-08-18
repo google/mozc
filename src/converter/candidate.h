@@ -166,8 +166,8 @@ class Candidate {
 
   std::string DebugString() const;
 
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const Candidate &candidate) {
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const Candidate& candidate) {
     return os << candidate.DebugString();
   }
 };

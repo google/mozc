@@ -69,8 +69,8 @@ class Segment final {
 
   Segment() : segment_type_(FREE), pool_(kCandidatesPoolSize) {}
 
-  Segment(const Segment &x);
-  Segment &operator=(const Segment &x);
+  Segment(const Segment& x);
+  Segment& operator=(const Segment& x);
 
   SegmentType segment_type() const { return segment_type_; }
   void set_segment_type(const SegmentType segment_type) {
@@ -83,7 +83,7 @@ class Segment final {
   size_t key_len() const { return key_len_; }
 
   template <typename T>
-  void set_key(T &&key) {
+  void set_key(T&& key) {
     strings::Assign(key_, std::forward<T>(key));
     key_len_ = Util::CharsLen(key_);
   }
@@ -93,17 +93,17 @@ class Segment final {
 
   // Candidate manipulations
   // getter
-  const Candidate &candidate(int i) const;
+  const Candidate& candidate(int i) const;
 
   // setter
-  Candidate *mutable_candidate(int i);
+  Candidate* mutable_candidate(int i);
 
   // push and insert candidates
-  Candidate *push_front_candidate();
-  Candidate *push_back_candidate();
+  Candidate* push_front_candidate();
+  Candidate* push_back_candidate();
   // alias of push_back_candidate()
-  Candidate *add_candidate() { return push_back_candidate(); }
-  Candidate *insert_candidate(int i);
+  Candidate* add_candidate() { return push_back_candidate(); }
+  Candidate* insert_candidate(int i);
   void insert_candidate(int i, std::unique_ptr<Candidate> candidate);
   void insert_candidates(int i,
                          std::vector<std::unique_ptr<Candidate>> candidates);
@@ -128,12 +128,12 @@ class Segment final {
   absl::Span<const Candidate> meta_candidates() const {
     return meta_candidates_;
   }
-  std::vector<Candidate> *mutable_meta_candidates() {
+  std::vector<Candidate>* mutable_meta_candidates() {
     return &meta_candidates_;
   }
-  const Candidate &meta_candidate(size_t i) const;
-  Candidate *mutable_meta_candidate(size_t i);
-  Candidate *add_meta_candidate();
+  const Candidate& meta_candidate(size_t i) const;
+  Candidate* mutable_meta_candidate(size_t i);
+  Candidate* add_meta_candidate();
 
   // move old_idx-th-candidate to new_index
   void move_candidate(int old_idx, int new_idx);
@@ -145,17 +145,17 @@ class Segment final {
 
   std::string DebugString() const;
 
-  friend std::ostream &operator<<(std::ostream &os, const Segment &segment) {
+  friend std::ostream& operator<<(std::ostream& os, const Segment& segment) {
     return os << segment.DebugString();
   }
 
-  const std::deque<Candidate *> &candidates() const { return candidates_; }
+  const std::deque<Candidate*>& candidates() const { return candidates_; }
 
   // For debug. Candidate words removed through conversion process.
   std::vector<Candidate> removed_candidates_for_debug_;
 
  private:
-  void DeepCopyCandidates(const std::deque<Candidate *> &candidates);
+  void DeepCopyCandidates(const std::deque<Candidate*>& candidates);
 
   static constexpr int kCandidatesPoolSize = 16;
 
@@ -170,7 +170,7 @@ class Segment final {
   // You should detect that by using both Composer and Segments.
   std::string key_;
   size_t key_len_ = 0;
-  std::deque<Candidate *> candidates_;
+  std::deque<Candidate*> candidates_;
   std::vector<Candidate> meta_candidates_;
   std::vector<std::unique_ptr<Candidate>> pool_;
   // LINT.ThenChange(//converter/segments_matchers.h)
@@ -200,8 +200,8 @@ class Segments final {
   // This class wraps an iterator as is, except that `operator*` dereferences
   // twice. For example, if `InnerIterator` is the iterator of
   // `std::deque<Segment *>`, `operator*` dereferences to `Segment&`.
-  using inner_iterator = std::deque<Segment *>::iterator;
-  using inner_const_iterator = std::deque<Segment *>::const_iterator;
+  using inner_iterator = std::deque<Segment*>::iterator;
+  using inner_const_iterator = std::deque<Segment*>::const_iterator;
   template <typename InnerIterator, bool is_const = false>
   class Iterator {
    public:
@@ -216,10 +216,10 @@ class Segments final {
         typename std::remove_pointer_t<inner_value_type>>;
     using difference_type =
         typename std::iterator_traits<InnerIterator>::difference_type;
-    using pointer = value_type *;
-    using reference = value_type &;
+    using pointer = value_type*;
+    using reference = value_type&;
 
-    explicit Iterator(const InnerIterator &iterator) : iterator_(iterator) {}
+    explicit Iterator(const InnerIterator& iterator) : iterator_(iterator) {}
 
     // Make `iterator` type convertible to `const_iterator`.
     template <bool enable = is_const>
@@ -230,11 +230,11 @@ class Segments final {
     reference operator*() const { return **iterator_; }
     pointer operator->() const { return *iterator_; }
 
-    Iterator &operator++() {
+    Iterator& operator++() {
       ++iterator_;
       return *this;
     }
-    Iterator &operator--() {
+    Iterator& operator--() {
       --iterator_;
       return *this;
     }
@@ -244,19 +244,19 @@ class Segments final {
     Iterator operator-(difference_type diff) const {
       return Iterator{iterator_ - diff};
     }
-    Iterator &operator+=(difference_type diff) {
+    Iterator& operator+=(difference_type diff) {
       iterator_ += diff;
       return *this;
     }
 
-    difference_type operator-(const Iterator &other) const {
+    difference_type operator-(const Iterator& other) const {
       return iterator_ - other.iterator_;
     }
 
-    bool operator==(const Iterator &other) const {
+    bool operator==(const Iterator& other) const {
       return iterator_ == other.iterator_;
     }
-    bool operator!=(const Iterator &other) const {
+    bool operator!=(const Iterator& other) const {
       return iterator_ != other.iterator_;
     }
 
@@ -279,10 +279,10 @@ class Segments final {
     using difference_type = typename Iterator::difference_type;
     using reference = typename Iterator::reference;
 
-    Range(const Iterator &begin, const Iterator &end)
+    Range(const Iterator& begin, const Iterator& end)
         : begin_(begin), end_(end) {}
     // Make `range` type convertible to `const_range`.
-    Range(const Range<iterator> &range) : Range(range.begin(), range.end()) {}
+    Range(const Range<iterator>& range) : Range(range.begin(), range.end()) {}
 
     Iterator begin() const { return begin_; }
     Iterator end() const { return end_; }
@@ -335,8 +335,8 @@ class Segments final {
   // constructors
   Segments() : max_history_segments_size_(0), resized_(false), pool_(32) {}
 
-  Segments(const Segments &x);
-  Segments &operator=(const Segments &x);
+  Segments(const Segments& x);
+  Segments& operator=(const Segments& x);
 
   // iterators
   iterator begin() { return iterator{segments_.begin()}; }
@@ -346,8 +346,8 @@ class Segments final {
 
   // ranges
   template <typename Iterator>
-  static Range<Iterator> make_range(const Iterator &begin,
-                                    const Iterator &end) {
+  static Range<Iterator> make_range(const Iterator& begin,
+                                    const Iterator& end) {
     return Range<Iterator>(begin, end);
   }
 
@@ -359,25 +359,25 @@ class Segments final {
   const_range conversion_segments() const;
 
   // getter
-  const Segment &segment(size_t i) const { return *segments_[i]; }
-  const Segment &conversion_segment(size_t i) const {
+  const Segment& segment(size_t i) const { return *segments_[i]; }
+  const Segment& conversion_segment(size_t i) const {
     return *segments_[i + history_segments_size()];
   }
-  const Segment &history_segment(size_t i) const { return *segments_[i]; }
+  const Segment& history_segment(size_t i) const { return *segments_[i]; }
 
   // setter
-  Segment *mutable_segment(size_t i) { return segments_[i]; }
-  Segment *mutable_conversion_segment(size_t i) {
+  Segment* mutable_segment(size_t i) { return segments_[i]; }
+  Segment* mutable_conversion_segment(size_t i) {
     return segments_[i + history_segments_size()];
   }
-  Segment *mutable_history_segment(size_t i) { return segments_[i]; }
+  Segment* mutable_history_segment(size_t i) { return segments_[i]; }
 
   // push and insert segments
-  Segment *push_front_segment();
-  Segment *push_back_segment();
+  Segment* push_front_segment();
+  Segment* push_back_segment();
   // alias of push_back_segment()
-  Segment *add_segment() { return push_back_segment(); }
-  Segment *insert_segment(size_t i);
+  Segment* add_segment() { return push_back_segment(); }
+  Segment* insert_segment(size_t i);
 
   // get size of segments
   size_t segments_size() const { return segments_.size(); }
@@ -431,13 +431,13 @@ class Segments final {
   // Prepend the candidates of `previous_segment` to the first conversion
   // segment. This is used to merge the previous suggestion results to the
   // prediction results.
-  void PrependCandidates(const Segment &previous_segment);
+  void PrependCandidates(const Segment& previous_segment);
 
   // Resize the segments starting from `start_index` with the given `new_sizes`.
   // Returns true if the segments are resized.
   bool Resize(size_t start_index, absl::Span<const uint8_t> new_sizes);
 
-  friend std::ostream &operator<<(std::ostream &os, const Segments &segments) {
+  friend std::ostream& operator<<(std::ostream& os, const Segments& segments) {
     return os << segments.DebugString();
   }
 
@@ -458,7 +458,7 @@ class Segments final {
   bool resized_;
 
   ObjectPool<Segment> pool_;
-  std::deque<Segment *> segments_;
+  std::deque<Segment*> segments_;
   uint64_t revert_id_ = 0;
   // LINT.ThenChange(//converter/segments_matchers.h)
 };
@@ -471,7 +471,7 @@ inline bool Segment::is_valid_index(int i) const {
   }
 }
 
-inline const converter::Candidate &Segment::candidate(int i) const {
+inline const converter::Candidate& Segment::candidate(int i) const {
   if (i < 0) {
     return meta_candidate(-i - 1);
   }
@@ -479,7 +479,7 @@ inline const converter::Candidate &Segment::candidate(int i) const {
   return *candidates_[i];
 }
 
-inline converter::Candidate *Segment::mutable_candidate(int i) {
+inline converter::Candidate* Segment::mutable_candidate(int i) {
   if (i < 0) {
     const size_t meta_index = -i - 1;
     DCHECK_LT(meta_index, meta_candidates_.size());

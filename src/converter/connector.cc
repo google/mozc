@@ -68,7 +68,7 @@ inline uint32_t EncodeKey(uint16_t rid, uint16_t lid) {
   return (static_cast<uint32_t>(rid) << 16) | lid;
 }
 
-absl::Status IsMemoryAligned32(const void *ptr) {
+absl::Status IsMemoryAligned32(const void* ptr) {
   const auto addr = reinterpret_cast<std::uintptr_t>(ptr);
   const auto alignment = addr % 4;
   if (alignment != 0) {
@@ -107,7 +107,7 @@ struct Metadata {
   }
 };
 
-absl::StatusOr<Metadata> ParseMetadata(const char *connection_data,
+absl::StatusOr<Metadata> ParseMetadata(const char* connection_data,
                                        size_t connection_size) {
   if (connection_size < Metadata::kByteSize) {
     const std::string data =
@@ -116,7 +116,7 @@ absl::StatusOr<Metadata> ParseMetadata(const char *connection_data,
         "connector.cc: At least ", Metadata::kByteSize,
         " bytes expected.  Bytes: '", data, "' (", connection_size, " bytes)"));
   }
-  const uint16_t *data = reinterpret_cast<const uint16_t *>(connection_data);
+  const uint16_t* data = reinterpret_cast<const uint16_t*>(connection_data);
   Metadata metadata;
   metadata.magic = data[0];
   metadata.resolution = data[1];
@@ -137,9 +137,9 @@ absl::StatusOr<Metadata> ParseMetadata(const char *connection_data,
 
 }  // namespace
 
-void Connector::Row::Init(const uint8_t *chunk_bits, size_t chunk_bits_size,
-                          const uint8_t *compact_bits, size_t compact_bits_size,
-                          const uint8_t *values, bool use_1byte_value) {
+void Connector::Row::Init(const uint8_t* chunk_bits, size_t chunk_bits_size,
+                          const uint8_t* compact_bits, size_t compact_bits_size,
+                          const uint8_t* values, bool use_1byte_value) {
   chunk_bits_index_.Init(chunk_bits, chunk_bits_size);
   compact_bits_index_.Init(compact_bits, compact_bits_size);
   values_ = values;
@@ -165,13 +165,13 @@ std::optional<uint16_t> Connector::Row::GetValue(uint16_t index) const {
     }
   } else {
     value = std::launder(
-        reinterpret_cast<const uint16_t *>(values_))[value_position];
+        reinterpret_cast<const uint16_t*>(values_))[value_position];
   }
   return value;
 }
 
 absl::StatusOr<Connector> Connector::CreateFromDataManager(
-    const DataManager &data_manager) {
+    const DataManager& data_manager) {
 #ifdef __ANDROID__
   constexpr int kCacheSize = 256;
 #else   // __ANDROID__
@@ -208,11 +208,11 @@ absl::Status Connector::Init(absl::string_view connection_data,
   resolution_ = metadata->resolution;
 
   // Set the read location to the metadata end.
-  const char *ptr = connection_data.data() + Metadata::kByteSize;
-  const char *data_end = connection_data.data() + connection_data.size();
+  const char* ptr = connection_data.data() + Metadata::kByteSize;
+  const char* data_end = connection_data.data() + connection_data.size();
 
-  const auto &gen_debug_info = [connection_data,
-                                &metadata](const char *ptr) -> std::string {
+  const auto& gen_debug_info = [connection_data,
+                                &metadata](const char* ptr) -> std::string {
     return absl::StrCat(metadata->DebugString(),
                         ", Reader{location: ", ptr - connection_data.data(),
                         ", datasize: ", connection_data.size(), "}");
@@ -235,7 +235,7 @@ absl::Status Connector::Init(absl::string_view connection_data,
   // out-of-range.
 #define VALIDATE_SIZE(ptr, num_bytes, ...)                               \
   do {                                                                   \
-    const auto *p = reinterpret_cast<const char *>(ptr);                 \
+    const auto* p = reinterpret_cast<const char*>(ptr);                  \
     const std::ptrdiff_t remaining = data_end - p;                       \
     if (remaining >= num_bytes) {                                        \
       break;                                                             \
@@ -247,7 +247,7 @@ absl::Status Connector::Init(absl::string_view connection_data,
   } while (false)
 
   // Read default cost array and move the read pointer.
-  default_cost_ = reinterpret_cast<const uint16_t *>(ptr);
+  default_cost_ = reinterpret_cast<const uint16_t*>(ptr);
   // Each element of default cost array is 2 bytes.
   const size_t default_cost_size = metadata->DefaultCostArraySize() * 2;
   VALIDATE_SIZE(default_cost_, default_cost_size, "Default cost");
@@ -267,26 +267,26 @@ absl::Status Connector::Init(absl::string_view connection_data,
     // |ptr| points to here now.  Every uint8_t[] block needs to be aligned at
     // 32-bit boundary.
     VALIDATE_SIZE(ptr, 2, "Compact bits size of row ", i, "/", rsize);
-    const uint16_t compact_bits_size = *reinterpret_cast<const uint16_t *>(ptr);
+    const uint16_t compact_bits_size = *reinterpret_cast<const uint16_t*>(ptr);
     ptr += 2;
 
     VALIDATE_SIZE(ptr, 2, "Values size of row ", i, "/", rsize);
-    const uint16_t values_size = *reinterpret_cast<const uint16_t *>(ptr);
+    const uint16_t values_size = *reinterpret_cast<const uint16_t*>(ptr);
     ptr += 2;
 
     VALIDATE_SIZE(ptr, chunk_bits_size, "Chunk bits of row ", i, "/", rsize);
-    const uint8_t *chunk_bits = reinterpret_cast<const uint8_t *>(ptr);
+    const uint8_t* chunk_bits = reinterpret_cast<const uint8_t*>(ptr);
     VALIDATE_ALIGNMENT(chunk_bits);
     ptr += chunk_bits_size;
 
     VALIDATE_SIZE(ptr, compact_bits_size, "Compact bits of row ", i, "/",
                   rsize);
-    const uint8_t *compact_bits = reinterpret_cast<const uint8_t *>(ptr);
+    const uint8_t* compact_bits = reinterpret_cast<const uint8_t*>(ptr);
     VALIDATE_ALIGNMENT(compact_bits);
     ptr += compact_bits_size;
 
     VALIDATE_SIZE(ptr, values_size, "Values of row ", i, "/", rsize);
-    const uint8_t *values = reinterpret_cast<const uint8_t *>(ptr);
+    const uint8_t* values = reinterpret_cast<const uint8_t*>(ptr);
     VALIDATE_ALIGNMENT(values);
     ptr += values_size;
 
@@ -317,7 +317,7 @@ int Connector::GetTransitionCost(uint16_t rid, uint16_t lid) const {
 }
 
 void Connector::ClearCache() {
-  for (std::atomic<uint64_t> &x : *cache_) {
+  for (std::atomic<uint64_t>& x : *cache_) {
     x.store(kInvalidCacheKey);
   }
 }

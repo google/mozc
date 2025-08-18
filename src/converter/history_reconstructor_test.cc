@@ -48,7 +48,7 @@ namespace converter {
 
 class HistoryReconstructorTestPeer : testing::TestPeer<HistoryReconstructor> {
  public:
-  explicit HistoryReconstructorTestPeer(HistoryReconstructor &reconstructor)
+  explicit HistoryReconstructorTestPeer(HistoryReconstructor& reconstructor)
       : testing::TestPeer<HistoryReconstructor>(reconstructor) {}
 
   PEER_METHOD(GetLastConnectivePart);
@@ -146,11 +146,11 @@ TEST(HistoryReconstructorTest, ReconstructHistory) {
   Segments segments;
   EXPECT_TRUE(reconstructor.ReconstructHistory(kTen, &segments));
   EXPECT_EQ(segments.segments_size(), 1);
-  const Segment &segment = segments.segment(0);
+  const Segment& segment = segments.segment(0);
   EXPECT_EQ(segment.segment_type(), Segment::HISTORY);
   EXPECT_EQ(segment.key(), "10");
   EXPECT_EQ(segment.candidates_size(), 1);
-  const Candidate &candidate = segment.candidate(0);
+  const Candidate& candidate = segment.candidate(0);
   EXPECT_EQ(candidate.attributes, Attribute::NO_LEARNING);
   EXPECT_EQ(candidate.content_key, "10");
   EXPECT_EQ(candidate.key, "10");

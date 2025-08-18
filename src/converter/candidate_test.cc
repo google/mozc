@@ -123,7 +123,7 @@ TEST(CandidateTest, InnerSegmentIterator) {
     candidate.key = "testfoobar";
     candidate.value = "redgreenblue";
     EXPECT_EQ(candidate.inner_segments().size(), 1);
-    for (const auto &iter : candidate.inner_segments()) {
+    for (const auto& iter : candidate.inner_segments()) {
       EXPECT_EQ(iter.GetKey(), candidate.key);
       EXPECT_EQ(iter.GetValue(), candidate.value);
       EXPECT_EQ(iter.GetContentKey(), candidate.key);
@@ -142,7 +142,7 @@ TEST(CandidateTest, InnerSegmentIterator) {
         {{4, 3, 4, 3}, {6, 9, 3, 5}}, candidate.key, candidate.value);
     std::vector<absl::string_view> keys, values, content_keys, content_values,
         functional_keys, functional_values;
-    for (const auto &iter : candidate.inner_segments()) {
+    for (const auto& iter : candidate.inner_segments()) {
       keys.push_back(iter.GetKey());
       values.push_back(iter.GetValue());
       content_keys.push_back(iter.GetContentKey());

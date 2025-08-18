@@ -91,7 +91,7 @@ namespace converter {
 
 class ConverterTestPeer : public testing::TestPeer<Converter> {
  public:
-  explicit ConverterTestPeer(Converter &converter)
+  explicit ConverterTestPeer(Converter& converter)
       : testing::TestPeer<Converter>(converter) {}
 
   PEER_METHOD(CompletePosIds);
@@ -116,16 +116,16 @@ using ::testing::StrEq;
 
 using UserEntry = user_dictionary::UserDictionary::Entry;
 
-Segment &AddSegment(absl::string_view key, Segment::SegmentType type,
-                    Segments &segments) {
-  Segment *segment = segments.add_segment();
+Segment& AddSegment(absl::string_view key, Segment::SegmentType type,
+                    Segments& segments) {
+  Segment* segment = segments.add_segment();
   segment->set_key(key);
   segment->set_segment_type(type);
   return *segment;
 }
 
-void PushBackCandidate(absl::string_view text, Segment &segment) {
-  Candidate *cand = segment.push_back_candidate();
+void PushBackCandidate(absl::string_view text, Segment& segment) {
+  Candidate* cand = segment.push_back_candidate();
   cand->key = std::string(text);
   cand->content_key = cand->key;
   cand->value = cand->key;
@@ -136,7 +136,7 @@ class StubPredictor : public PredictorInterface {
  public:
   StubPredictor() : predictor_name_("StubPredictor") {}
 
-  std::vector<Result> Predict(const ConversionRequest &request) const override {
+  std::vector<Result> Predict(const ConversionRequest& request) const override {
     absl::string_view key = request.key();
     if (key.empty()) {
       return {};
@@ -156,22 +156,22 @@ class StubPredictor : public PredictorInterface {
 };
 
 class StubRewriter : public RewriterInterface {
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override {
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override {
     return true;
   }
 };
 
 class InsertPlaceholderWordsRewriter : public RewriterInterface {
-  bool Rewrite(const ConversionRequest &, Segments *segments) const override {
-    for (Segment &segment : segments->conversion_segments()) {
+  bool Rewrite(const ConversionRequest&, Segments* segments) const override {
+    for (Segment& segment : segments->conversion_segments()) {
       {
-        Candidate *cand = segment.add_candidate();
+        Candidate* cand = segment.add_candidate();
         cand->key = "tobefiltered";
         cand->value = "ToBeFiltered";
       }
       {
-        Candidate *cand = segment.add_candidate();
+        Candidate* cand = segment.add_candidate();
         cand->key = "nottobefiltered";
         cand->value = "NotToBeFiltered";
       }
@@ -186,14 +186,14 @@ class ResizeSegmentsRewriter : public RewriterInterface {
                          std::array<uint8_t, 8> segment_sizes)
       : segment_index_(segment_index), segment_sizes_(segment_sizes) {}
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override {
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override {
     return true;
   }
 
   std::optional<RewriterInterface::ResizeSegmentsRequest>
-  CheckResizeSegmentsRequest(const ConversionRequest &request,
-                             const Segments &segments) const override {
+  CheckResizeSegmentsRequest(const ConversionRequest& request,
+                             const Segments& segments) const override {
     if (segments.resized()) {
       return std::nullopt;
     }
@@ -227,7 +227,7 @@ class MockPredictor : public mozc::prediction::PredictorInterface {
   MockPredictor() = default;
   ~MockPredictor() override = default;
 
-  MOCK_METHOD(std::vector<Result>, Predict, (const ConversionRequest &),
+  MOCK_METHOD(std::vector<Result>, Predict, (const ConversionRequest&),
               (const, override));
   MOCK_METHOD(void, Revert, (uint32_t), (override));
   MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
@@ -238,9 +238,9 @@ class MockRewriter : public RewriterInterface {
   MockRewriter() = default;
   ~MockRewriter() override = default;
 
-  MOCK_METHOD(bool, Rewrite, (const ConversionRequest &, Segments *),
+  MOCK_METHOD(bool, Rewrite, (const ConversionRequest&, Segments*),
               (const, override));
-  MOCK_METHOD(void, Revert, (const Segments &), (override));
+  MOCK_METHOD(void, Revert, (const Segments&), (override));
 };
 
 class ConverterTest : public testing::TestWithTempUserProfile {
@@ -265,9 +265,9 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   // the pointer for |converter| for initializing. Prease see
   // mozc/engine/engine.cc for details. Caller should manage the ownership.
   std::unique_ptr<PredictorInterface> CreatePredictor(
-      const engine::Modules &modules, PredictorType predictor_type,
-      const ConverterInterface &converter,
-      const ImmutableConverterInterface &immutable_converter) {
+      const engine::Modules& modules, PredictorType predictor_type,
+      const ConverterInterface& converter,
+      const ImmutableConverterInterface& immutable_converter) {
     if (predictor_type == STUB_PREDICTOR) {
       return std::make_unique<StubPredictor>();
     }
@@ -282,15 +282,15 @@ class ConverterTest : public testing::TestWithTempUserProfile {
       PredictorType predictor_type) {
     return std::make_unique<Converter>(
         std::move(modules),
-        [&](const engine::Modules &modules) {
+        [&](const engine::Modules& modules) {
           return std::make_unique<ImmutableConverter>(modules);
         },
-        [&](const engine::Modules &modules, const ConverterInterface &converter,
-            const ImmutableConverterInterface &immutable_converter) {
+        [&](const engine::Modules& modules, const ConverterInterface& converter,
+            const ImmutableConverterInterface& immutable_converter) {
           return CreatePredictor(modules, predictor_type, converter,
                                  immutable_converter);
         },
-        [&](const engine::Modules &modules) { return std::move(rewriter); });
+        [&](const engine::Modules& modules) { return std::move(rewriter); });
   }
 
   std::unique_ptr<Converter> CreateConverter(
@@ -319,9 +319,9 @@ class ConverterTest : public testing::TestWithTempUserProfile {
         *pos_matcher);
     {
       user_dictionary::UserDictionaryStorage storage;
-      user_dictionary::UserDictionary *dictionary = storage.add_dictionaries();
-      for (const UserDefinedEntry &user_entry : user_defined_entries) {
-        UserEntry *entry = dictionary->add_entries();
+      user_dictionary::UserDictionary* dictionary = storage.add_dictionaries();
+      for (const UserDefinedEntry& user_entry : user_defined_entries) {
+        UserEntry* entry = dictionary->add_entries();
         entry->set_key(user_entry.key);
         entry->set_value(user_entry.value);
         entry->set_pos(user_entry.pos);
@@ -346,7 +346,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   }
 
   bool FindCandidateByValue(absl::string_view value,
-                            const Segment &segment) const {
+                            const Segment& segment) const {
     for (size_t i = 0; i < segment.candidates_size(); ++i) {
       if (segment.candidate(i).value == value) {
         return true;
@@ -356,7 +356,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   }
 
   int GetCandidateIndexByValue(absl::string_view value,
-                               const Segment &segment) const {
+                               const Segment& segment) const {
     for (size_t i = 0; i < segment.candidates_size(); ++i) {
       if (segment.candidate(i).value == value) {
         return i;
@@ -365,7 +365,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     return -1;  // not found
   }
 
-  const commands::Request &default_request() const { return default_request_; }
+  const commands::Request& default_request() const { return default_request_; }
 
  private:
   const commands::Request default_request_;
@@ -421,9 +421,9 @@ TEST_F(ConverterTest, ConvertTest) {
 }
 
 namespace {
-std::string ContextAwareConvert(const std::string &first_key,
-                                const std::string &first_value,
-                                const std::string &second_key) {
+std::string ContextAwareConvert(const std::string& first_key,
+                                const std::string& first_value,
+                                const std::string& second_key) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
@@ -438,7 +438,7 @@ std::string ContextAwareConvert(const std::string &first_key,
     int position = -1;
     for (size_t i = 0; i < segments.segment(segment_num).candidates_size();
          ++i) {
-      const std::string &value =
+      const std::string& value =
           segments.segment(segment_num).candidate(i).value;
       if (first_value.substr(converted.size(), value.size()) == value) {
         position = static_cast<int>(i);
@@ -499,13 +499,13 @@ TEST_F(ConverterTest, CommitSegmentValue) {
 
   {
     // Prepare a segment, with candidates "1" and "2";
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->add_candidate()->value = "1";
     segment->add_candidate()->value = "2";
   }
   {
     // Prepare a segment, with candidates "3" and "4";
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->add_candidate()->value = "3";
     segment->add_candidate()->value = "4";
   }
@@ -515,7 +515,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     EXPECT_EQ(segments.segments_size(), 2);
     EXPECT_EQ(segments.history_segments_size(), 0);
     EXPECT_EQ(segments.conversion_segments_size(), 2);
-    const Segment &segment = segments.conversion_segment(0);
+    const Segment& segment = segments.conversion_segment(0);
     EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
     EXPECT_EQ(segment.candidate(0).value, "2");
     EXPECT_NE(segment.candidate(0).attributes & Attribute::RERANKED, 0);
@@ -534,7 +534,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     EXPECT_EQ(segments.segments_size(), 2);
     EXPECT_EQ(segments.history_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segments_size(), 1);
-    const Segment &segment = segments.conversion_segment(0);
+    const Segment& segment = segments.conversion_segment(0);
     EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
     EXPECT_EQ(segment.candidate(0).value, "3");
     EXPECT_EQ(segment.candidate(0).attributes & Attribute::RERANKED, 0);
@@ -549,26 +549,26 @@ TEST_F(ConverterTest, CommitSegments) {
 
   // History segment.
   {
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("あした");
     segment->set_segment_type(Segment::HISTORY);
-    Candidate *candidate = segment->add_candidate();
+    Candidate* candidate = segment->add_candidate();
     candidate->key = "あした";
     candidate->value = "今日";
   }
 
   {
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("かつこうに");
-    Candidate *candidate = segment->add_candidate();
+    Candidate* candidate = segment->add_candidate();
     candidate->value = "学校に";
     candidate->key = "がっこうに";
   }
 
   {
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("いく");
-    Candidate *candidate = segment->add_candidate();
+    Candidate* candidate = segment->add_candidate();
     candidate->value = "行く";
     candidate->key = "いく";
   }
@@ -613,13 +613,13 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
 
   {
     // Prepare a segment, with candidates "1" and "2";
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->add_candidate()->value = "1";
     segment->add_candidate()->value = "2";
   }
   {
     // Prepare a segment, with candidates "3" and "4";
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->add_candidate()->value = "3";
     segment->add_candidate()->value = "4";
   }
@@ -634,7 +634,7 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
       // The tail segment of the history segments uses
       // CommitPartialSuggestionSegmentValue's |current_segment_key| parameter
       // and contains original value.
-      const Segment &segment =
+      const Segment& segment =
           segments.history_segment(segments.history_segments_size() - 1);
       EXPECT_EQ(segment.segment_type(), Segment::SUBMITTED);
       EXPECT_EQ(segment.candidate(0).value, "2");
@@ -643,7 +643,7 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
     }
     {
       // The head segment of the conversion segments uses |new_segment_key|.
-      const Segment &segment = segments.conversion_segment(0);
+      const Segment& segment = segments.conversion_segment(0);
       EXPECT_EQ(segment.segment_type(), Segment::FREE);
       EXPECT_EQ(segment.key(), "right2");
     }
@@ -703,7 +703,7 @@ TEST_F(ConverterTest, Regression3437022) {
   // Add compound entry to suppression dictionary
   {
     user_dictionary::UserDictionaryStorage storage;
-    UserEntry *entry = storage.add_dictionaries()->add_entries();
+    UserEntry* entry = storage.add_dictionaries()->add_entries();
     entry->set_key(kKey1 + kKey2);
     entry->set_value(kValue1 + kValue2);
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
@@ -717,7 +717,7 @@ TEST_F(ConverterTest, Regression3437022) {
       ConvReq(kKey1 + kKey2, ConversionRequest::CONVERSION), &segments));
 
   int rest_size = 0;
-  for (const Segment &segment : segments.conversion_segments().drop(1)) {
+  for (const Segment& segment : segments.conversion_segments().drop(1)) {
     rest_size += Util::CharsLen(segment.candidate(0).key);
   }
 
@@ -734,7 +734,7 @@ TEST_F(ConverterTest, Regression3437022) {
 }
 
 TEST_F(ConverterTest, CompletePosIds) {
-  const char *kTestKeys[] = {
+  const char* kTestKeys[] = {
       "きょうと", "いきます",         "うつくしい",
       "おおきな", "いっちゃわないね", "わたしのなまえはなかのです",
   };
@@ -743,7 +743,7 @@ TEST_F(ConverterTest, CompletePosIds) {
   ConverterTestPeer converter_peer(*converter);
   for (size_t i = 0; i < std::size(kTestKeys); ++i) {
     Segments segments;
-    Segment *seg = segments.add_segment();
+    Segment* seg = segments.add_segment();
     seg->set_key(kTestKeys[i]);
     seg->set_segment_type(Segment::FREE);
     const ConversionRequest request =
@@ -806,7 +806,7 @@ TEST_F(ConverterTest, Regression3046266) {
   EXPECT_TRUE(converter->StartConversion(
       ConvReq(kKey2, ConversionRequest::CONVERSION), &segments));
   EXPECT_EQ(segments.conversion_segments_size(), 1);
-  const Segment &segment = segments.conversion_segment(0);
+  const Segment& segment = segments.conversion_segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     EXPECT_NE(segment.candidate(i).value, kValueNotExpected);
   }
@@ -824,7 +824,7 @@ TEST_F(ConverterTest, Regression5502496) {
   EXPECT_TRUE(converter->StartConversion(
       ConvReq(kKey, ConversionRequest::CONVERSION), &segments));
   EXPECT_EQ(segments.conversion_segments_size(), 1);
-  const Segment &segment = segments.conversion_segment(0);
+  const Segment& segment = segments.conversion_segment(0);
   bool found = false;
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).value == kValueExpected) {
@@ -966,13 +966,13 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
   // 1st candidate without PARTIALLY_KEY_CONSUMED
   segment.push_back_candidate();
   // 2nd candidate with PARTIALLY_KEY_CONSUMED
-  Candidate *candidate2 = segment.push_back_candidate();
+  Candidate* candidate2 = segment.push_back_candidate();
   candidate2->attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
   candidate2->consumed_key_size = original_consumed_key_size;
   // 1st meta candidate without PARTIALLY_KEY_CONSUMED
   segment.add_meta_candidate();
   // 2nd meta candidate with PARTIALLY_KEY_CONSUMED
-  Candidate *meta_candidate2 = segment.add_meta_candidate();
+  Candidate* meta_candidate2 = segment.add_meta_candidate();
   meta_candidate2->attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
   meta_candidate2->consumed_key_size = original_consumed_key_size;
 
@@ -1015,11 +1015,11 @@ TEST_F(ConverterTest, PredictSetKey) {
 
   std::unique_ptr<Converter> converter = CreateStubbedConverter();
 
-  for (const TestData &test_data : test_data_list) {
+  for (const TestData& test_data : test_data_list) {
     Segments segments;
     int orig_candidates_size = 0;
     if (test_data.key) {
-      Segment *seg = segments.add_segment();
+      Segment* seg = segments.add_segment();
       seg->set_key(*test_data.key);
       PushBackCandidate(*test_data.key, *seg);
       orig_candidates_size = seg->candidates_size();
@@ -1055,7 +1055,7 @@ TEST_F(ConverterTest, PredictSetKey) {
 // key and value is set to the given ones.
 struct InvokeCallbackWithUserDictionaryToken {
   template <class T, class U>
-  void operator()(T, U, DictionaryInterface::Callback *callback) {
+  void operator()(T, U, DictionaryInterface::Callback* callback) {
     const Token token(key, value, MockDictionary::kDefaultCost,
                       MockDictionary::kDefaultPosId,
                       MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
@@ -1086,15 +1086,15 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
 
   Converter converter(
       std::move(modules),
-      [&](const engine::Modules &modules) {
+      [&](const engine::Modules& modules) {
         return std::make_unique<ImmutableConverter>(modules);
       },
-      [](const engine::Modules &modules, const ConverterInterface &converter,
-         const ImmutableConverterInterface &immutable_converter) {
+      [](const engine::Modules& modules, const ConverterInterface& converter,
+         const ImmutableConverterInterface& immutable_converter) {
         return std::make_unique<prediction::Predictor>(modules, converter,
                                                        immutable_converter);
       },
-      [](const engine::Modules &modules) {
+      [](const engine::Modules& modules) {
         return std::make_unique<Rewriter>(modules);
       });
 
@@ -1166,12 +1166,12 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   std::unique_ptr<Converter> converter = CreateConverter(
       std::make_unique<InsertPlaceholderWordsRewriter>(), STUB_PREDICTOR);
 
-  engine::Modules &modules = converter->modules();
+  engine::Modules& modules = converter->modules();
 
   // Set up suppression dictionary
   {
     user_dictionary::UserDictionaryStorage storage;
-    UserEntry *entry = storage.add_dictionaries()->add_entries();
+    UserEntry* entry = storage.add_dictionaries()->add_entries();
     entry->set_key("tobefiltered");
     entry->set_value("ToBeFiltered");
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
@@ -1196,7 +1196,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
 
   // Verify that words inserted by the rewriter is suppressed if its in the
   // suppression_dictionary.
-  for (const Segment &segment : segments.conversion_segments()) {
+  for (const Segment& segment : segments.conversion_segments()) {
     EXPECT_FALSE(FindCandidateByValue("ToBeFiltered", segment));
     EXPECT_TRUE(FindCandidateByValue("NotToBeFiltered", segment));
   }
@@ -1223,7 +1223,7 @@ TEST_F(ConverterTest, StartReverseConversion) {
   const std::string kFullWidthSpace = "　";  // full-width space
   {
     // Test for single Kanji character.
-    const std::string &kInput = kHonKanji;
+    const std::string& kInput = kHonKanji;
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 1);
@@ -1232,7 +1232,7 @@ TEST_F(ConverterTest, StartReverseConversion) {
   }
   {
     // Test for multi-Kanji character.
-    const std::string &kInput = kMuryouKanji;
+    const std::string& kInput = kMuryouKanji;
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 1);
@@ -1366,11 +1366,11 @@ TEST_F(ConverterTest, ReconstructHistory) {
   Segments segments;
   EXPECT_TRUE(converter->ReconstructHistory(&segments, kTen));
   EXPECT_EQ(segments.segments_size(), 1);
-  const Segment &segment = segments.segment(0);
+  const Segment& segment = segments.segment(0);
   EXPECT_EQ(segment.segment_type(), Segment::HISTORY);
   EXPECT_EQ(segment.key(), "10");
   EXPECT_EQ(segment.candidates_size(), 1);
-  const Candidate &candidate = segment.candidate(0);
+  const Candidate& candidate = segment.candidate(0);
   EXPECT_EQ(candidate.attributes, Attribute::NO_LEARNING);
   EXPECT_EQ(candidate.content_key, "10");
   EXPECT_EQ(candidate.key, "10");
@@ -1385,7 +1385,7 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   auto table = std::make_shared<composer::Table>();
-  const config::Config &config = config::ConfigHandler::DefaultConfig();
+  const config::Config& config = config::ConfigHandler::DefaultConfig();
   mozc::commands::Request request_proto;
   mozc::composer::Composer composer(table, request_proto, config);
   composer.InsertCharacterPreedit("あ");
@@ -1685,7 +1685,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   for (int i = 0; i < 4; ++i) {
     segments.Clear();
     EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
-    const Segment &segment = segments.conversion_segment(0);
+    const Segment& segment = segments.conversion_segment(0);
     if (i == 0) {
       top_candidate = segment.candidate(0).value;
       seen.insert(top_candidate);
@@ -1771,10 +1771,10 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   Segments segments;
   // History segment.
   {
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("に");
     segment->set_segment_type(Segment::HISTORY);
-    Candidate *candidate = segment->add_candidate();
+    Candidate* candidate = segment->add_candidate();
     candidate->key = "に";
     candidate->value = "に";
     // Hack: Get POS for "助詞".
@@ -1810,15 +1810,15 @@ TEST_F(ConverterTest, RevertConversion) {
 
   std::unique_ptr<Converter> converter = std::make_unique<Converter>(
       std::move(modules),
-      [](const engine::Modules &modules) {
+      [](const engine::Modules& modules) {
         return std::make_unique<ImmutableConverter>(modules);
       },
       [&mock_predictor](
-          const engine::Modules &modules, const ConverterInterface &converter,
-          const ImmutableConverterInterface &immutable_converter) {
+          const engine::Modules& modules, const ConverterInterface& converter,
+          const ImmutableConverterInterface& immutable_converter) {
         return std::move(mock_predictor);
       },
-      [&mock_rewriter](const engine::Modules &modules) {
+      [&mock_rewriter](const engine::Modules& modules) {
         return std::move(mock_rewriter);
       });
 
@@ -1960,9 +1960,9 @@ TEST_F(ConverterTest, ResizeSegmentsWithArray) {
     // Even if segments has histroy segments, arguments for ResizeSegment is not
     // changed.
     Segments segments;
-    Segment &history0 = AddSegment("やゆよ", Segment::HISTORY, segments);
+    Segment& history0 = AddSegment("やゆよ", Segment::HISTORY, segments);
     PushBackCandidate("ヤユヨ", history0);
-    Segment &history1 = AddSegment("わをん", Segment::HISTORY, segments);
+    Segment& history1 = AddSegment("わをん", Segment::HISTORY, segments);
     PushBackCandidate("ワヲン", history1);
     AddSegment("あいうえ", Segment::FREE, segments);
     const ConversionRequest convreq;
@@ -2104,7 +2104,7 @@ TEST_F(ConverterTest, ResizeSegmentsWithArray) {
     // Since {"あいう", "えお"} may be modified too, the segment index for
     // "かきくけ" may be different from 2.
     const size_t resized_size = segments.conversion_segments_size();
-    const Segment &last_segment = segments.conversion_segment(resized_size - 1);
+    const Segment& last_segment = segments.conversion_segment(resized_size - 1);
     EXPECT_EQ(last_segment.key(), "かきくけ");
     EXPECT_EQ(last_segment.segment_type(), kFixedBoundary);
   }
@@ -2261,17 +2261,17 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
   // Test the case where value == content_value.
   {
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
 
-    Candidate *cand1 = segment->add_candidate();
+    Candidate* cand1 = segment->add_candidate();
     cand1->value = "東京";
     cand1->content_value = "東京";
 
-    Candidate *cand2 = segment->add_candidate();
+    Candidate* cand2 = segment->add_candidate();
     cand2->value = "大阪";
     cand2->content_value = "大阪";
 
-    Candidate *cand3 = segment->add_candidate();
+    Candidate* cand3 = segment->add_candidate();
     cand3->value = "群馬";
     cand3->content_value = "群馬";
 
@@ -2290,17 +2290,17 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
   // Test the case where value != content_value.
   {
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
 
-    Candidate *cand1 = segment->add_candidate();
+    Candidate* cand1 = segment->add_candidate();
     cand1->value = "東京に";
     cand1->content_value = "東京";
 
-    Candidate *cand2 = segment->add_candidate();
+    Candidate* cand2 = segment->add_candidate();
     cand2->value = "大阪に";
     cand2->content_value = "大阪";
 
-    Candidate *cand3 = segment->add_candidate();
+    Candidate* cand3 = segment->add_candidate();
     cand3->value = "群馬に";
     cand3->content_value = "群馬";
 
@@ -2320,9 +2320,9 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
   // Hiragana. We cannot add the reading in this case.
   {
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
 
-    Candidate *cand1 = segment->add_candidate();
+    Candidate* cand1 = segment->add_candidate();
     cand1->value = "東京便";
     cand1->content_value = "東京";
 
@@ -2337,9 +2337,9 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
   // Test the case where value != content_value and content_value is empty.
   {
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
 
-    Candidate *cand1 = segment->add_candidate();
+    Candidate* cand1 = segment->add_candidate();
     cand1->value = "東京";
     cand1->content_value.clear();
 
@@ -2363,9 +2363,9 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
   // Single segment and multiple candidates.
   {
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     for (int i = 0; i < 10; ++i) {
-      Candidate *c = segment->add_candidate();
+      Candidate* c = segment->add_candidate();
       c->key = absl::StrCat("k", i);
       c->content_key = "k";
       c->value = absl::StrCat("v", i);
@@ -2381,8 +2381,8 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
         Converter::MakeLearningResults(segments);
     EXPECT_EQ(results.size(), 5);
     for (int i = 0; i < results.size(); ++i) {
-      const Candidate &c = segment->candidate(i);
-      const prediction::Result &result = results[i];
+      const Candidate& c = segment->candidate(i);
+      const prediction::Result& result = results[i];
       EXPECT_EQ(c.key, result.key);
       EXPECT_EQ(c.value, result.value);
       EXPECT_EQ(c.description, result.description);
@@ -2392,7 +2392,7 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
       EXPECT_EQ(c.wcost, result.wcost);
 
       EXPECT_EQ(result.inner_segments().size(), 1);
-      for (const auto &iter : result.inner_segments()) {
+      for (const auto& iter : result.inner_segments()) {
         EXPECT_EQ(iter.GetKey(), c.key);
         EXPECT_EQ(iter.GetContentKey(), c.content_key);
         EXPECT_EQ(iter.GetValue(), c.value);
@@ -2405,8 +2405,8 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
   {
     Segments segments;
     for (int i = 0; i < 3; ++i) {
-      Segment *segment = segments.add_segment();
-      Candidate *c = segment->add_candidate();
+      Segment* segment = segments.add_segment();
+      Candidate* c = segment->add_candidate();
       c->key = absl::StrCat("k", i);
       c->content_key = "k";
       c->value = absl::StrCat("v", i);
@@ -2421,7 +2421,7 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
         Converter::MakeLearningResults(segments);
     EXPECT_EQ(results.size(), 1);
 
-    const prediction::Result &result = results.front();
+    const prediction::Result& result = results.front();
     EXPECT_EQ(result.key, "k0k1k2");
     EXPECT_EQ(result.value, "v0v1v2");
     EXPECT_EQ(result.lid, segments.segment(0).candidate(0).lid);
@@ -2430,8 +2430,8 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
     EXPECT_EQ(result.wcost, 0 + 10 + 20);
 
     int n = 0;
-    for (const auto &iter : result.inner_segments()) {
-      const Candidate &c = segments.segment(n).candidate(0);
+    for (const auto& iter : result.inner_segments()) {
+      const Candidate& c = segments.segment(n).candidate(0);
       EXPECT_EQ(iter.GetKey(), c.key);
       EXPECT_EQ(iter.GetContentKey(), c.content_key);
       EXPECT_EQ(iter.GetValue(), c.value);
@@ -2445,9 +2445,9 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
 TEST_F(ConverterTest, MakeHistoryResultTest) {
   Segments segments;
   for (int i = 0; i < 3; ++i) {
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_segment_type(Segment::HISTORY);
-    Candidate *c = segment->add_candidate();
+    Candidate* c = segment->add_candidate();
     c->key = absl::StrCat("k", i);
     c->content_key = "k";
     c->value = absl::StrCat("v", i);
@@ -2465,8 +2465,8 @@ TEST_F(ConverterTest, MakeHistoryResultTest) {
   EXPECT_EQ(result.cost, 2);  // only the last cost.
 
   int n = 0;
-  for (const auto &iter : result.inner_segments()) {
-    const Candidate &c = segments.segment(n).candidate(0);
+  for (const auto& iter : result.inner_segments()) {
+    const Candidate& c = segments.segment(n).candidate(0);
     EXPECT_EQ(iter.GetKey(), c.key);
     EXPECT_EQ(iter.GetContentKey(), c.content_key);
     EXPECT_EQ(iter.GetValue(), c.value);
@@ -2503,15 +2503,15 @@ TEST_F(ConverterTest, Bugfix424676259) {
 
   auto converter = std::make_unique<Converter>(
       std::move(modules),
-      [](const engine::Modules &modules) {
+      [](const engine::Modules& modules) {
         return std::make_unique<ImmutableConverter>(modules);
       },
       [&mock_predictor](
-          const engine::Modules &modules, const ConverterInterface &converter,
-          const ImmutableConverterInterface &immutable_converter) {
+          const engine::Modules& modules, const ConverterInterface& converter,
+          const ImmutableConverterInterface& immutable_converter) {
         return std::move(mock_predictor);
       },
-      [&mock_rewriter](const engine::Modules &modules) {
+      [&mock_rewriter](const engine::Modules& modules) {
         return std::move(mock_rewriter);
       });
 
@@ -2527,9 +2527,9 @@ TEST_F(ConverterTest, Bugfix424676259) {
   EXPECT_TRUE(converter->StartPrediction(convreq, &segments));
 
   ASSERT_EQ(segments.segments_size(), 1);
-  const converter::Segment &segment = segments.segment(0);
+  const converter::Segment& segment = segments.segment(0);
   ASSERT_EQ(segment.candidates_size(), 1);
-  const converter::Candidate &candidate = segment.candidate(0);
+  const converter::Candidate& candidate = segment.candidate(0);
 
   EXPECT_EQ(candidate.key, "3:30から");
   EXPECT_EQ(candidate.value, "３：３０から");

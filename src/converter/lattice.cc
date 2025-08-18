@@ -51,8 +51,8 @@
 namespace mozc {
 namespace {
 
-Node *InitBOSNode(Lattice *lattice, uint16_t length) {
-  Node *bos_node = lattice->NewNode();
+Node* InitBOSNode(Lattice* lattice, uint16_t length) {
+  Node* bos_node = lattice->NewNode();
   DCHECK(bos_node);
   bos_node->rid = 0;  // 0 is reserved for EOS/BOS
   bos_node->lid = 0;
@@ -67,8 +67,8 @@ Node *InitBOSNode(Lattice *lattice, uint16_t length) {
   return bos_node;
 }
 
-Node *InitEOSNode(Lattice *lattice, uint16_t length) {
-  Node *eos_node = lattice->NewNode();
+Node* InitEOSNode(Lattice* lattice, uint16_t length) {
+  Node* eos_node = lattice->NewNode();
   DCHECK(eos_node);
   eos_node->rid = 0;  // 0 is reserved for EOS/BOS
   eos_node->lid = 0;
@@ -83,7 +83,7 @@ Node *InitEOSNode(Lattice *lattice, uint16_t length) {
   return eos_node;
 }
 
-bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
+bool PathContainsString(const Node* node, size_t begin_pos, size_t end_pos,
                         const absl::string_view str) {
   CHECK(node);
   for (; node->prev != nullptr; node = node->prev) {
@@ -95,7 +95,7 @@ bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
   return false;
 }
 
-std::string GetDebugStringForNode(const Node *node, const Node *prev_node) {
+std::string GetDebugStringForNode(const Node* node, const Node* prev_node) {
   CHECK(node);
   std::stringstream os;
   os << "[con:" << node->cost - (prev_node ? prev_node->cost : 0) - node->wcost
@@ -108,18 +108,18 @@ std::string GetDebugStringForNode(const Node *node, const Node *prev_node) {
   return os.str();
 }
 
-std::string GetDebugStringForPath(const Node *end_node) {
+std::string GetDebugStringForPath(const Node* end_node) {
   CHECK(end_node);
   std::stringstream os;
-  std::vector<const Node *> node_vector;
+  std::vector<const Node*> node_vector;
 
-  for (const Node *node = end_node; node; node = node->prev) {
+  for (const Node* node = end_node; node; node = node->prev) {
     node_vector.push_back(node);
   }
-  const Node *prev_node = nullptr;
+  const Node* prev_node = nullptr;
 
   for (int i = static_cast<int>(node_vector.size()) - 1; i >= 0; --i) {
-    const Node *node = node_vector[i];
+    const Node* node = node_vector[i];
     os << GetDebugStringForNode(node, prev_node);
     prev_node = node;
   }
@@ -162,8 +162,8 @@ void Lattice::SetKey(std::string key) {
       InitEOSNode(this, static_cast<uint16_t>(key_.size()));
 }
 
-void Lattice::Insert(size_t pos, Node *node) {
-  for (Node *rnode = node; rnode != nullptr; rnode = rnode->bnext) {
+void Lattice::Insert(size_t pos, Node* node) {
+  for (Node* rnode = node; rnode != nullptr; rnode = rnode->bnext) {
     const size_t end_pos = std::min(rnode->key.size() + pos, key_.size());
     rnode->begin_pos = static_cast<uint16_t>(pos);
     rnode->end_pos = static_cast<uint16_t>(end_pos);
@@ -177,7 +177,7 @@ void Lattice::Insert(size_t pos, Node *node) {
   if (begin_nodes_[pos] == nullptr) {
     begin_nodes_[pos] = node;
   } else {
-    for (Node *rnode = node; rnode != nullptr; rnode = rnode->bnext) {
+    for (Node* rnode = node; rnode != nullptr; rnode = rnode->bnext) {
       if (rnode->bnext == nullptr) {
         rnode->bnext = begin_nodes_[pos];
         begin_nodes_[pos] = node;
@@ -196,14 +196,14 @@ void Lattice::Clear() {
 
 void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
                                   std::string str) {
-  LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
+  LatticeDisplayNodeInfo* info = Singleton<LatticeDisplayNodeInfo>::get();
   info->display_node_begin_pos = begin_pos;
   info->display_node_end_pos = end_pos;
   info->display_node_str = std::move(str);
 }
 
 void Lattice::ResetDebugDisplayNode() {
-  LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
+  LatticeDisplayNodeInfo* info = Singleton<LatticeDisplayNodeInfo>::get();
   info->display_node_str.clear();
 }
 
@@ -213,15 +213,15 @@ std::string Lattice::DebugString() const {
     return "";
   }
 
-  std::vector<const Node *> best_path_nodes;
+  std::vector<const Node*> best_path_nodes;
 
-  const Node *node = eos_nodes();
+  const Node* node = eos_nodes();
   // Print the best path
   os << "Best path: ";
   os << GetDebugStringForPath(node);
   os << std::endl;
 
-  LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
+  LatticeDisplayNodeInfo* info = Singleton<LatticeDisplayNodeInfo>::get();
 
   if (info->display_node_str.empty()) {
     return os.str();
@@ -232,13 +232,13 @@ std::string Lattice::DebugString() const {
   }
 
   // Print the path that contains the designated node
-  for (std::vector<const Node *>::const_iterator it = best_path_nodes.begin();
+  for (std::vector<const Node*>::const_iterator it = best_path_nodes.begin();
        it != best_path_nodes.end(); ++it) {
-    const Node *best_path_node = *it;
+    const Node* best_path_node = *it;
     if (best_path_node->begin_pos < info->display_node_end_pos) {
       break;
     }
-    for (const Node *prev_node = end_nodes(best_path_node->begin_pos);
+    for (const Node* prev_node = end_nodes(best_path_node->begin_pos);
          prev_node; prev_node = prev_node->enext) {
       if (!PathContainsString(prev_node, info->display_node_begin_pos,
                               info->display_node_end_pos,

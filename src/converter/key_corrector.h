@@ -52,8 +52,8 @@ class KeyCorrector final {
   }
 
   // Movable
-  KeyCorrector(KeyCorrector &&other) = default;
-  KeyCorrector &operator=(KeyCorrector &&other) = default;
+  KeyCorrector(KeyCorrector&& other) = default;
+  KeyCorrector& operator=(KeyCorrector&& other) = default;
 
   InputMode mode() const { return mode_; }
 
@@ -120,7 +120,7 @@ class KeyCorrector final {
   //  GetPrefix(3) = "んなのほん"
   //  GetPrefix(9) = "なのほん"
   //  GetPrefix(12) = nullptr
-  const char *GetCorrectedPrefix(size_t original_key_pos, size_t *length) const;
+  const char* GetCorrectedPrefix(size_t original_key_pos, size_t* length) const;
 
   // This is a helper function for CommonPrefixSearch in Converter.
   // Basically it is equivalent to

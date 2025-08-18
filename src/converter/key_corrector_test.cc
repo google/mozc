@@ -375,7 +375,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "みんなであそぼう");
 
-    const char *output = nullptr;
+    const char* output = nullptr;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
@@ -398,7 +398,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちは");
 
-    const char *output = nullptr;
+    const char* output = nullptr;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
@@ -420,7 +420,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちはせんよう");
 
-    const char *output = nullptr;
+    const char* output = nullptr;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);

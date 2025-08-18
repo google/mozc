@@ -146,10 +146,10 @@ namespace internal {
 
 // A helper function to print a container of candidate matchers.
 template <typename Container>
-std::string PrintCandidateMatcherArray(const Container &matchers) {
+std::string PrintCandidateMatcherArray(const Container& matchers) {
   std::string str = "candidates are:\n";
   int index = 0;
-  for (const auto &matcher : matchers) {
+  for (const auto& matcher : matchers) {
     str += absl::StrFormat("  cand %d %s\n", index++,
                            ::testing::PrintToString(matcher));
   }
@@ -189,15 +189,15 @@ template <typename T>
 }
 
 template <typename Container>
-::testing::Matcher<Segment> CandidatesAreArray(const Container &matchers) {
+::testing::Matcher<Segment> CandidatesAreArray(const Container& matchers) {
   return CandidatesAreArrayMatcherImpl(matchers);
 }
 
 // Checks if a segment contains one and only one candidate that matches the
 // given matcher.
 template <typename T>
-::testing::Matcher<Segment> HasSingleCandidate(const T &matcher) {
-  using CandidateMatcherType = ::testing::Matcher<const converter::Candidate *>;
+::testing::Matcher<Segment> HasSingleCandidate(const T& matcher) {
+  using CandidateMatcherType = ::testing::Matcher<const converter::Candidate*>;
   return CandidatesAreArray(std::vector<CandidateMatcherType>{matcher});
 }
 

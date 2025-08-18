@@ -58,8 +58,8 @@ class StateTable {
     idarray_.resize(size);
   }
 
-  StateTable(const StateTable &) = delete;
-  StateTable &operator=(const StateTable &) = delete;
+  StateTable(const StateTable&) = delete;
+  StateTable& operator=(const StateTable&) = delete;
 
   // |str| is an 1-dimensional row (or column) represented in byte array.
   void Add(uint16_t id, std::string str) {
@@ -100,8 +100,8 @@ class StateTable {
 
   size_t compressed_size() const { return compressed_size_; }
 
-  void Output(std::ostream *os) {
-    const char *data = reinterpret_cast<const char *>(compressed_table_.data());
+  void Output(std::ostream* os) {
+    const char* data = reinterpret_cast<const char*>(compressed_table_.data());
     const size_t bytelen = compressed_table_.size() * sizeof(uint16_t);
     os->write(data, bytelen);
   }
@@ -115,8 +115,8 @@ class StateTable {
 
 void SegmenterBitarrayGenerator::GenerateBitarray(
     int lsize, int rsize, IsBoundaryFunc is_boundary,
-    const std::string &output_size_info, const std::string &output_ltable,
-    const std::string &output_rtable, const std::string &output_bitarray) {
+    const std::string& output_size_info, const std::string& output_ltable,
+    const std::string& output_rtable, const std::string& output_bitarray) {
   // Load the original matrix into an array
   std::vector<uint8_t> array((lsize + 1) * (rsize + 1));
 

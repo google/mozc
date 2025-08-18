@@ -56,8 +56,8 @@ namespace {
 //   - "200x" -> "x" / ALPHABET
 //   (currently only NUMBER and ALPHABET are supported)
 bool ExtractLastTokenWithScriptType(const absl::string_view text,
-                                    std::string *last_token,
-                                    Util::ScriptType *last_script_type) {
+                                    std::string* last_token,
+                                    Util::ScriptType* last_script_type) {
   last_token->clear();
   *last_script_type = Util::SCRIPT_TYPE_SIZE;
 
@@ -100,11 +100,11 @@ bool ExtractLastTokenWithScriptType(const absl::string_view text,
 }  // namespace
 
 HistoryReconstructor::HistoryReconstructor(
-    const dictionary::PosMatcher &pos_matcher)
+    const dictionary::PosMatcher& pos_matcher)
     : pos_matcher_(pos_matcher) {}
 
 bool HistoryReconstructor::ReconstructHistory(absl::string_view preceding_text,
-                                              Segments *segments) const {
+                                              Segments* segments) const {
   std::string key;
   std::string value;
   uint16_t id;
@@ -112,10 +112,10 @@ bool HistoryReconstructor::ReconstructHistory(absl::string_view preceding_text,
     return false;
   }
 
-  Segment *segment = segments->add_segment();
+  Segment* segment = segments->add_segment();
   segment->set_key(key);
   segment->set_segment_type(Segment::HISTORY);
-  Candidate *candidate = segment->push_back_candidate();
+  Candidate* candidate = segment->push_back_candidate();
   candidate->rid = id;
   candidate->lid = id;
   candidate->content_key = key;
@@ -127,8 +127,8 @@ bool HistoryReconstructor::ReconstructHistory(absl::string_view preceding_text,
 }
 
 bool HistoryReconstructor::GetLastConnectivePart(
-    const absl::string_view preceding_text, std::string *key,
-    std::string *value, uint16_t *id) const {
+    const absl::string_view preceding_text, std::string* key,
+    std::string* value, uint16_t* id) const {
   key->clear();
   value->clear();
   *id = pos_matcher_.GetGeneralNounId();
