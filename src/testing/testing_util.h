@@ -67,8 +67,8 @@ namespace testing {
 namespace internal {
 ::testing::AssertionResult EqualsProtoFormat(
     absl::string_view expect_string, absl::string_view actual_string,
-    const mozc::protobuf::Message &expect,
-    const mozc::protobuf::Message &actual, bool is_partial);
+    const mozc::protobuf::Message& expect,
+    const mozc::protobuf::Message& actual, bool is_partial);
 }  // namespace internal
 
 // Thin wrapper of EqualsProto to check if expect and actual has same type
@@ -76,7 +76,7 @@ namespace internal {
 template <typename T>
 ::testing::AssertionResult EqualsProto(absl::string_view expect_string,
                                        absl::string_view actual_string,
-                                       const T &expect, const T &actual) {
+                                       const T& expect, const T& actual) {
   return ::mozc::testing::internal::EqualsProtoFormat(
       expect_string, actual_string, expect, actual, false);
 }
@@ -86,7 +86,7 @@ template <typename T>
 ::testing::AssertionResult EqualsProto(absl::string_view expect_string,
                                        absl::string_view actual_string,
                                        absl::string_view expect,
-                                       const mozc::protobuf::Message &actual);
+                                       const mozc::protobuf::Message& actual);
 
 #define EXPECT_PROTO_EQ(expect, actual) \
   EXPECT_PRED_FORMAT2(::mozc::testing::EqualsProto, expect, actual)
@@ -95,7 +95,7 @@ template <typename T>
 // absl::string_view .
 ::testing::AssertionResult PartiallyEqualsProto(
     absl::string_view expect_string, absl::string_view actual_string,
-    absl::string_view expect, const mozc::protobuf::Message &actual);
+    absl::string_view expect, const mozc::protobuf::Message& actual);
 
 #define EXPECT_PROTO_PEQ(expect, actual) \
   EXPECT_PRED_FORMAT2(::mozc::testing::PartiallyEqualsProto, expect, actual)

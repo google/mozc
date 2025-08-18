@@ -36,7 +36,7 @@
 #include "base/init_mozc.h"
 #include "testing/gunit.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // TODO(yukawa, team): Implement b/2805528 so that you can specify any option
   // given by gunit.
 #ifdef GTEST_HAS_ABSL

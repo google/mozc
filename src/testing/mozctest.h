@@ -56,7 +56,7 @@ std::string GetSourcePath(absl::Span<const absl::string_view> components);
 // Gets the absolute path of a test resource file. Returns an error status if
 // the path doesn't exist.
 absl::StatusOr<std::string> GetSourceFile(
-  absl::Span<const absl::string_view> components);
+    absl::Span<const absl::string_view> components);
 
 // Gets an absolute path of test resource file.  If the file doesn't exist,
 // terminates the program.
@@ -77,7 +77,6 @@ std::string GetSourceDirOrDie(absl::Span<const absl::string_view> components);
 std::vector<std::string> GetSourceFilesInDirOrDie(
     absl::Span<const absl::string_view> dir_components,
     absl::Span<const absl::string_view> filenames);
-
 
 // Creates and returns a new unique TempDirectory in TempDirectory::Default().
 TempDirectory MakeTempDirectoryOrDie();

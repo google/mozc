@@ -55,18 +55,18 @@ namespace testing {
 
 #define PEER_METHOD(func_name)                            \
   template <typename... Args>                             \
-  auto func_name(Args &&...args) {                        \
+  auto func_name(Args&&... args) {                        \
     return value_.func_name(std::forward<Args>(args)...); \
   }
 
 #define PEER_STATIC_METHOD(func_name)                        \
   template <typename... Args>                                \
-  static auto func_name(Args &&...args) {                    \
+  static auto func_name(Args&&... args) {                    \
     return TypeName::func_name(std::forward<Args>(args)...); \
   }
 
 #define PEER_VARIABLE(variable_name)                \
-  decltype(value_.variable_name) &variable_name() { \
+  decltype(value_.variable_name)& variable_name() { \
     return value_.variable_name;                    \
   }
 
@@ -75,12 +75,12 @@ namespace testing {
 template <typename T>
 class TestPeer {
  public:
-  explicit TestPeer(T &value) : value_(value) {}
+  explicit TestPeer(T& value) : value_(value) {}
 
   using TypeName = T;
 
  protected:
-  TypeName &value_;
+  TypeName& value_;
 };
 }  // namespace testing
 }  // namespace mozc
