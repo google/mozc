@@ -526,8 +526,10 @@ std::string Util::CodepointToUtf8(char32_t c) {
 }
 
 void Util::CodepointToUtf8Append(char32_t c, std::string* output) {
+  output->reserve(output->size() + 6);
   char buf[7];
-  output->append(buf, CodepointToUtf8(c, buf));
+  const size_t mblen = CodepointToUtf8(c, buf);
+  absl::StrAppend(output, absl::string_view(buf, mblen));
 }
 
 size_t Util::CodepointToUtf8(char32_t c, char* output) {
