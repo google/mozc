@@ -40,8 +40,7 @@ namespace mozc {
 
 class NodeAllocator {
  public:
-  NodeAllocator()
-      : node_freelist_(1024), max_nodes_size_(8192), node_count_(0) {}
+  NodeAllocator() : node_freelist_(1024) {}
   NodeAllocator(const NodeAllocator&) = delete;
   NodeAllocator& operator=(const NodeAllocator&) = delete;
 
@@ -49,28 +48,14 @@ class NodeAllocator {
     Node* node = node_freelist_.Alloc();
     DCHECK(node);
     node->Init();
-    ++node_count_;
     return node;
   }
 
   // Frees all nodes allocateed by NewNode().
-  void Free() {
-    node_freelist_.Free();
-    node_count_ = 0;
-  }
-
-  size_t max_nodes_size() const { return max_nodes_size_; }
-
-  void set_max_nodes_size(size_t max_nodes_size) {
-    max_nodes_size_ = max_nodes_size;
-  }
-
-  size_t node_count() const { return node_count_; }
+  void Free() { node_freelist_.Free(); }
 
  private:
   FreeList<Node> node_freelist_;
-  size_t max_nodes_size_;
-  size_t node_count_;
 };
 
 }  // namespace mozc

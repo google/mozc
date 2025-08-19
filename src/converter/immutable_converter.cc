@@ -87,13 +87,14 @@ constexpr size_t kMaxCharLengthForReverseConversion = 600;  // 200 chars in UTF8
 constexpr int kMaxCost = 32767;
 constexpr int kMinCost = -32767;
 constexpr int kDefaultNumberCost = 3000;
+constexpr int kMaxNodesSize = 8192;
 
 class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
  public:
   KeyCorrectedNodeListBuilder(size_t pos, absl::string_view original_lookup_key,
                               const KeyCorrector* key_corrector,
                               NodeAllocator* allocator)
-      : BaseNodeListBuilder(allocator, allocator->max_nodes_size()),
+      : BaseNodeListBuilder(allocator, kMaxNodesSize),
         pos_(pos),
         original_lookup_key_(original_lookup_key),
         key_corrector_(key_corrector),
@@ -715,9 +716,7 @@ Node* ImmutableConverter::Lookup(const int begin_pos,
   const absl::string_view key_substr =
       key.substr(std::min<int>(begin_pos, key.size()));
 
-  lattice->node_allocator()->set_max_nodes_size(8192);
-  BaseNodeListBuilder builder(lattice->node_allocator(),
-                              lattice->node_allocator()->max_nodes_size());
+  BaseNodeListBuilder builder(lattice->node_allocator(), kMaxNodesSize);
   if (is_reverse) {
     dictionary_.LookupReverse(key_substr, request, &builder);
   } else {
