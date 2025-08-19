@@ -359,7 +359,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
   }
 
   for (const Segment& segment : segments_) {
-    *actual_value += segment.candidate(0).value;
+    absl::StrAppend(actual_value, segment.candidate(0).value);
   }
 
   if (command == kConversionMatch) {

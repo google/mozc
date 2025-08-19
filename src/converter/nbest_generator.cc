@@ -40,6 +40,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/vlog.h"
@@ -171,13 +172,13 @@ void NBestGenerator::MakeCandidate(
   for (size_t i = 0; i < nodes.size(); ++i) {
     const Node* absl_nonnull node = nodes[i];
     if (!is_functional && !pos_matcher_.IsFunctional(node->lid)) {
-      candidate.content_key += node->key;
-      candidate.content_value += node->value;
+      absl::StrAppend(&candidate.content_key, node->key);
+      absl::StrAppend(&candidate.content_value, node->value);
     } else {
       is_functional = true;
     }
-    candidate.key += node->key;
-    candidate.value += node->value;
+    absl::StrAppend(&candidate.key, node->key);
+    absl::StrAppend(&candidate.value, node->value);
 
     if (node->constrained_prev != nullptr ||
         (node->next != nullptr && node->next->constrained_prev == node)) {
