@@ -346,7 +346,6 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
       tokens_(std::make_shared<TokensIndex>(*user_pos_)),
       filename_(std::move(filename)) {
   DCHECK(user_pos_);
-  DCHECK(tokens_);
   DCHECK(!canceled_signal_);
   DCHECK(!filename_.empty());
   Reload();

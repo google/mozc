@@ -38,6 +38,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "base/thread.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -119,14 +120,13 @@ class UserDictionary : public UserDictionaryInterface {
   class TokensIndex;
   class UserDictionaryReloader;
 
-  // TODO(all): use std::atomic<std::shared_ptr> once it gets available.
   std::shared_ptr<const TokensIndex> GetTokens() const {
-    return std::atomic_load(&tokens_);
+    return tokens_.load();
   }
 
   void SetTokens(std::shared_ptr<TokensIndex> tokens) {
     DCHECK(tokens);
-    return std::atomic_store(&tokens_, std::move(tokens));
+    tokens_.store(std::move(tokens));
   }
 
   std::string GetFileName() const;
@@ -137,7 +137,8 @@ class UserDictionary : public UserDictionaryInterface {
 
   // Uses shared pointer to asynchronously update `tokens_`.
   // `tokens_` are set in different thread.
-  std::shared_ptr<TokensIndex> tokens_;
+  // TODO(all): use std::atomic<std::shared_ptr> once it gets available.
+  AtomicSharedPtr<TokensIndex> tokens_;
 
   // Signal variable to cancel the dictionary loading thread.
   // We want to immediately cancel the loading thread in the detractor of
