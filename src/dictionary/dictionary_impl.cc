@@ -88,6 +88,7 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
       : config_(config),
         pos_matcher_(pos_matcher),
         user_dictionary_(user_dictionary),
+        has_suppressed_entries_(user_dictionary_.HasSuppressedEntries()),
         callback_(callback) {}
 
   ResultType OnKey(absl::string_view key) override {
@@ -115,7 +116,8 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
         return TRAVERSE_CONTINUE;
       }
     }
-    if (user_dictionary_.IsSuppressedEntry(token.key, token.value)) {
+    if (has_suppressed_entries_ &&
+        user_dictionary_.IsSuppressedEntry(token.key, token.value)) {
       return TRAVERSE_CONTINUE;
     }
     return callback_->OnToken(key, actual_key, token);
@@ -125,6 +127,10 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
   const config::Config& config_;
   const PosMatcher& pos_matcher_;
   const UserDictionaryInterface& user_dictionary_;
+  // cache the result of HasSuppressedEntries, because calling
+  // IsSuppressedEntry() has some latency because of mutex lock even when
+  // the entry is empty.
+  const bool has_suppressed_entries_ = false;
   DictionaryInterface::Callback* callback_;
 };
 

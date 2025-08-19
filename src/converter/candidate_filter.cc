@@ -231,6 +231,7 @@ CandidateFilter::CandidateFilter(const UserDictionaryInterface& user_dictionary,
     : user_dictionary_(user_dictionary),
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
+      has_suppressed_entries_(user_dictionary_.HasSuppressedEntries()),
       top_candidate_(nullptr) {}
 
 void CandidateFilter::Reset() {
@@ -346,11 +347,12 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // Remove "抑制単語" just in case.
-  if (user_dictionary_.IsSuppressedEntry(candidate->key, candidate->value) ||
-      (candidate->key != candidate->content_key &&
-       candidate->value != candidate->content_value &&
-       user_dictionary_.IsSuppressedEntry(candidate->content_key,
-                                          candidate->content_value))) {
+  if (has_suppressed_entries_ &&
+      (user_dictionary_.IsSuppressedEntry(candidate->key, candidate->value) ||
+       (candidate->key != candidate->content_key &&
+        candidate->value != candidate->content_value &&
+        user_dictionary_.IsSuppressedEntry(candidate->content_key,
+                                           candidate->content_value)))) {
     MOZC_CANDIDATE_LOG(candidate, "SuppressEntry");
     return CandidateFilter::BAD_CANDIDATE;
   }

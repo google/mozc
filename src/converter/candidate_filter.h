@@ -126,6 +126,10 @@ class CandidateFilter {
   const dictionary::UserDictionaryInterface& user_dictionary_;
   const dictionary::PosMatcher& pos_matcher_;
   const SuggestionFilter& suggestion_filter_;
+  // cache the result of HasSuppressedEntries, because calling
+  // IsSuppressedEntry() has some latency because of mutex lock even when
+  // the entry is empty.
+  bool has_suppressed_entries_ = false;
 
   absl::flat_hash_set<candidate_filter_internal::CandidateId,
                       candidate_filter_internal::CandidateHasher,
