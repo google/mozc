@@ -1977,9 +1977,10 @@ TEST_F(DictionaryPredictionAggregatorTest, TriggerZeroQuerySuggestion) {
     const char* find_value;
     int expected_rank;  // -1 when don't appear.
   } kTestCases[] = {
-      {"@", "@", "gmail.com", 0},      {"@", "@", "docomo.ne.jp", 1},
-      {"@", "@", "ezweb.ne.jp", 2},    {"@", "@", "i.softbank.jp", 3},
-      {"@", "@", "softbank.ne.jp", 4}, {"!", "!", "?", -1},
+      {"@", "@", "gmail.com", 0},
+      {"@", "@", "yahoo.co.jp", 1},
+      {"@", "@", "docomo.ne.jp", 2},
+      {"!", "!", "?", -1},
   };
 
   for (const auto& test_case : kTestCases) {
