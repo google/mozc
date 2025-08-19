@@ -2,5 +2,5 @@ BasedOnStyle: Google
 
 ---
 Language: Cpp
-PointerAlignment: Right
+PointerAlignment: Left
 QualifierAlignment: Left
