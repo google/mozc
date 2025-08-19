@@ -33,7 +33,10 @@
 
 #include <jni.h>
 
+#include <iterator>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -140,7 +143,7 @@ std::unique_ptr<SessionHandler> CreateSessionHandler(JNIEnv* env,
 
 // Does post-load tasks.
 // Returns true if the task succeeded
-// or SessionHandler has already been initializaed.
+// or SessionHandler has already been initialized.
 jboolean JNICALL onPostLoad(JNIEnv* env, jclass clazz,
                             jstring user_profile_directory_path,
                             jstring data_file_path) {
