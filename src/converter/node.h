@@ -51,11 +51,8 @@ struct Node {
     SYSTEM_DICTIONARY = 1 << 0,      // System dictionary (not used now)
     USER_DICTIONARY = 1 << 1,        // User dictionary
     NO_VARIANTS_EXPANSION = 1 << 2,  // No need to expand full/half
-    // Internally used in the converter
-    // TODO(toshiyuki): Delete this attribute.
-    WEAK_CONNECTED_OBSOLETE = 1 << 3,
-    STARTS_WITH_PARTICLE = 1 << 4,  // User input starts with particle
-    SPELLING_CORRECTION = 1 << 5,   // "Did you mean"
+    STARTS_WITH_PARTICLE = 1 << 4,   // User input starts with particle
+    SPELLING_CORRECTION = 1 << 5,    // "Did you mean"
     // Equal to that of Candidate.
     // Life of suggestion candidates from realtime conversion is;
     // 1. Created by ImmutableConverter as Candidate instance.
