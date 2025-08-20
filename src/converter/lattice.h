@@ -76,9 +76,6 @@ class Lattice {
   // inset nodes (linked list) to the position |pos|.
   void Insert(size_t pos, Node* node);
 
-  // clear all lattice and nodes allocated with NewNode method.
-  void Clear();
-
   // return true if this instance has a valid lattice.
   bool has_lattice() const { return !begin_nodes_.empty(); }
 
@@ -86,6 +83,10 @@ class Lattice {
   std::string DebugString() const;
 
  private:
+  // clear all lattice and nodes allocated with NewNode method
+  // Only called via Setkey().
+  void Clear();
+
   std::string key_;
   std::vector<Node*> begin_nodes_;
   std::vector<Node*> end_nodes_;

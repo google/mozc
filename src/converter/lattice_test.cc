@@ -47,10 +47,6 @@ TEST(LatticeTest, LatticeTest) {
 
   EXPECT_NE(lattice.bos_nodes(), nullptr);
   EXPECT_NE(lattice.eos_nodes(), nullptr);
-
-  lattice.Clear();
-  EXPECT_EQ(lattice.key(), "");
-  EXPECT_FALSE(lattice.has_lattice());
 }
 
 TEST(LatticeTest, NewNodeTest) {
