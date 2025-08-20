@@ -43,7 +43,6 @@
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/singleton.h"
 #include "base/strings/unicode.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
@@ -82,73 +81,7 @@ Node* InitEOSNode(Lattice* lattice, uint16_t length) {
   eos_node->bnext = nullptr;
   return eos_node;
 }
-
-bool PathContainsString(const Node* node, size_t begin_pos, size_t end_pos,
-                        const absl::string_view str) {
-  CHECK(node);
-  for (; node->prev != nullptr; node = node->prev) {
-    if (node->begin_pos == begin_pos && node->end_pos == end_pos &&
-        node->value == str) {
-      return true;
-    }
-  }
-  return false;
-}
-
-std::string GetDebugStringForNode(const Node* node, const Node* prev_node) {
-  CHECK(node);
-  std::stringstream os;
-  os << "[con:" << node->cost - (prev_node ? prev_node->cost : 0) - node->wcost
-     << "]";
-  os << "[lid:" << node->lid << "]";
-  os << "\"" << node->value << "\"";
-  os << "[wcost:" << node->wcost << "]";
-  os << "[cost:" << node->cost << "]";
-  os << "[rid:" << node->rid << "]";
-  return os.str();
-}
-
-std::string GetDebugStringForPath(const Node* end_node) {
-  CHECK(end_node);
-  std::stringstream os;
-  std::vector<const Node*> node_vector;
-
-  for (const Node* node = end_node; node; node = node->prev) {
-    node_vector.push_back(node);
-  }
-  const Node* prev_node = nullptr;
-
-  for (int i = static_cast<int>(node_vector.size()) - 1; i >= 0; --i) {
-    const Node* node = node_vector[i];
-    os << GetDebugStringForNode(node, prev_node);
-    prev_node = node;
-  }
-  return os.str();
-}
-
-absl::string_view GetCommonPrefix(absl::string_view str1,
-                                  absl::string_view str2) {
-  const absl::string_view orig_str = str1;
-  size_t common_size = 0;
-  while (!str1.empty() && !str2.empty()) {
-    absl::string_view c1, c2;
-    std::tie(c1, str1) = strings::FrontChar(str1);
-    std::tie(c2, str2) = strings::FrontChar(str2);
-    if (c1 != c2) {
-      break;
-    }
-    common_size += c1.size();
-  }
-  return orig_str.substr(0, common_size);
-}
-
 }  // namespace
-
-struct LatticeDisplayNodeInfo {
-  size_t display_node_begin_pos;
-  size_t display_node_end_pos;
-  std::string display_node_str;
-};
 
 void Lattice::SetKey(std::string key) {
   Clear();
@@ -194,66 +127,28 @@ void Lattice::Clear() {
   node_allocator_->Free();
 }
 
-void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
-                                  std::string str) {
-  LatticeDisplayNodeInfo* info = Singleton<LatticeDisplayNodeInfo>::get();
-  info->display_node_begin_pos = begin_pos;
-  info->display_node_end_pos = end_pos;
-  info->display_node_str = std::move(str);
-}
-
-void Lattice::ResetDebugDisplayNode() {
-  LatticeDisplayNodeInfo* info = Singleton<LatticeDisplayNodeInfo>::get();
-  info->display_node_str.clear();
-}
-
 std::string Lattice::DebugString() const {
-  std::stringstream os;
   if (!has_lattice()) {
     return "";
   }
 
-  std::vector<const Node*> best_path_nodes;
-
-  const Node* node = eos_nodes();
-  // Print the best path
-  os << "Best path: ";
-  os << GetDebugStringForPath(node);
-  os << std::endl;
-
-  LatticeDisplayNodeInfo* info = Singleton<LatticeDisplayNodeInfo>::get();
-
-  if (info->display_node_str.empty()) {
-    return os.str();
+  std::vector<const Node*> node_vector;
+  for (const Node* node = eos_nodes(); node; node = node->prev) {
+    node_vector.push_back(node);
   }
 
-  for (; node != nullptr; node = node->prev) {
-    best_path_nodes.push_back(node);
-  }
-
-  // Print the path that contains the designated node
-  for (std::vector<const Node*>::const_iterator it = best_path_nodes.begin();
-       it != best_path_nodes.end(); ++it) {
-    const Node* best_path_node = *it;
-    if (best_path_node->begin_pos < info->display_node_end_pos) {
-      break;
-    }
-    for (const Node* prev_node = end_nodes(best_path_node->begin_pos);
-         prev_node; prev_node = prev_node->enext) {
-      if (!PathContainsString(prev_node, info->display_node_begin_pos,
-                              info->display_node_end_pos,
-                              info->display_node_str)) {
-        continue;
-      }
-      os << "The path " << GetDebugStringForPath(prev_node)
-         << " ( + connection cost + wcost: " << best_path_node->wcost << ")"
-         << std::endl
-         << "was defeated" << " by the path " << std::endl
-         << GetDebugStringForPath(best_path_node->prev)
-         << " connecting to the node "
-         << GetDebugStringForNode(best_path_node, best_path_node->prev)
-         << std::endl;
-    }
+  std::stringstream os;
+  const Node* prev_node = nullptr;
+  for (auto it = node_vector.rbegin(); it != node_vector.rend(); ++it) {
+    const Node* node = *it;
+    os << "[con:"
+       << node->cost - (prev_node ? prev_node->cost : 0) - node->wcost << "]";
+    os << "[lid:" << node->lid << "]";
+    os << "\"" << node->value << "\"";
+    os << "[wcost:" << node->wcost << "]";
+    os << "[cost:" << node->cost << "]";
+    os << "[rid:" << node->rid << "]";
+    prev_node = node;
   }
 
   return os.str();

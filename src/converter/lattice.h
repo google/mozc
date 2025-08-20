@@ -85,13 +85,6 @@ class Lattice {
   // Dump the best path and the path that contains the designated string.
   std::string DebugString() const;
 
-  // Set the node info that should be used in DebugString() (For debug use).
-  static void SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
-                                  std::string str);
-
-  // Reset the debug info.
-  static void ResetDebugDisplayNode();
-
  private:
   std::string key_;
   std::vector<Node*> begin_nodes_;

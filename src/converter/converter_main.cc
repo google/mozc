@@ -59,7 +59,6 @@
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/converter_interface.h"
-#include "converter/lattice.h"
 #include "converter/pos_id_printer.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
@@ -318,19 +317,6 @@ bool ExecCommand(const ConverterInterface& converter, const std::string& line,
             .SetOptions(std::move(options))
             .Build();
     return converter.StartConversion(conversion_request, segments);
-  } else if (func == "convertwithnodeinfo" || func == "cn") {
-    CHECK_FIELDS_LENGTH(5);
-    Lattice::SetDebugDisplayNode(
-        NumberUtil::SimpleAtoi(fields[2]),  // begin pos
-        NumberUtil::SimpleAtoi(fields[3]),  // end pos
-        fields[4]);
-    composer::Composer composer;
-    composer.SetPreeditTextForTestOnly(fields[1]);
-    const ConversionRequest convreq =
-        ConversionRequestBuilder().SetComposer(composer).Build();
-    const bool result = converter.StartConversion(convreq, segments);
-    Lattice::ResetDebugDisplayNode();
-    return result;
   } else if (func == "reverseconversion" || func == "reverse" || func == "r") {
     CHECK_FIELDS_LENGTH(2);
     return converter.StartReverseConversion(segments, fields[1]);
