@@ -1978,6 +1978,8 @@ TEST_F(DictionaryPredictionAggregatorTest, TriggerZeroQuerySuggestion) {
     int expected_rank;  // -1 when don't appear.
   } kTestCases[] = {
       {"@", "@", "gmail.com", 0},
+      {"username@", "username@", "gmail.com",
+       0},  // Special treatment for email
       {"@", "@", "yahoo.co.jp", 1},
       {"@", "@", "docomo.ne.jp", 2},
       {"!", "!", "?", -1},

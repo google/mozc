@@ -44,7 +44,6 @@
 #include "absl/container/btree_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -139,6 +138,10 @@ std::optional<std::string> GetNumberHistory(const ConversionRequest& request) {
     return std::nullopt;
   }
   return japanese_util::FullWidthToHalfWidth(history_value);
+}
+
+bool IsEmailPrefix(absl::string_view str) {
+  return str.ends_with("@") && mozc::Util::IsAscii(str);
 }
 
 class PredictiveLookupCallback : public DictionaryInterface::Callback {
@@ -773,6 +776,12 @@ void DictionaryPredictionAggregator::AggregateZeroQuery(
   constexpr uint16_t kId = 0;  // EOS
   GetZeroQueryCandidatesForKey(request, history_value, zero_query_dict_, kId,
                                kId, results);
+  // Special treatment for email address.
+  // "user@" -> "google.com"
+  if (IsEmailPrefix(history_key) && (history_key == history_value)) {
+    GetZeroQueryCandidatesForKey(request, "@", zero_query_dict_, kId, kId,
+                                 results);
+  }
 
   // We do not want zero query results from suffix dictionary for Latin
   // input mode. For example, we do not need "です", "。" just after "when".
