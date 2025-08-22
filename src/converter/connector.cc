@@ -51,22 +51,13 @@
 namespace mozc {
 namespace {
 
-constexpr uint32_t kInvalidCacheKey = 0xFFFFFFFF;
 constexpr uint16_t kConnectorMagicNumber = 0xCDAB;
 constexpr uint8_t kInvalid1ByteCostValue = 255;
+constexpr uint32_t kCacheSize = 1024;
+constexpr uint32_t kCacheHashMask = kCacheSize - 1;
 
-inline uint32_t GetHashValue(uint16_t rid, uint16_t lid, uint32_t hash_mask) {
-  return (3 * static_cast<uint32_t>(rid) + lid) & hash_mask;
-  // Note: The above value is equivalent to
-  //   return (3 * rid + lid) % cache_size_
-  // because cache_size_ is the power of 2.
-  // Multiplying '3' makes the conversion speed faster.
-  // The result hash value becomes reasonably random.
-}
-
-inline uint32_t EncodeKey(uint16_t rid, uint16_t lid) {
-  return (static_cast<uint32_t>(rid) << 16) | lid;
-}
+static_assert((kCacheSize & kCacheHashMask) == 0,
+              "kCacheSize must be power of 2.");
 
 absl::Status IsMemoryAligned32(const void* ptr) {
   const auto addr = reinterpret_cast<std::uintptr_t>(ptr);
@@ -172,33 +163,20 @@ std::optional<uint16_t> Connector::Row::GetValue(uint16_t index) const {
 
 absl::StatusOr<Connector> Connector::CreateFromDataManager(
     const DataManager& data_manager) {
-#ifdef __ANDROID__
-  constexpr int kCacheSize = 256;
-#else   // __ANDROID__
-  constexpr int kCacheSize = 1024;
-#endif  // __ANDROID__
-  return Create(data_manager.GetConnectorData(), kCacheSize);
+  return Create(data_manager.GetConnectorData());
 }
 
-absl::StatusOr<Connector> Connector::Create(absl::string_view connection_data,
-                                            int cache_size) {
+absl::StatusOr<Connector> Connector::Create(absl::string_view connection_data) {
   Connector connector;
-  absl::Status status = connector.Init(connection_data, cache_size);
+  absl::Status status = connector.Init(connection_data);
   if (!status.ok()) {
     return status;
   }
   return connector;
 }
 
-absl::Status Connector::Init(absl::string_view connection_data,
-                             int cache_size) {
-  // Check if the cache_size is the power of 2.
-  if ((cache_size & (cache_size - 1)) != 0) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "connector.cc: Cache size must be 2^n: size=", cache_size));
-  }
-  cache_hash_mask_ = cache_size - 1;
-  cache_ = std::make_unique<cache_t>(cache_size);
+absl::Status Connector::Init(absl::string_view connection_data) {
+  cache_ = std::make_unique<cache_t>(kCacheSize);
 
   absl::StatusOr<Metadata> metadata =
       ParseMetadata(connection_data.data(), connection_data.size());
@@ -294,7 +272,6 @@ absl::Status Connector::Init(absl::string_view connection_data,
                   values, metadata->Use1ByteValue());
   }
   VALIDATE_SIZE(ptr, 0, "Data end");
-  ClearCache();
   return absl::Status();
 
 #undef VALIDATE_ALIGNMENT
@@ -302,8 +279,19 @@ absl::Status Connector::Init(absl::string_view connection_data,
 }
 
 int Connector::GetTransitionCost(uint16_t rid, uint16_t lid) const {
-  const uint32_t index = EncodeKey(rid, lid);
-  const uint32_t bucket = GetHashValue(rid, lid, cache_hash_mask_);
+  // Note:
+  // This function is called very frequently and has a significant impact on
+  // execution time. When making any modifications, please conduct a performance
+  // analysis.
+
+  const uint32_t index = (static_cast<uint32_t>(rid) << 16) | lid;
+  const uint32_t bucket =
+      (3 * static_cast<uint32_t>(rid) + lid) & kCacheHashMask;
+  // The above value is equivalent to (3 * rid + lid) % kCacheSize;
+  // because cache_size_ is the power of 2.
+  // Multiplying '3' makes the conversion speed faster.
+  // The result hash value becomes reasonably random.
+
   // don't care the memory order. atomic access is only required.
   // Upper 32bits stores the value-cost, lower 32 bits the index.
   const uint64_t cv = (*cache_)[bucket].load(std::memory_order_relaxed);
@@ -313,13 +301,8 @@ int Connector::GetTransitionCost(uint16_t rid, uint16_t lid) const {
   const int value = LookupCost(rid, lid);
   (*cache_)[bucket].store(static_cast<uint64_t>(value) << 32 | index,
                           std::memory_order_relaxed);
-  return value;
-}
 
-void Connector::ClearCache() {
-  for (std::atomic<uint64_t>& x : *cache_) {
-    x.store(kInvalidCacheKey);
-  }
+  return value;
 }
 
 int Connector::LookupCost(uint16_t rid, uint16_t lid) const {

@@ -52,25 +52,21 @@ class Connector final {
   static absl::StatusOr<Connector> CreateFromDataManager(
       const DataManager& data_manager);
 
-  static absl::StatusOr<Connector> Create(absl::string_view connection_data,
-                                          int cache_size);
+  static absl::StatusOr<Connector> Create(absl::string_view connection_data);
 
   int GetTransitionCost(uint16_t rid, uint16_t lid) const;
   int GetResolution() const { return resolution_; }
 
-  void ClearCache();
-
  private:
   class Row;
 
-  absl::Status Init(absl::string_view connection_data, int cache_size);
+  absl::Status Init(absl::string_view connection_data);
 
   int LookupCost(uint16_t rid, uint16_t lid) const;
 
   std::vector<Row> rows_;
   const uint16_t* default_cost_ = nullptr;
   int resolution_ = 0;
-  uint32_t cache_hash_mask_ = 0;
   // Cache for transition cost.
   using cache_t = std::vector<std::atomic<uint64_t>>;
   mutable std::unique_ptr<cache_t> cache_;
