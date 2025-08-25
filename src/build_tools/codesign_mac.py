@@ -128,6 +128,8 @@ def ParseOption():
                     default=False)
   parser.add_option("--verify", dest="verify", action="store_true",
                     default=False)
+  parser.add_option("--notaraize_only", dest="notarize_only",
+                    action="store_true", default=False)
   parser.add_option("--output", dest="output")
   (options, unused_args) = parser.parse_args()
 
@@ -158,14 +160,16 @@ def main():
 
   DumpEnviron()
 
-  # Call Codesign with the release keychain.
-  keychain = GetKeychain(opts.keychain)
-  RunOrDie(" ".join(["/usr/bin/security", "find-identity", keychain]))
+  if not opts.notarize_only:
+    # Call Codesign with the release keychain.
+    keychain = GetKeychain(opts.keychain)
+    RunOrDie(" ".join(["/usr/bin/security", "find-identity", keychain]))
 
-  # Unlock Keychain for codesigning.
-  UnlockKeychain(keychain, opts.password)
+    # Unlock Keychain for codesigning.
+    UnlockKeychain(keychain, opts.password)
 
-  Codesign(opts.target, keychain=keychain)
+    Codesign(opts.target, keychain=keychain)
+
   Notarize(opts.target)
 
   # Output something to make the processes trackable.
