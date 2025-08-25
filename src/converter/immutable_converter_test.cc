@@ -342,7 +342,7 @@ TEST(ImmutableConverterTest, MakeLatticeKatakana) {
 
   // If the first character of a node is `ALPHABET` or `KATAKANA`,
   // `AddCharacterTypeBasedNodes` should create a node of the character type.
-  Node* node = lattice.begin_nodes(0);
+  const Node* node = lattice.begin_nodes(0).back();
   EXPECT_EQ(node->key, "カタカナ");
   EXPECT_EQ(node->value, "カタカナ");
 }
@@ -373,8 +373,7 @@ TEST(ImmutableConverterTest, NotConnectedTest) {
   // Intentionally segmented position - 1
   const size_t pos = strlen("しょうめ");
   bool tested = false;
-  for (Node* rnode = lattice.begin_nodes(pos); rnode != nullptr;
-       rnode = rnode->bnext) {
+  for (const Node* rnode : lattice.begin_nodes(pos)) {
     if (Util::CharsLen(rnode->key) <= 1) {
       continue;
     }

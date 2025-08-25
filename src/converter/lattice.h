@@ -37,6 +37,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 
@@ -57,24 +58,44 @@ class Lattice {
   // allocate new node.
   Node* NewNode() { return node_allocator_->NewNode(); }
 
-  // return nodes (linked list) starting with |pos|.
-  // To traverse all nodes, use Node::bnext member.
-  Node* begin_nodes(size_t pos) const { return begin_nodes_[pos]; }
+  // return the array of nodes starting with `pos`.
+  absl::Span<Node* const> begin_nodes(size_t pos) const {
+    DCHECK_LE(pos, key_.size());
+    return begin_nodes_[pos];
+  }
 
-  // return nodes (linked list) ending at |pos|.
-  // To traverse all nodes, use Node::enext member.
-  Node* end_nodes(size_t pos) const { return end_nodes_[pos]; }
+  // return the array of nodes ending with `pos`.
+  absl::Span<Node* const> end_nodes(size_t pos) const {
+    DCHECK_LE(pos, key_.size());
+    return end_nodes_[pos];
+  }
 
-  // return bos nodes.
-  // alias of end_nodes(0).
-  Node* bos_nodes() const { return end_nodes_[0]; }
+  // return bos or eos node.
+  Node* bos_node() {
+    DCHECK_EQ(end_nodes_[0].size(), 1);
+    return end_nodes_[0].front();
+  }
 
-  // return eos nodes.
-  // alias of begin_nodes(key.size()).
-  Node* eos_nodes() const { return begin_nodes_[key_.size()]; }
+  Node* eos_node() {
+    DCHECK_EQ(begin_nodes_[key_.size()].size(), 1);
+    return begin_nodes_[key_.size()].front();
+  }
 
-  // inset nodes (linked list) to the position |pos|.
+  const Node* bos_node() const {
+    DCHECK_EQ(end_nodes_[0].size(), 1);
+    return end_nodes_[0].front();
+  }
+
+  const Node* eos_node() const {
+    DCHECK_EQ(begin_nodes_[key_.size()].size(), 1);
+    return begin_nodes_[key_.size()].front();
+  }
+
+  // inset one node to the position `pos`.
   void Insert(size_t pos, Node* node);
+
+  // inset multiple nodes to the position `pos`.
+  void Insert(size_t pos, absl::Span<Node* const> nodes);
 
   // return true if this instance has a valid lattice.
   bool has_lattice() const { return !begin_nodes_.empty(); }
@@ -88,9 +109,37 @@ class Lattice {
   void Clear();
 
   std::string key_;
-  std::vector<Node*> begin_nodes_;
-  std::vector<Node*> end_nodes_;
+  std::vector<std::vector<Node*>> begin_nodes_;
+  std::vector<std::vector<Node*>> end_nodes_;
   std::unique_ptr<NodeAllocator> node_allocator_;
+};
+
+// RAII class to insert nodes in detractor.
+// Adding a node while iterating through a vector/span is generally unsafe
+// because it can invalidate the vector's internal iterators. To avoid this, we
+// can use this helper class. Nodes are inserted in a batch during the
+// destructor.
+//
+// ScopedLatticeNodeInserter inserter(&lattice);
+// for (const Node *node : lattice.begin_nodes(pos)) {
+//   inserter.Insert(pos, new_node);
+// }
+class ScopedLatticeNodeInserter {
+ public:
+  explicit ScopedLatticeNodeInserter(Lattice* lattice) : lattice_(lattice) {}
+  ~ScopedLatticeNodeInserter() {
+    for (auto [pos, node] : inserted_) {
+      lattice_->Insert(pos, node);
+    }
+  }
+
+  bool IsInserted() const { return !inserted_.empty(); }
+
+  void Insert(size_t pos, Node* node) { inserted_.emplace_back(pos, node); }
+
+ private:
+  Lattice* lattice_ = nullptr;
+  std::vector<std::pair<size_t, Node*>> inserted_;
 };
 
 }  // namespace mozc

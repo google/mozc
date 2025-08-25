@@ -43,6 +43,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/strings/unicode.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
@@ -50,8 +51,7 @@
 namespace mozc {
 namespace {
 
-Node* InitBOSNode(Lattice* lattice, uint16_t length) {
-  Node* bos_node = lattice->NewNode();
+Node* InitBOSNode(Node* bos_node, uint16_t position) {
   DCHECK(bos_node);
   bos_node->rid = 0;  // 0 is reserved for EOS/BOS
   bos_node->lid = 0;
@@ -60,14 +60,12 @@ Node* InitBOSNode(Lattice* lattice, uint16_t length) {
   bos_node->node_type = Node::BOS_NODE;
   bos_node->wcost = 0;
   bos_node->cost = 0;
-  bos_node->begin_pos = length;
-  bos_node->end_pos = length;
-  bos_node->enext = nullptr;
+  bos_node->begin_pos = position;
+  bos_node->end_pos = position;
   return bos_node;
 }
 
-Node* InitEOSNode(Lattice* lattice, uint16_t length) {
-  Node* eos_node = lattice->NewNode();
+Node* InitEOSNode(Node* eos_node, uint16_t position) {
   DCHECK(eos_node);
   eos_node->rid = 0;  // 0 is reserved for EOS/BOS
   eos_node->lid = 0;
@@ -76,47 +74,52 @@ Node* InitEOSNode(Lattice* lattice, uint16_t length) {
   eos_node->node_type = Node::EOS_NODE;
   eos_node->wcost = 0;
   eos_node->cost = 0;
-  eos_node->begin_pos = length;
-  eos_node->end_pos = length;
-  eos_node->bnext = nullptr;
+  eos_node->begin_pos = position;
+  eos_node->end_pos = position;
   return eos_node;
 }
+
 }  // namespace
 
 void Lattice::SetKey(std::string key) {
   Clear();
-  const size_t size = key.size();
   key_ = std::move(key);
-  begin_nodes_.resize(size + 4, nullptr);
-  end_nodes_.resize(size + 4, nullptr);
+  begin_nodes_.resize(key_.size() + 1);
+  end_nodes_.resize(key_.size() + 1);
 
-  end_nodes_[0] = InitBOSNode(this, static_cast<uint16_t>(0));
-  begin_nodes_[key_.size()] =
-      InitEOSNode(this, static_cast<uint16_t>(key_.size()));
+  for (std::vector<Node*>& nodes : begin_nodes_) {
+    nodes.clear();
+    nodes.reserve(32);
+  }
+
+  for (std::vector<Node*>& nodes : end_nodes_) {
+    nodes.clear();
+    nodes.reserve(32);
+  }
+
+  Node* bos_node = InitBOSNode(NewNode(), 0);
+  Node* eos_node = InitEOSNode(NewNode(), static_cast<uint16_t>(key_.size()));
+
+  end_nodes_[0].push_back(bos_node);
+  begin_nodes_[key_.size()].push_back(eos_node);
 }
 
 void Lattice::Insert(size_t pos, Node* node) {
-  for (Node* rnode = node; rnode != nullptr; rnode = rnode->bnext) {
-    const size_t end_pos = std::min(rnode->key.size() + pos, key_.size());
-    rnode->begin_pos = static_cast<uint16_t>(pos);
-    rnode->end_pos = static_cast<uint16_t>(end_pos);
-    rnode->prev = nullptr;
-    rnode->next = nullptr;
-    rnode->cost = 0;
-    rnode->enext = end_nodes_[end_pos];
-    end_nodes_[end_pos] = rnode;
-  }
+  const size_t end_pos = std::min(node->key.size() + pos, key_.size());
+  node->begin_pos = static_cast<uint16_t>(pos);
+  node->end_pos = static_cast<uint16_t>(end_pos);
+  node->prev = nullptr;
+  node->next = nullptr;
+  node->cost = 0;
+  begin_nodes_[pos].emplace_back(node);
+  end_nodes_[end_pos].emplace_back(node);
+}
 
-  if (begin_nodes_[pos] == nullptr) {
-    begin_nodes_[pos] = node;
-  } else {
-    for (Node* rnode = node; rnode != nullptr; rnode = rnode->bnext) {
-      if (rnode->bnext == nullptr) {
-        rnode->bnext = begin_nodes_[pos];
-        begin_nodes_[pos] = node;
-        break;
-      }
-    }
+void Lattice::Insert(size_t pos, absl::Span<Node* const> nodes) {
+  std::vector<Node*>& begin_nodes = begin_nodes_[pos];
+  begin_nodes.reserve(begin_nodes.size() + nodes.size());
+  for (Node* node : nodes) {
+    Insert(pos, node);
   }
 }
 
@@ -133,7 +136,7 @@ std::string Lattice::DebugString() const {
   }
 
   std::vector<const Node*> node_vector;
-  for (const Node* node = eos_nodes(); node; node = node->prev) {
+  for (const Node* node = eos_node(); node; node = node->prev) {
     node_vector.push_back(node);
   }
 

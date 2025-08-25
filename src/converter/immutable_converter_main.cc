@@ -106,7 +106,7 @@ std::string DumpNodes(const Lattice& lattice) {
     return absl::StrCat(node_id(&node), "\t", node.key, "\t", node.value, "\t",
                         node.begin_pos, "\t", node.end_pos, "\t", node.lid,
                         "\t", node.rid, "\t", node.wcost, "\t", node.cost, "\t",
-                        node_id(node.bnext), "\t", node_id(node.enext), "\t",
+                        node.begin_pos, "\t", node.end_pos, "\t",
                         node_id(node.prev), "\t", node_id(node.next), "\n");
   };
 
@@ -119,16 +119,13 @@ std::string DumpNodes(const Lattice& lattice) {
                     "\t");
   absl::StrAppend(&output, "\n");
 
-  // Output BOS node(s).
-  for (Node* node = lattice.bos_nodes(); node != nullptr; node = node->bnext) {
-    absl::StrAppend(&output, dump_node(*node));
-  }
+  // Output BOS node.
+  absl::StrAppend(&output, dump_node(*lattice.bos_node()));
 
   // Make position nodes.
   std::vector<Node> pos_nodes;
   for (size_t i = 0; i <= lattice.key().size(); ++i) {
-    Node* begin_node = lattice.begin_nodes(i);
-    if (begin_node == nullptr) {
+    if (lattice.begin_nodes(i).empty()) {
       continue;
     }
 
@@ -136,7 +133,6 @@ std::string DumpNodes(const Lattice& lattice) {
     pos_node.begin_pos = i;
     pos_node.end_pos = i;
     pos_node.value = "POS";
-    pos_node.bnext = begin_node;
     pos_nodes.push_back(std::move(pos_node));
   }
   for (size_t i = 0; i < pos_nodes.size() - 1; ++i) {
@@ -150,8 +146,7 @@ std::string DumpNodes(const Lattice& lattice) {
 
   // Output nodes.
   for (size_t i = 0; i <= lattice.key().size(); ++i) {
-    Node* begin_node = lattice.begin_nodes(i);
-    if (begin_node == nullptr) {
+    if (lattice.begin_nodes(i).empty()) {
       continue;
     }
     {
@@ -159,11 +154,10 @@ std::string DumpNodes(const Lattice& lattice) {
       pos_node.begin_pos = i;
       pos_node.end_pos = i;
       pos_node.value = "POS";
-      pos_node.bnext = begin_node;
       pos_nodes.push_back(std::move(pos_node));
     }
 
-    for (const Node* node = begin_node; node != nullptr; node = node->bnext) {
+    for (const Node* node : lattice.begin_nodes(i)) {
       absl::StrAppend(&output, dump_node(*node));
     }
   }

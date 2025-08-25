@@ -140,8 +140,7 @@ void NBestGenerator::Reset(const Node* absl_nonnull begin_node,
   begin_node_ = begin_node;
   end_node_ = end_node;
 
-  for (Node* node = lattice_.begin_nodes(end_node_->begin_pos); node != nullptr;
-       node = node->bnext) {
+  for (const Node* node : lattice_.begin_nodes(end_node_->begin_pos)) {
     if (node == end_node_ ||
         (node->lid != end_node_->lid &&
          // node->cost can be smaller than end_node_->cost
@@ -452,8 +451,7 @@ bool NBestGenerator::Next(const ConversionRequest& request,
     // begin/end node regardless of its value.
     const bool is_edge = (is_right_edge || is_left_edge);
 
-    for (Node* lnode = lattice_.end_nodes(rnode->begin_pos); lnode != nullptr;
-         lnode = lnode->enext) {
+    for (const Node* lnode : lattice_.end_nodes(rnode->begin_pos)) {
       // is_invalid_position is true if the lnode's location is invalid
       //  1.   |<-- begin_node_-->|
       //                    |<--lnode-->|  <== overlapped.
@@ -640,6 +638,8 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
 bool NBestGenerator::MakeCandidateFromBestPath(Candidate& candidate) {
   top_nodes_.clear();
   int total_wcost = 0;
+  DCHECK(begin_node_);
+  DCHECK(end_node_);
   for (const Node* node = begin_node_->next; node != end_node_;
        node = node->next) {
     if (node != begin_node_->next) {
@@ -668,6 +668,8 @@ bool NBestGenerator::MakeCandidateFromBestPath(Candidate& candidate) {
 void NBestGenerator::MakePrefixCandidateFromBestPath(Candidate& candidate) {
   top_nodes_.clear();
   int total_extra_wcost = 0;  // wcost sum excepting the first node
+  DCHECK(begin_node_);
+  DCHECK(end_node_);
   const Node* prev_node = begin_node_;
   for (const Node* node = begin_node_->next; node != end_node_;
        node = node->next) {

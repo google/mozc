@@ -41,6 +41,7 @@
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
 #include "converter/node.h"
+#include "converter/node_list_builder.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -84,10 +85,11 @@ class ImmutableConverter : public ImmutableConverterInterface {
                         absl::string_view original_key, NBestGenerator* nbest,
                         Segment* segment, size_t expand_size) const;
   void InsertDummyCandidates(Segment* segment, size_t expand_size) const;
-  Node* Lookup(int begin_pos, const ConversionRequest& request, bool is_reverse,
-               Lattice* lattice) const;
-  Node* AddCharacterTypeBasedNodes(absl::string_view key_substr,
-                                   Lattice* lattice, Node* nodes) const;
+  std::vector<Node*> Lookup(int begin_pos, const ConversionRequest& request,
+                            bool is_reverse, Lattice* lattice) const;
+  void AddCharacterTypeBasedNodes(absl::string_view key_substr,
+                                  Lattice* lattice,
+                                  BaseNodeListBuilder* builder) const;
 
   void Resegment(const Segments& segments, absl::string_view history_key,
                  absl::string_view conversion_key, Lattice* lattice) const;

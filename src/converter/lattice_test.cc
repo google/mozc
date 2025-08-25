@@ -45,8 +45,8 @@ TEST(LatticeTest, LatticeTest) {
   lattice.SetKey("this is a test");
   EXPECT_TRUE(lattice.has_lattice());
 
-  EXPECT_NE(lattice.bos_nodes(), nullptr);
-  EXPECT_NE(lattice.eos_nodes(), nullptr);
+  EXPECT_NE(lattice.bos_node(), nullptr);
+  EXPECT_NE(lattice.eos_node(), nullptr);
 }
 
 TEST(LatticeTest, NewNodeTest) {
@@ -68,10 +68,10 @@ TEST(LatticeTest, InsertTest) {
     node->key = "es";
     lattice.Insert(1, node);
 
-    Node* node2 = lattice.begin_nodes(1);
+    Node* node2 = lattice.begin_nodes(1).front();
     EXPECT_EQ(node, node2);
 
-    Node* node3 = lattice.end_nodes(3);
+    Node* node3 = lattice.end_nodes(3).front();
     EXPECT_EQ(node, node3);
   }
 
@@ -81,16 +81,9 @@ TEST(LatticeTest, InsertTest) {
     node->key = "s";
     lattice.Insert(2, node);
 
-    Node* node2 = lattice.begin_nodes(2);
+    Node* node2 = lattice.begin_nodes(2).front();
     EXPECT_EQ(node, node2);
-
-    int size = 0;
-    Node* node3 = lattice.end_nodes(3);
-    for (; node3 != nullptr; node3 = node3->enext) {
-      ++size;
-    }
-    EXPECT_EQ(size, 2);
+    EXPECT_EQ(lattice.end_nodes(3).size(), 2);
   }
 }
-
 }  // namespace mozc

@@ -73,81 +73,6 @@ struct Node {
   Node* prev;
   Node* next;
 
-  // bnext points to another Node instance which shares the same beginning
-  // position of the key.
-  // enext points to another Node instance which shares the same ending
-  // position of the key.
-  //
-  // Here illustrates the image:
-  //
-  // key:         | 0 | 1 | 2 | 3 | 4 | 5 | 6 | ... | N |
-  // begin_nodes: | 0 | 1 | 2 | 3 | 4 | 5 | 6 | ... | N | (in lattice)
-  //                |   |   :   :   :   :   :         :
-  //                |   :
-  //                |   :          (nullptr)
-  //                |   :           ^
-  //                |   :           :
-  //                v   :           |
-  //               +-----------------+
-  //               | Node1(len4)     |
-  //               +-----------------+
-  //           bnext|   :           ^
-  //                v   :           |enext
-  //               +-----------------+
-  //               | Node2(len4)     | (nullptr)
-  //               +-----------------+  ^
-  //           bnext|   :           ^   :
-  //                |   :           |   :
-  //                v   :           :   |enext
-  //               +---------------------+
-  //               | Node3(len5)         |
-  //               +---------------------+ (nullptr)
-  //           bnext|   :           :   ^   ^
-  //                |   :           :   |   :
-  //                v   :           :   :   |enext
-  //               +-------------------------+
-  //               | Node4(len6)             |
-  //               +-------------------------+
-  //           bnext|   :           :   :   ^
-  //                :   :           :   :   |
-  //                v   :           :   :   :
-  //          (nullptr) |           :   :   :
-  //                    v           :   |enext
-  //                   +-----------------+  :
-  //                   | Node5(len4)     |  :
-  //                   +-----------------+  :
-  //               bnext|           :   ^   :
-  //                    v           :   |enext
-  //                   +-----------------+  :
-  //                   | Node6(len4)     |  :
-  //                   +-----------------+  :
-  //               bnext|           :   ^   :
-  //                    |           :   |   :
-  //                    v           :   :   |enext
-  //                   +---------------------+
-  //                   | Node7(len5)         |
-  //                   +---------------------+
-  //               bnext|           :   :   ^
-  //                    v           :   :   |enext
-  //                   +---------------------+
-  //                   | Node8(len5)         |
-  //                   +---------------------+
-  //               bnext|           :   :   ^
-  //                    :           :   :   |
-  //                    v           :   :   |
-  //               (nullptr)        :   :   |
-  //                                :   :   |
-  //                :   :   :   :   :   |   |         :
-  // end_nodes:   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | ... | N |  (in lattice)
-  //
-  // Note:
-  // 1) Nodes 1, 2, 3 and 4 start with pos "0", so they are connected by
-  //    bnext. Same for Nodes 5, 6, 7 and 8.
-  // 2) Nodes 3, 5 and 6 end with pos "5", so they are connected by enext.
-  //    Same for Nodes 4, 7 and 8.
-  Node* bnext;
-  Node* enext;
-
   // if it is not nullptr, transition cost
   // from constrained_prev to current node is defined,
   // other transition is set to be infinite
@@ -155,26 +80,27 @@ struct Node {
 
   uint16_t rid;
   uint16_t lid;
+
+  // The lattice positions of this node.
+  // lattice.begin_nodes(begin_pos) contains the array of Node pointer
+  // starting at `begin_pos`.
   uint16_t begin_pos;
+
+  // lattice.end_nodes(end_pos) contains the array of Node pointer
+  // ending at `end_pos`.
   uint16_t end_pos;
 
   // wcost: word cost for the node; it may be changed after lookup
   // cost: the total cost between BOS and the node
-  // raw_wcost: raw word cost for the node; it is not changed after lookup.
-  //            It is used for the cache of lattice.
   int32_t wcost;
   int32_t cost;
-  int32_t raw_wcost;
 
   NodeType node_type;
   uint32_t attributes;
 
   // key: The user input.
-  // actual_key: The actual search key that corresponds to the value.
-  //           Can differ from key when no modifier conversion is enabled.
   // value: The surface form of the word.
   std::string key;
-  std::string actual_key;
   std::string value;
 
   Node() { Init(); }
@@ -182,8 +108,6 @@ struct Node {
   inline void Init() {
     prev = nullptr;
     next = nullptr;
-    bnext = nullptr;
-    enext = nullptr;
     constrained_prev = nullptr;
     rid = 0;
     lid = 0;
@@ -192,18 +116,14 @@ struct Node {
     node_type = NOR_NODE;
     wcost = 0;
     cost = 0;
-    raw_wcost = 0;
     attributes = 0;
     key.clear();
-    actual_key.clear();
     value.clear();
   }
 
   inline void InitFromToken(const dictionary::Token& token) {
     prev = nullptr;
     next = nullptr;
-    bnext = nullptr;
-    enext = nullptr;
     constrained_prev = nullptr;
     rid = token.rid;
     lid = token.lid;
@@ -212,7 +132,6 @@ struct Node {
     node_type = NOR_NODE;
     wcost = token.cost;
     cost = 0;
-    raw_wcost = 0;
     attributes = 0;
     if (token.attributes & dictionary::Token::SPELLING_CORRECTION) {
       attributes |= SPELLING_CORRECTION;
@@ -225,7 +144,6 @@ struct Node {
       attributes |= NO_VARIANTS_EXPANSION;
     }
     key = token.key;
-    actual_key.clear();
     value = token.value;
   }
 };
