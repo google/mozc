@@ -36,6 +36,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -290,6 +291,13 @@ class Utf8CharIterator {
   BaseIterator last_;
   utf8_internal::DecodeResult dr_;
 };
+
+// operator<< is required for CHECK functions.
+template <typename First, typename Last>
+std::ostream& operator<<(std::ostream& os,
+                         const Utf8CharIterator<First, Last>& it) {
+  return os << "Utf8CharIterator: " << it.to_address();
+}
 
 // Utf8AsCharsBase is a wrapper to iterate over a UTF-8 string as a char32_t
 // code point or an absl::string_view substring of each character. Use the
