@@ -486,6 +486,9 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     (*method)->set_last_access_time(1);
 
     // Check the predictor functionality for the above history structure.
+    // TODO(taku): joined suggestion will not work when
+    // user_history_prediction_disable_joined_prediction is true.
+    // Updates the following tests when this mode is used as default.
     EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
     EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
     EXPECT_TRUE(
@@ -3429,17 +3432,30 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(FindCandidateByValue("中野です", results));
 
-    segments_proxy.Clear();
-    const ConversionRequest convreq4 =
-        SetUpInputForPrediction("なまえ", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq4);
-    EXPECT_FALSE(results.empty());
-    if (mixed_conversion) {
-      EXPECT_TRUE(FindCandidateByValue("名前", results));
-      EXPECT_TRUE(FindCandidateByValue("名前は中野", results));
-    } else {
-      EXPECT_TRUE(FindCandidateByValue("名前は", results));
-      EXPECT_TRUE(FindCandidateByValue("名前は中野です", results));
+    for (const bool disable_joined_prediction : {true, false}) {
+      request_.mutable_decoder_experiment_params()
+          ->set_user_history_disable_joined_prediction(
+              disable_joined_prediction);
+      segments_proxy.Clear();
+      const ConversionRequest convreq4 =
+          SetUpInputForPrediction("なまえ", &composer_, &segments_proxy);
+      results = predictor->Predict(convreq4);
+      EXPECT_FALSE(results.empty());
+      if (mixed_conversion) {
+        EXPECT_TRUE(FindCandidateByValue("名前", results));
+        if (!disable_joined_prediction) {
+          // "名前は", "中野" were typed in different segments, but predict
+          // joined phrase.
+          EXPECT_TRUE(FindCandidateByValue("名前は中野", results));
+        }
+      } else {
+        EXPECT_TRUE(FindCandidateByValue("名前は", results));
+        if (!disable_joined_prediction) {
+          // "名前は", "中野です" were typed in different segments, but predict
+          // joined phrase.
+          EXPECT_TRUE(FindCandidateByValue("名前は中野です", results));
+        }
+      }
     }
   }
 }

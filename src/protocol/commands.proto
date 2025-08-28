@@ -546,7 +546,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 126
+// Next ID: 127
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -651,6 +651,9 @@ message DecoderExperimentParams {
 
   // The mode of partial revert. When zero, partial revert is not enabled.
   optional int32 user_history_partial_revert_mode = 125 [default = 0];
+
+  // Disables aggressive prediction with joined bigram concatenation.
+  optional bool user_history_disable_joined_prediction = 126 [default = false];
 }
 
 // Clients' request to the server.

@@ -1066,7 +1066,12 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest& request,
   }
 
   // Generates joined result using |last_entry|.
-  if (last_entry != nullptr && Util::CharsLen(result->key()) >= 1 &&
+  const bool disable_joined_prediction =
+      request.request()
+          .decoder_experiment_params()
+          .user_history_disable_joined_prediction();
+  if (!disable_joined_prediction && last_entry != nullptr &&
+      Util::CharsLen(result->key()) >= 1 &&
       2 * Util::CharsLen(request_key) >= Util::CharsLen(result->key())) {
     const Entry* latest_entry = nullptr;
     const Entry* left_same_timestamp_entry = nullptr;
