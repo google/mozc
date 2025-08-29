@@ -1822,6 +1822,20 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   results = predictor->Predict(convreq11);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results[0].value, "太郎は良子に");
+
+  segments_proxy.Clear();
+  for (const bool is_mobile : {true, false}) {
+    request_.set_zero_query_suggestion(is_mobile);
+    const ConversionRequest convreq12 = SetUpInputForSuggestion(
+        "たろうははなこに", &composer_, &segments_proxy);
+    results = predictor->Predict(convreq12);
+    EXPECT_FALSE(results.empty());
+    if (is_mobile) {
+      EXPECT_EQ(results[0].value, "太郎は花子に");
+    } else {
+      EXPECT_EQ(results[0].value, "太郎は花子に難しい");
+    }
+  }
 }
 
 TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
@@ -1917,6 +1931,19 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   results = predictor->Predict(convreq11);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results[0].value, "太郎は良子に");
+
+  for (const bool is_mobile : {true, false}) {
+    request_.set_zero_query_suggestion(is_mobile);
+    const ConversionRequest convreq12 = SetUpInputForSuggestion(
+        "たろうははなこに", &composer_, &segments_proxy);
+    results = predictor->Predict(convreq12);
+    EXPECT_FALSE(results.empty());
+    if (is_mobile) {
+      EXPECT_EQ(results[0].value, "太郎は花子に");
+    } else {
+      EXPECT_EQ(results[0].value, "太郎は花子に難しい");
+    }
+  }
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {

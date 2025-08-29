@@ -819,17 +819,19 @@ bool UserHistoryPredictor::RomanFuzzyLookupEntry(
   return true;
 }
 
-UserHistoryPredictor::Entry* UserHistoryPredictor::AddEntry(
+UserHistoryPredictor::Entry* absl_nonnull UserHistoryPredictor::AddEntry(
     const Entry& entry, EntryPriorityQueue* entry_queue) const {
   // We add an entry even if it was marked as removed so that it can be used to
   // generate prediction by entry chaining. The deleted entry itself is never
   // shown in the final prediction result as it is filtered finally.
   Entry* new_entry = entry_queue->NewEntry();
+  DCHECK(new_entry);
   *new_entry = entry;
   return new_entry;
 }
 
-UserHistoryPredictor::Entry* UserHistoryPredictor::AddEntryWithNewKeyValue(
+UserHistoryPredictor::Entry* absl_nonnull
+UserHistoryPredictor::AddEntryWithNewKeyValue(
     std::string key, std::string value, Entry entry,
     EntryPriorityQueue* entry_queue) const {
   // We add an entry even if it was marked as removed so that it can be used to
@@ -849,10 +851,10 @@ UserHistoryPredictor::Entry* UserHistoryPredictor::AddEntryWithNewKeyValue(
 }
 
 bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
-    const absl::string_view request_key, const Entry* entry,
-    const Entry** result_last_entry, uint64_t* left_last_access_time,
-    uint64_t* left_most_last_access_time, std::string* result_key,
-    std::string* result_value) const {
+    const absl::string_view request_key, bool prefer_exact_match,
+    const Entry* entry, const Entry** result_last_entry,
+    uint64_t* left_last_access_time, uint64_t* left_most_last_access_time,
+    std::string* result_key, std::string* result_value) const {
   std::string key = entry->key();
   std::string value = entry->value();
   const Entry* current_entry = entry;
@@ -860,6 +862,9 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
   seen.emplace(current_entry->key(), current_entry->value());
   // Until target entry gets longer than request_key.
   while (key.size() <= request_key.size()) {
+    if (prefer_exact_match && key.size() == request_key.size()) {
+      break;
+    }
     const Entry* latest_entry = nullptr;
     const Entry* left_same_timestamp_entry = nullptr;
     const Entry* left_most_same_timestamp_entry = nullptr;
@@ -916,8 +921,8 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
       break;
     }
 
-    key += next_entry->key();
-    value += next_entry->value();
+    absl::StrAppend(&key, next_entry->key());
+    absl::StrAppend(&value, next_entry->value());
     current_entry = next_entry;
     *result_last_entry = next_entry;
 
@@ -981,65 +986,76 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest& request,
 
   const MatchType mtype =
       GetMatchTypeFromInput(request_key, key_base, key_expanded, entry->key());
+
   if (mtype == MatchType::NO_MATCH) {
     return false;
-  } else if (mtype == MatchType::LEFT_EMPTY_MATCH) {  // zero-query-suggestion
-    // if |request_key| is empty, the |prev_entry| and |entry| must
-    // have bigram relation.
-    if (prev_entry != nullptr && HasBigramEntry(*entry, *prev_entry)) {
-      result = AddEntry(*entry, entry_queue);
-      if (result) {
-        last_entry = entry;
-        left_last_access_time = entry->last_access_time();
-        left_most_last_access_time =
-            IsContentWord(entry->value()) ? left_last_access_time : 0;
-      }
-    } else {
+  }
+
+  // For mobile, prefer exact match.
+  const bool prefer_exact_match = request.request().zero_query_suggestion();
+
+  left_last_access_time = entry->last_access_time();
+  left_most_last_access_time =
+      IsContentWord(entry->value()) ? left_last_access_time : 0;
+
+  switch (mtype) {
+    case MatchType::NO_MATCH:
+      // Should not reach here.
       return false;
-    }
-  } else if (mtype == MatchType::LEFT_PREFIX_MATCH) {
-    // |request_key| is shorter than |entry->key()|
-    // This scenario is a simple prefix match.
-    // e.g., |request_key|="foo", |entry->key()|="foobar"
-    result = AddEntry(*entry, entry_queue);
-    if (result) {
-      last_entry = entry;
-      left_last_access_time = entry->last_access_time();
-      left_most_last_access_time =
-          IsContentWord(entry->value()) ? left_last_access_time : 0;
-    }
-  } else if (mtype == MatchType::RIGHT_PREFIX_MATCH ||
-             mtype == MatchType::EXACT_MATCH) {
-    // |request_key| is longer than or the same as |entry->key()|.
-    // In this case, recursively traverse "next_entries" until
-    // target entry gets longer than request_key.
-    // e.g., |request_key|="foobar", |entry->key()|="foo"
-    if (request.request().zero_query_suggestion() &&
-        mtype == MatchType::EXACT_MATCH) {
-      // For mobile, we don't generate joined result.
-      result = AddEntry(*entry, entry_queue);
-      if (result) {
+    case MatchType::LEFT_EMPTY_MATCH:
+      // zero-query-suggestion
+      // if |request_key| is empty, the |prev_entry| and |entry| must
+      // have bigram relation.
+      if (prev_entry != nullptr && HasBigramEntry(*entry, *prev_entry)) {
+        result = AddEntry(*entry, entry_queue);
         last_entry = entry;
-        left_last_access_time = entry->last_access_time();
-        left_most_last_access_time =
-            IsContentWord(entry->value()) ? left_last_access_time : 0;
       }
-    } else {
+      break;
+    case MatchType::LEFT_PREFIX_MATCH:
+      // |request_key| is shorter than |entry->key()|
+      // This scenario is a simple prefix match.
+      // e.g., |request_key|="foo", |entry->key()|="foobar"
+      result = AddEntry(*entry, entry_queue);
+      last_entry = entry;
+      break;
+    case MatchType::RIGHT_PREFIX_MATCH: {
+      // |request_key| is longer than |entry->key()|.
+      // In this case, recursively traverse "next_entries" until
+      // target entry gets longer than request_key.
+      // e.g., |request_key|="foobar", |entry->key()|="foo"
       std::string key, value;
-      left_last_access_time = entry->last_access_time();
-      left_most_last_access_time =
-          IsContentWord(entry->value()) ? left_last_access_time : 0;
-      if (!GetKeyValueForExactAndRightPrefixMatch(
-              request_key, entry, &last_entry, &left_last_access_time,
-              &left_most_last_access_time, &key, &value)) {
-        return false;
+      if (GetKeyValueForExactAndRightPrefixMatch(
+              request_key, prefer_exact_match, entry, &last_entry,
+              &left_last_access_time, &left_most_last_access_time, &key,
+              &value)) {
+        result = AddEntryWithNewKeyValue(std::move(key), std::move(value),
+                                         *entry, entry_queue);
       }
-      result = AddEntryWithNewKeyValue(std::move(key), std::move(value), *entry,
-                                       entry_queue);
+      break;
     }
-  } else {
-    LOG(ERROR) << "Unknown match mode: " << static_cast<int>(mtype);
-    return false;
+    case MatchType::EXACT_MATCH:
+      // |request_key| is the same as |entry->key()|.
+      if (prefer_exact_match) {
+        // For mobile, we don't generate joined result.
+        result = AddEntry(*entry, entry_queue);
+        last_entry = entry;
+      } else {
+        // In this case, recursively traverse "next_entries" until
+        // target entry gets longer than request_key.
+        // e.g., |request_key|="foobar", |entry->key()|="foo"
+        std::string key, value;
+        if (GetKeyValueForExactAndRightPrefixMatch(
+                request_key, prefer_exact_match, entry, &last_entry,
+                &left_last_access_time, &left_most_last_access_time, &key,
+                &value)) {
+          result = AddEntryWithNewKeyValue(std::move(key), std::move(value),
+                                           *entry, entry_queue);
+        }
+      }
+      break;
+    default:
+      LOG(ERROR) << "Unknown match mode: " << static_cast<int>(mtype);
+      return false;
   }
 
   if (result == nullptr) {

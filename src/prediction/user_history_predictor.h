@@ -314,22 +314,25 @@ class UserHistoryPredictor : public PredictorInterface {
   // Returns false if we don't have the result for this match.
   // |left_last_access_time| and |left_most_last_access_time| will be updated
   // according to the entry lookup.
+  // If exact match results exist, return them first when |prefer_exact_match|
+  // is true.
   bool GetKeyValueForExactAndRightPrefixMatch(
-      absl::string_view request_key, const Entry* entry,
-      const Entry** result_last_entry, uint64_t* left_last_access_time,
-      uint64_t* left_most_last_access_time, std::string* result_key,
-      std::string* result_value) const;
+      absl::string_view request_key, bool prefer_exact_match,
+      const Entry* entry, const Entry** result_last_entry,
+      uint64_t* left_last_access_time, uint64_t* left_most_last_access_time,
+      std::string* result_key, std::string* result_value) const;
 
   const Entry* absl_nullable LookupPrevEntry(
       const ConversionRequest& request) const;
 
   // Adds an entry to a priority queue.
-  Entry* AddEntry(const Entry& entry, EntryPriorityQueue* entry_queue) const;
+  Entry* absl_nonnull AddEntry(const Entry& entry,
+                               EntryPriorityQueue* entry_queue) const;
 
   // Adds the entry whose key and value are modified to a priority queue.
-  Entry* AddEntryWithNewKeyValue(std::string key, std::string value,
-                                 Entry entry,
-                                 EntryPriorityQueue* entry_queue) const;
+  Entry* absl_nonnull AddEntryWithNewKeyValue(
+      std::string key, std::string value, Entry entry,
+      EntryPriorityQueue* entry_queue) const;
 
   EntryPriorityQueue GetEntry_QueueFromHistoryDictionary(
       const ConversionRequest& request, const Entry* prev_entry,
