@@ -58,6 +58,15 @@ class SupplementalModelInterface {
     return EngineReloadResponse();
   }
 
+  // Returns true if supplemental model is available.
+  // Useful to run intensive operations before using supplemental model.
+  //
+  // if (supplemental_model->IsAvailable()) {
+  //    auto input = MakeInputWithIntensiveOperations();
+  //    auto output = supplemental_model->ProcessXXX(input);
+  // }
+  virtual bool IsAvailable() const { return false; }
+
   // Performs spelling correction for composition (pre-edit) Hiragana sequence.
   // Returns empty result when no correction is required.
   // Returns std::nullopt when the composition spellchecker is not
