@@ -5301,6 +5301,22 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
            entry->last_access_time() > 0;
   };
 
+  auto has_link = [&](absl::string_view prev_key, absl::string_view prev_value,
+                      absl::string_view next_key,
+                      absl::string_view next_value) {
+    UserHistoryPredictorTestPeer predictor_peer(*predictor);
+    const UserHistoryPredictor::Entry* prev_entry =
+        predictor_peer.dic_()->LookupWithoutInsert(
+            UserHistoryPredictor::Fingerprint(prev_key, prev_value));
+    if (!prev_entry) return false;
+    const uint32_t next_fp =
+        UserHistoryPredictor::Fingerprint(next_key, next_value);
+    for (const auto& next_entry : prev_entry->next_entries()) {
+      if (next_entry.entry_fp() == next_fp) return true;
+    }
+    return false;
+  };
+
   auto init_predictor = [&]() {
     predictor->ClearAllHistory();
     UserHistoryPredictorTestPeer(*predictor).WaitForSyncer();
@@ -5430,6 +5446,8 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     EXPECT_TRUE(has_entry("きょうとだいがく", "京都大学"));
     EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
     EXPECT_TRUE(has_entry("そつぎょう", "卒業"));  // Newly added.
+    EXPECT_TRUE(
+        has_link("きょうとだいがくを", "京都大学を", "そつぎょう", "卒業"));
   }
 
   {
@@ -5445,6 +5463,8 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     EXPECT_TRUE(has_entry("きょうとだいがく", "京都大学"));
     EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
     EXPECT_TRUE(has_entry("そつぎょうし", "卒業し"));  // Newly added.
+    EXPECT_TRUE(
+        has_link("きょうとだいがくを", "京都大学を", "そつぎょうし", "卒業し"));
   }
 
   {

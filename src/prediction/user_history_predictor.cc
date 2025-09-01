@@ -1909,6 +1909,7 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
     Entry* history_entry = dic_->MutableLookupWithoutInsert(
         LearningSegmentFingerprint(history_segment));
     if (history_entry) {
+      revert_entries->history_entry = *history_entry;
       NextEntry next_entry;
       if (!is_suggestion_selected) {
         for (const auto next_fp :
@@ -2013,6 +2014,18 @@ void UserHistoryPredictor::Revert(uint32_t revert_id) {
       // Performs the actual revert operation. dic_ will store the
       // reverted entries.
       *committed_entry = revert_entry;
+    }
+  }
+
+  // History entry may have the next_entry link.
+  // We have to revert these links.
+  if (revert_entries->history_entry.has_value()) {
+    const Entry& revert_history_entry = revert_entries->history_entry.value();
+    if (Entry* committed_history_entry = dic_->MutableLookupWithoutInsert(
+            EntryFingerprint(revert_history_entry));
+        committed_history_entry) {
+      last_committed_entries->history_entry = *committed_history_entry;
+      *committed_history_entry = revert_history_entry;
     }
   }
 
@@ -2249,6 +2262,36 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
     return;
   }
 
+  // Update chain link from prev_entry to `new_entry`.
+  // prev_entry ends at `new_entry_key_begin`.
+  auto update_chain = [&](int32_t new_entry_key_begin, const Entry& new_entry) {
+    uint32_t prev_entry_fp = 0;
+
+    if (new_entry_key_begin == 0) {
+      if (last_committed_entries->history_entry.has_value()) {
+        prev_entry_fp =
+            EntryFingerprint(last_committed_entries->history_entry.value());
+      }
+    } else {
+      for (const auto& [key_begin, value_begin, committed_entry] :
+           last_committed_entries->entries) {
+        if (new_entry_key_begin == key_begin + committed_entry.key().size()) {
+          prev_entry_fp = EntryFingerprint(committed_entry);
+          break;
+        }
+      }
+    }
+
+    if (prev_entry_fp == 0) return;
+
+    if (Entry* prev_entry = dic_->MutableLookupWithoutInsert(prev_entry_fp);
+        prev_entry) {
+      NextEntry next_entry;
+      next_entry.set_entry_fp(EntryFingerprint(new_entry));
+      InsertNextEntry(next_entry, prev_entry);
+    }
+  };
+
   auto insert_entry = [&](const Entry& new_entry) {
     if (Entry* entry =
             dic_->MutableLookupWithoutInsert(EntryFingerprint(new_entry));
@@ -2366,6 +2409,7 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
         prefix_entry.set_key(ckey_prefix);
         prefix_entry.set_value(cvalue_prefix);
         force_insert_entry(prefix_entry);
+        update_chain(key_begin, prefix_entry);
       }
     }
   }

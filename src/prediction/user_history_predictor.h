@@ -395,6 +395,10 @@ class UserHistoryPredictor : public PredictorInterface {
     // The result committed.
     Result result;
 
+    // History entry (previous context).
+    // The chain link from history entry to the first entries are reverted.
+    std::optional<Entry> history_entry;
+
     // Actual primitive entries associated with the last commit operation.
     // vector of [key_begin, value_begin, revert_entry].
     // `revert_entry` is stored in the LRU cache.
