@@ -248,7 +248,7 @@ class InnerSegments {
     using pointer = IteratorData*;
     using reference = IteratorData&;
 
-    const reference operator*() { return data_; }
+    reference operator*() { return data_; }
 
     Iterator& operator++() {
       data_.Next();
