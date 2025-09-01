@@ -39,15 +39,20 @@
 // clang-format off
 // Output:
 /*
-id	key	value	begin_pos	end_pos	lid	rid	wcost	cost	prev	next
-1		BOS	0	0	0	0	0	0	0	2
-3	へ	へ	0	3	1841	1841	32767	34068	1	0
-4	へんかん	返還	0	12	1841	1841	5030	6331	1	0
-5	へんかん	偏官	0	12	1841	1949	8024	9325	1	0
-2	へんかん	変換	0	12	1845	1845	300	5508	1	6
-7	へんか	返歌	0	9	1841	1841	6794	8095	1	0
-8	へんか	変化	0	9	1841	1841	3308	4609	1	0
-9	へん	へん	0	6	42	42	2001	7965	1	0
+id	key	value	begin_pos	end_pos	lid	rid	wcost	cost	bnext	enext	prev	next
+1		BOS	0	0	0	0	0	0	0	0	0	2
+3		POS	0	0	0	0	0	0	4	0	0	5
+5		POS	3	3	0	0	0	0	6	0	0	7
+7		POS	6	6	0	0	0	0	8	0	0	0
+4	も	も	0	3	1841	1841	32767	34068	9	0	1	0
+9	もじ	捩	0	6	577	577	11584	15810	10	0	1	0
+10	もじ	もじ	0	6	577	577	8697	12923	2	9	1	0
+2	もじ	文字	0	6	1851	1851	3953	5044	11	10	1	8
+11	もじ	モジ	0	6	1851	1851	7487	8578	12	2	1	0
+12	もじ	門司	0	6	1920	1920	5714	8904	13	11	1	0
+13	もじ	門司	0	6	1923	1923	5752	8371	14	12	1	0
+14	もじ	門司	0	6	1924	1924	4505	7301	15	13	1	0
+15	もじ	茂地	0	6	1924	1924	7372	10168	16	14	1	0
 ...
 */
 // clang-format on
@@ -66,6 +71,7 @@ id	key	value	begin_pos	end_pos	lid	rid	wcost	cost	prev	next
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "converter/immutable_converter.h"
@@ -101,12 +107,38 @@ std::string DumpNodes(const Lattice& lattice) {
     return id;
   };
 
+  auto bnext_id = [&](const Node& node) -> uint32_t {
+    const absl::Span<const Node* const>& begin_nodes =
+        lattice.begin_nodes(node.begin_pos);
+    // If the node is a POS node, returns the first begin node.
+    if (node.key.empty() && node.value == "POS") {
+      return node_id(begin_nodes[0]);
+    }
+    for (size_t i = 0; i < begin_nodes.size() - 1; ++i) {
+      if (begin_nodes[i] == &node) {
+        return node_id(begin_nodes[i + 1]);
+      }
+    }
+    return 0;
+  };
+
+  auto enext_id = [&](const Node& node) -> uint32_t {
+    const absl::Span<const Node* const>& end_nodes =
+        lattice.end_nodes(node.end_pos);
+    for (size_t i = 1; i < end_nodes.size(); ++i) {
+      if (end_nodes[i] == &node) {
+        return node_id(end_nodes[i - 1]);
+      }
+    }
+    return 0;
+  };
+
   // Returns a string representation of the given node in TSV.
-  auto dump_node = [&node_id](const Node& node) -> std::string {
+  auto dump_node = [&](const Node& node) -> std::string {
     return absl::StrCat(node_id(&node), "\t", node.key, "\t", node.value, "\t",
                         node.begin_pos, "\t", node.end_pos, "\t", node.lid,
                         "\t", node.rid, "\t", node.wcost, "\t", node.cost, "\t",
-                        node.begin_pos, "\t", node.end_pos, "\t",
+                        bnext_id(node), "\t", enext_id(node), "\t",
                         node_id(node.prev), "\t", node_id(node.next), "\n");
   };
 
