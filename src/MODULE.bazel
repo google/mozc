@@ -60,11 +60,11 @@ bazel_dep(
     version = "1.0.0",
 )
 
-# bazel_skylib: 1.7.1 2024-06-03
+# bazel_skylib: 1.8.1 2024-07-08
 # https://github.com/bazelbuild/bazel-skylib/
 bazel_dep(
     name = "bazel_skylib",
-    version = "1.7.1",
+    version = "1.8.1",
 )
 
 # rules_pkg: 1.1.0 2025-03-06
@@ -82,46 +82,48 @@ single_version_override(
     version = "1.1.0",
 )
 
-# rules_python: 1.4.1 2025-05-09
+# rules_python: 1.5.4 2025-08-28
 # https://github.com/bazelbuild/rules_python/
 bazel_dep(
     name = "rules_python",
-    version = "1.4.1",
+    version = "1.5.4",
 )
 
-# Bazel macOS build (3.22.0 2025-05-20)
+# Bazel macOS build (4.1.2 2025-08-07)
 # https://github.com/bazelbuild/rules_apple
 bazel_dep(
     name = "rules_apple",
-    version = "3.22.0",
+    version = "4.1.2",
     repo_name = "build_bazel_rules_apple",
 )
 
-# Apple Support for Bazel (1.22.0 2025-05-05)
+# Apple Support for Bazel (1.23.1 2025-08-29)
 # https://github.com/bazelbuild/apple_support/
 ## this must come above 'rules_cc'
 ## https://github.com/bazelbuild/apple_support/blob/d87e8b07f3345e750834dbb6ce38c7c7d3b8b44b/README.md#bazel-7-setup
 bazel_dep(
     name = "apple_support",
-    version = "1.22.0",
+    version = "1.23.1",
     repo_name = "build_bazel_apple_support",
 )
 
+# rules_swift: 3.1.2 2025-08-06
+# https://github.com/bazelbuild/rules_swift/
 # While Mozc does not directly depends on rules_swift, it is still indirectly
 # used by rules_apple. To avoid the build failure on Windows, its version needs
 # to be 2.5.0 or higher.
 # https://github.com/bazelbuild/rules_swift/issues/1502
 bazel_dep(
     name = "rules_swift",
-    version = "2.8.2",
+    version = "3.1.2",
     repo_name = "build_bazel_rules_swift",
 )
 
-# rules_cc: 0.1.4 2025-07-18
+# rules_cc: 0.2.2 2025-08-28
 # https://github.com/bazelbuild/rules_cc/
 bazel_dep(
     name = "rules_cc",
-    version = "0.1.4",
+    version = "0.2.2",
 )
 single_version_override(
     module_name = "rules_cc",
@@ -132,7 +134,7 @@ single_version_override(
         "bazel/rules_cc_windows_cc_configure.bzl.patch",
         "bazel/rules_cc_windows_cc_toolchain_config.bzl.patch",
     ],
-    version = "0.1.4",
+    version = "0.2.2",
 )
 
 cc_configure = use_extension(
