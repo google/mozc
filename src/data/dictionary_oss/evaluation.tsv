@@ -391,8 +391,8 @@ FAILED:	よてい	予定	Conversion Expected 999	豫定	2.30.5544
 FAILED:	よび	予備	Conversion Expected 999	豫備	2.30.5544
 FAILED:	よやく	予約	Conversion Expected 999	豫約	2.30.5544
 OK:	じんじょうしょう	尋常小	Conversion Expected	尋常小	2.30.5544
-FAILED:	ふうしが	風刺が	Conversion Expected 999	諷刺画	2.31.5851
-FAILED:	ふうしがか	風刺画か	Conversion Expected 999	諷刺画家	2.31.5851
+FAILED:	ふうしが	風刺が	Conversion Expected 999	諷刺画	2.30.5618
+FAILED:	ふうしがか	風刺画か	Conversion Expected 999	諷刺画家	2.30.5544
 OK:	ちょうせんかいきょう	朝鮮海峡	Conversion Expected	朝鮮海峡	2.30.5544
 OK:	かじょうわん	渦状腕	Conversion Expected	渦状腕	2.30.5544
 OK:	ぽるてぃちのおしむすめ	ポルティチの唖娘	Conversion Expected	ポルティチの唖娘	2.30.5544
