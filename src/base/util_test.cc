@@ -42,7 +42,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/check.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "testing/gmock.h"
@@ -184,52 +183,52 @@ TEST(UtilTest, SplitCSV) {
 
   Util::SplitCSV("Google,x,\"Buchheit, Paul\",\"string with \"\" quote in it\"",
                  &answer_vector);
-  CHECK_EQ(answer_vector.size(), 4);
-  CHECK_EQ(answer_vector[0], "Google");
-  CHECK_EQ(answer_vector[1], "x");
-  CHECK_EQ(answer_vector[2], "Buchheit, Paul");
-  CHECK_EQ(answer_vector[3], "string with \" quote in it");
+  EXPECT_EQ(answer_vector.size(), 4);
+  EXPECT_EQ(answer_vector[0], "Google");
+  EXPECT_EQ(answer_vector[1], "x");
+  EXPECT_EQ(answer_vector[2], "Buchheit, Paul");
+  EXPECT_EQ(answer_vector[3], "string with \" quote in it");
 
   Util::SplitCSV("Google,hello,", &answer_vector);
-  CHECK_EQ(answer_vector.size(), 3);
-  CHECK_EQ(answer_vector[0], "Google");
-  CHECK_EQ(answer_vector[1], "hello");
-  CHECK_EQ(answer_vector[2], "");
+  EXPECT_EQ(answer_vector.size(), 3);
+  EXPECT_EQ(answer_vector[0], "Google");
+  EXPECT_EQ(answer_vector[1], "hello");
+  EXPECT_EQ(answer_vector[2], "");
 
   Util::SplitCSV("Google rocks,hello", &answer_vector);
-  CHECK_EQ(answer_vector.size(), 2);
-  CHECK_EQ(answer_vector[0], "Google rocks");
-  CHECK_EQ(answer_vector[1], "hello");
+  EXPECT_EQ(answer_vector.size(), 2);
+  EXPECT_EQ(answer_vector[0], "Google rocks");
+  EXPECT_EQ(answer_vector[1], "hello");
 
   Util::SplitCSV(",,\"\",,", &answer_vector);
-  CHECK_EQ(answer_vector.size(), 5);
-  CHECK_EQ(answer_vector[0], "");
-  CHECK_EQ(answer_vector[1], "");
-  CHECK_EQ(answer_vector[2], "");
-  CHECK_EQ(answer_vector[3], "");
-  CHECK_EQ(answer_vector[4], "");
+  EXPECT_EQ(answer_vector.size(), 5);
+  EXPECT_EQ(answer_vector[0], "");
+  EXPECT_EQ(answer_vector[1], "");
+  EXPECT_EQ(answer_vector[2], "");
+  EXPECT_EQ(answer_vector[3], "");
+  EXPECT_EQ(answer_vector[4], "");
 
   // Test a string containing a comma.
   Util::SplitCSV("\",\",hello", &answer_vector);
-  CHECK_EQ(answer_vector.size(), 2);
-  CHECK_EQ(answer_vector[0], ",");
-  CHECK_EQ(answer_vector[1], "hello");
+  EXPECT_EQ(answer_vector.size(), 2);
+  EXPECT_EQ(answer_vector[0], ",");
+  EXPECT_EQ(answer_vector[1], "hello");
 
   // Invalid CSV
   Util::SplitCSV("\"no,last,quote", &answer_vector);
-  CHECK_EQ(answer_vector.size(), 1);
-  CHECK_EQ(answer_vector[0], "no,last,quote");
+  EXPECT_EQ(answer_vector.size(), 1);
+  EXPECT_EQ(answer_vector[0], "no,last,quote");
 
   Util::SplitCSV("backslash\\,is,no,an,\"escape\"", &answer_vector);
-  CHECK_EQ(answer_vector.size(), 5);
-  CHECK_EQ(answer_vector[0], "backslash\\");
-  CHECK_EQ(answer_vector[1], "is");
-  CHECK_EQ(answer_vector[2], "no");
-  CHECK_EQ(answer_vector[3], "an");
-  CHECK_EQ(answer_vector[4], "escape");
+  EXPECT_EQ(answer_vector.size(), 5);
+  EXPECT_EQ(answer_vector[0], "backslash\\");
+  EXPECT_EQ(answer_vector[1], "is");
+  EXPECT_EQ(answer_vector[2], "no");
+  EXPECT_EQ(answer_vector[3], "an");
+  EXPECT_EQ(answer_vector[4], "escape");
 
   Util::SplitCSV("", &answer_vector);
-  CHECK_EQ(answer_vector.size(), 0);
+  EXPECT_EQ(answer_vector.size(), 0);
 }
 
 TEST(UtilTest, LowerString) {
