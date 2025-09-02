@@ -29,11 +29,11 @@
 
 module(name = "mozc")
 
-# absl-cpp: 20250512.0 2025-05-13
+# absl-cpp: 20250814.0 2025-08-15
 # https://github.com/abseil/abseil-cpp
 bazel_dep(
     name = "abseil-cpp",
-    version = "20250512.0",
+    version = "20250814.0",
     repo_name = "com_google_absl",
 )
 

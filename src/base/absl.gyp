@@ -108,9 +108,7 @@
       'toolsets': ['host', 'target'],
       'type': 'static_library',
       'sources': [
-        '<(absl_srcdir)/hash/internal/city.cc',
-        '<(absl_srcdir)/hash/internal/hash.cc',
-        '<(absl_srcdir)/hash/internal/low_level_hash.cc',
+        '<!@(<(glob_absl) hash/internal "*.cc" --exclude print_hash_of.cc)',
       ],
       'dependencies': [
           'absl_container_internal',
