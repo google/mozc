@@ -134,7 +134,6 @@ mozc_cc_test(
         "//composer:query",
         "//composer:table",
         "//config:config_handler",
-        "//converter:attribute",
         "//converter:inner_segment",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_interface",

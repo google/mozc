@@ -85,7 +85,7 @@ namespace {
 
 using ::mozc::composer::TypeCorrectedQuery;
 
-// Finds suggestion candidates from the most recent 3000 history in LRU.
+// Finds suggestion candidates from the most recent 3000 history in LRUs.
 // We don't check all history, since suggestion is called every key event
 constexpr size_t kDefaultMaxSuggestionTrial = 3000;
 
@@ -222,6 +222,43 @@ bool UserHistoryPredictor::IsPrivacySensitive(
   return kNonSensitive;
 }
 
+// static
+void UserHistoryStorage::MigrateNextEntries(
+    mozc::user_history_predictor::UserHistory* absl_nonnull proto) {
+  DCHECK(proto);
+
+  bool migrated = true;
+  for (const auto& entry : proto->entries()) {
+    if (entry.next_entries_deprecated_size() > 0) {
+      migrated = false;
+      break;
+    }
+  }
+
+  if (migrated) {
+    return;
+  }
+
+  absl::flat_hash_map<uint32_t, uint64_t> old2new_fp;
+  for (const auto& entry : proto->entries()) {
+    const uint32_t old_fp =
+        UserHistoryPredictor::FingerprintDepereated(entry.key(), entry.value());
+    const uint64_t new_fp =
+        UserHistoryPredictor::Fingerprint(entry.key(), entry.value());
+    old2new_fp[old_fp] = new_fp;
+  }
+
+  for (auto& entry : *proto->mutable_entries()) {
+    for (const auto& next_entry : entry.next_entries_deprecated()) {
+      if (const auto it = old2new_fp.find(next_entry.entry_fp());
+          it != old2new_fp.end()) {
+        entry.add_next_entry_fps(it->second);
+      }
+    }
+    entry.clear_next_entries_deprecated();
+  }
+}
+
 bool UserHistoryStorage::Load() {
   std::string input;
   if (!storage_.Load(&input)) {
@@ -233,6 +270,8 @@ bool UserHistoryStorage::Load() {
     LOG(ERROR) << "ParseFromString failed. message looks broken";
     return false;
   }
+
+  MigrateNextEntries(&proto_);
 
   MOZC_VLOG(1) << "Loaded user history, size=" << proto_.entries_size();
   return true;
@@ -395,8 +434,8 @@ bool UserHistoryPredictor::Load(UserHistoryStorage&& history) {
         std::max(entry.suggestion_freq(), entry.conversion_freq_deprecated()));
     entry.clear_conversion_freq_deprecated();
     // Avoid std::move() is called before EntryFingerprint.
-    const uint32_t dic_key = EntryFingerprint(entry);
-    dic_->Insert(dic_key, std::move(entry));
+    const uint64_t fp = EntryFingerprint(entry);
+    dic_->Insert(fp, std::move(entry));
   }
 
   return true;
@@ -470,7 +509,7 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
     return false;
   }
 
-  std::vector<uint32_t> keys;
+  std::vector<uint64_t> keys;
   for (const DicElement& elm : *dic_) {
     MOZC_VLOG(3) << elm.key << " " << elm.value.suggestion_freq();
     if (elm.value.suggestion_freq() == 0) {
@@ -478,7 +517,7 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
     }
   }
 
-  for (const uint32_t key : keys) {
+  for (const uint64_t key : keys) {
     MOZC_VLOG(2) << "Removing: " << key;
     if (!dic_->Erase(key)) {
       LOG(ERROR) << "cannot erase " << key;
@@ -495,19 +534,10 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
 }
 
 // Erases all the next_entries whose entry_fp field equals |fp|.
-void UserHistoryPredictor::EraseNextEntries(uint32_t fp, Entry* entry) {
-  const size_t orig_size = entry->next_entries_size();
-  size_t new_size = orig_size;
-  for (size_t pos = 0; pos < new_size;) {
-    if (entry->next_entries(pos).entry_fp() == fp) {
-      entry->mutable_next_entries()->SwapElements(pos, --new_size);
-    } else {
-      ++pos;
-    }
-  }
-  for (size_t i = 0; i < orig_size - new_size; ++i) {
-    entry->mutable_next_entries()->RemoveLast();
-  }
+void UserHistoryPredictor::EraseNextEntries(uint64_t fp, Entry* entry) {
+  auto& next_fps = *entry->mutable_next_entry_fps();
+  auto new_end = std::remove(next_fps.begin(), next_fps.end(), fp);
+  next_fps.erase(new_end, next_fps.end());
 }
 
 // Recursively finds the Ngram history that produces |target_key| and
@@ -541,8 +571,7 @@ UserHistoryPredictor::RemoveNgramChain(
       value_ngrams_len < target_value.size()) {
     key_ngrams->push_back(entry->key());
     value_ngrams->push_back(entry->value());
-    for (size_t i = 0; i < entry->next_entries().size(); ++i) {
-      const uint32_t fp = entry->next_entries(i).entry_fp();
+    for (const uint64_t fp : entry->next_entry_fps()) {
       Entry* e = dic_->MutableLookupWithoutInsert(fp);
       if (e == nullptr) {
         continue;
@@ -632,13 +661,9 @@ bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
 // static
 bool UserHistoryPredictor::HasBigramEntry(const Entry& entry,
                                           const Entry& prev_entry) {
-  const uint32_t fp = EntryFingerprint(entry);
-  for (int i = 0; i < prev_entry.next_entries_size(); ++i) {
-    if (fp == prev_entry.next_entries(i).entry_fp()) {
-      return true;
-    }
-  }
-  return false;
+  const uint64_t fp = EntryFingerprint(entry);
+  const auto& next_fps = prev_entry.next_entry_fps();
+  return absl::c_find(next_fps, fp) != next_fps.end();
 }
 
 // static
@@ -858,6 +883,7 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
   std::string key = entry->key();
   std::string value = entry->value();
   const Entry* current_entry = entry;
+  DCHECK(current_entry);
   absl::flat_hash_set<std::pair<absl::string_view, absl::string_view>> seen;
   seen.emplace(current_entry->key(), current_entry->value());
   // Until target entry gets longer than request_key.
@@ -868,9 +894,9 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
     const Entry* latest_entry = nullptr;
     const Entry* left_same_timestamp_entry = nullptr;
     const Entry* left_most_same_timestamp_entry = nullptr;
-    for (size_t i = 0; i < current_entry->next_entries_size(); ++i) {
-      const Entry* tmp_next_entry =
-          dic_->LookupWithoutInsert(current_entry->next_entries(i).entry_fp());
+    DCHECK(current_entry);
+    for (const uint64_t fp : current_entry->next_entry_fps()) {
+      const Entry* tmp_next_entry = dic_->LookupWithoutInsert(fp);
       if (tmp_next_entry == nullptr || tmp_next_entry->key().empty()) {
         continue;
       }
@@ -1087,9 +1113,8 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest& request,
     const Entry* latest_entry = nullptr;
     const Entry* left_same_timestamp_entry = nullptr;
     const Entry* left_most_same_timestamp_entry = nullptr;
-    for (int i = 0; i < last_entry->next_entries_size(); ++i) {
-      const Entry* tmp_entry =
-          dic_->LookupWithoutInsert(last_entry->next_entries(i).entry_fp());
+    for (const uint64_t fp : last_entry->next_entry_fps()) {
+      const Entry* tmp_entry = dic_->LookupWithoutInsert(fp);
       if (tmp_entry == nullptr || tmp_entry->key().empty()) {
         continue;
       }
@@ -1276,7 +1301,7 @@ UserHistoryPredictor::LookupPrevEntry(const ConversionRequest& request) const {
   // When |prev_entry| is nullptr or |prev_entry| has no valid next_entries,
   // do linear-search over the LRU.
   if (prev_entry == nullptr ||
-      (prev_entry != nullptr && prev_entry->next_entries_size() == 0)) {
+      (prev_entry != nullptr && prev_entry->next_entry_fps_size() == 0)) {
     absl::string_view prev_value = prev_entry == nullptr
                                        ? request.converter_history_value(1)
                                        : prev_entry->value();
@@ -1291,7 +1316,7 @@ UserHistoryPredictor::LookupPrevEntry(const ConversionRequest& request) const {
       // length of entry->value() must be >= 2, as single-length
       // match would be noisy.
       if (IsValidEntry(*entry) && entry != prev_entry &&
-          entry->next_entries_size() > 0 &&
+          entry->next_entry_fps_size() > 0 &&
           Util::CharsLen(entry->value()) >= 2 &&
           (entry->value() == prev_value ||
            prev_value.ends_with(entry->value()))) {
@@ -1567,49 +1592,46 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
   return results;
 }
 
-void UserHistoryPredictor::InsertNextEntry(const NextEntry& next_entry,
-                                           Entry* entry) const {
-  if (next_entry.entry_fp() == 0 || entry == nullptr) {
+void UserHistoryPredictor::InsertNextEntry(uint64_t fp, Entry* entry) const {
+  if (fp == 0 || entry == nullptr) {
     return;
   }
-
-  NextEntry* target_next_entry = nullptr;
 
   // If next_entries_size is less than kMaxNextEntriesSize,
   // we simply allocate a new entry.
-  if (entry->next_entries_size() < max_next_entries_size()) {
-    target_next_entry = entry->add_next_entries();
+  if (entry->next_entry_fps_size() < max_next_entries_size()) {
+    entry->add_next_entry_fps(fp);
   } else {
     // Otherwise, find the oldest next_entry.
     uint64_t last_access_time = std::numeric_limits<uint64_t>::max();
-    for (int i = 0; i < entry->next_entries_size(); ++i) {
+    int insert_index = -1;
+
+    auto& next_entry_fps = *entry->mutable_next_entry_fps();
+    for (int i = 0; i < next_entry_fps.size(); ++i) {
       // Already has the same id
-      if (next_entry.entry_fp() == entry->next_entries(i).entry_fp()) {
-        target_next_entry = entry->mutable_next_entries(i);
-        break;
+      if (fp == next_entry_fps[i]) {
+        return;
       }
-      const Entry* found_entry =
-          dic_->LookupWithoutInsert(entry->next_entries(i).entry_fp());
+
+      const Entry* found_entry = dic_->LookupWithoutInsert(next_entry_fps[i]);
+
       // Reuses the entry if it is already removed from the LRU.
       if (found_entry == nullptr) {
-        target_next_entry = entry->mutable_next_entries(i);
-        break;
+        next_entry_fps[i] = fp;
+        return;
       }
+
       // Preserves the oldest entry
-      if (target_next_entry == nullptr ||
-          last_access_time > found_entry->last_access_time()) {
-        target_next_entry = entry->mutable_next_entries(i);
+      if (last_access_time > found_entry->last_access_time()) {
+        insert_index = i;
         last_access_time = found_entry->last_access_time();
       }
     }
-  }
 
-  if (target_next_entry == nullptr) {
-    LOG(ERROR) << "cannot find a room for inserting next fp";
-    return;
+    if (insert_index >= 0) {
+      next_entry_fps[insert_index] = fp;
+    }
   }
-
-  *target_next_entry = next_entry;
 }
 
 bool UserHistoryPredictor::IsValidEntry(const Entry& entry) const {
@@ -1658,7 +1680,7 @@ void UserHistoryPredictor::TryInsert(
     const ConversionRequest& request, int32_t key_begin, int32_t value_begin,
     absl::string_view key, absl::string_view value,
     absl::string_view description, bool is_suggestion_selected,
-    absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
+    absl::Span<const uint64_t> next_fps, uint64_t last_access_time,
     UserHistoryPredictor::RevertEntries* revert_entries) {
   // b/279560433: Preprocess key value
   // (key|value)_begin don't change after StripTrailingAsciiWhitespace.
@@ -1673,14 +1695,14 @@ void UserHistoryPredictor::TryInsert(
 void UserHistoryPredictor::Insert(
     int32_t key_begin, int32_t value_begin, absl::string_view key,
     absl::string_view value, absl::string_view description,
-    bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
+    bool is_suggestion_selected, absl::Span<const uint64_t> next_fps,
     uint64_t last_access_time,
     UserHistoryPredictor::RevertEntries* revert_entries) {
-  const uint32_t dic_key = Fingerprint(key, value);
+  const uint64_t fp = Fingerprint(key, value);
 
-  const bool has_dic_key = dic_->HasKey(dic_key);
+  const bool has_fp = dic_->HasKey(fp);
 
-  DicElement* e = dic_->Insert(dic_key);
+  DicElement* e = dic_->Insert(fp);
   if (e == nullptr) {
     MOZC_VLOG(2) << "insert failed";
     return;
@@ -1690,7 +1712,7 @@ void UserHistoryPredictor::Insert(
   DCHECK(entry);
 
   // `entry` might be reused from the heap, so explicitly clear.
-  if (!has_dic_key) {
+  if (!has_fp) {
     entry->Clear();
   }
 
@@ -1711,9 +1733,7 @@ void UserHistoryPredictor::Insert(
 
   // Inserts next_fp to the entry
   for (const auto next_fp : next_fps) {
-    NextEntry next_entry;
-    next_entry.set_entry_fp(next_fp);
-    InsertNextEntry(next_entry, entry);
+    InsertNextEntry(next_fp, entry);
   }
 
   MOZC_VLOG(2) << entry->key() << " " << entry->value()
@@ -1730,8 +1750,8 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
   static constexpr float kMinSelectedRatio = 0.05;
 
   for (size_t i = 0; i < std::min(results.size(), kMaxHistorySize); ++i) {
-    const uint64_t dic_key = Fingerprint(results[i].key, results[i].value);
-    Entry* entry = dic_->MutableLookupWithoutInsert(dic_key);
+    const uint64_t fp = Fingerprint(results[i].key, results[i].value);
+    Entry* entry = dic_->MutableLookupWithoutInsert(fp);
     if (entry == nullptr) {
       continue;
     }
@@ -1910,20 +1930,18 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
         LearningSegmentFingerprint(history_segment));
     if (history_entry) {
       revert_entries->history_entry = *history_entry;
-      NextEntry next_entry;
       if (!is_suggestion_selected) {
         for (const auto next_fp :
              LearningSegmentFingerprints(conversion_segment)) {
-          next_entry.set_entry_fp(next_fp);
-          InsertNextEntry(next_entry, history_entry);
+          InsertNextEntry(next_fp, history_entry);
         }
       }
 
       // Entire user input or SUGGESTION
       if (is_suggestion_selected ||
           learning_segments.conversion_segments.size() > 1) {
-        next_entry.set_entry_fp(Fingerprint(all_key, all_value));
-        InsertNextEntry(next_entry, history_entry);
+        const uint64_t next_fp = Fingerprint(all_key, all_value);
+        InsertNextEntry(next_fp, history_entry);
       }
     }
   }
@@ -1933,13 +1951,13 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     const ConversionRequest& request, bool is_suggestion_selected,
     uint64_t last_access_time, const SegmentsForLearning& learning_segments,
     UserHistoryPredictor::RevertEntries* revert_entries) {
-  absl::flat_hash_set<std::vector<uint32_t>> seen;
+  absl::flat_hash_set<std::vector<uint64_t>> seen;
   bool this_was_seen = false;
 
   for (size_t i = 0; i < learning_segments.conversion_segments.size(); ++i) {
     const SegmentForLearning& segment =
         learning_segments.conversion_segments[i];
-    std::vector<uint32_t> next_fps;
+    std::vector<uint64_t> next_fps;
     if (i + 1 < learning_segments.conversion_segments.size()) {
       next_fps = LearningSegmentFingerprints(
           learning_segments.conversion_segments[i + 1]);
@@ -1948,7 +1966,7 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     if (i == 0) {
       seen.insert(LearningSegmentFingerprints(segment));
     }
-    std::vector<uint32_t> next_fps_to_set = next_fps;
+    std::vector<uint64_t> next_fps_to_set = next_fps;
     // If two duplicate segments exist, kills the link
     // TO/FROM the second one to prevent loops.
     // Only killing "TO" link caused bug #2982886:
@@ -2113,25 +2131,31 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
 }
 
 // static
-uint32_t UserHistoryPredictor::Fingerprint(const absl::string_view key,
+uint64_t UserHistoryPredictor::Fingerprint(const absl::string_view key,
                                            const absl::string_view value) {
+  return ::mozc::CityFingerprint(absl::StrCat(key, kDelimiter, value));
+}
+
+// static
+uint32_t UserHistoryPredictor::FingerprintDepereated(
+    const absl::string_view key, const absl::string_view value) {
   return Fingerprint32(absl::StrCat(key, kDelimiter, value));
 }
 
 // static
-uint32_t UserHistoryPredictor::EntryFingerprint(const Entry& entry) {
+uint64_t UserHistoryPredictor::EntryFingerprint(const Entry& entry) {
   return Fingerprint(entry.key(), entry.value());
 }
 
 // static
-uint32_t UserHistoryPredictor::LearningSegmentFingerprint(
+uint64_t UserHistoryPredictor::LearningSegmentFingerprint(
     const SegmentForLearning& segment) {
   return Fingerprint(segment.key, segment.value);
 }
 
-std::vector<uint32_t> UserHistoryPredictor::LearningSegmentFingerprints(
+std::vector<uint64_t> UserHistoryPredictor::LearningSegmentFingerprints(
     const SegmentForLearning& segment) const {
-  std::vector<uint32_t> fps;
+  std::vector<uint64_t> fps;
   fps.reserve(2);
   fps.push_back(Fingerprint(segment.key, segment.value));
   if (segment.key != segment.content_key) {
@@ -2265,7 +2289,7 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
   // Update chain link from prev_entry to `new_entry`.
   // prev_entry ends at `new_entry_key_begin`.
   auto update_chain = [&](int32_t new_entry_key_begin, const Entry& new_entry) {
-    uint32_t prev_entry_fp = 0;
+    uint64_t prev_entry_fp = 0;
 
     if (new_entry_key_begin == 0) {
       if (last_committed_entries->history_entry.has_value()) {
@@ -2286,9 +2310,8 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
 
     if (Entry* prev_entry = dic_->MutableLookupWithoutInsert(prev_entry_fp);
         prev_entry) {
-      NextEntry next_entry;
-      next_entry.set_entry_fp(EntryFingerprint(new_entry));
-      InsertNextEntry(next_entry, prev_entry);
+      const uint64_t next_entry_fp = EntryFingerprint(new_entry);
+      InsertNextEntry(next_entry_fp, prev_entry);
     }
   };
 
@@ -2302,13 +2325,13 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
   };
 
   auto force_insert_entry = [&](const Entry& new_entry) {
-    const uint32_t dic_key = EntryFingerprint(new_entry);
-    const bool has_dic_key = dic_->HasKey(dic_key);
-    DicElement* elm = dic_->Insert(dic_key);
+    const uint64_t fp = EntryFingerprint(new_entry);
+    const bool has_fp = dic_->HasKey(fp);
+    DicElement* elm = dic_->Insert(fp);
     if (!elm) return;
 
     Entry* entry = &(elm->value);
-    if (has_dic_key) {
+    if (has_fp) {
       // reuse key, value, description and other fields.
       entry->set_suggestion_freq(entry->suggestion_freq() + 1);
     } else {

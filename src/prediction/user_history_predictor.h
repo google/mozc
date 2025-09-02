@@ -79,6 +79,10 @@ class UserHistoryStorage {
     return proto_;
   }
 
+  // Migrate old 32bit Fingerprint to 64bit Fingerprint.
+  static void MigrateNextEntries(
+      mozc::user_history_predictor::UserHistory* absl_nonnull proto);
+
  private:
   storage::EncryptedStringStorage storage_;
   mozc::user_history_predictor::UserHistory proto_;
@@ -133,12 +137,15 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // From user_history_predictor.proto
   using Entry = user_history_predictor::UserHistory::Entry;
-  using NextEntry = user_history_predictor::UserHistory::NextEntry;
 
   // Returns fingerprints from various object.
-  static uint32_t Fingerprint(absl::string_view key, absl::string_view value);
-  static uint32_t EntryFingerprint(const Entry& entry);
-  static uint32_t ResultFingerprint(const Result& result);
+  static uint64_t Fingerprint(absl::string_view key, absl::string_view value);
+  static uint64_t EntryFingerprint(const Entry& entry);
+  static uint64_t ResultFingerprint(const Result& result);
+
+  // Old 32-bit fingerprints functions.
+  static uint32_t FingerprintDepereated(absl::string_view key,
+                                        absl::string_view value);
 
   // Returns the size of cache.
   static uint32_t cache_size();
@@ -159,11 +166,11 @@ class UserHistoryPredictor : public PredictorInterface {
   };
 
   // Fingerprint of key/value.
-  static uint32_t LearningSegmentFingerprint(
+  static uint64_t LearningSegmentFingerprint(
       const SegmentForLearning& learning_segment);
 
   // Fingerprints of key/value and content_key/content_value.
-  std::vector<uint32_t> LearningSegmentFingerprints(
+  std::vector<uint64_t> LearningSegmentFingerprints(
       const SegmentForLearning& learning_segment) const;
 
   struct SegmentsForLearning {
@@ -232,9 +239,6 @@ class UserHistoryPredictor : public PredictorInterface {
                                          const Trie<std::string>* key_expanded,
                                          absl::string_view target);
 
-  // Uint32 <=> string conversion
-  static std::string Uint32ToString(uint32_t fp);
-
   // Returns true if prev_entry has a next_fp link to entry
   static bool HasBigramEntry(const Entry& entry, const Entry& prev_entry);
 
@@ -277,7 +281,7 @@ class UserHistoryPredictor : public PredictorInterface {
     Entry* NewEntry();
 
    private:
-    using QueueElement = std::pair<uint32_t, Entry*>;
+    using QueueElement = std::pair<uint64_t, Entry*>;
     using Agenda = std::priority_queue<QueueElement>;
 
     friend class UserHistoryPredictor;
@@ -289,7 +293,7 @@ class UserHistoryPredictor : public PredictorInterface {
     absl::flat_hash_set<size_t> seen_;
   };
 
-  using DicCache = mozc::storage::LruCache<uint32_t, Entry>;
+  using DicCache = mozc::storage::LruCache<uint64_t, Entry>;
   using DicElement = DicCache::Element;
 
   bool CheckSyncerAndDelete() const;
@@ -427,7 +431,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // |last_access_time|: the time when this entry was created
   void Insert(int32_t key_begin, int32_t value_begin, absl::string_view key,
               absl::string_view value, absl::string_view description,
-              bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
+              bool is_suggestion_selected, absl::Span<const uint64_t> next_fps,
               uint64_t last_access_time, RevertEntries* revert_entries);
 
   // Called by TryInsert to check the Entry to insert.
@@ -441,14 +445,14 @@ class UserHistoryPredictor : public PredictorInterface {
                  int32_t value_begin, absl::string_view key,
                  absl::string_view value, absl::string_view description,
                  bool is_suggestion_selected,
-                 absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
+                 absl::Span<const uint64_t> next_fps, uint64_t last_access_time,
                  RevertEntries* revert_entries);
 
-  // Inserts a new |next_entry| into |entry|.
+  // Inserts a new |fp| into |entry|.
   // it makes a bigram connection from entry to next_entry.
-  void InsertNextEntry(const NextEntry& next_entry, Entry* entry) const;
+  void InsertNextEntry(uint64_t fp, Entry* entry) const;
 
-  static void EraseNextEntries(uint32_t fp, Entry* entry);
+  static void EraseNextEntries(uint64_t fp, Entry* entry);
 
   // Recursively removes a chain of Entries in |dic_|. See the comment in
   // implementation for details.

@@ -414,7 +414,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   static UserHistoryPredictor::Entry* AppendEntry(
       UserHistoryPredictor* predictor, const absl::string_view key,
       const absl::string_view value, UserHistoryPredictor::Entry* prev) {
-    prev->add_next_entries()->set_entry_fp(predictor->Fingerprint(key, value));
+    prev->add_next_entry_fps(predictor->Fingerprint(key, value));
     UserHistoryPredictor::Entry* e = InsertEntry(predictor, key, value);
     return e;
   }
@@ -430,14 +430,10 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   static bool IsConnected(const UserHistoryPredictor::Entry& prev,
                           const UserHistoryPredictor::Entry& next) {
-    const uint32_t fp =
+    const uint64_t fp =
         UserHistoryPredictor::Fingerprint(next.key(), next.value());
-    for (size_t i = 0; i < prev.next_entries_size(); ++i) {
-      if (prev.next_entries(i).entry_fp() == fp) {
-        return true;
-      }
-    }
-    return false;
+    const auto& next_fps = prev.next_entry_fps();
+    return absl::c_find(next_fps, fp) != next_fps.end();
   }
 
   // Helper function to create a test case for bigram history deletion.
@@ -2296,8 +2292,8 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
   entry.set_key(kKey);
   entry.set_value(kValue);
 
-  const uint32_t entry_fp1 = UserHistoryPredictor::Fingerprint(kKey, kValue);
-  const uint32_t entry_fp2 = UserHistoryPredictor::EntryFingerprint(entry);
+  const uint64_t entry_fp1 = UserHistoryPredictor::Fingerprint(kKey, kValue);
+  const uint64_t entry_fp2 = UserHistoryPredictor::EntryFingerprint(entry);
 
   EXPECT_EQ(entry_fp1, entry_fp2);
 }
@@ -3533,29 +3529,29 @@ TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
 
 TEST_F(UserHistoryPredictorTest, EraseNextEntries) {
   UserHistoryPredictor::Entry e;
-  e.add_next_entries()->set_entry_fp(100);
-  e.add_next_entries()->set_entry_fp(10);
-  e.add_next_entries()->set_entry_fp(30);
-  e.add_next_entries()->set_entry_fp(10);
-  e.add_next_entries()->set_entry_fp(100);
+  e.add_next_entry_fps(100);
+  e.add_next_entry_fps(10);
+  e.add_next_entry_fps(30);
+  e.add_next_entry_fps(10);
+  e.add_next_entry_fps(100);
 
   UserHistoryPredictorTestPeer::EraseNextEntries(1234, &e);
-  EXPECT_EQ(e.next_entries_size(), 5);
+  EXPECT_EQ(e.next_entry_fps_size(), 5);
 
   UserHistoryPredictorTestPeer::EraseNextEntries(30, &e);
-  ASSERT_EQ(e.next_entries_size(), 4);
+  ASSERT_EQ(e.next_entry_fps_size(), 4);
   for (size_t i = 0; i < 4; ++i) {
-    EXPECT_NE(e.next_entries(i).entry_fp(), 30);
+    EXPECT_NE(e.next_entry_fps(i), 30);
   }
 
   UserHistoryPredictorTestPeer::EraseNextEntries(10, &e);
-  ASSERT_EQ(e.next_entries_size(), 2);
+  ASSERT_EQ(e.next_entry_fps_size(), 2);
   for (size_t i = 0; i < 2; ++i) {
-    EXPECT_NE(e.next_entries(i).entry_fp(), 10);
+    EXPECT_NE(e.next_entry_fps(i), 10);
   }
 
   UserHistoryPredictorTestPeer::EraseNextEntries(100, &e);
-  EXPECT_EQ(e.next_entries_size(), 0);
+  EXPECT_EQ(e.next_entry_fps_size(), 0);
 }
 
 TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
@@ -5309,12 +5305,10 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
         predictor_peer.dic_()->LookupWithoutInsert(
             UserHistoryPredictor::Fingerprint(prev_key, prev_value));
     if (!prev_entry) return false;
-    const uint32_t next_fp =
+    const uint64_t next_fp =
         UserHistoryPredictor::Fingerprint(next_key, next_value);
-    for (const auto& next_entry : prev_entry->next_entries()) {
-      if (next_entry.entry_fp() == next_fp) return true;
-    }
-    return false;
+    const auto& next_fps = prev_entry->next_entry_fps();
+    return absl::c_find(next_fps, next_fp) != next_fps.end();
   };
 
   auto init_predictor = [&]() {
@@ -5531,6 +5525,35 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
     EXPECT_TRUE(has_entry("きょうとだいがく", "京都大学"));
     EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, MigrateNextEntriesTest) {
+  mozc::user_history_predictor::UserHistory proto;
+
+  for (int i = 0; i < 100; ++i) {
+    auto* entry = proto.add_entries();
+    entry->set_key(absl::StrCat("key", i));
+    entry->set_value(absl::StrCat("value", i));
+    for (int k = i + 1; k < i + 5 && k < 100; ++k) {
+      const uint32_t fp = UserHistoryPredictor::FingerprintDepereated(
+          absl::StrCat("key", k), absl::StrCat("value", k));
+      entry->add_next_entries_deprecated()->set_entry_fp(fp);
+    }
+  }
+
+  UserHistoryStorage::MigrateNextEntries(&proto);
+
+  for (int i = 0; i < 100; ++i) {
+    const auto& entry = proto.entries(i);
+    EXPECT_EQ(entry.next_entries_deprecated_size(), 0);
+    int s = 0;
+    for (int k = i + 1; k < i + 5 && k < 100; ++k) {
+      const uint64_t fp = UserHistoryPredictor::Fingerprint(
+          absl::StrCat("key", k), absl::StrCat("value", k));
+      EXPECT_EQ(entry.next_entry_fps(s++), fp);
+    }
+    EXPECT_EQ(entry.next_entry_fps_size(), s);
   }
 }
 

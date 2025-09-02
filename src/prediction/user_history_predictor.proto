@@ -58,7 +58,12 @@ message UserHistory {
     optional uint64 last_access_time = 4 [default = 0];
 
     // list entries which were input just after this entry.
-    repeated NextEntry next_entries = 7;
+    // This field is no longer used. uses `next_entry_fps`.
+    repeated NextEntry next_entries_deprecated = 7 [deprecated = true];
+
+    // list of entry-fps that were input just after this entry.
+    // uses fixed64 and packed as Fp cannot be compressed.
+    repeated fixed64 next_entry_fps = 23 [packed = true];
 
     // internally used in UserHistoryPredictor.
     optional bool bigram_boost = 20 [default = false];
