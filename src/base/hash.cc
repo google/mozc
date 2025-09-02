@@ -78,12 +78,6 @@ void Mix(T& a, T& b, T& c) {
   c ^= (b >> 15);
 }
 
-}  // namespace
-
-uint32_t Fingerprint32(absl::string_view str) {
-  return Fingerprint32WithSeed(str, kFingerPrint32Seed);
-}
-
 uint32_t Fingerprint32WithSeed(absl::string_view str, uint32_t seed) {
   DCHECK_LE(str.size(), std::numeric_limits<uint32_t>::max());
   const uint32_t str_len = static_cast<uint32_t>(str.size());
@@ -138,6 +132,11 @@ uint32_t Fingerprint32WithSeed(absl::string_view str, uint32_t seed) {
   Mix(a, b, c);
 
   return c;
+}
+}  // namespace
+
+uint32_t Fingerprint32(absl::string_view str) {
+  return Fingerprint32WithSeed(str, kFingerPrint32Seed);
 }
 
 uint64_t Fingerprint(absl::string_view str) {

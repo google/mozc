@@ -29,6 +29,7 @@
 
 #include "storage/existence_filter.h"
 
+#include <concepts>
 #include <cstdint>
 #include <cstring>
 #include <iterator>
@@ -47,10 +48,18 @@ namespace mozc {
 namespace storage {
 namespace {
 
+template <class T>
+  requires(std::integral<T>)
+uint64_t FingerprintNum(T num) {
+  // Reinterpret the number as a byte string to compute the fingerprint.
+  return Fingerprint(
+      absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)));
+}
+
 void CheckValues(const ExistenceFilter& filter, int m, int n) {
   int false_positives = 0;
   for (int i = 0; i < 2 * n; ++i) {
-    uint64_t hash = Fingerprint(i);
+    uint64_t hash = FingerprintNum(i);
     bool should_exist = ((i % 2) == 0);
     bool actual = filter.Exists(hash);
     if (should_exist) {
@@ -77,7 +86,7 @@ void RunTest(int m, int n) {
 
   for (int i = 0; i < n; ++i) {
     int val = i * 2;
-    uint64_t hash = Fingerprint(val);
+    uint64_t hash = FingerprintNum(val);
     builder.Insert(hash);
   }
 
