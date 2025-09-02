@@ -568,7 +568,7 @@ std::shared_ptr<const Table> Table::GetSharedDefaultTable() {
 // TableContainer
 // ========================================
 TableManager::TableManager()
-    : custom_roman_table_fingerprint_(Fingerprint32("")) {}
+    : custom_roman_table_fingerprint_(CityFingerprint32("")) {}
 
 std::shared_ptr<const Table> TableManager::GetTable(
     const mozc::commands::Request& request,
@@ -583,7 +583,7 @@ std::shared_ptr<const Table> TableManager::GetTable(
   if ((config.preedit_method() == config::Config::ROMAN) &&
       config.has_custom_roman_table() && !config.custom_roman_table().empty()) {
     const uint32_t custom_roman_table_fingerprint =
-        Fingerprint32(config.custom_roman_table());
+        CityFingerprint32(config.custom_roman_table());
     if (custom_roman_table_fingerprint != custom_roman_table_fingerprint_) {
       update_custom_roman_table = true;
       custom_roman_table_fingerprint_ = custom_roman_table_fingerprint;

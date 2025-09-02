@@ -71,7 +71,7 @@ EngineReloadResponse::Status ConvertStatus(absl::Status status) {
 DataLoader::~DataLoader() { Wait(); }
 
 uint64_t DataLoader::GetRequestId(const EngineReloadRequest& request) const {
-  return Fingerprint(request.SerializeAsString());
+  return CityFingerprint(request.SerializeAsString());
 }
 
 std::optional<DataLoader::RequestData> DataLoader::GetPendingRequestData()

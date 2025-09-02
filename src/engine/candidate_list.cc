@@ -76,7 +76,7 @@ void CandidateList::AddCandidateWithAttributes(const int id,
 
   // If the value has already been stored in the candidate list, reuse it and
   // update the alternative_ids_.
-  const uint64_t fp = Fingerprint(value);
+  const uint64_t fp = CityFingerprint(value);
 
   if (const auto [iter, inserted] = added_candidates_.emplace(fp, id);
       !inserted) {  // insertion was failed.

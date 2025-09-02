@@ -78,7 +78,7 @@ bool IsProcessAlive(pid_t pid) {
 #endif  // !_WIN32
 }  // namespace
 
-std::string NamedEventUtil::GetEventPath(const char *name) {
+std::string NamedEventUtil::GetEventPath(const char* name) {
   name = (name == nullptr) ? "nullptr" : name;
   std::string event_name = absl::StrCat(
       kEventPathPrefix, SystemUtil::GetUserSidAsString(), ".", name);
@@ -94,15 +94,14 @@ std::string NamedEventUtil::GetEventPath(const char *name) {
   //  equal to or less than 13 characters in length not including the
   //  terminating null character."
   constexpr size_t kEventPathLength = 13;
-  std::string buf =
-      absl::StrFormat("/%x", static_cast<uint64_t>(Fingerprint(event_name)));
+  std::string buf = absl::StrFormat("/%x", CityFingerprint(event_name));
   buf.erase(std::min(kEventPathLength, buf.size()));
   return buf;
 #endif  // _WIN32
 }
 
 #ifdef _WIN32
-NamedEventListener::NamedEventListener(const char *name)
+NamedEventListener::NamedEventListener(const char* name)
     : is_owner_(false), handle_(nullptr) {
   std::wstring event_path =
       win32::Utf8ToWide(NamedEventUtil::GetEventPath(name));
@@ -208,7 +207,7 @@ int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
   return result;
 }
 
-NamedEventNotifier::NamedEventNotifier(const char *name) : handle_(nullptr) {
+NamedEventNotifier::NamedEventNotifier(const char* name) : handle_(nullptr) {
   std::wstring event_path =
       win32::Utf8ToWide(NamedEventUtil::GetEventPath(name));
   handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false, event_path.c_str());
@@ -243,7 +242,7 @@ bool NamedEventNotifier::Notify() {
 
 #else   // _WIN32
 
-NamedEventListener::NamedEventListener(const char *name)
+NamedEventListener::NamedEventListener(const char* name)
     : is_owner_(false), sem_(SEM_FAILED) {
   key_filename_ = NamedEventUtil::GetEventPath(name);
 
@@ -318,7 +317,7 @@ int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
   return NamedEventListener::TIMEOUT;
 }
 
-NamedEventNotifier::NamedEventNotifier(const char *name) : sem_(SEM_FAILED) {
+NamedEventNotifier::NamedEventNotifier(const char* name) : sem_(SEM_FAILED) {
   const std::string key_filename = NamedEventUtil::GetEventPath(name);
   sem_ = ::sem_open(key_filename.c_str(), 0);
   if (sem_ == SEM_FAILED) {

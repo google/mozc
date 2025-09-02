@@ -195,9 +195,9 @@ class UserDictionary::TokensIndex {
         static_assert(user_dictionary::UserDictionary_PosType_PosType_MAX <=
                       std::numeric_limits<char>::max());
         const char pos_type_as_char[] = {static_cast<char>(entry.pos())};
-        const uint64_t fp =
-            Fingerprint(absl::StrCat(reading, "\t", entry.value(), "\t",
-                                     absl::string_view(pos_type_as_char, 1)));
+        const uint64_t fp = CityFingerprint(
+            absl::StrCat(reading, "\t", entry.value(), "\t",
+                         absl::string_view(pos_type_as_char, 1)));
         if (!seen.insert(fp).second) {
           MOZC_VLOG(1) << "Found dup item";
           continue;

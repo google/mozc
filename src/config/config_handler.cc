@@ -206,7 +206,7 @@ void ConfigHandlerImpl::SetConfigInternal(std::shared_ptr<Config> config) {
 }
 
 void ConfigHandlerImpl::SetConfig(Config config) {
-  const uint64_t config_hash = Fingerprint(config.SerializeAsString());
+  const uint64_t config_hash = CityFingerprint(config.SerializeAsString());
 
   // If the wire format of config is identical to the one of the previously
   // stored config, skip updating.
@@ -222,7 +222,8 @@ void ConfigHandlerImpl::SetConfig(Config config) {
   // If the wire format of the config w/o metadata is identical to the one of
   // the previous config, skip updating.
   output_config->mutable_general_config()->clear_last_modified_time();
-  const uint64_t content_hash = Fingerprint(output_config->SerializeAsString());
+  const uint64_t content_hash =
+      CityFingerprint(output_config->SerializeAsString());
   if (content_hash_ == content_hash) {
     return;
   }
@@ -230,7 +231,7 @@ void ConfigHandlerImpl::SetConfig(Config config) {
 
   // Set metadata and update `config_hash_`.
   SetMetaData(output_config.get());
-  config_hash_ = Fingerprint(output_config->SerializeAsString());
+  config_hash_ = CityFingerprint(output_config->SerializeAsString());
 
   const std::string filename = GetConfigFileName();
 

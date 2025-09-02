@@ -52,7 +52,7 @@ template <class T>
   requires(std::integral<T>)
 uint64_t FingerprintNum(T num) {
   // Reinterpret the number as a byte string to compute the fingerprint.
-  return Fingerprint(
+  return CityFingerprint(
       absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)));
 }
 
@@ -130,7 +130,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
       ExistenceFilterBuilder::CreateOptimal(num_bytes, std::size(kWords)));
 
   for (const absl::string_view& word : kWords) {
-    builder.Insert(Fingerprint(word));
+    builder.Insert(CityFingerprint(word));
   }
 
   const std::string buf = builder.SerializeAsString();
@@ -140,7 +140,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
   EXPECT_OK(filter_read);
 
   for (const absl::string_view& word : kWords) {
-    EXPECT_TRUE(filter_read->Exists(Fingerprint(word)));
+    EXPECT_TRUE(filter_read->Exists(CityFingerprint(word)));
   }
 }
 
@@ -156,13 +156,13 @@ TEST(ExistenceFilterTest, InsertAndExistsTest) {
       ExistenceFilterBuilder::CreateOptimal(num_bytes, words.size()));
 
   for (const std::string& word : words) {
-    builder.Insert(Fingerprint(word));
+    builder.Insert(CityFingerprint(word));
   }
 
   ExistenceFilter filter = builder.Build();
 
   for (const std::string& word : words) {
-    EXPECT_TRUE(filter.Exists(Fingerprint(word)));
+    EXPECT_TRUE(filter.Exists(CityFingerprint(word)));
   }
 }
 
