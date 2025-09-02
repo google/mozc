@@ -232,6 +232,7 @@ mozc_cc_library(
     srcs = ["hash.cc"],
     hdrs = ["hash.h"],
     deps = [
+        "@com_google_absl//absl/hash:city",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
