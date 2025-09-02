@@ -37,21 +37,12 @@ bazel_dep(
     repo_name = "com_google_absl",
 )
 
-# protobuf: 31.1 2025-05-27
+# protobuf: 32.0 2025-08-15
 # https://github.com/protocolbuffers/protobuf
 bazel_dep(
     name = "protobuf",
-    version = "31.1",
+    version = "32.0",
     repo_name = "com_google_protobuf",
-)
-single_version_override(
-    module_name = "protobuf",
-    patches = [
-        # Patch to fix build failure for Windows debug build.
-        # https://github.com/protocolbuffers/protobuf/issues/21957
-        "bazel/protobuf_src_google_protobuf_port.h.patch",
-    ],
-    version = "31.1",
 )
 
 # googletest: 1.17.0 2025-05-01
