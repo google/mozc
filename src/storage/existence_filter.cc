@@ -131,10 +131,22 @@ absl::StatusOr<ExistenceFilterParams> ReadHeader(
   ExistenceFilterParams params;
   params.size = *it++;
   params.expected_nelts = *it++;
-  params.num_hashes = *it++;
+
+  // Assumes little-endian.
+  // num_hashes was originally stored as 32bit integer, so the old
+  // binary stores the value in lower bits.
+  const uint32_t v = *it++;
+  params.num_hashes = v & 0xFFFF;
+  params.fp_type = v >> 16;
+
   if (params.num_hashes >= 8 || params.num_hashes <= 0) {
     return absl::InvalidArgumentError("Bad number of hashes (header.k)");
   }
+
+  if (params.fp_type >= ExistenceFilterParams::FP_TYPE_SIZE) {
+    return absl::InvalidArgumentError("unsupported fp type");
+  }
+
   return params;
 }
 
@@ -186,24 +198,20 @@ absl::StatusOr<ExistenceFilter> ExistenceFilter::Read(
 }
 
 ExistenceFilterBuilder ExistenceFilterBuilder::CreateOptimal(
-    size_t size_in_bytes, uint32_t estimated_insertions) {
+    size_t size_in_bytes, uint32_t estimated_insertions, uint16_t fp_type) {
   CHECK_LT(size_in_bytes, (1 << 29)) << "Requested size is too big";
   CHECK_GT(estimated_insertions, 0);
+  CHECK_LT(fp_type, ExistenceFilterParams::FP_TYPE_SIZE);
   const uint32_t m = std::max<size_t>(1, size_in_bytes * 8);
   const uint32_t n = estimated_insertions;
 
-  int optimal_k =
+  uint16_t optimal_k =
       static_cast<int>((static_cast<float>(m) / n * log(2.0)) + 0.5);
-  if (optimal_k < 1) {
-    optimal_k = 1;
-  }
-  if (optimal_k > 7) {
-    optimal_k = 7;
-  }
+  optimal_k = std::clamp<uint16_t>(optimal_k, 1, 7);
 
   MOZC_VLOG(1) << "optimal_k: " << optimal_k;
 
-  return ExistenceFilterBuilder({m, n, optimal_k});
+  return ExistenceFilterBuilder({m, n, optimal_k, fp_type});
 }
 
 void ExistenceFilterBuilder::Insert(uint64_t hash) {
@@ -238,7 +246,10 @@ std::string ExistenceFilterBuilder::SerializeAsString() {
   // write header
   it = StoreUnaligned<uint32_t>(params_.size, it);
   it = StoreUnaligned<uint32_t>(params_.expected_nelts, it);
-  it = StoreUnaligned<uint32_t>(params_.num_hashes, it);
+  // Original num_hashes was 32 bit integer. Pushes the num_hases first so
+  // it can evaluated properly even when loading them as single 32 bit integer.
+  it = StoreUnaligned<uint16_t>(params_.num_hashes, it);
+  it = StoreUnaligned<uint16_t>(params_.fp_type, it);
   // This method is called on data generation and we can call LOG(INFO) here.
   LOG(INFO) << "Header written: " << params_;
 

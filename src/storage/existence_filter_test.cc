@@ -128,41 +128,95 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
 
   ExistenceFilterBuilder builder(
       ExistenceFilterBuilder::CreateOptimal(num_bytes, std::size(kWords)));
+  EXPECT_EQ(CityFingerprint(builder.SerializeAsString()), 0x75eede91bff86e79);
 
-  for (const absl::string_view& word : kWords) {
+  for (const absl::string_view word : kWords) {
     builder.Insert(CityFingerprint(word));
   }
 
   const std::string buf = builder.SerializeAsString();
+  EXPECT_EQ(CityFingerprint(buf), 0x7aa1e7863779ce69);
   const std::vector<uint32_t> aligned_buf = StringToAlignedBuffer(buf);
   absl::StatusOr<ExistenceFilter> filter_read(
       ExistenceFilter::Read(aligned_buf));
   EXPECT_OK(filter_read);
 
-  for (const absl::string_view& word : kWords) {
+  for (const absl::string_view word : kWords) {
     EXPECT_TRUE(filter_read->Exists(CityFingerprint(word)));
   }
 }
 
 TEST(ExistenceFilterTest, InsertAndExistsTest) {
-  const std::vector<std::string> words = {"a", "b", "c", "d", "e",
+  constexpr absl::string_view kWords[] = {"a", "b", "c", "d", "e",
                                           "f", "g", "h", "i"};
 
   static constexpr float kErrorRate = 0.0001;
   int num_bytes = ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(
-      kErrorRate, words.size());
+      kErrorRate, std::size(kWords));
 
   ExistenceFilterBuilder builder(
-      ExistenceFilterBuilder::CreateOptimal(num_bytes, words.size()));
+      ExistenceFilterBuilder::CreateOptimal(num_bytes, std::size(kWords)));
 
-  for (const std::string& word : words) {
+  for (const absl::string_view word : kWords) {
     builder.Insert(CityFingerprint(word));
   }
 
-  ExistenceFilter filter = builder.Build();
+  const ExistenceFilter filter = builder.Build();
+  EXPECT_EQ(CityFingerprint(builder.SerializeAsString()), 0xd94d8ad95ad944ab);
 
-  for (const std::string& word : words) {
+  for (const absl::string_view word : kWords) {
     EXPECT_TRUE(filter.Exists(CityFingerprint(word)));
+  }
+}
+
+TEST(ExistenceFilterTest, InsertAndExistsStringTest) {
+  constexpr absl::string_view kWords[] = {"a", "b", "c", "d", "e",
+                                          "f", "g", "h", "i"};
+
+  static constexpr float kErrorRate = 0.0001;
+  int num_bytes = ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(
+      kErrorRate, std::size(kWords) * 2);
+
+  for (const uint16_t fp_type : {0, 1}) {
+    ExistenceFilterBuilder builder(ExistenceFilterBuilder::CreateOptimal(
+        num_bytes, std::size(kWords), fp_type));
+    for (const absl::string_view word : kWords) {
+      builder.Insert(word);
+      builder.Insert({word, "\t", word});
+    }
+
+    const ExistenceFilter filter = builder.Build();
+    EXPECT_EQ(filter.params().fp_type, fp_type);
+
+    for (const absl::string_view word : kWords) {
+      EXPECT_TRUE(filter.Exists(word));
+      EXPECT_TRUE(filter.Exists({word, "\t", word}));
+    }
+  }
+}
+
+TEST(ExistenceFilterTest, FpTypeTest) {
+  constexpr absl::string_view kWords[] = {"a", "b", "c"};
+
+  static constexpr float kErrorRate = 0.0001;
+  int num_bytes = ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(
+      kErrorRate, std::size(kWords));
+
+  for (uint16_t fp_type = 0; fp_type < ExistenceFilterParams::FP_TYPE_SIZE;
+       ++fp_type) {
+    ExistenceFilterBuilder builder(ExistenceFilterBuilder::CreateOptimal(
+        num_bytes, std::size(kWords), fp_type));
+
+    for (const absl::string_view word : kWords) {
+      builder.Insert(CityFingerprint(word));
+    }
+
+    const std::string buf = builder.SerializeAsString();
+    const std::vector<uint32_t> aligned_buf = StringToAlignedBuffer(buf);
+    absl::StatusOr<ExistenceFilter> filter_read(
+        ExistenceFilter::Read(aligned_buf));
+
+    EXPECT_EQ(filter_read->params().fp_type, fp_type);
   }
 }
 
