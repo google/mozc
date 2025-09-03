@@ -45,7 +45,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/hash.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/attribute.h"
@@ -76,8 +75,7 @@ bool CollocationFilter::Exists(const absl::string_view left,
   if (left.empty() || right.empty()) {
     return false;
   }
-  const uint64_t id = Fingerprint(absl::StrCat(left, right));
-  return filter_.Exists(id);
+  return filter_.Exists({left, right});
 }
 
 absl::StatusOr<SuppressionFilter> SuppressionFilter::Create(
@@ -92,9 +90,7 @@ absl::StatusOr<SuppressionFilter> SuppressionFilter::Create(
 bool SuppressionFilter::Exists(const converter::Candidate& cand) const {
   // TODO(noriyukit): We should share key generation rule with
   // gen_collocation_suppression_data_main.cc.
-  const uint64_t id =
-      Fingerprint(absl::StrCat(cand.content_value, "\t", cand.content_key));
-  return filter_.Exists(id);
+  return filter_.Exists({cand.content_value, "\t", cand.content_key});
 }
 
 }  // namespace collocation_rewriter_internal

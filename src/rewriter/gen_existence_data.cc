@@ -40,7 +40,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/codegen_bytearray_stream.h"
-#include "base/hash.h"
 #include "storage/existence_filter.h"
 
 namespace mozc {
@@ -57,9 +56,8 @@ std::string GenExistenceData(const absl::Span<const std::string> entries,
 
   ExistenceFilterBuilder builder(ExistenceFilterBuilder::CreateOptimal(m, n));
 
-  for (const std::string& entry : entries) {
-    const uint64_t id = Fingerprint(entry);
-    builder.Insert(id);
+  for (absl::string_view entry : entries) {
+    builder.Insert(entry);
   }
   return builder.SerializeAsString();
 }

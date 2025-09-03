@@ -80,7 +80,6 @@ mozc_cc_library(
     deps = [
         ":collocation_util",
         ":rewriter_interface",
-        "//base:hash",
         "//base:util",
         "//base:vlog",
         "//converter:attribute",
@@ -1591,7 +1590,6 @@ mozc_cc_library(
     hdrs = ["gen_existence_data.h"],
     deps = [
         "//base:codegen_bytearray_stream",
-        "//base:hash",
         "//storage:existence_filter",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",

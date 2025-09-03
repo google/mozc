@@ -493,7 +493,6 @@ mozc_cc_library(
         "//engine:__pkg__",
     ],
     deps = [
-        "//base:hash",
         "//base:util",
         "//storage:existence_filter",
         "@com_google_absl//absl/log",
@@ -537,7 +536,6 @@ mozc_cc_binary(
     deps = [
         "//base:codegen_bytearray_stream",
         "//base:file_stream",
-        "//base:hash",
         "//base:init_mozc_buildtool",
         "//base:multifile",
         "//base:util",

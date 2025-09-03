@@ -164,11 +164,6 @@ class ExistenceFilter {
   static absl::StatusOr<ExistenceFilter> Read(
       absl::Span<const uint32_t> buf ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
-  // Checks if the given 'hash' was previously inserted int the filter
-  // It may return some false positives
-  // TODO(taku): Deprecates the interface to use the raw hash.
-  bool Exists(uint64_t hash) const;
-
   // Checks if the given `args` was in the filter.
   bool Exists(absl::Span<const absl::string_view> keys) const {
     return Exists(existence_filter_internal::Fingerprint(
@@ -184,6 +179,10 @@ class ExistenceFilter {
   const ExistenceFilterParams& params() const { return params_; }
 
  private:
+  // Checks if the given 'hash' was previously inserted int the filter
+  // It may return some false positives
+  bool Exists(uint64_t hash) const;
+
   ExistenceFilterParams params_;
   existence_filter_internal::BlockBitmap rep_;  // points to bitmap
 };
@@ -199,11 +198,6 @@ class ExistenceFilterBuilder {
   static ExistenceFilterBuilder CreateOptimal(
       size_t size_in_bytes, uint32_t estimated_insertions,
       uint16_t fp_type = ExistenceFilterParams::kDefaultFpType);
-
-  // Inserts a hash value into the filter
-  // We generate 'k' separate internal hash values
-  // TODO(taku): Deprecates the interface to use the raw hash.
-  void Insert(uint64_t hash);
 
   // Inserts a list of string into the filter.
   void Insert(absl::Span<const absl::string_view> keys) {
@@ -228,6 +222,10 @@ class ExistenceFilterBuilder {
                                                  size_t num_elements);
 
  private:
+  // Inserts a hash value into the filter
+  // We generate 'k' separate internal hash values
+  void Insert(uint64_t hash);
+
   ExistenceFilterParams params_;
   existence_filter_internal::BlockBitmapBuilder rep_;
 };
