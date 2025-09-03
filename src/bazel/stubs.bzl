@@ -29,6 +29,7 @@
 
 """Stub build rules."""
 
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 def android_cc_test(name, cc_test_name, **kwargs):
