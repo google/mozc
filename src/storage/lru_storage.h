@@ -107,10 +107,6 @@ class LruStorage {
   // elements.
   int DeleteElementsBefore(uint32_t timestamp);
 
-  // Deletes all the elements that are not accessed for 62 days.
-  // Returns the number of deleted elements.
-  int DeleteElementsUntouchedFor62Days();
-
   // Returns the byte length of each item, which is the user specified value
   // size + 12 bytes.  Here, 12 bytes is used for fingerprint (8 bytes) and
   // timestamp (4 bytes).

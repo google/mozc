@@ -72,8 +72,6 @@ constexpr size_t kMaxValueSize = 1024;   // 1024 byte
 // * 4 bytes for fingerprint seed
 constexpr size_t kFileHeaderSize = 12;
 
-constexpr uint64_t k62DaysInSec = 62 * 24 * 60 * 60;
-
 uint64_t GetFP(const char* ptr) { return LoadUnaligned<uint64_t>(ptr); }
 
 uint32_t GetTimeStamp(const char* ptr) {
@@ -95,11 +93,6 @@ void Update(char* ptr, uint64_t fp, const char* value, size_t value_size) {
   ptr = StoreUnaligned<uint32_t>(
       static_cast<uint32_t>(absl::ToUnixSeconds(Clock::GetAbslTime())), ptr);
   std::copy_n(value, value_size, ptr);
-}
-
-bool IsOlderThan62Days(uint64_t timestamp) {
-  const uint64_t now = absl::ToUnixSeconds(Clock::GetAbslTime());
-  return (timestamp + k62DaysInSec < now);
 }
 
 class CompareByTimeStamp {
@@ -382,16 +375,10 @@ bool LruStorage::Open(char* ptr, size_t ptr_size) {
   next_item_ = (next != nullptr) ? next : end_;
   DCHECK_LE(next_item_, end_);
 
-  // At the time file is opened, perform clean up.
-  DeleteElementsUntouchedFor62Days();
-
   return true;
 }
 
 void LruStorage::Close() {
-  // Perform clean up before closing the file.
-  DeleteElementsUntouchedFor62Days();
-
   filename_.clear();
   mmap_.Close();
   lru_list_.clear();
@@ -406,9 +393,6 @@ const char* absl_nullable LruStorage::Lookup(const absl::string_view key,
     return nullptr;
   }
   const uint32_t timestamp = GetTimeStamp(*it->second);
-  if (IsOlderThan62Days(timestamp)) {
-    return nullptr;
-  }
   *last_access_time = timestamp;
   return GetValue(*it->second);
 }
@@ -419,10 +403,6 @@ void LruStorage::GetAllValues(std::vector<std::string>* values) const {
   // Iterate data from the most recently used element to the least recently used
   // element.
   for (const char* ptr : lru_list_) {
-    const uint32_t timestamp = GetTimeStamp(ptr);
-    if (IsOlderThan62Days(timestamp)) {
-      break;
-    }
     // Default constructor of string is not applicable
     // because value's size() must return value_size_.
     DCHECK(ptr);
@@ -434,10 +414,6 @@ bool LruStorage::Touch(const absl::string_view key) {
   const uint64_t fp = LegacyFingerprintWithSeed(key, seed_);
   auto it = lru_map_.find(fp);
   if (it == lru_map_.end()) {
-    return false;
-  }
-  const uint32_t timestamp = GetTimeStamp(*it->second);
-  if (IsOlderThan62Days(timestamp)) {
     return false;
   }
   Update(*it->second);
@@ -564,13 +540,6 @@ int LruStorage::DeleteElementsBefore(uint32_t timestamp) {
     break;
   }
   return num_deleted;
-}
-
-int LruStorage::DeleteElementsUntouchedFor62Days() {
-  const uint64_t now = absl::ToUnixSeconds(Clock::GetAbslTime());
-  const uint32_t timestamp =
-      static_cast<uint32_t>((now > k62DaysInSec) ? now - k62DaysInSec : 0);
-  return DeleteElementsBefore(timestamp);
 }
 
 void LruStorage::Write(size_t i, uint64_t fp, const absl::string_view value,

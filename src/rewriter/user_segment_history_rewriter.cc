@@ -803,12 +803,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest& request,
   revert_cache_.Insert(segments.revert_id(), revert_entries);
 }
 
-bool UserSegmentHistoryRewriter::Sync() {
-  if (storage_) {
-    storage_->DeleteElementsUntouchedFor62Days();
-  }
-  return true;
-}
+bool UserSegmentHistoryRewriter::Sync() { return true; }
 
 bool UserSegmentHistoryRewriter::Reload() {
   const std::string filename = ConfigFileStream::GetFileName(kFileName);

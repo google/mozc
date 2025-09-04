@@ -271,10 +271,7 @@ UserBoundaryHistoryRewriter::CheckResizeSegmentsRequest(
   return std::nullopt;
 }
 
-bool UserBoundaryHistoryRewriter::Sync() {
-  storage_.DeleteElementsUntouchedFor62Days();
-  return true;
-}
+bool UserBoundaryHistoryRewriter::Sync() { return true; }
 
 bool UserBoundaryHistoryRewriter::Reload() {
   const std::string filename = ConfigFileStream::GetFileName(kFileName);
