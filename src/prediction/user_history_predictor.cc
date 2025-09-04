@@ -119,6 +119,15 @@ constexpr absl::string_view kEmojiDescription = "絵文字";
 
 constexpr size_t kRevertCacheSize = 16;
 
+// Mixed conversion is enabled mainly on mobile device.
+bool IsMixedConversionEnabled(const ConversionRequest& request) {
+  return request.request().mixed_conversion();
+}
+
+bool IsZeroQuerySuggestionEnabled(const ConversionRequest& request) {
+  return request.request().zero_query_suggestion();
+}
+
 // TODO(peria, hidehiko): Unify this checker and IsEmojiCandidate in
 //     EmojiRewriter.  If you make similar functions before the merging in
 //     case, put a similar note to avoid twisted dependency.
@@ -794,7 +803,7 @@ bool UserHistoryPredictor::ZeroQueryLookupEntry(
 
   // when `perv_entry` is not null, it is guaranteed that
   // the history segment is in the LRU cache.
-  if (prev_entry && request.request().zero_query_suggestion() &&
+  if (prev_entry && IsZeroQuerySuggestionEnabled(request) &&
       request_key.empty() && entry->key().size() > prev_entry->key().size() &&
       entry->value().size() > prev_entry->value().size() &&
       entry->key().starts_with(prev_entry->key()) &&
@@ -1018,7 +1027,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest& request,
   }
 
   // For mobile, prefer exact match.
-  const bool prefer_exact_match = request.request().zero_query_suggestion();
+  const bool prefer_exact_match = IsMixedConversionEnabled(request);
 
   left_last_access_time = entry->last_access_time();
   left_most_last_access_time =
@@ -1102,7 +1111,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest& request,
     entry_queue->Push(result);
   }
 
-  if (request.request().zero_query_suggestion()) {
+  if (IsMixedConversionEnabled(request)) {
     // For mobile, we don't generate joined result.
     return true;
   }
@@ -1192,7 +1201,7 @@ std::vector<Result> UserHistoryPredictor::Predict(
   SetCacheStoreSize(params.user_history_cache_store_size());
 
   const bool is_zero_query =
-      request.request().zero_query_suggestion() && is_empty_input;
+      IsZeroQuerySuggestionEnabled(request) && is_empty_input;
   size_t max_prediction_size =
       request.max_user_history_prediction_candidates_size();
   size_t max_prediction_char_coverage =
@@ -1254,7 +1263,7 @@ bool UserHistoryPredictor::ShouldPredict(
 
   absl::string_view request_key = request.key();
 
-  if (request_key.empty() && !request.request().zero_query_suggestion()) {
+  if (request_key.empty() && !IsZeroQuerySuggestionEnabled(request)) {
     MOZC_VLOG(2) << "key length is 0";
     return false;
   }
@@ -1440,7 +1449,7 @@ void UserHistoryPredictor::GetInputKeyFromRequest(
 UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     const ConversionRequest& request, bool is_top_candidate,
     uint32_t request_key_len, const Entry& entry) {
-  if (request.request().mixed_conversion()) {
+  if (IsMixedConversionEnabled(request)) {
     if (IsValidSuggestionForMixedConversion(request, request_key_len, entry)) {
       return ResultType::GOOD_RESULT;
     }
@@ -1669,7 +1678,7 @@ bool UserHistoryPredictor::ShouldInsert(
   }
 
   // For mobile, we do not learn candidates that ends with punctuation.
-  if (request.request().zero_query_suggestion() && Util::CharsLen(value) > 1 &&
+  if (IsMixedConversionEnabled(request) && Util::CharsLen(value) > 1 &&
       IsPunctuation(Util::Utf8SubString(value, Util::CharsLen(value) - 1, 1))) {
     return false;
   }
@@ -1889,7 +1898,7 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
 
   // Inserts all_key/all_value.
   // We don't insert it for mobile.
-  if (!request.request().zero_query_suggestion() &&
+  if (!IsMixedConversionEnabled(request) &&
       learning_segments.conversion_segments.size() > 1 && !all_key.empty() &&
       !all_value.empty()) {
     TryInsert(request, 0, 0, all_key, all_value, "", is_suggestion_selected, {},
@@ -1922,7 +1931,7 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
     // Note that another piece of code handles learning for
     // (sentence + punctuation) form; see Finish().
     if (IsPunctuation(Util::Utf8SubString(conversion_segment.value, 0, 1)) &&
-        (!request.request().zero_query_suggestion() ||
+        (!IsMixedConversionEnabled(request) ||
          Util::CharsLen(conversion_segment.value) > 1)) {
       return;
     }
@@ -1984,7 +1993,7 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     TryInsert(request, segment.key_begin, segment.value_begin, segment.key,
               segment.value, segment.description, is_suggestion_selected,
               next_fps_to_set, last_access_time, revert_entries);
-    if (request.request().mixed_conversion() &&
+    if (IsMixedConversionEnabled(request) &&
         segment.content_key != segment.key &&
         segment.content_value != segment.value) {
       TryInsert(request, segment.key_begin, segment.value_begin,
@@ -2184,10 +2193,8 @@ bool UserHistoryPredictor::IsValidSuggestion(const ConversionRequest& request,
   if (entry.bigram_boost()) {
     return true;
   }
-  // When zero_query_suggestion is true, that means that
-  // predictor is running on mobile device. In this case,
-  // make the behavior more aggressive.
-  if (request.request().zero_query_suggestion()) {
+  // For mobile, make the behavior more aggressive.
+  if (IsMixedConversionEnabled(request)) {
     return true;
   }
   const uint32_t freq = entry.suggestion_freq();

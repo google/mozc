@@ -306,7 +306,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     data_and_predictor_ = CreateDataAndPredictor();
   }
 
-  void TearDown() override {}
+  void TearDown() override { request_.Clear(); }
 
   ConversionRequest CreateConversionRequestWithOptions(
       const composer::Composer& composer, ConversionRequest::Options options,
@@ -1583,6 +1583,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
   UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
   request_.set_zero_query_suggestion(true);
+  request_.set_mixed_conversion(true);
 
   commands::Request non_zero_query_request;
   non_zero_query_request.set_zero_query_suggestion(false);
@@ -1821,7 +1822,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
 
   segments_proxy.Clear();
   for (const bool is_mobile : {true, false}) {
-    request_.set_zero_query_suggestion(is_mobile);
+    request_.set_mixed_conversion(is_mobile);
     const ConversionRequest convreq12 = SetUpInputForSuggestion(
         "たろうははなこに", &composer_, &segments_proxy);
     results = predictor->Predict(convreq12);
@@ -1929,7 +1930,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   EXPECT_EQ(results[0].value, "太郎は良子に");
 
   for (const bool is_mobile : {true, false}) {
-    request_.set_zero_query_suggestion(is_mobile);
+    request_.set_mixed_conversion(is_mobile);
     const ConversionRequest convreq12 = SetUpInputForSuggestion(
         "たろうははなこに", &composer_, &segments_proxy);
     results = predictor->Predict(convreq12);
@@ -3459,7 +3460,8 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
     EXPECT_FALSE(results.empty());
     if (mixed_conversion) {
       EXPECT_TRUE(FindCandidateByValue("名前", results));
-      EXPECT_TRUE(FindCandidateByValue("名前は中野", results));
+      EXPECT_FALSE(FindCandidateByValue("名前は", results));
+      EXPECT_FALSE(FindCandidateByValue("名前は中野", results));
     } else {
       EXPECT_TRUE(FindCandidateByValue("名前は", results));
       EXPECT_TRUE(FindCandidateByValue("名前は中野です", results));
@@ -5219,7 +5221,7 @@ TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
         SetUpInputForSuggestion("", &composer_, &segments_proxy);
     segments_proxy.PrependHistory("の", "の");
     segments_proxy.PrependHistory("わたし", "私");
-    request_.set_zero_query_suggestion(true);
+    request_.set_mixed_conversion(true);
     results = predictor->Predict(convreq1);
     ASSERT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "名前");
@@ -5229,7 +5231,7 @@ TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
         SetUpInputForSuggestion("", &composer_, &segments_proxy);
     segments_proxy.PrependHistory("は", "は");
     segments_proxy.PrependHistory("なまえ", "名前");
-    request_.set_zero_query_suggestion(true);
+    request_.set_mixed_conversion(true);
     results = predictor->Predict(convreq2);
     ASSERT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "中野");
@@ -5340,14 +5342,13 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     // Make a placeholder request for Finish().
     SegmentsProxy segments_proxy;
     request_.set_mixed_conversion(true);
+    request_.set_zero_query_suggestion(true);
     const ConversionRequest convreq =
         SetUpInputForSuggestion("さとう", &composer_, &segments_proxy);
 
     predictor->Finish(convreq, {result}, kRevertId);
 
     // New entries are inserted.
-    EXPECT_TRUE(has_entry("さとうさんはきょうとだいがくをそつぎょうした",
-                          "佐藤さんは京都大学を卒業した"));
     EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
     EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
     EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
@@ -5385,8 +5386,6 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(absl::StartsWith(results[0].value, "佐藤さん"));
 
-    EXPECT_TRUE(
-        has_entry("さとうさんはきょうとだいがくを", "佐藤さんは京都大学を"));
     EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
     EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
     EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
@@ -5400,8 +5399,6 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     results = suggest_with_context("さとう", "佐藤さんは京都大学");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_TRUE(
-        has_entry("さとうさんはきょうとだいがく", "佐藤さんは京都大学"));
     EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
     EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
     EXPECT_FALSE(has_entry("きょうとだいがくを", "京都大学を"));
@@ -5416,7 +5413,6 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     results = suggest_with_context("さとう", "佐藤さんは京都");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_TRUE(has_entry("さとうさんはきょうと", "佐藤さんは京都"));
     EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
     EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
     EXPECT_TRUE(has_entry("きょうと", "京都"));
@@ -5432,8 +5428,6 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     results = suggest_with_context("さとう", "佐藤さんは京都大学を卒業");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_TRUE(has_entry("さとうさんはきょうとだいがくをそつぎょう",
-                          "佐藤さんは京都大学を卒業"));
     EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
     EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
     EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
@@ -5449,8 +5443,6 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     results = suggest_with_context("さとう", "佐藤さんは京都大学を卒業し");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_TRUE(has_entry("さとうさんはきょうとだいがくをそつぎょうし",
-                          "佐藤さんは京都大学を卒業し"));
     EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
     EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
     EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
@@ -5518,8 +5510,6 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(absl::StartsWith(results[0].value, "佐藤さん"));
 
-    EXPECT_TRUE(
-        has_entry("さとうさんはきょうとだいがくを", "佐藤さんは京都大学を"));
     EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
     EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
     EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
