@@ -124,7 +124,7 @@ TEST_F(CodecTest, FactoryTest) {
   DictionaryFileCodecFactory::SetCodec(&codec_mock);
   const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
-  EXPECT_TRUE(codec != nullptr);
+  ASSERT_NE(codec, nullptr);
   std::vector<DictionaryFileSection> sections;
   {
     OutputFileStream ofs;
@@ -149,7 +149,7 @@ TEST_F(CodecTest, FactoryTest) {
 TEST_F(CodecTest, DefaultTest) {
   const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
-  EXPECT_TRUE(codec != nullptr);
+  ASSERT_NE(codec, nullptr);
   {
     std::vector<DictionaryFileSection> write_sections;
     const std::string value0 = "Value 0 test";
@@ -183,7 +183,7 @@ TEST_F(CodecTest, RandomizedCodecTest) {
   DictionaryFileCodecFactory::SetCodec(&internal_codec);
   const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
-  EXPECT_TRUE(codec != nullptr);
+  ASSERT_NE(codec, nullptr);
   {
     std::vector<DictionaryFileSection> write_sections;
     const std::string value0 = "Value 0 test";

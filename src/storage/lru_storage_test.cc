@@ -88,11 +88,11 @@ void RunTest(LruStorage* storage, uint32_t size) {
         storage->Lookup(values[i].first, &last_access_time));
     const uint32_t* v3 =
         reinterpret_cast<const uint32_t*>(value_list[i].data());
-    EXPECT_TRUE(v1 != nullptr);
+    ASSERT_NE(v1, nullptr);
     EXPECT_EQ(*v1, values[i].second);
-    EXPECT_TRUE(v2 != nullptr);
+    ASSERT_NE(v2, nullptr);
     EXPECT_EQ(*v2, values[i].second);
-    EXPECT_TRUE(v3 != nullptr);
+    ASSERT_NE(v3, nullptr);
     EXPECT_EQ(*v3, values[i].second);
   }
 
@@ -100,8 +100,8 @@ void RunTest(LruStorage* storage, uint32_t size) {
     const uint32_t* v1 = cache.Lookup(values[i].first);
     const uint32_t* v2 = reinterpret_cast<const uint32_t*>(
         storage->Lookup(values[i].first, &last_access_time));
-    EXPECT_TRUE(v1 == nullptr);
-    EXPECT_TRUE(v2 == nullptr);
+    EXPECT_EQ(v1, nullptr);
+    EXPECT_EQ(v2, nullptr);
   }
 }
 
@@ -378,7 +378,7 @@ TEST_F(LruStorageTest, Delete) {
   EXPECT_EQ(storage.LookupAsString("0000"), "aaaa");
   EXPECT_EQ(storage.LookupAsString("1111"), "bbbb");
   EXPECT_EQ(storage.LookupAsString("2222"), "cccc");
-  EXPECT_TRUE(storage.Lookup("3333") == nullptr);
+  EXPECT_EQ(storage.Lookup("3333"), nullptr);
 
   // Remove the element ("1111", "bbbb") in the middle.  The current
   // last element, ("2222", "cccc") should be moved to keep contiguity.
@@ -386,8 +386,8 @@ TEST_F(LruStorageTest, Delete) {
   EXPECT_EQ(storage.used_size(), 2);
   EXPECT_EQ(storage.LookupAsString("0000"), "aaaa");
   EXPECT_EQ(storage.LookupAsString("2222"), "cccc");
-  EXPECT_TRUE(storage.Lookup("1111") == nullptr);
-  EXPECT_TRUE(storage.Lookup("3333") == nullptr);
+  EXPECT_EQ(storage.Lookup("1111"), nullptr);
+  EXPECT_EQ(storage.Lookup("3333"), nullptr);
   expected = {"aaaa", "cccc"};
   EXPECT_EQ(GetValuesInStorageOrder(storage), expected);
 
@@ -397,8 +397,8 @@ TEST_F(LruStorageTest, Delete) {
   EXPECT_EQ(storage.LookupAsString("0000"), "aaaa");
   EXPECT_EQ(storage.LookupAsString("2222"), "cccc");
   EXPECT_EQ(storage.LookupAsString("4444"), "eeee");
-  EXPECT_TRUE(storage.Lookup("1111") == nullptr);
-  EXPECT_TRUE(storage.Lookup("3333") == nullptr);
+  EXPECT_EQ(storage.Lookup("1111"), nullptr);
+  EXPECT_EQ(storage.Lookup("3333"), nullptr);
   expected = {"aaaa", "cccc", "eeee"};
   EXPECT_EQ(GetValuesInStorageOrder(storage), expected);
 
@@ -407,29 +407,29 @@ TEST_F(LruStorageTest, Delete) {
   EXPECT_EQ(storage.used_size(), 2);
   EXPECT_EQ(storage.LookupAsString("2222"), "cccc");
   EXPECT_EQ(storage.LookupAsString("4444"), "eeee");
-  EXPECT_TRUE(storage.Lookup("0000") == nullptr);
-  EXPECT_TRUE(storage.Lookup("1111") == nullptr);
-  EXPECT_TRUE(storage.Lookup("3333") == nullptr);
+  EXPECT_EQ(storage.Lookup("0000"), nullptr);
+  EXPECT_EQ(storage.Lookup("1111"), nullptr);
+  EXPECT_EQ(storage.Lookup("3333"), nullptr);
   expected = {"eeee", "cccc"};  // "eeee" was moved to the position of "aaaa".
   EXPECT_EQ(GetValuesInStorageOrder(storage), expected);
 
   // Remove ("4444", "eeee")
   EXPECT_TRUE(storage.Delete("4444"));
   EXPECT_EQ(storage.used_size(), 1);
-  EXPECT_TRUE(storage.Lookup("0000") == nullptr);
-  EXPECT_TRUE(storage.Lookup("1111") == nullptr);
-  EXPECT_TRUE(storage.Lookup("3333") == nullptr);
-  EXPECT_TRUE(storage.Lookup("4444") == nullptr);
+  EXPECT_EQ(storage.Lookup("0000"), nullptr);
+  EXPECT_EQ(storage.Lookup("1111"), nullptr);
+  EXPECT_EQ(storage.Lookup("3333"), nullptr);
+  EXPECT_EQ(storage.Lookup("4444"), nullptr);
   expected = {"cccc"};
   EXPECT_EQ(GetValuesInStorageOrder(storage), expected);
 
   EXPECT_TRUE(storage.Delete("2222"));
   EXPECT_EQ(storage.used_size(), 0);
-  EXPECT_TRUE(storage.Lookup("0000") == nullptr);
-  EXPECT_TRUE(storage.Lookup("1111") == nullptr);
-  EXPECT_TRUE(storage.Lookup("2222") == nullptr);
-  EXPECT_TRUE(storage.Lookup("3333") == nullptr);
-  EXPECT_TRUE(storage.Lookup("4444") == nullptr);
+  EXPECT_EQ(storage.Lookup("0000"), nullptr);
+  EXPECT_EQ(storage.Lookup("1111"), nullptr);
+  EXPECT_EQ(storage.Lookup("2222"), nullptr);
+  EXPECT_EQ(storage.Lookup("3333"), nullptr);
+  EXPECT_EQ(storage.Lookup("4444"), nullptr);
 }
 
 TEST_F(LruStorageTest, DeleteElementsBefore) {

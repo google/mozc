@@ -280,8 +280,8 @@ class SystemDictionaryCodecTest : public ::testing::Test {
   void CheckDecoded() const {
     EXPECT_EQ(decoded_tokens_.size(), source_tokens_.size());
     for (size_t i = 0; i < source_tokens_.size(); ++i) {
-      EXPECT_TRUE(source_tokens_[i].token != nullptr);
-      EXPECT_TRUE(decoded_tokens_[i].token != nullptr);
+      ASSERT_NE(source_tokens_[i].token, nullptr);
+      ASSERT_NE(decoded_tokens_[i].token, nullptr);
 
       EXPECT_EQ(source_tokens_[i].token->attributes,
                 decoded_tokens_[i].token->attributes);

@@ -88,13 +88,13 @@ TEST(LruCacheTest, Lookup) {
   EXPECT_THAT(GetOrderedKeys(cache), ElementsAre(2, 1, 0));
 
   // Looked up elements are moved to the head.
-  EXPECT_TRUE(cache.Lookup(0) != nullptr);
+  EXPECT_NE(cache.Lookup(0), nullptr);
   EXPECT_THAT(GetOrderedKeys(cache), ElementsAre(0, 2, 1));
-  EXPECT_TRUE(cache.Lookup(1) != nullptr);
+  EXPECT_NE(cache.Lookup(1), nullptr);
   EXPECT_THAT(GetOrderedKeys(cache), ElementsAre(1, 0, 2));
 
-  EXPECT_TRUE(cache.Lookup(-1) == nullptr);
-  EXPECT_TRUE(cache.Lookup(3) == nullptr);
+  EXPECT_EQ(cache.Lookup(-1), nullptr);
+  EXPECT_EQ(cache.Lookup(3), nullptr);
 }
 
 TEST(LruCacheTest, LookupWithoutInsert) {
@@ -106,11 +106,11 @@ TEST(LruCacheTest, LookupWithoutInsert) {
 
   // Unlike Lookup, LRU order shouldn't change.
   for (int i = 0; i < 3; ++i) {
-    EXPECT_TRUE(cache.LookupWithoutInsert(i) != nullptr);
+    EXPECT_NE(cache.LookupWithoutInsert(i), nullptr);
     EXPECT_THAT(GetOrderedKeys(cache), ElementsAre(2, 1, 0));
   }
-  EXPECT_TRUE(cache.LookupWithoutInsert(-1) == nullptr);
-  EXPECT_TRUE(cache.LookupWithoutInsert(3) == nullptr);
+  EXPECT_EQ(cache.LookupWithoutInsert(-1), nullptr);
+  EXPECT_EQ(cache.LookupWithoutInsert(3), nullptr);
 }
 
 TEST(LruCacheTest, Erase) {

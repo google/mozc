@@ -52,7 +52,7 @@ TEST(LatticeTest, LatticeTest) {
 TEST(LatticeTest, NewNodeTest) {
   Lattice lattice;
   Node* node = lattice.NewNode();
-  EXPECT_TRUE(node != nullptr);
+  ASSERT_NE(node, nullptr);
   EXPECT_EQ(node->lid, 0);
   EXPECT_EQ(node->rid, 0);
 }

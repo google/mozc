@@ -2477,7 +2477,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
   {
     UserHistoryPredictorTestPeer::EntryPriorityQueue queue;
     for (int i = 0; i < 10000; ++i) {
-      EXPECT_NE(nullptr, queue.NewEntry());
+      EXPECT_NE(queue.NewEntry(), nullptr);
     }
   }
 
@@ -3218,7 +3218,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
                                                        &base, &expanded);
   EXPECT_EQ(request_key, "ぐーｇ");
   EXPECT_EQ(base, "ぐー");
-  EXPECT_TRUE(expanded != nullptr);
+  ASSERT_NE(expanded, nullptr);
   std::string value;
   size_t key_length = 0;
   bool has_subtrie = false;
@@ -3275,7 +3275,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                                          &base, &expanded);
     EXPECT_EQ(request_key, "ｎ");
     EXPECT_EQ(base, "");
-    EXPECT_TRUE(expanded != nullptr);
+    ASSERT_NE(expanded, nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
@@ -3296,7 +3296,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                                          &base, &expanded);
     EXPECT_EQ(request_key, "ん");
     EXPECT_EQ(base, "ん");
-    EXPECT_TRUE(expanded == nullptr);
+    EXPECT_EQ(expanded, nullptr);
   }
 
   composer_.Reset();
@@ -3311,7 +3311,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                                          &base, &expanded);
     EXPECT_EQ(request_key, "ん");
     EXPECT_EQ(base, "ん");
-    EXPECT_TRUE(expanded == nullptr);
+    EXPECT_EQ(expanded, nullptr);
   }
 
   composer_.Reset();
@@ -3326,7 +3326,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                                          &base, &expanded);
     EXPECT_EQ(request_key, "んｎ");
     EXPECT_EQ(base, "ん");
-    EXPECT_TRUE(expanded != nullptr);
+    ASSERT_NE(expanded, nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
@@ -3350,7 +3350,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
                                                          &base, &expanded);
     EXPECT_EQ(request_key, "ん");
     EXPECT_EQ(base, "");
-    EXPECT_TRUE(expanded != nullptr);
+    ASSERT_NE(expanded, nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
@@ -3374,7 +3374,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
                                                          &base, &expanded);
     EXPECT_EQ(request_key, "ん");
     EXPECT_EQ(base, "");
-    EXPECT_TRUE(expanded != nullptr);
+    ASSERT_NE(expanded, nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
@@ -3399,7 +3399,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
                                                          &base, &expanded);
     EXPECT_EQ(request_key, "あか");
     EXPECT_EQ(base, "あ");
-    EXPECT_TRUE(expanded != nullptr);
+    ASSERT_NE(expanded, nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;

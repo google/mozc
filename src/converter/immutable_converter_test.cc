@@ -378,7 +378,7 @@ TEST(ImmutableConverterTest, NotConnectedTest) {
       continue;
     }
     // If len(rnode->value) > 1, that node should cross over the boundary
-    EXPECT_TRUE(rnode->prev == nullptr);
+    EXPECT_EQ(rnode->prev, nullptr);
     tested = true;
   }
   EXPECT_TRUE(tested);
