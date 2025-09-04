@@ -55,21 +55,21 @@ TEST(HashTest, CityFingerprint) {
   EXPECT_EQ(CityFingerprintWithSeed(s, 0xdeadbeef), 0xdc8878e5c23ac13f);
 }
 
-TEST(HashTest, Fingerprint) {
+TEST(HashTest, LegacyFingerprint) {
   std::string s = "";
-  EXPECT_EQ(Fingerprint32(s), 0x0d46d8e3);
-  EXPECT_EQ(Fingerprint(s), 0x2dcdbae1b24d9501);
-  EXPECT_EQ(FingerprintWithSeed(s, 0xdeadbeef), 0x1153f4beb24d9501);
+  EXPECT_EQ(LegacyFingerprint32(s), 0x0d46d8e3);
+  EXPECT_EQ(LegacyFingerprint(s), 0x2dcdbae1b24d9501);
+  EXPECT_EQ(LegacyFingerprintWithSeed(s, 0xdeadbeef), 0x1153f4beb24d9501);
 
   s = "google";
-  EXPECT_EQ(Fingerprint32(s), 0x74290877);
-  EXPECT_EQ(Fingerprint(s), 0x56d4ad5eafa6beed);
-  EXPECT_EQ(FingerprintWithSeed(s, 0xdeadbeef), 0x1f8cbc0cafa6beed);
+  EXPECT_EQ(LegacyFingerprint32(s), 0x74290877);
+  EXPECT_EQ(LegacyFingerprint(s), 0x56d4ad5eafa6beed);
+  EXPECT_EQ(LegacyFingerprintWithSeed(s, 0xdeadbeef), 0x1f8cbc0cafa6beed);
 
   s = "Hello, world!  Hello, Tokyo!  Good afternoon!  Ladies and gentlemen.";
-  EXPECT_EQ(Fingerprint32(s), 0xb0f5a2ba);
-  EXPECT_EQ(Fingerprint(s), 0x936ccddf9d4f0b39);
-  EXPECT_EQ(FingerprintWithSeed(s, 0xdeadbeef), 0xe3fd29979d4f0b39);
+  EXPECT_EQ(LegacyFingerprint32(s), 0xb0f5a2ba);
+  EXPECT_EQ(LegacyFingerprint(s), 0x936ccddf9d4f0b39);
+  EXPECT_EQ(LegacyFingerprintWithSeed(s, 0xdeadbeef), 0xe3fd29979d4f0b39);
 }
 
 }  // namespace

@@ -102,7 +102,7 @@ class BlockBitmapBuilder {
 };
 
 inline uint64_t Fingerprint(absl::string_view str, uint16_t fp_type) {
-  return fp_type == 0 ? ::mozc::Fingerprint(str) : ::mozc::CityFingerprint(str);
+  return fp_type == 0 ? LegacyFingerprint(str) : CityFingerprint(str);
 }
 
 }  // namespace existence_filter_internal

@@ -53,7 +53,7 @@ namespace mozc {
 namespace dictionary {
 
 void DictionaryFileCodec::WriteSections(
-    absl::Span<const DictionaryFileSection> sections, std::ostream *ofs) const {
+    absl::Span<const DictionaryFileSection> sections, std::ostream* ofs) const {
   DCHECK(ofs);
   WriteHeader(ofs);
 
@@ -68,7 +68,7 @@ void DictionaryFileCodec::WriteSections(
   } else {
     // Some tests don't have four sections.  In this case, simply write sections
     // in given order.
-    for (const auto &section : sections) {
+    for (const auto& section : sections) {
       WriteSection(section, ofs);
     }
   }
@@ -76,16 +76,16 @@ void DictionaryFileCodec::WriteSections(
   filecodec_util::WriteInt32(0, ofs);
 }
 
-void DictionaryFileCodec::WriteHeader(std::ostream *ofs) const {
+void DictionaryFileCodec::WriteHeader(std::ostream* ofs) const {
   DCHECK(ofs);
   filecodec_util::WriteInt32(filemagic_, ofs);
   filecodec_util::WriteInt32(seed_, ofs);
 }
 
-void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
-                                       std::ostream *ofs) const {
+void DictionaryFileCodec::WriteSection(const DictionaryFileSection& section,
+                                       std::ostream* ofs) const {
   DCHECK(ofs);
-  const std::string &name = section.name;
+  const std::string& name = section.name;
   // name should be encoded
   // uint64_t needs just 8 bytes.
   DCHECK_EQ(8, name.size());
@@ -102,8 +102,8 @@ void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
 std::string DictionaryFileCodec::GetSectionName(
     const absl::string_view name) const {
   MOZC_VLOG(1) << "seed\t" << seed_;
-  const uint64_t name_fp = FingerprintWithSeed(name, seed_);
-  const std::string fp_string(reinterpret_cast<const char *>(&name_fp),
+  const uint64_t name_fp = LegacyFingerprintWithSeed(name, seed_);
+  const std::string fp_string(reinterpret_cast<const char*>(&name_fp),
                               sizeof(name_fp));
   if (MOZC_VLOG_IS_ON(1)) {
     MOZC_VLOG(1) << "Section name for " << name << ": "
@@ -113,8 +113,8 @@ std::string DictionaryFileCodec::GetSectionName(
 }
 
 absl::Status DictionaryFileCodec::ReadSections(
-    const char *image, int length,
-    std::vector<DictionaryFileSection> *sections) const {
+    const char* image, int length,
+    std::vector<DictionaryFileSection>* sections) const {
   DCHECK(sections);
   if (image == nullptr) {
     return absl::InvalidArgumentError("codec.cc: Image is nullptr");
@@ -130,8 +130,8 @@ absl::Status DictionaryFileCodec::ReadSections(
         absl::StrCat("codec.cc: memory block of size ", length,
                      " is not aligned at 32-bit boundary"));
   }
-  const char *ptr = image;  // The current position at which data is read.
-  const char *const image_end = image + length;
+  const char* ptr = image;  // The current position at which data is read.
+  const char* const image_end = image + length;
 
   const int32_t filemagic = LoadUnalignedAdvance<int32_t>(ptr);
   if (filemagic != filemagic_) {
@@ -162,7 +162,7 @@ absl::Status DictionaryFileCodec::ReadSections(
     // the beginning of fingerprint.
     constexpr size_t kFingerprintByteLength = 8;
     const auto padded_data_size = filecodec_util::RoundUp4(data_size);
-    const auto *section_end = ptr + kFingerprintByteLength + padded_data_size;
+    const auto* section_end = ptr + kFingerprintByteLength + padded_data_size;
     if (section_end > image_end) {
       return absl::OutOfRangeError(absl::StrCat(
           "codec.cc: Section ", section_index,

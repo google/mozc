@@ -2142,13 +2142,13 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
 // static
 uint64_t UserHistoryPredictor::Fingerprint(const absl::string_view key,
                                            const absl::string_view value) {
-  return ::mozc::CityFingerprint(absl::StrCat(key, kDelimiter, value));
+  return CityFingerprint(absl::StrCat(key, kDelimiter, value));
 }
 
 // static
 uint32_t UserHistoryPredictor::FingerprintDepereated(
     const absl::string_view key, const absl::string_view value) {
-  return Fingerprint32(absl::StrCat(key, kDelimiter, value));
+  return LegacyFingerprint32(absl::StrCat(key, kDelimiter, value));
 }
 
 // static

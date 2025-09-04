@@ -400,7 +400,7 @@ void LruStorage::Close() {
 
 const char* absl_nullable LruStorage::Lookup(const absl::string_view key,
                                              uint32_t* last_access_time) const {
-  const uint64_t fp = FingerprintWithSeed(key, seed_);
+  const uint64_t fp = LegacyFingerprintWithSeed(key, seed_);
   const auto it = lru_map_.find(fp);
   if (it == lru_map_.end()) {
     return nullptr;
@@ -431,7 +431,7 @@ void LruStorage::GetAllValues(std::vector<std::string>* values) const {
 }
 
 bool LruStorage::Touch(const absl::string_view key) {
-  const uint64_t fp = FingerprintWithSeed(key, seed_);
+  const uint64_t fp = LegacyFingerprintWithSeed(key, seed_);
   auto it = lru_map_.find(fp);
   if (it == lru_map_.end()) {
     return false;
@@ -450,7 +450,7 @@ bool LruStorage::Insert(const absl::string_view key, const char* value) {
   if (value == nullptr) {
     return false;
   }
-  const uint64_t fp = FingerprintWithSeed(key, seed_);
+  const uint64_t fp = LegacyFingerprintWithSeed(key, seed_);
 
   // If the data corresponding to |key| already exists in LRU, update it.
   {
@@ -492,7 +492,7 @@ bool LruStorage::Insert(const absl::string_view key, const char* value) {
 }
 
 bool LruStorage::TryInsert(const absl::string_view key, const char* value) {
-  const uint64_t fp = FingerprintWithSeed(key, seed_);
+  const uint64_t fp = LegacyFingerprintWithSeed(key, seed_);
   auto it = lru_map_.find(fp);
   if (it != lru_map_.end()) {
     Update(*it->second, fp, value, value_size_);
@@ -502,7 +502,7 @@ bool LruStorage::TryInsert(const absl::string_view key, const char* value) {
 }
 
 bool LruStorage::Delete(const absl::string_view key) {
-  const uint64_t fp = FingerprintWithSeed(key, seed_);
+  const uint64_t fp = LegacyFingerprintWithSeed(key, seed_);
   return Delete(fp);
 }
 

@@ -61,16 +61,15 @@ inline uint32_t CityFingerprint32(absl::string_view str) {
 // Legacy Fingerprint Functions
 // These are about 5-7 times slower than CityFingerprint.
 // Do not use legacy Fingerprint in new code.
-// TODO(taku): Rename them with LegacyFingerprintXX.
 // TODO(all): Migrate to CityFingerprint except for the case where the
 // fingerprint of user-data is stored.
 
 // Calculates 64-bit fingerprint.
-uint64_t Fingerprint(absl::string_view str);
-uint64_t FingerprintWithSeed(absl::string_view str, uint32_t seed);
+uint64_t LegacyFingerprint(absl::string_view str);
+uint64_t LegacyFingerprintWithSeed(absl::string_view str, uint32_t seed);
 
 // Calculates 32-bit fingerprint.
-uint32_t Fingerprint32(absl::string_view str);
+uint32_t LegacyFingerprint32(absl::string_view str);
 
 }  // namespace mozc
 
