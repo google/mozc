@@ -20,7 +20,7 @@ jobs:
     steps:
       # Checkout without submodules to exclude third_party code from lint check
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: false
 
