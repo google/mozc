@@ -61,8 +61,6 @@ inline uint32_t CityFingerprint32(absl::string_view str) {
 // Legacy Fingerprint Functions
 // These are about 5-7 times slower than CityFingerprint.
 // Do not use legacy Fingerprint in new code.
-// TODO(all): Migrate to CityFingerprint except for the case where the
-// fingerprint of user-data is stored.
 
 // Calculates 64-bit fingerprint.
 uint64_t LegacyFingerprint(absl::string_view str);

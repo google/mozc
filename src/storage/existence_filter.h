@@ -118,12 +118,12 @@ struct ExistenceFilterParams {
   }
 
   enum FpType {
-    MOZC_FP = 0,
+    LEGACY_FP = 0,
     CITY_FP = 1,
     FP_TYPE_SIZE = 2,
   };
 
-  static constexpr uint16_t kDefaultFpType = MOZC_FP;
+  static constexpr uint16_t kDefaultFpType = CITY_FP;
 
   uint32_t size = 0;            // the number of bits in the bit vector
   uint32_t expected_nelts = 0;  // the number of values that will be stored
