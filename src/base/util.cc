@@ -1036,48 +1036,6 @@ bool Util::IsAscii(absl::string_view str) {
   return absl::c_all_of(str, absl::ascii_isascii);
 }
 
-namespace {
-// const uint32_t* kJisX0208Bitmap[]
-// constexpr uint64_t kJisX0208BitmapIndex
-#include "base/character_set.inc"
-
-bool IsJisX0208Char(char32_t codepoint) {
-  if (codepoint <= 0x7F) {
-    return true;  // ASCII
-  }
-
-  if ((65377 <= codepoint && codepoint <= 65439)) {
-    return true;  // JISX0201
-  }
-
-  if (codepoint < 65536) {
-    const int index = codepoint / 1024;
-    if ((kJisX0208BitmapIndex & (static_cast<uint64_t>(1) << index)) == 0) {
-      return false;
-    }
-    // Note, the return value of 1 << 64 is not zero. It's undefined.
-    const int bitmap_index =
-        std::popcount(kJisX0208BitmapIndex << (63 - index)) - 1;
-    const uint32_t* bitmap = kJisX0208Bitmap[bitmap_index];
-    if ((bitmap[(codepoint % 1024) / 32] >> (codepoint % 32)) & 0b1) {
-      return true;  // JISX0208
-    }
-    return false;
-  }
-
-  return false;
-}
-}  // namespace
-
-bool Util::IsJisX0208(absl::string_view str) {
-  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    if (!IsJisX0208Char(iter.Get())) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // CAUTION: Be careful to change the implementation of serialization.  Some
 // files use this format, so compatibility can be lost.  See, e.g.,
 // data_manager/dataset_writer.cc.

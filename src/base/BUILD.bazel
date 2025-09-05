@@ -209,24 +209,6 @@ mozc_cc_test(
     ],
 )
 
-mozc_py_binary(
-    name = "gen_character_set",
-    srcs = ["gen_character_set.py"],
-)
-
-mozc_run_build_tool(
-    name = "character_set_data",
-    srcs = {
-        "--jisx0201file": ["//data/unicode:JIS0201.TXT"],
-        "--jisx0208file": ["//data/unicode:JIS0208.TXT"],
-    },
-    outs = {
-        "--output": "character_set.inc",
-    },
-    tool = ":gen_character_set",
-    visibility = ["//visibility:private"],
-)
-
 mozc_cc_library(
     name = "hash",
     srcs = ["hash.cc"],
@@ -285,7 +267,6 @@ mozc_cc_library(
     name = "util",
     srcs = [
         "util.cc",
-        ":character_set_data",
     ],
     hdrs = ["util.h"],
     visibility = [
