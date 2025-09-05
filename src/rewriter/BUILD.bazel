@@ -926,6 +926,7 @@ mozc_cc_binary(
         "//base:vlog",
         "//base/file:temp_dir",
         "//base/strings:japanese",
+        "//base/strings:unicode",
         "//data_manager",
         "//data_manager:serialized_dictionary",
         "@com_google_absl//absl/container:flat_hash_map",
