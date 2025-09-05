@@ -648,9 +648,6 @@ message DecoderExperimentParams {
   // The maximum size of entries actually saved to disk.
   // When zero, store all entries in the on-memory LRU.
   optional int32 user_history_cache_store_size = 110 [default = 0];
-
-  // The mode of partial revert. When zero, partial revert is not enabled.
-  optional int32 user_history_partial_revert_mode = 125 [default = 0];
 }
 
 // Clients' request to the server.

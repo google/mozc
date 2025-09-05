@@ -5371,8 +5371,6 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
   auto suggest_with_context = [&](absl::string_view key,
                                   absl::string_view left_context) {
     context_.set_preceding_text(left_context);
-    request_.mutable_decoder_experiment_params()
-        ->set_user_history_partial_revert_mode(1);
     SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
         SetUpInputForSuggestion(key, &composer_, &segments_proxy);

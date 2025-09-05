@@ -2277,12 +2277,6 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
   auto last_committed_entries = std::move(last_committed_entries_);
   last_committed_entries_.reset();
 
-  const commands::DecoderExperimentParams& params =
-      request.request().decoder_experiment_params();
-  if (params.user_history_partial_revert_mode() == 0) {
-    return;
-  }
-
   // Gets the actual cursor position after committing the result.
   const int32_t actual_value_end = GuessRevertedValueOffset(
       last_committed_entries->result.value, request.context().preceding_text());
