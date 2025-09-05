@@ -29,13 +29,13 @@
 
 #include "base/cpu_stats.h"
 
+#include <atomic>
 #include <cstdint>
 #include <vector>
 
 #include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-#include "base/cpu_stats.h"
 #include "base/thread.h"
 #include "testing/gunit.h"
 
@@ -60,7 +60,7 @@ TEST(CPUStats, MultiThreadTest) {
   threads.reserve(kDummyThreadsSize);
   for (int i = 0; i < kDummyThreadsSize; ++i) {
     threads.push_back(mozc::Thread([&cancel] {
-      volatile uint64_t n = 0;
+      std::atomic<uint64_t> n = 0;
       // Makes busy loop.
       while (!cancel.HasBeenNotified()) {
         ++n;
@@ -80,7 +80,7 @@ TEST(CPUStats, MultiThreadTest) {
 
   cancel.Notify();
 
-  for (auto& thread : threads) {
+  for (mozc::Thread& thread : threads) {
     thread.Join();
   }
 }
