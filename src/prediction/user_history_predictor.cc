@@ -119,6 +119,9 @@ constexpr absl::string_view kEmojiDescription = "絵文字";
 
 constexpr size_t kRevertCacheSize = 16;
 
+constexpr absl::string_view kPunctuations[] = {"。", ".",  "、", ",",  "？",
+                                               "?",  "！", "!",  "，", "．"};
+
 // Mixed conversion is enabled mainly on mobile device.
 bool IsMixedConversionEnabled(const ConversionRequest& request) {
   return request.request().mixed_conversion();
@@ -145,10 +148,16 @@ bool IsAndroidPuaEmoji(absl::string_view s) {
           s <= kUtf8MaxGooglePuaEmoji);
 }
 
-bool IsPunctuation(absl::string_view value) {
-  return (value == "。" || value == "." || value == "、" || value == "," ||
-          value == "？" || value == "?" || value == "！" || value == "!" ||
-          value == "，" || value == "．");
+bool StartsWithPunctuation(absl::string_view value) {
+  return absl::c_find_if(kPunctuations, [&value](absl::string_view x) {
+           return absl::StartsWith(value, x);
+         }) != std::end(kPunctuations);
+}
+
+bool EndsWithPunctuation(absl::string_view value) {
+  return absl::c_find_if(kPunctuations, [&value](absl::string_view x) {
+           return absl::EndsWith(value, x);
+         }) != std::end(kPunctuations);
 }
 
 // Returns romanaized string.
@@ -944,7 +953,9 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
       next_entry = latest_entry;
     }
 
-    if (next_entry == nullptr || next_entry->key().empty()) {
+    // Don't predict the next phrase if it starts with punctuation.
+    if (next_entry == nullptr || next_entry->key().empty() ||
+        StartsWithPunctuation(next_entry->value())) {
       break;
     }
 
@@ -1152,6 +1163,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest& request,
     if (next_entry != nullptr && !next_entry->key().empty() &&
         abs(static_cast<int32_t>(next_entry->last_access_time() -
                                  last_entry->last_access_time())) <= 10 &&
+        !StartsWithPunctuation(next_entry->value()) &&
         IsContentWord(next_entry->value())) {
       Entry* result2 = AddEntryWithNewKeyValue(
           absl::StrCat(result->key(), next_entry->key()),
@@ -1268,7 +1280,7 @@ bool UserHistoryPredictor::ShouldPredict(
     return false;
   }
 
-  if (IsPunctuation(Util::Utf8SubString(request_key, 0, 1))) {
+  if (StartsWithPunctuation(request_key)) {
     MOZC_VLOG(2) << "request_key starts with punctuations";
     return false;
   }
@@ -1691,11 +1703,16 @@ bool UserHistoryPredictor::ShouldInsert(
     return false;
   }
 
-  // For mobile, we do not learn candidates that ends with punctuation.
-  if (IsMixedConversionEnabled(request) && Util::CharsLen(value) > 1 &&
-      IsPunctuation(Util::Utf8SubString(value, Util::CharsLen(value) - 1, 1))) {
+  // Do not remember Japanese text that ends with a punctuation.
+  // Usually Japanese punctuation is an independent segment, so
+  // this case happens when user type "よろしく。" directly via composer.
+  const auto type = Util::GetFirstScriptType(value);
+  if ((type == Util::KANJI || type == Util::HIRAGANA ||
+       type == Util::KATAKANA) &&
+      Util::CharsLen(value) > 1 && EndsWithPunctuation(value)) {
     return false;
   }
+
   return true;
 }
 
@@ -1932,8 +1949,7 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
       return;
     }
     // 1) Don't learn a link from a history which ends with punctuation.
-    if (IsPunctuation(Util::Utf8SubString(
-            history_value, Util::CharsLen(history_value) - 1, 1))) {
+    if (EndsWithPunctuation(history_value)) {
       return;
     }
     // 2) Don't learn a link to a punctuation.
@@ -1942,11 +1958,11 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
     // Example: "よろしく|。" -> OK
     //          "よろしく|。でも" -> NG
     //          "よろしく|。。" -> NG
-    // Note that another piece of code handles learning for
-    // (sentence + punctuation) form; see Finish().
-    if (IsPunctuation(Util::Utf8SubString(conversion_segment.value, 0, 1)) &&
-        (!IsMixedConversionEnabled(request) ||
-         Util::CharsLen(conversion_segment.value) > 1)) {
+    // In the suggestion phase, we do not allow the bigram connection where
+    // right-hand-side words start with a punctuation mark. The prediction
+    // of punctuation marks is only triggered on zero-query suggestions.
+    if (Util::CharsLen(conversion_segment.value) > 1 &&
+        StartsWithPunctuation(conversion_segment.value)) {
       return;
     }
     Entry* history_entry = dic_->MutableLookupWithoutInsert(
@@ -2007,8 +2023,7 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     TryInsert(request, segment.key_begin, segment.value_begin, segment.key,
               segment.value, segment.description, is_suggestion_selected,
               next_fps_to_set, last_access_time, revert_entries);
-    if (IsMixedConversionEnabled(request) &&
-        segment.content_key != segment.key &&
+    if (segment.content_key != segment.key &&
         segment.content_value != segment.value) {
       TryInsert(request, segment.key_begin, segment.value_begin,
                 segment.content_key, segment.content_value, segment.description,

@@ -47,9 +47,9 @@ SEND_KEY	ENTER
 
 # SCENARIO 2 (Trigram history: deletion of user input itself)
 #   1. A user inputs 今日は晴れです！.
-#   2. Both 今日は晴れです and 今日は晴れです！ are suggested.
-#   3. The user deletes 今日は晴れです！.
-#   4. After deletion, only 今日は晴れです should be shown.
+#   2. Both 今日は晴れです and 今日は晴れの感じです are suggested.
+#   3. The user deletes 今日は晴れの感じです.
+#   4. After deletion, only 今日は晴れ should be shown.
 
 # Reset.
 CLEAR_USER_PREDICTION
@@ -60,64 +60,64 @@ SET_CONFIG	session_keymap	MSIME
 SWITCH_INPUT_MODE	HIRAGANA
 
 # Set up input history.
-SEND_KEYS	kyouhaharedesu!
+SEND_KEYS	kyouhaharenokanjidesu
 SEND_KEY	SPACE
-EXPECT_PREEDIT	今日は晴れです！
+EXPECT_PREEDIT	今日は晴れの感じです
 SEND_KEY	ENTER
 
-# Now both 今日は晴れです and 今日は晴れです！ are shown.
+# Now both 今日は晴れ and 今日は晴れの感じです are shown.
 SEND_KEYS	kyou
 EXPECT_PREEDIT	きょう
 
 # Shown in suggestions.
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 
 # Select the one ending with ！.
 SEND_KEY	TAB
 SEND_KEY	TAB
 SEND_KEY	TAB
-EXPECT_PREEDIT	今日は晴れです！
+EXPECT_PREEDIT	今日は晴れの感じです
 
-# Delete 今日は晴れです！ from the input history.
+# Delete 今日は晴れの感じです from the input history.
 SEND_KEY	CTRL DELETE
 
 # Now the state is back to composition and suggestion is shown.
 EXPECT_PREEDIT	きょう
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 
-# Again kick the prediction. But this time 今日は晴れです！ is not shown.
+# Again kick the prediction. But this time 今日は晴れの感じです is not shown.
 SEND_KEY	TAB
 SEND_KEY	TAB
 SEND_KEY	TAB
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 
 # Cancel the input to go back to the precomposition.
 SEND_KEY	ESC
 SEND_KEY	ESC
 EXPECT_PREEDIT	
 
-# Type きょう again to see 今日は and 今日は晴れです in suggestions in this
+# Type きょう again to see 今日は and 今日は晴れ in suggestions in this
 # order.
 SEND_KEYS	kyou
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
 SEND_KEY	TAB
-EXPECT_PREEDIT	今日は
+EXPECT_PREEDIT	今日
 SEND_KEY	TAB
-EXPECT_PREEDIT	今日は晴れです
+EXPECT_PREEDIT	今日は晴れ
 
 
 # SCENARIO 3 (Trigram history: deletion of derived bigram chain)
-#   1. A user inputs 今日は晴れです！, as in the SCENARIO 2.
-#   2. Both 今日は晴れです and 今日は晴れです！ are suggested.
-#   3. The user deletes 今日は晴れです (the one without exclamation mark).
-#   4. After deletion, only 今日は晴れです！ should be shown.
+#   1. A user inputs 今日は晴れの感じです, as in the SCENARIO 2.
+#   2. Both 今日は晴れ and 今日は晴れの感じです are suggested.
+#   3. The user deletes 今日は晴れ (the one without exclamation mark).
+#   4. After deletion, only 今日は晴れの感じです should be shown.
 
 # Reset.
 CLEAR_USER_PREDICTION
@@ -128,63 +128,65 @@ SET_CONFIG	session_keymap	MSIME
 SWITCH_INPUT_MODE	HIRAGANA
 
 # Set up input history.
-SEND_KEYS	kyouhaharedesu!
+SEND_KEYS	kyouhaharenokanjidesu
 SEND_KEY	SPACE
-EXPECT_PREEDIT	今日は晴れです！
+EXPECT_PREEDIT	今日は晴れの感じです
 SEND_KEY	ENTER
 
-# Now both 今日は晴れです and 今日は晴れです！ are shown.
+# Now both 今日は晴れ and 今日は晴れの感じです are shown.
 SEND_KEYS	kyou
 EXPECT_PREEDIT	きょう
 
 # Shown in suggestions.
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 
-# Select 今日は晴れです.
+# Select 今日は晴れ.
 SEND_KEY	TAB
 SEND_KEY	TAB
-EXPECT_PREEDIT	今日は晴れです
+EXPECT_PREEDIT	今日は晴れ
 
-# Delete 今日は晴れです from the input history.
+# Delete 今日は晴れ from the input history.
 SEND_KEY	CTRL DELETE
 
 # Now the state is back to composition and suggestion is shown.
 EXPECT_PREEDIT	きょう
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 
-# Again kick the prediction. But this time 今日は晴れです is not shown.
+# Again kick the prediction. But this time 今日は晴れ is not shown.
 SEND_KEY	TAB
 SEND_KEY	TAB
 SEND_KEY	TAB
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 
 # Cancel the input to go back to the precomposition.
 SEND_KEY	ESC
 SEND_KEY	ESC
 EXPECT_PREEDIT	
 
-# Type きょう again to see 今日は and 今日は晴れです！ in suggestions.
+# Type きょう again to see 今日 and 今日は晴れの感じです in suggestions.
+# TODO(taku): we shold remove "今日は晴れの".
 SEND_KEYS	kyou
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 SEND_KEY	TAB
-EXPECT_PREEDIT	今日は
+EXPECT_PREEDIT	今日
 SEND_KEY	TAB
-EXPECT_PREEDIT	今日は晴れです！
+EXPECT_PREEDIT	今日は晴れの
 
 
 # SCENARIO 4 (Trigram history: deletion of the first node)
-#   1. A user inputs 今日は晴れです！, as in the SCENARIO 2.
-#   2. All of 今日は, 今日は晴れです and 今日は晴れです！ are suggested.
-#   3. The user deletes 今日は.
-#   4. After deletion, 今日は晴れです and 今日は晴れです！ should be shown.
+#   1. A user inputs 今日は晴れの感じです, as in the SCENARIO 2.
+#   2. All of 今日, 今日は晴れ and 今日は晴れの感じです are suggested.
+#   3. The user deletes 今日.
+#   4. After deletion, 今日, 今日は晴れ and 今日は晴れの感じです should be shown.
 
 # Reset.
 CLEAR_USER_PREDICTION
@@ -195,21 +197,21 @@ SET_CONFIG	session_keymap	MSIME
 SWITCH_INPUT_MODE	HIRAGANA
 
 # Set up input history.
-SEND_KEYS	kyouhaharedesu!
+SEND_KEYS	kyouhaharenokanjidesu
 SEND_KEY	SPACE
-EXPECT_PREEDIT	今日は晴れです！
+EXPECT_PREEDIT	今日は晴れの感じです
 SEND_KEY	ENTER
 
 # Now three candidates are suggested by きょう.
 SEND_KEYS	kyou
 EXPECT_PREEDIT	きょう
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 
 # Select 今日は.
 SEND_KEY	TAB
-EXPECT_PREEDIT	今日は
+EXPECT_PREEDIT	今日
 
 # Delete 今日は from the input history.
 SEND_KEY	CTRL DELETE
@@ -217,29 +219,31 @@ SEND_KEY	CTRL DELETE
 # Now the state is back to composition and only 今日は was removed from
 # suggestion candidates.
 EXPECT_PREEDIT	きょう
-EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 
 # Again kick the prediction.
 SEND_KEY	TAB
 SEND_KEY	TAB
 SEND_KEY	TAB
-EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 
 # Cancel the input to go back to the precomposition.
 SEND_KEY	ESC
 SEND_KEY	ESC
 EXPECT_PREEDIT	
 
-# Type きょう again to see 今日は晴れです in suggestions.
+# Type きょう again to see 今日は in suggestions.
+# TODO(taku): we should remove "今日は".
 SEND_KEYS	kyou
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
-EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れ
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れの感じです
 SEND_KEY	TAB
-EXPECT_PREEDIT	今日は晴れです
+EXPECT_PREEDIT	今日は
 
 # SCENARIO 5 (Deletion of non-history candidate)
 

@@ -1379,9 +1379,8 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
       SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
-  EXPECT_EQ(results.size(), 2);
+  EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の名前は中野です");
-  EXPECT_EQ(results[1].value, "私の名前は中野です。");
 
   segments_proxy.Clear();
   const ConversionRequest convreq3 =
@@ -1389,9 +1388,8 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
 
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
-  EXPECT_EQ(results.size(), 2);
+  EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の名前は中野です");
-  EXPECT_EQ(results[1].value, "私の名前は中野です。");
 }
 
 TEST_F(UserHistoryPredictorTest, TrailingPunctuationMobile) {
@@ -1950,11 +1948,11 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("とうきょうは", &composer_, &segments_proxy);
-  segments_proxy.AddCandidate(0, "東京は");
+      SetUpInputForConversion("とうきょう", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "東京");
 
-  segments_proxy.AddSegment("、");
-  segments_proxy.AddCandidate(1, "、");
+  segments_proxy.AddSegment("は");
+  segments_proxy.AddCandidate(1, "は");
 
   segments_proxy.AddSegment("にほんです");
   segments_proxy.AddCandidate(2, "日本です");
@@ -1969,11 +1967,11 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
   absl::SleepFor(absl::Seconds(1));
 
   const ConversionRequest convreq2 =
-      SetUpInputForConversion("らーめんは", &composer_, &segments_proxy);
-  segments_proxy.AddCandidate(0, "ラーメンは");
+      SetUpInputForConversion("らーめん", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "ラーメン");
 
-  segments_proxy.AddSegment("、");
-  segments_proxy.AddCandidate(1, "、");
+  segments_proxy.AddSegment("は");
+  segments_proxy.AddCandidate(1, "は");
 
   segments_proxy.AddSegment("めんるいです");
   segments_proxy.AddCandidate(2, "麺類です");
@@ -1986,11 +1984,10 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
   segments_proxy.Clear();
 
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("とうきょうは、", &composer_, &segments_proxy);
+      SetUpInputForSuggestion("とうきょうは", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
-
-  EXPECT_EQ(results[0].value, "東京は、日本です");
+  EXPECT_EQ(results[0].value, "東京は日本です");
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371Case2) {
@@ -2133,7 +2130,8 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
 
-  EXPECT_EQ(results[0].value, "そうです。よろしくお願いします");
+  // Do not allow the bigram connecting to punctuation.
+  EXPECT_EQ(results[0].value, "そうです");
 }
 
 TEST_F(UserHistoryPredictorTest, DuplicateString) {
@@ -3477,11 +3475,8 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
         SetUpInputForPrediction("なかの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
-    if (mixed_conversion) {
-      EXPECT_TRUE(FindCandidateByValue("中野", results));
-    } else {
-      EXPECT_TRUE(FindCandidateByValue("中野です", results));
-    }
+    EXPECT_TRUE(FindCandidateByValue("中野", results));
+    EXPECT_FALSE(FindCandidateByValue("中野です", results));
     segments_proxy.Clear();
 
     const ConversionRequest convreq3 =
@@ -3495,13 +3490,16 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
         SetUpInputForPrediction("なまえ", &composer_, &segments_proxy);
     results = predictor->Predict(convreq4);
     EXPECT_FALSE(results.empty());
+    EXPECT_TRUE(FindCandidateByValue("名前", results));
+    // Do not suggest the phrase ends with [content_word + function_word].
+    EXPECT_FALSE(FindCandidateByValue("名前は", results));
+    EXPECT_FALSE(FindCandidateByValue("名前は中野です", results));
     if (mixed_conversion) {
-      EXPECT_TRUE(FindCandidateByValue("名前", results));
-      EXPECT_FALSE(FindCandidateByValue("名前は", results));
+      // prefer exact match.
       EXPECT_FALSE(FindCandidateByValue("名前は中野", results));
     } else {
-      EXPECT_TRUE(FindCandidateByValue("名前は", results));
-      EXPECT_TRUE(FindCandidateByValue("名前は中野です", results));
+      // prefer prediction.
+      EXPECT_TRUE(FindCandidateByValue("名前は中野", results));
     }
   }
 }
@@ -4199,11 +4197,11 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
     predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
-  // Check if the predictor learned the sentence.  Since the symbol is contained
-  // in one segment, both "今日もいい天気" and "今日もいい天気!" should be
-  // suggested and predicted.
+  // Check if the predictor learned the sentence.
+  // Only predict "今日もいい天気". "今日もいい天気!" is not suggested as it
+  // ends with punctuation.
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "きょうも", "今日もいい天気"));
-  EXPECT_TRUE(
+  EXPECT_FALSE(
       IsSuggestedAndPredicted(predictor, "きょうも", "今日もいい天気!"));
 
   // Now the user deletes the sentence containing the "!".
@@ -4347,7 +4345,7 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   segments_proxy.Clear();
 }
 
-TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
+TEST_F(UserHistoryPredictorTest, PunctuationLink) {
   UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   request_test_util::FillMobileRequest(&request_);
   SegmentsProxy segments_proxy;
@@ -4547,6 +4545,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
   WaitForSyncer(predictor);
 
   {
+    // Ends with punctuation.
     const ConversionRequest convreq1 =
         SetUpInputForConversion("ございます!", &composer_, &segments_proxy);
     segments_proxy.AddCandidate(0, "ございます！");
@@ -4564,19 +4563,13 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
     const ConversionRequest convreq2 =
         SetUpInputForSuggestion("ございます", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "ございます！");
-    EXPECT_FALSE(
-        FindCandidateByValue("ございます！よろしくお願いします", results));
+    EXPECT_TRUE(results.empty());
 
     segments_proxy.Clear();
     const ConversionRequest convreq3 =
         SetUpInputForSuggestion("ございます!", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "ございます！");
-    EXPECT_FALSE(
-        FindCandidateByValue("ございます！よろしくお願いします", results));
+    EXPECT_TRUE(results.empty());
   }
 
   predictor->ClearAllHistory();
