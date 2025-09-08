@@ -108,8 +108,7 @@ class UserHistoryPredictorTestPeer
 
   PEER_STATIC_METHOD(GetScore);
   PEER_STATIC_METHOD(GetMatchType);
-  PEER_STATIC_METHOD(IsValidSuggestion);
-  PEER_STATIC_METHOD(IsValidSuggestionForMixedConversion);
+  PEER_STATIC_METHOD(GetResultType);
   PEER_STATIC_METHOD(RomanFuzzyPrefixMatch);
   PEER_STATIC_METHOD(MaybeRomanMisspelledKey);
   PEER_STATIC_METHOD(GetRomanMisspelledKey);
@@ -132,6 +131,7 @@ class UserHistoryPredictorTestPeer
   PEER_DECLARE(MatchType);
   PEER_DECLARE(RemoveNgramChainResult);
   PEER_DECLARE(EntryPriorityQueue);
+  PEER_DECLARE(ResultType);
 };
 
 // Needs to call UpdateHistoryResult() to update history_result_.
@@ -2431,44 +2431,81 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 }
 
-TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
+TEST_F(UserHistoryPredictorTest, GetResultType) {
   UserHistoryPredictor::Entry entry;
 
-  Request request;
-  request.set_zero_query_suggestion(false);
-  const ConversionRequest convreq =
-      ConversionRequestBuilder().SetRequestView(request).Build();
+  using ResultType = UserHistoryPredictorTestPeer::ResultType;
 
-  EXPECT_FALSE(
-      UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
+  // desktop
+  {
+    Request request;
+    request.set_mixed_conversion(false);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetRequestView(request)
+            .SetRequestType(ConversionRequest::SUGGESTION)
+            .Build();
 
-  entry.set_bigram_boost(true);
-  EXPECT_TRUE(
-      UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
+    entry.set_bigram_boost(true);
+    EXPECT_EQ(
+        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
+        ResultType::GOOD_RESULT);
 
-  entry.set_bigram_boost(false);
-  entry.set_suggestion_freq(10);
-  EXPECT_TRUE(
-      UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
+    entry.set_bigram_boost(false);
 
-  entry.set_bigram_boost(false);
-  request.set_zero_query_suggestion(true);
-  EXPECT_TRUE(
-      UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
-}
+    // const uint32_t freq = entry.suggestion_freq();
+    // const uint32_t base_prefix_len = 3 - std::min<uint32_t>(2, freq);
+    // if (request_key_len >= base_prefix_len) {
+    // 3 >= 3 - min(2, 1) -> OK
+    entry.set_suggestion_freq(1);
+    EXPECT_EQ(
+        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 3, entry),
+        ResultType::GOOD_RESULT);
 
-TEST_F(UserHistoryPredictorTest, IsValidSuggestionForMixedConversion) {
-  UserHistoryPredictor::Entry entry;
-  const ConversionRequest conversion_request;
+    // 1 >= 3 - min(2, 1) ->  NG
+    entry.set_suggestion_freq(1);
+    EXPECT_EQ(
+        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
+        ResultType::BAD_RESULT);
 
-  entry.set_suggestion_freq(1);
-  EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidSuggestionForMixedConversion(
-      conversion_request, 1, entry));
+    // 1 >= 3 - min(2, 2) -> OK
+    entry.set_suggestion_freq(1);
+    EXPECT_EQ(
+        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
+        ResultType::BAD_RESULT);
 
-  entry.set_value("よろしくおねがいします。");  // too long
-  EXPECT_FALSE(
-      UserHistoryPredictorTestPeer::IsValidSuggestionForMixedConversion(
-          conversion_request, 1, entry));
+    entry.set_suggestion_freq(1);
+    EXPECT_EQ(
+        UserHistoryPredictorTestPeer::GetResultType(convreq, true, 1, entry),
+        ResultType::STOP_ENUMERATION);
+  }
+
+  // mobile
+  {
+    Request request;
+    request.set_mixed_conversion(true);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetRequestView(request).Build();
+
+    // entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8
+    entry.set_suggestion_freq(1);
+    entry.set_value("よろしく");
+    EXPECT_EQ(
+        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
+        ResultType::GOOD_RESULT);
+
+    entry.set_suggestion_freq(2);                 // high freq
+    entry.set_value("よろしくおねがいします。");  // too long
+    EXPECT_EQ(
+        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
+        ResultType::GOOD_RESULT);
+
+    entry.set_suggestion_freq(1);                 // low freq
+    entry.set_value("よろしくおねがいします。");  // too long
+    EXPECT_EQ(
+        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
+        ResultType::BAD_RESULT);
+  }
 }
 
 TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {

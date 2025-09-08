@@ -1450,13 +1450,29 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     const ConversionRequest& request, bool is_top_candidate,
     uint32_t request_key_len, const Entry& entry) {
   if (IsMixedConversionEnabled(request)) {
-    if (IsValidSuggestionForMixedConversion(request, request_key_len, entry)) {
-      return ResultType::GOOD_RESULT;
+    // Don't show long history for mixed conversion
+    if (entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8) {
+      MOZC_VLOG(2) << "long candidate: " << entry.value();
+      return ResultType::BAD_RESULT;
     }
-    return ResultType::BAD_RESULT;
+    return ResultType::GOOD_RESULT;
   }
 
   if (request.request_type() == ConversionRequest::SUGGESTION) {
+    // When bigram_boost is true, that means that previous user input
+    // and current input have bigram relation.
+    if (entry.bigram_boost()) {
+      return ResultType::GOOD_RESULT;
+    }
+
+    // TODO(taku,komatsu): better to make it simpler and easier to be
+    // understood.
+    const uint32_t freq = entry.suggestion_freq();
+    const uint32_t base_prefix_len = 3 - std::min<uint32_t>(2, freq);
+    if (request_key_len >= base_prefix_len) {
+      return ResultType::GOOD_RESULT;
+    }
+
     // The top result of suggestion should be a VALID suggestion candidate.
     // i.e., SuggestionTriggerFunc should return true for the first
     // candidate.
@@ -1465,13 +1481,11 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     // "です" after that,  showing "デスノート" is annoying.
     // In this situation, "です" is in the LRU, but SuggestionTriggerFunc
     // returns false for "です", since it is short.
-    if (IsValidSuggestion(request, request_key_len, entry)) {
-      return ResultType::GOOD_RESULT;
-    }
     if (is_top_candidate) {
       MOZC_VLOG(2) << "candidates size is 0";
       return ResultType::STOP_ENUMERATION;
     }
+
     return ResultType::BAD_RESULT;
   }
 
@@ -2171,36 +2185,6 @@ std::vector<uint64_t> UserHistoryPredictor::LearningSegmentFingerprints(
     fps.push_back(Fingerprint(segment.content_key, segment.content_value));
   }
   return fps;
-}
-
-bool UserHistoryPredictor::IsValidSuggestionForMixedConversion(
-    const ConversionRequest& request, uint32_t prefix_len, const Entry& entry) {
-  if (entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8) {
-    // Don't show long history for mixed conversion
-    MOZC_VLOG(2) << "long candidate: " << entry.value();
-    return false;
-  }
-
-  return true;
-}
-
-// static
-bool UserHistoryPredictor::IsValidSuggestion(const ConversionRequest& request,
-                                             uint32_t prefix_len,
-                                             const Entry& entry) {
-  // When bigram_boost is true, that means that previous user input
-  // and current input have bigram relation.
-  if (entry.bigram_boost()) {
-    return true;
-  }
-  // For mobile, make the behavior more aggressive.
-  if (IsMixedConversionEnabled(request)) {
-    return true;
-  }
-  const uint32_t freq = entry.suggestion_freq();
-  // TODO(taku,komatsu): better to make it simpler and easier to be understood.
-  const uint32_t base_prefix_len = 3 - std::min<uint32_t>(2, freq);
-  return (prefix_len >= base_prefix_len);
 }
 
 // static

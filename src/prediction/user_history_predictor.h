@@ -242,16 +242,6 @@ class UserHistoryPredictor : public PredictorInterface {
   // Returns true if prev_entry has a next_fp link to entry
   static bool HasBigramEntry(const Entry& entry, const Entry& prev_entry);
 
-  // Returns true |result_entry| can be handled as
-  // a valid result if the length of user input is |prefix_len|.
-  static bool IsValidSuggestion(const ConversionRequest& request,
-                                uint32_t prefix_len, const Entry& entry);
-
-  // IsValidSuggestion used in mixed conversion (mobile).
-  static bool IsValidSuggestionForMixedConversion(
-      const ConversionRequest& request, uint32_t prefix_len,
-      const Entry& entry);
-
   static ResultType GetResultType(const ConversionRequest& request,
                                   bool is_top_candidate,
                                   uint32_t request_key_len, const Entry& entry);
