@@ -76,7 +76,7 @@ uint64_t DataLoader::GetRequestId(const EngineReloadRequest& request) const {
 
 std::optional<DataLoader::RequestData> DataLoader::GetPendingRequestData()
     const {
-  absl::ReaderMutexLock lock(&mutex_);
+  absl::ReaderMutexLock lock(mutex_);
 
   if (requests_.empty()) {
     return std::nullopt;
@@ -91,7 +91,7 @@ std::optional<DataLoader::RequestData> DataLoader::GetPendingRequestData()
 }
 
 bool DataLoader::RegisterRequest(const EngineReloadRequest& request) {
-  absl::WriterMutexLock lock(&mutex_);
+  absl::WriterMutexLock lock(mutex_);
 
   const uint64_t id = GetRequestId(request);
 
@@ -130,7 +130,7 @@ bool DataLoader::RegisterRequest(const EngineReloadRequest& request) {
 }
 
 void DataLoader::ReportLoadFailure(const DataLoader::RequestData& request) {
-  absl::WriterMutexLock lock(&mutex_);
+  absl::WriterMutexLock lock(mutex_);
   LOG(ERROR) << "Failed to load data: " << request;
   const uint64_t id = request.id;
   const auto it =
@@ -143,7 +143,7 @@ void DataLoader::ReportLoadFailure(const DataLoader::RequestData& request) {
 }
 
 void DataLoader::ReportLoadSuccess(const DataLoader::RequestData& request) {
-  absl::WriterMutexLock lock(&mutex_);
+  absl::WriterMutexLock lock(mutex_);
   LOG(INFO) << "New data is loaded: " << request;
   current_request_id_ = request.id;
 }
