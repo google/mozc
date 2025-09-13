@@ -276,7 +276,7 @@ void ConfigHandlerImpl::Reload() {
 
 void ConfigHandlerImpl::SetConfigFileName(const absl::string_view filename) {
   {
-    absl::WriterMutexLock lock(&mutex_);
+    absl::WriterMutexLock lock(mutex_);
     MOZC_VLOG(1) << "set new config file name: " << filename;
     strings::Assign(filename_, filename);
   }
@@ -284,7 +284,7 @@ void ConfigHandlerImpl::SetConfigFileName(const absl::string_view filename) {
 }
 
 std::string ConfigHandlerImpl::GetConfigFileName() const {
-  absl::ReaderMutexLock lock(&mutex_);
+  absl::ReaderMutexLock lock(mutex_);
   return filename_;
 }
 }  // namespace
