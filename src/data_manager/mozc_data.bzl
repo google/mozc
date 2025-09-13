@@ -319,7 +319,7 @@ def mozc_dataset(
     )
 
     def _get_collocation_error_rate(data_tag):
-        return 0.00001 if data_tag != "mock" else 0.000001
+        return 1e-5 if data_tag != "mock" else 1e-6
 
     native.genrule(
         name = name + "@collocation",
