@@ -597,7 +597,15 @@
             'input_files%': [
               '<(platform_data_dir)/collocation.txt',
             ],
+            'error_rate': '1e-5',
           },
+          'conditions': [
+            ['dataset_tag == "mock"', {
+              'variables': {
+                'error_rate': '1e-6',
+              },
+            }],
+          ],
           'inputs': [
             '<(generator)',
             '<@(input_files)',
@@ -609,6 +617,7 @@
             '<(generator)',
             '--collocation_data=<@(input_files)',
             '--output=<(gen_out_dir)/collocation_data.data',
+            '--error_rate=<(error_rate)',
             '--binary_mode',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
