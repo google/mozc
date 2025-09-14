@@ -71,7 +71,6 @@ mozc_cc_library(
     name = "lru_cache",
     hdrs = ["lru_cache.h"],
     visibility = [
-        "//:__subpackages__",
         "//prediction:__pkg__",
         "//rewriter:__pkg__",
         "//session:__pkg__",
