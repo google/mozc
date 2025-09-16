@@ -97,7 +97,7 @@ class UserProfileDirectoryImpl final {
 };
 
 std::string UserProfileDirectoryImpl::GetDir() {
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   if (!dir_.empty()) {
     return dir_;
   }
@@ -115,7 +115,7 @@ std::string UserProfileDirectoryImpl::GetDir() {
 }
 
 void UserProfileDirectoryImpl::SetDir(const std::string& dir) {
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   dir_ = dir;
 }
 

@@ -287,12 +287,12 @@ class PasswordManagerImpl {
   }
 
   bool InitPassword() {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     return InitPasswordUnlocked();
   }
 
   bool GetPassword(std::string* password) {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     if (password_manager_->GetPassword(password)) {
       return true;
     }
@@ -313,12 +313,12 @@ class PasswordManagerImpl {
   }
 
   bool RemovePassword() {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     return password_manager_->RemovePassword();
   }
 
   void SetPasswordManagerHandler(PasswordManagerInterface* handler) {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     password_manager_ = handler;
   }
 

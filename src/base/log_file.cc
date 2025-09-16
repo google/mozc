@@ -47,12 +47,12 @@ class LogFileSink : public absl::LogSink {
   explicit LogFileSink(const std::string& path) : file_(path) {}
 
   void Send(const absl::LogEntry& entry) override {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     file_ << entry.text_message_with_prefix_and_newline();
   }
 
   void Flush() override {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     file_.flush();
   }
 

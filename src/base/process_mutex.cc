@@ -78,7 +78,7 @@ ProcessMutex::~ProcessMutex() { UnLock(); }
 bool ProcessMutex::Lock() { return LockAndWrite(""); }
 
 bool ProcessMutex::LockAndWrite(absl::string_view message) {
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   if (locked_) {
     MOZC_VLOG(1) << filename_ << " is already locked";
     return false;
@@ -89,7 +89,7 @@ bool ProcessMutex::LockAndWrite(absl::string_view message) {
 
 // always return true at this moment.
 bool ProcessMutex::UnLock() {
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   if (!locked_) {
     MOZC_VLOG(1) << filename_ << " is not locked";
     return true;
@@ -170,7 +170,7 @@ namespace {
 class FileLockManager {
  public:
   absl::StatusOr<int> Lock(const zstring_view filename) {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
 
     if (filename.empty()) {
       return absl::InvalidArgumentError("filename is empty");
@@ -205,7 +205,7 @@ class FileLockManager {
   }
 
   absl::Status UnLock(const std::string& filename) {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     auto node = fdmap_.extract(filename);
     if (node.empty()) {
       return absl::FailedPreconditionError(
