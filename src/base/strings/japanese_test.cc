@@ -91,8 +91,8 @@ TEST(JapaneseUtilTest, KatakanaToHiragana) {
 
 TEST(JapaneseUtilTest, RomanjiToHiragana) {
   struct {
-    const char *input;
-    const char *expected;
+    const char* input;
+    const char* expected;
   } kTestCases[] = {
       {"watasinonamaehatakahashinoriyukidesu",
        "わたしのなまえはたかはしのりゆきです"},
@@ -100,7 +100,7 @@ TEST(JapaneseUtilTest, RomanjiToHiragana) {
       {"kk", "っk"},
       {"xyz", "xyz"},
   };
-  for (const auto &test_case : kTestCases) {
+  for (const auto& test_case : kTestCases) {
     std::string actual = RomanjiToHiragana(test_case.input);
     EXPECT_EQ(actual, test_case.expected);
   }
@@ -108,8 +108,8 @@ TEST(JapaneseUtilTest, RomanjiToHiragana) {
 
 TEST(JapaneseUtilTest, HiraganaToRomanji) {
   struct {
-    const char *input;
-    const char *expected;
+    const char* input;
+    const char* expected;
   } kTestCases[] = {
       {"わたしのなまえはたかはしのりゆきです",
        "watasinonamaehatakahasinoriyukidesu"},
@@ -123,7 +123,7 @@ TEST(JapaneseUtilTest, HiraganaToRomanji) {
       {"はんnにゃ", "hannnya"},
       {"xyz", "xyz"},
   };
-  for (const auto &test_case : kTestCases) {
+  for (const auto& test_case : kTestCases) {
     std::string actual = HiraganaToRomanji(test_case.input);
     EXPECT_EQ(actual, test_case.expected);
   }

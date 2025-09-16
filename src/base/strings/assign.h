@@ -54,26 +54,26 @@ namespace mozc::strings {
 // Use this function when assigning from absl::string_view or using template.
 // Continue to use std::string::operator= if the operand is known to work.
 template <typename T>
-std::string &Assign(std::string &to,
-                    T &&value) noexcept(noexcept(to = std::forward<T>(value))) {
+std::string& Assign(std::string& to,
+                    T&& value) noexcept(noexcept(to = std::forward<T>(value))) {
   static_assert(std::is_assignable_v<std::string, T>,
                 "T must be assignable to std::string.");
   to = std::forward<T>(value);
   return to;
 }
 
-inline std::string &Assign(std::string &to, const absl::string_view value) {
+inline std::string& Assign(std::string& to, const absl::string_view value) {
   to.assign(value.data(), value.size());
   return to;
 }
 
-inline std::string &Assign(std::string &to,
+inline std::string& Assign(std::string& to,
                            const std::initializer_list<char> ilist) {
   to = ilist;
   return to;
 }
 
-std::string &Assign(std::string &to, std::nullptr_t) = delete;
+std::string& Assign(std::string& to, std::nullptr_t) = delete;
 
 }  // namespace mozc::strings
 

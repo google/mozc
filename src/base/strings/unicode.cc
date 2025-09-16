@@ -40,8 +40,8 @@ namespace mozc {
 namespace strings {
 
 bool IsValidUtf8(const absl::string_view sv) {
-  const char *const last = sv.data() + sv.size();
-  for (const char *ptr = sv.data(); ptr != last;) {
+  const char* const last = sv.data() + sv.size();
+  for (const char* ptr = sv.data(); ptr != last;) {
     const utf8_internal::DecodeResult dr = utf8_internal::Decode(ptr, last);
     if (!dr.ok()) {
       return false;
