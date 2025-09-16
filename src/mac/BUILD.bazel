@@ -491,6 +491,7 @@ genrule(
               prod_macos = "",
           ) +
           ' --codesign_identity "' + CODESIGN_IDENTITY_SELECT + '"',
+    exec_compatible_with = ["@platforms//os:macos"],
     # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
     local = True,
     tags = ["manual"],
