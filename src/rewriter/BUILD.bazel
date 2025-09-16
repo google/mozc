@@ -610,9 +610,6 @@ mozc_cc_library(
     name = "variants_rewriter",
     srcs = ["variants_rewriter.cc"],
     hdrs = ["variants_rewriter.h"],
-    visibility = [
-        "//converter:__pkg__",
-    ],
     deps = [
         ":rewriter_interface",
         "//base:japanese_util",
