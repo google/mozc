@@ -134,7 +134,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
 #endif  // _WIN32
 
 #ifdef DEBUG
-  // In order to test the Session treatment (timeout/size constratins),
+  // In order to test the Session treatment (timeout/size constraints),
   // Server flags can be configurable on DEBUG build
   if (!arg.empty()) {
     arg += " ";
