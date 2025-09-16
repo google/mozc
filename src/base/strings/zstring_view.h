@@ -134,7 +134,7 @@ class basic_zstring_view {
   // Access the underlying StringViewT through the arrow operator.
   // basic_zstring_view doesn't now implement a non-const operator->() to not
   // allow operations that could break the null-termination guarantee.
-  constexpr const StringViewT* operator->() const noexcept {
+  constexpr const StringViewT* absl_nonnull operator->() const noexcept {
     return std::addressof(sv_);
   }
 
