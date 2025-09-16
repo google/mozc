@@ -92,7 +92,7 @@ class basic_zstring_view {
   // is just an alias of std::string_view in most cases, so passing a nullptr is
   // probably a bad idea anyway.
   //
-  // NOLINTNEXTLINE(runtime/explicit)
+  // NOLINTNEXTLINE(runtime/explicit, google-explicit-constructor)
   constexpr basic_zstring_view(
       const absl_nonnull const_pointer p ABSL_ATTRIBUTE_LIFETIME_BOUND)
       // This std::basic_string_view constructor overload is not noexcept.
@@ -114,7 +114,7 @@ class basic_zstring_view {
   // is necessary to accept basic_string as zstring_view because we can't add
   // an operator to std::basic_string.
   //
-  // NOLINTNEXTLINE(runtime/explicit)
+  // NOLINTNEXTLINE(runtime/explicit, google-explicit-constructor)
   constexpr basic_zstring_view(const std::basic_string<value_type> &str
                                    ABSL_ATTRIBUTE_LIFETIME_BOUND) noexcept
       // Implicitly converts to std::basic_string::operator basic_string_view(),
@@ -142,13 +142,13 @@ class basic_zstring_view {
   constexpr const StringViewT &view() const noexcept { return sv_; }
 
   // Allow implicit conversion to StringViewT.
-  // NOLINTNEXTLINE(runtime/explicit)
+  // NOLINTNEXTLINE(runtime/explicit, google-explicit-constructor)
   constexpr operator StringViewT() const noexcept { return sv_; }
 
   // Allow implicit conversion to absl::AlphaNum to use with absl::StrCat().
   // This method only works for zstring_view (not zwstring_view) because
   // absl::AlphaNum doesn't support wide characters.
-  // NOLINTNEXTLINE(runtime/explicit)
+  // NOLINTNEXTLINE(runtime/explicit, google-explicit-constructor)
   operator absl::AlphaNum() const noexcept { return sv_; }
 
   // c_str() and data() return a pointer to the null-terminated StringViewT.
