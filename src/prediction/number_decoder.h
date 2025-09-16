@@ -157,9 +157,6 @@ class NumberDecoder {
   explicit NumberDecoder(
       const dictionary::PosMatcher& pos_matcher ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
-  NumberDecoder(NumberDecoder&&) = default;
-  NumberDecoder& operator=(NumberDecoder&&) = default;
-
   std::vector<NumberDecoderResult> Decode(absl::string_view key) const;
 
   std::vector<Result> Decode(const ConversionRequest& request) const;
