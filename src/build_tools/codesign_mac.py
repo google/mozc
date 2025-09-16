@@ -128,7 +128,7 @@ def ParseOption():
                     default=False)
   parser.add_option("--verify", dest="verify", action="store_true",
                     default=False)
-  parser.add_option("--notaraize_only", dest="notarize_only",
+  parser.add_option("--notarize_only", dest="notarize_only",
                     action="store_true", default=False)
   parser.add_option("--output", dest="output")
   (options, unused_args) = parser.parse_args()
