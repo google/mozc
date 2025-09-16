@@ -97,7 +97,7 @@ BlockBitmapBuilder::BlockBitmapBuilder(uint32_t size) {
 
 std::string::iterator BlockBitmapBuilder::SerializeTo(
     std::string::iterator it) {
-  for (const auto& block : blocks_) {
+  for (const std::vector<uint32_t>& block : blocks_) {
     for (const uint32_t i : block) {
       it = StoreUnaligned<uint32_t>(i, it);
     }
@@ -108,7 +108,7 @@ std::string::iterator BlockBitmapBuilder::SerializeTo(
 BlockBitmap BlockBitmapBuilder::Build() const {
   std::vector<absl::Span<const uint32_t>> blocks;
   blocks.reserve(blocks_.size());
-  for (const auto& block : blocks_) {
+  for (const std::vector<uint32_t>& block : blocks_) {
     blocks.push_back(block);
   }
   return BlockBitmap(std::move(blocks));
@@ -202,11 +202,11 @@ ExistenceFilterBuilder ExistenceFilterBuilder::CreateOptimal(
   CHECK_LT(size_in_bytes, (1 << 29)) << "Requested size is too big";
   CHECK_GT(estimated_insertions, 0);
   CHECK_LT(fp_type, ExistenceFilterParams::FP_TYPE_SIZE);
-  const uint32_t m = std::max<size_t>(1, size_in_bytes * 8);
+  const uint32_t m = std::max<uint32_t>(1, size_in_bytes * 8);
   const uint32_t n = estimated_insertions;
 
   uint16_t optimal_k =
-      static_cast<int>((static_cast<float>(m) / n * log(2.0)) + 0.5);
+      static_cast<uint16_t>(std::round(static_cast<float>(m) / n * log(2.0)));
   optimal_k = std::clamp<uint16_t>(optimal_k, 1, 7);
 
   MOZC_VLOG(1) << "optimal_k: " << optimal_k;

@@ -29,7 +29,6 @@
 
 #include "storage/existence_filter.h"
 
-#include <concepts>
 #include <cstdint>
 #include <cstring>
 #include <iterator>

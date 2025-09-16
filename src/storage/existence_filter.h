@@ -30,6 +30,7 @@
 #ifndef MOZC_STORAGE_EXISTENCE_FILTER_H_
 #define MOZC_STORAGE_EXISTENCE_FILTER_H_
 
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
@@ -41,6 +42,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/hash.h"
 
