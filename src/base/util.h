@@ -247,9 +247,6 @@ class Util {
   // Returns true if all characters of `str` are ASCII (U+00 - U+7F).
   static bool IsAscii(absl::string_view str);
 
-  // Returns true if all characters of `str` are JIS X 0208.
-  static bool IsJisX0208(absl::string_view str);
-
   // Serializes uint64_t into a string of eight byte.
   static std::string SerializeUint64(uint64_t x);
 

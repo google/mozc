@@ -871,42 +871,6 @@ TEST(UtilTest, IsAscii) {
   EXPECT_FALSE(Util::IsAscii("\x80"));
 }
 
-TEST(UtilTest, IsJisX0208) {
-  EXPECT_TRUE(Util::IsJisX0208("\u007F"));
-  EXPECT_FALSE(Util::IsJisX0208("\u0080"));
-
-  EXPECT_TRUE(Util::IsJisX0208("あいうえお"));
-  EXPECT_TRUE(Util::IsJisX0208("abc"));
-  EXPECT_TRUE(Util::IsJisX0208("abcあいう"));
-
-  // half width katakana
-  EXPECT_TRUE(Util::IsJisX0208("ｶﾀｶﾅ"));
-  EXPECT_TRUE(Util::IsJisX0208("ｶﾀｶﾅカタカナ"));
-
-  // boundary edges
-  EXPECT_TRUE(Util::IsJisX0208("ﾟ"));  // U+FF9F, the last char of JIS X 0208
-  EXPECT_TRUE(Util::IsJisX0208("\uFF9F"));   // U+FF9F
-  EXPECT_FALSE(Util::IsJisX0208("\uFFA0"));  // U+FF9F + 1
-  EXPECT_FALSE(Util::IsJisX0208("\uFFFF"));
-  EXPECT_FALSE(Util::IsJisX0208("\U00010000"));
-
-  // JIS X 0213
-  EXPECT_FALSE(Util::IsJisX0208("Ⅰ"));
-  EXPECT_FALSE(Util::IsJisX0208("①"));
-  EXPECT_FALSE(Util::IsJisX0208("㊤"));
-
-  // only in CP932
-  EXPECT_FALSE(Util::IsJisX0208("凬"));
-
-  // only in Unicode
-  EXPECT_FALSE(Util::IsJisX0208("￦"));
-
-  // SIP range (U+20000 - U+2FFFF)
-  EXPECT_FALSE(Util::IsJisX0208("𠮟"));  // U+20B9F
-  EXPECT_FALSE(Util::IsJisX0208("𪚲"));  // U+2A6B2
-  EXPECT_FALSE(Util::IsJisX0208("𠮷"));  // U+20BB7
-}
-
 TEST(UtilTest, IsKanaSymbolContained) {
   const std::string kFullstop("。");
   const std::string kSpace(" ");
