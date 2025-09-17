@@ -590,7 +590,12 @@ genrule(
         "/usr/bin/codesign",
         "--timestamp --options=runtime",  # For notarization
         "--keychain login.keychain",
-    ]) + ' --sign "' + CODESIGN_IDENTITY_SELECT + '"' + " $@",
+    ]) +
+    # mozc_select cannot be in join, as it's treated as a function rather than a string.
+    mozc_select(
+        default = " --identifier Mozc",
+        prod = " --identifier GoogleJapaneseInput",
+    ) + ' --sign "' + CODESIGN_IDENTITY_SELECT + '"' + " $@",
     exec_compatible_with = ["@platforms//os:macos"],
     # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
     local = True,
