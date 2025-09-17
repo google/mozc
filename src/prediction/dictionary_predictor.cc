@@ -308,6 +308,20 @@ void DictionaryPredictor::MaybeApplyPostCorrection(
   if (request_util::IsHandwriting(request)) {
     return;
   }
+
+  // Demotes the partial candidates so that the top
+  // `top_n` results are non-partial candidates.
+  const commands::DecoderExperimentParams& params =
+      request.request().decoder_experiment_params();
+
+  DemoteFirstN(absl::MakeSpan(results), params.demote_partial_candidate_top_n(),
+               [&params](const Result& result) {
+                 return (result.candidate_attributes &
+                         converter::Attribute::PARTIALLY_KEY_CONSUMED) &&
+                        Util::CharsLen(result.value) <=
+                            params.demote_partial_candidate_max_length();
+               });
+
   modules_.GetSupplementalModel().PostCorrect(request, results);
 }
 

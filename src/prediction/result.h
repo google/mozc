@@ -220,6 +220,56 @@ void PopulateTypeCorrectedQuery(
 // Makes debug string from `types`.
 std::string GetPredictionTypeDebugString(PredictionTypes types);
 
+// Demotes elements in `results` that match a given predicate (pred).
+// Specifically, it reorders candidates so that no matching elements appear
+// within the top N positions. If the number of matched elements is greater than
+// results.size() - N, some demoted elements might still end up within the top N
+// positions.  The relative ranking of both the matched and unmatched elements
+// remains unchanged. This is useful for preventing inappropriate elements from
+// appearing in the top candidates.
+//
+// Example: (K: keep, D: demote)
+// [K1, D1, K2, K3, D2, K4, K5 ] -> [K1, K2, K3, D1, D2, K4, K5]  (N = 3)
+template <typename T, typename Pred>
+void DemoteFirstN(absl::Span<T> results, size_t N, Pred pred) {
+  if (results.empty() || N == 0) return;
+
+  std::vector<size_t> demoted;
+  size_t last_pos = 0;
+
+  // remembers the index to be demoted.
+  for (last_pos = 0; last_pos < results.size(); ++last_pos) {
+    if (pred(results[last_pos])) {
+      demoted.emplace_back(last_pos);
+    } else if (N-- == 0) {
+      break;
+    }
+  }
+
+  if (demoted.empty()) return;
+
+  std::vector<T> temp;
+  temp.reserve(demoted.size());
+
+  // moves the unmatched elements to `results`.
+  auto demoted_iter = demoted.begin();
+  size_t write_pos = 0;
+  for (size_t read_pos = 0; read_pos < last_pos; ++read_pos) {
+    if (demoted_iter != demoted.end() && read_pos == *demoted_iter) {
+      temp.emplace_back(std::move(results[read_pos]));
+      ++demoted_iter;
+    } else {
+      if (write_pos != read_pos) {
+        results[write_pos] = std::move(results[read_pos]);
+      }
+      ++write_pos;
+    }
+  }
+
+  // Inserts the matched element to `results`.
+  std::move(temp.begin(), temp.end(), results.begin() + write_pos);
+}
+
 #ifndef NDEBUG
 #define MOZC_WORD_LOG(result, ...)                                  \
   {                                                                 \

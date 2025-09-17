@@ -546,7 +546,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 126
+// Next ID: 128
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -648,6 +648,13 @@ message DecoderExperimentParams {
   // The maximum size of entries actually saved to disk.
   // When zero, store all entries in the on-memory LRU.
   optional int32 user_history_cache_store_size = 110 [default = 0];
+
+  // Demotes the partial candidates so that the top_n results must
+  // be non-partial candidates.
+  optional int32 demote_partial_candidate_top_n = 126 [ default = 0];
+  // Maximum length of partial candidates. When 1, only demote
+  // single-value candidates.
+  optional int32 demote_partial_candidate_max_length = 127 [ default = 0];
 }
 
 // Clients' request to the server.
