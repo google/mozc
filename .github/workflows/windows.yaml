@@ -4,7 +4,8 @@ name: CI for Windows
 # Run on push.
 on: push
 
-permissions: read-all
+permissions:
+  contents: read
 
 # Prevent previous workflows from running.
 concurrency:
