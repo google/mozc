@@ -63,6 +63,8 @@ def _GetSha1Digest(file_path):
   with open(file_path, 'rb') as f:
     data = f.read()
     sha.update(data)
+  # NOTE: The linter complains that sha1 gets too many args.
+  # pylint: disable=too-many-function-args
   return sha.digest()
 
 
@@ -90,7 +92,7 @@ def _VersioningFile(version_string, is_debug, file_path):
   sha1_digest = _GetSha1Digest(new_file_path)
   sha1_hash = base64.b64encode(sha1_digest).decode('latin1')
   sha1_hash_hex = sha1_digest.hex()
-  with open('%s.info' % new_file_path, 'w') as output:
+  with open('%s.info' % new_file_path, 'w', newline='\n') as output:
     output.write('package\t%s\n' % package)
     output.write('build_id\t%s\n' % build_id)
     output.write('version\t%s\n' % version_string)
