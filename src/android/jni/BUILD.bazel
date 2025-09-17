@@ -70,6 +70,11 @@ mozc_cc_library(
 mozc_cc_binary(
     name = "mozc",
     srcs = [],
+    linkopts = [
+        # 16 KB page size support is a requirement to target Android 15+.
+        # https://developer.android.com/guide/practices/page-sizes
+        "-Wl,-z,max-page-size=16384",
+    ],
     linkshared = 1,
     tags = MOZC_TAGS.ANDROID_ONLY,
     target_compatible_with = _TARGET_COMPATIBLE_WITH,
