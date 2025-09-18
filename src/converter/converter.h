@@ -81,6 +81,7 @@ class Converter final : public ConverterInterface {
             const ImmutableConverterFactory& immutable_converter_factory,
             const PredictorFactory& predictor_factory,
             const RewriterFactory& rewriter_factory);
+  Converter() = delete;
 
   [[nodiscard]]
   bool StartConversion(const ConversionRequest& request,
@@ -181,8 +182,6 @@ class Converter final : public ConverterInterface {
   static prediction::Result MakeHistoryResult(const Segments& segments);
 
  private:
-  Converter() = default;
-
   friend class ConverterTestPeer;
 
   // Complete Left id/Right id if they are not defined.
