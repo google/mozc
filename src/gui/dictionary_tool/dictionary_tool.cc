@@ -433,7 +433,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   // Qt::CTRL = Command key
   // Command+Backspace = delete
   QShortcut *shortcut2 =
-      new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Backspace), dic_content_);
+      new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Backspace), dic_content_);
   connect(shortcut1, SIGNAL(activated()), this, SLOT(DeleteWord()));
   connect(shortcut2, SIGNAL(activated()), this, SLOT(DeleteWord()));
 #else   // __APPLE__
