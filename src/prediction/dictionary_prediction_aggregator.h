@@ -73,7 +73,7 @@ class DictionaryPredictionAggregatorInterface {
 class DictionaryPredictionAggregator
     : public DictionaryPredictionAggregatorInterface {
  public:
-  DictionaryPredictionAggregator() = default;
+  DictionaryPredictionAggregator() = delete;
   DictionaryPredictionAggregator(const DictionaryPredictionAggregator&) =
       delete;
 
@@ -90,14 +90,14 @@ class DictionaryPredictionAggregator
       const ConversionRequest& request) const;
 
   // These methods will be moved to DesktopPredictor and MixedDecodingPredictor.
-  virtual std::vector<Result> AggregateResultsForMixedConversion(
-      const ConversionRequest& request) const;
+  std::vector<Result> AggregateResultsForMixedConversion(
+      const ConversionRequest& request) const override;
 
-  virtual std::vector<Result> AggregateResultsForDesktop(
-      const ConversionRequest& request) const;
+  std::vector<Result> AggregateResultsForDesktop(
+      const ConversionRequest& request) const override;
 
-  virtual std::vector<Result> AggregateTypingCorrectedResultsForMixedConversion(
-      const ConversionRequest& request) const;
+  std::vector<Result> AggregateTypingCorrectedResultsForMixedConversion(
+      const ConversionRequest& request) const override;
 
  private:
   struct HandwritingQueryInfo {
@@ -229,7 +229,7 @@ class DictionaryPredictionAggregator
   static bool ShouldAggregateRealTimeConversionResults(
       const ConversionRequest& request);
 
-  // Returns true if key consistes of '0'-'9' or '-'
+  // Returns true if key consists of '0'-'9' or '-'
   static bool IsZipCodeRequest(absl::string_view key);
 
   // Returns max size of realtime candidates.
