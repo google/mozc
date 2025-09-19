@@ -144,8 +144,6 @@ class TestServerLauncher : public ServerLauncherInterface {
     return placeholder_server_program_path_;
   }
 
-  void set_restricted(bool restricted) override {}
-
   void set_suppress_error_dialog(bool suppress) override {}
 
   void set_start_server_result(const bool result) {
@@ -937,8 +935,6 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
   void OnFatal(ServerLauncherInterface::ServerErrorType type) override {}
 
   void set_server_program(const absl::string_view server_path) override {}
-
-  void set_restricted(bool restricted) override {}
 
   void set_suppress_error_dialog(bool suppress) override {}
 
