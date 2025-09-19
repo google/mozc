@@ -54,10 +54,6 @@ inline uint64_t CityFingerprintWithSeed(absl::string_view str, uint64_t seed) {
                                                    seed);
 }
 
-inline uint32_t CityFingerprint32(absl::string_view str) {
-  return ::absl::hash_internal::CityHash32(str.data(), str.size());
-}
-
 // Legacy Fingerprint Functions
 // These are about 5-7 times slower than CityFingerprint.
 // Do not use legacy Fingerprint in new code.

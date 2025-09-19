@@ -40,17 +40,14 @@ namespace {
 // Tests to confirm the behavior of CityHash.
 TEST(HashTest, CityFingerprint) {
   std::string s = "";
-  EXPECT_EQ(CityFingerprint32(s), 0xdc56d17a);
   EXPECT_EQ(CityFingerprint(s), 0x9ae16a3b2f90404f);
   EXPECT_EQ(CityFingerprintWithSeed(s, 0xdeadbeef), 0xa124a921b10cc2f);
 
   s = "google";
-  EXPECT_EQ(CityFingerprint32(s), 0x677bd5b);
   EXPECT_EQ(CityFingerprint(s), 0xae26cdb9998ac502);
   EXPECT_EQ(CityFingerprintWithSeed(s, 0xdeadbeef), 0xce10609e8e3ef7fb);
 
   s = "Hello, world!  Hello, Tokyo!  Good afternoon!  Ladies and gentlemen.";
-  EXPECT_EQ(CityFingerprint32(s), 0x79547dff);
   EXPECT_EQ(CityFingerprint(s), 0x8477e610cd1108ce);
   EXPECT_EQ(CityFingerprintWithSeed(s, 0xdeadbeef), 0xdc8878e5c23ac13f);
 }
