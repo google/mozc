@@ -174,7 +174,7 @@ class TableManager {
   //  config::Config::PreeditMethod
   //  config::Config::PunctuationMethod
   //  config::Config::SymbolMethod
-  absl::flat_hash_map<uint32_t, std::shared_ptr<const Table>> table_map_;
+  absl::flat_hash_map<size_t, std::shared_ptr<const Table>> table_map_;
   // Fingerprint for Config::custom_roman_table;
   uint32_t custom_roman_table_fingerprint_;
 };

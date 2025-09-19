@@ -574,7 +574,7 @@ std::shared_ptr<const Table> TableManager::GetTable(
     const mozc::commands::Request& request,
     const mozc::config::Config& config) {
   // calculate the hash depending on the request and the config
-  const uint32_t hash =
+  const size_t hash =
       absl::HashOf(request.special_romanji_table(), config.preedit_method(),
                    config.punctuation_method(), config.symbol_method());
 
