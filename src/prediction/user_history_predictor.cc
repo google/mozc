@@ -1463,7 +1463,7 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     uint32_t request_key_len, const Entry& entry) {
   if (IsMixedConversionEnabled(request)) {
     // Don't show long history for mixed conversion
-    if (entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8) {
+    if (entry.suggestion_freq() <= 1 && Util::CharsLen(entry.value()) >= 9) {
       MOZC_VLOG(2) << "long candidate: " << entry.value();
       return ResultType::BAD_RESULT;
     }
@@ -1477,11 +1477,9 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
       return ResultType::GOOD_RESULT;
     }
 
-    // TODO(taku,komatsu): better to make it simpler and easier to be
-    // understood.
-    const uint32_t freq = entry.suggestion_freq();
-    const uint32_t base_prefix_len = 3 - std::min<uint32_t>(2, freq);
-    if (request_key_len >= base_prefix_len) {
+    // Accepts short key prefix only when the frequency is >= 2.
+    const uint32_t min_prefix_len = entry.suggestion_freq() >= 2 ? 1 : 2;
+    if (request_key_len >= min_prefix_len) {
       return ResultType::GOOD_RESULT;
     }
 
