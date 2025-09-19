@@ -432,10 +432,6 @@ void Client::EnableCascadingWindow(const bool enable) {
 
 void Client::set_timeout(absl::Duration timeout) { timeout_ = timeout; }
 
-void Client::set_restricted(bool restricted) {
-  server_launcher_->set_restricted(restricted);
-}
-
 void Client::set_server_program(const absl::string_view program_path) {
   server_launcher_->set_server_program(program_path);
 }

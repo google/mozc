@@ -97,7 +97,6 @@ const std::string LoadServerFlags() {
 // initialize default path
 ServerLauncher::ServerLauncher()
     : server_program_(SystemUtil::GetServerPath()),
-      restricted_(false),
       suppress_error_dialog_(false) {}
 
 ServerLauncher::~ServerLauncher() = default;
@@ -127,7 +126,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
   // with restricted mode.
 
   const bool process_in_job = RunLevel::IsProcessInJob();
-  if (process_in_job || restricted_) {
+  if (process_in_job) {
     LOG(WARNING) << "Parent process is in job. start with restricted mode";
     arg += "--restricted";
   }
