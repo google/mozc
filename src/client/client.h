@@ -173,6 +173,12 @@ class Client : public ClientInterface {
 
   bool OpenBrowser(const std::string &url) override;
 
+  // The most primitive Call method
+  // This method won't change the server_status_ even
+  // when version mismatch happens. In this case,
+  // just return false.
+  bool Call(const commands::Input &input, commands::Output *output);
+
  private:
   friend class ClientTestPeer;
 
@@ -215,12 +221,6 @@ class Client : public ClientInterface {
   // This method automatically re-launch mozc_server and
   // re-issue session id if it is not available.
   bool EnsureCallCommand(commands::Input *input, commands::Output *output);
-
-  // The most primitive Call method
-  // This method won't change the server_status_ even
-  // when version mismatch happens. In this case,
-  // just return false.
-  bool Call(const commands::Input &input, commands::Output *output);
 
   // first invoke Call() command and check the
   // protocol_version. When protocol version mismatch,
