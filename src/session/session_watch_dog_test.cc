@@ -59,7 +59,7 @@ class TestCPUStats : public CPUStatsInterface {
   }
 
   float GetSystemCPULoad() override {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     CHECK_GT(cpu_loads_.size(), 0);
     float load = cpu_loads_.back();
     cpu_loads_.pop_back();
@@ -71,7 +71,7 @@ class TestCPUStats : public CPUStatsInterface {
   size_t GetNumberOfProcessors() const override { return size_t{1}; }
 
   void Set(std::vector<float> cpu_loads) {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     cpu_loads_ = std::move(cpu_loads);
     std::reverse(cpu_loads_.begin(), cpu_loads_.end());
   }
