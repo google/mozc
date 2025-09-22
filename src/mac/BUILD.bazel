@@ -588,6 +588,8 @@ genrule(
         "cp $(location :diskimage) $@ &&",
         "chmod u+w $@ &&",
         "/usr/bin/codesign",
+        "--force --verbose",
+        "--deep",  # Recursive signs
         "--timestamp --options=runtime",  # For notarization
         "--keychain login.keychain",
     ]) +
