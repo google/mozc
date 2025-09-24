@@ -199,7 +199,10 @@ def Codesign(top_dir: str, identity: str) -> None:
       util.RunOrDie(codesign)
 
   # codesign apps
-  for cur_dir, dirs, _ in os.walk(top_dir):  # symbolic links are not followed.
+  # Walk the directory from the bottom to the top. This is necessary because
+  # the sub apps should be signed before the main app.
+  # Note, os.walk does not folow symbolic links.
+  for cur_dir, dirs, _ in os.walk(top_dir, topdown=False):
     for dir_name in dirs:
       path = os.path.join(cur_dir, dir_name)
       if dir_name.endswith('.app') and not os.path.islink(path):
