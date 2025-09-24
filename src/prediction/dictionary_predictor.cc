@@ -309,8 +309,14 @@ void DictionaryPredictor::MaybeApplyPostCorrection(
     return;
   }
 
+  // Apply PostCorrection.
+  modules_.GetSupplementalModel().PostCorrect(request, results);
+
   // Demotes the partial candidates so that the top
   // `top_n` results are non-partial candidates.
+  // Note that the candidates boosted with literal-at-least-second might
+  // be demoted with this treatment.
+  // TODO(taku): Better to promote non-partial candidate to second position.
   const commands::DecoderExperimentParams& params =
       request.request().decoder_experiment_params();
 
@@ -321,8 +327,6 @@ void DictionaryPredictor::MaybeApplyPostCorrection(
                         Util::CharsLen(result.value) <=
                             params.demote_partial_candidate_max_length();
                });
-
-  modules_.GetSupplementalModel().PostCorrect(request, results);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(
