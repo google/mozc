@@ -47,7 +47,10 @@ def RunOrDie(command):
     print(output.decode("utf-8"), file=sys.stderr)
   except subprocess.CalledProcessError as e:
     print("==========", file=sys.stderr)
-    print(e.output, file=sys.stderr)
+    output = e.output
+    if isinstance(output, bytes):
+      output = output.decode("utf-8")
+    print(output, file=sys.stderr)
     print("==========", file=sys.stderr)
     sys.exit(1)
 
