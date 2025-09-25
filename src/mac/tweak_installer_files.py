@@ -205,7 +205,9 @@ def Codesign(top_dir: str, identity: str) -> None:
   for cur_dir, dirs, _ in os.walk(top_dir, topdown=False):
     for dir_name in dirs:
       path = os.path.join(cur_dir, dir_name)
-      if dir_name.endswith('.app') and not os.path.islink(path):
+      ext = os.path.splitext(dir_name)[1]
+      is_app = ext in ['.app', '.bundle', '.framework']
+      if is_app and not os.path.islink(path):
         codesign = ['/usr/bin/codesign', *args, path]
         util.RunOrDie(codesign)
 
