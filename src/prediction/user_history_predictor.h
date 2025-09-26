@@ -204,7 +204,6 @@ class UserHistoryPredictor : public PredictorInterface {
   enum class ResultType {
     GOOD_RESULT,
     BAD_RESULT,
-    STOP_ENUMERATION,  // Do not insert and stop enumerations
   };
 
   // Returns true if this predictor should return results for the input.
@@ -243,7 +242,6 @@ class UserHistoryPredictor : public PredictorInterface {
   static bool HasBigramEntry(const Entry& entry, const Entry& prev_entry);
 
   static ResultType GetResultType(const ConversionRequest& request,
-                                  bool is_top_candidate,
                                   uint32_t request_key_len, const Entry& entry);
 
   // Returns true if entry is DEFAULT_ENTRY, satisfies certain conditions, and

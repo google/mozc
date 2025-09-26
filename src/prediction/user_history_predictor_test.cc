@@ -1334,6 +1334,14 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
   predictor->ClearAllHistory();
   WaitForSyncer(predictor);
 
+  {
+    SegmentsProxy segments_proxy;
+    const ConversionRequest convreq1 =
+        SetUpInputForSuggestion("t", &composer_, &segments_proxy);
+    results = predictor->Predict(convreq1);
+    EXPECT_TRUE(results.empty());
+  }
+
   // input "testtest" 1 time
   for (int i = 0; i < 1; ++i) {
     SegmentsProxy segments_proxy;
@@ -1349,12 +1357,6 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
     const ConversionRequest convreq1 =
         SetUpInputForSuggestion("t", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
-    EXPECT_TRUE(results.empty());
-
-    segments_proxy.Clear();
-    const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("testte", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
   }
 }
@@ -1752,7 +1754,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   const ConversionRequest convreq2 =
       SetUpInputForSuggestion("た", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
-  EXPECT_TRUE(results.empty());
+  EXPECT_FALSE(results.empty());  // "たろう"
 
   segments_proxy.Clear();
   const ConversionRequest convreq3 =
@@ -1867,7 +1869,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   const ConversionRequest convreq3 =
       SetUpInputForSuggestion("た", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
-  EXPECT_TRUE(results.empty());
+  EXPECT_FALSE(results.empty());  // たろうは
 
   segments_proxy.Clear();
   const ConversionRequest convreq4 =
@@ -2444,38 +2446,17 @@ TEST_F(UserHistoryPredictorTest, GetResultType) {
             .SetRequestType(ConversionRequest::SUGGESTION)
             .Build();
 
+    // Always return GOOD_RESULT
     entry.set_bigram_boost(true);
-    EXPECT_EQ(
-        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
-        ResultType::GOOD_RESULT);
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
+              ResultType::GOOD_RESULT);
 
     entry.set_bigram_boost(false);
-
-    // const uint32_t freq = entry.suggestion_freq();
-    // const uint32_t base_prefix_len = 3 - std::min<uint32_t>(2, freq);
-    // if (request_key_len >= base_prefix_len) {
-    // 3 >= 3 - min(2, 1) -> OK
     entry.set_suggestion_freq(1);
-    EXPECT_EQ(
-        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 3, entry),
-        ResultType::GOOD_RESULT);
-
-    // 1 >= 3 - min(2, 1) ->  NG
-    entry.set_suggestion_freq(1);
-    EXPECT_EQ(
-        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
-        ResultType::BAD_RESULT);
-
-    // 1 >= 3 - min(2, 2) -> OK
-    entry.set_suggestion_freq(1);
-    EXPECT_EQ(
-        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
-        ResultType::BAD_RESULT);
-
-    entry.set_suggestion_freq(1);
-    EXPECT_EQ(
-        UserHistoryPredictorTestPeer::GetResultType(convreq, true, 1, entry),
-        ResultType::STOP_ENUMERATION);
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 3, entry),
+              ResultType::GOOD_RESULT);
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
+              ResultType::GOOD_RESULT);
   }
 
   // mobile
@@ -2488,21 +2469,18 @@ TEST_F(UserHistoryPredictorTest, GetResultType) {
     // entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8
     entry.set_suggestion_freq(1);
     entry.set_value("よろしく");
-    EXPECT_EQ(
-        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
-        ResultType::GOOD_RESULT);
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
+              ResultType::GOOD_RESULT);
 
     entry.set_suggestion_freq(2);                 // high freq
     entry.set_value("よろしくおねがいします。");  // too long
-    EXPECT_EQ(
-        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
-        ResultType::GOOD_RESULT);
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
+              ResultType::GOOD_RESULT);
 
     entry.set_suggestion_freq(1);                 // low freq
     entry.set_value("よろしくおねがいします。");  // too long
-    EXPECT_EQ(
-        UserHistoryPredictorTestPeer::GetResultType(convreq, false, 1, entry),
-        ResultType::BAD_RESULT);
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
+              ResultType::BAD_RESULT);
   }
 }
 

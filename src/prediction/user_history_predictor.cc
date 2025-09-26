@@ -1459,8 +1459,8 @@ void UserHistoryPredictor::GetInputKeyFromRequest(
 }
 
 UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
-    const ConversionRequest& request, bool is_top_candidate,
-    uint32_t request_key_len, const Entry& entry) {
+    const ConversionRequest& request, uint32_t request_key_len,
+    const Entry& entry) {
   if (IsMixedConversionEnabled(request)) {
     // Don't show long history for mixed conversion
     if (entry.suggestion_freq() <= 1 && Util::CharsLen(entry.value()) >= 9) {
@@ -1470,35 +1470,7 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     return ResultType::GOOD_RESULT;
   }
 
-  if (request.request_type() == ConversionRequest::SUGGESTION) {
-    // When bigram_boost is true, that means that previous user input
-    // and current input have bigram relation.
-    if (entry.bigram_boost()) {
-      return ResultType::GOOD_RESULT;
-    }
-
-    // Accepts short key prefix only when the frequency is >= 2.
-    const uint32_t min_prefix_len = entry.suggestion_freq() >= 2 ? 1 : 2;
-    if (request_key_len >= min_prefix_len) {
-      return ResultType::GOOD_RESULT;
-    }
-
-    // The top result of suggestion should be a VALID suggestion candidate.
-    // i.e., SuggestionTriggerFunc should return true for the first
-    // candidate.
-    // If user types "デスノート" too many times, "デスノート" will be
-    // suggested when user types "で". It is expected, but if user types
-    // "です" after that,  showing "デスノート" is annoying.
-    // In this situation, "です" is in the LRU, but SuggestionTriggerFunc
-    // returns false for "です", since it is short.
-    if (is_top_candidate) {
-      MOZC_VLOG(2) << "candidates size is 0";
-      return ResultType::STOP_ENUMERATION;
-    }
-
-    return ResultType::BAD_RESULT;
-  }
-
+  // No suppression rule on desktop for the sake of simplicity.
   return ResultType::GOOD_RESULT;
 }
 
@@ -1514,7 +1486,6 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
   }
   const uint32_t request_key_len = Util::CharsLen(request.key());
 
-  size_t inserted_num = 0;
   size_t inserted_char_coverage = 0;
 
   std::vector<const UserHistoryPredictor::Entry*> entries;
@@ -1557,7 +1528,7 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     return true;
   };
 
-  while (inserted_num < max_prediction_size) {
+  while (entries.size() < max_prediction_size) {
     // |entry_queue| is a priority queue where the element
     // in the queue is sorted by the score defined in GetScore().
     const Entry* result_entry = entry_queue->Pop();
@@ -1566,11 +1537,8 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
       break;
     }
 
-    const ResultType result =
-        GetResultType(request, entries.empty(), request_key_len, *result_entry);
-    if (result == ResultType::STOP_ENUMERATION) {
-      break;
-    } else if (result == ResultType::BAD_RESULT) {
+    if (GetResultType(request, request_key_len, *result_entry) ==
+        ResultType::BAD_RESULT) {
       continue;
     }
 
@@ -1583,14 +1551,12 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     // Break when the accumulated character length exceeds the
     // `max_prediction_char_coverage`. Allows to add at least one candidate.
     const size_t value_len = Util::CharsLen(result_entry->value());
-    if (max_prediction_char_coverage > 0 && inserted_num > 0 &&
+    if (max_prediction_char_coverage > 0 && !entries.empty() &&
         inserted_char_coverage + value_len > max_prediction_char_coverage) {
       break;
     }
 
     entries.emplace_back(result_entry);
-
-    ++inserted_num;
     inserted_char_coverage += value_len;
   }
 
