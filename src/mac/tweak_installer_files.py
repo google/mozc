@@ -188,7 +188,14 @@ def Codesign(top_dir: str, identity: str) -> None:
       shutil.rmtree(os.path.join(cur_dir, dir_name))
       dirs.remove(dir_name)  # skip walking the removed directory.
 
-  args = ['--force', '--sign', identity, '--keychain', 'login.keychain']
+  args = [
+      '--force',
+      '--options=runtime',
+      '--sign',
+      identity,
+      '--keychain',
+      'login.keychain',
+  ]
 
   # codesign libqcocoa.dylib
   file_name = 'libqcocoa.dylib'
