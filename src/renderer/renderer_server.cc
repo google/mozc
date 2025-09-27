@@ -102,6 +102,20 @@ class RendererServerSendCommand : public client::SendCommandInterface {
       // Unsupported command.
       return false;
     }
+
+    HWND target = WinUtil::DecodeWindowHandle(receiver_handle_);
+    if (target == nullptr) {
+      LOG(ERROR) << "target window is nullptr";
+      return false;
+    }
+    UINT mozc_msg = ::RegisterWindowMessageW(kMessageReceiverMessageName);
+    if (mozc_msg == 0) {
+      LOG(ERROR) << "RegisterWindowMessage failed: " << ::GetLastError();
+      return false;
+    }
+    WPARAM type = static_cast<WPARAM>(command.type());
+    LPARAM id = static_cast<LPARAM>(command.id());
+    ::PostMessage(target, mozc_msg, type, id);
 #endif  // _WIN32
 
     // TODO(all): implementation for Mac/Linux
