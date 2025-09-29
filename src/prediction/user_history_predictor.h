@@ -200,12 +200,6 @@ class UserHistoryPredictor : public PredictorInterface {
     NOT_FOUND,
   };
 
-  // Result type for IsValidCandidate() check.
-  enum class ResultType {
-    GOOD_RESULT,
-    BAD_RESULT,
-  };
-
   // Returns true if this predictor should return results for the input.
   bool ShouldPredict(const ConversionRequest& request) const;
 
@@ -241,8 +235,9 @@ class UserHistoryPredictor : public PredictorInterface {
   // Returns true if prev_entry has a next_fp link to entry
   static bool HasBigramEntry(const Entry& entry, const Entry& prev_entry);
 
-  static ResultType GetResultType(const ConversionRequest& request,
-                                  uint32_t request_key_len, const Entry& entry);
+  // Returns true if `entry` is valid.
+  static bool IsValidResult(const ConversionRequest& request,
+                            uint32_t request_key_len, const Entry& entry);
 
   // Returns true if entry is DEFAULT_ENTRY, satisfies certain conditions, and
   // doesn't have removed flag.

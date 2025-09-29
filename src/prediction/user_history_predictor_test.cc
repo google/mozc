@@ -108,7 +108,7 @@ class UserHistoryPredictorTestPeer
 
   PEER_STATIC_METHOD(GetScore);
   PEER_STATIC_METHOD(GetMatchType);
-  PEER_STATIC_METHOD(GetResultType);
+  PEER_STATIC_METHOD(IsValidResult);
   PEER_STATIC_METHOD(RomanFuzzyPrefixMatch);
   PEER_STATIC_METHOD(MaybeRomanMisspelledKey);
   PEER_STATIC_METHOD(GetRomanMisspelledKey);
@@ -131,7 +131,6 @@ class UserHistoryPredictorTestPeer
   PEER_DECLARE(MatchType);
   PEER_DECLARE(RemoveNgramChainResult);
   PEER_DECLARE(EntryPriorityQueue);
-  PEER_DECLARE(ResultType);
 };
 
 // Needs to call UpdateHistoryResult() to update history_result_.
@@ -2431,10 +2430,8 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 }
 
-TEST_F(UserHistoryPredictorTest, GetResultType) {
+TEST_F(UserHistoryPredictorTest, IsValidResult) {
   UserHistoryPredictor::Entry entry;
-
-  using ResultType = UserHistoryPredictorTestPeer::ResultType;
 
   // desktop
   {
@@ -2448,15 +2445,12 @@ TEST_F(UserHistoryPredictorTest, GetResultType) {
 
     // Always return GOOD_RESULT
     entry.set_bigram_boost(true);
-    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
-              ResultType::GOOD_RESULT);
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, 1, entry));
 
     entry.set_bigram_boost(false);
     entry.set_suggestion_freq(1);
-    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 3, entry),
-              ResultType::GOOD_RESULT);
-    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
-              ResultType::GOOD_RESULT);
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, 3, entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, 1, entry));
   }
 
   // mobile
@@ -2469,18 +2463,16 @@ TEST_F(UserHistoryPredictorTest, GetResultType) {
     // entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8
     entry.set_suggestion_freq(1);
     entry.set_value("よろしく");
-    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
-              ResultType::GOOD_RESULT);
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, 1, entry));
 
     entry.set_suggestion_freq(2);                 // high freq
     entry.set_value("よろしくおねがいします。");  // too long
-    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
-              ResultType::GOOD_RESULT);
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, 1, entry));
 
     entry.set_suggestion_freq(1);                 // low freq
     entry.set_value("よろしくおねがいします。");  // too long
-    EXPECT_EQ(UserHistoryPredictorTestPeer::GetResultType(convreq, 1, entry),
-              ResultType::BAD_RESULT);
+    EXPECT_FALSE(
+        UserHistoryPredictorTestPeer::IsValidResult(convreq, 1, entry));
   }
 }
 

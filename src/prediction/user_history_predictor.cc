@@ -1458,20 +1458,20 @@ void UserHistoryPredictor::GetInputKeyFromRequest(
   }
 }
 
-UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
-    const ConversionRequest& request, uint32_t request_key_len,
-    const Entry& entry) {
+bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
+                                         uint32_t request_key_len,
+                                         const Entry& entry) {
   if (IsMixedConversionEnabled(request)) {
     // Don't show long history for mixed conversion
     if (entry.suggestion_freq() <= 1 && Util::CharsLen(entry.value()) >= 9) {
       MOZC_VLOG(2) << "long candidate: " << entry.value();
-      return ResultType::BAD_RESULT;
+      return false;
     }
-    return ResultType::GOOD_RESULT;
+    return true;
   }
 
   // No suppression rule on desktop for the sake of simplicity.
-  return ResultType::GOOD_RESULT;
+  return true;
 }
 
 std::vector<Result> UserHistoryPredictor::MakeResults(
@@ -1537,8 +1537,7 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
       break;
     }
 
-    if (GetResultType(request, request_key_len, *result_entry) ==
-        ResultType::BAD_RESULT) {
+    if (!IsValidResult(request, request_key_len, *result_entry)) {
       continue;
     }
 
