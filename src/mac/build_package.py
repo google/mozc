@@ -47,6 +47,12 @@ def ParseArguments():
   parser.add_argument('--input')
   parser.add_argument('--output')
   parser.add_argument('--oss', action='store_true')
+  parser.add_argument(
+      '--codesign_identity',
+      default='-',
+      # Note: '-' is used as a pseudo identity for /usr/bin/codesign.
+      help='Code signing identity. Use "-" to skip codesigning.',
+  )
   return parser.parse_args()
 
 
@@ -65,7 +71,7 @@ def main():
     util.RunOrDie(['unzip', '-q', args.input, '-d', tmp_dir])
     os.chdir(os.path.join(tmp_dir, 'installer'))
     pkgbuild_commands = [
-        'pkgbuild',
+        '/usr/bin/pkgbuild',
         '--root',
         'root',
         '--identifier',
@@ -76,7 +82,7 @@ def main():
     ]
     util.RunOrDie(pkgbuild_commands)
     productbuild_commands = [
-        'productbuild',
+        '/usr/bin/productbuild',
         '--distribution',
         'distribution.xml',
         '--plugins',
@@ -86,7 +92,19 @@ def main():
         'package.pkg',  # this name is only used within this script.
     ]
     util.RunOrDie(productbuild_commands)
-    shutil.copyfile('package.pkg', output_path)
+
+    # codesign the package and copy it to the output path.
+    if args.codesign_identity == '-':
+      shutil.copyfile('package.pkg', output_path)
+    else:
+      codesign_commands = [
+          '/usr/bin/productsign',
+          '--sign',
+          args.codesign_identity,
+          'package.pkg',
+          output_path,
+      ]
+      util.RunOrDie(codesign_commands)
 
 
 if __name__ == '__main__':

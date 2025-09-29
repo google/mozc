@@ -541,6 +541,7 @@ genrule(
     outs = ["Mozc.pkg"],
     cmd = "$(location :build_package) --input $(location :productbuild_files)" +
           " --output $@" +
+          ' --codesign_identity "' + CODESIGN_IDENTITY_SELECT + '"' +
           mozc_select(
               default = "",
               oss = " --oss",
