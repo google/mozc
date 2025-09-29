@@ -32,6 +32,13 @@
 #import <Carbon/Carbon.h>
 #import <Foundation/Foundation.h>
 
+// Set kUseUsageStats to control usage stats.
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+constexpr bool kUseUsageStats = true;
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
+constexpr bool kUseUsageStats = false;
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 static const unsigned char kInstalledLocation[] = "/Library/Input Methods/GoogleJapaneseInput.app";
 static NSString *kLaunchdPlistFiles[] = {
@@ -138,9 +145,10 @@ static BOOL HasUsageStatsDB() {
 // directory.  This function should be called only if the user checks
 // the |_putUsageStatsDB| button.
 static BOOL StoreDefaultConfigWithSendingUsageStats() {
-#ifndef GOOGLE_JAPANESE_INPUT_BUILD
-  return NO;
-#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
+  if (!kUseUsageStats) {
+    return NO;
+  }
+
   NSArray *libraryPaths =
       NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
   NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -299,11 +307,10 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
       ActivateGoogleJapaneseInput();
       _alreadyActivated = YES;
     }
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-    if (!_hasUsageStatsDB && [_putUsageStatsDB state] == NSControlStateValueOn) {
+
+    if (kUseUsageStats && !_hasUsageStatsDB && [_putUsageStatsDB state] == NSControlStateValueOn) {
       StoreDefaultConfigWithSendingUsageStats();
     }
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   }
 }
 
