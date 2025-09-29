@@ -478,11 +478,11 @@ mozc_py_binary(
     deps = ["//build_tools:util"],
 )
 
-# Create a zip file for productbuild. The files in the zip file are codesigned.
+# Create a zip file for package. The files in the zip file are codesigned.
 genrule(
-    name = "productbuild_files",
+    name = "package_files",
     srcs = [":zipped_installer_files"],
-    outs = ["productbuild_files.zip"],
+    outs = ["package_files.zip"],
     cmd = "$(location :tweak_installer_files) --productbuild --input $(SRCS)" +
           " --output $@" +
           mozc_select(
@@ -494,17 +494,6 @@ genrule(
     exec_compatible_with = ["@platforms//os:macos"],
     # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
     local = True,
-    tags = ["manual"],
-    tools = [":tweak_installer_files"],
-)
-
-# TODO(b/357456172): The rules from tweaked_installer_files till installer_oss_macos are deprecated.
-# Those rules will be removed after the migration to the new build system.
-genrule(
-    name = "tweaked_installer_files",
-    srcs = [":zipped_installer_files"],
-    outs = ["tweaked_installer.zip"],
-    cmd = "$(location :tweak_installer_files) --input $(SRCS) --output $@",
     tags = ["manual"],
     tools = [":tweak_installer_files"],
 )
@@ -537,9 +526,9 @@ mozc_py_binary(
 
 genrule(
     name = "package",
-    srcs = [":productbuild_files"],
+    srcs = [":package_files"],
     outs = ["Mozc.pkg"],
-    cmd = "$(location :build_package) --input $(location :productbuild_files)" +
+    cmd = "$(location :build_package) --input $(location :package_files)" +
           " --output $@" +
           ' --codesign_identity "' + CODESIGN_IDENTITY_SELECT + '"' +
           mozc_select(
