@@ -2473,6 +2473,17 @@ TEST_F(UserHistoryPredictorTest, IsValidResult) {
     entry.set_value("よろしくおねがいします。");  // too long
     EXPECT_FALSE(
         UserHistoryPredictorTestPeer::IsValidResult(convreq, 1, entry));
+
+    // Allows long value.
+    request.mutable_decoder_experiment_params()
+        ->set_user_history_suppress_min_length(20);
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, 1, entry));
+
+    // Default values
+    request.mutable_decoder_experiment_params()
+        ->set_user_history_suppress_min_length(0);
+    EXPECT_FALSE(
+        UserHistoryPredictorTestPeer::IsValidResult(convreq, 1, entry));
   }
 }
 

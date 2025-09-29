@@ -1463,7 +1463,13 @@ bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
                                          const Entry& entry) {
   if (IsMixedConversionEnabled(request)) {
     // Don't show long history for mixed conversion
-    if (entry.suggestion_freq() <= 1 && Util::CharsLen(entry.value()) >= 9) {
+    // TODO(taku, b/447705421): Deprecates the length-based filtering.
+    int suppress_min_length = request.request()
+                                  .decoder_experiment_params()
+                                  .user_history_suppress_min_length();
+    suppress_min_length = suppress_min_length <= 0 ? 9 : suppress_min_length;
+    if (entry.suggestion_freq() <= 1 &&
+        Util::CharsLen(entry.value()) >= suppress_min_length) {
       MOZC_VLOG(2) << "long candidate: " << entry.value();
       return false;
     }
