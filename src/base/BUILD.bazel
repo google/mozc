@@ -697,11 +697,9 @@ mozc_run_build_tool(
 
 mozc_cc_library(
     name = "config_file_stream",
-    srcs = [
-        "config_file_stream.cc",
-        ":config_file_stream_data",
-    ],
+    srcs = ["config_file_stream.cc"],
     hdrs = ["config_file_stream.h"],
+    textual_hdrs = [":config_file_stream_data"],
     visibility = ["//:__subpackages__"],
     deps = [
         ":file_stream",
