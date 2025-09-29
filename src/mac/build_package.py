@@ -61,8 +61,10 @@ def main():
 
   if args.oss:
     identifier = 'org.mozc.pkg.JapaneseInput'
+    pkg_name = 'Mozc.pkg'
   else:
     identifier = 'com.google.pkg.GoogleJapaneseInput'
+    pkg_name = 'GoogleJapaneseInput.pkg'
 
   output_path = os.path.abspath(args.output)
 
@@ -78,7 +80,7 @@ def main():
         identifier,
         '--scripts',
         'scripts/',
-        'Mozc.pkg',  # the name "Mozc.pkg" is configured in distribution.xml.
+        pkg_name,  # pkg_name is configured in distribution.xml.
     ]
     util.RunOrDie(pkgbuild_commands)
     productbuild_commands = [
