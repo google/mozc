@@ -490,7 +490,8 @@ genrule(
               oss_macos = " --oss",
               prod_macos = "",
           ) +
-          ' --codesign_identity "' + CODESIGN_IDENTITY_SELECT + '"',
+          ' --codesign_identity "' + CODESIGN_IDENTITY_SELECT + '"' +
+          " --channel " + BUILD_TYPE_SELECT,
     exec_compatible_with = ["@platforms//os:macos"],
     # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
     local = True,

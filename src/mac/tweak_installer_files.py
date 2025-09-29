@@ -49,6 +49,7 @@ def ParseArguments() -> argparse.Namespace:
   parser.add_argument('--productbuild', action='store_true')
   parser.add_argument('--noqt', action='store_true')
   parser.add_argument('--oss', action='store_true')
+  parser.add_argument('--channel', default='dev')
   parser.add_argument('--work_dir')
   # '-' means pseudo identity.
   # https://github.com/bazelbuild/rules_apple/blob/3.5.1/apple/internal/codesigning_support.bzl#L42
@@ -132,15 +133,19 @@ def TweakQtApps(top_dir: str, oss: bool) -> None:
   SymlinkQtFrameworks(qt_app)
 
 
-def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
+def TweakForProductbuild(
+    top_dir: str, tweak_qt: bool, oss: bool, channel: str
+) -> None:
   """Tweak file paths for the productbuild command."""
   orig_dir = os.getcwd()
   os.chdir(top_dir)
 
   if oss:
+    is_dev_channel = False
     name = 'Mozc'
     folder = 'Mozc'
   else:
+    is_dev_channel = channel == 'dev'
     name = 'GoogleJapaneseInput'
     folder = 'GoogleJapaneseInput.localized'
 
@@ -153,8 +158,21 @@ def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
       ('postflight.sh', 'scripts/postinstall'),
       ('preflight.sh', 'scripts/preinstall'),
   ]
-  if not oss:
+
+  # For the dev channel, add the dev confirm section to the installer.
+  if is_dev_channel:
     renames += [('DevConfirmPane.bundle', 'Plugins/')]
+  else:
+    shutil.rmtree('DevConfirmPane.bundle')
+    # Remove the dev confirm section from InstallerSections.plist
+    contents = []
+    with open('InstallerSections.plist', 'r') as f:
+      for line in f:
+        if 'DevConfirmPane' in line:
+          continue
+        contents.append(line)
+    with open('InstallerSections.plist', 'w') as f:
+      f.write(''.join(contents))
 
   for src, dst in renames:
     if dst.endswith('/'):
@@ -235,7 +253,7 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
     TweakQtApps(top_dir, args.oss)
 
   if args.productbuild:
-    TweakForProductbuild(top_dir, tweak_qt, args.oss)
+    TweakForProductbuild(top_dir, tweak_qt, args.oss, args.channel)
     Codesign(top_dir, args.codesign_identity)
 
   # Create a zip file with the zip command.
