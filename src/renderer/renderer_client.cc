@@ -57,7 +57,6 @@
 #endif  // __APPLE__
 
 #ifdef _WIN32
-#include "base/run_level.h"
 #include "base/win32/win_sandbox.h"
 #endif  // _WIN32
 
@@ -227,23 +226,19 @@ class RendererLauncher : public RendererLauncherInterface {
 
 #ifdef _WIN32
     DWORD pid = 0;
-    const bool process_in_job = RunLevel::IsProcessInJob();
-    const std::string arg = process_in_job ? "--restricted" : "";
 
     WinSandbox::SecurityInfo info;
     info.primary_level = WinSandbox::USER_INTERACTIVE;
     info.impersonation_level = WinSandbox::USER_RESTRICTED_SAME_ACCESS;
     info.integrity_level = WinSandbox::INTEGRITY_LEVEL_LOW;
-    // If the current process is in a job, you cannot use
-    // CREATE_BREAKAWAY_FROM_JOB. b/1571395
-    info.use_locked_down_job = !process_in_job;
+    info.use_locked_down_job = true;
     info.allow_ui_operation = true;  // skip UI protection
     info.in_system_dir = true;  // use system dir not to lock current directory
     info.creation_flags = CREATE_DEFAULT_ERROR_MODE;
 
     // start renderer process
     const bool result =
-        WinSandbox::SpawnSandboxedProcess(path_, arg, info, &pid);
+        WinSandbox::SpawnSandboxedProcess(path_, "", info, &pid);
 #elif defined(__APPLE__)  // _WIN32
     // Start renderer process by using launch_msg API.
     pid_t pid = 0;
