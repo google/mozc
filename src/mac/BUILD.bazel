@@ -40,9 +40,13 @@ load(
     "//:config.bzl",
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
+    "MACOS_CODESIGN_IDENTITY_INSTALLER_RELEASE",
+    "MACOS_CODESIGN_IDENTITY_INSTALLER_TESTING",
     "MACOS_CODESIGN_IDENTITY_PSEUDO",
     "MACOS_CODESIGN_IDENTITY_RELEASE",
     "MACOS_CODESIGN_IDENTITY_TESTING",
+    "MACOS_KEYCHAIN_INSTALLER_RELEASE",
+    "MACOS_KEYCHAIN_INSTALLER_TESTING",
 )
 
 package(default_visibility = ["//visibility:private"])
@@ -60,6 +64,18 @@ CODESIGN_IDENTITY_SELECT = select({
     "//:codesign_release": MACOS_CODESIGN_IDENTITY_RELEASE,
     "//:codesign_testing": MACOS_CODESIGN_IDENTITY_TESTING,
     "//conditions:default": MACOS_CODESIGN_IDENTITY_PSEUDO,
+})
+
+CODESIGN_IDENTITY_INSTALLER_SELECT = select({
+    "//:codesign_release": MACOS_CODESIGN_IDENTITY_INSTALLER_RELEASE,
+    "//:codesign_testing": MACOS_CODESIGN_IDENTITY_INSTALLER_TESTING,
+    "//conditions:default": MACOS_CODESIGN_IDENTITY_PSEUDO,
+})
+
+KEYCHAIN_INSTALLER_SELECT = select({
+    "//:codesign_release": MACOS_KEYCHAIN_INSTALLER_RELEASE,
+    "//:codesign_testing": MACOS_KEYCHAIN_INSTALLER_TESTING,
+    "//conditions:default": "",
 })
 
 mozc_macos_application(
@@ -531,7 +547,8 @@ genrule(
     outs = ["Mozc.pkg"],
     cmd = "$(location :build_package) --input $(location :package_files)" +
           " --output $@" +
-          ' --codesign_identity "' + CODESIGN_IDENTITY_SELECT + '"' +
+          ' --codesign_identity "' + CODESIGN_IDENTITY_INSTALLER_SELECT + '"' +
+          ' --keychain "' + KEYCHAIN_INSTALLER_SELECT + '"' +
           mozc_select(
               default = "",
               oss = " --oss",

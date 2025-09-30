@@ -53,6 +53,7 @@ def ParseArguments():
       # Note: '-' is used as a pseudo identity for /usr/bin/codesign.
       help='Code signing identity. Use "-" to skip codesigning.',
   )
+  parser.add_argument('--keychain')
   return parser.parse_args()
 
 
@@ -99,10 +100,15 @@ def main():
     if args.codesign_identity == '-':
       shutil.copyfile('package.pkg', output_path)
     else:
+      keychain_path = os.path.join(
+          os.getenv('HOME'), 'Library/Keychains', args.keychain
+      )
       codesign_commands = [
           '/usr/bin/productsign',
           '--sign',
           args.codesign_identity,
+          '--keychain',
+          keychain_path,
           'package.pkg',
           output_path,
       ]
