@@ -1702,55 +1702,6 @@ TEST_F(DictionaryPredictorTest, FilterNwpSuffixCandidates) {
   }
 }
 
-TEST_F(DictionaryPredictorTest, DemotePartialSuggestions) {
-  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  DictionaryPredictorTestPeer predictor_peer =
-      data_and_predictor->predictor_peer();
-
-  std::vector<Result> results;
-  for (int i = 0; i < 10; ++i) {
-    Result result;
-    result.key = "key";
-    result.value = absl::StrCat("v", i);
-    if (i % 2 == 0)
-      result.candidate_attributes |=
-          converter::Attribute::PARTIALLY_KEY_CONSUMED;
-    results.emplace_back(std::move(result));
-  }
-
-  auto demote = [&](int n, int len) {
-    auto* params = request_->mutable_decoder_experiment_params();
-    params->set_demote_partial_candidate_top_n(n);
-    params->set_demote_partial_candidate_max_length(len);
-    const ConversionRequest request =
-        CreateConversionRequest(ConversionRequest::SUGGESTION, "key");
-    std::vector<Result> input = results;
-    predictor_peer.MaybeApplyPostCorrection(request, input);
-    params->set_demote_partial_candidate_top_n(0);
-    params->set_demote_partial_candidate_max_length(0);
-
-    return absl::StrJoin(input, " ",
-                         [](std::string* out, const Result& result) {
-                           absl::StrAppend(out, result.value);
-                         });
-  };
-
-  // Nothing happens when len == 1
-  EXPECT_EQ(demote(2, 1), "v0 v1 v2 v3 v4 v5 v6 v7 v8 v9");
-  EXPECT_EQ(demote(3, 1), "v0 v1 v2 v3 v4 v5 v6 v7 v8 v9");
-  EXPECT_EQ(demote(4, 1), "v0 v1 v2 v3 v4 v5 v6 v7 v8 v9");
-
-  // Top n odd items must be promoted.
-  EXPECT_EQ(demote(2, 2), "v1 v3 v0 v2 v4 v5 v6 v7 v8 v9");
-  EXPECT_EQ(demote(3, 2), "v1 v3 v5 v0 v2 v4 v6 v7 v8 v9");
-  EXPECT_EQ(demote(4, 2), "v1 v3 v5 v7 v0 v2 v4 v6 v8 v9");
-
-  // The same as n == 2 case.
-  EXPECT_EQ(demote(2, 3), "v1 v3 v0 v2 v4 v5 v6 v7 v8 v9");
-  EXPECT_EQ(demote(3, 3), "v1 v3 v5 v0 v2 v4 v6 v7 v8 v9");
-  EXPECT_EQ(demote(4, 3), "v1 v3 v5 v7 v0 v2 v4 v6 v8 v9");
-}
-
 TEST_F(DictionaryPredictorTest, DemoteFirstN_test) {
   // Tests of DemoteFirstN in result.h
   const std::vector<std::string> results = {"d1", "k1", "d2", "k2", "d3", "k3",
