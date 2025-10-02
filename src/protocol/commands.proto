@@ -546,7 +546,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 131
+// Next ID: 132
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -655,12 +655,17 @@ message DecoderExperimentParams {
   // This parameter is only used in mixed conversion mode.
   optional int32 user_history_suppress_min_length = 130 [default = 0];
 
+  // Caches full sentences consisting of multiple segments in user history
+  // learning. This mode is enabled on desktop, but we want to enable it on all
+  // devices to unify and simplify the implementation.
+  optional bool user_history_cache_full_sentence = 131 [default = false];
+
   // Demotes the partial candidates so that the top_n results must
   // be non-partial candidates.
-  optional int32 demote_partial_candidate_top_n = 126 [ default = 0];
+  optional int32 demote_partial_candidate_top_n = 126 [default = 0];
   // Maximum length of partial candidates. When 1, only demote
   // single-value candidates.
-  optional int32 demote_partial_candidate_max_length = 127 [ default = 0];
+  optional int32 demote_partial_candidate_max_length = 127 [default = 0];
 }
 
 // Clients' request to the server.

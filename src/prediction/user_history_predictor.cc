@@ -1896,9 +1896,13 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
   absl::string_view all_key = learning_segments.conversion_segments_key;
   absl::string_view all_value = learning_segments.conversion_segments_value;
 
+  const commands::DecoderExperimentParams& params =
+      request.request().decoder_experiment_params();
+
   // Inserts all_key/all_value.
   // We don't insert it for mobile.
-  if (!IsMixedConversionEnabled(request) &&
+  if ((params.user_history_cache_full_sentence() ||
+       !IsMixedConversionEnabled(request)) &&
       learning_segments.conversion_segments.size() > 1 && !all_key.empty() &&
       !all_value.empty()) {
     TryInsert(request, 0, 0, all_key, all_value, "", is_suggestion_selected, {},
