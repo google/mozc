@@ -79,9 +79,6 @@ class ServerLauncherInterface {
   // This is used for making IPC connection.
   virtual zstring_view server_program() const = 0;
 
-  // launch with restricted mode
-  virtual void set_restricted(bool restricted) = 0;
-
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;
 };
@@ -195,10 +192,6 @@ class ClientInterface {
 
   // Sets the time out in milli second used for the IPC connection.
   virtual void set_timeout(absl::Duration timeout) = 0;
-
-  // Sets restricted mode.
-  // server is launched inside restricted environment.
-  virtual void set_restricted(bool restricted) = 0;
 
   // Sets server program path.
   // mainly for unittesting.
