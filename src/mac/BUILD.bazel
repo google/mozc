@@ -555,6 +555,8 @@ genrule(
               prod = "",
           ),
     exec_compatible_with = ["@platforms//os:macos"],
+    # Set local for `productsign` with the local KeyChain.
+    local = True,
     # TODO(b/269007577): version_file, auto_updater_dir and build_type should be supported.
     tags = ["manual"],
     tools = [":build_package"],
