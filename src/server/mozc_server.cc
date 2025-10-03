@@ -101,8 +101,8 @@ int MozcServer::Run() {
   }
 
   {
-    std::unique_ptr<mozc::SessionServer> session_server(
-        new mozc::SessionServer);
+    std::unique_ptr<mozc::SessionServer> session_server =
+        std::make_unique<mozc::SessionServer>();
     g_session_server = session_server.get();
     CHECK(g_session_server);
     if (!g_session_server->Connected()) {
