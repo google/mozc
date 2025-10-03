@@ -115,7 +115,7 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string& path) {
     const KeyList& key_list = kv.second;
     const std::string& description = GetDescription(key_list, key_count);
     for (const std::string& key : key_list) {
-      std::unique_ptr<CompilerToken> token(new CompilerToken());
+      std::unique_ptr<CompilerToken> token = std::make_unique<CompilerToken>();
       token->value = value;
       token->description = description;
       token->lid = 0;

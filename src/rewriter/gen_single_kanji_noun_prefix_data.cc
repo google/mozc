@@ -92,8 +92,8 @@ int main(int argc, char** argv) {
 
   std::map<std::string, mozc::SerializedDictionary::TokenList> tokens;
   for (const NounPrefix& entry : kNounPrefixList) {
-    std::unique_ptr<mozc::SerializedDictionary::CompilerToken> token(
-        new mozc::SerializedDictionary::CompilerToken);
+    std::unique_ptr<mozc::SerializedDictionary::CompilerToken> token =
+        std::make_unique<mozc::SerializedDictionary::CompilerToken>();
     token->value = entry.value;
     token->lid = 0;
     token->rid = 0;
