@@ -133,8 +133,8 @@ class MockDataAndImmutableConverter {
 }  // namespace
 
 TEST(ImmutableConverterTest, KeepKeyForPrediction) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   Segments segments;
   const ConversionRequest request =
       ConversionRequestBuilder()
@@ -151,8 +151,8 @@ TEST(ImmutableConverterTest, KeepKeyForPrediction) {
 }
 
 TEST(ImmutableConverterTest, ResegmentTest) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   Segments segments;
   const ConversionRequest request =
       ConversionRequestBuilder()
@@ -186,8 +186,8 @@ TEST(ImmutableConverterTest, ResegmentTest) {
 }
 
 TEST(ImmutableConverterTest, DummyCandidatesCost) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   Segment segment;
   SetCandidate("てすと", "test", &segment);
   data_and_converter->GetConverterTestPeer().InsertDummyCandidates(&segment,
@@ -198,8 +198,8 @@ TEST(ImmutableConverterTest, DummyCandidatesCost) {
 }
 
 TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   Segment segment;
   SetCandidate("てすと", "test", &segment);
   Candidate* c = segment.mutable_candidate(0);
@@ -258,8 +258,8 @@ class KeyCheckDictionary : public DictionaryInterface {
 }  // namespace
 
 TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   Segments segments;
   Segment* segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
@@ -304,8 +304,8 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
 }
 
 TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   Segments segments;
   Segment* segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
@@ -324,8 +324,8 @@ TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
 }
 
 TEST(ImmutableConverterTest, MakeLatticeKatakana) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   ImmutableConverterTestPeer converter =
       data_and_converter->GetConverterTestPeer();
 
@@ -348,8 +348,8 @@ TEST(ImmutableConverterTest, MakeLatticeKatakana) {
 }
 
 TEST(ImmutableConverterTest, NotConnectedTest) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   ImmutableConverterTestPeer converter =
       data_and_converter->GetConverterTestPeer();
 
@@ -410,8 +410,8 @@ TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
 
   // Verify that history segments are cleared due to its length limit and at
   // least one candidate is generated.
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   const ConversionRequest request =
       ConversionRequestBuilder()
           .SetRequestType(ConversionRequest::CONVERSION)
@@ -425,8 +425,8 @@ TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
 
 namespace {
 bool AutoPartialSuggestionTestHelper(const ConversionRequest& request) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   Segments segments;
   ConversionRequest::Options options = request.options();
   options.request_type = ConversionRequest::PREDICTION;
@@ -578,8 +578,8 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
 
 // Confirm t13n (Hiragana to English) conversions twice work (b/427316871).
 TEST(ImmutableConverterTest, T13nConversionTwice) {
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter =
+      std::make_unique<MockDataAndImmutableConverter>();
   Segments segments;
   {
     Segment* segment = segments.add_segment();
