@@ -97,6 +97,10 @@ inline std::optional<uint32_t> EncodeLengths(uint32_t key_len,
   return *reinterpret_cast<const uint32_t*>(&data);
 }
 
+inline internal::LengthData DecodeLengths(uint32_t encoded) {
+  return *reinterpret_cast<const struct internal::LengthData*>(&encoded);
+}
+
 // Builder class for inner segment boundary.
 //
 // Example:
@@ -128,6 +132,14 @@ class InnerSegmentBoundaryBuilder {
     } else {
       error_ = true;
     }
+    return *this;
+  }
+
+  InnerSegmentBoundaryBuilder& AddEncoded(uint32_t encoded) {
+    const internal::LengthData data = DecodeLengths(encoded);
+    key_consumed_ += data.key_len;
+    value_consumed_ += data.value_len;
+    boundary_.emplace_back(encoded);
     return *this;
   }
 
@@ -202,8 +214,7 @@ class InnerSegments {
 
     internal::LengthData length_data() const {
       DCHECK(!encoded_lengths_.empty());
-      return *reinterpret_cast<const struct internal::LengthData*>(
-          &encoded_lengths_.front());
+      return DecodeLengths(encoded_lengths_.front());
     }
 
     // When `encoded_lengths` is not available, returns (key_|values_).size()

@@ -74,6 +74,9 @@ message UserHistory {
     // This entry is removed.
     optional bool removed = 8 [default = false];
 
+    // Inner segment boundary. See converter/inner_segment.h
+    repeated fixed32 inner_segment_boundary = 24;
+
     reserved 9;  // Deprecated entry_type
   }
 

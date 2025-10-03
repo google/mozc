@@ -51,6 +51,7 @@
 #include "base/container/trie.h"
 #include "base/thread.h"
 #include "composer/query.h"
+#include "converter/inner_segment.h"
 #include "dictionary/dictionary_interface.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
@@ -176,6 +177,7 @@ class UserHistoryPredictor : public PredictorInterface {
   struct SegmentsForLearning {
     std::string conversion_segments_key;
     std::string conversion_segments_value;
+    converter::InnerSegmentBoundary inner_segment_boundary;
 
     std::vector<SegmentForLearning> history_segments;
     std::vector<SegmentForLearning> conversion_segments;
@@ -307,7 +309,8 @@ class UserHistoryPredictor : public PredictorInterface {
       absl::string_view request_key, bool prefer_exact_match,
       const Entry* entry, const Entry** result_last_entry,
       uint64_t* left_last_access_time, uint64_t* left_most_last_access_time,
-      std::string* result_key, std::string* result_value) const;
+      std::string* result_key, std::string* result_value,
+      converter::InnerSegmentBoundary* result_inner_segment_boundary) const;
 
   const Entry* absl_nullable LookupPrevEntry(
       const ConversionRequest& request) const;
@@ -318,7 +321,8 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Adds the entry whose key and value are modified to a priority queue.
   Entry* absl_nonnull AddEntryWithNewKeyValue(
-      std::string key, std::string value, Entry entry,
+      std::string key, std::string value,
+      converter::InnerSegmentBoundarySpan inner_segment_boundary, Entry entry,
       EntryPriorityQueue* entry_queue) const;
 
   EntryPriorityQueue GetEntry_QueueFromHistoryDictionary(
@@ -408,28 +412,18 @@ class UserHistoryPredictor : public PredictorInterface {
       RevertEntries* revert_entries);
 
   // Inserts |key,value,description| to the internal dictionary database.
+  // |inner_segment_boundary| inner segment boundary information.
   // |key_begin,value_begin|: string byte offset on result.(key|value).
   // |is_suggestion_selected|: key/value is suggestion or conversion.
   // |next_fp|: fingerprints of the next segment.
-  // |last_access_time|: the time when this entry was created
-  void Insert(int32_t key_begin, int32_t value_begin, absl::string_view key,
+  // |last_access_time|: the time when this entry was created.
+  // Entry's contents and request_type will be checked before insertion.
+  void Insert(const ConversionRequest& request, int32_t key_begin,
+              int32_t value_begin, absl::string_view key,
               absl::string_view value, absl::string_view description,
+              converter::InnerSegmentBoundarySpan inner_segment_boundary,
               bool is_suggestion_selected, absl::Span<const uint64_t> next_fps,
               uint64_t last_access_time, RevertEntries* revert_entries);
-
-  // Called by TryInsert to check the Entry to insert.
-  bool ShouldInsert(const ConversionRequest& request, absl::string_view key,
-                    absl::string_view value,
-                    absl::string_view description) const;
-
-  // Tries to insert entry.
-  // Entry's contents and request_type will be checked before insertion.
-  void TryInsert(const ConversionRequest& request, int32_t key_begin,
-                 int32_t value_begin, absl::string_view key,
-                 absl::string_view value, absl::string_view description,
-                 bool is_suggestion_selected,
-                 absl::Span<const uint64_t> next_fps, uint64_t last_access_time,
-                 RevertEntries* revert_entries);
 
   // Inserts a new |fp| into |entry|.
   // it makes a bigram connection from entry to next_entry.

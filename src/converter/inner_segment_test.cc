@@ -29,6 +29,7 @@
 
 #include "converter/inner_segment.h"
 
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -106,6 +107,23 @@ TEST(InnerSegment, InnerSegmentIterator) {
       inner_segments.GetMergedContentKeyAndValue();
   EXPECT_EQ(merged_content_key, "testfoo");
   EXPECT_EQ(merged_content_value, "redgreen");
+}
+
+TEST(InnerSegmentBoundary, InnerSegmentIteratorBuilder) {
+  InnerSegmentBoundaryBuilder builder;
+
+  // 私の|名は
+  builder.Add(12, 6, 9, 6);
+  builder.Add(6, 6, 3, 3);
+  InnerSegmentBoundary boundary = builder.Build("私の", "名は");
+
+  InnerSegmentBoundaryBuilder builder2;
+  for (uint32_t encoded : boundary) {
+    builder2.AddEncoded(encoded);
+  }
+  InnerSegmentBoundary boundary2 = builder2.Build("私の", "名は");
+
+  EXPECT_EQ(boundary, boundary2);
 }
 
 TEST(InnerSegmentBoundary, InnerSegmentIteratorEmpty) {

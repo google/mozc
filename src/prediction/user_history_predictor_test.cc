@@ -49,6 +49,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -591,6 +592,16 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
       }
     }
     return std::nullopt;
+  }
+
+  static std::string GetKeyValueWithBoundary(const Result& result) {
+    std::vector<std::string> v;
+    for (const auto& iter : result.inner_segments()) {
+      v.emplace_back(absl::StrFormat("%s,%s,%s,%s", iter.GetKey(),
+                                     iter.GetValue(), iter.GetContentKey(),
+                                     iter.GetContentValue()));
+    }
+    return absl::StrJoin(v, "|");
   }
 
   composer::Composer composer_;
@@ -3473,6 +3484,7 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
       EXPECT_FALSE(results.empty());
       EXPECT_TRUE(FindCandidateByValue("中野", results));
       EXPECT_FALSE(FindCandidateByValue("中野です", results));
+      EXPECT_EQ(GetKeyValueWithBoundary(results[0]), "なかの,中野,なかの,中野");
       segments_proxy.Clear();
 
       const ConversionRequest convreq3 =
@@ -3480,6 +3492,8 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
       results = predictor->Predict(convreq3);
       EXPECT_FALSE(results.empty());
       EXPECT_TRUE(FindCandidateByValue("中野です", results));
+      EXPECT_EQ(GetKeyValueWithBoundary(results[0]),
+                "なかのです,中野です,なかの,中野");
 
       segments_proxy.Clear();
       const ConversionRequest convreq4 =
@@ -3490,12 +3504,15 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
       // Do not suggest the phrase ends with [content_word + function_word].
       EXPECT_FALSE(FindCandidateByValue("名前は", results));
       EXPECT_FALSE(FindCandidateByValue("名前は中野です", results));
+      EXPECT_EQ(GetKeyValueWithBoundary(results[0]), "なまえ,名前,なまえ,名前");
       if (mixed_conversion) {
         // prefer exact match.
         EXPECT_FALSE(FindCandidateByValue("名前は中野", results));
       } else {
         // prefer prediction.
         EXPECT_TRUE(FindCandidateByValue("名前は中野", results));
+        EXPECT_EQ(GetKeyValueWithBoundary(results[1]),
+                  "なまえは,名前は,なまえ,名前|なかの,中野,なかの,中野");
       }
     }
   }
@@ -4249,7 +4266,6 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("名古屋", results));
   EXPECT_FALSE(FindCandidateByValue("名古屋に", results));
-
   segments_proxy.Clear();
   const ConversionRequest convreq4 =
       SetUpInputForPrediction("い", &composer_, &segments_proxy);
@@ -4323,6 +4339,10 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   EXPECT_EQ(results.size(), 2);
   EXPECT_EQ(results[0].value, "私の");
   EXPECT_EQ(results[1].value, "私の名前は");
+  EXPECT_EQ(GetKeyValueWithBoundary(results[0]), "わたしの,私の,わたしの,私の");
+  EXPECT_EQ(GetKeyValueWithBoundary(results[1]),
+            "わたしの,私の,わたしの,私の|なまえは,名前は,なまえは,名前は");
+
   segments_proxy.Clear();
 
   const ConversionRequest convreq3 =
@@ -4331,6 +4351,9 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の名前は");
+  EXPECT_EQ(GetKeyValueWithBoundary(results[0]),
+            "わたしの,私の,わたしの,私の|なまえは,名前は,なまえは,名前は");
+
   segments_proxy.Clear();
 
   const ConversionRequest convreq4 =
@@ -4339,6 +4362,9 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の名前は");
+  EXPECT_EQ(GetKeyValueWithBoundary(results[0]),
+            "わたしの,私の,わたしの,私の|なまえは,名前は,なまえは,名前は");
+
   segments_proxy.Clear();
 }
 
