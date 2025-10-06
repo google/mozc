@@ -353,8 +353,8 @@ class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
 };
 
 TEST_F(SystemDictionaryCodecTest, FactoryTest) {
-  std::unique_ptr<SystemDictionaryCodecMock> mock(
-      new SystemDictionaryCodecMock);
+  std::unique_ptr<SystemDictionaryCodecMock> mock =
+      std::make_unique<SystemDictionaryCodecMock>();
   SystemDictionaryCodecFactory::SetCodec(mock.get());
   SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
@@ -392,7 +392,8 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
-  std::unique_ptr<SystemDictionaryCodec> codec(new SystemDictionaryCodec);
+  std::unique_ptr<SystemDictionaryCodec> codec =
+      std::make_unique<SystemDictionaryCodec>();
   // TODO(toshiyuki): Use 0x10ffff instead when UCS4 is supported.
   constexpr char32_t kMaxUniChar = 0x10ffff;
   for (char32_t c = 0x01; c <= kMaxUniChar; ++c) {
@@ -744,7 +745,8 @@ TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, CodecTest) {
-  std::unique_ptr<SystemDictionaryCodec> impl(new SystemDictionaryCodec);
+  std::unique_ptr<SystemDictionaryCodec> impl =
+      std::make_unique<SystemDictionaryCodec>();
   SystemDictionaryCodecFactory::SetCodec(impl.get());
   SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
