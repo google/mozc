@@ -193,27 +193,16 @@ void PopulateInnerSegmentBoundary(
     converter::InnerSegmentBoundarySpan inner_segment_boundary,
     UserHistoryPredictor::Entry* absl_nonnull entry) {
   entry->clear_inner_segment_boundary();
-  if (inner_segment_boundary.empty()) return;
-  entry->mutable_inner_segment_boundary()->Reserve(
-      inner_segment_boundary.size());
-  for (const uint32_t v : inner_segment_boundary) {
-    entry->add_inner_segment_boundary(v);
-  }
+
+  // b/449508982: temporarily disables the inner segment feature.
+  return;
 }
 
 // Add the inner_segment_boundary information in `entry` via `builder`.
 void AppendInnerBoundary(converter::InnerSegmentBoundaryBuilder& builder,
                          const UserHistoryPredictor::Entry& entry) {
-  if (entry.inner_segment_boundary_size() > 0) {
-    // Directly copies the raw encoded value.
-    for (const uint32_t encoded : entry.inner_segment_boundary()) {
-      builder.AddEncoded(encoded);
-    }
-  } else {
-    // Encode the length assuming one key/value.
-    builder.Add(entry.key().size(), entry.value().size(), entry.key().size(),
-                entry.value().size());
-  }
+  // b/449508982: temporarily disables the inner segment feature.
+  return;
 }
 
 }  // namespace
@@ -481,6 +470,10 @@ bool UserHistoryPredictor::Load(UserHistoryStorage&& history) {
         std::max(entry.suggestion_freq(), entry.conversion_freq_deprecated()));
     entry.clear_conversion_freq_deprecated();
     // Avoid std::move() is called before EntryFingerprint.
+
+    // b/449508982: temporarily disables the inner segment feature.
+    entry.clear_inner_segment_boundary();
+
     const uint64_t fp = EntryFingerprint(entry);
     dic_->Insert(fp, std::move(entry));
   }
