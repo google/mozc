@@ -741,7 +741,7 @@ mozc_run_build_tool(
     outs = {
         "--output": "mozc_version.txt",
     },
-    args = mozc_select(
+    args = ["--use_mozc_version_env"] + mozc_select(
         android = ["--target_platform=Android"],
         chromiumos = ["--target_platform=ChromeOS"],
         default = ["--target_platform="],
