@@ -101,80 +101,6 @@ inline internal::LengthData DecodeLengths(uint32_t encoded) {
   return *reinterpret_cast<const struct internal::LengthData*>(&encoded);
 }
 
-// Builder class for inner segment boundary.
-//
-// Example:
-//   InnerSegmentBoundaryBuilder builder;
-//   for (...) {
-//     builder.Add(2, 3, 1, 1)  // key/value/content_key/content_value len.
-//   }
-//   auto boundary = builder.Build("key", "value");
-//
-// The last Build() method checks whether the encoded lengths are consistent
-// with key/value. When inconsistent lengths are passed, return empty boundary
-class InnerSegmentBoundaryBuilder {
- public:
-  InnerSegmentBoundaryBuilder() = default;
-
-  InnerSegmentBoundaryBuilder& Add(uint32_t key_len, uint32_t value_len,
-                                   uint32_t content_key_len,
-                                   uint32_t content_value_len) {
-    if (error_) {
-      return *this;
-    }
-
-    if (std::optional<uint32_t> encoded = EncodeLengths(
-            key_len, value_len, content_key_len, content_value_len);
-        encoded.has_value()) {
-      key_consumed_ += key_len;
-      value_consumed_ += value_len;
-      boundary_.emplace_back(encoded.value());
-    } else {
-      error_ = true;
-    }
-    return *this;
-  }
-
-  InnerSegmentBoundaryBuilder& AddEncoded(uint32_t encoded) {
-    const internal::LengthData data = DecodeLengths(encoded);
-    key_consumed_ += data.key_len;
-    value_consumed_ += data.value_len;
-    boundary_.emplace_back(encoded);
-    return *this;
-  }
-
-  InnerSegmentBoundary Build(absl::string_view key, absl::string_view value) {
-    if (error_ || key_consumed_ != key.size() ||
-        value_consumed_ != value.size()) {
-      boundary_.clear();
-    }
-    return boundary_;
-  }
-
- private:
-  bool error_ = false;
-  InnerSegmentBoundary boundary_;
-  uint32_t key_consumed_ = 0;
-  uint32_t value_consumed_ = 0;
-};
-
-// Utility function to accept fixed lengths array.
-//
-// auto boundary = BuildInnerSegmentBoundary(
-//                  {{2, 2, 1, 1}, {3, 3, 2, 2}}, "key", "value")
-//
-inline InnerSegmentBoundary BuildInnerSegmentBoundary(
-    absl::Span<const std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>>
-        boundary,
-    absl::string_view key, absl::string_view value) {
-  InnerSegmentBoundaryBuilder builder;
-  for (const auto& [key_len, value_len, content_key_len, content_value_len] :
-       boundary) {
-    builder.Add(key_len, value_len, content_key_len, content_value_len);
-  }
-  return builder.Build(key, value);
-}
-
 // Iterator class to access inner segments.
 // Allows to access the inner segment via range-based-loop.
 //
@@ -399,6 +325,89 @@ class InnerSegments {
 
   const Iterator begin_;
 };
+
+// Builder class for inner segment boundary.
+//
+// Example:
+//   InnerSegmentBoundaryBuilder builder;
+//   for (...) {
+//     builder.Add(2, 3, 1, 1)  // key/value/content_key/content_value len.
+//   }
+//   auto boundary = builder.Build("key", "value");
+//
+// The last Build() method checks whether the encoded lengths are consistent
+// with key/value. When inconsistent lengths are passed, return empty boundary
+class InnerSegmentBoundaryBuilder {
+ public:
+  InnerSegmentBoundaryBuilder() = default;
+
+  InnerSegmentBoundaryBuilder& Add(uint32_t key_len, uint32_t value_len,
+                                   uint32_t content_key_len,
+                                   uint32_t content_value_len) {
+    if (error_) {
+      return *this;
+    }
+
+    if (std::optional<uint32_t> encoded = EncodeLengths(
+            key_len, value_len, content_key_len, content_value_len);
+        encoded.has_value()) {
+      key_consumed_ += key_len;
+      value_consumed_ += value_len;
+      boundary_.emplace_back(encoded.value());
+    } else {
+      error_ = true;
+    }
+    return *this;
+  }
+
+  InnerSegmentBoundaryBuilder& Add(const InnerSegments::IteratorData& data) {
+    return Add(data.GetKey().size(), data.GetValue().size(),
+               data.GetContentKey().size(), data.GetContentValue().size());
+  }
+
+  InnerSegmentBoundaryBuilder& Add(InnerSegments::Iterator& iter) {
+    return Add(*iter);
+  }
+
+  InnerSegmentBoundaryBuilder& AddEncoded(uint32_t encoded) {
+    const internal::LengthData data = DecodeLengths(encoded);
+    key_consumed_ += data.key_len;
+    value_consumed_ += data.value_len;
+    boundary_.emplace_back(encoded);
+    return *this;
+  }
+
+  InnerSegmentBoundary Build(absl::string_view key, absl::string_view value) {
+    if (error_ || key_consumed_ != key.size() ||
+        value_consumed_ != value.size()) {
+      boundary_.clear();
+    }
+    return boundary_;
+  }
+
+ private:
+  bool error_ = false;
+  InnerSegmentBoundary boundary_;
+  uint32_t key_consumed_ = 0;
+  uint32_t value_consumed_ = 0;
+};
+
+// Utility function to accept fixed lengths array.
+//
+// auto boundary = BuildInnerSegmentBoundary(
+//                  {{2, 2, 1, 1}, {3, 3, 2, 2}}, "key", "value")
+//
+inline InnerSegmentBoundary BuildInnerSegmentBoundary(
+    absl::Span<const std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>>
+        boundary,
+    absl::string_view key, absl::string_view value) {
+  InnerSegmentBoundaryBuilder builder;
+  for (const auto& [key_len, value_len, content_key_len, content_value_len] :
+       boundary) {
+    builder.Add(key_len, value_len, content_key_len, content_value_len);
+  }
+  return builder.Build(key, value);
+}
 
 }  // namespace converter
 }  // namespace mozc
