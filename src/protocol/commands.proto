@@ -636,19 +636,6 @@ message DecoderExperimentParams {
   // The candidate will not be filtered if this value is zero.
   optional int32 suffix_nwp_transition_cost_threshold = 107 [default = 0];
 
-  // How many initial LRU entries to look up.
-  // We use a simple linear-search on LRU.
-  // When zero, default value (3000) is used.
-  optional int32 user_history_max_suggestion_trial = 108 [default = 0];
-
-  // The maximum lifetime of the entries.
-  // When zero, default value (62) is used.
-  optional int32 user_history_entry_lifetime_days = 109 [default = 0];
-
-  // The maximum size of entries actually saved to disk.
-  // When zero, store all entries in the on-memory LRU.
-  optional int32 user_history_cache_store_size = 110 [default = 0];
-
   // Suppress the prediction when value_len >= suppress_min_length
   // and suggestion frequency is one.
   // If user_history_suppress_min_length <= 0, this suppression is disabled.

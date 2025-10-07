@@ -87,10 +87,6 @@ namespace {
 
 using ::mozc::composer::TypeCorrectedQuery;
 
-// Finds suggestion candidates from the most recent 3000 history in LRUs.
-// We don't check all history, since suggestion is called every key event
-constexpr size_t kDefaultMaxSuggestionTrial = 3000;
-
 // Finds suffix matches of history_segments from the most recent 500 histories
 // in LRU.
 constexpr size_t kMaxPrevValueTrial = 500;
@@ -368,7 +364,7 @@ UserHistoryPredictor::UserHistoryPredictor(const engine::Modules& modules)
     : dictionary_(modules.GetDictionary()),
       user_dictionary_(modules.GetUserDictionary()),
       updated_(false),
-      dic_(new DicCache(UserHistoryPredictor::cache_size())),
+      dic_(new DicCache(kLruCacheSize)),
       modules_(modules),
       revert_cache_(kRevertCacheSize) {
   AsyncLoad();  // non-blocking
@@ -491,20 +487,10 @@ bool UserHistoryPredictor::Save() {
 
   UserHistoryStorage history(filename);
 
-  // Copy the current values to avoid these values from being updated in
-  // the actual copy operations.
-  const int store_size = cache_store_size_.load();
-  const absl::Duration lifetime_days = entry_lifetime_days_as_duration();
   auto& proto = history.GetProto();
-
-  const absl::Time now = Clock::GetAbslTime();
   for (const DicElement& elm : *dic_) {
-    if (store_size > 0 && proto.entries_size() >= store_size) {
+    if (proto.entries_size() >= kLruCacheSize) {
       break;
-    }
-    if (absl::FromUnixSeconds(elm.value.last_access_time()) + lifetime_days <
-        now) {
-      continue;
     }
     *proto.add_entries() = elm.value;
   }
@@ -531,7 +517,7 @@ bool UserHistoryPredictor::ClearAllHistory() {
   MOZC_VLOG(1) << "Clearing user prediction";
   // Renews DicCache as LruCache tries to reuse the internal value by
   // using FreeList
-  dic_ = std::make_unique<DicCache>(UserHistoryPredictor::cache_size());
+  dic_ = std::make_unique<DicCache>(kLruCacheSize);
 
   updated_ = true;
 
@@ -1225,7 +1211,10 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest& request,
     result->set_bigram_boost(true);
   }
 
-  if (!result->removed()) {
+  // result with zero frequency is generated via revert operation.
+  // zero frequency entry is suggested and the frequency is incremented
+  // in Finsih method.
+  if (!result->removed() && result->suggestion_freq() > 0) {
     entry_queue->Push(result);
   }
 
@@ -1321,9 +1310,6 @@ std::vector<Result> UserHistoryPredictor::Predict(
   }
 
   const auto& params = request.request().decoder_experiment_params();
-
-  SetEntryLifetimeDays(params.user_history_entry_lifetime_days());
-  SetCacheStoreSize(params.user_history_cache_store_size());
 
   const bool is_zero_query =
       IsZeroQuerySuggestionEnabled(request) && is_empty_input;
@@ -1422,16 +1408,6 @@ UserHistoryPredictor::LookupPrevEntry(const ConversionRequest& request) const {
     if (prev_entry) break;
   }
 
-  // Check the timestamp of prev_entry.
-  const absl::Time now = Clock::GetAbslTime();
-  const absl::Duration lifetime_days = entry_lifetime_days_as_duration();
-  if (prev_entry != nullptr &&
-      absl::FromUnixSeconds(prev_entry->last_access_time()) + lifetime_days <
-          now) {
-    updated_ = true;  // We found an entry to be deleted at next save.
-    return nullptr;
-  }
-
   // When |prev_entry| is nullptr or |prev_entry| has no valid next_entries,
   // do linear-search over the LRU.
   if (prev_entry == nullptr ||
@@ -1495,13 +1471,6 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
   GetInputKeyFromRequest(request, &request_key, &base_key, &expanded);
 
   EntryPriorityQueue entry_queue;
-  const absl::Time now = Clock::GetAbslTime();
-  int trial = 0;
-  int max_trial = request.request()
-                      .decoder_experiment_params()
-                      .user_history_max_suggestion_trial();
-  if (max_trial <= 0) max_trial = kDefaultMaxSuggestionTrial;
-  const absl::Duration lifetime_days = entry_lifetime_days_as_duration();
 
   for (const DicElement& elm : *dic_) {
     // already found enough entry_queue.
@@ -1511,16 +1480,6 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
 
     if (!IsValidEntryIgnoringRemovedField(elm.value)) {
       continue;
-    }
-    if (absl::FromUnixSeconds(elm.value.last_access_time()) + lifetime_days <
-        now) {
-      updated_ = true;  // We found an entry to be deleted at next save.
-      continue;
-    }
-    if (request.request_type() == ConversionRequest::SUGGESTION &&
-        trial++ >= max_trial) {
-      MOZC_VLOG(2) << "too many trials";
-      break;
     }
 
     // Lookup key from elm_value and prev_entry.
@@ -1718,7 +1677,7 @@ void UserHistoryPredictor::InsertNextEntry(uint64_t fp, Entry* entry) const {
 
   // If next_entries_size is less than kMaxNextEntriesSize,
   // we simply allocate a new entry.
-  if (entry->next_entry_fps_size() < max_next_entries_size()) {
+  if (entry->next_entry_fps_size() < kMaxNextEntriesSize) {
     entry->add_next_entry_fps(fp);
   } else {
     // Otherwise, find the oldest next_entry.
@@ -2529,15 +2488,6 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
       }
     }
   }
-}
-
-// Returns the size of cache.
-// static
-uint32_t UserHistoryPredictor::cache_size() { return kLruCacheSize; }
-
-// Returns the size of next entries.
-uint32_t UserHistoryPredictor::max_next_entries_size() const {
-  return kMaxNextEntriesSize;
 }
 
 }  // namespace mozc::prediction

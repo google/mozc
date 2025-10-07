@@ -148,12 +148,6 @@ class UserHistoryPredictor : public PredictorInterface {
   static uint32_t FingerprintDepereated(absl::string_view key,
                                         absl::string_view value);
 
-  // Returns the size of cache.
-  static uint32_t cache_size();
-
-  // Returns the size of next entries.
-  uint32_t max_next_entries_size() const;
-
  private:
   struct SegmentForLearning {
     // The string byte offset of key and value on result.(key|value).
@@ -464,16 +458,6 @@ class UserHistoryPredictor : public PredictorInterface {
   // Users may use the backspace key just to remove the last few characters.
   void MaybeProcessPartialRevertEntry(const ConversionRequest& request) const;
 
-  // Default entry lifetime period.
-  // Entries will be automatically purged after this period.
-  static constexpr int kDefaultEntryLifetimeDays = 62;
-
-  void SetEntryLifetimeDays(int days) const {
-    entry_lifetime_days_.store(days <= 0 ? kDefaultEntryLifetimeDays : days);
-  }
-
-  void SetCacheStoreSize(int size) const { cache_store_size_.store(size); }
-
   const dictionary::DictionaryInterface& dictionary_;
   const dictionary::UserDictionaryInterface& user_dictionary_;
 
@@ -497,12 +481,6 @@ class UserHistoryPredictor : public PredictorInterface {
 
   mutable std::optional<BackgroundFuture<void>> sync_;
   const engine::Modules& modules_;
-
-  mutable std::atomic<int> entry_lifetime_days_ = kDefaultEntryLifetimeDays;
-
-  absl::Duration entry_lifetime_days_as_duration() const {
-    return absl::Hours(24 * entry_lifetime_days_.load());
-  }
 
   // The maximum entries size serialized to the file.
   // When zero, all entries in the on-memory LRU are stored.

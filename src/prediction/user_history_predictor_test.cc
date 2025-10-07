@@ -125,10 +125,6 @@ class UserHistoryPredictorTestPeer
   PEER_METHOD(RemoveNgramChain);
   PEER_METHOD(WaitForSyncer);
   PEER_METHOD(Save);
-  PEER_METHOD(SetEntryLifetimeDays);
-  PEER_METHOD(SetCacheStoreSize);
-  PEER_VARIABLE(cache_store_size_);
-  PEER_VARIABLE(entry_lifetime_days_);
   PEER_VARIABLE(dic_);
   PEER_DECLARE(MatchType);
   PEER_DECLARE(EntryPriorityQueue);
@@ -408,6 +404,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     e->set_key(std::string(key));
     e->set_value(std::string(value));
     e->set_removed(false);
+    e->set_suggestion_freq(1);
+    e->set_last_access_time(1);
     return e;
   }
 
@@ -449,9 +447,6 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     *japaneseinput = InsertEntry(predictor, "japaneseinput", "JapaneseInput");
     *japanese = InsertEntry(predictor, "japanese", "Japanese");
     *input = AppendEntry(predictor, "input", "Input", *japanese);
-    (*japaneseinput)->set_last_access_time(1);
-    (*japanese)->set_last_access_time(1);
-    (*input)->set_last_access_time(1);
 
     // Check the predictor functionality for the above history structure.
     EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
@@ -476,10 +471,6 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     *japanese = InsertEntry(predictor, "japanese", "Japanese");
     *input = AppendEntry(predictor, "input", "Input", *japanese);
     *method = AppendEntry(predictor, "method", "Method", *input);
-    (*japaneseinputmethod)->set_last_access_time(1);
-    (*japanese)->set_last_access_time(1);
-    (*input)->set_last_access_time(1);
-    (*method)->set_last_access_time(1);
 
     // Check the predictor functionality for the above history structure.
     EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
@@ -1251,6 +1242,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
   UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   std::vector<Result> results;
 
@@ -4699,167 +4691,29 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
   }
 }
 
-TEST_F(UserHistoryPredictorTest, EntriesMaxTrialSize) {
+TEST_F(UserHistoryPredictorTest, EntriesAreDeletedAtSync) {
   UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
-  // Insert one entry per day.
-  for (int i = 0; i < 30; ++i) {
+  for (int i = 0; i < 12000; ++i) {
     SegmentsProxy segments_proxy;
     const ConversionRequest convreq = SetUpInputForConversion(
-        absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments_proxy);
-    segments_proxy.AddCandidate(0, absl::StrFormat("私の名前%2d", i));
+        absl::StrFormat("わたしのなまえ%d", i), &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, absl::StrFormat("私の名前%d", i));
     predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
-  for (int trial : {10, 20}) {
-    request_.mutable_decoder_experiment_params()
-        ->set_user_history_max_suggestion_trial(trial);
-    for (int i = 29; i >= 0; --i) {
-      SegmentsProxy segments_proxy;
-      const ConversionRequest convreq = SetUpInputForSuggestion(
-          absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments_proxy);
-      const std::vector<Result> results = predictor->Predict(convreq);
-      const int lookup_trial = 29 - i;
-      if (lookup_trial < trial) {
-        EXPECT_FALSE(results.empty());
-      } else {
-        EXPECT_TRUE(results.empty());
-      }
-    }
-  }
+  predictor_peer.Save();
 
-  request_.mutable_decoder_experiment_params()
-      ->set_user_history_max_suggestion_trial(0);
-}
+  auto has_key = [&](absl::string_view key) {
+    SegmentsProxy segments_proxy;
+    const ConversionRequest convreq =
+        SetUpInputForPrediction(key, &composer_, &segments_proxy);
+    return !predictor->Predict(convreq).empty();
+  };
 
-TEST_F(UserHistoryPredictorTest, EntriesAreDeletedAtSync) {
-  // mode 0 -> delete by lifetime
-  // mode 1 -> delete by cache size.
-
-  for (const int mode : {0, 1}) {
-    for (const int limit : {10, 20, 30, 40}) {
-      ScopedClockMock clock(absl::FromUnixSeconds(1));
-      UserHistoryPredictor* predictor =
-          GetUserHistoryPredictorWithClearedHistory();
-      UserHistoryPredictorTestPeer predictor_peer(*predictor);
-
-      if (mode == 0) {
-        predictor_peer.SetEntryLifetimeDays(limit);
-        EXPECT_EQ(predictor_peer.entry_lifetime_days_(), limit);
-      } else {
-        predictor_peer.SetCacheStoreSize(limit);
-        EXPECT_EQ(predictor_peer.cache_store_size_(), limit);
-      }
-
-      // Insert one entry per day.
-      for (int i = 0; i < 50; ++i) {
-        SegmentsProxy segments_proxy;
-        const ConversionRequest convreq =
-            SetUpInputForConversion(absl::StrFormat("わたしのなまえ%2d", i),
-                                    &composer_, &segments_proxy);
-        segments_proxy.AddCandidate(0, absl::StrFormat("私の名前%2d", i));
-        predictor->Finish(convreq, segments_proxy.MakeLearningResults(),
-                          kRevertId);
-        if (mode == 0) {
-          clock->Advance(absl::Hours(24));  // advance one day.
-        }
-      }
-
-      predictor_peer.Save();
-
-      auto lookup_key = [&](absl::string_view key) -> std::string {
-        SegmentsProxy segments_proxy;
-        const ConversionRequest convreq =
-            SetUpInputForPrediction(key, &composer_, &segments_proxy);
-        const std::vector<Result> results = predictor->Predict(convreq);
-        return results.empty() ? "" : results[0].value;
-      };
-
-      const int deleted = 50 - limit;
-      for (int i = 0; i < deleted; ++i) {
-        EXPECT_EQ(lookup_key(absl::StrFormat("わたしのなまえ%2d", i)), "");
-      }
-
-      for (int i = deleted; i < limit; ++i) {
-        EXPECT_EQ(lookup_key(absl::StrFormat("わたしのなまえ%2d", i)),
-                  absl::StrFormat("私の名前%2d", i));
-      }
-
-      predictor_peer.SetEntryLifetimeDays(0);
-      predictor_peer.SetCacheStoreSize(0);
-      EXPECT_EQ(predictor_peer.entry_lifetime_days_(), 62);
-      EXPECT_EQ(predictor_peer.cache_store_size_(), 0);
-    }
-  }
-}
-
-TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
-  ScopedClockMock clock(absl::FromUnixSeconds(1));
-
-  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
-  UserHistoryPredictorTestPeer predictor_peer(*predictor);
-  std::vector<Result> results;
-
-  // Let the predictor learn "私の名前は中野です".
-  SegmentsProxy segments_proxy;
-  const ConversionRequest convreq1 = SetUpInputForConversion(
-      "わたしのなまえはなかのです", &composer_, &segments_proxy);
-  segments_proxy.AddCandidate(0, "私の名前は中野です");
-  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
-
-  // Verify that "私の名前は中野です" is predicted.
-  segments_proxy.Clear();
-  const ConversionRequest convreq2 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
-  results = predictor->Predict(convreq2);
-  EXPECT_FALSE(results.empty());
-  EXPECT_TRUE(FindCandidateByValue("私の名前は中野です", results));
-
-  // Now, simulate the case where 63 days passed.
-  clock->Advance(absl::Hours(63 * 24));
-
-  // Let the predictor learn "私の名前は高橋です".
-  segments_proxy.Clear();
-  const ConversionRequest convreq3 = SetUpInputForConversion(
-      "わたしのなまえはたかはしです", &composer_, &segments_proxy);
-  segments_proxy.AddCandidate(0, "私の名前は高橋です");
-  predictor->Finish(convreq3, segments_proxy.MakeLearningResults(), kRevertId);
-
-  // Verify that "私の名前は高橋です" is predicted but "私の名前は中野です" is
-  // not.  The latter one is still in on-memory data structure but lookup is
-  // prevented.  The entry is removed when the data is written to disk.
-  segments_proxy.Clear();
-  const ConversionRequest convreq4 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
-  results = predictor->Predict(convreq4);
-  EXPECT_FALSE(results.empty());
-  EXPECT_TRUE(FindCandidateByValue("私の名前は高橋です", results));
-  EXPECT_FALSE(FindCandidateByValue("私の名前は中野です", results));
-
-  // Here, write the history to a storage.
-  ASSERT_TRUE(predictor->Sync());
-  WaitForSyncer(predictor);
-
-  // Verify that "私の名前は中野です" is no longer predicted because it was
-  // learned 63 days before.
-  segments_proxy.Clear();
-  const ConversionRequest convreq5 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
-  results = predictor->Predict(convreq5);
-  EXPECT_FALSE(results.empty());
-  EXPECT_TRUE(FindCandidateByValue("私の名前は高橋です", results));
-  EXPECT_FALSE(FindCandidateByValue("私の名前は中野です", results));
-
-  // Verify also that on-memory data structure doesn't contain node for 中野.
-  bool found_takahashi = false;
-  for (const auto& elem : *predictor_peer.dic_()) {
-    EXPECT_EQ(elem.value.value().find("中野"), std::string::npos);
-    if (elem.value.value().find("高橋")) {
-      found_takahashi = true;
-    }
-  }
-  EXPECT_TRUE(found_takahashi);
+  EXPECT_FALSE(has_key("わたしのなまえ0"));  // too old
+  EXPECT_TRUE(has_key("わたしのなまえ11000"));
 }
 
 TEST_F(UserHistoryPredictorTest, FutureTimestamp) {
