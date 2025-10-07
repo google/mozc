@@ -83,8 +83,6 @@ class ServerLauncher : public ServerLauncherInterface {
   // return server program
   zstring_view server_program() const override { return server_program_; }
 
-  void set_restricted(bool restricted) override { restricted_ = restricted; }
-
   // Sets the flag of error dialog suppression.
   void set_suppress_error_dialog(bool suppress) override {
     suppress_error_dialog_ = suppress;
@@ -92,7 +90,6 @@ class ServerLauncher : public ServerLauncherInterface {
 
  private:
   std::string server_program_;
-  bool restricted_;
   bool suppress_error_dialog_;
 };
 
@@ -158,7 +155,6 @@ class Client : public ClientInterface {
   void EnableCascadingWindow(bool enable) override;
 
   void set_timeout(absl::Duration timeout) override;
-  void set_restricted(bool restricted) override;
   void set_server_program(absl::string_view program_path) override;
   void set_suppress_error_dialog(bool suppress) override;
   void set_client_capability(const commands::Capability &capability) override;

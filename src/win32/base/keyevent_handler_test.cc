@@ -137,8 +137,6 @@ class TestServerLauncher : public client::ServerLauncherInterface {
     start_server_called_ = start_server_called;
   }
 
-  void set_restricted(bool restricted) override {}
-
   void set_suppress_error_dialog(bool suppress) override {}
 
   void set_server_program(const absl::string_view server_path) override {}
