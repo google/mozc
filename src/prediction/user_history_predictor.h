@@ -194,14 +194,6 @@ class UserHistoryPredictor : public PredictorInterface {
     EXACT_MATCH,         // right string == left string
   };
 
-  // Returns value of RemoveNgramChain() method. See the comments in
-  // implementation.
-  enum class RemoveNgramChainResult {
-    DONE,
-    TAIL,
-    NOT_FOUND,
-  };
-
   // Returns true if this predictor should return results for the input.
   bool ShouldPredict(const ConversionRequest& request) const;
 
@@ -431,13 +423,16 @@ class UserHistoryPredictor : public PredictorInterface {
 
   static void EraseNextEntries(uint64_t fp, Entry* entry);
 
-  // Recursively removes a chain of Entries in |dic_|. See the comment in
-  // implementation for details.
-  RemoveNgramChainResult RemoveNgramChain(
-      absl::string_view target_key, absl::string_view target_value,
-      Entry* entry, std::vector<absl::string_view>* key_ngrams,
-      size_t key_ngrams_len, std::vector<absl::string_view>* value_ngrams,
-      size_t value_ngrams_len);
+  // Recursively removes a chain of Entries in |dic_|.
+  // Returns true if at least one chain is removed.
+  bool RemoveNgramChain(absl::string_view target_key,
+                        absl::string_view target_value, Entry* entry);
+
+  // Removes entry when key/value are the prefix of entry with
+  // the inner boundary constraint. entry->removed() gets true when removed.
+  static bool RemoveEntryWithInnerSegment(absl::string_view key,
+                                          absl::string_view value,
+                                          Entry* entry);
 
   // Returns true if the input first candidate seems to be a privacy sensitive
   // such like password.

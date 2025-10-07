@@ -35,6 +35,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <memory>
@@ -585,77 +586,148 @@ void UserHistoryPredictor::EraseNextEntries(uint64_t fp, Entry* entry) {
 // chain like
 //    ("aaa", "AAA") -- ("bbb", "BBB") -- ("ccc", "CCC"),
 // and if target_key == "aaabbbccc" and target_value == "AAABBBCCC", the link
-// from ("bbb", "BBB") to ("ccc", "CCC") is removed. If a link was removed, this
-// method returns DONE. If no history entries can produce the target key
-// value, then NOT_FOUND is returned. TAIL is returned only when the
-// tail was found, e.g., in the above example, when the method finds the tail
-// node ("ccc", "CCC").
-UserHistoryPredictor::RemoveNgramChainResult
-UserHistoryPredictor::RemoveNgramChain(
+// from ("bbb", "BBB") to ("ccc", "CCC") is removed.
+// return true if a link was removed.
+bool UserHistoryPredictor::RemoveNgramChain(
     const absl::string_view target_key, const absl::string_view target_value,
-    Entry* entry, std::vector<absl::string_view>* key_ngrams,
-    size_t key_ngrams_len, std::vector<absl::string_view>* value_ngrams,
-    size_t value_ngrams_len) {
+    Entry* entry) {
   DCHECK(entry);
-  DCHECK(key_ngrams);
-  DCHECK(value_ngrams);
 
-  // Updates the lengths with the current entry node.
-  key_ngrams_len += entry->key().size();
-  value_ngrams_len += entry->value().size();
-
-  // This is the case where ngram key and value are shorter than the target key
-  // and value, respectively. In this case, we need to find further entries to
-  // concatenate in order to make |target_key| and |target_value|.
-  if (key_ngrams_len < target_key.size() &&
-      value_ngrams_len < target_value.size()) {
-    key_ngrams->push_back(entry->key());
-    value_ngrams->push_back(entry->value());
-    for (const uint64_t fp : entry->next_entry_fps()) {
-      Entry* e = dic_->MutableLookupWithoutInsert(fp);
-      if (e == nullptr) {
-        continue;
-      }
-      const RemoveNgramChainResult r =
-          RemoveNgramChain(target_key, target_value, e, key_ngrams,
-                           key_ngrams_len, value_ngrams, value_ngrams_len);
-      switch (r) {
-        case RemoveNgramChainResult::DONE:
-          return RemoveNgramChainResult::DONE;
-        case RemoveNgramChainResult::TAIL:
-          // |entry| is the second-to-the-last node. So cut the link to the
-          // child entry.
-          EraseNextEntries(fp, entry);
-          return RemoveNgramChainResult::DONE;
-        default:
-          break;
-      }
-    }
-    // Recovers the state.
-    key_ngrams->pop_back();
-    value_ngrams->pop_back();
-    return RemoveNgramChainResult::NOT_FOUND;
+  if (!target_key.starts_with(entry->key()) ||
+      !target_value.starts_with(entry->value())) {
+    return false;
   }
 
-  // This is the case where the current ngram key and value have the same
-  // lengths as those of |target_key| and |target_value|, respectively.
-  if (key_ngrams_len == target_key.size() &&
-      value_ngrams_len == target_value.size()) {
-    key_ngrams->push_back(entry->key());
-    value_ngrams->push_back(entry->value());
-    const std::string ngram_key = absl::StrJoin(*key_ngrams, "");
-    const std::string ngram_value = absl::StrJoin(*value_ngrams, "");
-    if (ngram_key == target_key && ngram_value == target_value) {
-      // |entry| is the last node. So return TAIL to tell the caller so
-      // that it can remove the link to this last node.
-      return RemoveNgramChainResult::TAIL;
+  // Returns value of RemoveNgramChain() method. See the comments in
+  // implementation.
+  enum RemoveNgramChainResult {
+    DONE,
+    TAIL,
+    NOT_FOUND,
+  };
+
+  std::vector<absl::string_view> key_ngrams, value_ngrams;
+  std::function<RemoveNgramChainResult(Entry*, size_t, size_t)>
+      remove_ngram_chain_internal =
+          [&](Entry* entry, size_t key_ngrams_len,
+              size_t value_ngrams_len) -> RemoveNgramChainResult {
+    // Updates the lengths with the current entry node.
+    key_ngrams_len += entry->key().size();
+    value_ngrams_len += entry->value().size();
+
+    // This is the case where ngram key and value are shorter than the target
+    // key and value, respectively. In this case, we need to find further
+    // entries to concatenate in order to make |target_key| and |target_value|.
+    if (key_ngrams_len < target_key.size() &&
+        value_ngrams_len < target_value.size()) {
+      key_ngrams.push_back(entry->key());
+      value_ngrams.push_back(entry->value());
+      for (const uint64_t fp : entry->next_entry_fps()) {
+        Entry* e = dic_->MutableLookupWithoutInsert(fp);
+        if (e == nullptr) {
+          continue;
+        }
+        switch (
+            remove_ngram_chain_internal(e, key_ngrams_len, value_ngrams_len)) {
+          case DONE:
+            return DONE;
+          case TAIL:
+            // |entry| is the second-to-the-last node. So cut the link to the
+            // child entry.
+            EraseNextEntries(fp, entry);
+            return DONE;
+          default:
+            break;
+        }
+      }
+      // Recovers the state.
+      key_ngrams.pop_back();
+      value_ngrams.pop_back();
+      return NOT_FOUND;
     }
-    key_ngrams->pop_back();
-    value_ngrams->pop_back();
-    return RemoveNgramChainResult::NOT_FOUND;
+
+    // This is the case where the current ngram key and value have the same
+    // lengths as those of |target_key| and |target_value|, respectively.
+    if (key_ngrams_len == target_key.size() &&
+        value_ngrams_len == target_value.size()) {
+      key_ngrams.push_back(entry->key());
+      value_ngrams.push_back(entry->value());
+      const std::string ngram_key = absl::StrJoin(key_ngrams, "");
+      const std::string ngram_value = absl::StrJoin(value_ngrams, "");
+      if (ngram_key == target_key && ngram_value == target_value) {
+        // |entry| is the last node. So return TAIL to tell the caller so that
+        // it can remove the link to this last node.
+        return TAIL;
+      }
+      key_ngrams.pop_back();
+      value_ngrams.pop_back();
+      return NOT_FOUND;
+    }
+
+    return NOT_FOUND;
+  };
+
+  return remove_ngram_chain_internal(entry, 0, 0) == DONE;
+}
+
+// static
+bool UserHistoryPredictor::RemoveEntryWithInnerSegment(absl::string_view key,
+                                                       absl::string_view value,
+                                                       Entry* entry) {
+  DCHECK(entry);
+
+  if (entry->inner_segment_boundary_size() == 0) {
+    return false;
   }
 
-  return RemoveNgramChainResult::NOT_FOUND;
+  // TODO(taku): Support multiple matches.
+
+  // Checks from value as value is less likely matched.
+  const auto value_start = absl::string_view(entry->value()).find(value);
+  if (value_start == absl::string_view::npos) return false;
+
+  const auto key_start = absl::string_view(entry->key()).find(key);
+  if (key_start == absl::string_view::npos) return false;
+
+  const converter::InnerSegments inner_segments(
+      entry->key(), entry->value(), entry->inner_segment_boundary());
+
+  const uint32_t key_end = key_start + key.size();
+  const uint32_t value_end = value_start + value.size();
+
+  uint32_t key_len = 0;
+  uint32_t value_len = 0;
+  bool start_match = false;
+
+  for (const auto& it : inner_segments) {
+    if (key_len == key_start && value_len == value_start) {
+      start_match = true;
+    }
+
+    // Ends at the key/value or content_key/value boundary.
+    if ((key_len + it.GetKey().size() == key_end &&
+         value_len + it.GetValue().size() == value_end) ||
+        (key_len + it.GetContentKey().size() == key_end &&
+         value_len + it.GetContentValue().size() == value_end)) {
+      if (start_match) {
+        entry->set_suggestion_freq(0);
+        entry->set_shown_freq(0);
+        entry->set_removed(true);
+        return true;
+      }
+      return false;
+    }
+
+    key_len += it.GetKey().size();
+    value_len += it.GetValue().size();
+
+    // Exceeds the boundary.
+    if (!start_match && (key_len > key_start || value_len > value_start)) {
+      return false;
+    }
+  }
+
+  return false;
 }
 
 bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
@@ -674,26 +746,26 @@ bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
       deleted = true;
     }
   }
+
   {
-    // Finds a chain of history entries that produces key and value. If exists,
-    // remove the link so that N-gram history prediction never generates this
-    // key value pair..
+    // Two case
+    // 1) Finds a chain of history entries that produces key and value.
+    //   If exists, remove the link so that N-gram history prediction never
+    //   generates this key value pair.
+    // 2) key/value are the substring of entry.
     for (DicElement& elm : *dic_) {
       Entry* entry = &elm.value;
-      if (!key.starts_with(entry->key()) ||
-          !value.starts_with(entry->value())) {
-        continue;
-      }
-      std::vector<absl::string_view> key_ngrams, value_ngrams;
-      if (RemoveNgramChain(key, value, entry, &key_ngrams, 0, &value_ngrams,
-                           0) == RemoveNgramChainResult::DONE) {
+      if (RemoveNgramChain(key, value, entry) ||
+          RemoveEntryWithInnerSegment(key, value, entry)) {
         deleted = true;
       }
     }
   }
+
   if (deleted) {
     updated_ = true;
   }
+
   return deleted;
 }
 

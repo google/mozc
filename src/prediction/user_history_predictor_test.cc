@@ -117,6 +117,7 @@ class UserHistoryPredictorTestPeer
   PEER_STATIC_METHOD(GetInputKeyFromRequest);
   PEER_STATIC_METHOD(EraseNextEntries);
   PEER_STATIC_METHOD(GuessRevertedValueOffset);
+  PEER_STATIC_METHOD(RemoveEntryWithInnerSegment);
   PEER_METHOD(IsValidEntry);
   PEER_METHOD(IsValidEntryIgnoringRemovedField);
   PEER_METHOD(RomanFuzzyLookupEntry);
@@ -130,7 +131,6 @@ class UserHistoryPredictorTestPeer
   PEER_VARIABLE(entry_lifetime_days_);
   PEER_VARIABLE(dic_);
   PEER_DECLARE(MatchType);
-  PEER_DECLARE(RemoveNgramChainResult);
   PEER_DECLARE(EntryPriorityQueue);
 };
 
@@ -3617,15 +3617,9 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   entries.push_back(b);
   entries.push_back(c);
 
-  using RemoveNgramChainResult =
-      UserHistoryPredictorTestPeer::RemoveNgramChainResult;
-
   // The method should return NOT_FOUND for key-value pairs not in the chain.
   for (size_t i = 0; i < entries.size(); ++i) {
-    std::vector<absl::string_view> dummy1, dummy2;
-    EXPECT_EQ(predictor_peer.RemoveNgramChain("hoge", "HOGE", entries[i],
-                                              &dummy1, 0, &dummy2, 0),
-              RemoveNgramChainResult::NOT_FOUND);
+    EXPECT_FALSE(predictor_peer.RemoveNgramChain("hoge", "HOGE", entries[i]));
   }
   // Moreover, all nodes and links should be kept.
   for (size_t i = 0; i < entries.size(); ++i) {
@@ -3637,10 +3631,7 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   {
     // Try deleting the chain for "abc". Only the link from "b" to "c" should be
     // removed.
-    std::vector<absl::string_view> dummy1, dummy2;
-    EXPECT_EQ(predictor_peer.RemoveNgramChain("abc", "ABC", a, &dummy1, 0,
-                                              &dummy2, 0),
-              RemoveNgramChainResult::DONE);
+    EXPECT_TRUE(predictor_peer.RemoveNgramChain("abc", "ABC", a));
     for (size_t i = 0; i < entries.size(); ++i) {
       EXPECT_FALSE(entries[i]->removed());
     }
@@ -3650,10 +3641,7 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   {
     // Try deleting the chain for "a". Since this is the head of the chain, the
     // function returns TAIL and nothing should be removed.
-    std::vector<absl::string_view> dummy1, dummy2;
-    EXPECT_EQ(
-        predictor_peer.RemoveNgramChain("a", "A", a, &dummy1, 0, &dummy2, 0),
-        RemoveNgramChainResult::TAIL);
+    EXPECT_FALSE(predictor_peer.RemoveNgramChain("a", "A", a));
     for (size_t i = 0; i < entries.size(); ++i) {
       EXPECT_FALSE(entries[i]->removed());
     }
@@ -3662,15 +3650,90 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   }
   {
     // Further delete the chain for "ab".  Now all the links should be removed.
-    std::vector<absl::string_view> dummy1, dummy2;
-    EXPECT_EQ(
-        predictor_peer.RemoveNgramChain("ab", "AB", a, &dummy1, 0, &dummy2, 0),
-        RemoveNgramChainResult::DONE);
+    EXPECT_TRUE(predictor_peer.RemoveNgramChain("ab", "AB", a));
     for (size_t i = 0; i < entries.size(); ++i) {
       EXPECT_FALSE(entries[i]->removed());
     }
     EXPECT_FALSE(IsConnected(*a, *b));
     EXPECT_FALSE(IsConnected(*b, *c));
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, RemoveEntryWithInnerSegment) {
+  {
+    // single segment case.
+    UserHistoryPredictor::Entry entry;
+    entry.set_value("京都の");
+    entry.set_key("きょうとの");
+
+    EXPECT_FALSE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうと", "京都", &entry));
+    EXPECT_FALSE(entry.removed());
+
+    for (const uint32_t encoded : converter::BuildInnerSegmentBoundary(
+             {{15, 9, 12, 6}}, "きょうとの", "京都の")) {
+      entry.add_inner_segment_boundary(encoded);
+    }
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうと", "京都", &entry));
+    EXPECT_TRUE(entry.removed());
+  }
+
+  {
+    // multi segment case.
+    UserHistoryPredictor::Entry entry;
+    entry.set_value("京都の歴史あるお寺は");
+    entry.set_key("きょうとのれきしあるおてらは");
+    for (const uint32_t encoded : converter::BuildInnerSegmentBoundary(
+             {{15, 9, 12, 6}, {15, 12, 9, 6}, {12, 9, 9, 6}},
+             "きょうとのれきしあるおてらは", "京都の歴史あるお寺は")) {
+      entry.add_inner_segment_boundary(encoded);
+    }
+
+    // All prefix
+    EXPECT_FALSE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょう", "京", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうと", "京都", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうとの", "京都の", &entry));
+    EXPECT_FALSE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうとのれき", "京都の歴", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうとのれきし", "京都の歴史", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうとのれきしある", "京都の歴史ある", &entry));
+    EXPECT_FALSE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうとのれきしあるお", "京都の歴史あるお", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうとのれきしあるおてら", "京都の歴史あるお寺", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "きょうとのれきしあるおてらは", "京都の歴史あるお寺は", &entry));
+
+    // Partial
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "れきし", "歴史", &entry));
+    EXPECT_FALSE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "れきしあ", "歴史あ", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "れきしある", "歴史ある", &entry));
+    EXPECT_FALSE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "れきしあるお", "歴史あるお", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "れきしあるおてら", "歴史あるお寺", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "れきしあるおてらは", "歴史あるお寺は", &entry));
+
+    EXPECT_FALSE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "お", "お", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "おてら", "お寺", &entry));
+    EXPECT_TRUE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "おてらは", "お寺は", &entry));
+    EXPECT_FALSE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "てら", "寺", &entry));
+    EXPECT_FALSE(UserHistoryPredictorTestPeer::RemoveEntryWithInnerSegment(
+        "てらは", "寺は", &entry));
   }
 }
 
