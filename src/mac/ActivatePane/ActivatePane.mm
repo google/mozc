@@ -270,9 +270,11 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
   }
 
   // usage stats message
+  // Note, setHidden is used instead of removeFromSuperview because removeFromSuperview requires
+  // additional logic for memory management. Otherwise it may result crash of installer.
 #ifndef GOOGLE_JAPANESE_INPUT_BUILD
-  [_putUsageStatsDB removeFromSuperview];
-  [_putUsageStatsDBMessage removeFromSuperview];
+  [_putUsageStatsDB setHidden:YES];
+  [_putUsageStatsDBMessage setHidden:YES];
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
   if (!_hasUsageStatsDB) {
     NSString *usageStatsMessage = [self localizedStringForKey:@"usageStatsMessage"];
@@ -280,8 +282,8 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
       [_putUsageStatsDBMessage setStringValue:usageStatsMessage];
     }
   } else {
-    [_putUsageStatsDB removeFromSuperview];
-    [_putUsageStatsDBMessage removeFromSuperview];
+    [_putUsageStatsDB setHidden:YES];
+    [_putUsageStatsDBMessage setHidden:YES];
   }
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
