@@ -589,10 +589,19 @@ std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
   }
 
   DWORD creation_flags = info.creation_flags | CREATE_SUSPENDED;
-  // Note: If the current process is already in a job, you cannot use
-  // CREATE_BREAKAWAY_FROM_JOB.  See b/1571395
   if (info.use_locked_down_job) {
-    creation_flags |= CREATE_BREAKAWAY_FROM_JOB;
+    // Windows 8 and later allow nested jobs, hence CREATE_BREAKAWAY_FROM_JOB is
+    // optional. Set it only when JOB_OBJECT_LIMIT_BREAKAWAY_OK is set to
+    // minimize the impact on the existing job limitations if possible.
+    // TODO(google/mozc#1376): See if this can be removed or not.
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_info = {};
+    if (::QueryInformationJobObject(nullptr, JobObjectExtendedLimitInformation,
+                                    &job_info, sizeof(job_info), nullptr)) {
+      const DWORD job_flags = job_info.BasicLimitInformation.LimitFlags;
+      if ((job_flags & JOB_OBJECT_LIMIT_BREAKAWAY_OK) != 0) {
+        creation_flags |= CREATE_BREAKAWAY_FROM_JOB;
+      }
+    }
   }
 
   const wchar_t* startup_directory =

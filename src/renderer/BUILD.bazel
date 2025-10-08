@@ -77,7 +77,6 @@ mozc_cc_library(
         macos = ["//base/mac:mac_util"],
         windows = [
             "//base/win32:win_sandbox",
-            "//base:run_level",
         ],
     ),
 )

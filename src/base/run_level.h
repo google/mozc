@@ -65,10 +65,6 @@ class RunLevel {
     return (GetRunLevel(RunLevel::CLIENT) <= RunLevel::RESTRICTED);
   }
 
-  // return true if the current process is in other JOB.
-  // returns always false on Linux/Mac
-  static bool IsProcessInJob();
-
   // return true the current process is elevated by UAC.
   // return false if the function failed to determine it.
   // return false on Mac/Linux
