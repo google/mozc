@@ -23,6 +23,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: setup
         run: |
@@ -62,6 +63,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Try to restore update_deps cache
         uses: actions/cache@v4
