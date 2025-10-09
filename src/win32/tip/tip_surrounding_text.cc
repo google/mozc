@@ -338,6 +338,13 @@ bool TipSurroundingText::PrepareForReconversionFromIme(
   if (!GetSurroundingTextImm32(context,
                                ReconvertString::RequestType::kReconvertString,
                                info)) {
+    // Certain apps such as Excel do start reconversions by using
+    // ITfFnReconversion protocol upon receiving IMR_RECONVERTSTRING message,
+    // even though they return 0 (== failure) to the message.
+    // See https://github.com/google/mozc/issues/1384 for details.
+    // In this sense, seeing failure here is still a necessary step to support
+    // reconversions in such apps. We just need to wait for the app to call into
+    // TipReconvertFunction::Reconvert later.
     return false;
   }
   // IMM32-like reconversion requires async edit session.
