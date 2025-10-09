@@ -92,25 +92,29 @@ class WinSandbox {
     USER_UNPROTECTED,
   };
 
-  // Make a security attributes that only permit current user and system
-  // to access the target resource.
-  // return true if a valid securityAttributes is generated.
-  // Please call ::LocalFree() to release the attributes.
+  // Returns a security descriptor that only permit current user and system to
+  // access the target resource.
   //
   // Usage:
-  // SECURITY_ATTRIBUTES security_attributes;
-  // if (!MakeSecurityAttributes(WinSandbox::kSharablePipe,
-  //                             &security_attributes)) {
-  //  LOG(ERROR) << "Cannot make SecurityAttributes";
+  // auto security_descriptor =
+  //     MakeSecurityDescriptor(WinSandbox::kSharablePipe);
+  // if (!security_descriptor) {
+  //  LOG(ERROR) << "Cannot make SecurityDescriptor";
   //  return;
   // }
+  //
+  // SECURITY_ATTRIBUTES security_attributes = {
+  //    .nLength = sizeof(SECURITY_ATTRIBUTES),
+  //    .lpSecurityDescriptor = security_descriptor.get(),
+  //    .bInheritHandle = FALSE,
+  // };
+  //
   // handle_ = ::CreateNamedPipe(..
   //                             PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED |
   //                             FILE_FLAG_FIRST_PIPE_INSTANCE,
   //                             PIPE_REJECT_REMOTE_CLIENTS | ...,
   //                             ...
   //                             &security_attributes);
-  // ::LocalFree(security_attributes.lpSecurityDescriptor);
   enum ObjectSecurityType {
     // Used for an object that is inaccessible from lower sandbox level.
     kPrivateObject = 0,
@@ -129,8 +133,8 @@ class WinSandbox {
     // level.
     kIPCServerProcess,
   };
-  static bool MakeSecurityAttributes(ObjectSecurityType shareble_object_type,
-                                     SECURITY_ATTRIBUTES* security_attributes);
+  static wil::unique_hlocal_security_descriptor MakeSecurityDescriptor(
+      ObjectSecurityType shareble_object_type);
 
   // Adds an ACE represented by |known_sid| and |access| to the dacl of the
   // kernel object referenced by |object|. |inheritance_flag| is a set of bit

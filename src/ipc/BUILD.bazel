@@ -220,6 +220,7 @@ mozc_cc_library(
         windows = [
             "//base/win32:win_sandbox",
             "//base/win32:wide_char",
+            "@com_microsoft_wil//:wil",
         ],
     ),
 )
