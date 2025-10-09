@@ -482,10 +482,6 @@ class UserHistoryPredictor : public PredictorInterface {
   mutable std::optional<BackgroundFuture<void>> sync_;
   const engine::Modules& modules_;
 
-  // The maximum entries size serialized to the file.
-  // When zero, all entries in the on-memory LRU are stored.
-  mutable std::atomic<int> cache_store_size_ = 0;
-
   // Internal LRU cache to store dic_key/Entry to be reverted.
   storage::LruCache<uint64_t, RevertEntries> revert_cache_;
 
