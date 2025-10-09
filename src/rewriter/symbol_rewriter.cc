@@ -71,10 +71,8 @@ constexpr size_t kDefaultOffset = 3;
 constexpr size_t kOffsetForSymbolKey = 1;
 // Number of symbols which are inserted to first part
 constexpr size_t kMaxInsertToMedium = 15;
-}  // namespace
 
-size_t SymbolRewriter::GetOffset(const ConversionRequest& request,
-                                 absl::string_view key) {
+size_t GetOffset(const ConversionRequest& request, absl::string_view key) {
   const bool is_symbol_key =
       Util::CharsLen(key) == 1 && Util::IsScriptType(key, Util::UNKNOWN_SCRIPT);
 
@@ -93,8 +91,7 @@ size_t SymbolRewriter::GetOffset(const ConversionRequest& request,
 // If the symbol has description and additional description,
 // Return merged description.
 // TODO(taku): allow us to define two descriptions in *.tsv file
-// static function
-std::string SymbolRewriter::GetDescription(
+std::string GetDescription(
     const absl::string_view value, const absl::string_view description,
     const absl::string_view additional_description) {
   if (description.empty()) {
@@ -108,8 +105,7 @@ std::string SymbolRewriter::GetDescription(
 }
 
 // return true key has no-hiragana
-// static function
-bool SymbolRewriter::IsSymbol(const absl::string_view key) {
+bool IsSymbol(const absl::string_view key) {
   for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
     const char32_t codepoint = iter.Get();
     if (codepoint >= 0x3041 && codepoint <= 0x309F) {  // hiragana
@@ -119,8 +115,8 @@ bool SymbolRewriter::IsSymbol(const absl::string_view key) {
   return true;
 }
 
-// static function
-void SymbolRewriter::ExpandSpace(Segment* segment) {
+// Insert alternative form of space.
+void ExpandSpace(Segment* segment) {
   auto insert_candidate = [segment](int base, absl::string_view value) {
     auto c = std::make_unique<converter::Candidate>(segment->candidate(base));
     strings::Assign(c->value, value);
@@ -144,8 +140,7 @@ void SymbolRewriter::ExpandSpace(Segment* segment) {
 }
 
 // Return true if two symbols are in same group
-// static function
-bool SymbolRewriter::InSameSymbolGroup(
+bool InSameSymbolGroup(
     SerializedDictionary::const_iterator lhs,
     SerializedDictionary::const_iterator rhs) {
   // "矢印記号", "矢印記号"
@@ -156,9 +151,31 @@ bool SymbolRewriter::InSameSymbolGroup(
   return lhs.description() == rhs.description();
 }
 
+// Add symbol desc to existing candidates
+void AddDescForCurrentCandidates(
+    const SerializedDictionary::IterRange& range, Segment* segment) {
+  for (size_t i = 0; i < segment->candidates_size(); ++i) {
+    converter::Candidate* candidate = segment->mutable_candidate(i);
+    std::string full_width_value =
+        japanese_util::HalfWidthToFullWidth(candidate->value);
+    std::string half_width_value =
+        japanese_util::FullWidthToHalfWidth(candidate->value);
+
+    for (auto iter = range.first; iter != range.second; ++iter) {
+      if (candidate->value == iter.value() ||
+          full_width_value == iter.value() ||
+          half_width_value == iter.value()) {
+        candidate->description =
+            GetDescription(candidate->value, iter.description(),
+                           iter.additional_description());
+        break;
+      }
+    }
+  }
+}
+
 // Insert Symbol into segment.
-// static function
-void SymbolRewriter::InsertCandidates(
+void InsertCandidates(
     size_t default_offset, const SerializedDictionary::IterRange& range,
     bool context_sensitive, Segment* segment) {
   if (segment->candidates_size() == 0) {
@@ -269,28 +286,7 @@ void SymbolRewriter::InsertCandidates(
   segment->insert_candidates(segment->candidates_size(), std::move(candidates));
 }
 
-// static
-void SymbolRewriter::AddDescForCurrentCandidates(
-    const SerializedDictionary::IterRange& range, Segment* segment) {
-  for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    converter::Candidate* candidate = segment->mutable_candidate(i);
-    std::string full_width_value =
-        japanese_util::HalfWidthToFullWidth(candidate->value);
-    std::string half_width_value =
-        japanese_util::FullWidthToHalfWidth(candidate->value);
-
-    for (auto iter = range.first; iter != range.second; ++iter) {
-      if (candidate->value == iter.value() ||
-          full_width_value == iter.value() ||
-          half_width_value == iter.value()) {
-        candidate->description =
-            GetDescription(candidate->value, iter.description(),
-                           iter.additional_description());
-        break;
-      }
-    }
-  }
-}
+}  // namespace
 
 bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest& request,
                                           Segments* segments) const {

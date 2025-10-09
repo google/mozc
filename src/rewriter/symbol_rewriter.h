@@ -33,7 +33,6 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
-#include <string>
 
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
@@ -63,34 +62,6 @@ class SymbolRewriter : public RewriterInterface {
 
  private:
   friend class SymbolRewriterTestPeer;
-
-  // Some characters may have different description for full/half width forms.
-  // Here we just change the description in this function.
-  static std::string GetDescription(absl::string_view value,
-                                    absl::string_view description,
-                                    absl::string_view additional_description);
-
-  // return true key has no-hiragana
-  static bool IsSymbol(absl::string_view key);
-
-  // Insert alternative form of space.
-  static void ExpandSpace(Segment* segment);
-
-  // Return true if two symbols are in same group.
-  static bool InSameSymbolGroup(SerializedDictionary::const_iterator lhs,
-                                SerializedDictionary::const_iterator rhs);
-
-  // Insert Symbol into segment.
-  static void InsertCandidates(size_t default_offset,
-                               const SerializedDictionary::IterRange& range,
-                               bool context_sensitive, Segment* segment);
-
-  // Add symbol desc to existing candidates
-  static void AddDescForCurrentCandidates(
-      const SerializedDictionary::IterRange& range, Segment* segment);
-
-  static size_t GetOffset(const ConversionRequest& request,
-                          absl::string_view key);
 
   // Insert symbols using connected all segments.
   bool RewriteEntireCandidate(const ConversionRequest& request,
