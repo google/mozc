@@ -107,15 +107,19 @@ bool ProcessMutex::LockAndWriteInternal(const absl::string_view message) {
       FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY |
       FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_FLAG_DELETE_ON_CLOSE;
 
-  SECURITY_ATTRIBUTES serucity_attributes = {};
-  if (!WinSandbox::MakeSecurityAttributes(WinSandbox::kSharableFileForRead,
-                                          &serucity_attributes)) {
+  wil::unique_hlocal_security_descriptor security_descriptor =
+       WinSandbox::MakeSecurityDescriptor(WinSandbox::kSharableFileForRead);
+  if (!security_descriptor) {
     return false;
   }
+  SECURITY_ATTRIBUTES security_attributes = {
+      .nLength = sizeof(SECURITY_ATTRIBUTES),
+      .lpSecurityDescriptor = security_descriptor.get(),
+      .bInheritHandle = FALSE,
+  };
   handle_.reset(::CreateFileW(wfilename.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
-                              &serucity_attributes, CREATE_ALWAYS, kAttribute,
+                              &security_attributes, CREATE_ALWAYS, kAttribute,
                               nullptr));
-  ::LocalFree(serucity_attributes.lpSecurityDescriptor);
 
   if (!handle_.is_valid()) {
     MOZC_VLOG(1) << "already locked";
