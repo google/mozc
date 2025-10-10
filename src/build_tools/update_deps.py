@@ -40,6 +40,7 @@ import dataclasses
 import hashlib
 import os
 import pathlib
+import platform
 import shutil
 import stat
 import subprocess
@@ -116,6 +117,12 @@ LLVM_WIN = ArchiveInfo(
     url='https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.1/clang+llvm-20.1.1-x86_64-pc-windows-msvc.tar.xz',
     size=939286624,
     sha256='f8114cb674317e8a303731b1f9d22bf37b8c571b64f600abe528e92275ed4ace',
+)
+
+LLVM_WIN_ARM64 = ArchiveInfo(
+    url='https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.1/clang+llvm-20.1.1-aarch64-pc-windows-msvc.tar.xz',
+    size=900502024,
+    sha256='6ee4c1a8c51cf081e19a7225d802d160cc888cdc3a8da07dcbdb5768e3160244',
 )
 
 MSYS2 = ArchiveInfo(
@@ -302,16 +309,16 @@ class StatefulLLVMExtractionFilter:
     return member.replace(name=new_path, deep=False)
 
 
-def extract_llvm(dryrun: bool = False) -> None:
+def extract_llvm(archive: ArchiveInfo, dryrun: bool = False) -> None:
   """Extract LLVM archive.
 
   Args:
+    archive: LLVM archive.
     dryrun: True if this is a dry-run.
   """
   if not is_windows():
     return
 
-  archive = LLVM_WIN
   src = CACHE_DIR.joinpath(archive.filename)
   dest = ABS_THIRD_PARTY_DIR.joinpath('llvm').absolute()
 
@@ -608,7 +615,10 @@ def main():
       archives.append(NDK_MAC)
   if is_windows():
     if not args.nollvm:
-      archives.append(LLVM_WIN)
+      if platform.machine().lower() == 'arm64':
+        archives.append(LLVM_WIN_ARM64)
+      else:
+        archives.append(LLVM_WIN)
     if not args.nomsys2:
       archives.append(MSYS2)
 
@@ -618,8 +628,10 @@ def main():
   if args.cache_only:
     return
 
-  if LLVM_WIN in archives:
-    extract_llvm(args.dryrun)
+  for llvm in [LLVM_WIN, LLVM_WIN_ARM64]:
+    if llvm in archives:
+      extract_llvm(llvm, args.dryrun)
+      break
 
   if MSYS2 in archives:
     extract_msys2(MSYS2, args.dryrun)
