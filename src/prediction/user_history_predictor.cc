@@ -2435,6 +2435,10 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
        last_committed_entries->entries) {
     absl::string_view cvalue = committed_entry.value();
     absl::string_view ckey = committed_entry.key();
+    // temporal workaround for b/450398740
+    if (!Util::IsValidUtf8(cvalue) || !Util::IsValidUtf8(ckey)) {
+      continue;
+    }
     const int32_t value_end = value_begin + cvalue.size();
     const int32_t key_end = key_begin + ckey.size();
 
