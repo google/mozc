@@ -85,7 +85,6 @@ mozc_cc_library(
         "//:__subpackages__",
         "//converter:__pkg__",
         "//prediction:__pkg__",
-        "//rewriter:__pkg__",
     ],
     deps = [
         ":conversion_request",
