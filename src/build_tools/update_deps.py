@@ -294,12 +294,11 @@ class StatefulLLVMExtractionFilter:
       skipping = False
     elif len(paths) >= 2 and paths[1] in ['include', 'lib']:
       skipping = False
-    new_path = '/'.join(paths[1:])
     if skipping:
-      self.printer.print_line('skipping   ' + new_path)
+      self.printer.print_line('skipping   ' + member.name)
       return None
-    self.printer.print_line('extracting ' + new_path)
-    return member.replace(name=new_path, deep=False)
+    self.printer.print_line('extracting ' + member.name)
+    return member
 
 
 def extract_llvm(dryrun: bool = False) -> None:
