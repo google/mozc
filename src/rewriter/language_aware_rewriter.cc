@@ -235,11 +235,6 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest& request,
   candidate->attributes |= (converter::Attribute::NO_VARIANTS_EXPANSION |
                             converter::Attribute::NO_EXTRA_DESCRIPTION);
 
-  if (!IsMobileRequest(request)) {
-    candidate->prefix = "→ ";
-    candidate->description = "もしかして";
-  }
-
   return true;
 }
 

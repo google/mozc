@@ -142,11 +142,8 @@ constexpr auto ValueIs =
 // with "did you mean" annotation.
 constexpr auto IsLangAwareCandidate =
     [](absl::string_view value) -> Matcher<const converter::Candidate*> {
-  return Pointee(
-      AllOf(Field(&converter::Candidate::key, value),
-            Field(&converter::Candidate::value, value),
-            Field(&converter::Candidate::prefix, "→ "),
-            Field(&converter::Candidate::description, "もしかして")));
+  return Pointee(AllOf(Field(&converter::Candidate::key, value),
+                       Field(&converter::Candidate::value, value)));
 };
 
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
