@@ -170,6 +170,13 @@ bool IsContentWord(const absl::string_view value) {
          Util::GetScriptType(value) != Util::UNKNOWN_SCRIPT;
 }
 
+// Returns true if `value` starts with a valid letter character.
+bool StartsWithValidLetter(const absl::string_view value) {
+  const auto type = Util::GetFirstScriptType(value);
+  return type == Util::KANJI || type == Util::HIRAGANA ||
+         type == Util::KATAKANA || type == Util::ALPHABET;
+}
+
 // Returns candidate description.
 // If candidate is spelling correction, typing correction
 // or auto partial suggestion,
@@ -900,9 +907,7 @@ bool UserHistoryPredictor::ZeroQueryLookupEntry(
     // suffix must starts with Japanese characters.
     std::string key = entry->key().substr(prev_entry->key().size());
     std::string value = entry->value().substr(prev_entry->value().size());
-    const auto type = Util::GetFirstScriptType(value);
-    if (type != Util::KANJI && type != Util::HIRAGANA &&
-        type != Util::KATAKANA) {
+    if (!StartsWithValidLetter(value)) {
       return false;
     }
     Entry* result = entry_queue->NewEntry();
@@ -1756,13 +1761,10 @@ void UserHistoryPredictor::Insert(
     return;
   }
 
-  // Do not remember Japanese text that ends with a punctuation.
-  // Usually Japanese punctuation is an independent segment, so
-  // this case happens when user type "よろしく。" directly via composer.
-  const auto type = Util::GetFirstScriptType(value);
-  if ((type == Util::KANJI || type == Util::HIRAGANA ||
-       type == Util::KATAKANA) &&
-      Util::CharsLen(value) > 1 && EndsWithPunctuation(value)) {
+  // Do not remember text that ends with a punctuation.
+  // This case happens when user type "よろしく。" or "hello," directly via
+  // composer.
+  if (StartsWithValidLetter(value) && EndsWithPunctuation(value)) {
     return;
   }
 

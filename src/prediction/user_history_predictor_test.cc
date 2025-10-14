@@ -1401,19 +1401,24 @@ TEST_F(UserHistoryPredictorTest, TrailingPunctuationMobile) {
   request_test_util::FillMobileRequest(&request_);
   SegmentsProxy segments_proxy;
 
-  const ConversionRequest convreq1 =
-      SetUpInputForConversion("です。", &composer_, &segments_proxy);
+  // [query, whether the query is remembered]
+  const std::vector<std::pair<absl::string_view, bool>> kTestCase = {
+      {"です。", false}, {"です", true}, {"hello,", false},
+      {"hello", true},   {"123,", true}, {"+@#!,", true}};
 
-  segments_proxy.AddCandidate(0, "です。");
+  for (const auto& [query, expected] : kTestCase) {
+    const ConversionRequest convreq1 =
+        SetUpInputForConversion(query, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, query);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
-
-  segments_proxy.Clear();
-
-  const ConversionRequest convreq2 =
-      SetUpInputForPrediction("です", &composer_, &segments_proxy);
-  const std::vector<Result> results = predictor->Predict(convreq2);
-  EXPECT_TRUE(results.empty());
+    segments_proxy.Clear();
+    const ConversionRequest convreq2 = SetUpInputForPrediction(
+        Util::Utf8SubString(query, 0, 2), &composer_, &segments_proxy);
+    const std::vector<Result> results = predictor->Predict(convreq2);
+    EXPECT_EQ(results.empty(), !expected);
+  }
 }
 
 TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
