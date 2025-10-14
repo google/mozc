@@ -39,7 +39,7 @@ namespace mozc {
 namespace dictionary {
 
 struct Token {
-  typedef uint8_t AttributesBitfield;
+  using AttributesBitfield = uint8_t;
 
   enum Attribute {
     NONE = 0,
@@ -58,15 +58,15 @@ struct Token {
 
   Token() = default;
   Token(absl::string_view k, absl::string_view v) : key(k), value(v) {}
-  Token(absl::string_view k, absl::string_view v, int c, int l, int r,
+  Token(absl::string_view k, absl::string_view v, int c, uint16_t l, uint16_t r,
         AttributesBitfield a)
       : key(k), value(v), cost(c), lid(l), rid(r), attributes(a) {}
 
   std::string key;
   std::string value;
   int cost = 0;
-  int lid = 0;
-  int rid = 0;
+  uint16_t lid = 0;
+  uint16_t rid = 0;
   AttributesBitfield attributes = NONE;
 };
 

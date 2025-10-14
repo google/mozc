@@ -1017,7 +1017,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   constexpr absl::string_view kHiraganaAA = "ああ";
   constexpr auto kCost = MockDictionary::kDefaultCost;
   constexpr auto kPosId = MockDictionary::kDefaultPosId;
-  const int kUnknownId = data_and_aggregator->pos_matcher().GetUnknownId();
+  const uint16_t kUnknownId = data_and_aggregator->pos_matcher().GetUnknownId();
 
   const std::vector<Token> a_tokens = {
       // A system dictionary entry "a".
