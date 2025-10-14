@@ -29,7 +29,6 @@
 
 #include "rewriter/symbol_rewriter.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -83,7 +82,9 @@ size_t GetOffset(const ConversionRequest& request, absl::string_view key) {
     // and users would not be able to find symbol candidates.
     return kOffsetForSymbolKey;
   }
-  return kDefaultOffset;
+  return request.request()
+      .decoder_experiment_params()
+      .symbol_rewriter_candidate_position();
 }
 
 // Some characters may have different description for full/half width forms.
@@ -175,9 +176,9 @@ void AddDescForCurrentCandidates(
 }
 
 // Insert Symbol into segment.
-void InsertCandidates(
-    size_t default_offset, const SerializedDictionary::IterRange& range,
-    bool context_sensitive, Segment* segment) {
+void InsertCandidates(size_t default_offset, int32_t promotion_size,
+                      const SerializedDictionary::IterRange& range,
+                      bool context_sensitive, Segment* segment) {
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
     return;
@@ -259,7 +260,7 @@ void InsertCandidates(
     candidates.emplace_back(create_candidate(iter));
 
     if (const int inserted_count = candidates.size();
-        inserted_count < kMaxInsertToMedium ||
+        inserted_count < promotion_size ||
         // If number of rest symbols is small, insert current position.
         range_size - inserted_count < 5) {
       continue;
@@ -291,6 +292,9 @@ void InsertCandidates(
 bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest& request,
                                           Segments* segments) const {
   bool modified = false;
+  const int32_t promotion_size = request.request()
+                                     .decoder_experiment_params()
+                                     .symbol_rewriter_promotion_size();
   for (Segment& segment : segments->conversion_segments()) {
     absl::string_view key = segment.key();
     const SerializedDictionary::IterRange range = dictionary_->equal_range(key);
@@ -301,8 +305,8 @@ bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest& request,
     // if key is symbol, no need to see the context
     const bool context_sensitive = !IsSymbol(key);
 
-    InsertCandidates(GetOffset(request, key), range, context_sensitive,
-                     &segment);
+    InsertCandidates(GetOffset(request, key), promotion_size, range,
+                     context_sensitive, &segment);
 
     modified = true;
   }
@@ -322,7 +326,10 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest& request,
     return false;
   }
 
-  InsertCandidates(GetOffset(request, key), range,
+  const int32_t promotion_size = request.request()
+                                     .decoder_experiment_params()
+                                     .symbol_rewriter_promotion_size();
+  InsertCandidates(GetOffset(request, key), promotion_size, range,
                    false,  // not context sensitive
                    segments->mutable_conversion_segment(0));
   return true;
