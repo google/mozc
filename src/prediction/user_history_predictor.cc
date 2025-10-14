@@ -197,16 +197,12 @@ void PopulateInnerSegmentBoundary(
     converter::InnerSegmentBoundarySpan inner_segment_boundary,
     UserHistoryPredictor::Entry* absl_nonnull entry) {
   entry->clear_inner_segment_boundary();
-
-  // b/449508982: temporarily disables the inner segment feature.
-  return;
 }
 
 // Add the inner_segment_boundary information in `entry` via `builder`.
 void AppendInnerBoundary(converter::InnerSegmentBoundaryBuilder& builder,
                          const UserHistoryPredictor::Entry& entry) {
   // b/449508982: temporarily disables the inner segment feature.
-  return;
 }
 
 }  // namespace
