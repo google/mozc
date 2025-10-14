@@ -34,13 +34,11 @@ package(default_visibility = ["//visibility:private"])
 filegroup(
     name = "candidate_window_logo",
     srcs = glob(["candidate_window_logo_*.bmp"]),
-    visibility = ["//renderer/win32:__subpackages__"],
 )
 
 filegroup(
     name = "icons",
     srcs = glob(["*.ico"]),
-    visibility = ["//win32/tip:__subpackages__"],
 )
 
 exports_files(
