@@ -112,6 +112,9 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
   candidate->attributes |= converter::Attribute::RERANKED;
 
   AddCandidate("gekkyokuwo", "GEKKYOKUwo", "gekkyoku", "GEKKYOKU", segment);
+  converter::Candidate* candidate2 =
+      AddCandidate("かびばら", "かびばら", "カピバラ", "カピバラ", segment);
+  candidate2->attributes |= converter::Attribute::SPELLING_CORRECTION;
 
   config_.set_use_spelling_correction(false);
 
@@ -133,6 +136,12 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
   EXPECT_EQ(segments.conversion_segment(0).candidate(1).attributes,
             converter::Attribute::DEFAULT_ATTRIBUTE);
   EXPECT_TRUE(segments.conversion_segment(0).candidate(1).description.empty());
+
+  // candidate 2
+  EXPECT_EQ(segments.conversion_segment(0).candidate(2).attributes,
+            converter::Attribute::SPELLING_CORRECTION);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(2).description,
+            "<もしかして>");
 }
 
 }  // namespace mozc

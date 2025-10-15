@@ -139,24 +139,20 @@ NumberUtil::NumberString::Style GetStyle(
 // static
 void VariantsRewriter::SetDescriptionForCandidate(const PosMatcher pos_matcher,
                                                   Candidate* candidate) {
-  SetDescription(
-      pos_matcher,
-      (FULL_HALF_WIDTH | CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION),
-      candidate);
+  SetDescription(pos_matcher, (FULL_HALF_WIDTH | CHARACTER_FORM | ZIPCODE),
+                 candidate);
 }
 
 // static
 void VariantsRewriter::SetDescriptionForTransliteration(
     const PosMatcher pos_matcher, Candidate* candidate) {
-  SetDescription(pos_matcher,
-                 (FULL_HALF_WIDTH | CHARACTER_FORM | SPELLING_CORRECTION),
-                 candidate);
+  SetDescription(pos_matcher, (FULL_HALF_WIDTH | CHARACTER_FORM), candidate);
 }
 
 // static
 void VariantsRewriter::SetDescriptionForPrediction(const PosMatcher pos_matcher,
                                                    Candidate* candidate) {
-  SetDescription(pos_matcher, ZIPCODE | SPELLING_CORRECTION, candidate);
+  SetDescription(pos_matcher, ZIPCODE, candidate);
 }
 
 // static
@@ -287,30 +283,7 @@ std::string VariantsRewriter::GetDescription(const PosMatcher pos_matcher,
     }
   }
 
-  // The following description tries to overwrite existing description.
-  // TODO(taku): reconsider this behavior.
-  // Spelling Correction description
-  if ((description_type & SPELLING_CORRECTION) &&
-      (candidate.attributes & Attribute::SPELLING_CORRECTION)) {
-    // Append default description because it may contain extra description.
-    if (candidate.description.empty()) {
-      pieces = {kDidYouMean};
-    } else {
-      pieces = {kDidYouMean, candidate.description};
-    }
-  }
   return absl::StrJoin(pieces, " ");
-}
-
-// static
-absl::string_view VariantsRewriter::GetPrefix(const int description_type,
-                                              const Candidate& candidate) {
-  if ((description_type & SPELLING_CORRECTION) &&
-      (candidate.attributes & Attribute::SPELLING_CORRECTION)) {
-    // Add prefix to distinguish this candidate.
-    return "→ ";
-  }
-  return "";
 }
 
 void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
@@ -319,7 +292,6 @@ void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
   // set new description
   candidate->description =
       GetDescription(pos_matcher, description_type, *candidate);
-  candidate->prefix = GetPrefix(description_type, *candidate);
   candidate->attributes |= Attribute::NO_EXTRA_DESCRIPTION;
 }
 
@@ -427,7 +399,7 @@ VariantsRewriter::CreateAlternativeCandidate(
   const bool is_secondary_half_width = (secondary_form == Util::HALF_WIDTH);
 
   auto get_description_type = [](Util::FormType form) {
-    constexpr int kBaseTypes = CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION;
+    constexpr int kBaseTypes = CHARACTER_FORM | ZIPCODE;
     switch (form) {
       case Util::FULL_WIDTH:
         return VariantsRewriter::FULL_WIDTH | kBaseTypes;

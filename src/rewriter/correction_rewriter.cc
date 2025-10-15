@@ -53,10 +53,19 @@ using ::mozc::converter::Candidate;
 
 void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem& item,
                                       Candidate* candidate) {
+  // TODO(taku): The current description does not accurately represent the
+  // information about the typos and is space-consuming. We will
+  // change the description or replace it more direct inlined annotation.
+  constexpr absl::string_view kDidYouMean = "もしかして";
+
   candidate->prefix = "→ ";
   candidate->attributes |= Attribute::SPELLING_CORRECTION;
-
-  candidate->description = absl::StrCat("<もしかして: ", item.correction, ">");
+  if (item.correction.empty()) {
+    candidate->description = absl::StrCat("<", kDidYouMean, ">");
+  } else {
+    candidate->description =
+        absl::StrCat("<", kDidYouMean, ": ", item.correction, ">");
+  }
 }
 
 bool CorrectionRewriter::LookupCorrection(
@@ -119,10 +128,21 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
       // Check if the existing candidate is a corrected candidate.
       // In this case, update the candidate description.
       const converter::Candidate& candidate = segment.candidate(j);
+
+      // Handles the spelling correction defined in the system dictionary.
+      // mostly they are Katakana to Katakana correction.
+      if (candidate.attributes & Attribute::SPELLING_CORRECTION) {
+        // Sets empty correction item.
+        SetCandidate(ReadingCorrectionItem{"", "", ""},
+                     segment.mutable_candidate(j));
+        continue;
+      }
+
       if (!LookupCorrection(candidate.content_key, candidate.content_value,
                             &results)) {
         continue;
       }
+
       CHECK_GT(results.size(), 0);
       // results.size() should be 1, but we don't check it here.
       Candidate* mutable_candidate = segment.mutable_candidate(j);

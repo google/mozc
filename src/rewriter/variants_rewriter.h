@@ -65,7 +65,6 @@ class VariantsRewriter : public RewriterInterface {
 #endif  // __ANDROID__
   static constexpr absl::string_view kFullWidth = "[全]";
   static constexpr absl::string_view kHalfWidth = "[半]";
-  static constexpr absl::string_view kDidYouMean = "<もしかして>";
   static constexpr absl::string_view kYenKigou = "円記号";
 
   explicit VariantsRewriter(dictionary::PosMatcher pos_matcher)
@@ -126,7 +125,6 @@ class VariantsRewriter : public RewriterInterface {
     CHARACTER_FORM = 16,  // Hiragana/Katakana..etc
     DEPRECATED_PLATFORM_DEPENDENT_CHARACTER = 32,  // Deprecated. "機種依存文字"
     ZIPCODE = 64,
-    SPELLING_CORRECTION = 128
   };
 
   enum RewriteType {

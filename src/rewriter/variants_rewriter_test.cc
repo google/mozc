@@ -202,20 +202,6 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
     EXPECT_EQ(seg->candidate(1).content_value, "グーグル");
     seg->clear_candidates();
   }
-
-  {
-    converter::Candidate* candidate = seg->add_candidate();
-    candidate->value = "グーグル";
-    candidate->content_value = "グーグル";
-    candidate->attributes |= converter::Attribute::SPELLING_CORRECTION;
-    candidate->attributes |= converter::Attribute::USER_HISTORY_PREDICTION;
-    EXPECT_TRUE(candidate->description.empty());
-    EXPECT_FALSE(rewriter->Rewrite(request, &segments));
-    EXPECT_EQ(seg->candidates_size(), 1);
-    EXPECT_FALSE(
-        seg->candidate(0).description.empty());  // Added "did you mean".
-    seg->clear_candidates();
-  }
 }
 
 TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
