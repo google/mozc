@@ -1534,6 +1534,11 @@ void UserHistoryPredictor::GetInputKeyFromRequest(
 bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
                                          uint32_t request_key_len,
                                          const Entry& entry) {
+  // Suppress broken utf8 string just in case.
+  if (!Util::IsValidUtf8(entry.value())) {
+    return false;
+  }
+
   if (IsMixedConversionEnabled(request)) {
     // Don't show long history for mixed conversion
     // TODO(taku, b/447705421): Deprecates the length-based filtering.
@@ -1753,7 +1758,7 @@ void UserHistoryPredictor::Insert(
 
   if (key.empty() || value.empty() || key.size() > kMaxStringLength ||
       value.size() > kMaxStringLength ||
-      description.size() > kMaxStringLength) {
+      description.size() > kMaxStringLength || !Util::IsValidUtf8(value)) {
     return;
   }
 
