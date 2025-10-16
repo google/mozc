@@ -2371,6 +2371,7 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
       c->value = absl::StrCat("v", i);
       c->content_value = "v";
       c->description = "description";
+      c->display_value = "display_value";
       c->lid = i;
       c->rid = i + 1;
       c->cost = i + 2;
@@ -2386,6 +2387,7 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
       EXPECT_EQ(c.key, result.key);
       EXPECT_EQ(c.value, result.value);
       EXPECT_EQ(c.description, result.description);
+      EXPECT_EQ(c.display_value, result.display_value);
       EXPECT_EQ(c.lid, result.lid);
       EXPECT_EQ(c.rid, result.rid);
       EXPECT_EQ(c.cost, result.cost);

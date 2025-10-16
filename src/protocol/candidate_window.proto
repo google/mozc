@@ -54,6 +54,9 @@ message Annotation {
   // One of the example usage of this field is android:contentDescription in
   // Android.
   optional string a11y_description = 6;
+  // Actual value to be displayed. Uses it to encode meta information
+  // in the value. e.g., puts "_" to clarify the unrecognizable white spaces.
+  optional string display_value = 7;
 }
 
 // Additional information to a candidate word.  This message is

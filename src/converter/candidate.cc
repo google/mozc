@@ -62,6 +62,7 @@ void Candidate::Clear() {
   prefix.clear();
   suffix.clear();
   description.clear();
+  display_value.clear();
   usage_title.clear();
   usage_description.clear();
   cost = 0;
@@ -101,6 +102,9 @@ std::string Candidate::DebugString() const {
   }
   if (!description.empty()) {
     os << " description=" << description;
+  }
+  if (!display_value.empty()) {
+    os << " display_value=" << display_value;
   }
   if (!inner_segment_boundary.empty()) {
     os << " segbdd=";

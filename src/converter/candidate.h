@@ -85,12 +85,17 @@ class Candidate {
   size_t consumed_key_size = 0;
 
   // Meta information
+  // TODO(taku): Better to introduce a struct to save heap usage.
+  // These fields are mostly empty.
   std::string prefix;
   std::string suffix;
   // Description including description type and message
   std::string description;
   // Description for A11y support (e.g. "あ。ヒラガナ あ")
   std::string a11y_description;
+  // Actual value to be displayed. Uses it to encode meta information
+  // in the value. e.g., puts "_" to clarify the unrecognizable white spaces.
+  std::string display_value;
 
   // Usage ID
   int32_t usage_id = 0;

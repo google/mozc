@@ -66,6 +66,7 @@ MATCHER_P(EqualsCandidate, candidate, "") {
   COMPARE_FIELD(suffix);
   COMPARE_FIELD(description);
   COMPARE_FIELD(a11y_description);
+  COMPARE_FIELD(display_value);
   COMPARE_FIELD(usage_id);
   COMPARE_FIELD(usage_title);
   COMPARE_FIELD(usage_description);

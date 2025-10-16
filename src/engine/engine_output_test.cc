@@ -77,6 +77,7 @@ TEST(EngineOutputTest, FillCandidate) {
   const std::string kPrefix42 = "prefix";
   const std::string kSuffix42 = "suffix";
   const std::string kDescription42 = "description";
+  const std::string kDisplayValue42 = "display_value";
   const std::string kSubcandidateList = "Subcandidates";
 
   // Make 100 candidates
@@ -88,6 +89,7 @@ TEST(EngineOutputTest, FillCandidate) {
   segment.mutable_candidate(42)->prefix = kPrefix42;
   segment.mutable_candidate(42)->suffix = kSuffix42;
   segment.mutable_candidate(42)->description = kDescription42;
+  segment.mutable_candidate(42)->display_value = kDisplayValue42;
 
   candidate.set_id(13);
   output::FillCandidate(segment, candidate, &candidate_proto);
@@ -105,6 +107,7 @@ TEST(EngineOutputTest, FillCandidate) {
   EXPECT_EQ(candidate_proto.annotation().prefix(), kPrefix42);
   EXPECT_EQ(candidate_proto.annotation().suffix(), kSuffix42);
   EXPECT_EQ(candidate_proto.annotation().description(), kDescription42);
+  EXPECT_EQ(candidate_proto.annotation().display_value(), kDisplayValue42);
 
   candidate.Clear();
   candidate_proto.Clear();

@@ -105,6 +105,7 @@ struct Result {
   std::string key;
   std::string value;
   std::string description;
+  std::string display_value;
   // Indicating which PredictionType creates this instance.
   // UNIGRAM, BIGRAM, REALTIME, SUFFIX, ENGLISH or TYPING_CORRECTION
   // is set exclusively.

@@ -733,6 +733,7 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest& request,
     strings::Assign(candidate->key, result.key);
     strings::Assign(candidate->value, result.value);
     strings::Assign(candidate->description, result.description);
+    strings::Assign(candidate->display_value, result.display_value);
     candidate->lid = result.lid;
     candidate->rid = result.rid;
     candidate->wcost = result.wcost;
@@ -772,6 +773,7 @@ std::vector<prediction::Result> Converter::MakeLearningResults(
       strings::Assign(result.key, candidate->key);
       strings::Assign(result.value, candidate->value);
       strings::Assign(result.description, candidate->description);
+      strings::Assign(result.display_value, candidate->display_value);
       result.lid = candidate->lid;
       result.rid = candidate->rid;
       result.wcost = candidate->wcost;

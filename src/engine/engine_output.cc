@@ -85,6 +85,10 @@ bool FillAnnotation(const converter::Candidate& candidate_value,
     annotation->set_deletable(true);
     is_modified = true;
   }
+  if (!candidate_value.display_value.empty()) {
+    annotation->set_display_value(candidate_value.display_value);
+    is_modified = true;
+  }
   return is_modified;
 }
 
