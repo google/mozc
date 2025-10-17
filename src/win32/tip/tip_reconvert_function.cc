@@ -83,18 +83,20 @@ STDMETHODIMP TipReconvertFunction::QueryRange(
     return E_FAIL;
   }
 
-  TipSurroundingTextInfo info;
-  if (!TipSurroundingText::Get(text_service_.get(), context.get(), &info)) {
+  std::wstring selected_text;
+  bool is_composing = false;
+  if (!TipEditSession::GetTextSync(text_service_.get(), range,
+                                   &selected_text, &is_composing)) {
     return E_FAIL;
   }
 
-  if (info.in_composition) {
+  if (is_composing) {
     // on-going composition is found.
     SaveToOptionalOutParam(FALSE, opt_convertible);
     return S_OK;
   }
 
-  if (info.selected_text.find(static_cast<wchar_t>(TS_CHAR_EMBEDDED)) !=
+  if (selected_text.find(static_cast<wchar_t>(TS_CHAR_EMBEDDED)) !=
       std::wstring::npos) {
     // embedded object is found.
     SaveToOptionalOutParam(FALSE, opt_convertible);
@@ -120,7 +122,8 @@ TipReconvertFunction::GetReconversion(
     return E_FAIL;
   }
   std::wstring query;
-  if (!TipEditSession::GetTextSync(text_service_.get(), range, &query)) {
+  if (!TipEditSession::GetTextSync(text_service_.get(), range, &query,
+                                   nullptr)) {
     return E_FAIL;
   }
   std::vector<std::wstring> candidates;

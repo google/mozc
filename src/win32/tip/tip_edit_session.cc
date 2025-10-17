@@ -49,6 +49,7 @@
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"
 #include "win32/base/input_state.h"
+#include "win32/tip/tip_composition_util.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session_impl.h"
 #include "win32/tip/tip_input_mode_manager.h"
@@ -553,23 +554,38 @@ class SyncGetTextEditSessionImpl final
     : public TipComImplements<ITfEditSession> {
  public:
   SyncGetTextEditSessionImpl(wil::com_ptr_nothrow<TipTextService> text_service,
-                             wil::com_ptr_nothrow<ITfRange> range)
-      : text_service_(std::move(text_service)), range_(std::move(range)) {}
+                             wil::com_ptr_nothrow<ITfRange> range,
+                             bool check_composition)
+      : text_service_(std::move(text_service)),
+        range_(std::move(range)),
+        check_composition_(check_composition) {}
 
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie read_cookie) {
-    TipRangeUtil::GetText(range_.get(), read_cookie, &text_);
+    HRESULT result = TipRangeUtil::GetText(range_.get(), read_cookie, &text_);
+    if (FAILED(result)) {
+      return result;
+    }
+    if (check_composition_) {
+      wil::com_ptr_nothrow<ITfCompositionView> composition_view =
+          TipCompositionUtil::GetCompositionViewFromRange(range_.get(),
+                                                          read_cookie);
+      is_composing_ = !!composition_view;
+    }
     return S_OK;
   }
 
   const std::wstring &text() const { return text_; }
+  bool is_composing() const { return is_composing_; }
 
  private:
   wil::com_ptr_nothrow<TipTextService> text_service_;
   wil::com_ptr_nothrow<ITfRange> range_;
+  bool check_composition_ = false;
   std::wstring text_;
+  bool is_composing_ = false;
 };
 
 // This class is an implementation class for the ITfEditSession classes, which
@@ -793,24 +809,25 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
     return false;
   }
 
-  TipSurroundingTextInfo info;
-  if (!TipSurroundingText::Get(text_service, context.get(), &info)) {
+  std::wstring selected_text;
+  bool is_composing = false;
+  if (!GetTextSync(text_service, range, &selected_text, &is_composing)) {
     return false;
   }
 
-  if (info.selected_text.empty()) {
+  if (selected_text.empty()) {
     // Selected text is empty. Nothing to do.
     return false;
   }
 
-  if (info.in_composition) {
+  if (is_composing) {
     // on-going composition is found.
     return false;
   }
 
   // Stop reconversion when any embedded object is found because we cannot
   // easily restore it. See b/3406434
-  if (info.selected_text.find(static_cast<wchar_t>(TS_CHAR_EMBEDDED)) !=
+  if (selected_text.find(static_cast<wchar_t>(TS_CHAR_EMBEDDED)) !=
       std::wstring::npos) {
     // embedded object is found.
     return false;
@@ -818,7 +835,7 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
 
   SessionCommand command;
   command.set_type(SessionCommand::CONVERT_REVERSE);
-  command.set_text(WideToUtf8(info.selected_text));
+  command.set_text(WideToUtf8(selected_text));
   Output output;
   if (!private_context->GetClient()->SendCommand(command, &output)) {
     return false;
@@ -882,12 +899,14 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
 }
 
 bool TipEditSession::GetTextSync(TipTextService *text_service, ITfRange *range,
-                                 std::wstring *text) {
+                                 std::wstring *text, bool *is_composing) {
   wil::com_ptr_nothrow<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {
     return false;
   }
-  auto get_text = MakeComPtr<SyncGetTextEditSessionImpl>(text_service, range);
+  const bool check_composition = (is_composing != nullptr);
+  auto get_text = MakeComPtr<SyncGetTextEditSessionImpl>(text_service, range,
+                                                         check_composition);
 
   HRESULT hr = S_OK;
   HRESULT hr_session = S_OK;
@@ -897,6 +916,9 @@ bool TipEditSession::GetTextSync(TipTextService *text_service, ITfRange *range,
     return false;
   }
   *text = get_text->text();
+  if (check_composition) {
+    *is_composing = get_text->is_composing();
+  }
   return true;
 }
 
