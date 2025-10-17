@@ -23,6 +23,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Set up pip
         shell: cmd
@@ -85,6 +86,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Try to restore update_deps cache
         uses: actions/cache@v4
@@ -137,6 +139,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Try to restore update_deps cache
         uses: actions/cache@v4
@@ -189,6 +192,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Set up pip
         shell: cmd
@@ -231,6 +235,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Try to restore update_deps cache
         uses: actions/cache@v4
@@ -266,6 +271,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: false
+          persist-credentials: false
 
       - name: Try to restore update_deps cache
         uses: actions/cache@v4
