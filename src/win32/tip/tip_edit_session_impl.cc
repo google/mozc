@@ -225,35 +225,31 @@ HRESULT UpdateComposition(TipTextService *text_service, ITfContext *context,
                           TfEditCookie write_cookie, const Output &output) {
   HRESULT result = S_OK;
 
-  // Clear composition
-  if (composition) {
-    wil::com_ptr_nothrow<ITfRange> composition_range;
-    result = composition->GetRange(&composition_range);
-    if (FAILED(result)) {
-      return result;
-    }
-    BOOL is_empty = FALSE;
-    result = composition_range->IsEmpty(write_cookie, &is_empty);
-    if (FAILED(result)) {
-      return result;
-    }
-    if (is_empty != TRUE) {
-      std::wstring str;
-      TipRangeUtil::GetText(composition_range.get(), write_cookie, &str);
-      result = composition_range->SetText(write_cookie, 0, L"", 0);
-      if (FAILED(result)) {
-        return result;
-      }
-      result = ClearReadingProperties(context, composition_range.get(),
-                                      write_cookie);
-      if (FAILED(result)) {
-        return result;
-      }
-    }
-  }
-
   if (!output.has_preedit()) {
     if (composition) {
+      wil::com_ptr_nothrow<ITfRange> composition_range;
+      result = composition->GetRange(&composition_range);
+      if (FAILED(result)) {
+        return result;
+      }
+      BOOL is_empty = FALSE;
+      result = composition_range->IsEmpty(write_cookie, &is_empty);
+      if (FAILED(result)) {
+        return result;
+      }
+      if (is_empty != TRUE) {
+        std::wstring str;
+        TipRangeUtil::GetText(composition_range.get(), write_cookie, &str);
+        result = composition_range->SetText(write_cookie, 0, L"", 0);
+        if (FAILED(result)) {
+          return result;
+        }
+        result = ClearReadingProperties(context, composition_range.get(),
+                                        write_cookie);
+        if (FAILED(result)) {
+          return result;
+        }
+      }
       result = composition->EndComposition(write_cookie);
       if (FAILED(result)) {
         return result;
@@ -445,6 +441,7 @@ HRESULT UpdatePreeditAndComposition(TipTextService *text_service,
       TipCompositionUtil::GetComposition(context, write_cookie);
 
   // Clear the display attributes first.
+  // TODO(https://github.com/google/mozc/discussions/1388): Revisit here.
   if (composition) {
     const HRESULT result = TipCompositionUtil::ClearDisplayAttributes(
         context, composition.get(), write_cookie);
@@ -614,6 +611,7 @@ HRESULT TipEditSessionImpl::OnCompositionTerminated(
   }
 
   // Clear the display attributes first.
+  // TODO(https://github.com/google/mozc/discussions/1388): Revisit here.
   if (composition) {
     const HRESULT result = TipCompositionUtil::ClearDisplayAttributes(
         context, composition, write_cookie);
