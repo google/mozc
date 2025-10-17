@@ -382,14 +382,12 @@ std::wstring Sid::GetAccountName() const {
   return StrCatW(domain_name_buffer.get(), L"/", name_buffer.get());
 }
 
-// make SecurityAttributes for the named pipe.
-bool WinSandbox::MakeSecurityAttributes(
-    ObjectSecurityType shareble_object_type,
-    SECURITY_ATTRIBUTES* security_attributes) {
+wil::unique_hlocal_security_descriptor WinSandbox::MakeSecurityDescriptor(
+    ObjectSecurityType shareble_object_type) {
   std::wstring token_user_sid;
   std::wstring token_primary_group_sid;
   if (!GetUserSid(token_user_sid, token_primary_group_sid)) {
-    return false;
+    return nullptr;
   }
 
   const std::wstring& sddl =
@@ -402,15 +400,10 @@ bool WinSandbox::MakeSecurityAttributes(
     LOG(ERROR)
         << "ConvertStringSecurityDescriptorToSecurityDescriptorW failed: "
         << ::GetLastError();
-    return false;
+    return nullptr;
   }
 
-  // Set up security attributes
-  security_attributes->nLength = sizeof(SECURITY_ATTRIBUTES);
-  security_attributes->lpSecurityDescriptor = self_relative_desc.release();
-  security_attributes->bInheritHandle = FALSE;
-
-  return true;
+  return self_relative_desc;
 }
 
 bool WinSandbox::AddKnownSidToKernelObject(HANDLE object, const SID* known_sid,
@@ -562,11 +555,9 @@ std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
     return std::nullopt;
   }
 
-  PSECURITY_ATTRIBUTES security_attributes_ptr = nullptr;
-  SECURITY_ATTRIBUTES security_attributes = {};
-  if (WinSandbox::MakeSecurityAttributes(WinSandbox::kIPCServerProcess,
-                                         &security_attributes)) {
-    security_attributes_ptr = &security_attributes;
+  wil::unique_hlocal_security_descriptor security_descriptor =
+      WinSandbox::MakeSecurityDescriptor(WinSandbox::kIPCServerProcess);
+  if (security_descriptor) {
     // Override the impersonation thread token's DACL to avoid http://b/1728895
     // On Windows Server, the objects created by a member of
     // the built-in administrators group do not always explicitly
@@ -579,9 +570,9 @@ std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
     // That prevents GetRunLevel() from verifying its own thread identity.
     // Note: Overriding the thread token's
     // DACL will not elevate the thread's running context.
-    if (!::SetKernelObjectSecurity(
-            impersonation_token.get(), DACL_SECURITY_INFORMATION,
-            security_attributes_ptr->lpSecurityDescriptor)) {
+    if (!::SetKernelObjectSecurity(impersonation_token.get(),
+                                   DACL_SECURITY_INFORMATION,
+                                   security_descriptor.get())) {
       const DWORD last_error = ::GetLastError();
       DLOG(ERROR) << "SetKernelObjectSecurity failed. Error: " << last_error;
       return std::nullopt;
@@ -607,6 +598,14 @@ std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
   const wchar_t* startup_directory =
       (info.in_system_dir ? SystemUtil::GetSystemDir() : nullptr);
 
+  SECURITY_ATTRIBUTES security_attributes = {
+      .nLength = sizeof(SECURITY_ATTRIBUTES),
+      .lpSecurityDescriptor = security_descriptor.get(),
+      .bInheritHandle = FALSE,
+  };
+  SECURITY_ATTRIBUTES* security_attributes_ptr =
+      (security_descriptor ? &security_attributes : nullptr);
+
   STARTUPINFO startup_info = {sizeof(STARTUPINFO)};
   wil::unique_process_information process_info;
   // 3rd parameter of CreateProcessAsUser must be a writable buffer.
@@ -622,10 +621,6 @@ std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
     const DWORD last_error = ::GetLastError();
     DLOG(ERROR) << "CreateProcessAsUser failed. Error: " << last_error;
     return std::nullopt;
-  }
-
-  if (security_attributes_ptr != nullptr) {
-    ::LocalFree(security_attributes_ptr->lpSecurityDescriptor);
   }
 
   // Change the token of the main thread of the new process for the

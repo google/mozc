@@ -46,6 +46,7 @@
 
 #ifdef _WIN32
 #include <sddl.h>
+#include <wil/resource.h>
 #include <windows.h>
 
 #include "base/win32/wide_char.h"
@@ -109,16 +110,19 @@ NamedEventListener::NamedEventListener(const char* name)
   handle_ = ::OpenEventW(EVENT_ALL_ACCESS, false, event_path.c_str());
 
   if (handle_ == nullptr) {
-    SECURITY_ATTRIBUTES security_attributes;
-    if (!WinSandbox::MakeSecurityAttributes(WinSandbox::kSharableEvent,
-                                            &security_attributes)) {
-      LOG(ERROR) << "Cannot make SecurityAttributes";
+    wil::unique_hlocal_security_descriptor security_descriptor =
+        WinSandbox::MakeSecurityDescriptor(WinSandbox::kSharableEvent);
+    if (!security_descriptor) {
+      LOG(ERROR) << "Cannot make SecurityDescriptor";
       return;
     }
-
+    SECURITY_ATTRIBUTES security_attributes = {
+        .nLength = sizeof(SECURITY_ATTRIBUTES),
+        .lpSecurityDescriptor = security_descriptor.get(),
+        .bInheritHandle = FALSE,
+    };
     handle_ =
         ::CreateEventW(&security_attributes, true, false, event_path.c_str());
-    ::LocalFree(security_attributes.lpSecurityDescriptor);
     if (handle_ == nullptr) {
       LOG(ERROR) << "CreateEvent() failed: " << ::GetLastError();
       return;
