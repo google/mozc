@@ -2024,13 +2024,9 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     const ConversionRequest& request, bool is_suggestion_selected,
     uint64_t last_access_time, const SegmentsForLearning& learning_segments,
     UserHistoryPredictor::RevertEntries* revert_entries) {
-  const commands::DecoderExperimentParams& params =
-      request.request().decoder_experiment_params();
-
   // Inserts all_key/all_value.
   // We don't insert it for mobile.
-  if ((params.user_history_cache_full_sentence() ||
-       !IsMixedConversionEnabled(request)) &&
+  if (!IsMixedConversionEnabled(request) &&
       learning_segments.conversion_segments.size() > 1) {
     Insert(request, 0, 0, learning_segments.conversion_segments_key,
            learning_segments.conversion_segments_value, "",

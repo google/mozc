@@ -642,11 +642,6 @@ message DecoderExperimentParams {
   // This parameter is only used in mixed conversion mode.
   optional int32 user_history_suppress_min_length = 130 [default = 0];
 
-  // Caches full sentences consisting of multiple segments in user history
-  // learning. This mode is enabled on desktop, but we want to enable it on all
-  // devices to unify and simplify the implementation.
-  optional bool user_history_cache_full_sentence = 131 [default = false];
-
   // Demotes the partial candidates so that the top_n results must
   // be non-partial candidates.
   optional int32 demote_partial_candidate_top_n = 126 [default = 0];
