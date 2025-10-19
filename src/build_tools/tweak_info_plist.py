@@ -90,14 +90,9 @@ def main():
   if options.branding == 'GoogleJapaneseInput':
     domain_prefix = 'com.google'
     product_name = 'Google Japanese Input'
-    breakpad_product = 'Google_Japanese_IME_Mac'
-    breakpad_url = 'https://clients2.google.com/cr/report'
   else:
     domain_prefix = 'org.mozc'
     product_name = 'Mozc'
-    breakpad_product = 'Mozc'
-    # Reports are generated under $TMPDIR, but not sent to a server.
-    breakpad_url = 'file:///dev/null'
 
   variables = {
       'GOOGLE_VERSIONINFO_LONG': long_version,
@@ -109,10 +104,6 @@ def main():
           options.branding,
       'DOMAIN_PREFIX':
           domain_prefix,
-      'BREAKPAD_PRODUCT':
-          breakpad_product,
-      'BREAKPAD_URL':
-          breakpad_url,
   }
 
   codecs.open(options.output, 'w', encoding='utf-8').write(

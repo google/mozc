@@ -32,22 +32,6 @@
 	<string>NSApplication</string>
 	<key>LSUIElement</key>
 	<string>1</string>
-	<key>BreakpadProduct</key>
-	<string>${BREAKPAD_PRODUCT}</string>
-	<key>BreakpadProductDisplay</key>
-	<string>${PRODUCT_NAME}</string>
-	<key>BreakpadVersion</key>
-	<string>${GOOGLE_VERSIONINFO_LONG}</string>
-	<key>BreakpadURL</key>
-	<string>${BREAKPAD_URL}</string>
-	<key>BreakpadReportInterval</key>
-	<string>86400</string>
-	<key>BreakpadSkipConfirm</key>
-	<string>YES</string>
-	<key>BreakpadSendAndExit</key>
-	<string>YES</string>
-	<key>BreakpadInProcess</key>
-	<string>YES</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 </dict>
