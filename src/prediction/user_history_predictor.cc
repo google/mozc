@@ -52,6 +52,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
+#include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -458,11 +459,14 @@ bool UserHistoryPredictor::Load() {
 bool UserHistoryPredictor::Load(UserHistoryStorage&& history) {
   dic_->Clear();
   for (Entry& entry : *history.GetProto().mutable_entries()) {
+    if (entry.value().empty() || entry.key().empty()) {
+      continue;
+    }
     // Workaround for b/116826494: Some garbled characters are suggested
     // from user history. This filters such entries.
-    if (entry.value().empty() || entry.key().empty() ||
-        !Util::IsValidUtf8(entry.value())) {
-      LOG(ERROR) << "Invalid UTF8 found in user history: " << entry;
+    if (!Util::IsValidUtf8(entry.value())) {
+      LOG(ERROR) << "Invalid UTF8 found in user history: "
+                 << absl::BytesToHexString(entry.value());
       continue;
     }
     // conversion_freq is migrated to suggestion_freq.
@@ -1214,7 +1218,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest& request,
 
   // result with zero frequency is generated via revert operation.
   // zero frequency entry is suggested and the frequency is incremented
-  // in Finsih method.
+  // in Finish method.
   if (!result->removed() && result->suggestion_freq() > 0) {
     entry_queue->Push(result);
   }
@@ -1536,6 +1540,7 @@ bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
                                          const Entry& entry) {
   // Suppress broken utf8 string just in case.
   if (!Util::IsValidUtf8(entry.value())) {
+    DLOG(ERROR) << "Invalid UTF8: " << absl::BytesToHexString(entry.value());
     return false;
   }
 
@@ -1756,9 +1761,15 @@ void UserHistoryPredictor::Insert(
   key = absl::StripTrailingAsciiWhitespace(key);
   value = absl::StripTrailingAsciiWhitespace(value);
 
+  if (!Util::IsValidUtf8(key) || !Util::IsValidUtf8(value)) {
+    DLOG(ERROR) << "Invalid UTF8: " << absl::BytesToHexString(key) << " "
+                << absl::BytesToHexString(value);
+    return;
+  }
+
   if (key.empty() || value.empty() || key.size() > kMaxStringLength ||
       value.size() > kMaxStringLength ||
-      description.size() > kMaxStringLength || !Util::IsValidUtf8(value)) {
+      description.size() > kMaxStringLength) {
     return;
   }
 
@@ -2436,6 +2447,8 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
     absl::string_view ckey = committed_entry.key();
     // temporal workaround for b/450398740
     if (!Util::IsValidUtf8(cvalue) || !Util::IsValidUtf8(ckey)) {
+      DLOG(ERROR) << "Invalid UTF8: " << absl::BytesToHexString(cvalue) << " "
+                  << absl::BytesToHexString(ckey);
       continue;
     }
     const int32_t value_end = value_begin + cvalue.size();
