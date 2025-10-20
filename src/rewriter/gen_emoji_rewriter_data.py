@@ -80,6 +80,7 @@ _VERSION_ALL = [
     'E15.0',
     'E15.1',
     'E16.0',
+    'E17.0',
 ]
 # Dict for converting version string into enum index.
 VERSION_TO_INDEX = {v: i for i, v in enumerate(_VERSION_ALL)}

@@ -119,6 +119,7 @@ class EnvironmentalFilterRewriter : public RewriterInterface {
   CharacterGroupFinder finder_e15_0_;
   CharacterGroupFinder finder_e15_1_;
   CharacterGroupFinder finder_e16_0_;
+  CharacterGroupFinder finder_e17_0_;
 };
 }  // namespace mozc
 #endif  // MOZC_REWRITER_ENVIRONMENTAL_FILTER_REWRITER_H_

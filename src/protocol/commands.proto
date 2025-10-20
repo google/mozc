@@ -909,7 +909,7 @@ message Request {
   // necessarily mutually exclusive. However, the current implementation in
   // NormalizationRewriter assumes they are mutually exclusive.
   // LINT.IfChange
-  // Next ID: 14
+  // Next ID: 15
   enum AdditionalRenderableCharacterGroup {
     // Do not use this case. This case is reserved for future usage.
     // Because 0th element in enum is used as default value, in order to prevend
@@ -948,6 +948,8 @@ message Request {
     EMOJI_15_1 = 12;
     // Emoji 16.0, released September 2024
     EMOJI_16_0 = 13;
+    // Emoji 17.0, released Octorber 2025
+    EMOJI_17_0 = 14;
 
     // Additional Hieroglyphs (U+13000 ~ U+1342E)
     // Unicode 5.2, released October 2009
