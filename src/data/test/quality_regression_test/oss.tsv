@@ -206,12 +206,19 @@ oss_issue579	そうけつ	倉頡	Conversion Expected 9
 oss_issue583	あかつきにふねをいだす	暁に船を出だす	Conversion Expected
 oss_issue583	さいのうをみいだす	才能を見出だす	Conversion Expected 2
 oss_issue587	いっぴょう	一票	Conversion Expected 2
+oss_issue587	いっぴょう	1票	Conversion Expected 9
 oss_issue588	きそう	寄贈	Conversion Expected 9
 oss_issue589	なぞめいてて	謎めいてて	Conversion Expected
 oss_issue590	しょくじをしたにもかかわらず	食事をした	Conversion Match
 oss_issue591	さんぜんえん	三千円	Conversion Expected 2
+oss_issue591	さんぜんえん	3千円	Conversion Expected 99
+oss_issue591	さんぜんえん	3000円	Conversion Expected 99
 oss_issue591	はっせんえん	八千円	Conversion Expected 2
+oss_issue591	はっせんえん	8千円	Conversion Expected 99
+oss_issue591	はっせんえん	8000円	Conversion Expected 99
 oss_issue591	きゅうせんえん	九千円	Conversion Expected 2
+oss_issue591	きゅうせんえん	9千円	Conversion Expected 99
+oss_issue591	きゅうせんえん	9000円	Conversion Expected 99
 oss_issue592	ひらぶんでおくる	平文で送る	Conversion Expected
 oss_issue593	ごかんそう	ご感想	Conversion Expected
 oss_issue598	うっぷんばらし	鬱憤晴らし	Conversion Expected 2
@@ -246,8 +253,12 @@ oss_issue624	おんじゅ	飲酒	Conversion Expected 9
 oss_issue624	ふもうご	不妄語	Conversion Expected 9
 oss_issue624	ふおんじゅ	不飲酒	Conversion Expected 9
 oss_issue628	ぜんざいさん	全財産	Conversion Expected
+oss_issue629	あんぜんせいのこうじょう	安全性の向上	Conversion Expected
 oss_issue631	きこう	貴行	Conversion Expected 9
+oss_issue632	へんしんまち	返信待ち	Conversion Expected
+oss_issue635	ゆうせんでもむせんでも	優先でも無線でも	Conversion Expected
 oss_issue640	さぶすく	サブスク	Conversion Expected
+oss_issue641	かたがこる	肩が	Conversion Match
 oss_issue642	ばうんしゃ	馬運車	Conversion Expected
 oss_issue645	しんしょかいふうざい	信書開封罪	Conversion Expected
 oss_issue646	あいしんかくら	愛新覚羅	Conversion Expected
@@ -256,10 +267,27 @@ oss_issue648	なごやとばし	名古屋飛ばし	Conversion Expected
 oss_issue651	こんせ	今世	Conversion Expected 9
 oss_issue651	こんぜ	今世	Conversion Expected 9
 oss_issue651	こんせい	今世	Conversion Expected 9
+oss_issue654	しんちょうにはこぶ	慎重に運ぶ	Conversion Expected
+oss_issue655	ぎろんになんしょくをしめす	議論に難色を示す	Conversion Expected
+oss_issue656	おんどをおどる	音頭を	Conversion Match
+oss_issue658	かいぜんしとうぞんじます	改善しとう	Conversion Match
 oss_issue660	ふくじょし	副助詞	Conversion Expected 2
 oss_issue661	らっぷ	乱舞	Conversion Expected 9
 oss_issue662	こきゅう	枯朽	Conversion Expected 9
 oss_issue664	こうばいりょくへいか	購買力平価	Conversion Expected
+oss_issue666	ろーまじぶんをかく	ローマ字文を書く	Conversion Expected
+oss_issue667	かんじかなまじりぶん	文	Conversion Match
+oss_issue669	にせんえんさつ	二千円札	Conversion Expected 2
+oss_issue669	ごせんえんさつ	五千円札	Conversion Expected 2
+oss_issue669	ごひゃくえんさつ	五百円札	Conversion Expected 2
+oss_issue669	にせんえんさつ	2千円札	Conversion Expected 9
+oss_issue669	ごせんえんさつ	5千円札	Conversion Expected 9
+oss_issue669	ごひゃくえんさつ	5百円札	Conversion Expected 9
+oss_issue670	たいをなす	体を	Conversion Match
+oss_issue672	じゅうまん	十万	Conversion Expected 9
+oss_issue672	じゅうまん	10万	Conversion Expected 9
+oss_issue672	じゅうまんえん	十万円	Conversion Expected 9
+oss_issue672	じゅうまんえん	10万円	Conversion Expected 9
 oss_issue675	たいせつ	堆雪	Conversion Expected 9
 oss_issue675	はいせつ	排雪	Conversion Expected 9
 oss_issue676	りねーむ	リネーム	Conversion Expected
@@ -293,6 +321,13 @@ oss_issue768	かいていこう	改訂稿	Conversion Expected 2
 oss_issue768	けっていこう	決定稿	Conversion Expected
 oss_issue768	さいしゅうこう	最終稿	Conversion Expected
 oss_issue768	しゅうせいこう	修正稿	Conversion Expected
+oss_issue812	さんじゅっぷん	三十分	Conversion Expected 9
+oss_issue812	じゅうごふん	十五分	Conversion Expected 9
+oss_issue812	にじゅうごびょう	二十五秒	Conversion Expected 9
+oss_issue812	ごじゅうにち	五十日	Conversion Expected 9
+oss_issue812	じゅうはちねん	十八年	Conversion Expected 9
+oss_issue812	さんがつはつか	三月二十日	Conversion Expected 9
+oss_issue812	さんがつはつか	三月二〇日	Conversion Expected 9
 oss_issue865	とりそこなって	取り損なって	Conversion Expected
 oss_issue885	ごかい	誤解	Conversion Expected 9
 oss_issue885	ごかいする	誤解する	Conversion Expected 2

@@ -206,12 +206,19 @@ OK:	そうけつ	総穴	Conversion Expected 9	倉頡	2.30.5490
 OK:	あかつきにふねをいだす	暁に船を出だす	Conversion Expected	暁に船を出だす	2.28.4770
 OK:	さいのうをみいだす	才能を見出す	Conversion Expected 2	才能を見出だす	2.30.5432
 FAILED:	いっぴょう	一瓢	Conversion Expected 2	一票	2.28.4880
+FAILED:	いっぴょう	一瓢	Conversion Expected 9	1票	2.32.5981
 OK:	きそう	競う	Conversion Expected 9	寄贈	2.28.4880
 OK:	なぞめいてて	謎めいてて	Conversion Expected	謎めいてて	2.29.5268
 OK:	しょくじをしたにもかかわらず	食事をしたにもかかわらず	Conversion Match	食事をした	2.31.5851
 FAILED:	さんぜんえん	産前円	Conversion Expected 2	三千円	2.28.5050
+FAILED:	さんぜんえん	産前円	Conversion Expected 99	3千円	2.32.5981
+FAILED:	さんぜんえん	産前円	Conversion Expected 99	3000円	2.32.5981
 OK:	はっせんえん	ハッ千円	Conversion Expected 2	八千円	2.30.5618
+OK:	はっせんえん	ハッ千円	Conversion Expected 99	8千円	2.32.5981
+FAILED:	はっせんえん	ハッ千円	Conversion Expected 99	8000円	2.32.5981
 FAILED:	きゅうせんえん	旧千円	Conversion Expected 2	九千円	2.28.4880
+FAILED:	きゅうせんえん	旧千円	Conversion Expected 99	9千円	2.32.5981
+FAILED:	きゅうせんえん	旧千円	Conversion Expected 99	9000円	2.32.5981
 OK:	ひらぶんでおくる	平文で送る	Conversion Expected	平文で送る	2.28.4880
 FAILED:	ごかんそう	ご乾燥	Conversion Expected	ご感想	2.28.4830
 OK:	うっぷんばらし	鬱憤晴らし	Conversion Expected 2	鬱憤晴らし	2.28.4880
@@ -246,8 +253,12 @@ FAILED:	おんじゅ	オンジュ	Conversion Expected 9	飲酒	2.29.5268
 OK:	ふもうご	不妄語	Conversion Expected 9	不妄語	2.28.5000
 FAILED:	ふおんじゅ	不穏樹	Conversion Expected 9	不飲酒	2.30.5618
 OK:	ぜんざいさん	全財産	Conversion Expected	全財産	2.28.5000
+OK:	あんぜんせいのこうじょう	安全性の向上	Conversion Expected	安全性の向上	2.32.5981
 FAILED:	きこう	機構	Conversion Expected 9	貴行	2.28.4990
+OK:	へんしんまち	返信待ち	Conversion Expected	返信待ち	2.32.5981
+OK:	ゆうせんでもむせんでも	優先でも無線でも	Conversion Expected	優先でも無線でも	2.32.5981
 OK:	さぶすく	サブスク	Conversion Expected	サブスク	2.28.5000
+FAILED:	かたがこる	方がこる	Conversion Match	肩が	2.32.5981
 OK:	ばうんしゃ	馬運車	Conversion Expected	馬運車	2.28.5000
 OK:	しんしょかいふうざい	信書開封罪	Conversion Expected	信書開封罪	2.28.5000
 OK:	あいしんかくら	愛新覚羅	Conversion Expected	愛新覚羅	2.28.5000
@@ -256,10 +267,27 @@ FAILED:	なごやとばし	名古屋鳥羽市	Conversion Expected	名古屋飛�
 OK:	こんせ	今世	Conversion Expected 9	今世	2.28.5000
 OK:	こんぜ	今世	Conversion Expected 9	今世	2.28.5000
 OK:	こんせい	混成	Conversion Expected 9	今世	2.30.5490
+OK:	しんちょうにはこぶ	慎重に運ぶ	Conversion Expected	慎重に運ぶ	2.32.5981
+OK:	ぎろんになんしょくをしめす	議論に難色を示す	Conversion Expected	議論に難色を示す	2.32.5981
+OK:	おんどをおどる	音頭を踊る	Conversion Match	音頭を	2.32.5981
+OK:	かいぜんしとうぞんじます	改善しとう存じます	Conversion Match	改善しとう	2.32.5981
 FAILED:	ふくじょし	服女子	Conversion Expected 2	副助詞	2.30.5618
 FAILED:	らっぷ	ラップ	Conversion Expected 9	乱舞	2.28.4990
 OK:	こきゅう	呼吸	Conversion Expected 9	枯朽	2.28.5000
 OK:	こうばいりょくへいか	購買力平価	Conversion Expected	購買力平価	2.28.5000
+FAILED:	ろーまじぶんをかく	ローマ字分を書く	Conversion Expected	ローマ字文を書く	2.32.5981
+FAILED:	かんじかなまじりぶん	感じかな混じり分	Conversion Match	文	2.32.5981
+FAILED:	にせんえんさつ	にせん円札	Conversion Expected 2	二千円札	2.32.5981
+FAILED:	ごせんえんさつ	互選円札	Conversion Expected 2	五千円札	2.32.5981
+FAILED:	ごひゃくえんさつ	御百円札	Conversion Expected 2	五百円札	2.32.5981
+FAILED:	にせんえんさつ	にせん円札	Conversion Expected 9	2千円札	2.32.5981
+FAILED:	ごせんえんさつ	互選円札	Conversion Expected 9	5千円札	2.32.5981
+FAILED:	ごひゃくえんさつ	御百円札	Conversion Expected 9	5百円札	2.32.5981
+FAILED:	たいをなす	タイをなす	Conversion Match	体を	2.32.5981
+OK:	じゅうまん	充満	Conversion Expected 9	十万	2.32.5981
+FAILED:	じゅうまん	充満	Conversion Expected 9	10万	2.32.5981
+OK:	じゅうまんえん	充満園	Conversion Expected 9	十万円	2.32.5981
+FAILED:	じゅうまんえん	充満園	Conversion Expected 9	10万円	2.32.5981
 OK:	たいせつ	大切	Conversion Expected 9	堆雪	2.28.4960
 OK:	はいせつ	排泄	Conversion Expected 9	排雪	2.28.4960
 OK:	りねーむ	リネーム	Conversion Expected	リネーム	2.28.4960
@@ -293,6 +321,13 @@ FAILED:	かいていこう	書いていこう	Conversion Expected 2	改訂稿	2.
 OK:	けっていこう	決定稿	Conversion Expected	決定稿	2.29.5135
 OK:	さいしゅうこう	最終稿	Conversion Expected	最終稿	2.30.5618
 OK:	しゅうせいこう	修正稿	Conversion Expected	修正稿	2.30.5618
+FAILED:	さんじゅっぷん	三拾分	Conversion Expected 9	三十分	2.32.5981
+OK:	じゅうごふん	中五分	Conversion Expected 9	十五分	2.32.5981
+OK:	にじゅうごびょう	二重五秒	Conversion Expected 9	二十五秒	2.32.5981
+OK:	ごじゅうにち	五十日	Conversion Expected 9	五十日	2.32.5981
+OK:	じゅうはちねん	中八年	Conversion Expected 9	十八年	2.32.5981
+FAILED:	さんがつはつか	３月は柄	Conversion Expected 9	三月二十日	2.32.5981
+FAILED:	さんがつはつか	３月は柄	Conversion Expected 9	三月二〇日	2.32.5981
 FAILED:	とりそこなって	鳥損なって	Conversion Expected	取り損なって	2.30.5618
 FAILED:	ごかい	五回	Conversion Expected 9	誤解	2.30.5432
 OK:	ごかいする	誤解する	Conversion Expected 2	誤解する	2.30.5432
