@@ -388,19 +388,18 @@ class UserHistoryPredictor : public PredictorInterface {
                      RevertEntries* revert_entries);
 
   void InsertHistoryForHistorySegments(
-      const ConversionRequest& request, bool is_suggestion_selected,
-      uint64_t last_access_time, const SegmentsForLearning& learning_segments,
+      const ConversionRequest& request, uint64_t last_access_time,
+      const SegmentsForLearning& learning_segments,
       RevertEntries* revert_entries);
 
   void InsertHistoryForConversionSegments(
-      const ConversionRequest& request, bool is_suggestion_selected,
-      uint64_t last_access_time, const SegmentsForLearning& learning_segments,
+      const ConversionRequest& request, uint64_t last_access_time,
+      const SegmentsForLearning& learning_segments,
       RevertEntries* revert_entries);
 
   // Inserts |key,value,description| to the internal dictionary database.
   // |inner_segment_boundary| inner segment boundary information.
   // |key_begin,value_begin|: string byte offset on result.(key|value).
-  // |is_suggestion_selected|: key/value is suggestion or conversion.
   // |next_fp|: fingerprints of the next segment.
   // |last_access_time|: the time when this entry was created.
   // Entry's contents and request_type will be checked before insertion.
@@ -408,8 +407,8 @@ class UserHistoryPredictor : public PredictorInterface {
               int32_t value_begin, absl::string_view key,
               absl::string_view value, absl::string_view description,
               converter::InnerSegmentBoundarySpan inner_segment_boundary,
-              bool is_suggestion_selected, absl::Span<const uint64_t> next_fps,
-              uint64_t last_access_time, RevertEntries* revert_entries);
+              absl::Span<const uint64_t> next_fps, uint64_t last_access_time,
+              RevertEntries* revert_entries);
 
   // Inserts a new |fp| into |entry|.
   // it makes a bigram connection from entry to next_entry.

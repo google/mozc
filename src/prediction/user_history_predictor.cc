@@ -1753,8 +1753,7 @@ void UserHistoryPredictor::Insert(
     absl::string_view key, absl::string_view value,
     absl::string_view description,
     converter::InnerSegmentBoundarySpan inner_segment_boundary,
-    bool is_suggestion_selected, absl::Span<const uint64_t> next_fps,
-    uint64_t last_access_time,
+    absl::Span<const uint64_t> next_fps, uint64_t last_access_time,
     UserHistoryPredictor::RevertEntries* revert_entries) {
   // b/279560433: Preprocess key value
   // (key|value)_begin don't change after StripTrailingAsciiWhitespace.
@@ -1956,21 +1955,17 @@ void UserHistoryPredictor::InsertHistory(
     const ConversionRequest& request,
     const UserHistoryPredictor::SegmentsForLearning& learning_segments,
     UserHistoryPredictor::RevertEntries* revert_entries) {
-  const bool is_suggestion_selected =
-      request.request_type() != ConversionRequest::CONVERSION;
   const uint64_t last_access_time = absl::ToUnixSeconds(Clock::GetAbslTime());
 
-  InsertHistoryForConversionSegments(request, is_suggestion_selected,
-                                     last_access_time, learning_segments,
-                                     revert_entries);
-  InsertHistoryForHistorySegments(request, is_suggestion_selected,
-                                  last_access_time, learning_segments,
+  InsertHistoryForConversionSegments(request, last_access_time,
+                                     learning_segments, revert_entries);
+  InsertHistoryForHistorySegments(request, last_access_time, learning_segments,
                                   revert_entries);
 }
 
 void UserHistoryPredictor::InsertHistoryForHistorySegments(
-    const ConversionRequest& request, bool is_suggestion_selected,
-    uint64_t last_access_time, const SegmentsForLearning& learning_segments,
+    const ConversionRequest& request, uint64_t last_access_time,
+    const SegmentsForLearning& learning_segments,
     UserHistoryPredictor::RevertEntries* revert_entries) {
   // Makes a link from the last history_segment to the first conversion
   // segment or to the entire user input.
@@ -2014,26 +2009,15 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
   }
 
   revert_entries->history_entry = *history_entry;
-  if (!is_suggestion_selected) {
-    for (const auto next_fp : LearningSegmentFingerprints(conversion_segment)) {
-      InsertNextEntry(next_fp, history_entry);
-    }
-  }
 
-  // Entire user input or SUGGESTION
-  if (is_suggestion_selected ||
-      learning_segments.conversion_segments.size() > 1) {
-    // This fp would not be available on mobile, as key/value is not stored.
-    const uint64_t next_fp =
-        Fingerprint(learning_segments.conversion_segments_key,
-                    learning_segments.conversion_segments_value);
+  for (const auto next_fp : LearningSegmentFingerprints(conversion_segment)) {
     InsertNextEntry(next_fp, history_entry);
   }
 }
 
 void UserHistoryPredictor::InsertHistoryForConversionSegments(
-    const ConversionRequest& request, bool is_suggestion_selected,
-    uint64_t last_access_time, const SegmentsForLearning& learning_segments,
+    const ConversionRequest& request, uint64_t last_access_time,
+    const SegmentsForLearning& learning_segments,
     UserHistoryPredictor::RevertEntries* revert_entries) {
   // Inserts all_key/all_value.
   // We don't insert it for mobile.
@@ -2041,8 +2025,8 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
       learning_segments.conversion_segments.size() > 1) {
     Insert(request, 0, 0, learning_segments.conversion_segments_key,
            learning_segments.conversion_segments_value, "",
-           learning_segments.inner_segment_boundary, is_suggestion_selected, {},
-           last_access_time, revert_entries);
+           learning_segments.inner_segment_boundary, {}, last_access_time,
+           revert_entries);
   }
 
   absl::flat_hash_set<std::vector<uint64_t>> seen;
@@ -2084,13 +2068,12 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
           segment.key, segment.value);
       Insert(request, segment.key_begin, segment.value_begin,
              segment.content_key, segment.content_value, segment.description,
-             {}, is_suggestion_selected, {}, last_access_time, revert_entries);
+             {}, {}, last_access_time, revert_entries);
     }
 
     Insert(request, segment.key_begin, segment.value_begin, segment.key,
            segment.value, segment.description, inner_segment_boundary,
-           is_suggestion_selected, next_fps_to_set, last_access_time,
-           revert_entries);
+           next_fps_to_set, last_access_time, revert_entries);
   }
 }
 
