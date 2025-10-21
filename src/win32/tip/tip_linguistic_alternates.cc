@@ -95,7 +95,8 @@ TipLinguisticAlternates::GetAlternates(
   }
   *candidate_list = nullptr;
   std::wstring query;
-  if (!TipEditSession::GetTextSync(text_service_.get(), range, &query)) {
+  if (!TipEditSession::GetTextSync(text_service_.get(), range, &query,
+                                   nullptr)) {
     return E_FAIL;
   }
   std::vector<std::wstring> candidates;

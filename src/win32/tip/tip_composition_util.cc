@@ -40,23 +40,13 @@
 namespace mozc {
 namespace win32 {
 namespace tsf {
+namespace {
 
-wil::com_ptr_nothrow<ITfComposition> TipCompositionUtil::GetComposition(
-    ITfContext *context, TfEditCookie edit_cookie) {
-  wil::com_ptr_nothrow<ITfCompositionView> composition_view =
-      GetCompositionView(context, edit_cookie);
-  return ComCopy<ITfComposition>(composition_view);
-}
-
-wil::com_ptr_nothrow<ITfCompositionView> TipCompositionUtil::GetCompositionView(
-    ITfContext *context, TfEditCookie edit_cookie) {
-  auto context_composition = ComQuery<ITfContextComposition>(context);
-  if (!context_composition) {
-    return nullptr;
-  }
-
+wil::com_ptr_nothrow<ITfCompositionView> GetCompositionViewInternal(
+    ITfContextComposition *context_composition, ITfRange *range,
+    TfEditCookie edit_cookie) {
   wil::com_ptr_nothrow<IEnumITfCompositionView> enum_composition;
-  if (FAILED(context_composition->FindComposition(edit_cookie, nullptr,
+  if (FAILED(context_composition->FindComposition(edit_cookie, range,
                                                   &enum_composition))) {
     return nullptr;
   }
@@ -81,6 +71,43 @@ wil::com_ptr_nothrow<ITfCompositionView> TipCompositionUtil::GetCompositionView(
     // composition at the same time. So the first one must be the only one.
     return composition_view;
   }
+}
+
+}  // namespace
+
+wil::com_ptr_nothrow<ITfComposition> TipCompositionUtil::GetComposition(
+    ITfContext *context, TfEditCookie edit_cookie) {
+  wil::com_ptr_nothrow<ITfCompositionView> composition_view =
+      GetCompositionView(context, edit_cookie);
+  return ComCopy<ITfComposition>(composition_view);
+}
+
+wil::com_ptr_nothrow<ITfCompositionView> TipCompositionUtil::GetCompositionView(
+    ITfContext *context, TfEditCookie edit_cookie) {
+  auto context_composition = ComQuery<ITfContextComposition>(context);
+  if (!context_composition) {
+    return nullptr;
+  }
+  return GetCompositionViewInternal(context_composition.get(), nullptr,
+                                    edit_cookie);
+}
+
+wil::com_ptr_nothrow<ITfCompositionView>
+TipCompositionUtil::GetCompositionViewFromRange(ITfRange *range,
+                                                TfEditCookie edit_cookie) {
+  HRESULT result = S_OK;
+
+  wil::com_ptr_nothrow<ITfContext> context;
+  result = range->GetContext(&context);
+  if (FAILED(result)) {
+    return nullptr;
+  }
+  auto context_composition = ComQuery<ITfContextComposition>(context);
+  if (!context_composition) {
+    return nullptr;
+  }
+  return GetCompositionViewInternal(context_composition.get(), range,
+                                    edit_cookie);
 }
 
 HRESULT TipCompositionUtil::ClearDisplayAttributes(ITfContext *context,

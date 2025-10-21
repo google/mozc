@@ -54,6 +54,11 @@ class TipCompositionUtil {
   static wil::com_ptr_nothrow<ITfCompositionView> GetCompositionView(
       ITfContext *context, TfEditCookie edit_cookie);
 
+  // Returns composition view object if there is a composition which belongs
+  // to Mozc in |range|. Otherwise returns nullptr.
+  static wil::com_ptr_nothrow<ITfCompositionView> GetCompositionViewFromRange(
+      ITfRange *range, TfEditCookie edit_cookie);
+
   // Removes display attributes from |composition|. Returns the result.
   static HRESULT ClearDisplayAttributes(ITfContext *context,
                                         ITfComposition *composition,
