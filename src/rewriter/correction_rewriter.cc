@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -51,15 +53,94 @@ namespace mozc {
 using ::mozc::converter::Attribute;
 using ::mozc::converter::Candidate;
 
-void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem& item,
-                                      Candidate* candidate) {
+// Returns "巣(そう)窟" from {"巣窟", "すくつ", "そうくつ"}
+// It extracts the minimum span where the reading is different.
+std::optional<std::string> CorrectionRewriter::GetDisplayValue(
+    const ReadingCorrectionItem& item) const {
+  using Alignment =
+      std::vector<std::pair<absl::string_view, absl::string_view>>;
+
+  const Alignment error_alignment =
+      modules_.GetSupplementalModel().GetReadingAlignment(item.value,
+                                                          item.error);
+  const Alignment correction_alignment =
+      modules_.GetSupplementalModel().GetReadingAlignment(item.value,
+                                                          item.correction);
+
+  auto fallback_result = [&]() {
+    return absl::StrCat(item.value, "(", item.correction, ")");
+  };
+
+  // reading aligner is not available.
+  // TODO(taku): Consider using fallback result when reading aligner is not
+  // available.
+  if (error_alignment.empty() || correction_alignment.empty()) {
+    return std::nullopt;
+  }
+
+  if (error_alignment.size() != correction_alignment.size()) {
+    return fallback_result();
+  }
+
+  // The maximum range where the per-character-readings are different.
+  int diff_start = error_alignment.size();
+  int diff_end = -1;
+  for (int i = 0; i < error_alignment.size(); ++i) {
+    if (error_alignment[i].second != correction_alignment[i].second) {
+      diff_start = std::min(diff_start, i);
+      diff_end = std::max(diff_end, i);
+    }
+  }
+
+  if (diff_end == -1) {
+    return fallback_result();
+  }
+
+  std::string result;
+
+  // [0, diff_start) have the same value.
+  for (int i = 0; i < diff_start; ++i) {
+    absl::StrAppend(&result, correction_alignment[i].first);
+  }
+
+  {
+    // [diff_start, diff_end] are different.
+    std::string diff_value, diff_key;
+    for (int i = diff_start; i <= diff_end; ++i) {
+      absl::StrAppend(&diff_value, correction_alignment[i].first);
+      absl::StrAppend(&diff_key, correction_alignment[i].second);
+    }
+    absl::StrAppend(&result, diff_value, "(", diff_key, ")");
+  }
+
+  // (diff_end, last) have the same value.
+  for (int i = diff_end + 1; i < correction_alignment.size(); ++i) {
+    absl::StrAppend(&result, correction_alignment[i].first);
+  }
+
+  return result;
+}
+
+void CorrectionRewriter::SetCandidate(
+    const ReadingCorrectionItem& item,
+    commands::Request::DisplayValueCapability capability,
+    Candidate* candidate) const {
+  candidate->attributes |= Attribute::SPELLING_CORRECTION;
+
+  // Assigns display_value in best-effort-basis.
+  if (capability == commands::Request::PLAIN_TEXT && !item.correction.empty()) {
+    if (std::optional<std::string> display_value = GetDisplayValue(item);
+        display_value.has_value()) {
+      candidate->display_value = std::move(display_value.value());
+      return;
+    }
+  }
+
   // TODO(taku): The current description does not accurately represent the
   // information about the typos and is space-consuming. We will
   // change the description or replace it more direct inlined annotation.
   constexpr absl::string_view kDidYouMean = "もしかして";
-
   candidate->prefix = "→ ";
-  candidate->attributes |= Attribute::SPELLING_CORRECTION;
   if (item.correction.empty()) {
     candidate->description = absl::StrCat("<", kDidYouMean, ">");
   } else {
@@ -87,9 +168,11 @@ bool CorrectionRewriter::LookupCorrection(
   return !results->empty();
 }
 
-CorrectionRewriter::CorrectionRewriter(
-    absl::string_view value_array_data, absl::string_view error_array_data,
-    absl::string_view correction_array_data) {
+CorrectionRewriter::CorrectionRewriter(const engine::Modules& modules,
+                                       absl::string_view value_array_data,
+                                       absl::string_view error_array_data,
+                                       absl::string_view correction_array_data)
+    : modules_(modules) {
   DCHECK(SerializedStringArray::VerifyData(value_array_data));
   DCHECK(SerializedStringArray::VerifyData(error_array_data));
   DCHECK(SerializedStringArray::VerifyData(correction_array_data));
@@ -102,12 +185,12 @@ CorrectionRewriter::CorrectionRewriter(
 
 // static
 std::unique_ptr<CorrectionRewriter>
-CorrectionRewriter::CreateCorrectionRewriter(const DataManager& data_manager) {
+CorrectionRewriter::CreateCorrectionRewriter(const engine::Modules& modules) {
   absl::string_view value_array_data, error_array_data, correction_array_data;
-  data_manager.GetReadingCorrectionData(&value_array_data, &error_array_data,
-                                        &correction_array_data);
+  modules.GetDataManager().GetReadingCorrectionData(
+      &value_array_data, &error_array_data, &correction_array_data);
   return std::make_unique<CorrectionRewriter>(
-      value_array_data, error_array_data, correction_array_data);
+      modules, value_array_data, error_array_data, correction_array_data);
 }
 
 bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
@@ -118,6 +201,9 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
 
   bool modified = false;
   std::vector<ReadingCorrectionItem> results;
+
+  const commands::Request::DisplayValueCapability capability =
+      request.request().display_value_capability();
 
   for (Segment& segment : segments->conversion_segments()) {
     if (segment.candidates_size() == 0) {
@@ -133,7 +219,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
       // mostly they are Katakana to Katakana correction.
       if (candidate.attributes & Attribute::SPELLING_CORRECTION) {
         // Sets empty correction item.
-        SetCandidate(ReadingCorrectionItem{"", "", ""},
+        SetCandidate(ReadingCorrectionItem{"", "", ""}, capability,
                      segment.mutable_candidate(j));
         continue;
       }
@@ -147,7 +233,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
       // results.size() should be 1, but we don't check it here.
       Candidate* mutable_candidate = segment.mutable_candidate(j);
       DCHECK(mutable_candidate);
-      SetCandidate(results[0], mutable_candidate);
+      SetCandidate(results[0], capability, mutable_candidate);
       modified = true;
     }
 
@@ -175,7 +261,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
       new_candidate->value =
           absl::StrCat(result.value, top_candidate.functional_value());
       new_candidate->inner_segment_boundary.clear();
-      SetCandidate(result, new_candidate.get());
+      SetCandidate(result, capability, new_candidate.get());
 
       segment.insert_candidate(kInsertPosition, std::move(new_candidate));
       modified = true;

@@ -122,6 +122,7 @@ mozc_cc_library(
     hdrs = ["supplemental_model_mock.h"],
     visibility = [
         "//prediction:__pkg__",
+        "//rewriter:__pkg__",
     ],
     deps = [
         ":supplemental_model_interface",

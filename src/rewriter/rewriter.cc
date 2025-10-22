@@ -181,7 +181,7 @@ Rewriter::Rewriter(const engine::Modules& modules) {
 #endif  // MOZC_USAGE_REWRITER
 
   AddRewriter(std::make_unique<VersionRewriter>(data_manager.GetDataVersion()));
-  AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
+  AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(modules));
   AddRewriter(std::make_unique<T13nPromotionRewriter>());
   AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(data_manager));
   AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());

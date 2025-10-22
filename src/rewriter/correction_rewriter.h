@@ -38,6 +38,8 @@
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
+#include "engine/modules.h"
+#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -49,9 +51,10 @@ class CorrectionRewriter : public RewriterInterface {
   // default provided by data_manager.  The caller takes the ownership of the
   // instance.
   static std::unique_ptr<CorrectionRewriter> CreateCorrectionRewriter(
-      const DataManager& data_manager);
+      const engine::Modules& modules);
 
-  CorrectionRewriter(absl::string_view value_array_data,
+  CorrectionRewriter(const engine::Modules& modules,
+                     absl::string_view value_array_data,
                      absl::string_view error_array_data,
                      absl::string_view correction_array_data);
 
@@ -74,21 +77,27 @@ class CorrectionRewriter : public RewriterInterface {
     absl::string_view correction;
   };
 
-  // Sets |candidate| fields from |iterm|.
-  static void SetCandidate(const ReadingCorrectionItem& item,
-                           converter::Candidate* candidate);
+  // Sets `candidate` fields from `item`.
+  void SetCandidate(const ReadingCorrectionItem& item,
+                    commands::Request::DisplayValueCapability capability,
+                    converter::Candidate* candidate) const;
+
+  // Makes the display_value from `item`.
+  std::optional<std::string> GetDisplayValue(
+      const ReadingCorrectionItem& item) const;
 
   // Looks up corrections with key and value. Return true if at least
   // one correction is found in the internal dictionary.
-  // If |value| is empty, looks up corrections only using the key.
-  // The matched results are saved in |results|.
-  // Return false if |results| is empty.
+  // If `value` is empty, looks up corrections only using the key.
+  // The matched results are saved in `results`.
+  // Return false if `results` is empty.
   bool LookupCorrection(absl::string_view key, absl::string_view value,
                         std::vector<ReadingCorrectionItem>* results) const;
 
   SerializedStringArray value_array_;
   SerializedStringArray error_array_;
   SerializedStringArray correction_array_;
+  const engine::Modules& modules_;
 };
 
 }  // namespace mozc
