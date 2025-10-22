@@ -661,7 +661,7 @@ message DecoderExperimentParams {
 // Users cannot modify this.
 // In the future each request may be able to be overwritten by Config.
 // The server does not have to obey this request.
-// Next ID: 24
+// Next ID: 25
 message Request {
   // Enable zero query suggestion.
   optional bool zero_query_suggestion = 1
@@ -981,6 +981,14 @@ message Request {
   // Clients needs to check ConversionRequest::incognito_mode() instead of
   // this value directly, as the incognito mode can be set in other ways.
   optional bool is_incognito_mode = 23 [default = false];
+
+  // Whether the client can accept display_value attribute.
+  enum DisplayValueCapability {
+    NOT_SUPPORTED = 0;
+    PLAIN_TEXT = 1;
+  }
+  optional DisplayValueCapability display_value_capability = 24
+      [default = NOT_SUPPORTED];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.
