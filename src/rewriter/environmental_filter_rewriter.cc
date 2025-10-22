@@ -40,6 +40,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -161,8 +162,7 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
 
   std::vector<AdditionalRenderableCharacterGroup> result;
   for (const AdditionalRenderableCharacterGroup group : kAllCases) {
-    if (std::find(additional_groups.begin(), additional_groups.end(), group) !=
-        additional_groups.end()) {
+    if (absl::c_contains(additional_groups, group)) {
       continue;
     }
     result.push_back(group);
@@ -223,7 +223,7 @@ ExtractTargetEmojis(
     }
     const EmojiVersion version =
         static_cast<EmojiVersion>(unicode_version_index);
-    if (results.find(version) == results.end()) {
+    if (!results.contains(version)) {
       continue;
     }
     const absl::string_view utf8_emoji = string_array[iter.emoji_index()];
@@ -234,7 +234,7 @@ ExtractTargetEmojis(
 
 std::u32string SortAndUnique(std::u32string_view codepoints) {
   std::u32string result(codepoints);
-  std::sort(result.begin(), result.end());
+  absl::c_sort(result);
   result.erase(std::unique(result.begin(), result.end()), result.end());
   return result;
 }
@@ -260,8 +260,7 @@ void CharacterGroupFinder::Initialize(
     }
   }
 
-  std::sort(multiple_codepoints_hashes_.begin(),
-            multiple_codepoints_hashes_.end());
+  absl::c_sort(multiple_codepoints_hashes_);
 
   // Create intersection of multiple_codepoints_ to use early return key in
   // search algorithm.
@@ -270,9 +269,8 @@ void CharacterGroupFinder::Initialize(
     for (const std::u32string& codepoints : multiple_codepoints_) {
       std::u32string new_intersection;
       const std::u32string cp_set = SortAndUnique(codepoints);
-      std::set_intersection(
-          cp_set.begin(), cp_set.end(), intersection.begin(),
-          intersection.end(),
+      absl::c_set_intersection(
+          cp_set, intersection,
           std::inserter(new_intersection, new_intersection.end()));
       intersection = std::move(new_intersection);
     }
@@ -280,7 +278,7 @@ void CharacterGroupFinder::Initialize(
   }
 
   // sort and summarize them into range;
-  std::sort(single_codepoints.begin(), single_codepoints.end());
+  absl::c_sort(single_codepoints);
   if (!single_codepoints.empty()) {
     min_single_codepoint_ = single_codepoints[0];
   }
@@ -316,8 +314,7 @@ bool CharacterGroupFinder::FindMatch(const std::u32string_view target) const {
       continue;
     }
     const auto position =
-        std::upper_bound(sorted_single_codepoint_lefts_.begin(),
-                         sorted_single_codepoint_lefts_.end(), codepoint);
+        absl::c_upper_bound(sorted_single_codepoint_lefts_, codepoint);
     const auto index_upper =
         std::distance(sorted_single_codepoint_lefts_.begin(), position);
     if (index_upper != 0 &&
@@ -329,7 +326,7 @@ bool CharacterGroupFinder::FindMatch(const std::u32string_view target) const {
   // If target does not contain any intersection of multiple_codepoints_, return
   // false here.
   for (const char32_t codepoint : sorted_multiple_codepoints_intersection_) {
-    if (std::find(target.begin(), target.end(), codepoint) == target.end()) {
+    if (!absl::c_contains(target, codepoint)) {
       return false;
     }
   }
@@ -347,8 +344,7 @@ bool CharacterGroupFinder::FindMatch(const std::u32string_view target) const {
       //  For codepoints {0x0, 0x1, 0x2, 0x3, 0x4} and left = 1 and right = 3,
       //  `hash` is hash for {0x1, 0x2}
       const int64_t hash = hasher.hash_between(left, right + 1);
-      if (std::binary_search(multiple_codepoints_hashes_.begin(),
-                             multiple_codepoints_hashes_.end(), hash)) {
+      if (absl::c_binary_search(multiple_codepoints_hashes_, hash)) {
         // As hash can collide in some unfortunate case, double-check here.
         const std::u32string_view hashed_target =
             target.substr(left, right - left + 1);
