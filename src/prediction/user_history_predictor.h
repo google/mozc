@@ -220,6 +220,12 @@ class UserHistoryPredictor : public PredictorInterface {
                                          const Trie<std::string>* key_expanded,
                                          absl::string_view target);
 
+  // Returns the LUR order of the next_fp links from `prev_entry` to `entry`.
+  // Returns a larger value if the connection from prev_entry to entry was made
+  // more recently. The return value must be [0, kMaxNextEntriesSize).
+  static std::optional<int> GetBigramEntryLruOrder(const Entry& entry,
+                                                   const Entry& prev_entry);
+
   // Returns true if prev_entry has a next_fp link to entry
   static bool HasBigramEntry(const Entry& entry, const Entry& prev_entry);
 
@@ -412,7 +418,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Inserts a new |fp| into |entry|.
   // it makes a bigram connection from entry to next_entry.
-  void InsertNextEntry(uint64_t fp, Entry* entry) const;
+  static void InsertNextEntry(uint64_t fp, Entry* entry);
 
   static void EraseNextEntries(uint64_t fp, Entry* entry);
 

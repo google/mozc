@@ -762,13 +762,21 @@ bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
   return deleted;
 }
 
+// static
+std::optional<int> UserHistoryPredictor::GetBigramEntryLruOrder(
+    const Entry& entry, const Entry& prev_entry) {
+  const uint64_t fp = EntryFingerprint(entry);
+  const auto& next_fps = prev_entry.next_entry_fps();
+  const auto it = absl::c_find(next_fps, fp);
+  if (it == next_fps.end()) return std::nullopt;
+  return std::distance(next_fps.begin(), it);
+}
+
 // Returns true if prev_entry has a next_fp link to entry
 // static
 bool UserHistoryPredictor::HasBigramEntry(const Entry& entry,
                                           const Entry& prev_entry) {
-  const uint64_t fp = EntryFingerprint(entry);
-  const auto& next_fps = prev_entry.next_entry_fps();
-  return absl::c_find(next_fps, fp) != next_fps.end();
+  return GetBigramEntryLruOrder(entry, prev_entry).has_value();
 }
 
 // static
@@ -1210,10 +1218,34 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest& request,
   // from |prev_entry| to |entry|.
   result->set_bigram_boost(false);
 
-  if (prev_entry != nullptr && HasBigramEntry(*entry, *prev_entry)) {
-    // Sets bigram_boost flag so that this entry is boosted
-    // against LRU policy.
-    result->set_bigram_boost(true);
+  if (prev_entry != nullptr) {
+    if (mtype == MatchType::LEFT_EMPTY_MATCH) {
+      // When zero query suggestion, prev_entry and entry might not always typed
+      // at the same time. Instead of using the unigram timestamp of prev_entry
+      // and entry, we simply use the actual time of the bigram was generated.
+      // GetBigramEntryLruOrder returns a larger value if the connection from
+      // prev_entry to entry was made more recently.
+      // (prev_entry->last_access_time() + 10 *GetBigramEntryLruOrder()) purely
+      // prioritizes bigrams that were recently generated.
+      //
+      // Sets "prev_entry->last_access_time()" as the base time to compare
+      // the preference with the entry typed prev_entry+current_entry as one
+      // word. Suppose the case when there are two histories "東京駅"  and
+      // 東京|大学", and NWP for 東京. We want to compare the timestamp of
+      // "東京駅" and "東京大学" to decide the NWP, "駅" or "大学".
+      if (std::optional<int> order =
+              GetBigramEntryLruOrder(*entry, *prev_entry);
+          order.has_value()) {
+        constexpr uint32_t kBigramLinkAsTime = 10;
+        result->set_last_access_time(prev_entry->last_access_time() +
+                                     kBigramLinkAsTime * order.value());
+        result->set_bigram_boost(true);
+      }
+    } else {
+      // Sets bigram_boost flag so that this entry is boosted
+      // against LRU policy.
+      result->set_bigram_boost(HasBigramEntry(*entry, *prev_entry));
+    }
   }
 
   // result with zero frequency is generated via revert operation.
@@ -1681,45 +1713,25 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
   return results;
 }
 
-void UserHistoryPredictor::InsertNextEntry(uint64_t fp, Entry* entry) const {
+// static
+void UserHistoryPredictor::InsertNextEntry(uint64_t fp, Entry* entry) {
   if (fp == 0 || entry == nullptr) {
     return;
   }
 
-  // If next_entries_size is less than kMaxNextEntriesSize,
-  // we simply allocate a new entry.
-  if (entry->next_entry_fps_size() < kMaxNextEntriesSize) {
-    entry->add_next_entry_fps(fp);
-  } else {
-    // Otherwise, find the oldest next_entry.
-    uint64_t last_access_time = std::numeric_limits<uint64_t>::max();
-    int insert_index = -1;
+  auto& next_fps = *(entry->mutable_next_entry_fps());
 
-    auto& next_entry_fps = *entry->mutable_next_entry_fps();
-    for (int i = 0; i < next_entry_fps.size(); ++i) {
-      // Already has the same id
-      if (fp == next_entry_fps[i]) {
-        return;
-      }
+  // Emulates LRU. next_fps.back() is the latest fp.
+  // Here we remove all elements equal to `fp` to de-dup the next_fps.
+  next_fps.erase(std::remove(next_fps.begin(), next_fps.end(), fp),
+                 next_fps.end());
+  next_fps.Add(fp);  // always push to the last.
 
-      const Entry* found_entry = dic_->LookupWithoutInsert(next_entry_fps[i]);
-
-      // Reuses the entry if it is already removed from the LRU.
-      if (found_entry == nullptr) {
-        next_entry_fps[i] = fp;
-        return;
-      }
-
-      // Preserves the oldest entry
-      if (last_access_time > found_entry->last_access_time()) {
-        insert_index = i;
-        last_access_time = found_entry->last_access_time();
-      }
-    }
-
-    if (insert_index >= 0) {
-      next_entry_fps[insert_index] = fp;
-    }
+  // Removes the older items when the size exceeds the capacity.
+  // The top elements are older.
+  if (next_fps.size() > kMaxNextEntriesSize) {
+    next_fps.erase(next_fps.begin(),
+                   next_fps.begin() + next_fps.size() - kMaxNextEntriesSize);
   }
 }
 

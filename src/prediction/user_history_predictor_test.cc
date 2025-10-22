@@ -94,6 +94,7 @@ using ::mozc::config::Config;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::UserDictionaryInterface;
 using ::testing::_;
+using ::testing::ElementsAre;
 using ::testing::Invoke;
 using ::testing::Return;
 
@@ -115,6 +116,7 @@ class UserHistoryPredictorTestPeer
   PEER_STATIC_METHOD(GetRomanMisspelledKey);
   PEER_STATIC_METHOD(GetMatchTypeFromInput);
   PEER_STATIC_METHOD(GetInputKeyFromRequest);
+  PEER_STATIC_METHOD(InsertNextEntry);
   PEER_STATIC_METHOD(EraseNextEntries);
   PEER_STATIC_METHOD(GuessRevertedValueOffset);
   PEER_STATIC_METHOD(RemoveEntryWithInnerSegment);
@@ -1720,6 +1722,112 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     segments_proxy.AddSegment("た");
     results = predictor->Predict(convreq());
     EXPECT_FALSE(results.empty());
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, ZeroQueryPreferenceTest) {
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  request_.set_zero_query_suggestion(true);
+  request_.set_mixed_conversion(true);
+
+  SegmentsProxy segments_proxy;
+  std::vector<Result> results;
+
+  auto convert_unigram = [&](absl::string_view key1, absl::string_view value1) {
+    const ConversionRequest convreq1 =
+        SetUpInputForConversion(key1, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, value1);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+  };
+
+  auto convert_bigram = [&](absl::string_view key1, absl::string_view value1,
+                            absl::string_view key2, absl::string_view value2) {
+    const ConversionRequest convreq1 =
+        SetUpInputForConversion(key1, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, value1);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    clock->Advance(absl::Seconds(10));
+    const ConversionRequest convreq2 = SetUpInputForConversionWithHistory(
+        key2, key1, value1, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(1, value2);
+    predictor->Finish(convreq2, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    clock->Advance(absl::Seconds(10));
+  };
+
+  {
+    predictor->ClearAllHistory();
+    WaitForSyncer(predictor);
+
+    // Fixes https://b/453507817
+    convert_bigram("おおさか", "大阪", "だいがく", "大学");
+    convert_bigram("きょうと", "京都", "だいがく", "大学");
+    convert_bigram("おおさか", "大阪", "ちゅうがく", "中学");
+    convert_bigram("きょうと", "京都", "だいがく", "大学");
+
+    const ConversionRequest convreq = SetUpInputForSuggestionWithHistory(
+        "", "おおさか", "大阪", &composer_, &segments_proxy);
+    results = predictor->Predict(convreq);
+    ASSERT_EQ(results.size(), 2);
+    EXPECT_EQ(results[0].value, "中学");
+    EXPECT_EQ(results[1].value, "大学");
+
+    // This unigram timestamp is not considered.
+    clock->Advance(absl::Hours(1));
+    convert_unigram("だいがく", "大学");
+
+    // Prefers the actual bigram.
+    convert_bigram("おおさか", "大阪", "こうこう", "高校");
+
+    results = predictor->Predict(convreq);
+    ASSERT_EQ(results.size(), 3);
+    EXPECT_EQ(results[0].value, "高校");
+    EXPECT_EQ(results[1].value, "中学");
+    EXPECT_EQ(results[2].value, "大学");
+  }
+
+  // NWP is generated from bigram and unigram.
+  // The preferences are determined by the LRU principle.
+  {
+    predictor->ClearAllHistory();
+    WaitForSyncer(predictor);
+
+    convert_bigram("とうきょう", "東京", "だいがく", "大学");
+    clock->Advance(absl::Hours(1));
+    convert_unigram("とうきょうたわー", "東京タワー");
+
+    const ConversionRequest convreq = SetUpInputForSuggestionWithHistory(
+        "", "とうきょう", "東京", &composer_, &segments_proxy);
+    results = predictor->Predict(convreq);
+    ASSERT_EQ(results.size(), 2);
+    EXPECT_EQ(results[0].value, "タワー");
+    EXPECT_EQ(results[1].value, "大学");
+
+    // Unigram timestamp doesn't affect the bigram preference.
+    convert_unigram("だいがく", "大学");
+    ASSERT_EQ(results.size(), 2);
+    EXPECT_EQ(results[0].value, "タワー");
+    EXPECT_EQ(results[1].value, "大学");
+  }
+
+  {
+    predictor->ClearAllHistory();
+    WaitForSyncer(predictor);
+
+    convert_unigram("とうきょうたわー", "東京タワー");
+    clock->Advance(absl::Hours(1));
+    convert_bigram("とうきょう", "東京", "だいがく", "大学");
+
+    const ConversionRequest convreq = SetUpInputForSuggestionWithHistory(
+        "", "とうきょう", "東京", &composer_, &segments_proxy);
+    results = predictor->Predict(convreq);
+    ASSERT_EQ(results.size(), 2);
+    EXPECT_EQ(results[0].value, "大学");
+    EXPECT_EQ(results[1].value, "タワー");
   }
 }
 
@@ -3561,6 +3669,31 @@ TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
   results = predictor->Predict(convreq);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("よろしくお願いします", results));
+}
+
+TEST_F(UserHistoryPredictorTest, InsertNextEntry) {
+  auto insert_next_entry = [](absl::Span<const uint64_t> fps, uint64_t new_fp) {
+    UserHistoryPredictor::Entry e;
+    for (const uint64_t fp : fps) {
+      e.add_next_entry_fps(fp);
+    }
+    UserHistoryPredictorTestPeer::InsertNextEntry(new_fp, &e);
+    return e.next_entry_fps();
+  };
+
+  EXPECT_THAT(insert_next_entry({}, 10), ElementsAre(10));
+  EXPECT_THAT(insert_next_entry({1}, 10), ElementsAre(1, 10));
+  EXPECT_THAT(insert_next_entry({1, 10}, 10), ElementsAre(1, 10));
+  EXPECT_THAT(insert_next_entry({1, 10, 20}, 10), ElementsAre(1, 20, 10));
+
+  // Remove dups.
+  EXPECT_THAT(insert_next_entry({1, 10, 10, 20}, 10), ElementsAre(1, 20, 10));
+  EXPECT_THAT(insert_next_entry({1, 10, 20, 10}, 10), ElementsAre(1, 20, 10));
+  EXPECT_THAT(insert_next_entry({10, 10, 10}, 10), ElementsAre(10));
+
+  // Exceeds the capacity.
+  EXPECT_THAT(insert_next_entry({1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, 10),
+              ElementsAre(5, 6, 7, 8, 9, 10));
 }
 
 TEST_F(UserHistoryPredictorTest, EraseNextEntries) {

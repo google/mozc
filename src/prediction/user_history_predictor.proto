@@ -63,6 +63,9 @@ message UserHistory {
 
     // list of entry-fps that were input just after this entry.
     // uses fixed64 and packed as Fp cannot be compressed.
+    // It won't result in an error, but duplicates aren't allowed.
+    // The fps are stored to operate as an LRU (Least Recently Used) cache.
+    // The front element is the oldest, and the back element is the newest.
     repeated fixed64 next_entry_fps = 23 [packed = true];
 
     // internally used in UserHistoryPredictor.
