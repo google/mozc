@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -122,12 +123,16 @@ bool ResultFilter::ShouldRemove(const Result& result, int added_num) {
     return true;
   }
 
-  // When |include_exact_key| is true, we don't filter the results
-  // which have the exactly same key as the input even if it's a bad
-  // suggestion.
-  if (!(include_exact_key_ && result.key == request_key_) &&
-      suggestion_filter_.IsBadSuggestion(result.value)) {
-    return true;
+  {
+    const uint32_t strategies = SelectSuggestionFilterStrategies(result);
+    if ((strategies & kFilterByValue) &&
+        suggestion_filter_.IsBadSuggestion(result.value)) {
+      return true;
+    }
+    if ((strategies & kFilterByHistoryAndValue) &&
+        suggestion_filter_.IsBadSuggestion(history_value_ + result.value)) {
+      return true;
+    }
   }
 
   if (is_handwriting_) {
@@ -214,6 +219,25 @@ bool ResultFilter::ShouldRemove(const Result& result, int added_num) {
   }
 
   return check_dup_and_return(result.value);
+}
+
+uint32_t ResultFilter::SelectSuggestionFilterStrategies(
+    const Result& result, absl::string_view request_key,
+    absl::string_view history_value, bool include_exact_key) {
+  // For next word prediction, we always apply the filter by value and
+  // history+value.
+  if (request_key.empty() || result.key.empty())
+    return kFilterByValue | kFilterByHistoryAndValue;
+
+  if (include_exact_key) {
+    // If `include_exact_key_` is true, we don't apply the filter to the results
+    // which have exactly the same key as the request. Consequently, such
+    // candidates can appear even if they are bad suggestion.
+    return result.key == request_key ? kSkipFilter : kFilterByValue;
+  }
+
+  // Apply the filter by value by default.
+  return kFilterByValue;
 }
 
 size_t GetMissSpelledPosition(const absl::string_view key,

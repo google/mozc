@@ -54,6 +54,26 @@ class ResultFilter {
 
   bool ShouldRemove(const Result& result, int added_num);
 
+  // Bit field.
+  enum SuggestionFilterStrategy : uint32_t {
+    kSkipFilter = 0,
+    // Applied against result's value
+    kFilterByValue = 1,
+    // Applied against the concatenation of history value and result's value
+    kFilterByHistoryAndValue = 2,
+  };
+
+  // Select how to apply the suggestion filter against `result`. Returns a
+  // bit fields of `SuggestionFilterStrategy`.
+  uint32_t SelectSuggestionFilterStrategies(const Result& result) const {
+    return SelectSuggestionFilterStrategies(result, request_key_,
+                                            history_value_, include_exact_key_);
+  }
+
+  static uint32_t SelectSuggestionFilterStrategies(
+      const Result& result, absl::string_view request_key,
+      absl::string_view history_value, bool include_exact_key);
+
  private:
   absl::string_view request_key_;
   std::string history_key_;

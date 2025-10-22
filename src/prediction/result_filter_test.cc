@@ -29,6 +29,7 @@
 
 #include "prediction/result_filter.h"
 
+#include <cstdint>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -40,6 +41,7 @@
 #include "testing/gunit.h"
 
 namespace mozc::prediction::filter {
+namespace {
 
 TEST(ResultFilterTest, GetMissSpelledPosition) {
   EXPECT_EQ(GetMissSpelledPosition("", ""), 0);
@@ -111,4 +113,50 @@ TEST(ResultFilterTest, RemoveRedundantResultsTest) {
   }
 }
 
+TEST(ResultFilterTest, SelectSuggestionFilterStrategies) {
+  // A normal candidate.
+  const Result kTokyo = {.key = "とうきょう", .value = "東京"};
+  // A next word prediction.
+  const Result kNwp = {.key = "", .value = "東京"};
+
+  constexpr uint32_t kSkipFilter = ResultFilter::kSkipFilter;
+  constexpr uint32_t kByValue = ResultFilter::kFilterByValue;
+  constexpr uint32_t kByHistAndValue =
+      ResultFilter::kFilterByValue | ResultFilter::kFilterByHistoryAndValue;
+
+  struct {
+    const Result result;
+    const absl::string_view request_key;
+    const absl::string_view history_value;
+    const bool include_exact_key;
+    const uint32_t expected;
+  } const kTestCases[] = {
+      // Exact candidates without history value.
+      {kTokyo, "とうきょう", "", false, kByValue},
+      {kTokyo, "とうきょう", "", true, kSkipFilter},
+      // Exact candidates with history value.
+      {kTokyo, "とうきょう", "西", false, kByValue},
+      {kTokyo, "とうきょう", "西", true, kSkipFilter},
+      // Completion candidates without history value.
+      {kTokyo, "とう", "", false, kByValue},
+      {kTokyo, "とう", "", true, kByValue},
+      // Completion candidates with history value.
+      {kTokyo, "とう", "西", false, kByValue},
+      {kTokyo, "とう", "西", true, kByValue},
+      // Next word prediction without history value.
+      {kNwp, "", "", false, kByHistAndValue},
+      {kNwp, "", "", true, kByHistAndValue},
+      // Next word prediction with history value.
+      {kNwp, "", "西", false, kByHistAndValue},
+      {kNwp, "", "西", true, kByHistAndValue},
+  };
+  for (const auto& test_case : kTestCases) {
+    EXPECT_EQ(test_case.expected,
+              ResultFilter::SelectSuggestionFilterStrategies(
+                  test_case.result, test_case.request_key,
+                  test_case.history_value, test_case.include_exact_key));
+  }
+}
+
+}  // namespace
 }  // namespace mozc::prediction::filter
