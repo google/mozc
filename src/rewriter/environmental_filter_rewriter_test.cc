@@ -120,6 +120,11 @@ constexpr EmojiData kTestEmojiList[] = {
     {"🪏", EmojiVersion::E16_0},  // 1FA8F
     {"🫆", EmojiVersion::E16_0},  // 1FAC6
     {"🫟", EmojiVersion::E16_0},  // 1FADF
+
+    // Emoji 17.0 Example
+    {"🛘", EmojiVersion::E17_0},  // 1F6D8 LANDSLIDE
+    {"🫍", EmojiVersion::E17_0},  // 1FACD ORCA
+    {"🫯", EmojiVersion::E17_0},  // 1FAEF FIGHT_CLOUD
 };
 
 // This data manager overrides GetEmojiRewriterData() to return the above test
