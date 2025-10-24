@@ -39,10 +39,12 @@
 // clang-format on
 
 #include <cstddef>
+#include <cstdlib>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -519,40 +521,104 @@ class LockedDownJob {
     return ERROR_SUCCESS;
   }
 
-  DWORD AssignProcessToJob(HANDLE process_handle) {
-    if (job_handle_ == nullptr) {
-      return ERROR_NO_DATA;
-    }
-    if (!::AssignProcessToJobObject(job_handle_, process_handle)) {
-      return ::GetLastError();
-    }
-    return ERROR_SUCCESS;
-  }
+  HANDLE GetJobHandle() const { return job_handle_; }
 
  private:
   HANDLE job_handle_;
 };
 
-std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
-    std::wstring command_line, const WinSandbox::SecurityInfo& info) {
+class StartupInfo {
+ public:
+  StartupInfo() = default;
+  StartupInfo(const StartupInfo&) = delete;
+  StartupInfo& operator=(const StartupInfo&) = delete;
+  ~StartupInfo() { Cleanup(); }
+
+  STARTUPINFO* AsPtr() { return &startup_info_.StartupInfo; }
+
+  bool SetJob(bool allow_ui_operation) {
+    Cleanup();
+    const bool result = SetJobWithoutCleanup(allow_ui_operation);
+    if (!result) {
+      Cleanup();
+    }
+    return result;
+  }
+
+ private:
+  bool SetJobWithoutCleanup(bool allow_ui_operation) {
+    job_ = std::make_unique<LockedDownJob>();
+    const DWORD error_code = job_->Init(nullptr, allow_ui_operation);
+    if (error_code != ERROR_SUCCESS) {
+      return false;
+    }
+    const DWORD attribute_count = 1;
+    SIZE_T size = 0;
+    ::InitializeProcThreadAttributeList(nullptr, attribute_count, 0, &size);
+    if (size == 0) {
+      return false;
+    }
+    startup_info_.lpAttributeList =
+        static_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(std::malloc(size));
+    if (startup_info_.lpAttributeList == nullptr) {
+      return false;
+    }
+    if (!::InitializeProcThreadAttributeList(startup_info_.lpAttributeList,
+                                             attribute_count, 0, &size)) {
+      return false;
+    }
+    attribute_list_initialized_ = true;
+    if (!::UpdateProcThreadAttribute(
+            startup_info_.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST,
+            reinterpret_cast<PVOID>(job_->GetJobHandle()), sizeof(HANDLE),
+            nullptr, nullptr)) {
+      return false;
+    }
+    return true;
+  }
+
+  void Cleanup() {
+    if (startup_info_.lpAttributeList != nullptr) {
+      if (attribute_list_initialized_) {
+        ::DeleteProcThreadAttributeList(startup_info_.lpAttributeList);
+        attribute_list_initialized_ = false;
+      }
+      std::free(startup_info_.lpAttributeList);
+      startup_info_.lpAttributeList = nullptr;
+    }
+    job_.reset();
+  }
+
+  std::unique_ptr<LockedDownJob> job_;
+  STARTUPINFOEX startup_info_ = []() {
+    STARTUPINFOEX info = {};
+    info.StartupInfo.cb = sizeof(STARTUPINFOEX);
+    return info;
+  }();
+  bool attribute_list_initialized_ = false;
+};
+
+bool SpawnSandboxedProcessImpl(std::wstring command_line,
+                               const WinSandbox::SecurityInfo& info,
+                               DWORD* pid) {
   wil::unique_process_handle process_token;
   if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_ALL_ACCESS,
                           process_token.put())) {
-    return std::nullopt;
+    return false;
   }
 
   wil::unique_process_handle primary_token =
       WinSandbox::GetRestrictedTokenHandle(
           process_token.get(), info.primary_level, info.integrity_level);
   if (!primary_token) {
-    return std::nullopt;
+    return false;
   }
 
   wil::unique_process_handle impersonation_token =
       WinSandbox::GetRestrictedTokenHandleForImpersonation(
           process_token.get(), info.impersonation_level, info.integrity_level);
   if (!impersonation_token) {
-    return std::nullopt;
+    return false;
   }
 
   wil::unique_hlocal_security_descriptor security_descriptor =
@@ -575,12 +641,19 @@ std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
                                    security_descriptor.get())) {
       const DWORD last_error = ::GetLastError();
       DLOG(ERROR) << "SetKernelObjectSecurity failed. Error: " << last_error;
-      return std::nullopt;
+      return false;
     }
   }
 
+  // CREATE_SUSPENDED is still needed for us to call ::SetThreadToken before
+  // starting its main thread.
   DWORD creation_flags = info.creation_flags | CREATE_SUSPENDED;
+
+  StartupInfo startup_info_;
   if (info.use_locked_down_job) {
+    if (!startup_info_.SetJob(info.allow_ui_operation)) {
+      return false;
+    }
     // Windows 8 and later allow nested jobs, hence CREATE_BREAKAWAY_FROM_JOB is
     // optional. Set it only when JOB_OBJECT_LIMIT_BREAKAWAY_OK is set to
     // minimize the impact on the existing job limitations if possible.
@@ -606,7 +679,6 @@ std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
   SECURITY_ATTRIBUTES* security_attributes_ptr =
       (security_descriptor ? &security_attributes : nullptr);
 
-  STARTUPINFO startup_info = {sizeof(STARTUPINFO)};
   wil::unique_process_information process_info;
   // 3rd parameter of CreateProcessAsUser must be a writable buffer.
   if (!::CreateProcessAsUser(primary_token.get(),
@@ -616,11 +688,11 @@ std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
                              FALSE,  // Do not inherit handles.
                              creation_flags,
                              nullptr,  // Use the environment of the caller.
-                             startup_directory, &startup_info,
+                             startup_directory, startup_info_.AsPtr(),
                              process_info.reset_and_addressof())) {
     const DWORD last_error = ::GetLastError();
     DLOG(ERROR) << "CreateProcessAsUser failed. Error: " << last_error;
-    return std::nullopt;
+    return false;
   }
 
   // Change the token of the main thread of the new process for the
@@ -629,40 +701,12 @@ std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
     const DWORD last_error = ::GetLastError();
     DLOG(ERROR) << "SetThreadToken failed. Error: " << last_error;
     ::TerminateProcess(process_info.hProcess, 0);
-    return std::nullopt;
-  }
-
-  return process_info;
-}
-
-bool SpawnSandboxedProcessImpl(std::wstring_view command_line,
-                               const WinSandbox::SecurityInfo& info,
-                               DWORD& pid) {
-  LockedDownJob job;
-
-  if (info.use_locked_down_job) {
-    const DWORD error_code = job.Init(nullptr, info.allow_ui_operation);
-    if (error_code != ERROR_SUCCESS) {
-      return false;
-    }
-  }
-
-  std::optional<wil::unique_process_information> process_info =
-      CreateSuspendedRestrictedProcess(std::wstring(command_line), info);
-  if (!process_info.has_value()) {
     return false;
   }
-  pid = process_info->dwProcessId;
 
-  if (job.IsValid()) {
-    const DWORD error_code = job.AssignProcessToJob(process_info->hProcess);
-    if (error_code != ERROR_SUCCESS) {
-      ::TerminateProcess(process_info->hProcess, 0);
-      return false;
-    }
-  }
+  ::ResumeThread(process_info.hThread);
 
-  ::ResumeThread(process_info->hThread);
+  *pid = process_info.dwProcessId;
 
   return true;
 }
@@ -686,11 +730,7 @@ bool WinSandbox::SpawnSandboxedProcess(absl::string_view path,
     StrAppendW(&wpath, L" ", win32::Utf8ToWide(arg));
   }
 
-  if (!SpawnSandboxedProcessImpl(wpath, info, *pid)) {
-    return false;
-  }
-
-  return true;
+  return SpawnSandboxedProcessImpl(std::move(wpath), info, pid);
 }
 
 // Utility functions and classes for GetRestrictionInfo
