@@ -83,8 +83,11 @@ class CorrectionRewriter : public RewriterInterface {
                     converter::Candidate* candidate) const;
 
   // Makes the display_value from `item`.
-  std::optional<std::string> GetDisplayValue(
+  std::optional<std::string> GetDisplayValueForReadingCorrection(
       const ReadingCorrectionItem& item) const;
+
+  std::optional<std::string> GetDisplayValueForKatakana(
+      const converter::Candidate& candidate) const;
 
   // Looks up corrections with key and value. Return true if at least
   // one correction is found in the internal dictionary.

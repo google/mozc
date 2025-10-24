@@ -41,6 +41,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
+#include "base/japanese_util.h"
+#include "base/util.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
@@ -53,9 +55,18 @@ namespace mozc {
 using ::mozc::converter::Attribute;
 using ::mozc::converter::Candidate;
 
+// Returns "アボ*カ*ド" from {content_key=あぼがど, content_value=アボカド}
+// It extracts the minimum span where the reading is different.
+std::optional<std::string> CorrectionRewriter::GetDisplayValueForKatakana(
+    const Candidate& candidate) const {
+
+  return std::nullopt;
+}
+
 // Returns "巣(そう)窟" from {"巣窟", "すくつ", "そうくつ"}
 // It extracts the minimum span where the reading is different.
-std::optional<std::string> CorrectionRewriter::GetDisplayValue(
+std::optional<std::string>
+CorrectionRewriter::GetDisplayValueForReadingCorrection(
     const ReadingCorrectionItem& item) const {
   using Alignment =
       std::vector<std::pair<absl::string_view, absl::string_view>>;
@@ -88,7 +99,7 @@ std::optional<std::string> CorrectionRewriter::GetDisplayValue(
   for (int i = 0; i < error_alignment.size(); ++i) {
     if (error_alignment[i].second != correction_alignment[i].second) {
       diff_start = std::min(diff_start, i);
-      diff_end = std::max(diff_end, i);
+      diff_end = i;
     }
   }
 
@@ -127,18 +138,23 @@ void CorrectionRewriter::SetCandidate(
     Candidate* candidate) const {
   candidate->attributes |= Attribute::SPELLING_CORRECTION;
 
-  // Assigns display_value in best-effort-basis.
-  if (capability == commands::Request::PLAIN_TEXT && !item.correction.empty()) {
-    if (std::optional<std::string> display_value = GetDisplayValue(item);
-        display_value.has_value()) {
+  // Assigns display_value when the client supports it.
+  if (capability == commands::Request::PLAIN_TEXT) {
+    std::optional<std::string> display_value;
+    if (!item.correction.empty()) {
+      display_value = GetDisplayValueForReadingCorrection(item);
+    } else {
+      display_value = GetDisplayValueForKatakana(*candidate);
+    }
+
+    if (display_value.has_value()) {
       candidate->display_value = std::move(display_value.value());
+      candidate->description.clear();
       return;
     }
   }
 
-  // TODO(taku): The current description does not accurately represent the
-  // information about the typos and is space-consuming. We will
-  // change the description or replace it more direct inlined annotation.
+  // The legacy description-based annotation.
   constexpr absl::string_view kDidYouMean = "もしかして";
   candidate->prefix = "→ ";
   if (item.correction.empty()) {

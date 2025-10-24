@@ -164,7 +164,8 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
             "<もしかして>");
 }
 
-TEST_F(CorrectionRewriterTest, RewriteWithDisplayValueTest) {
+TEST_F(CorrectionRewriterTest,
+       RewriteWithDisplayValueForReadlingCorrectionTest) {
   auto mock = std::make_unique<engine::MockSupplementalModel>();
   // TODO(taku): Avoid sharing the pointer of std::unique_ptr.
   engine::MockSupplementalModel* mock_ptr = mock.get();
@@ -270,5 +271,8 @@ TEST_F(CorrectionRewriterTest, RewriteWithDisplayValueTest) {
     EXPECT_EQ(candidate.description, "<もしかして: ふんいき>");
     EXPECT_TRUE(candidate.display_value.empty());
   }
+}
+
+TEST_F(CorrectionRewriterTest, RewriteWithDisplayValueForKatakanaTest) {
 }
 }  // namespace mozc

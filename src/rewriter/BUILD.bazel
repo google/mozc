@@ -1415,6 +1415,8 @@ mozc_cc_library(
     hdrs = ["correction_rewriter.h"],
     deps = [
         ":rewriter_interface",
+        "//base:japanese_util",
+        "//base:util",
         "//base/container:serialized_string_array",
         "//converter:attribute",
         "//converter:segments",
