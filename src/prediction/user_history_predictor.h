@@ -175,6 +175,12 @@ class UserHistoryPredictor : public PredictorInterface {
 
     std::vector<SegmentForLearning> history_segments;
     std::vector<SegmentForLearning> conversion_segments;
+
+    // whether the there is a space between history_segments.back() and
+    // conversion_segments.front(), e.g., ラーメン_渋谷. We heuristically
+    // identify the existence of the space using the surrounding context and the
+    // head segment in the LRU cache.
+    bool has_space_prefix = false;
   };
 
   friend class UserHistoryPredictorTestPeer;
@@ -232,6 +238,12 @@ class UserHistoryPredictor : public PredictorInterface {
   // Returns true if `entry` is valid.
   static bool IsValidResult(const ConversionRequest& request,
                             uint32_t request_key_len, const Entry& entry);
+
+  // Rewrite the prefix white spaces in result.(value|key) to
+  // full or half width form depending on the config.
+  // If display_value capability is available, sets result.display_value.
+  static void MaybeRewritePrefixSpace(const ConversionRequest& request,
+                                      Result& result);
 
   // Returns true if entry is DEFAULT_ENTRY, satisfies certain conditions, and
   // doesn't have removed flag.

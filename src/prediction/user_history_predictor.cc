@@ -41,6 +41,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -115,6 +116,11 @@ constexpr char kFileName[] = "user://.history.db";
 // Uses '\t' as a key/value delimiter
 constexpr absl::string_view kDelimiter = "\t";
 constexpr absl::string_view kEmojiDescription = "絵文字";
+
+// Spaces added as a prefix of NWP.
+constexpr absl::string_view kPrefixFullSpace = "　";  // full width
+constexpr absl::string_view kPrefixHalfSpace = " ";   // half width.
+constexpr absl::string_view kPrefixDisplaySpace = "␣";
 
 constexpr size_t kRevertCacheSize = 16;
 
@@ -1595,6 +1601,34 @@ bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
   return true;
 }
 
+// static
+void UserHistoryPredictor::MaybeRewritePrefixSpace(
+    const ConversionRequest& request, Result& result) {
+  if (!absl::StartsWith(result.key, kPrefixFullSpace) ||
+      !absl::StartsWith(result.value, kPrefixFullSpace)) {
+    return;
+  }
+
+  // Clears inner_segment_boundary because the prefix space may break the
+  // internal offsets.
+  result.inner_segment_boundary.clear();
+
+  // Replaces the space in display_value: " ラーメン" -> "␣ラーメン"
+  if (request.request().display_value_capability() ==
+      commands::Request::PLAIN_TEXT) {
+    result.display_value = absl::StrCat(
+        kPrefixDisplaySpace, result.value.substr(kPrefixFullSpace.size()));
+  }
+
+  if (request.config().space_character_form() ==
+      config::Config::FUNDAMENTAL_HALF_WIDTH) {
+    result.key = absl::StrCat(kPrefixHalfSpace,
+                              result.key.substr(kPrefixFullSpace.size()));
+    result.value = absl::StrCat(kPrefixHalfSpace,
+                                result.value.substr(kPrefixFullSpace.size()));
+  }
+}
+
 std::vector<Result> UserHistoryPredictor::MakeResults(
     const ConversionRequest& request, size_t max_prediction_size,
     size_t max_prediction_char_coverage,
@@ -1700,6 +1734,9 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
       result.description = description;
       result.candidate_attributes |= converter::Attribute::NO_EXTRA_DESCRIPTION;
     }
+
+    MaybeRewritePrefixSpace(request, result);
+
     MOZC_WORD_LOG(result, "Added by UserHistoryPredictor::InsertCandidates");
 #if DEBUG
     if (!absl::StrContains(result.description, "History")) {
@@ -1938,6 +1975,9 @@ UserHistoryPredictor::MakeLearningSegments(
   auto make_learning_segments = [](const Result& result) {
     std::vector<SegmentForLearning> segments;
     const bool is_single_segment = result.inner_segments().size() <= 1;
+    // TODO(taku): result.(key|value) may start with kPrefixFullSpace.
+    // It would be better to remove them to increase the coverage
+    // of bigram-prediction.
     for (const auto& iter : result.inner_segments()) {
       const int key_begin =
           std::distance(result.key.data(), iter.GetKey().data());
@@ -1951,12 +1991,64 @@ UserHistoryPredictor::MakeLearningSegments(
     return segments;
   };
 
+  // Returns [Segments, whether_contains_space_prefix]
+  auto make_history_learning_segments = [&](const Result& result)
+      -> std::pair<std::vector<SegmentForLearning>, bool> {
+    static constexpr bool kHasPrefixSpace = true;
+
+    std::vector<SegmentForLearning> segments = make_learning_segments(result);
+    if (!segments.empty()) return {segments, !kHasPrefixSpace};
+
+    // TODO(taku): disable space_prefix when the client doesn't have
+    // display_value capability.
+    if (!request.request()
+             .decoder_experiment_params()
+             .user_history_predict_space_prefix()) {
+      return {segments, !kHasPrefixSpace};
+    }
+
+    // whether the preceding_text ends with a single space.
+    absl::string_view preceding_text = request.context().preceding_text();
+    for (absl::string_view space_char : {kPrefixHalfSpace, kPrefixFullSpace}) {
+      if (absl::EndsWith(preceding_text, space_char)) {
+        preceding_text.remove_suffix(space_char.size());
+      }
+    }
+
+    // preceding_text does not end with space.
+    if (preceding_text.size() == request.context().preceding_text().size()) {
+      return {segments, !kHasPrefixSpace};
+    }
+
+    const DicElement* head = dic_->Head();
+    if (head == nullptr ||
+        !absl::EndsWith(preceding_text, head->value.value())) {
+      return {segments, !kHasPrefixSpace};
+    }
+
+    // When `head` has functional value, head->next may store the context_value.
+    // We only suggest space-prefixed suggestion only when noun to noun case.
+    // TODO(taku): Better to use inner boundary information.
+    const DicElement* head_next = head->next;
+    if (head_next != nullptr &&
+        absl::StartsWith(head->value.value(), head_next->value.value())) {
+      return {segments, !kHasPrefixSpace};
+    }
+
+    const Entry& head_entry = head->value;
+    segments.push_back({0, 0, head_entry.key(), head_entry.value(),
+                        head_entry.key(), head_entry.value()});
+
+    return {segments, kHasPrefixSpace};
+  };
+
   const Result& result = results.front();
 
   learning_segments.conversion_segments_key = result.key;
   learning_segments.conversion_segments_value = result.value;
-  learning_segments.history_segments =
-      make_learning_segments(request.history_result());
+  std::tie(learning_segments.history_segments,
+           learning_segments.has_space_prefix) =
+      make_history_learning_segments(request.history_result());
   learning_segments.conversion_segments = make_learning_segments(result);
   learning_segments.inner_segment_boundary = result.inner_segment_boundary;
 
@@ -1985,7 +2077,6 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
       learning_segments.conversion_segments.empty()) {
     return;
   }
-
   const SegmentForLearning& history_segment =
       learning_segments.history_segments.back();
   const SegmentForLearning& conversion_segment =
@@ -1995,10 +2086,15 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
     return;
   }
 
+  const bool ends_with_punctuation = EndsWithPunctuation(history_value);
+
   // 1) Don't learn a link from a history which ends with punctuation.
-  if (EndsWithPunctuation(history_value)) {
+  if (ends_with_punctuation) {
     return;
   }
+
+  const bool starts_with_punctuation =
+      StartsWithPunctuation(conversion_segment.value);
 
   // 2) Don't learn a link to a punctuation.
   // Exception: For zero query suggestion, we learn a link to a single
@@ -2009,8 +2105,14 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
   // In the suggestion phase, we do not allow the bigram connection where
   // right-hand-side words start with a punctuation mark. The prediction
   // of punctuation marks is only triggered on zero-query suggestions.
-  if (Util::CharsLen(conversion_segment.value) > 1 &&
-      StartsWithPunctuation(conversion_segment.value)) {
+  if (Util::CharsLen(conversion_segment.value) > 1 && starts_with_punctuation) {
+    return;
+  }
+
+  // When there is a space between the history and current token,
+  // do not allow the punctuation.
+  if (learning_segments.has_space_prefix &&
+      (starts_with_punctuation || ends_with_punctuation)) {
     return;
   }
 
@@ -2022,8 +2124,27 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
 
   revert_entries->history_entry = *history_entry;
 
-  for (const auto next_fp : LearningSegmentFingerprints(conversion_segment)) {
-    InsertNextEntry(next_fp, history_entry);
+  if (learning_segments.has_space_prefix) {
+    // Space is mainly used to make a search query, e.g. ラーメン_渋谷.
+    // So the next word would mainly be a noun. We only predict space-prefixed
+    // word when the next word has no functional word.
+    if (conversion_segment.key == conversion_segment.content_key &&
+        conversion_segment.value == conversion_segment.content_value) {
+      // Add full width space because half width space may be removed in
+      // Insert() method.
+      const std::string key =
+          absl::StrCat(kPrefixFullSpace, conversion_segment.key);
+      const std::string value =
+          absl::StrCat(kPrefixFullSpace, conversion_segment.value);
+      Insert(request, 0, 0, key, value, "", {}, {}, last_access_time,
+             revert_entries);
+      InsertNextEntry(Fingerprint(key, value), history_entry);
+    }
+  } else {
+    for (const uint64_t next_fp :
+         LearningSegmentFingerprints(conversion_segment)) {
+      InsertNextEntry(next_fp, history_entry);
+    }
   }
 }
 
