@@ -47,7 +47,7 @@ Building on Mac requires the following software.
 * [Bazelisk](https://github.com/bazelbuild/bazelisk)
   * Bazelisk is a wrapper of [Bazel](https://bazel.build/) to use the specific version of Bazel.
   * [src/.bazeliskrc](../src/.bazeliskrc) controls which version of Bazel is used.
-* Python 3.9 or later.
+* Python 3.12 or later.
 * CMake 3.18.4 or later (to build Qt6)
 
 ## Get the Code
@@ -205,7 +205,7 @@ For GYP build, Ninja and Packages are also required.
 
 * [Ninja](https://github.com/ninja-build/ninja) for GYP build
 * [Packages](http://s.sudre.free.fr/Software/Packages/about.html) for installer
-* Python 3.9 or later with the following pip module.
+* Python 3.12 or later with the following pip module.
   * `six`
 
 ### Build executables

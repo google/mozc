@@ -32,7 +32,7 @@ Building `libmozc.so` for Android requires the following software.
 
  * [bazelisk](https://github.com/bazelbuild/bazelisk)
  * C++ compiler (GCC or clang)
- * Python 3.9 or later
+ * Python 3.12 or later
 
 ## Build instructions
 

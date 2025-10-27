@@ -41,7 +41,7 @@ Building Mozc on Windows requires the following software.
     * Windows 11 SDK
     * MSVC v143 - VS 2022 C++ x64/x86 build tools (Latest)
     * C++ ATL for latest v143 build tools (x86 & x64)
-  * Python 3.9 or later.
+  * Python 3.12 or later.
   * `.NET 6` or later (for `dotnet` command).
   * [Bazelisk](https://github.com/bazelbuild/bazelisk)
 
