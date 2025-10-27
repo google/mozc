@@ -15,3 +15,10 @@ was for a different project), you probably don't need to do it again.
 
 Visit <https://cla.developers.google.com/> to see your current agreements or to
 sign a new one.
+
+## Coding style guide
+
+The Mozc project follows Google Style Guide.　You PR is also requested to follow
+the style guide.
+
+https://google.github.io/styleguide/
