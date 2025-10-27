@@ -1,11 +1,15 @@
 # How to build Mozc in Docker
 
-⚠️ `Dockerfile` provided under [`docker/`](../docker/) are deprecated. See the following documents on how to build Mozc for Linux desktop or Android.
+<!-- disableFinding(LINK_RELATIVE_G3DOC) -->
 
-* [How to build Mozc for Android](./build_mozc_for_android.md): for Android library (`libmozc.so`)
-* [How to build Mozc for Linux](./build_mozc_for_linux.md): for Linux desktop
+⚠️ `Dockerfile` provided under [`docker/`](../docker/) are deprecated. See the
+following documents on how to build Mozc for Linux desktop or Android.
 
------
+*   [How to build Mozc for Android](./build_mozc_for_android.md): for Android
+    library (`libmozc.so`)
+*   [How to build Mozc for Linux](./build_mozc_for_linux.md): for Linux desktop
+
+--------------------------------------------------------------------------------
 
 ## Build Mozc for Linux Desktop with GYP (deprecated):
 
