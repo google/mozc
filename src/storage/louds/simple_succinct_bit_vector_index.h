@@ -59,13 +59,21 @@ class SimpleSuccinctBitVectorIndex {
         lb0_cache_increment_(1),
         lb1_cache_increment_(1) {}
 
+  SimpleSuccinctBitVectorIndex(const SimpleSuccinctBitVectorIndex&) = delete;
+  SimpleSuccinctBitVectorIndex& operator=(const SimpleSuccinctBitVectorIndex&) =
+      delete;
+
+  SimpleSuccinctBitVectorIndex(SimpleSuccinctBitVectorIndex&&) = default;
+  SimpleSuccinctBitVectorIndex& operator=(SimpleSuccinctBitVectorIndex&&) =
+      default;
+
   // Initializes the index. This class doesn't have the ownership of the memory
   // pointed by data, so it is caller's responsibility to manage its life time.
   // The 'data' needs to be aligned to 32-bits.
-  void Init(const uint8_t *data, int length, size_t lb0_cache_size,
+  void Init(const uint8_t* data, int length, size_t lb0_cache_size,
             size_t lb1_cache_size);
 
-  void Init(const uint8_t *data, int length) { Init(data, length, 0, 0); }
+  void Init(const uint8_t* data, int length) { Init(data, length, 0, 0); }
 
   // Resets the internal state, especially releases the allocated memory
   // for the index used internally.
@@ -95,14 +103,14 @@ class SimpleSuccinctBitVectorIndex {
 
  private:
   // The order of members is optimized to minimize the padding size.
-  const uint8_t *data_;
+  const uint8_t* data_;
   int length_;
   int chunk_size_;
   std::vector<int> index_;
-  std::vector<const int *> lb0_cache_;
+  std::vector<const int*> lb0_cache_;
   int lb0_cache_increment_;
   int lb1_cache_increment_;
-  std::vector<const int *> lb1_cache_;
+  std::vector<const int*> lb1_cache_;
 };
 
 }  // namespace louds

@@ -71,7 +71,7 @@ class Louds {
    public:
     constexpr int node_id() const { return node_id_; }
 
-    friend constexpr bool operator==(const Node &x, const Node &y) {
+    friend constexpr bool operator==(const Node& x, const Node& y) {
       return x.edge_index_ == y.edge_index_ && x.node_id_ == y.node_id_;
     }
 
@@ -83,8 +83,13 @@ class Louds {
   };
 
   Louds() = default;
-  Louds(const Louds &) = delete;
-  Louds &operator=(const Louds &) = delete;
+
+  Louds(const Louds&) = delete;
+  Louds& operator=(const Louds&) = delete;
+
+  Louds(Louds&&) = default;
+  Louds& operator=(Louds&&) = default;
+
   ~Louds() = default;
 
   // Initializes this LOUDS from bit array.  To improve the performance of
@@ -92,7 +97,7 @@ class Louds {
   // and |select0_cache_size| to larger values.  On the other hand, to improve
   // the performance of upward traversal (i.e., from leaves to the root), set
   // |bitvec_lb1_cache_size| and |select1_cache_size| to larger values.
-  void Init(const uint8_t *image, int length, size_t bitvec_lb0_cache_size,
+  void Init(const uint8_t* image, int length, size_t bitvec_lb0_cache_size,
             size_t bitvec_lb1_cache_size, size_t select0_cache_size,
             size_t select1_cache_size);
 
@@ -103,7 +108,7 @@ class Louds {
 
   // Initializes a Node instance from node ID.
   // Note: to get the root node, just allocate a default Node instance.
-  void InitNodeFromNodeId(int node_id, Node *node) const {
+  void InitNodeFromNodeId(int node_id, Node* node) const {
     node->node_id_ = node_id;
     node->edge_index_ = node_id < select1_cache_size_
                             ? select1_cache_ptr_[node_id]
@@ -111,7 +116,7 @@ class Louds {
   }
 
   // Returns true if the given node is the root.
-  static bool IsRoot(const Node &node) { return node.node_id_ == 1; }
+  static bool IsRoot(const Node& node) { return node.node_id_ == 1; }
 
   // Moves the given node to its first (most left) child.  If |node| is a leaf,
   // the resulting node becomes invalid.  For example, in the above diagram of
@@ -120,7 +125,7 @@ class Louds {
   //   * node 3 -> node 4
   //   * node 4 -> invalid node
   // REQUIRES: |node| is valid.
-  void MoveToFirstChild(Node *node) const {
+  void MoveToFirstChild(Node* node) const {
     node->edge_index_ = node->node_id_ < select0_cache_size_
                             ? select_cache_[node->node_id_]
                             : index_.Select0(node->node_id_) + 1;
@@ -134,7 +139,7 @@ class Louds {
   //   * node 2 -> node 3
   //   * node 5 -> invalid node
   // REQUIRES: |node| is valid.
-  static void MoveToNextSibling(Node *node) {
+  static void MoveToNextSibling(Node* node) {
     ++node->edge_index_;
     ++node->node_id_;
   }
@@ -145,7 +150,7 @@ class Louds {
   //   * node 3 -> node 1
   //   * node 5 -> node 3
   // REQUIRES: |node| is valid and not root.
-  void MoveToParent(Node *node) const {
+  void MoveToParent(Node* node) const {
     node->node_id_ = node->edge_index_ - node->node_id_ + 1;
     node->edge_index_ = node->node_id_ < select1_cache_size_
                             ? select1_cache_ptr_[node->node_id_]
@@ -153,7 +158,7 @@ class Louds {
   }
 
   // Returns true if |node| is in a valid state.
-  bool IsValidNode(const Node &node) const {
+  bool IsValidNode(const Node& node) const {
     return index_.Get(node.edge_index_) != 0;
   }
 
@@ -162,7 +167,7 @@ class Louds {
   size_t select0_cache_size_ = 0;
   size_t select1_cache_size_ = 0;
   std::unique_ptr<int[]> select_cache_;
-  int *select1_cache_ptr_;  // = select_cache_.get() + select0_cache_size_
+  int* select1_cache_ptr_;  // = select_cache_.get() + select0_cache_size_
 };
 
 }  // namespace louds

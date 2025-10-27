@@ -50,8 +50,12 @@ class LoudsTrie {
   typedef Louds::Node Node;
 
   LoudsTrie() = default;
-  LoudsTrie(const LoudsTrie &) = delete;
-  LoudsTrie &operator=(const LoudsTrie &) = delete;
+
+  LoudsTrie(const LoudsTrie&) = delete;
+  LoudsTrie& operator=(const LoudsTrie&) = delete;
+
+  LoudsTrie(LoudsTrie&&) = default;
+  LoudsTrie& operator=(LoudsTrie&&) = default;
 
   // Opens the binary image and constructs the data structure.  The first four
   // cache sizes are passed to the underlying LOUDS.  See louds.h for more
@@ -59,11 +63,11 @@ class LoudsTrie {
   // terminal bit vector.  This class doesn't own the "data", so it is caller's
   // responsibility to keep the data alive until Close is invoked.  See .cc file
   // for the detailed format of the binary image.
-  bool Open(const uint8_t *image, size_t louds_lb0_cache_size,
+  bool Open(const uint8_t* image, size_t louds_lb0_cache_size,
             size_t louds_lb1_cache_size, size_t louds_select0_cache_size,
             size_t louds_select1_cache_size, size_t termvec_lb1_cache_size);
 
-  bool Open(const uint8_t *data) { return Open(data, 0, 0, 0, 0, 0); }
+  bool Open(const uint8_t* data) { return Open(data, 0, 0, 0, 0, 0); }
 
   // Destructs the internal data structure explicitly (the destructor will do
   // clean up too).
@@ -74,27 +78,27 @@ class LoudsTrie {
 
   // Returns true if |node| is in a valid state (returns true both for terminal
   // and non-terminal nodes).
-  bool IsValidNode(const Node &node) const { return louds_.IsValidNode(node); }
+  bool IsValidNode(const Node& node) const { return louds_.IsValidNode(node); }
 
   // Returns true if |node| is a terminal node.
-  bool IsTerminalNode(const Node &node) const {
+  bool IsTerminalNode(const Node& node) const {
     return terminal_bit_vector_.Get(node.node_id() - 1) != 0;
   }
 
   // Returns the label of the edge from |node|'s parent (predecessor) to |node|.
-  char GetEdgeLabelToParentNode(const Node &node) const {
+  char GetEdgeLabelToParentNode(const Node& node) const {
     return edge_character_[node.node_id() - 1];
   }
 
   // Computes the ID of key that reaches to |node|.
   // REQUIRES: |node| is a terminal node.
-  int GetKeyIdOfTerminalNode(const Node &node) const {
+  int GetKeyIdOfTerminalNode(const Node& node) const {
     return terminal_bit_vector_.Rank1(node.node_id() - 1);
   }
 
   // Initializes a node corresponding to |key_id|.
   // REQUIRES: |key_id| is a valid ID.
-  void GetTerminalNodeFromKeyId(int key_id, Node *node) const {
+  void GetTerminalNodeFromKeyId(int key_id, Node* node) const {
     const int node_id = terminal_bit_vector_.Select1(key_id + 1) + 1;
     louds_.InitNodeFromNodeId(node_id, node);
   }
@@ -110,26 +114,26 @@ class LoudsTrie {
   // to be passed in |buf|.  The returned string view points to a piece of
   // |buf|.
   // REQUIRES: |buf| is longer than kMaxDepth + 1.
-  absl::string_view RestoreKeyString(Node node, char *buf) const;
+  absl::string_view RestoreKeyString(Node node, char* buf) const;
 
   // Restores the key string corresponding to |key_id|.  The caller is
   // responsible for allocating a buffer for the result string view, which needs
   // to be passed in |buf|.  The returned string view points to a piece of
   // |buf|.
   // REQUIRES: |buf| is longer than kMaxDepth + 1.
-  absl::string_view RestoreKeyString(int key_id, char *buf) const {
+  absl::string_view RestoreKeyString(int key_id, char* buf) const {
     // TODO(noriyukit): Check if it's necessary to handle negative IDs.
     return key_id < 0 ? absl::string_view()
                       : RestoreKeyString(GetTerminalNodeFromKeyId(key_id), buf);
   }
 
   // Methods for moving node exported from Louds class; see louds.h.
-  void MoveToFirstChild(Node *node) const { louds_.MoveToFirstChild(node); }
+  void MoveToFirstChild(Node* node) const { louds_.MoveToFirstChild(node); }
   Node MoveToFirstChild(Node node) const {
     MoveToFirstChild(&node);
     return node;
   }
-  static void MoveToNextSibling(Node *node) { Louds::MoveToNextSibling(node); }
+  static void MoveToNextSibling(Node* node) { Louds::MoveToNextSibling(node); }
   static Node MoveToNextSibling(Node node) {
     MoveToNextSibling(&node);
     return node;
@@ -137,12 +141,12 @@ class LoudsTrie {
 
   // Moves |node| to its child connected by the edge with |label|.  If there's
   // no edge having |label|, |node| becomes invalid and false is returned.
-  bool MoveToChildByLabel(char label, Node *node) const;
+  bool MoveToChildByLabel(char label, Node* node) const;
 
   // Traverses a trie for |key|, starting from |node|, and modifies |node| to
   // the destination terminal node.  Here, |node| is not necessarily the root.
   // Returns false if there's no node reachable by |key|.
-  bool Traverse(absl::string_view key, Node *node) const;
+  bool Traverse(absl::string_view key, Node* node) const;
 
   // Higher level APIs.
 
@@ -199,7 +203,7 @@ class LoudsTrie {
   // A sequence of characters, annotated to each edge.
   // This array also doesn't have an entry for super root.
   // In other words, id=2 in louds_ corresponds to edge_character_[1].
-  const char *edge_character_ = nullptr;
+  const char* edge_character_ = nullptr;
 };
 
 }  // namespace louds
