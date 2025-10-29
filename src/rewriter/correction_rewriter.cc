@@ -50,8 +50,6 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 
-constexpr bool kEnableDisplayValueForKatakana = false;
-
 
 namespace mozc {
 
@@ -62,60 +60,6 @@ using ::mozc::converter::Candidate;
 // It extracts the minimum span where the reading is different.
 std::optional<std::string> CorrectionRewriter::GetDisplayValueForKatakana(
     const Candidate& candidate) const {
-  if constexpr (kEnableDisplayValueForKatakana) {
-    if (Util::GetScriptType(candidate.content_value) != Util::KATAKANA ||
-        !(candidate.attributes & Attribute::SPELLING_CORRECTION)) {
-      return std::nullopt;
-    }
-
-    const std::string katakana_key =
-        japanese_util::HiraganaToKatakana(candidate.content_key);
-
-    // Per character diff-ish edits.
-    using Edits = std::vector<std::pair<absl::string_view, absl::string_view>>;
-
-    // Example: アボガド, アボカド -> [アボ:アボ], [ガ:カ], [ド:ド]
-    const Edits edits =
-        AnalyzeSimilarity(katakana_key, candidate.content_value).edits;
-
-    if (edits.empty()) {
-      return std::nullopt;
-    }
-
-    int diff_start = edits.size();
-    int diff_end = -1;
-    for (int i = 0; i < edits.size(); ++i) {
-      if (edits[i].first != edits[i].second) {
-        diff_start = std::min(diff_start, i);
-        diff_end = i;
-      }
-    }
-
-    if (diff_start <= diff_end) {  // insertion & replace.
-      std::string result;
-      // [0, diff_start) have the same value.
-      for (int i = 0; i < diff_start; ++i) {
-        absl::StrAppend(&result, edits[i].second);
-      }
-
-      // [diff_start, diff_end] are different.
-      absl::StrAppend(&result, "*");
-      absl::string_view prev_result = result;
-      for (int i = diff_start; i <= diff_end; ++i) {
-        absl::StrAppend(&result, edits[i].second);
-      }
-      if (prev_result != result) absl::StrAppend(&result, "*");
-
-      // (diff_end, last) have the same value.
-      for (int i = diff_end + 1; i < edits.size(); ++i) {
-        absl::StrAppend(&result, edits[i].second);
-      }
-
-      absl::StrAppend(&result, candidate.functional_value());
-      return result;
-    }
-  }
-
   return std::nullopt;
 }
 
