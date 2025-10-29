@@ -1604,8 +1604,14 @@ bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
 // static
 void UserHistoryPredictor::MaybeRewritePrefixSpace(
     const ConversionRequest& request, Result& result) {
-  if (!absl::StartsWith(result.key, kPrefixFullSpace) ||
-      !absl::StartsWith(result.value, kPrefixFullSpace)) {
+  const bool is_prefix_full_space =
+      absl::StartsWith(result.key, kPrefixFullSpace) &&
+      absl::StartsWith(result.value, kPrefixFullSpace);
+  const bool is_prefix_half_space =
+      absl::StartsWith(result.key, kPrefixHalfSpace) &&
+      absl::StartsWith(result.value, kPrefixHalfSpace);
+
+  if (!is_prefix_full_space && !is_prefix_half_space) {
     return;
   }
 
@@ -1616,16 +1622,28 @@ void UserHistoryPredictor::MaybeRewritePrefixSpace(
   // Replaces the space in display_value: " ラーメン" -> "␣ラーメン"
   if (request.request().display_value_capability() ==
       commands::Request::PLAIN_TEXT) {
-    result.display_value = absl::StrCat(
-        kPrefixDisplaySpace, result.value.substr(kPrefixFullSpace.size()));
+    if (is_prefix_full_space) {
+      result.display_value = absl::StrCat(
+          kPrefixDisplaySpace, result.value.substr(kPrefixFullSpace.size()));
+    } else {
+      result.display_value = absl::StrCat(
+          kPrefixDisplaySpace, result.value.substr(kPrefixHalfSpace.size()));
+    }
   }
 
-  if (request.config().space_character_form() ==
-      config::Config::FUNDAMENTAL_HALF_WIDTH) {
+  const auto cform = request.config().space_character_form();
+
+  if (cform == config::Config::FUNDAMENTAL_HALF_WIDTH && is_prefix_full_space) {
     result.key = absl::StrCat(kPrefixHalfSpace,
                               result.key.substr(kPrefixFullSpace.size()));
     result.value = absl::StrCat(kPrefixHalfSpace,
                                 result.value.substr(kPrefixFullSpace.size()));
+  } else if (cform == config::Config::FUNDAMENTAL_FULL_WIDTH &&
+             is_prefix_half_space) {
+    result.key = absl::StrCat(kPrefixFullSpace,
+                              result.key.substr(kPrefixHalfSpace.size()));
+    result.value = absl::StrCat(kPrefixFullSpace,
+                                result.value.substr(kPrefixHalfSpace.size()));
   }
 }
 

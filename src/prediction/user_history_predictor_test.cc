@@ -5837,6 +5837,23 @@ TEST_F(UserHistoryPredictorTest, MaybeRewritePrefixSpace) {
   }
 
   {
+    config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
+    const ConversionRequest conv_req = ConversionRequestBuilder()
+                                           .SetConfigView(config)
+                                           .SetRequestView(request)
+                                           .Build();
+    Result result;
+    result.key = " key";
+    result.value = " value";
+    result.inner_segment_boundary = {0};
+    UserHistoryPredictorTestPeer::MaybeRewritePrefixSpace(conv_req, result);
+    EXPECT_EQ(result.key, "　key");
+    EXPECT_EQ(result.value, "　value");
+    EXPECT_EQ(result.display_value, "␣value");
+    EXPECT_TRUE(result.inner_segment_boundary.empty());
+  }
+
+  {
     request.set_display_value_capability(commands::Request::NOT_SUPPORTED);
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
     const ConversionRequest conv_req = ConversionRequestBuilder()
