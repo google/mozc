@@ -546,7 +546,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 135
+// Next ID: 136
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -644,6 +644,11 @@ message DecoderExperimentParams {
 
   // Predicts candidate staring with white space.
   optional bool user_history_predict_space_prefix = 134 [default = false];
+
+  // Stores inner segment boundary in user history cache.
+  // This information is going to be shared with user_segment_rewriter.
+  optional bool user_history_cache_inner_segment_boundary = 135
+      [default = false];
 
   // Demotes the partial candidates so that the top_n results must
   // be non-partial candidates.

@@ -349,5 +349,94 @@ TEST(InnerSegments, GetSuffixKeyAndValue) {
   }
 }
 
+TEST(InnerSegments, GetPrefixKeyAndValue) {
+  auto prefix_key_default = [](const InnerSegments& inner_segments) {
+    return inner_segments.GetPrefixKeyAndValue().first;
+  };
+
+  auto prefix_value_default = [](const InnerSegments& inner_segments) {
+    return inner_segments.GetPrefixKeyAndValue().second;
+  };
+
+  auto prefix_key = [](const InnerSegments& inner_segments, int size) {
+    return inner_segments.GetPrefixKeyAndValue(size).first;
+  };
+
+  auto prefix_value = [](const InnerSegments& inner_segments, int size) {
+    return inner_segments.GetPrefixKeyAndValue(size).second;
+  };
+
+  {
+    std::string all_key, all_value;
+
+    converter::InnerSegmentBoundaryBuilder builder;
+
+    auto add_segment = [&](absl::string_view key, absl::string_view value) {
+      builder.Add(key.size(), value.size(), key.size(), value.size());
+      absl::StrAppend(&all_key, key);
+      absl::StrAppend(&all_value, value);
+    };
+
+    for (int i = 0; i < 3; ++i) {
+      add_segment(absl::StrCat("k", i), absl::StrCat("v", i));
+    }
+
+    InnerSegmentBoundary inner_segment_boundary =
+        builder.Build(all_key, all_value);
+
+    const InnerSegments inner_segments(all_key, all_value,
+                                       inner_segment_boundary);
+
+    EXPECT_EQ(inner_segments.size(), 3);
+    EXPECT_EQ(prefix_key_default(inner_segments), "k0k1k2");
+    EXPECT_EQ(prefix_value_default(inner_segments), "v0v1v2");
+    EXPECT_EQ(prefix_key(inner_segments, -1), "k0k1k2");
+    EXPECT_EQ(prefix_value(inner_segments, -1), "v0v1v2");
+    EXPECT_EQ(prefix_key(inner_segments, 10), "k0k1k2");
+    EXPECT_EQ(prefix_value(inner_segments, 10), "v0v1v2");
+    EXPECT_EQ(prefix_key(inner_segments, 0), "");
+    EXPECT_EQ(prefix_value(inner_segments, 0), "");
+    EXPECT_EQ(prefix_key(inner_segments, 1), "k0");
+    EXPECT_EQ(prefix_value(inner_segments, 1), "v0");
+    EXPECT_EQ(prefix_key(inner_segments, 2), "k0k1");
+    EXPECT_EQ(prefix_value(inner_segments, 2), "v0v1");
+    EXPECT_EQ(prefix_key(inner_segments, 3), "k0k1k2");
+    EXPECT_EQ(prefix_value(inner_segments, 3), "v0v1v2");
+    EXPECT_EQ(prefix_key(inner_segments, 4), "k0k1k2");
+    EXPECT_EQ(prefix_value(inner_segments, 4), "v0v1v2");
+  }
+
+  {
+    const InnerSegments inner_segments("", "", {});
+
+    EXPECT_EQ(inner_segments.size(), 0);
+    EXPECT_EQ(prefix_key_default(inner_segments), "");
+    EXPECT_EQ(prefix_value_default(inner_segments), "");
+    EXPECT_EQ(prefix_key(inner_segments, -1), "");
+    EXPECT_EQ(prefix_value(inner_segments, -1), "");
+    EXPECT_EQ(prefix_key(inner_segments, 10), "");
+    EXPECT_EQ(prefix_value(inner_segments, 10), "");
+    EXPECT_EQ(prefix_key(inner_segments, 0), "");
+    EXPECT_EQ(prefix_value(inner_segments, 0), "");
+    EXPECT_EQ(prefix_key(inner_segments, 2), "");
+    EXPECT_EQ(prefix_value(inner_segments, 2), "");
+    EXPECT_EQ(prefix_key(inner_segments, 1), "");
+    EXPECT_EQ(prefix_value(inner_segments, 1), "");
+  }
+
+  {
+    const InnerSegments inner_segments("key", "value", {});
+    EXPECT_EQ(inner_segments.size(), 1);
+    EXPECT_EQ(prefix_key_default(inner_segments), "key");
+    EXPECT_EQ(prefix_value_default(inner_segments), "value");
+    EXPECT_EQ(prefix_key(inner_segments, -1), "key");
+    EXPECT_EQ(prefix_value(inner_segments, -1), "value");
+    EXPECT_EQ(prefix_key(inner_segments, 1), "key");
+    EXPECT_EQ(prefix_value(inner_segments, 1), "value");
+    EXPECT_EQ(prefix_key(inner_segments, 2), "key");
+    EXPECT_EQ(prefix_value(inner_segments, 2), "value");
+  }
+}
+
 }  // namespace converter
 }  // namespace mozc

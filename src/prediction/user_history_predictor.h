@@ -237,7 +237,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Returns true if `entry` is valid.
   static bool IsValidResult(const ConversionRequest& request,
-                            uint32_t request_key_len, const Entry& entry);
+                            const Entry& entry);
 
   // Rewrite the prefix white spaces in result.(value|key) to
   // full or half width form depending on the config.
@@ -310,10 +310,11 @@ class UserHistoryPredictor : public PredictorInterface {
   // If exact match results exist, return them first when |prefer_exact_match|
   // is true.
   bool GetKeyValueForExactAndRightPrefixMatch(
-      absl::string_view request_key, bool prefer_exact_match,
-      const Entry* entry, const Entry** result_last_entry,
-      uint64_t* left_last_access_time, uint64_t* left_most_last_access_time,
-      std::string* result_key, std::string* result_value,
+      const ConversionRequest& request, absl::string_view request_key,
+      bool prefer_exact_match, const Entry* entry,
+      const Entry** result_last_entry, uint64_t* left_last_access_time,
+      uint64_t* left_most_last_access_time, std::string* result_key,
+      std::string* result_value,
       converter::InnerSegmentBoundary* result_inner_segment_boundary) const;
 
   const Entry* absl_nullable LookupPrevEntry(
@@ -325,7 +326,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Adds the entry whose key and value are modified to a priority queue.
   Entry* absl_nonnull AddEntryWithNewKeyValue(
-      std::string key, std::string value,
+      const ConversionRequest& request, std::string key, std::string value,
       converter::InnerSegmentBoundarySpan inner_segment_boundary, Entry entry,
       EntryPriorityQueue* entry_queue) const;
 

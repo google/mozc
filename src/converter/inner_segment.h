@@ -247,6 +247,29 @@ class InnerSegments {
     return std::make_pair(key, value);
   }
 
+  // Returns the concatenated prefix key and value of segments size `size`, used
+  // in history result. When size is -1, returns all key/value.
+  std::pair<absl::string_view, absl::string_view> GetPrefixKeyAndValue(
+      int size = -1) const {
+    absl::string_view key = begin_.data_.key_;
+    absl::string_view value = begin_.data_.value_;
+
+    if (size < 0) return std::make_pair(key, value);
+
+    int key_len = 0;
+    int value_len = 0;
+    for (const auto& iter : *this) {
+      if (size-- == 0 || key_len >= key.size() || value_len >= value.size()) {
+        return std::make_pair(key.substr(0, key_len),
+                              value.substr(0, value_len));
+      }
+      key_len += iter.GetKey().size();
+      value_len += iter.GetValue().size();
+    }
+
+    return std::make_pair(key, value);
+  }
+
   // Returns the concatenated suffix key and value of segments size `size`, used
   // in history result. When size is -1, returns all key/value.
   std::pair<absl::string_view, absl::string_view> GetSuffixKeyAndValue(
