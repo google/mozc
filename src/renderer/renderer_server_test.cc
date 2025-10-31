@@ -81,7 +81,7 @@ class TestRendererServer : public RendererServer {
   // Not async for testing
   bool AsyncExecCommand(absl::string_view proto_message) override {
     commands::RendererCommand command;
-    command.ParseFromArray(proto_message.data(), proto_message.size());
+    command.ParseFromString(proto_message);
     return ExecCommandInternal(command);
   }
 };
