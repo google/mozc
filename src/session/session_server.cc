@@ -91,8 +91,7 @@ bool SessionServer::Process(absl::string_view request, std::string* response) {
   }
 
   commands::Command command;
-  if (!command.mutable_input()->ParseFromArray(request.data(),
-                                               request.size())) {
+  if (!command.mutable_input()->ParseFromString(request)) {
     LOG(WARNING) << "Invalid request";
     response->clear();
     return true;
