@@ -239,7 +239,7 @@ absl::Status DataManager::InitFromReader(const DataSetReader& reader) {
       return absl::NotFoundError("Cannot find a segmenter size info");
     }
     converter::SegmenterDataSizeInfo sizeinfo;
-    if (!sizeinfo.ParseFromArray(memblock.data(), memblock.size())) {
+    if (!sizeinfo.ParseFromString(memblock)) {
       return absl::DataLossError("Failed to parse SegmenterDataSizeInfo");
     }
     segmenter_compressed_lsize_ = sizeinfo.compressed_lsize();
