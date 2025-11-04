@@ -31,13 +31,14 @@
 #define MOZC_REWRITER_CORRECTION_REWRITER_H_
 
 #include <memory>
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "engine/modules.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
