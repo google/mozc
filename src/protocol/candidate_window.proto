@@ -37,6 +37,50 @@ package mozc.commands;
 option java_outer_classname = "ProtoCandidateWindow";
 option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
 
+// General non-recursive rich text representation.
+message RichText {
+  message TextStyle {
+    enum Style {
+      STYLE_UNSPECIFIED = 0;
+      STYLE_BOLD = 1;           // Typeface.BOLD
+      STYLE_ITALIC = 2;         // Typeface.ITALIC
+      STYLE_UNDERLINE = 4;      // UnderlineSpan
+      STYLE_STRIKETHROUGH = 8;  // StikethroughSpan
+    }
+
+    enum FontSize {
+      FONT_SIZE_DEFAULT = 0;
+      FONT_SIZE_SUPERSCRIPT = 1;
+      FONT_SIZE_SUBSCRIPT = 2;
+      FONT_SIZE_LARGE = 3;
+      FONT_SIZE_SMALL = 4;
+    }
+
+    enum TextColor {
+      TEXT_COLOR_DEFAULT = 0;
+      TEXT_COLOR_EMPHASIZED = 1;
+      TEXT_COLOR_DEEMPHASIZED = 2;
+    }
+
+    // Bit fields. Styles are not exclusive.
+    optional uint32 styles = 1 [default = 0];
+
+    optional FontSize font_size = 2 [default = FONT_SIZE_DEFAULT];
+
+    optional TextColor text_color = 3 [default = TEXT_COLOR_DEFAULT];
+  }
+
+  message Span {
+    optional string text = 1;
+    optional TextStyle text_style = 2;
+  }
+
+  repeated Span spans = 1;
+
+  // fallback text in plain-text format.
+  optional string fallback_text = 2;
+}
+
 // Annotation against a candidate.
 message Annotation {
   // Annotation prepended to the value.
