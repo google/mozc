@@ -5690,6 +5690,10 @@ TEST_F(UserHistoryPredictorTest, PredictPrefixSpace) {
   request_.set_zero_query_suggestion(true);
   request_.set_mixed_conversion(true);
 
+  // Remembers full sentence with inner boundary. "渋谷は"
+  request_.mutable_decoder_experiment_params()
+      ->set_user_history_cache_inner_segment_boundary(true);
+
   auto convert_unigram = [&](absl::string_view key, absl::string_view value) {
     segments_proxy.Clear();
     const ConversionRequest convreq =
@@ -5780,6 +5784,7 @@ TEST_F(UserHistoryPredictorTest, PredictPrefixSpace) {
   // No NWP from functional word.
   {
     predictor->ClearAllHistory();
+    UserHistoryPredictorTestPeer(*predictor).WaitForSyncer();
 
     convert_unigram_with_boundary("らーめんの", "ラーメンの", 15, 15, 12, 12);
     context_.set_preceding_text("ラーメンの　");
@@ -5799,10 +5804,10 @@ TEST_F(UserHistoryPredictorTest, PredictPrefixSpace) {
   // No NWP to segments with functional word.
   {
     predictor->ClearAllHistory();
+    UserHistoryPredictorTestPeer(*predictor).WaitForSyncer();
 
     convert_unigram("らーめん", "ラーメン");
     context_.set_preceding_text("ラーメン　");
-    convert_unigram("しぶや", "渋谷");
     convert_unigram_with_boundary("しぶやは", "渋谷は", 12, 9, 9, 6);
 
     const ConversionRequest convreq = SetUpInputForSuggestionWithHistory(
