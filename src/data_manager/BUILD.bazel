@@ -56,7 +56,6 @@ mozc_cc_library(
         "//dictionary:__pkg__",
         "//engine:__pkg__",
         "//ios:__pkg__",
-        "//prediction:__pkg__",
         "//rewriter:__pkg__",
         "//session:__pkg__",
     ],
