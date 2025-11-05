@@ -38,20 +38,10 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "base/strings/pfchar.h"
-#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {
 namespace {
-
-using ::testing::IsEmpty;
-
-TEST(zpfstring_viewTest, Nullptr) {
-  constexpr zpfstring_view zpsv;
-  EXPECT_THAT(zpsv, IsEmpty());
-  EXPECT_EQ(zpsv.c_str(), nullptr);
-  EXPECT_TRUE(zpsv->empty());
-}
 
 TEST(ZStringViewTest, Smoke) {
   constexpr zpfstring_view zpsv = PF_STRING("test string");

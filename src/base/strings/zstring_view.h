@@ -83,8 +83,8 @@ class basic_zstring_view {
   using size_type = typename StringViewT::size_type;
   using difference_type = typename StringViewT::difference_type;
 
-  // Default constructor initializes basic_zstring_view with nullptr.
-  constexpr basic_zstring_view() noexcept = default;
+  // Disallow default construction for null-termination guarantee.
+  constexpr basic_zstring_view() noexcept = delete;
 
   // Implicit constructor from const CharT* (C-style null-terminated string).
   // Unlike absl::string_view (when ABSL_OPTION_USE_STD_STRING_VIEW is set to
