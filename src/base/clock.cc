@@ -29,38 +29,40 @@
 
 #include "base/clock.h"
 
+#include <ctime>
+
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/singleton.h"
 
-#if !(defined(OS_CHROMEOS) || defined(_WIN32))
-#define MOZC_USE_ABSL_TIME_ZONE
-#endif  // !(defined(OS_CHROMEOS) || defined(_WIN32))
+#if defined(OS_CHROMEOS) || defined(_WIN32)
+constexpr bool kUseAbslLocalTimeZone = false;
 
-#ifndef MOZC_USE_ABSL_TIME_ZONE
-#include <ctime>
-#endif  // MOZC_USE_ABSL_TIME_ZONE
+#else  // defined(OS_CHROMEOS) || defined(_WIN32)
+constexpr bool kUseAbslLocalTimeZone = true;
+
+#endif  // defined(OS_CHROMEOS) || defined(_WIN32)
 
 namespace mozc {
 namespace {
 
 absl::TimeZone GetLocalTimeZone() {
-#ifdef MOZC_USE_ABSL_TIME_ZONE
-  return absl::LocalTimeZone();
-#else   // MOZC_USE_ABSL_TIME_ZONE
-  // Do not use absl::LocalTimeZone() here because
-  // - on Chrome OS, it returns UTC: b/196271425
-  // - on Windows, it crashes: https://github.com/google/mozc/issues/856
-  const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
-  const std::tm* offset = std::localtime(&epoch);
-  if (offset == nullptr) {
-    return absl::FixedTimeZone(9 * 60 * 60);  // JST as fallback
+  if constexpr (kUseAbslLocalTimeZone) {
+    return absl::LocalTimeZone();
+  } else {
+    // Do not use absl::LocalTimeZone() here because
+    // - on Chrome OS, it returns UTC: b/196271425
+    // - on Windows, it crashes: https://github.com/google/mozc/issues/856
+    const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
+    const std::tm* offset = std::localtime(&epoch);
+    if (offset == nullptr) {
+      return absl::FixedTimeZone(9 * 60 * 60);  // JST as fallback
+    }
+    return absl::FixedTimeZone(
+        (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
+        + offset->tm_hour * 60 * 60           // hour offset from 00 am.
+        + offset->tm_min * 60);               // minute offset.
   }
-  return absl::FixedTimeZone(
-      (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
-      + offset->tm_hour * 60 * 60           // hour offset from 00 am.
-      + offset->tm_min * 60);               // minute offset.
-#endif  // MOZC_USE_ABSL_TIME_ZONE
 }
 
 class ClockImpl : public ClockInterface {
