@@ -97,7 +97,7 @@ BlockBitmapBuilder::BlockBitmapBuilder(uint32_t size) {
 
 std::string::iterator BlockBitmapBuilder::SerializeTo(
     std::string::iterator it) {
-  for (const std::vector<uint32_t>& block : blocks_) {
+  for (absl::Span<const uint32_t> block : blocks_) {
     for (const uint32_t i : block) {
       it = StoreUnaligned<uint32_t>(i, it);
     }
@@ -108,7 +108,7 @@ std::string::iterator BlockBitmapBuilder::SerializeTo(
 BlockBitmap BlockBitmapBuilder::Build() const {
   std::vector<absl::Span<const uint32_t>> blocks;
   blocks.reserve(blocks_.size());
-  for (const std::vector<uint32_t>& block : blocks_) {
+  for (absl::Span<const uint32_t> block : blocks_) {
     blocks.push_back(block);
   }
   return BlockBitmap(std::move(blocks));
