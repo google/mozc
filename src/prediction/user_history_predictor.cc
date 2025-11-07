@@ -1432,8 +1432,7 @@ bool UserHistoryPredictor::ShouldPredict(
     return false;
   }
 
-  if (!request.config().use_history_suggest() &&
-      request.request_type() == ConversionRequest::SUGGESTION) {
+  if (!request.config().use_history_suggest()) {
     MOZC_VLOG(2) << "no history suggest";
     return false;
   }
@@ -1700,12 +1699,6 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     size_t max_prediction_char_coverage,
     EntryPriorityQueue* entry_queue) const {
   DCHECK(entry_queue);
-  if (request.request_type() != ConversionRequest::SUGGESTION &&
-      request.request_type() != ConversionRequest::PREDICTION) {
-    LOG(ERROR) << "Unknown mode";
-    return {};
-  }
-
   size_t inserted_char_coverage = 0;
 
   std::vector<const UserHistoryPredictor::Entry*> entries;
