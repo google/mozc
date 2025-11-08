@@ -35,9 +35,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <functional>
 #include <iterator>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -49,6 +47,7 @@
 #include "absl/base/nullability.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -633,7 +632,7 @@ bool UserHistoryPredictor::RemoveNgramChain(
   };
 
   std::vector<absl::string_view> key_ngrams, value_ngrams;
-  std::function<RemoveNgramChainResult(Entry*, size_t, size_t)>
+  absl::AnyInvocable<RemoveNgramChainResult(Entry*, size_t, size_t)>
       remove_ngram_chain_internal =
           [&](Entry* entry, size_t key_ngrams_len,
               size_t value_ngrams_len) -> RemoveNgramChainResult {
