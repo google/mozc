@@ -166,7 +166,7 @@ android_ndk_repository_extension = use_extension(
     "android_ndk_repository_extension",
 )
 android_ndk_repository_extension.configure(
-    path = "$WORKSPACE_ROOT/third_party/ndk/android-ndk-r28",
+    path = "$WORKSPACE_ROOT/third_party/ndk/android-ndk-r29",
 )
 use_repo(android_ndk_repository_extension, "androidndk")
 
