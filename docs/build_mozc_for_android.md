@@ -57,7 +57,7 @@ python3 build_tools/update_deps.py
 
 In this step, additional build dependencies will be downloaded.
 
-*   [Android NDK r28](https://github.com/android/ndk/wiki/Home/24fe2d7ee3591346e0e8ae615977a15c0a4fba40#ndk-r28)
+*   [Android NDK r29](https://github.com/android/ndk/wiki/Home/da2aa451f142a10203894c58fd1af78248fb06b4#ndk-r29)
 *   [git submodules](../.gitmodules)
 
 ### Build `libmozc.so` for Android
