@@ -121,6 +121,10 @@ constexpr absl::string_view kPrefixFullSpace = "　";  // full width
 constexpr absl::string_view kPrefixHalfSpace = " ";   // half width.
 constexpr absl::string_view kPrefixDisplaySpace = "␣";
 
+// Zero width space is added as an alternative character of space-prefix
+// to identify that the histories are handled as a special case of NWP.
+constexpr absl::string_view kPrefixZeroSpace = "\u200b";  // Zero-width space.
+
 constexpr size_t kRevertCacheSize = 16;
 
 constexpr absl::string_view kPunctuations[] = {"。", ".",  "、", ",",  "？",
@@ -1650,16 +1654,21 @@ bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
 // static
 void UserHistoryPredictor::MaybeRewritePrefixSpace(
     const ConversionRequest& request, Result& result) {
-  const bool is_prefix_full_space =
-      absl::StartsWith(result.key, kPrefixFullSpace) &&
-      absl::StartsWith(result.value, kPrefixFullSpace);
-  const bool is_prefix_half_space =
-      absl::StartsWith(result.key, kPrefixHalfSpace) &&
-      absl::StartsWith(result.value, kPrefixHalfSpace);
+  bool has_space = false;
 
-  if (!is_prefix_full_space && !is_prefix_half_space) {
-    return;
+  // We had added kPrefixFullSpace in the old code as a placeholder.
+  for (absl::string_view prefix : {kPrefixZeroSpace, kPrefixFullSpace}) {
+    if (absl::StartsWith(result.key, prefix) &&
+        absl::StartsWith(result.value, prefix)) {
+      // Removes the prefix spaces.
+      has_space = true;
+      result.key = result.key.substr(prefix.size());
+      result.value = result.value.substr(prefix.size());
+      break;
+    }
   }
+
+  if (!has_space) return;
 
   // Clears inner_segment_boundary because the prefix space may break the
   // internal offsets.
@@ -1668,29 +1677,15 @@ void UserHistoryPredictor::MaybeRewritePrefixSpace(
   // Replaces the space in display_value: " ラーメン" -> "␣ラーメン"
   if (request.request().display_value_capability() ==
       commands::Request::PLAIN_TEXT) {
-    if (is_prefix_full_space) {
-      result.display_value = absl::StrCat(
-          kPrefixDisplaySpace, result.value.substr(kPrefixFullSpace.size()));
-    } else {
-      result.display_value = absl::StrCat(
-          kPrefixDisplaySpace, result.value.substr(kPrefixHalfSpace.size()));
-    }
+    result.display_value = absl::StrCat(kPrefixDisplaySpace, result.value);
   }
 
   const auto cform = request.config().space_character_form();
-
-  if (cform == config::Config::FUNDAMENTAL_HALF_WIDTH && is_prefix_full_space) {
-    result.key = absl::StrCat(kPrefixHalfSpace,
-                              result.key.substr(kPrefixFullSpace.size()));
-    result.value = absl::StrCat(kPrefixHalfSpace,
-                                result.value.substr(kPrefixFullSpace.size()));
-  } else if (cform == config::Config::FUNDAMENTAL_FULL_WIDTH &&
-             is_prefix_half_space) {
-    result.key = absl::StrCat(kPrefixFullSpace,
-                              result.key.substr(kPrefixHalfSpace.size()));
-    result.value = absl::StrCat(kPrefixFullSpace,
-                                result.value.substr(kPrefixHalfSpace.size()));
-  }
+  absl::string_view prefix = (cform == config::Config::FUNDAMENTAL_HALF_WIDTH)
+                                 ? kPrefixHalfSpace
+                                 : kPrefixFullSpace;
+  result.key = absl::StrCat(prefix, result.key);
+  result.value = absl::StrCat(prefix, result.value);
 }
 
 std::vector<Result> UserHistoryPredictor::MakeResults(
@@ -2043,7 +2038,7 @@ UserHistoryPredictor::MakeLearningSegments(
                           result.value, GetDescription(result)});
     } else {
       const bool is_single_segment = result.inner_segments().size() <= 1;
-      // TODO(taku): result.(key|value) may start with kPrefixFullSpace.
+      // TODO(taku): result.(key|value) may start with kPrefixZeroSpace.
       // It would be better to remove them to increase the coverage
       // of bigram-prediction.
       for (const auto& iter : result.inner_segments()) {
@@ -2200,12 +2195,11 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
     // word when the next word has no functional word.
     if (conversion_segment.key == conversion_segment.content_key &&
         conversion_segment.value == conversion_segment.content_value) {
-      // Add full width space because half width space may be removed in
-      // Insert() method.
+      // Uses zero-width space as an internal representation of prefix-space.
       const std::string key =
-          absl::StrCat(kPrefixFullSpace, conversion_segment.key);
+          absl::StrCat(kPrefixZeroSpace, conversion_segment.key);
       const std::string value =
-          absl::StrCat(kPrefixFullSpace, conversion_segment.value);
+          absl::StrCat(kPrefixZeroSpace, conversion_segment.value);
       Insert(request, 0, 0, key, value, "", {}, {}, last_access_time,
              revert_entries);
       InsertNextEntry(Fingerprint(key, value), history_entry);

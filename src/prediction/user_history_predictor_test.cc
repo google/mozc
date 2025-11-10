@@ -5894,8 +5894,9 @@ TEST_F(UserHistoryPredictorTest, MaybeRewritePrefixSpace) {
                                            .SetRequestView(request)
                                            .Build();
     Result result;
-    result.key = " key";
-    result.value = " value";
+    // Internally, Zero-wdith space is added.
+    result.key = "\xE3\x80\x80key";
+    result.value = "\xE3\x80\x80value";
     result.inner_segment_boundary = {0};
     UserHistoryPredictorTestPeer::MaybeRewritePrefixSpace(conv_req, result);
     EXPECT_EQ(result.key, "　key");
