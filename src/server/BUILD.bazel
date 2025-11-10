@@ -124,8 +124,4 @@ mozc_macos_application(
         "//mac:__pkg__",
     ],
     deps = [":mozc_server_lib"],
-    # When we support Breakpad, uncomment the following block.
-    # additional_contents = {
-    #     "[Breakpad]" : "Frameworks",
-    # },
 )

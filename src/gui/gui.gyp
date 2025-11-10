@@ -677,13 +677,7 @@
             'gen_mozc_tool_lib_info_plist',
             'prelauncher_lib',
             '<(mozc_oss_src_dir)/base/base.gyp:base_core',
-            '<(mozc_oss_src_dir)/base/base.gyp:breakpad',
           ],
-          'link_settings': {
-            'libraries': [
-              '<(mac_breakpad_framework)',
-            ],
-          },
           'conditions': [
             ['use_qt=="YES"', {
               'postbuilds': [
@@ -915,8 +909,8 @@
         },
         {
           # ConfigDialog.app is the host app of Frameworks (e.g. GuiTool_lib,
-          # QtCore, Breakpad, etc.). These Frameworks are refferred by other
-          # apps like AboutDialog.app.
+          # QtCore, etc.). These Frameworks are refferred by other apps like
+          # AboutDialog.app.
           'target_name': 'config_dialog_mac',
           'product_name': 'ConfigDialog',
           'type': 'executable',
