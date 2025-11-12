@@ -317,4 +317,5 @@ mozc_cc_library(
     name = "emoji_data",
     hdrs = ["emoji_data.h"],
     visibility = ["//rewriter:__pkg__"],
+    deps = ["//base:bits"],
 )

@@ -42,6 +42,7 @@
 #include <bit>
 
 #include "absl/container/flat_hash_map.h"
+#include "base/bits.h"
 #include "base/singleton.h"
 #include "base/win32/win_api_test_helper.h"
 #endif  // _WIN32
@@ -228,7 +229,7 @@ class RegistryEmulator {
     if (!CheckWritable(key)) {
       return ERROR_ACCESS_DENIED;
     }
-    SetUsagestatsValue(key, *reinterpret_cast<const DWORD*>(data));
+    SetUsagestatsValue(key, LoadUnaligned<DWORD>(data));
     return ERROR_SUCCESS;
   }
   static LSTATUS WINAPI TestRegCloseKey(HKEY key) { return ERROR_SUCCESS; }

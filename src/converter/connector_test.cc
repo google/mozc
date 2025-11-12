@@ -39,6 +39,7 @@
 #include "absl/random/random.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "base/mmap.h"
 #include "base/vlog.h"
 #include "data_manager/connection_file_reader.h"
@@ -102,7 +103,7 @@ TEST(ConnectorTest, BrokenData) {
   // Invalid magic number.
   {
     data.assign(cmmap->begin(), cmmap->size());
-    *reinterpret_cast<uint16_t*>(&data[0]) = 0;
+    StoreUnaligned<uint16_t>(0, &data[0]);
     const auto status = Connector::Create(data).status();
     MOZC_VLOG(1) << status;
     EXPECT_FALSE(status.ok());

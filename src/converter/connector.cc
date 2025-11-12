@@ -45,6 +45,7 @@
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "data_manager/data_manager.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
@@ -245,11 +246,11 @@ absl::Status Connector::Init(absl::string_view connection_data) {
     // |ptr| points to here now.  Every uint8_t[] block needs to be aligned at
     // 32-bit boundary.
     VALIDATE_SIZE(ptr, 2, "Compact bits size of row ", i, "/", rsize);
-    const uint16_t compact_bits_size = *reinterpret_cast<const uint16_t*>(ptr);
+    const uint16_t compact_bits_size = LoadUnaligned<uint16_t>(ptr);
     ptr += 2;
 
     VALIDATE_SIZE(ptr, 2, "Values size of row ", i, "/", rsize);
-    const uint16_t values_size = *reinterpret_cast<const uint16_t*>(ptr);
+    const uint16_t values_size = LoadUnaligned<uint16_t>(ptr);
     ptr += 2;
 
     VALIDATE_SIZE(ptr, chunk_bits_size, "Chunk bits of row ", i, "/", rsize);

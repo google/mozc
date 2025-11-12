@@ -42,6 +42,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 
 namespace mozc {
@@ -137,72 +138,35 @@ class SerializedDictionary {
         : token_ptr_(token_ptr), string_array_(string_array) {}
     iterator(const iterator& x) = default;
 
-    uint32_t key_index() {
-      return *reinterpret_cast<const uint32_t*>(token_ptr_);
-    }
-    uint32_t key_index() const {
-      return *reinterpret_cast<const uint32_t*>(token_ptr_);
-    }
-    absl::string_view key() { return (*string_array_)[key_index()]; }
+    uint32_t key_index() const { return LoadUnaligned<uint32_t>(token_ptr_); }
     absl::string_view key() const { return (*string_array_)[key_index()]; }
 
-    uint32_t value_index() {
-      return *reinterpret_cast<const uint32_t*>(token_ptr_ + 4);
-    }
     uint32_t value_index() const {
-      return *reinterpret_cast<const uint32_t*>(token_ptr_ + 4);
+      return LoadUnaligned<uint32_t>(token_ptr_ + 4);
     }
-    absl::string_view value() { return (*string_array_)[value_index()]; }
     absl::string_view value() const { return (*string_array_)[value_index()]; }
 
-    uint32_t description_index() {
-      return *reinterpret_cast<const uint32_t*>(token_ptr_ + 8);
-    }
     uint32_t description_index() const {
-      return *reinterpret_cast<const uint32_t*>(token_ptr_ + 8);
+      return LoadUnaligned<uint32_t>(token_ptr_ + 8);
     }
 
-    absl::string_view description() {
-      return (*string_array_)[description_index()];
-    }
     absl::string_view description() const {
       return (*string_array_)[description_index()];
     }
 
-    uint32_t additional_description_index() {
-      return *reinterpret_cast<const uint32_t*>(token_ptr_ + 12);
-    }
     uint32_t additional_description_index() const {
-      return *reinterpret_cast<const uint32_t*>(token_ptr_ + 12);
-    }
-    absl::string_view additional_description() {
-      return (*string_array_)[additional_description_index()];
+      return LoadUnaligned<uint32_t>(token_ptr_ + 12);
     }
 
     absl::string_view additional_description() const {
       return (*string_array_)[additional_description_index()];
     }
 
-    uint16_t lid() {
-      return *reinterpret_cast<const uint16_t*>(token_ptr_ + 16);
-    }
-    uint16_t lid() const {
-      return *reinterpret_cast<const uint16_t*>(token_ptr_ + 16);
-    }
+    uint16_t lid() const { return LoadUnaligned<uint16_t>(token_ptr_ + 16); }
 
-    uint16_t rid() {
-      return *reinterpret_cast<const uint16_t*>(token_ptr_ + 18);
-    }
-    uint16_t rid() const {
-      return *reinterpret_cast<const uint16_t*>(token_ptr_ + 18);
-    }
+    uint16_t rid() const { return LoadUnaligned<uint16_t>(token_ptr_ + 18); }
 
-    int16_t cost() {
-      return *reinterpret_cast<const uint16_t*>(token_ptr_ + 20);
-    }
-    int16_t cost() const {
-      return *reinterpret_cast<const uint16_t*>(token_ptr_ + 20);
-    }
+    int16_t cost() const { return LoadUnaligned<int16_t>(token_ptr_ + 20); }
 
     absl::string_view operator*() { return key(); }
     absl::string_view operator*() const { return key(); }

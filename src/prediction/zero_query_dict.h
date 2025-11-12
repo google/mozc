@@ -37,6 +37,7 @@
 #include <utility>
 
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 
 namespace mozc {
@@ -98,21 +99,17 @@ class ZeroQueryDict {
     uint32_t operator*() const { return key_index(); }
 
     uint32_t operator[](ptrdiff_t n) const {
-      return *reinterpret_cast<const uint32_t*>(ptr_ + n * kTokenByteSize);
+      return LoadUnaligned<uint32_t>(ptr_ + n * kTokenByteSize);
     }
 
     const iterator* operator->() const { return this; }
 
-    uint32_t key_index() const {
-      return *reinterpret_cast<const uint32_t*>(ptr_);
-    }
+    uint32_t key_index() const { return LoadUnaligned<uint32_t>(ptr_); }
 
-    uint32_t value_index() const {
-      return *reinterpret_cast<const uint32_t*>(ptr_ + 4);
-    }
+    uint32_t value_index() const { return LoadUnaligned<uint32_t>(ptr_ + 4); }
 
     ZeroQueryType type() const {
-      const uint16_t val = *reinterpret_cast<const uint16_t*>(ptr_ + 8);
+      const uint16_t val = LoadUnaligned<uint16_t>(ptr_ + 8);
       return static_cast<ZeroQueryType>(val);
     }
 

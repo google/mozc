@@ -546,6 +546,7 @@ mozc_cc_library(
         "//rewriter:__pkg__",
     ],
     deps = [
+        "//base:bits",
         "//base/container:serialized_string_array",
         "//base/strings:assign",
         "//data_manager",

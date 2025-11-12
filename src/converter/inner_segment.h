@@ -31,6 +31,7 @@
 #define MOZC_CONVERTER_INNER_SEGMENT_H_
 
 #include <algorithm>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -94,11 +95,11 @@ inline std::optional<uint32_t> EncodeLengths(uint32_t key_len,
 
   const internal::LengthData data{key_len, value_len, content_key_len,
                                   content_value_len};
-  return *reinterpret_cast<const uint32_t*>(&data);
+  return std::bit_cast<uint32_t>(data);
 }
 
 inline internal::LengthData DecodeLengths(uint32_t encoded) {
-  return *reinterpret_cast<const struct internal::LengthData*>(&encoded);
+  return std::bit_cast<internal::LengthData>(encoded);
 }
 
 // Iterator class to access inner segments.

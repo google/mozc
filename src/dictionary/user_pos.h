@@ -40,6 +40,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "data_manager/data_manager.h"
 
@@ -132,17 +133,15 @@ class UserPos {
     explicit iterator(const char* ptr) : ptr_(ptr) {}
     iterator(const iterator& x) = default;
 
-    uint16_t pos_index() const {
-      return *reinterpret_cast<const uint16_t*>(ptr_);
-    }
+    uint16_t pos_index() const { return LoadUnaligned<uint16_t>(ptr_); }
     uint16_t value_suffix_index() const {
-      return *reinterpret_cast<const uint16_t*>(ptr_ + 2);
+      return LoadUnaligned<uint16_t>(ptr_ + 2);
     }
     uint16_t key_suffix_index() const {
-      return *reinterpret_cast<const uint16_t*>(ptr_ + 4);
+      return LoadUnaligned<uint16_t>(ptr_ + 4);
     }
     uint16_t conjugation_id() const {
-      return *reinterpret_cast<const uint16_t*>(ptr_ + 6);
+      return LoadUnaligned<uint16_t>(ptr_ + 6);
     }
 
     uint16_t operator*() const { return pos_index(); }

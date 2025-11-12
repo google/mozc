@@ -137,6 +137,7 @@ mozc_cc_test(
             "//protocol:config_cc_proto",
         ],
         windows = [
+            "//base:bits",
             "//base/win32:win_api_test_helper",
             "@com_google_absl//absl/base",
             "@com_google_absl//absl/container:flat_hash_map",
@@ -164,6 +165,7 @@ mozc_cc_library(
     ],
     deps = [
         ":config_handler",
+        "//base:bits",
         "//base:config_file_stream",
         "//base:number_util",
         "//base:singleton",

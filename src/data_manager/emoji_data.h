@@ -35,6 +35,8 @@
 #include <iterator>
 #include <utility>
 
+#include "base/bits.h"
+
 namespace mozc {
 
 // Emoji Version Data, in Unicode.
@@ -99,17 +101,13 @@ class EmojiDataIterator {
   EmojiDataIterator() : ptr_(nullptr) {}
   explicit EmojiDataIterator(const char* ptr) : ptr_(ptr) {}
 
-  uint32_t key_index() const {
-    return *reinterpret_cast<const uint32_t*>(ptr_);
-  }
-  uint32_t emoji_index() const {
-    return *reinterpret_cast<const uint32_t*>(ptr_ + 4);
-  }
+  uint32_t key_index() const { return LoadUnaligned<uint32_t>(ptr_); }
+  uint32_t emoji_index() const { return LoadUnaligned<uint32_t>(ptr_ + 4); }
   uint32_t unicode_version_index() const {
-    return *reinterpret_cast<const uint32_t*>(ptr_ + 8);
+    return LoadUnaligned<uint32_t>(ptr_ + 8);
   }
   uint32_t description_utf8_index() const {
-    return *reinterpret_cast<const uint32_t*>(ptr_ + 12);
+    return LoadUnaligned<uint32_t>(ptr_ + 12);
   }
 
   // Returns key index as token array is searched by key.
