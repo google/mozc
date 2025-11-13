@@ -275,12 +275,12 @@ bool IosEngine::MaybeCreateNewChunk(commands::Command *command)
   commands::SessionCommand *session_command = input->mutable_command();
   session_command->set_type(commands::SessionCommand::STOP_KEY_TOGGLING);
   // TODO(b/438604511): Use try_lock when Abseil LTS supports it.
-  if (!mutex_.TryLock()) {
+  if (!mutex_.try_lock()) {
     return false;
   }
   const bool ret = session_handler_->EvalCommand(command);
   // TODO(b/438604511): Use unlock when Abseil LTS supports it.
-  mutex_.Unlock();
+  mutex_.unlock();
   return ret;
 }
 
@@ -297,7 +297,7 @@ bool IosEngine::SendSessionCommand(
 
 bool IosEngine::EvalCommandLockGuarded(commands::Command *command) {
   // TODO(b/438604511): Use mutex_ (w/o &) when Abseil LTS supports it.
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   if (command->input().has_command()) {
     previous_command_ = command->input().command().type();
   } else {
