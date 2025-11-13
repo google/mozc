@@ -896,13 +896,14 @@ absl::CivilMinute GetCivilMinuteWithDiff(int type, int diff,
   return absl::ToCivilMinute(at, tz);
 }
 
-std::vector<std::string> GetConversions(const DateRewriter::DateData& data,
-                                        const absl::string_view extra_format) {
+std::vector<std::string> GetConversions(
+    const DateRewriter::DateData& data,
+    const std::vector<std::string>& extra_formats) {
   std::vector<std::string> results;
   const absl::TimeZone tz = Clock::GetTimeZone();
   const absl::CivilMinute cm = GetCivilMinuteWithDiff(data.type, data.diff, tz);
 
-  if (!extra_format.empty()) {
+  for (const absl::string_view extra_format : extra_formats) {
     const absl::Time at = absl::FromCivil(cm, tz);
     results.push_back(absl::FormatTime(extra_format, at, tz));
   }
@@ -965,7 +966,7 @@ std::vector<std::string> GetConversions(const DateRewriter::DateData& data,
 }  // namespace
 
 bool DateRewriter::RewriteDate(Segment* segment,
-                               const absl::string_view extra_format,
+                               const std::vector<std::string>& extra_formats,
                                size_t& num_done_out) {
   absl::string_view key = segment->key();
   auto rit = std::find_if(std::begin(kDateData), std::end(kDateData),
@@ -975,7 +976,7 @@ bool DateRewriter::RewriteDate(Segment* segment,
   }
 
   const DateData& data = *rit;
-  std::vector<std::string> conversions = GetConversions(data, extra_format);
+  std::vector<std::string> conversions = GetConversions(data, extra_formats);
   if (conversions.empty()) {
     return false;
   }
@@ -1460,32 +1461,36 @@ std::string ConvertExtraFormat(const absl::string_view base) {
                                     {"{{}", "{"}});
 }
 
-std::string GetExtraFormat(const dictionary::DictionaryInterface* dictionary) {
+std::vector<std::string> GetExtraFormats(
+    const dictionary::DictionaryInterface* const dictionary) {
   if (dictionary == nullptr) {
-    return "";
+    return {};
   }
 
+  // Callback to store extra date formats in the user dictionary into `tokens`.
   class EntryCollector : public dictionary::DictionaryInterface::Callback {
    public:
-    explicit EntryCollector(std::string* token) : token_(token) {}
+    explicit EntryCollector(std::vector<std::string>& tokens)
+        : tokens_(tokens) {}
     ResultType OnToken(absl::string_view key, absl::string_view actual_key,
                        const dictionary::Token& token) override {
       if (token.attributes != dictionary::Token::USER_DICTIONARY) {
         return TRAVERSE_CONTINUE;
       }
-      *token_ = token.value;
+      tokens_.push_back(ConvertExtraFormat(token.value));
       return TRAVERSE_DONE;
     }
-    std::string* token_;
+    std::vector<std::string>& tokens_;
   };
 
-  std::string extra_format;
-
+  // Lookup the extra format key from the user dictionary and store the results
+  // into `extra_formats`.
+  std::vector<std::string> extra_formats;
+  EntryCollector callback(extra_formats);
   ConversionRequest crequest;
-  EntryCollector callback(&extra_format);
   dictionary->LookupExact(DateRewriter::kExtraFormatKey, crequest, &callback);
 
-  return ConvertExtraFormat(extra_format);
+  return extra_formats;
 }
 }  // namespace
 
@@ -1527,7 +1532,7 @@ bool DateRewriter::Rewrite(const ConversionRequest& request,
   }
 
   bool modified = false;
-  const std::string extra_format = GetExtraFormat(dictionary_);
+const std::vector<std::string> extra_formats = GetExtraFormats(dictionary_);
   size_t num_done = 1;
   for (Segments::range rest_segments = conversion_segments;
        !rest_segments.empty(); rest_segments = rest_segments.drop(num_done)) {
@@ -1538,7 +1543,7 @@ bool DateRewriter::Rewrite(const ConversionRequest& request,
     }
 
     if (RewriteAd(rest_segments, num_done) ||
-        RewriteDate(seg, extra_format, num_done) ||
+        RewriteDate(seg, extra_formats, num_done) ||
         RewriteEra(rest_segments, num_done)) {
       modified = true;
       continue;

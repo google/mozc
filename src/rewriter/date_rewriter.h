@@ -150,13 +150,14 @@ class DateRewriter : public RewriterInterface {
   // https://abseil.io/docs/cpp/guides/time#formatting-absltime
   //
   // THIS IS EXPERIMENTAL. This functionality may be dropped or changed.
-  static constexpr char kExtraFormatKey[] = "DATE_FORMAT";
+  static constexpr absl::string_view kExtraFormatKey = "DATE_FORMAT";
 
  private:
   // If the rewrite is done, returns `true` and sets the `num_done_out` to the
   // number of segments processed. The `num_done_out` is not modified if the
   // rewrite is not done.
-  static bool RewriteDate(Segment* segment, absl::string_view extra_format,
+  static bool RewriteDate(Segment* segment,
+                          const std::vector<std::string>& extra_formats,
                           size_t& num_done_out);
   static bool RewriteEra(Segments::range segments_range, size_t& num_done_out);
   static bool RewriteAd(Segments::range segments_range, size_t& num_done_out);

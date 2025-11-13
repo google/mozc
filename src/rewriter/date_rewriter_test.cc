@@ -113,16 +113,17 @@ Matcher<const converter::Candidate*> ValueAndDescAre(absl::string_view value,
 // An action that invokes a DictionaryInterface::Callback with the token whose
 // value is set to the given one.
 struct InvokeCallbackWithUserDictionaryToken {
-  template <class T>
-  void operator()(absl::string_view key, T,
+  void operator()(absl::string_view key, const ConversionRequest& convreq,
                   DictionaryInterface::Callback* callback) {
-    const Token token(key, value, MockDictionary::kDefaultCost,
-                      MockDictionary::kDefaultPosId,
-                      MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
-    callback->OnToken(key, key, token);
+    for (const std::string& value : values) {
+      const Token token(key, value, MockDictionary::kDefaultCost,
+                        MockDictionary::kDefaultPosId,
+                        MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
+      callback->OnToken(key, key, token);
+    }
   }
 
-  std::string value;
+  std::vector<std::string> values;
 };
 
 }  // namespace
@@ -1128,9 +1129,9 @@ TEST_F(DateRewriterTest, ExtraFormatTest) {
   MockDictionary dictionary;
   EXPECT_CALL(dictionary,
               LookupExact(StrEq(DateRewriter::kExtraFormatKey), _, _))
-      .WillOnce(InvokeCallbackWithUserDictionaryToken{"{YEAR}{MONTH}{DATE}"});
+      .WillOnce(InvokeCallbackWithUserDictionaryToken{
+          {"{YEAR}{MONTH}{DATE}", "{YEAR}_{MONTH}_{DATE}"}});
 
-  MockConverter converter;
   DateRewriter rewriter(dictionary);
 
   Segments segments;
@@ -1144,7 +1145,8 @@ TEST_F(DateRewriterTest, ExtraFormatTest) {
   EXPECT_THAT(segments.segment(0),
               CandidatesAreArray({
                   ValueAndDescAre("今日", ""),
-                  ValueAndDescAre("20110418", kDesc),  // Custom format
+                  ValueAndDescAre("20110418", kDesc),    // Custom format
+                  ValueAndDescAre("2011_04_18", kDesc),  // Custom format
                   ValueAndDescAre("2011/04/18", kDesc),
                   ValueAndDescAre("2011-04-18", kDesc),
                   ValueAndDescAre("2011年4月18日", kDesc),
@@ -1163,7 +1165,7 @@ TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
     MockDictionary dictionary;
     EXPECT_CALL(dictionary,
                 LookupExact(StrEq(DateRewriter::kExtraFormatKey), _, _))
-        .WillOnce(InvokeCallbackWithUserDictionaryToken{std::string(input)});
+        .WillOnce(InvokeCallbackWithUserDictionaryToken{{std::string(input)}});
     MockConverter converter;
     DateRewriter rewriter(dictionary);
     Segments segments;
