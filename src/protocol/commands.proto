@@ -650,13 +650,6 @@ message DecoderExperimentParams {
   optional bool user_history_cache_inner_segment_boundary = 135
       [default = false];
 
-  // Demotes the partial candidates so that the top_n results must
-  // be non-partial candidates.
-  optional int32 demote_partial_candidate_top_n = 126 [default = 0];
-  // Maximum length of partial candidates. When 1, only demote
-  // single-value candidates.
-  optional int32 demote_partial_candidate_max_length = 127 [default = 0];
-
   // Position of the first symbol rewriter candidate (0-origin).
   optional int32 symbol_rewriter_candidate_position = 132 [default = 3];
   // Number of candidates to be promoted.
