@@ -70,7 +70,7 @@ jobs:
           python build_mozc.py build -c Release package
 
       - name: upload Mozc64_gyp.msi
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Mozc64_gyp.msi
           path: src/out_win/Release/Mozc64.msi
@@ -123,7 +123,7 @@ jobs:
           bazelisk build --config oss_windows --config release_build package
 
       - name: upload Mozc64_x64.msi
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Mozc64_x64.msi
           path: src/bazel-bin/win32/installer/Mozc64.msi
@@ -176,7 +176,7 @@ jobs:
           bazelisk build package --config oss_windows --config release_build --platforms=//:windows-arm64
 
       - name: upload Mozc64_arm64.msi
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Mozc64_arm64.msi
           path: src/bazel-bin/win32/installer/Mozc64.msi

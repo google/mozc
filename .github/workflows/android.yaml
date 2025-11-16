@@ -47,7 +47,7 @@ jobs:
           bazelisk build --config oss_android package --config release_build
 
       - name: upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: native_libs.zip
           path: src/bazel-bin/android/jni/native_libs.zip
