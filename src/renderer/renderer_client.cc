@@ -185,7 +185,7 @@ class RendererLauncher : public RendererLauncherInterface {
     // ignore NOOP|SHUTDOWN
     if (command.type() == commands::RendererCommand::UPDATE) {
       // TODO(b/438604511): Use mu_ (w/o &) when Abseil LTS supports it.
-      absl::MutexLock l(&mu_);
+      absl::MutexLock l(mu_);
       if (!pending_command_.has_value()) {
         pending_command_ = command;
       }
@@ -208,13 +208,13 @@ class RendererLauncher : public RendererLauncherInterface {
 
   RendererStatus Status() const ABSL_LOCKS_EXCLUDED(mu_) {
     // TODO(b/438604511): Use mu_ (w/o &) when Abseil LTS supports it.
-    absl::MutexLock l(&mu_);
+    absl::MutexLock l(mu_);
     return renderer_status_;
   }
 
   void SetStatus(RendererStatus status) ABSL_LOCKS_EXCLUDED(mu_) {
     // TODO(b/438604511): Use mu_ (w/o &) when Abseil LTS supports it.
-    absl::MutexLock l(&mu_);
+    absl::MutexLock l(mu_);
     renderer_status_ = status;
   }
 
@@ -294,7 +294,7 @@ class RendererLauncher : public RendererLauncherInterface {
 
   void FlushPendingCommand() ABSL_LOCKS_EXCLUDED(mu_) {
     // TODO(b/438604511): Use mu_ (w/o &) when Abseil LTS supports it.
-    absl::MutexLock l(&mu_);
+    absl::MutexLock l(mu_);
     if (ipc_client_factory_interface_ != nullptr &&
         pending_command_.has_value()) {
       std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
