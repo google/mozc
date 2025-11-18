@@ -30,9 +30,13 @@
 #include "base/thread.h"
 
 #include <atomic>
+#include <functional>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
@@ -225,6 +229,35 @@ TEST(CopyableAtomicTest, BasicTest) {
 
   const CopyableAtomic<int> f3(f1);
   EXPECT_EQ(f3, 10);
+}
+
+TEST(RecursiveMutexTest, BasicTest) {
+  // Edits the `buffer` from multiple threads.
+  std::string buffer;
+
+  RecursiveMutex mutex;
+  std::vector<Thread> threads;
+
+  // `fib` is recursively called.
+  std::function<int(int)> fib = [&](int n) {
+    std::unique_lock<RecursiveMutex> lock(mutex);
+    buffer += ' ';
+    if (n <= 1) {
+      return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+  };
+
+  constexpr int kNumThreads = 16;
+  for (int i = 0; i < kNumThreads; ++i) {
+    threads.emplace_back([&] { fib(i); });
+  }
+
+  for (Thread& thread : threads) {
+    thread.Join();
+  }
+
+  EXPECT_TRUE(true);  // Expect to reach here
 }
 
 }  // namespace

@@ -1032,7 +1032,9 @@ mozc_cc_library(
     name = "thread",
     hdrs = ["thread.h"],
     deps = [
+        "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/synchronization",
     ],
 )
