@@ -2576,7 +2576,6 @@ TEST_F(UserHistoryPredictorTest, IsValidResult) {
     const ConversionRequest convreq =
         ConversionRequestBuilder().SetRequestView(request).Build();
 
-    // entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8
     entry.set_suggestion_freq(1);
     entry.set_value("よろしく");
     EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, entry));
@@ -2587,17 +2586,7 @@ TEST_F(UserHistoryPredictorTest, IsValidResult) {
 
     entry.set_suggestion_freq(1);                 // low freq
     entry.set_value("よろしくおねがいします。");  // too long
-    EXPECT_FALSE(UserHistoryPredictorTestPeer::IsValidResult(convreq, entry));
-
-    // Allows long value.
-    request.mutable_decoder_experiment_params()
-        ->set_user_history_suppress_min_length(20);
     EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, entry));
-
-    // Default values
-    request.mutable_decoder_experiment_params()
-        ->set_user_history_suppress_min_length(0);
-    EXPECT_FALSE(UserHistoryPredictorTestPeer::IsValidResult(convreq, entry));
   }
 
   // entry with cache-inner-segment mode.

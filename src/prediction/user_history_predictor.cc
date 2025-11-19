@@ -1611,40 +1611,25 @@ bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
     return false;
   }
 
-  if (IsMixedConversionEnabled(request)) {
-    // Don't show long history for mixed conversion
-    // TODO(taku, b/447705421): Deprecates the length-based filtering.
-    int suppress_min_length = request.request()
-                                  .decoder_experiment_params()
-                                  .user_history_suppress_min_length();
-    suppress_min_length = suppress_min_length <= 0 ? 9 : suppress_min_length;
-    if (entry.suggestion_freq() <= 1 &&
-        Util::CharsLen(entry.value()) >= suppress_min_length) {
-      MOZC_VLOG(2) << "long candidate: " << entry.value();
+  // The full sentence candidate was not cached nor suggested before.
+  // Here we filter the full sentence candidate to emulate the previous
+  // behavior. The full sentence is allowed only when the key exceeds
+  // the key of the last segment. When the frequency >= 2, no filtering
+  // is applied because the suggested full sentence is repeatedly selected.
+  // e.g., entry="きょうの|てんき"
+  //      request={き,きょ...,きょう,きょうの} -> NG.
+  //              {きょうのて,きようのてん,きようのてんき} -> OK.
+  if (IsMixedConversionEnabled(request) &&
+      entry.inner_segment_boundary_size() >= 2 &&
+      entry.suggestion_freq() <= 1 &&
+      CacheInnerSegmentBoundaryEnabled(request)) {
+    const converter::InnerSegments inner_segments(
+        entry.key(), entry.value(), entry.inner_segment_boundary());
+    absl::string_view min_required_key =
+        inner_segments.GetPrefixKeyAndValue(inner_segments.size() - 1).first;
+    if (request.key().size() <= min_required_key.size()) {
       return false;
     }
-
-    // The full sentence candidate was not cached nor suggested before.
-    // Here we filter the full sentence candidate to emulate the previous
-    // behavior. The full sentence is allowed only when the key exceeds
-    // the key of the last segment. When the frequency >= 2, no filtering
-    // is applied because the suggested full sentence is repeatedly selected.
-    // e.g., entry="きょうの|てんき"
-    //      request={き,きょ...,きょう,きょうの} -> NG.
-    //              {きょうのて,きようのてん,きようのてんき} -> OK.
-    if (entry.inner_segment_boundary_size() >= 2 &&
-        entry.suggestion_freq() <= 1 &&
-        CacheInnerSegmentBoundaryEnabled(request)) {
-      const converter::InnerSegments inner_segments(
-          entry.key(), entry.value(), entry.inner_segment_boundary());
-      absl::string_view min_required_key =
-          inner_segments.GetPrefixKeyAndValue(inner_segments.size() - 1).first;
-      if (request.key().size() <= min_required_key.size()) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   // No suppression rule on desktop for the sake of simplicity.
