@@ -105,6 +105,11 @@ class SupplementalModelInterface {
                       absl::string_view reading) const {
     return {};
   }
+
+  virtual bool DecodeEnglish(const ConversionRequest& request,
+                             std::vector<prediction::Result>& results) const {
+    return false;
+  }
 };
 
 class SupplementalModelStub : public SupplementalModelInterface {};

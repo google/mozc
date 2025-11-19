@@ -75,6 +75,10 @@ class MockSupplementalModel : public SupplementalModelInterface {
               GetReadingAlignment,
               (absl::string_view surface, absl::string_view reading),
               (const, override));
+  MOCK_METHOD(bool, DecodeEnglish,
+              (const ConversionRequest& request,
+               std::vector<prediction::Result>& results),
+              (const, override));
 };
 
 }  // namespace mozc::engine
