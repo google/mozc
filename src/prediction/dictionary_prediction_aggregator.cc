@@ -84,11 +84,15 @@ using ::mozc::dictionary::Token;
 constexpr size_t kSuggestionMaxResultsSize = 256;
 constexpr size_t kPredictionMaxResultsSize = 100000;
 
+// Returns true if the input mode is Latin-character-input mode, regardless
+// of the actual keyboard layout.
 bool IsLatinInputMode(const ConversionRequest& request) {
   return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
          request.composer().GetInputMode() == transliteration::FULL_ASCII;
 }
 
+// Return true if the current keyboard is capable to type Latin characters
+// regardless of actual input mode. QWERTY keyboard is the typical case.
 bool IsQwertyMobileTable(const ConversionRequest& request) {
   const auto table = request.request().special_romanji_table();
   return (table == Request::QWERTY_MOBILE_TO_HIRAGANA ||
@@ -553,8 +557,9 @@ DictionaryPredictionAggregator::AggregateResultsForMixedConversion(
 
   // `min_unigram_key_len` is only used here.
   const size_t key_len = Util::CharsLen(key);
-  if (IsLanguageAwareInputEnabled(request) && IsQwertyMobileTable(request) &&
-      key_len >= min_unigram_key_len) {
+  if (IsLanguageAwareInputEnabled(request) && !IsLatinInputMode(request) &&
+      IsQwertyMobileTable(request) && key_len >= min_unigram_key_len) {
+    // QWERTY-Romaji mode to type Japanese. Handle the ごおgぇ -> Google.
     AggregateEnglishUsingRawInput(request, &results);
   }
 
@@ -715,6 +720,8 @@ void DictionaryPredictionAggregator::AggregateUnigram(
   int min_key_len = 1;
   AggregateUnigramFn unigram_fn = nullptr;
 
+  // User switches to Latin input mode type Latin characters or English words.
+  // No need to perform Japanese decoding.
   if (IsLatinInputMode(request)) {
     // For SUGGESTION request in Desktop, We don't look up English words when
     // key length is one.
