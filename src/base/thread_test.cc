@@ -250,7 +250,7 @@ TEST(RecursiveMutexTest, BasicTest) {
 
   constexpr int kNumThreads = 16;
   for (int i = 0; i < kNumThreads; ++i) {
-    threads.emplace_back([&] { fib(i); });
+    threads.emplace_back([&, i] { fib(i); });
   }
 
   for (Thread& thread : threads) {
