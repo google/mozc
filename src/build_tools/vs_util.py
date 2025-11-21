@@ -85,6 +85,9 @@ def get_vcvarsall(
       'Microsoft.VisualStudio.Product.BuildTools',
       '-find',
       'VC/Auxiliary/Build/vcvarsall.bat',
+      '-version',
+      '[17,18)',  # See https://github.com/microsoft/vswhere/wiki/Versions
+      '-latest',
       '-utf8',
   ]
   cmd += [
