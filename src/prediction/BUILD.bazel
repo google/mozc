@@ -68,6 +68,49 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
+    name = "user_history_storage",
+    srcs = ["user_history_storage.cc"],
+    hdrs = ["user_history_storage.h"],
+    deps = [
+        ":user_history_predictor_cc_proto",
+        "//base:config_file_stream",
+        "//base:file_util",
+        "//base:hash",
+        "//base:thread",
+        "//base:util",
+        "//storage:encrypted_string_storage",
+        "//storage:lru_cache",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/base:nullability",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/types:span",
+    ],
+    alwayslink = 1,
+)
+
+mozc_cc_test(
+    name = "user_history_storage_test",
+    size = "small",
+    srcs = ["user_history_storage_test.cc"],
+    tags = [
+        "nowin",
+    ],  # TODO(yuryu): depends on //base:encryptor
+    deps = [
+        ":user_history_storage",
+        "//base:file_util",
+        "//base:thread",
+        "//base/file:temp_dir",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
     name = "user_history_predictor",
     srcs = ["user_history_predictor.cc"],
     hdrs = ["user_history_predictor.h"],

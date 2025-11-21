@@ -259,6 +259,32 @@ inline bool BackgroundFuture<void>::Ready() const noexcept {
   return done_->HasBeenNotified();
 }
 
+// Thread-safe wrapper of BackgroundFuture.
+class TaskManager {
+ public:
+  template <class F>
+  void Schedule(F&& f) {
+    absl::MutexLock guard(mutex_);
+    if (task_.has_value()) task_->Wait();
+    task_.emplace(std::forward<F>(f));
+  }
+
+  bool IsRunning() const {
+    absl::MutexLock guard(mutex_);
+    return task_.has_value() && !task_->Ready();
+  }
+
+  void Wait() {
+    absl::MutexLock guard(mutex_);
+    if (task_.has_value()) task_->Wait();
+    task_.reset();
+  }
+
+ private:
+  std::optional<BackgroundFuture<void>> task_;
+  mutable absl::Mutex mutex_;
+};
+
 // AtomicSharedPtr is a temporary implementation using mutex until
 // std::atomic<std::shared_ptr<T>> becomes available. std::atomic_load and
 // std::atomic_store will be deprecated in the future and the interface can be
@@ -275,12 +301,12 @@ class AtomicSharedPtr {
   AtomicSharedPtr& operator=(const AtomicSharedPtr&) = delete;
 
   std::shared_ptr<T> load() const ABSL_LOCKS_EXCLUDED(mutex_) {
-    absl::MutexLock gurad(&mutex_);
+    absl::MutexLock guard( mutex_ );
     return ptr_;
   }
 
   void store(std::shared_ptr<T> ptr) ABSL_LOCKS_EXCLUDED(mutex_) {
-    absl::MutexLock gurad(&mutex_);
+    absl::MutexLock guard( mutex_ );
     ptr_ = std::move(ptr);
   }
 
@@ -367,7 +393,7 @@ class ABSL_LOCKABLE RecursiveMutex {
   }
 
   // Upper case versions are deprecated in absl::Mutex too.
-  // They are not compatible with std::lock_gurad<>/std::unique_lock<>.
+  // They are not compatible with std::lock_guard<>/std::unique_lock<>.
   inline void Lock() ABSL_EXCLUSIVE_LOCK_FUNCTION() { lock(); }
   inline void Unlock() ABSL_UNLOCK_FUNCTION() { unlock(); }
 
