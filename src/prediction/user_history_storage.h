@@ -41,6 +41,7 @@
 #include <vector>
 
 #include "absl/base/nullability.h"
+#include "absl/functional/function_ref.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/types/span.h"
@@ -159,7 +160,10 @@ class UserHistoryStorage {
 
   // Iterates the all entries in LRU order.
   // `func` is the callback. When `func` returns false, stops the iteration.
-  void ForEach(std::function<bool(uint64_t fp, const Entry& entry)> func) const;
+  void ForEach(absl::FunctionRef<bool(uint64_t, const Entry&)> func) const;
+
+  //  Iterates the all entries in LRU order. Mutable entries are passed.
+  void ForEach(absl::FunctionRef<bool(uint64_t, Entry&)> func);
 
   // Returns true if `fp` exists in the storage.
   bool Contains(uint64_t fp) const { return static_cast<bool>(Lookup(fp)); }
@@ -179,8 +183,38 @@ class UserHistoryStorage {
   // LRU order is not updated.
   EntrySnapshot MutableLookup(uint64_t fp) const;
 
+  // Defines the wrapper of Contains/Lookup/MutableLookup that
+  // accept arbitrary `args`. Fingerprint(args) must be defined.
+#define DEFINE_FP_WRAPPER(Method, RetType)                   \
+  template <typename... Args>                                \
+  inline RetType Method(Args&&... args) const {              \
+    return Method(Fingerprint(std::forward<Args>(args)...)); \
+  }
+
+  DEFINE_FP_WRAPPER(Contains, bool);
+  DEFINE_FP_WRAPPER(Lookup, ConstEntrySnapshot);
+  DEFINE_FP_WRAPPER(MutableLookup, EntrySnapshot);
+
+#undef DEFINE_FP_WRAPPER
+
   // Returns the LRU-head entry.
   ConstEntrySnapshot Head() const;
+
+  // Returns the head->next entry.
+  ConstEntrySnapshot HeadNext() const;
+
+  // Returns null entry.
+  // Useful to initialize snapshot with null variable.
+  // auto snapshot = storage.NullEntry();
+  // if (...) return snapshot;
+  // snapshot = std::move(snapshot2);
+  ConstEntrySnapshot NullEntry() const;
+
+  // Finds the entry with linear search. Only top `size` elements are
+  // searched. When the size is -1 (default) search all entries.
+  ConstEntrySnapshot FindIf(
+      absl::FunctionRef<bool(uint64_t, const Entry&)> func,
+      int size = -1) const;
 
   // Erases `fps` from the storage.
   void Erase(absl::Span<const uint64_t> fps) const;
@@ -190,18 +224,21 @@ class UserHistoryStorage {
 
   // Returns fingerprints from various object.
   static uint64_t Fingerprint(absl::string_view key, absl::string_view value);
-  static uint32_t FingerprintDepereated(absl::string_view key,
-                                        absl::string_view value);
-  static uint64_t EntryFingerprint(const Entry& entry);
-
-  // Migrate old 32bit Fingerprint to 64bit Fingerprint.
-  static void MigrateNextEntries(
-      user_history_predictor::UserHistory* absl_nonnull proto);
+  static uint64_t Fingerprint(const Entry& entry);
 
  private:
+  friend class UserHistoryStorageTestPeer;
+
   const std::string& filename() const { return filename_; }
 
   bool Load(user_history_predictor::UserHistory&& proto);
+
+  // Migrate old 32bit Fingerprint to 64bit Fingerprint.
+  static uint32_t FingerprintDepereated(absl::string_view key,
+                                        absl::string_view value);
+
+  static void MigrateNextEntries(
+      user_history_predictor::UserHistory* absl_nonnull proto);
 
   using DicCache = storage::LruCache<uint64_t, Entry>;
   using DicElement = DicCache::Element;

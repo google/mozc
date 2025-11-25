@@ -35,15 +35,17 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/thread.h"
+#include "storage/encrypted_string_storage.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 namespace mozc::prediction {
-namespace {
 
 using Entry = UserHistoryStorage::Entry;
 
@@ -56,11 +58,19 @@ Entry MakeEntry(int i) {
 
 class UserHistoryStorageTest : public testing::TestWithTempUserProfile {};
 
+class UserHistoryStorageTestPeer
+    : public testing::TestPeer<UserHistoryStorage> {
+ public:
+  PEER_STATIC_METHOD(FingerprintDepereated);
+  PEER_STATIC_METHOD(MigrateNextEntries);
+};
+
 TEST_F(UserHistoryStorageTest, BasicTest) {
   UserHistoryStorage storage;
 
   EXPECT_TRUE(storage.IsEmpty());
   EXPECT_FALSE(storage.Head());
+  EXPECT_FALSE(storage.HeadNext());
 
   std::vector<Entry> entries;
 
@@ -87,7 +97,7 @@ TEST_F(UserHistoryStorageTest, BasicTest) {
 
   // immutable lookup. LRU order is not updated.
   for (const Entry& entry : entries) {
-    const uint64_t fp = UserHistoryStorage::EntryFingerprint(entry);
+    const uint64_t fp = UserHistoryStorage::Fingerprint(entry);
     EXPECT_TRUE(storage.Contains(fp));
     const auto snapshot = storage.Lookup(fp);
     EXPECT_TRUE(snapshot);
@@ -97,7 +107,7 @@ TEST_F(UserHistoryStorageTest, BasicTest) {
 
   // mutable lookup. LRU order is not updated.
   for (const Entry& entry : entries) {
-    const uint64_t fp = UserHistoryStorage::EntryFingerprint(entry);
+    const uint64_t fp = UserHistoryStorage::Fingerprint(entry);
     EXPECT_TRUE(storage.Contains(fp));
     auto snapshot = storage.MutableLookup(fp);
     EXPECT_TRUE(snapshot);
@@ -119,6 +129,10 @@ TEST_F(UserHistoryStorageTest, BasicTest) {
     EXPECT_TRUE(head);
     EXPECT_EQ(head->key(), "key99");
     EXPECT_EQ(head->value(), "value99");
+
+    auto head_next = storage.HeadNext();
+    EXPECT_EQ(head_next->key(), "key98");
+    EXPECT_EQ(head_next->value(), "value98");
   }
 
   // ForEach.
@@ -141,6 +155,38 @@ TEST_F(UserHistoryStorageTest, BasicTest) {
     EXPECT_EQ(num_iterations, 10);
   }
 
+  // FindIf
+  {
+    constexpr absl::string_view kValue = "value95";
+    auto found_snapshot = storage.FindIf([&](uint64_t fp, const Entry& entry) {
+      return entry.value() == kValue;
+    });
+    EXPECT_TRUE(found_snapshot);
+    EXPECT_EQ(found_snapshot, storage.Lookup(*found_snapshot));
+    EXPECT_EQ(found_snapshot->value(), kValue);
+
+    auto not_found_snapshot =
+        storage.FindIf([&](uint64_t fp, const Entry& entry) {
+          return entry.value() == "NOT_FOUND";
+        });
+    EXPECT_FALSE(not_found_snapshot);
+
+    for (int size = 0; size < 10; ++size) {
+      auto snapshot = storage.FindIf(
+          [&](uint64_t fp, const Entry& entry) {
+            return entry.value() == kValue;
+          },
+          size);
+      if (size >= 5) {
+        EXPECT_TRUE(snapshot);
+        EXPECT_EQ(snapshot, storage.Lookup(*snapshot));
+        EXPECT_EQ(snapshot->value(), kValue);
+      } else {
+        EXPECT_FALSE(snapshot);
+      }
+    }
+  }
+
   // Insert new entry.
   {
     const Entry entry = MakeEntry(10000);
@@ -155,7 +201,7 @@ TEST_F(UserHistoryStorageTest, BasicTest) {
     std::vector<uint64_t> fps;
     for (int i = 0; i < 50; ++i) {
       Entry entry = MakeEntry(i);
-      fps.emplace_back(UserHistoryStorage::EntryFingerprint(entry));
+      fps.emplace_back(UserHistoryStorage::Fingerprint(entry));
     }
 
     storage.Erase(fps);
@@ -165,8 +211,7 @@ TEST_F(UserHistoryStorageTest, BasicTest) {
     }
 
     for (int i = 50; i < 100; ++i) {
-      const uint64_t fp = UserHistoryStorage::EntryFingerprint(MakeEntry(i));
-      EXPECT_TRUE(storage.Contains(fp));
+      EXPECT_TRUE(storage.Contains(MakeEntry(i)));
     }
   }
 
@@ -200,7 +245,7 @@ TEST_F(UserHistoryStorageTest, MultiThreadsTest) {
 
         for (int n = 0; n < 100; ++n) {
           Entry entry = MakeEntry(i * n);
-          const uint64_t fp = UserHistoryStorage::EntryFingerprint(entry);
+          const uint64_t fp = UserHistoryStorage::Fingerprint(entry);
           if (storage.Contains(fp)) {
             const auto snapshot = storage.Lookup(fp);
             if (snapshot) {
@@ -292,8 +337,7 @@ TEST_F(UserHistoryStorageTest, CancelTest) {
     storage.Wait();
     for (int i = 0; i < 100; ++i) {
       const Entry entry = MakeEntry(i);
-      EXPECT_TRUE(
-          storage.Contains(UserHistoryStorage::EntryFingerprint(entry)));
+      EXPECT_TRUE(storage.Contains(UserHistoryStorage::Fingerprint(entry)));
     }
   };
 
@@ -317,13 +361,13 @@ TEST_F(UserHistoryStorageTest, MigrateNextEntriesTest) {
     Entry* entry = proto.add_entries();
     *entry = MakeEntry(i);
     for (int k = i + 1; k < i + 5 && k < 100; ++k) {
-      const uint32_t fp = UserHistoryStorage::FingerprintDepereated(
+      const uint32_t fp = UserHistoryStorageTestPeer::FingerprintDepereated(
           absl::StrCat("key", k), absl::StrCat("value", k));
       entry->add_next_entries_deprecated()->set_entry_fp(fp);
     }
   }
 
-  UserHistoryStorage::MigrateNextEntries(&proto);
+  UserHistoryStorageTestPeer::MigrateNextEntries(&proto);
 
   for (int i = 0; i < 100; ++i) {
     const auto& entry = proto.entries(i);
@@ -338,5 +382,44 @@ TEST_F(UserHistoryStorageTest, MigrateNextEntriesTest) {
   }
 }
 
-}  // namespace
+TEST_F(UserHistoryStorageTest, UserHistoryStorageContainingInvalidEntries) {
+  user_history_predictor::UserHistory history;
+
+  // Invalid UTF8.
+  for (const absl::string_view value : {
+           "abc",  // valid
+           "\xC2\xC2 ",
+           "\xE0\xE0\xE0 ",
+           "\xF0\xF0\xF0\xF0 ",
+           "\xFF ",
+           "\xFE ",
+           "\xC0\xAF",
+           "\xE0\x80\xAF",
+           // Real-world examples from b/116826494.
+           "\xEF",
+           "\xBC\x91\xE5",
+       }) {
+    auto* entry = history.add_entries();
+    entry->set_key("key");
+    entry->set_value(value);
+  }
+
+  TempFile file(testing::MakeTempFileOrDie());
+  // Write directly to the file to keep invalid entries for testing.
+  storage::EncryptedStringStorage file_storage(file.path());
+  ASSERT_TRUE(file_storage.Save(history.SerializeAsString()));
+
+  UserHistoryStorage storage(file.path());
+  storage.Wait();
+
+  int valid_num = 0;
+  storage.ForEach(
+      [&valid_num](uint64_t fp, const UserHistoryStorage::Entry& entry) {
+        ++valid_num;
+        return true;
+      });
+
+  EXPECT_EQ(valid_num, 1);
+}
+
 }  // namespace mozc::prediction

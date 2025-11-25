@@ -33,7 +33,6 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
@@ -41,6 +40,7 @@
 #include "absl/algorithm/container.h"
 #include "absl/base/nullability.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/functional/function_ref.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/escaping.h"
@@ -98,7 +98,7 @@ UserHistoryStorage::~UserHistoryStorage() {
 }
 
 void UserHistoryStorage::Wait() const { task_manager_.Wait(); }
-  
+
 bool UserHistoryStorage::IsSyncerRunning() const {
   return task_manager_.IsRunning();
 }
@@ -178,9 +178,9 @@ bool UserHistoryStorage::Load(user_history_predictor::UserHistory&& proto) {
     entry.set_suggestion_freq(
         std::max(entry.suggestion_freq(), entry.conversion_freq_deprecated()));
     entry.clear_conversion_freq_deprecated();
-    // Avoid std::move() is called before EntryFingerprint.
+    // Avoid std::move() is called before Fingerprint.
 
-    const uint64_t fp = EntryFingerprint(entry);
+    const uint64_t fp = Fingerprint(entry);
     dic_->Insert(fp, std::move(entry));
   }
 
@@ -239,10 +239,21 @@ UserHistoryStorage::UniqueLock UserHistoryStorage::AcquireUniqueLock() const {
 }
 
 void UserHistoryStorage::ForEach(
-    std::function<bool(uint64_t fp, const Entry& entry)> func) const {
+    absl::FunctionRef<bool(uint64_t fp, const Entry& entry)> func) const {
   auto lock = AcquireUniqueLock();
 
   for (const DicElement& elm : *dic_) {
+    if (!func(elm.key, elm.value)) {
+      break;
+    }
+  }
+}
+
+void UserHistoryStorage::ForEach(
+    absl::FunctionRef<bool(uint64_t fp, Entry& entry)> func) {
+  auto lock = AcquireUniqueLock();
+
+  for (DicElement& elm : *dic_) {
     if (!func(elm.key, elm.value)) {
       break;
     }
@@ -259,7 +270,7 @@ UserHistoryStorage::EntrySnapshot UserHistoryStorage::Insert(
 }
 
 void UserHistoryStorage::Insert(Entry entry) const {
-  const uint64_t fp = EntryFingerprint(entry);
+  const uint64_t fp = Fingerprint(entry);
 
   auto lock = AcquireUniqueLock();
   needs_sync_ = true;
@@ -283,6 +294,34 @@ UserHistoryStorage::ConstEntrySnapshot UserHistoryStorage::Head() const {
   auto lock = AcquireUniqueLock();
   const DicElement* elm = dic_->Head();
   return ConstEntrySnapshot(elm ? &elm->value : nullptr, std::move(lock));
+}
+
+UserHistoryStorage::ConstEntrySnapshot UserHistoryStorage::HeadNext() const {
+  auto lock = AcquireUniqueLock();
+  const DicElement* elm = dic_->Head();
+  return ConstEntrySnapshot((elm && elm->next) ? &elm->next->value : nullptr,
+                            std::move(lock));
+}
+
+UserHistoryStorage::ConstEntrySnapshot UserHistoryStorage::NullEntry() const {
+  auto lock = AcquireUniqueLock();
+  return ConstEntrySnapshot(nullptr, std::move(lock));
+}
+
+UserHistoryStorage::ConstEntrySnapshot UserHistoryStorage::FindIf(
+    absl::FunctionRef<bool(uint64_t, const Entry&)> func, int size) const {
+  auto lock = AcquireUniqueLock();
+
+  if (size < 0) size = dic_->Size();
+
+  for (const DicElement& elm : *dic_) {
+    if (size-- <= 0) break;
+    if (func(elm.key, elm.value)) {
+      return ConstEntrySnapshot(&elm.value, std::move(lock));
+    }
+  }
+
+  return ConstEntrySnapshot(nullptr, std::move(lock));
 }
 
 void UserHistoryStorage::Erase(absl::Span<const uint64_t> fps) const {
@@ -316,7 +355,7 @@ uint32_t UserHistoryStorage::FingerprintDepereated(
 }
 
 // static
-uint64_t UserHistoryStorage::EntryFingerprint(const Entry& entry) {
+uint64_t UserHistoryStorage::Fingerprint(const Entry& entry) {
   return Fingerprint(entry.key(), entry.value());
 }
 
