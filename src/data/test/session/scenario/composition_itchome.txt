@@ -8,7 +8,7 @@ SEND_KEY	ON
 SET_CONFIG	preedit_method	ROMAN
 
 RESET_CONTEXT
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Send itchome and confirm the preedit is "いっちょめ".
 # Note: The expected conversion of "itchome" is "いっちょめ" but not "いっちょうめ"

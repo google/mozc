@@ -3,7 +3,7 @@
 # Enable IME
 SEND_KEY	ON
 RESET_CONTEXT
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 ################################################################################
 # Test for MS-IME keymap

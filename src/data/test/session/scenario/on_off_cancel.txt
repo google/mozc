@@ -3,7 +3,7 @@
 # Tests for ImeOn/Off, Cancel, Revert
 
 SET_CONFIG	preedit_method	ROMAN
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 SET_CONFIG	session_keymap	MSIME
 
 # ON/OFF is largely handled by client.

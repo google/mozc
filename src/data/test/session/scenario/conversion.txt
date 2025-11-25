@@ -1,7 +1,7 @@
 # Enable IME
 
 SET_CONFIG	preedit_method	ROMAN
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 SET_CONFIG	session_keymap	MSIME
 SET_CONFIG	use_cascading_window	false
 SEND_KEY	ON

@@ -393,16 +393,18 @@ void SwitchInputFieldType(commands::Context::InputFieldType type,
   EXPECT_EQ(session->context().composer().GetInputFieldType(), type);
 }
 
-bool SwitchInputModeCommand(commands::CompositionMode mode, Session* session,
-                            commands::Command* command) {
-  SetSendCommandCommand(commands::SessionCommand::SWITCH_INPUT_MODE, command);
+bool SwitchCompositionModeCommand(commands::CompositionMode mode,
+                                  Session* session,
+                                  commands::Command* command) {
+  SetSendCommandCommand(commands::SessionCommand::SWITCH_COMPOSITION_MODE,
+                        command);
   command->mutable_input()->mutable_command()->set_composition_mode(mode);
   return session->SendCommand(command);
 }
 
-void SwitchInputMode(commands::CompositionMode mode, Session* session) {
+void SwitchCompositionMode(commands::CompositionMode mode, Session* session) {
   commands::Command command;
-  EXPECT_TRUE(SwitchInputModeCommand(mode, session, &command));
+  EXPECT_TRUE(SwitchCompositionModeCommand(mode, session, &command));
 }
 
 }  // namespace
@@ -851,19 +853,19 @@ TEST_F(SessionTest, SendCommand) {
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_candidate_window());
 
-  // SWITCH_INPUT_MODE
+  // SWITCH_COMPOSITION_MODE
   SendKey("a", &session, &command);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
-  SwitchInputMode(commands::FULL_ASCII, &session);
+  SwitchCompositionMode(commands::FULL_ASCII, &session);
 
   SendKey("a", &session, &command);
   EXPECT_SINGLE_SEGMENT("あａ", command);
 
   // GET_STATUS
   SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
-  // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
-  SwitchInputMode(commands::FULL_ASCII, &session);
+  // FULL_ASCII was set at the SWITCH_COMPOSITION_MODE testcase.
+  SwitchCompositionMode(commands::FULL_ASCII, &session);
 
   // RESET_CONTEXT
   // test of reverting composition
@@ -889,7 +891,7 @@ TEST_F(SessionTest, SendCommand) {
   }
 }
 
-TEST_F(SessionTest, SwitchInputMode) {
+TEST_F(SessionTest, SwitchCompositionMode) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -898,18 +900,18 @@ TEST_F(SessionTest, SwitchInputMode) {
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
-    // SWITCH_INPUT_MODE
+    // SWITCH_COMPOSITION_MODE
     SendKey("a", &session, &command);
     EXPECT_SINGLE_SEGMENT("あ", command);
 
-    SwitchInputMode(commands::FULL_ASCII, &session);
+    SwitchCompositionMode(commands::FULL_ASCII, &session);
 
     SendKey("a", &session, &command);
     EXPECT_SINGLE_SEGMENT("あａ", command);
 
     // GET_STATUS
     SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
-    // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
+    // FULL_ASCII was set at the SWITCH_COMPOSITION_MODE testcase.
     EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
   }
 
@@ -923,15 +925,15 @@ TEST_F(SessionTest, SwitchInputMode) {
 
     // GET_STATUS
     SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
-    // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
+    // FULL_ASCII was set at the SWITCH_COMPOSITION_MODE testcase.
     EXPECT_EQ(command.output().mode(), commands::DIRECT);
 
-    // SWITCH_INPUT_MODE
-    SwitchInputMode(commands::HIRAGANA, &session);
+    // SWITCH_COMPOSITION_MODE
+    SwitchCompositionMode(commands::HIRAGANA, &session);
 
     // GET_STATUS
     SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
-    // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
+    // FULL_ASCII was set at the SWITCH_COMPOSITION_MODE testcase.
     EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
     SendKey("a", &session, &command);
@@ -939,12 +941,12 @@ TEST_F(SessionTest, SwitchInputMode) {
 
     // GET_STATUS
     SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
-    // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
+    // FULL_ASCII was set at the SWITCH_COMPOSITION_MODE testcase.
     EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   }
 }
 
-TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
+TEST_F(SessionTest, SwitchCompositionModeWithCandidateList) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -964,12 +966,12 @@ TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
     EXPECT_TRUE(command.output().has_all_candidate_words());
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
 
-    // SWITCH_INPUT_MODE
+    // SWITCH_COMPOSITION_MODE
     command.Clear();
     EXPECT_TRUE(
-        SwitchInputModeCommand(commands::FULL_ASCII, &session, &command));
+        SwitchCompositionModeCommand(commands::FULL_ASCII, &session, &command));
 
-    // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
+    // FULL_ASCII was set at the SWITCH_COMPOSITION_MODE testcase.
     EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
     EXPECT_TRUE(command.output().has_all_candidate_words());
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
@@ -996,12 +998,12 @@ TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
     EXPECT_TRUE(command.output().has_all_candidate_words());
     EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
-    // SWITCH_INPUT_MODE
+    // SWITCH_COMPOSITION_MODE
     command.Clear();
     EXPECT_TRUE(
-        SwitchInputModeCommand(commands::FULL_ASCII, &session, &command));
+        SwitchCompositionModeCommand(commands::FULL_ASCII, &session, &command));
 
-    // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
+    // FULL_ASCII was set at the SWITCH_COMPOSITION_MODE testcase.
     EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
     EXPECT_TRUE(command.output().has_all_candidate_words());
     EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
@@ -1039,14 +1041,14 @@ TEST_F(SessionTest, RevertComposition) {
   EXPECT_SINGLE_SEGMENT("あ", command);
 }
 
-TEST_F(SessionTest, InputMode) {
+TEST_F(SessionTest, CompositionMode) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
-  EXPECT_TRUE(session.InputModeHalfASCII(&command));
+  EXPECT_TRUE(session.CompositionModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
 
@@ -1982,7 +1984,7 @@ TEST_F(SessionTest, SwitchKanaType) {
 }
 
 // Rotate input mode among Hiragana, Katakana, and Half Katakana
-TEST_F(SessionTest, InputModeSwitchKanaType) {
+TEST_F(SessionTest, CompositionModeSwitchKanaType) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2000,7 +2002,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.Commit(&command);
   command.Clear();
-  session.InputModeSwitchKanaType(&command);
+  session.CompositionModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
   EXPECT_EQ(GetComposition(command), "ア");
   EXPECT_TRUE(command.output().has_mode());
@@ -2010,7 +2012,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.Commit(&command);
   command.Clear();
-  session.InputModeSwitchKanaType(&command);
+  session.CompositionModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
   EXPECT_EQ(GetComposition(command), "ｱ");
   EXPECT_TRUE(command.output().has_mode());
@@ -2020,7 +2022,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.Commit(&command);
   command.Clear();
-  session.InputModeSwitchKanaType(&command);
+  session.CompositionModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
   EXPECT_EQ(GetComposition(command), "あ");
   EXPECT_TRUE(command.output().has_mode());
@@ -2030,7 +2032,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.Commit(&command);
   command.Clear();
-  session.InputModeHalfASCII(&command);
+  session.CompositionModeHalfASCII(&command);
   InsertCharacterChars("a", &session, &command);
   EXPECT_EQ(GetComposition(command), "a");
   EXPECT_TRUE(command.output().has_mode());
@@ -2040,7 +2042,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.Commit(&command);
   command.Clear();
-  session.InputModeSwitchKanaType(&command);
+  session.CompositionModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
   EXPECT_EQ(GetComposition(command), "a");
   EXPECT_TRUE(command.output().has_mode());
@@ -2050,7 +2052,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.Commit(&command);
   command.Clear();
-  session.InputModeFullASCII(&command);
+  session.CompositionModeFullASCII(&command);
   InsertCharacterChars("a", &session, &command);
   EXPECT_EQ(GetComposition(command), "ａ");
   EXPECT_TRUE(command.output().has_mode());
@@ -2060,7 +2062,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.Commit(&command);
   command.Clear();
-  session.InputModeSwitchKanaType(&command);
+  session.CompositionModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
   EXPECT_EQ(GetComposition(command), "ａ");
   EXPECT_TRUE(command.output().has_mode());
@@ -3426,7 +3428,7 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   EXPECT_FALSE(command.output().has_preedit());
 }
 
-TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
+TEST_F(SessionTest, TemporaryCompositionModeAfterUndo) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -4187,7 +4189,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
     Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
-    session.InputModeFullKatakana(&command);
+    session.CompositionModeFullKatakana(&command);
     EXPECT_EQ(command.output().mode(), commands::FULL_KATAKANA);
     EXPECT_TRUE(SendKey("a", &session, &command));
     EXPECT_TRUE(SendKey("A", &session, &command));  // "アA"
@@ -4388,7 +4390,7 @@ TEST_F(SessionTest, StatusOutput) {
     Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
-    session.InputModeFullKatakana(&command);
+    session.CompositionModeFullKatakana(&command);
     EXPECT_EQ(command.output().mode(), commands::FULL_KATAKANA);  // obsolete
     EXPECT_EQ(command.output().status().mode(), commands::FULL_KATAKANA);
     EXPECT_EQ(command.output().status().comeback_mode(),
@@ -4774,7 +4776,7 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
     EXPECT_TRUE(command.output().has_mode());
     EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
-    session.InputModeHiragana(&command);
+    session.CompositionModeHiragana(&command);
     InsertCharacterChars("a", &session, &command);  // on Hiragana mode
     EXPECT_EQ(GetComposition(command), "あ");
 
@@ -4969,7 +4971,7 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
   EXPECT_EQ(GetComposition(command), "");
 }
 
-TEST_F(SessionTest, InsertSpaceWithInputMode) {
+TEST_F(SessionTest, InsertSpaceWithCompositionMode) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -5580,7 +5582,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
-  EXPECT_TRUE(session.InputModeHalfKatakana(&command));
+  EXPECT_TRUE(session.CompositionModeHalfKatakana(&command));
   EXPECT_EQ(command.output().mode(), commands::HALF_KATAKANA);
   InsertCharacterChars("a", &session, &command);
   EXPECT_EQ(GetComposition(command), "ｱ");
@@ -5613,23 +5615,23 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     InitSessionToPrecomposition(&session);
 
     // Hiragana
-    session.InputModeHiragana(&command);
+    session.CompositionModeHiragana(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-Katakana
     command.Clear();
-    session.InputModeFullKatakana(&command);
+    session.CompositionModeFullKatakana(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-Katakana
     command.Clear();
-    session.InputModeHalfKatakana(&command);
+    session.CompositionModeHalfKatakana(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-ASCII
     command.Clear();
-    session.InputModeFullASCII(&command);
+    session.CompositionModeFullASCII(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-ASCII
     command.Clear();
-    session.InputModeHalfASCII(&command);
+    session.CompositionModeHalfASCII(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Direct
     command.Clear();
@@ -5647,23 +5649,23 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Hiragana
     command.Clear();
-    session.InputModeHiragana(&command);
+    session.CompositionModeHiragana(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-Katakana
     command.Clear();
-    session.InputModeFullKatakana(&command);
+    session.CompositionModeFullKatakana(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-Katakana
     command.Clear();
-    session.InputModeHalfKatakana(&command);
+    session.CompositionModeHalfKatakana(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-ASCII
     command.Clear();
-    session.InputModeFullASCII(&command);
+    session.CompositionModeFullASCII(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-ASCII
     command.Clear();
-    session.InputModeHalfASCII(&command);
+    session.CompositionModeHalfASCII(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Direct
     command.Clear();
@@ -5682,23 +5684,23 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Hiragana
     command.Clear();
-    session.InputModeHiragana(&command);
+    session.CompositionModeHiragana(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-Katakana
     command.Clear();
-    session.InputModeFullKatakana(&command);
+    session.CompositionModeFullKatakana(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(command.input()));
     // Half-Katakana
     command.Clear();
-    session.InputModeHalfKatakana(&command);
+    session.CompositionModeHalfKatakana(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-ASCII
     command.Clear();
-    session.InputModeFullASCII(&command);
+    session.CompositionModeFullASCII(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-ASCII
     command.Clear();
-    session.InputModeHalfASCII(&command);
+    session.CompositionModeHalfASCII(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Direct
     command.Clear();
@@ -5723,23 +5725,23 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Hiragana
     commands::Command command;
-    session.InputModeHiragana(&command);
+    session.CompositionModeHiragana(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Full-Katakana
     command.Clear();
-    session.InputModeFullKatakana(&command);
+    session.CompositionModeFullKatakana(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Half-Katakana
     command.Clear();
-    session.InputModeHalfKatakana(&command);
+    session.CompositionModeHalfKatakana(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Full-ASCII
     command.Clear();
-    session.InputModeFullASCII(&command);
+    session.CompositionModeFullASCII(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Half-ASCII
     command.Clear();
-    session.InputModeHalfASCII(&command);
+    session.CompositionModeHalfASCII(&command);
     EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Direct
     command.Clear();
@@ -5751,23 +5753,23 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Hiragana
     command.Clear();
-    session.InputModeHiragana(&command);
+    session.CompositionModeHiragana(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Full-Katakana
     command.Clear();
-    session.InputModeFullKatakana(&command);
+    session.CompositionModeFullKatakana(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Half-Katakana
     command.Clear();
-    session.InputModeHalfKatakana(&command);
+    session.CompositionModeHalfKatakana(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Full-ASCII
     command.Clear();
-    session.InputModeFullASCII(&command);
+    session.CompositionModeFullASCII(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Half-ASCII
     command.Clear();
-    session.InputModeHalfASCII(&command);
+    session.CompositionModeHalfASCII(&command);
     EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Direct
     command.Clear();
@@ -6042,7 +6044,7 @@ TEST_F(SessionTest, Issue2187132) {
   EXPECT_TRUE(GetComposition(command).empty());
 
   // If a user intentionally switched an input mode, it should remain.
-  EXPECT_TRUE(session.InputModeHalfASCII(&command));
+  EXPECT_TRUE(session.CompositionModeHalfASCII(&command));
   SendKey("A", &session, &command);
   SendKey("Enter", &session, &command);
   SendKey("a", &session, &command);
@@ -6206,7 +6208,7 @@ TEST_F(SessionTest, Issue2223762) {
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
-  EXPECT_TRUE(session.InputModeHalfASCII(&command));
+  EXPECT_TRUE(session.CompositionModeHalfASCII(&command));
   EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   EXPECT_TRUE(SendKey("Space", &session, &command));
@@ -6291,7 +6293,7 @@ TEST_F(SessionTest, Issue2269058) {
   EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeHalfASCII(&command));
+  EXPECT_TRUE(session.CompositionModeHalfASCII(&command));
   EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   EXPECT_TRUE(SendKey("Shift", &session, &command));
@@ -6345,7 +6347,7 @@ TEST_F(SessionTest, Issue2282319) {
   session.SetKeyMapManager(key_map_manager);
 
   commands::Command command;
-  EXPECT_TRUE(session.InputModeHalfASCII(&command));
+  EXPECT_TRUE(session.CompositionModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
 
@@ -6511,7 +6513,7 @@ TEST_F(SessionTest, Issue2555503) {
   SendKey("a", &session, &command);
 
   command.Clear();
-  session.InputModeFullKatakana(&command);
+  session.CompositionModeFullKatakana(&command);
 
   SendKey("i", &session, &command);
   EXPECT_EQ(GetComposition(command), "あイ");
@@ -6712,30 +6714,30 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
   }
 }
 
-TEST_F(SessionTest, InputModeConsumed) {
+TEST_F(SessionTest, CompositionModeConsumed) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
-  EXPECT_TRUE(session.InputModeHiragana(&command));
+  EXPECT_TRUE(session.CompositionModeHiragana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HIRAGANA);
   command.Clear();
-  EXPECT_TRUE(session.InputModeFullKatakana(&command));
+  EXPECT_TRUE(session.CompositionModeFullKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::FULL_KATAKANA);
   command.Clear();
-  EXPECT_TRUE(session.InputModeHalfKatakana(&command));
+  EXPECT_TRUE(session.CompositionModeHalfKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_KATAKANA);
   command.Clear();
-  EXPECT_TRUE(session.InputModeFullASCII(&command));
+  EXPECT_TRUE(session.CompositionModeFullASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::FULL_ASCII);
   command.Clear();
-  EXPECT_TRUE(session.InputModeHalfASCII(&command));
+  EXPECT_TRUE(session.CompositionModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
 }
@@ -6764,7 +6766,7 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
 #endif  // _WIN32
 }
 
-TEST_F(SessionTest, InputModeOutputHasComposition) {
+TEST_F(SessionTest, CompositionModeOutputHasComposition) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -6775,37 +6777,37 @@ TEST_F(SessionTest, InputModeOutputHasComposition) {
   EXPECT_SINGLE_SEGMENT("あ", command);
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeHiragana(&command));
+  EXPECT_TRUE(session.CompositionModeHiragana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HIRAGANA);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeFullKatakana(&command));
+  EXPECT_TRUE(session.CompositionModeFullKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::FULL_KATAKANA);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeHalfKatakana(&command));
+  EXPECT_TRUE(session.CompositionModeHalfKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_KATAKANA);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeFullASCII(&command));
+  EXPECT_TRUE(session.CompositionModeFullASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::FULL_ASCII);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeHalfASCII(&command));
+  EXPECT_TRUE(session.CompositionModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
   EXPECT_SINGLE_SEGMENT("あ", command);
 }
 
-TEST_F(SessionTest, InputModeOutputHasCandidates) {
+TEST_F(SessionTest, CompositionModeOutputHasCandidates) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -6829,35 +6831,35 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeHiragana(&command));
+  EXPECT_TRUE(session.CompositionModeHiragana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HIRAGANA);
   EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeFullKatakana(&command));
+  EXPECT_TRUE(session.CompositionModeFullKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::FULL_KATAKANA);
   EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeHalfKatakana(&command));
+  EXPECT_TRUE(session.CompositionModeHalfKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_KATAKANA);
   EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeFullASCII(&command));
+  EXPECT_TRUE(session.CompositionModeFullASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::FULL_ASCII);
   EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
-  EXPECT_TRUE(session.InputModeHalfASCII(&command));
+  EXPECT_TRUE(session.CompositionModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
   EXPECT_TRUE(command.output().has_candidate_window());
@@ -7305,7 +7307,7 @@ TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
-  EXPECT_TRUE(session.InputModeHiragana(&command));
+  EXPECT_TRUE(session.CompositionModeHiragana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HIRAGANA);
 
@@ -8482,7 +8484,7 @@ TEST_F(SessionTest, Issue4437420) {
   config::Config overriding_config;
   overriding_config.set_session_keymap(config::Config::MOBILE);
   // Change to 12keys-halfascii mode.
-  SwitchInputMode(commands::HALF_ASCII, &session);
+  SwitchCompositionMode(commands::HALF_ASCII, &session);
 
   command.Clear();
   request.set_special_romanji_table(
@@ -8502,7 +8504,7 @@ TEST_F(SessionTest, Issue4437420) {
   EXPECT_EQ(GetComposition(command), "A");
 
   // Change to 12keys-halfascii mode.
-  SwitchInputMode(commands::HALF_ASCII, &session);
+  SwitchCompositionMode(commands::HALF_ASCII, &session);
 
   command.Clear();
   request.set_special_romanji_table(
@@ -8564,7 +8566,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-halfascii mode.
-    SwitchInputMode(commands::HALF_ASCII, &session);
+    SwitchCompositionMode(commands::HALF_ASCII, &session);
 
     command.Clear();
     request.set_special_romanji_table(
@@ -8609,7 +8611,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
-    SwitchInputMode(commands::HIRAGANA, &session);
+    SwitchCompositionMode(commands::HIRAGANA, &session);
 
     command.Clear();
     request.set_special_romanji_table(
@@ -8651,7 +8653,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
-    SwitchInputMode(commands::HIRAGANA, &session);
+    SwitchCompositionMode(commands::HIRAGANA, &session);
 
     command.Clear();
     request.set_special_romanji_table(
@@ -8699,7 +8701,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
-    SwitchInputMode(commands::HIRAGANA, &session);
+    SwitchCompositionMode(commands::HIRAGANA, &session);
 
     command.Clear();
     request.set_special_romanji_table(
@@ -8778,7 +8780,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
-    SwitchInputMode(commands::HIRAGANA, &session);
+    SwitchCompositionMode(commands::HIRAGANA, &session);
 
     command.Clear();
     request.set_special_romanji_table(
@@ -8829,7 +8831,7 @@ TEST_F(SessionTest, DedupAfterUndo) {
     capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
     session.set_client_capability(capability);
 
-    SwitchInputMode(commands::HIRAGANA, &session);
+    SwitchCompositionMode(commands::HIRAGANA, &session);
 
     commands::Request request(*mobile_request_);
     request.set_special_romanji_table(
@@ -9081,7 +9083,7 @@ TEST_F(SessionTest, PasswordWithToggleAlphabetInput) {
 
   // Change to 12keys-halfascii mode.
   SwitchInputFieldType(commands::Context::PASSWORD, &session);
-  SwitchInputMode(commands::HALF_ASCII, &session);
+  SwitchCompositionMode(commands::HALF_ASCII, &session);
 
   commands::Command command;
   SendKey("2", &session, &command);
@@ -9156,7 +9158,7 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
   InitSessionToPrecomposition(&session, request);
 
   SwitchInputFieldType(commands::Context::PASSWORD, &session);
-  SwitchInputMode(commands::HALF_ASCII, &session);
+  SwitchCompositionMode(commands::HALF_ASCII, &session);
 
   commands::Command command;
   // cursor key commits the preedit without moving system cursor.
@@ -9211,7 +9213,7 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
   session.SetTable(table);
 
   SwitchInputFieldType(commands::Context::PASSWORD, &session);
-  SwitchInputMode(commands::HALF_ASCII, &session);
+  SwitchCompositionMode(commands::HALF_ASCII, &session);
 
   SendKey("m", &session, &command);
   EXPECT_EQ(command.output().result().type(), commands::Result::NONE);
@@ -10195,7 +10197,7 @@ TEST_F(SessionTest, ClearCompositionByBackspace) {
 
   // Input mode switch command can output the current internal candidate list,
   // which should be cleared by the above backspace.
-  session.InputModeSwitchKanaType(&command);
+  session.CompositionModeSwitchKanaType(&command);
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_all_candidate_words());
 }
@@ -10231,7 +10233,7 @@ TEST_F(SessionTest, ClearCompositionByEscape) {
 
   // Input mode switch command can output the current internal candidate list,
   // which should be cleared by the above backspace.
-  session.InputModeSwitchKanaType(&command);
+  session.CompositionModeSwitchKanaType(&command);
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_all_candidate_words());
 }

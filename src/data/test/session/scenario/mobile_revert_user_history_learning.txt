@@ -3,7 +3,7 @@ SEND_KEY	ON
 
 # Switch to 12keys-hiragana keyboard layout.
 UPDATE_MOBILE_KEYBOARD	FLICK_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 
 # Check if the user history is working for suggestion

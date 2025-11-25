@@ -429,7 +429,7 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   }
 
   if (mode_ == mozc::commands::DIRECT) {
-    // Turn on the IME as the input mode is changed from DIRECT to an active mode.
+    // Turn on the IME as the mode is changed from DIRECT to an active mode.
     DLOG(INFO) << "Mode switch: DIRECT -> HIRAGANA, KATAKANA, etc.";
     KeyEvent keyEvent;
     Output output;
@@ -437,10 +437,10 @@ bool CanSurroundingText(absl::string_view bundle_id) {
     mozcClient_->SendKey(keyEvent, &output);
   }
 
-  // Switch input mode.
-  DLOG(INFO) << "Switch input mode.";
+  // Switch composition mode.
+  DLOG(INFO) << "Switch composition mode.";
   SessionCommand command;
-  command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
+  command.set_type(mozc::commands::SessionCommand::SWITCH_COMPOSITION_MODE);
   command.set_composition_mode(new_mode);
   Output output;
   mozcClient_->SendCommand(command, &output);

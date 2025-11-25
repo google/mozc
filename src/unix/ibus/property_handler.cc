@@ -398,7 +398,7 @@ void PropertyHandler::SetCompositionMode(
     command.set_composition_mode(original_composition_mode_);
     client_->SendCommand(command, &output);
   } else {
-    command.set_type(commands::SessionCommand::SWITCH_INPUT_MODE);
+    command.set_type(commands::SessionCommand::SWITCH_COMPOSITION_MODE);
     command.set_composition_mode(composition_mode);
     client_->SendCommand(command, &output);
   }

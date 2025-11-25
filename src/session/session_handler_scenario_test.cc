@@ -239,7 +239,7 @@ const char* kScenariosForExperimentParams[] = {
     DATA_DIR "mobile_preedit.txt",
     DATA_DIR "mobile_qwerty_transliteration_scenario.txt",
     DATA_DIR "mobile_revert_user_history_learning.txt",
-    DATA_DIR "mobile_switch_input_mode.txt",
+    DATA_DIR "mobile_switch_composition_mode.txt",
     DATA_DIR "mobile_t13n_candidates.txt",
     DATA_DIR "mobile_zero_query.txt",
 #undef DATA_DIR

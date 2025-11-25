@@ -9,7 +9,7 @@ RESET_CONTEXT
 SET_MOBILE_REQUEST
 SET_CONFIG	use_kana_modifier_insensitive_conversion	true
 SET_CONFIG	use_typing_correction	true
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Type "てつとう"
 SEND_KEYS	4444

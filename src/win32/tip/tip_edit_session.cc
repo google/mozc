@@ -230,9 +230,9 @@ class AsyncSwitchInputModeEditSessionImpl final
       }
     } else {
       // The next on/off mode and the state of input mode manager is
-      // consistent. Send SWITCH_INPUT_MODE to update the converter state.
+      // consistent. Send SWITCH_COMPOSITION_MODE to update the converter state.
       SessionCommand command;
-      command.set_type(SessionCommand::SWITCH_INPUT_MODE);
+      command.set_type(SessionCommand::SWITCH_COMPOSITION_MODE);
       command.set_composition_mode(mozc_mode);
       if (!private_context->GetClient()->SendCommand(command, &output)) {
         return E_FAIL;

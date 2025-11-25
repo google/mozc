@@ -86,7 +86,7 @@ class SessionHandlerTool {
   // the current focused candidate will be specified.
   bool DeleteCandidateFromHistory(std::optional<int> id,
                                   commands::Output* output);
-  bool SwitchInputMode(commands::CompositionMode composition_mode);
+  bool SwitchCompositionMode(commands::CompositionMode composition_mode);
   bool SetRequest(const commands::Request& request, commands::Output* output);
   bool SetConfig(const config::Config& config, commands::Output* output);
   bool SyncData();

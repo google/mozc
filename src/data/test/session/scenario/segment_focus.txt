@@ -7,7 +7,7 @@ SET_CONFIG	session_keymap	MSIME
 # Enable IME with Hiragana mode
 SEND_KEY	ON
 RESET_CONTEXT
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Make Segments of size 3: わたしの|なまえは|なかのです
 SEND_KEYS	watashinonamaehanakanodesu

@@ -6,7 +6,7 @@ RESET_CONTEXT
 SET_MOBILE_REQUEST
 SET_CONFIG	use_kana_modifier_insensitive_conversion	true
 UPDATE_MOBILE_KEYBOARD	TOGGLE_FLICK_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Scenario 1: A user typed さ, then tapped the modifier key to input ざ.
 # Words starting with さ should not be suggested.

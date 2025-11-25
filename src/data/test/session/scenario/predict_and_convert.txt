@@ -7,7 +7,7 @@ SET_CONFIG	session_keymap	MSIME
 # Enable IME with Hiragana mode
 SEND_KEY	ON
 RESET_CONTEXT
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Test for TAB key (PredictAndConvert) in composition mode.
 # Check if prediction is performed after hitting TAB 4 times (Note: the number

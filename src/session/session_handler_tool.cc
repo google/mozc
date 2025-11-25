@@ -223,12 +223,12 @@ bool SessionHandlerTool::DeleteCandidateFromHistory(std::optional<int> id,
   return EvalCommand(&input, output);
 }
 
-bool SessionHandlerTool::SwitchInputMode(
+bool SessionHandlerTool::SwitchCompositionMode(
     commands::CompositionMode composition_mode) {
   commands::Input input;
   input.set_type(commands::Input::SEND_COMMAND);
   input.mutable_command()->set_type(
-      commands::SessionCommand::SWITCH_INPUT_MODE);
+      commands::SessionCommand::SWITCH_COMPOSITION_MODE);
   input.mutable_command()->set_composition_mode(composition_mode);
   return EvalCommand(&input, nullptr);
 }
@@ -676,12 +676,12 @@ absl::Status SessionHandlerInterpreter::Eval(
     }
     MOZC_ASSERT_TRUE(
         client_->DeleteCandidateFromHistory(id, last_output_.get()));
-  } else if (command == "SWITCH_INPUT_MODE") {
+  } else if (command == "SWITCH_COMPOSITION_MODE") {
     MOZC_ASSERT_EQ(2, args.size());
     CompositionMode composition_mode;
     MOZC_ASSERT_TRUE_MSG(CompositionMode_Parse(args[1], &composition_mode),
                          "Unknown CompositionMode");
-    MOZC_ASSERT_TRUE(client_->SwitchInputMode(composition_mode));
+    MOZC_ASSERT_TRUE(client_->SwitchCompositionMode(composition_mode));
   } else if (command == "SET_DEFAULT_REQUEST") {
     *request_ = Request::default_instance();
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));

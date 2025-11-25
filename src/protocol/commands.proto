@@ -278,7 +278,7 @@ message KeyEvent {
   }
   optional InputStyle input_style = 6 [default = FOLLOW_MODE];
 
-  // Input mode
+  // Composition mode
   // For histrical reasons, this field expects a temporary conversion
   // mode rather than comeback input mode.
   optional CompositionMode mode = 7;
@@ -332,9 +332,9 @@ message SessionCommand {
     // while SELECT_CANDIDATE closes the candidate window.
     HIGHLIGHT_CANDIDATE = 4;
 
-    // Specify the input mode.  This command should be used with
+    // Specify the composition mode.  This command should be used with
     // composition_mode.
-    SWITCH_INPUT_MODE = 5;
+    SWITCH_COMPOSITION_MODE = 5;
 
     // Return the current status such as composition mode, preedit method, etc.
     GET_STATUS = 6;
@@ -451,7 +451,7 @@ message SessionCommand {
   // list. This value is a return value of CandidateWord::id().
   optional int32 id = 2;
 
-  // This is used with SWITCH_INPUT_MODE, TURN_ON_IME and TURN_OFF_IME.
+  // This is used with SWITCH_COMPOSITION_MODE, TURN_ON_IME and TURN_OFF_IME.
   optional CompositionMode composition_mode = 3;
 
   // Text argument.  This is used by CONVERT_REVERSE at this moment.

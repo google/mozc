@@ -8,7 +8,7 @@
 SEND_KEY	ON
 RESET_CONTEXT
 SET_CONFIG	session_keymap	MSIME
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Set up input history.  Convert gu-guru- (ぐーぐるー) to グーグルー so that it
 # appears at the top of suggestion/prediciton.
@@ -57,7 +57,7 @@ SEND_KEY	OFF
 SEND_KEY	ON
 RESET_CONTEXT
 SET_CONFIG	session_keymap	MSIME
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Set up input history.
 SEND_KEYS	kyouhaharenokanjidesu
@@ -125,7 +125,7 @@ SEND_KEY	OFF
 SEND_KEY	ON
 RESET_CONTEXT
 SET_CONFIG	session_keymap	MSIME
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Set up input history.
 SEND_KEYS	kyouhaharenokanjidesu
@@ -194,7 +194,7 @@ SEND_KEY	OFF
 SEND_KEY	ON
 RESET_CONTEXT
 SET_CONFIG	session_keymap	MSIME
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Set up input history.
 SEND_KEYS	kyouhaharenokanjidesu
@@ -253,7 +253,7 @@ SEND_KEY	OFF
 SEND_KEY	ON
 RESET_CONTEXT
 SET_CONFIG	session_keymap	MSIME
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Set up input history.
 SEND_KEYS	heimenzu

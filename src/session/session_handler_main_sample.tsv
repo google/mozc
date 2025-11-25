@@ -5,7 +5,7 @@ SET_MOBILE_REQUEST
 
 RESET_CONTEXT
 UPDATE_MOBILE_KEYBOARD	QWERTY_MOBILE_TO_HIRAGANA	COMMIT
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 SEND_KEYS	arigatou
 SEND_KEY	Enter
@@ -37,7 +37,7 @@ SHOW_LOG_BY_VALUE	ございました
 # SUBMIT_CANDIDATE(id): submit the candidate of `id`.
 # SUBMIT_CANDIDATE_BY_VALUE(value): submit the candidate of `value`.
 # UNDO_OR_REWIND(): send the UNDO_OR_REWIND command.
-# SWITCH_INPUT_MODE(mode): siwtch the composition mode.
+# SWITCH_COMPOSITION_MODE(mode): siwtch the composition mode.
 #
 # SET_DEFAULT_REQUEST(): set the default request for desktop.
 # SET_MOBILE_REQUEST(): set the default request for mobile.

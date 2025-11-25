@@ -3,7 +3,7 @@ SEND_KEY	ON
 RESET_CONTEXT
 
 # Set to Qwerty kana mode.
-SWITCH_INPUT_MODE	HIRAGANA
+SWITCH_COMPOSITION_MODE	HIRAGANA
 
 # Send key "toukyout"
 SEND_KEYS	toukyout

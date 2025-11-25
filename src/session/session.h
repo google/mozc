@@ -201,13 +201,13 @@ class Session {
   bool TranslateHalfWidth(mozc::commands::Command* command);
   bool ToggleAlphanumericMode(mozc::commands::Command* command);
 
-  // Switch the input mode.
-  bool InputModeHiragana(mozc::commands::Command* command);
-  bool InputModeFullKatakana(mozc::commands::Command* command);
-  bool InputModeHalfKatakana(mozc::commands::Command* command);
-  bool InputModeFullASCII(mozc::commands::Command* command);
-  bool InputModeHalfASCII(mozc::commands::Command* command);
-  bool InputModeSwitchKanaType(mozc::commands::Command* command);
+  // Switch the composition mode.
+  bool CompositionModeHiragana(mozc::commands::Command* command);
+  bool CompositionModeFullKatakana(mozc::commands::Command* command);
+  bool CompositionModeHalfKatakana(mozc::commands::Command* command);
+  bool CompositionModeFullASCII(mozc::commands::Command* command);
+  bool CompositionModeHalfASCII(mozc::commands::Command* command);
+  bool CompositionModeSwitchKanaType(mozc::commands::Command* command);
 
   // Specify the input field type.
   bool SwitchInputFieldType(mozc::commands::Command* command);
