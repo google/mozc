@@ -79,7 +79,7 @@ class DataLoader {
                              ReloadedCallback callback);
 
   // Waits for loading thread.
-  void Wait() const;
+  void Wait();
 
   // Returns true if the loading thread is running.
   bool IsRunning() const;
@@ -144,7 +144,7 @@ class DataLoader {
   // Notify when a new high priority data is registered.
   absl::Notification high_priority_data_registered_;
 
-  std::optional<BackgroundFuture<void>> load_;
+  TaskManager load_;
 };
 
 }  // namespace mozc

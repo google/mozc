@@ -239,20 +239,14 @@ bool DataLoader::StartNewDataBuildTask(const EngineReloadRequest& request,
   if (!IsRunning()) {
     // Restarts StartReloadLoop from scratch when the thread is not running.
     // Needs to copy the `callback` as the callback is executed in other thread.
-    load_.emplace([this, callback]() { StartReloadLoop(callback); });
+    load_.Schedule([this, callback]() { StartReloadLoop(callback); });
   }
 
   return true;
 }
 
-void DataLoader::Wait() const {
-  if (load_.has_value()) {
-    load_->Wait();
-  }
-}
+void DataLoader::Wait() { load_.Wait(); }
 
-bool DataLoader::IsRunning() const {
-  return load_.has_value() && !load_->Ready();
-}
+bool DataLoader::IsRunning() const { return load_.IsRunning(); }
 
 }  // namespace mozc
