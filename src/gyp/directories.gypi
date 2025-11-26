@@ -58,14 +58,6 @@
     'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
     'mozc_oss_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
 
-    # Ninja requires <(abs_depth) instead of <(DEPTH).
-    'mac_breakpad_dir': '<(PRODUCT_DIR)/Breakpad',
-    # This points to the same dir with mac_breakpad_dir, but this should use
-    # '${BUILT_PRODUCTS_DIR}' instead of '<(PRODUCT_DIR)'.
-    # See post_build_mac.gypi
-    'mac_breakpad_tools_dir': '${BUILT_PRODUCTS_DIR}/Breakpad',
-    'mac_breakpad_framework': '<(mac_breakpad_dir)/Breakpad.framework',
-
     # glob command to get files.
     'glob': '<(python) <(abs_depth)/gyp/glob_files.py',
   },
