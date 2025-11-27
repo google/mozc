@@ -158,10 +158,10 @@ class UserHistoryPredictor : public PredictorInterface {
   static MatchType GetMatchType(absl::string_view lstr, absl::string_view rstr);
 
   // Gets match type with ambiguity expansion
-  static MatchType GetMatchTypeFromInput(absl::string_view request_key,
-                                         absl::string_view key_base,
-                                         const Trie<std::string>* key_expanded,
-                                         absl::string_view target);
+  static MatchType GetMatchTypeFromInput(
+      absl::string_view request_key, absl::string_view key_base,
+      const Trie<std::string>* absl_nullable key_expanded,
+      absl::string_view target);
 
   // Returns the LUR order of the next_fp links from `prev_entry` to `entry`.
   // Returns a larger value if the connection from prev_entry to entry was made
@@ -202,9 +202,9 @@ class UserHistoryPredictor : public PredictorInterface {
    public:
     EntryPriorityQueue() : pool_(kEntryPoolSize) {}
     size_t size() const { return agenda_.size(); }
-    bool Push(Entry* entry);
+    bool Push(Entry* absl_nonnull entry);
     Entry* absl_nullable Pop();
-    Entry* NewEntry();
+    Entry* absl_nonnull NewEntry();
 
    private:
     using QueueElement = std::pair<uint64_t, Entry*>;
@@ -230,9 +230,9 @@ class UserHistoryPredictor : public PredictorInterface {
   // pair<score, entry>, to |entry_queue|.
   bool LookupEntry(const ConversionRequest& request,
                    absl::string_view request_key, absl::string_view key_base,
-                   const Trie<std::string>* key_expanded, const Entry* entry,
-                   const Entry* prev_entry,
-                   EntryPriorityQueue* entry_queue) const;
+                   const Trie<std::string>* absl_nullable key_expanded,
+                   const Entry& entry, const Entry* absl_nullable prev_entry,
+                   EntryPriorityQueue& entry_queue) const;
 
   // For the EXACT and RIGHT_PREFIX match, we will generate joined
   // candidates by looking up the history link.
@@ -244,40 +244,42 @@ class UserHistoryPredictor : public PredictorInterface {
   // according to the entry lookup.
   // If exact match results exist, return them first when |prefer_exact_match|
   // is true.
+  // TODO(taku): Cleanup the output args.
   bool GetKeyValueForExactAndRightPrefixMatch(
       const ConversionRequest& request, absl::string_view request_key,
-      bool prefer_exact_match, const Entry* entry,
-      const Entry** result_last_entry, uint64_t* left_last_access_time,
-      uint64_t* left_most_last_access_time, std::string* result_key,
-      std::string* result_value,
-      converter::InnerSegmentBoundary* result_inner_segment_boundary) const;
+      bool prefer_exact_match, const Entry& entry,
+      const Entry*& result_last_entry, uint64_t& left_last_access_time,
+      uint64_t& left_most_last_access_time, std::string& result_key,
+      std::string& result_value,
+      converter::InnerSegmentBoundary& result_inner_segment_boundary) const;
 
   ConstEntrySnapshot LookupPrevEntry(const ConversionRequest& request) const;
 
   // Adds an entry to a priority queue.
   Entry* absl_nonnull AddEntry(const Entry& entry,
-                               EntryPriorityQueue* entry_queue) const;
+                               EntryPriorityQueue& entry_queue) const;
 
   // Adds the entry whose key and value are modified to a priority queue.
   Entry* absl_nonnull AddEntryWithNewKeyValue(
       const ConversionRequest& request, std::string key, std::string value,
       converter::InnerSegmentBoundarySpan inner_segment_boundary, Entry entry,
-      EntryPriorityQueue* entry_queue) const;
+      EntryPriorityQueue& entry_queue) const;
 
   EntryPriorityQueue GetEntry_QueueFromHistoryDictionary(
-      const ConversionRequest& request, const Entry* prev_entry,
+      const ConversionRequest& request, const Entry* absl_nullable prev_entry,
       size_t max_entry_queue_size) const;
 
   // Gets input data from segments.
   // These input data include ambiguities.
-  static void GetInputKeyFromRequest(
-      const ConversionRequest& request, std::string* request_key,
-      std::string* base, std::unique_ptr<Trie<std::string>>* expanded);
+  // return [request_key, base, expanded]
+  static std::tuple<std::string, std::string,
+                    std::unique_ptr<Trie<std::string>>>
+  GetInputKeyFromRequest(const ConversionRequest& reques);
 
   std::vector<Result> MakeResults(const ConversionRequest& request,
                                   size_t max_prediction_size,
                                   size_t max_prediction_char_coverage,
-                                  EntryPriorityQueue* entry_queue) const;
+                                  EntryPriorityQueue& entry_queue) const;
 
   SegmentsForLearning MakeLearningSegments(
       const ConversionRequest& request, absl::Span<const Result> results) const;
@@ -311,15 +313,15 @@ class UserHistoryPredictor : public PredictorInterface {
   // This method adds a new result entry with score, pair<score, entry>, to
   // |entry_queue|.
   bool RomanFuzzyLookupEntry(absl::string_view roman_request_key,
-                             const Entry* entry,
-                             EntryPriorityQueue* entry_queue) const;
+                             const Entry& entry,
+                             EntryPriorityQueue& entry_queue) const;
 
   // if `prev_entry` is the prefix of `entry`, add the suffix part as
   // zero-query suggestion.
   bool ZeroQueryLookupEntry(const ConversionRequest& request,
-                            absl::string_view request_key, const Entry* entry,
-                            const Entry* prev_entry,
-                            EntryPriorityQueue* entry_queue) const;
+                            absl::string_view request_key, const Entry& entry,
+                            const Entry* absl_nullable prev_entry,
+                            EntryPriorityQueue& entry_queue) const;
 
   struct RevertEntries {
     // The result committed.
@@ -338,17 +340,17 @@ class UserHistoryPredictor : public PredictorInterface {
 
   void InsertHistory(const ConversionRequest& request,
                      const SegmentsForLearning& learning_segments,
-                     RevertEntries* revert_entries);
+                     RevertEntries& revert_entries);
 
   void InsertHistoryForHistorySegments(
       const ConversionRequest& request, uint64_t last_access_time,
       const SegmentsForLearning& learning_segments,
-      RevertEntries* revert_entries);
+      RevertEntries& revert_entries);
 
   void InsertHistoryForConversionSegments(
       const ConversionRequest& request, uint64_t last_access_time,
       const SegmentsForLearning& learning_segments,
-      RevertEntries* revert_entries);
+      RevertEntries& revert_entries);
 
   // Inserts |key,value,description| to the internal dictionary database.
   // |inner_segment_boundary| inner segment boundary information.
@@ -361,24 +363,24 @@ class UserHistoryPredictor : public PredictorInterface {
               absl::string_view value, absl::string_view description,
               converter::InnerSegmentBoundarySpan inner_segment_boundary,
               absl::Span<const uint64_t> next_fps, uint64_t last_access_time,
-              RevertEntries* revert_entries);
+              RevertEntries& revert_entries);
 
   // Inserts a new |fp| into |entry|.
   // it makes a bigram connection from entry to next_entry.
-  static void InsertNextEntry(uint64_t fp, Entry* entry);
+  static void InsertNextEntry(uint64_t fp, Entry& entry);
 
-  static void EraseNextEntries(uint64_t fp, Entry* entry);
+  static void EraseNextEntries(uint64_t fp, Entry& entry);
 
   // Recursively removes a chain of Entries in |dic_|.
   // Returns true if at least one chain is removed.
   bool RemoveNgramChain(absl::string_view target_key,
-                        absl::string_view target_value, Entry* entry);
+                        absl::string_view target_value, Entry& entry);
 
   // Removes entry when key/value are the prefix of entry with
   // the inner boundary constraint. entry->removed() gets true when removed.
   static bool RemoveEntryWithInnerSegment(absl::string_view key,
                                           absl::string_view value,
-                                          Entry* entry);
+                                          Entry& entry);
 
   // Returns true if the input first candidate seems to be a privacy sensitive
   // such like password.
@@ -388,7 +390,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // Selected ratio:
   //  (# of candidate committed) / (# of candidate shown on commit event)
   void MaybeRemoveUnselectedHistory(absl::Span<const Result> results,
-                                    RevertEntries* revert_entries);
+                                    RevertEntries& revert_entries);
 
   // Returns the value string byte offset on `reverted_value` with the context
   // information populated from the client. When all characters in
