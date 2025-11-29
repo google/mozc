@@ -47,6 +47,7 @@
         'result_filter.cc',
         'single_kanji_decoder.cc',
         'user_history_predictor.cc',
+        'user_history_storage.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
