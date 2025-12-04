@@ -790,13 +790,16 @@ void DictionaryPredictionAggregator::AggregateZeroQuery(
                                  results);
   }
 
+  // 4. English decoder.
+  modules_.GetSupplementalModel().DecodeEnglish(request, *results);
+
   // We do not want zero query results from suffix dictionary for Latin
   // input mode. For example, we do not need "です", "。" just after "when".
   if (IsLatinInputMode(request)) {
     return;
   }
 
-  // 4. Zero query suffix dictionary.
+  // 5. Zero query suffix dictionary.
   //    "東京" -> "は"
   if (results->empty() || !IsZeroQuerySuffixPredictionDisabled(request) ||
       request_util::IsHandwriting(request)) {
@@ -986,6 +989,8 @@ void DictionaryPredictionAggregator::AggregateEnglish(
   GetPredictiveResultsForEnglishKey(dictionary_, request, request.key(),
                                     ENGLISH, adjuster.cutoff_threshold(),
                                     results);
+
+  modules_.GetSupplementalModel().DecodeEnglish(request, *results);
 }
 
 void DictionaryPredictionAggregator::AggregateEnglishUsingRawInput(
@@ -997,6 +1002,8 @@ void DictionaryPredictionAggregator::AggregateEnglishUsingRawInput(
   GetPredictiveResultsForEnglishKey(dictionary_, request,
                                     request.composer().GetRawString(), ENGLISH,
                                     adjuster.cutoff_threshold(), results);
+
+  modules_.GetSupplementalModel().DecodeEnglish(request, *results);
 }
 
 void DictionaryPredictionAggregator::AggregateNumber(
