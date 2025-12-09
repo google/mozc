@@ -295,6 +295,7 @@ mozc_cc_library(
         client = ["//data_manager/google:pos_list.inc"],
         default = [],
         oss = ["//data_manager/oss:pos_list.inc"],
+        prod = ["//data_manager/google:pos_list.inc"],
     ),
     visibility = ["//gui:__subpackages__"],
     deps = [
