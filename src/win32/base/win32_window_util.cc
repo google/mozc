@@ -45,7 +45,7 @@ std::wstring SafeGetWindowText(HWND window_handle) {
     return std::wstring();
   }
 
-  const int text_len_without_null = GetWindowTextLength(window_handle);
+  const int text_len_without_null = GetWindowTextLengthW(window_handle);
   if (text_len_without_null <= 0) {
     return std::wstring();
   }
@@ -53,7 +53,7 @@ std::wstring SafeGetWindowText(HWND window_handle) {
   std::wstring buffer(text_len_without_null, 0);
 
   const int copied_len_without_null =
-      GetWindowText(window_handle, buffer.data(), buffer.size() + 1);
+      GetWindowTextW(window_handle, buffer.data(), buffer.size() + 1);
 
   if (copied_len_without_null <= 0) {
     return std::wstring();
