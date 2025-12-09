@@ -85,6 +85,7 @@
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "testing/test_peer.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc::prediction {
 namespace {
@@ -470,6 +471,9 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
                   SegmentsProxy* segments_proxy) const {
     composer->Reset();
     composer->SetPreeditTextForTestOnly(key);
+    // TODO(taku): `SetPreeditTextForTestOnly` changes the input mode to Latin
+    // when key is empty. This behavior is not intended.
+    if (key.empty()) composer->SetInputMode(transliteration::HIRAGANA);
     segments_proxy->MakeSegments(key);
   }
 

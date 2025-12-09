@@ -81,6 +81,7 @@
 #include "request/conversion_request.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc::prediction {
 namespace {
@@ -1357,21 +1358,22 @@ bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
 // static
 void UserHistoryPredictor::MaybeRewritePrefixSpace(
     const ConversionRequest& request, Result& result) {
-  bool has_space = false;
+  // The space prefix in `result`. This prefix may be modified to
+  // the actual `output_space_prefix`.
+  absl::string_view result_space_prefix;
 
   // We had added kPrefixFullSpace in the old code as a placeholder.
-  for (absl::string_view prefix : {kPrefixZeroSpace, kPrefixFullSpace}) {
+  // Serialized entry uses kPrefixZeroSpace to normalize the space.
+  for (absl::string_view prefix :
+       {kPrefixZeroSpace, kPrefixFullSpace, kPrefixHalfSpace}) {
     if (absl::StartsWith(result.key, prefix) &&
         absl::StartsWith(result.value, prefix)) {
-      // Removes the prefix spaces.
-      has_space = true;
-      result.key = result.key.substr(prefix.size());
-      result.value = result.value.substr(prefix.size());
+      result_space_prefix = prefix;
       break;
     }
   }
 
-  if (!has_space) return;
+  if (result_space_prefix.empty()) return;
 
   // Clears inner_segment_boundary because the prefix space may break the
   // internal offsets.
@@ -1380,15 +1382,26 @@ void UserHistoryPredictor::MaybeRewritePrefixSpace(
   // Replaces the space in display_value: " ラーメン" -> "␣ラーメン"
   if (request.request().display_value_capability() ==
       commands::Request::PLAIN_TEXT) {
-    result.display_value = absl::StrCat(kPrefixDisplaySpace, result.value);
+    result.display_value = absl::StrCat(
+        kPrefixDisplaySpace, result.value.substr(result_space_prefix.size()));
   }
 
+  DCHECK(!result_space_prefix.empty());
+
+  // Uses the half-width space in half-width-Latin mode.
+  const bool is_latin_mode =
+      request.composer().GetInputMode() == transliteration::HALF_ASCII;
   const auto cform = request.config().space_character_form();
-  absl::string_view prefix = (cform == config::Config::FUNDAMENTAL_HALF_WIDTH)
-                                 ? kPrefixHalfSpace
-                                 : kPrefixFullSpace;
-  result.key = absl::StrCat(prefix, result.key);
-  result.value = absl::StrCat(prefix, result.value);
+  absl::string_view output_space_prefix =
+      (cform == config::Config::FUNDAMENTAL_HALF_WIDTH || is_latin_mode)
+          ? kPrefixHalfSpace
+          : kPrefixFullSpace;
+  if (result_space_prefix != output_space_prefix) {
+    result.key = absl::StrCat(output_space_prefix,
+                              result.key.substr(result_space_prefix.size()));
+    result.value = absl::StrCat(
+        output_space_prefix, result.value.substr(result_space_prefix.size()));
+  }
 }
 
 std::vector<Result> UserHistoryPredictor::MakeResults(
@@ -1717,6 +1730,16 @@ UserHistoryPredictor::MakeLearningSegments(
 
   if (results.empty()) return learning_segments;
 
+  auto get_space_prefix = [&]() -> absl::string_view {
+    absl::string_view preceding_text = request.context().preceding_text();
+    for (absl::string_view space_char : {kPrefixHalfSpace, kPrefixFullSpace}) {
+      if (absl::EndsWith(preceding_text, space_char)) {
+        return space_char;
+      }
+    }
+    return "";
+  };
+
   auto make_learning_segments = [&](const Result& result) {
     std::vector<SegmentForLearning> segments;
 
@@ -1757,7 +1780,6 @@ UserHistoryPredictor::MakeLearningSegments(
     static constexpr bool kHasPrefixSpace = true;
 
     std::vector<SegmentForLearning> segments = make_learning_segments(result);
-    if (!segments.empty()) return {segments, !kHasPrefixSpace};
 
     // TODO(taku): disable space_prefix when the client doesn't have
     // display_value capability.
@@ -1767,18 +1789,13 @@ UserHistoryPredictor::MakeLearningSegments(
       return {segments, !kHasPrefixSpace};
     }
 
-    // whether the preceding_text ends with a single space.
-    absl::string_view preceding_text = request.context().preceding_text();
-    for (absl::string_view space_char : {kPrefixHalfSpace, kPrefixFullSpace}) {
-      if (absl::EndsWith(preceding_text, space_char)) {
-        preceding_text.remove_suffix(space_char.size());
-      }
+    absl::string_view space_prefix = get_space_prefix();
+    if (!segments.empty() || space_prefix.empty()) {
+      return {segments, !space_prefix.empty()};
     }
 
-    // preceding_text does not end with space.
-    if (preceding_text.size() == request.context().preceding_text().size()) {
-      return {segments, !kHasPrefixSpace};
-    }
+    absl::string_view preceding_text = request.context().preceding_text();
+    preceding_text.remove_suffix(space_prefix.size());
 
     ConstEntrySnapshot head_entry = storage_.Head();
     if (!head_entry || !absl::EndsWith(preceding_text, head_entry->value())) {
