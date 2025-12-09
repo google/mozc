@@ -29,6 +29,8 @@
 
 #include "base/bits.h"
 
+#include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <string>
@@ -36,6 +38,7 @@
 
 #include "absl/algorithm/container.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -119,6 +122,50 @@ TEST(BitsTest, ByteSwap) {
   EXPECT_EQ(byteswap(byteswap(u64)), u64);
   const int64_t i64 = 0x1234567890abcdef;
   EXPECT_EQ(byteswap(i64), 0xefcdab9078563412);
+}
+
+TEST(BitsTest, AsBytes) {
+  uint32_t arr[] = {0x01234567, 0x89abcdef};
+  absl::Span<const uint32_t> span = arr;
+  if constexpr (std::endian::native == std::endian::little) {
+    EXPECT_THAT(as_bytes(span),
+                ElementsAre(std::byte{0x67}, std::byte{0x45}, std::byte{0x23},
+                            std::byte{0x01}, std::byte{0xef}, std::byte{0xcd},
+                            std::byte{0xab}, std::byte{0x89}));
+    EXPECT_THAT(as_bytes<unsigned char>(span),
+                ElementsAre(0x67, 0x45, 0x23, 0x01, 0xef, 0xcd, 0xab, 0x89));
+    EXPECT_THAT(as_bytes<char>(span),
+                ElementsAre(0x67, 0x45, 0x23, 0x01, 0xef, 0xcd, 0xab, 0x89));
+  } else {
+    EXPECT_THAT(as_bytes(span),
+                ElementsAre(std::byte{0x01}, std::byte{0x23}, std::byte{0x45},
+                            std::byte{0x67}, std::byte{0x89}, std::byte{0xab},
+                            std::byte{0xcd}, std::byte{0xef}));
+    EXPECT_THAT(as_bytes<unsigned char>(span),
+                ElementsAre(0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef));
+    EXPECT_THAT(as_bytes<char>(span),
+                ElementsAre(0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef));
+  }
+}
+
+TEST(BitsTest, AsWritableBytes) {
+  uint32_t arr[] = {0x01234567, 0x89abcdef};
+  absl::Span<uint32_t> span = absl::MakeSpan(arr);
+  if constexpr (std::endian::native == std::endian::little) {
+    EXPECT_THAT(as_writable_bytes(span),
+                ElementsAre(std::byte{0x67}, std::byte{0x45}, std::byte{0x23},
+                            std::byte{0x01}, std::byte{0xef}, std::byte{0xcd},
+                            std::byte{0xab}, std::byte{0x89}));
+    as_writable_bytes(span)[0] = std::byte{0};
+    EXPECT_EQ(arr[0], 0x01234500);
+  } else {
+    EXPECT_THAT(as_writable_bytes(span),
+                ElementsAre(std::byte{0x01}, std::byte{0x23}, std::byte{0x45},
+                            std::byte{0x67}, std::byte{0x89}, std::byte{0xab},
+                            std::byte{0xcd}, std::byte{0xef}));
+    as_writable_bytes(span)[3] = std::byte{0};
+    EXPECT_EQ(arr[0], 0x01234500);
+  }
 }
 
 }  // namespace

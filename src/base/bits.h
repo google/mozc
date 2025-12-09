@@ -42,6 +42,7 @@
 #include <type_traits>
 
 #include "absl/base/config.h"
+#include "absl/types/span.h"
 
 #if __has_include(<bits>)
 #include <bits>
@@ -194,6 +195,34 @@ template <typename T>
   requires(std::integral<T>)
 inline T LittleToHost(const T n) {
   return HostToLittle(n);
+}
+
+// Converts a span of type T to a span of bytes.
+//
+// Functionally similar to std::as_bytes but for absl::Span.
+// However, this function allows casting to other "byte-like" types
+// (char, unsigned char, std::byte), as the standard explicitly
+// permits reinterpretation to these types.
+template <typename B = std::byte, typename T>
+  requires(std::same_as<B, char> || std::same_as<B, unsigned char> ||
+           std::same_as<B, std::byte>)
+absl::Span<const B> as_bytes(absl::Span<T> s) {
+  return absl::Span<const B>(reinterpret_cast<const B*>(s.data()),
+                             s.size() * sizeof(T));
+}
+
+// Converts a span of type T to a span of bytes.
+//
+// Functionally similar to std::as_writable_bytes but for absl::Span.
+// However, this function allows casting to other "byte-like" types
+// (char, unsigned char, std::byte), as the standard explicitly
+// permits reinterpretation to these types.
+template <typename B = std::byte, typename T>
+  requires((std::same_as<B, char> || std::same_as<B, unsigned char> ||
+            std::same_as<B, std::byte>) &&
+           !std::is_const_v<T>)
+absl::Span<B> as_writable_bytes(absl::Span<T> s) {
+  return absl::Span<B>(reinterpret_cast<B*>(s.data()), s.size() * sizeof(T));
 }
 
 namespace bits_internal {
