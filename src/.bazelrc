@@ -6,15 +6,15 @@ common:linux      --config=linux_env --define TARGET=oss_linux
 common:oss_linux  --config=linux_env --define TARGET=oss_linux
 common:prod_linux --config=linux_env --define TARGET=prod_linux
 
-common:macos      --config=macos_env --define TARGET=oss_macos
-common:oss_macos  --config=macos_env --define TARGET=oss_macos
-common:prod_macos --config=macos_env --define TARGET=prod_macos
-common:prod_macos_dev --config=prod_macos --config=dev_channel
+common:macos          --config=macos_env --define TARGET=oss_macos
+common:oss_macos      --config=macos_env --define TARGET=oss_macos
+common:prod_macos     --config=macos_env --define TARGET=prod_macos
+common:prod_macos_dev --config=macos_env --define TARGET=prod_macos --config=dev_channel
 
-common:windows      --config=windows_env --define TARGET=oss_windows
-common:oss_windows  --config=windows_env --define TARGET=oss_windows
-common:prod_windows --config=windows_env --define TARGET=prod_windows
-common:prod_windows_dev --config=prod_windows --config=dev_channel
+common:windows          --config=windows_env --define TARGET=oss_windows
+common:oss_windows      --config=windows_env --define TARGET=oss_windows
+common:prod_windows     --config=windows_env --define TARGET=prod_windows
+common:prod_windows_dev --config=windows_env --define TARGET=prod_windows --config=dev_channel
 
 common:android      --config=android_env --define TARGET=oss_android
 common:oss_android  --config=android_env --define TARGET=oss_android
