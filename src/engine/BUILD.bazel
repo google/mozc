@@ -276,6 +276,7 @@ mozc_cc_library(
         android = [":android_engine_factory"],
         default = [":google_engine_factory"],
         oss = [":oss_engine_factory"],
+        prod = [":google_engine_factory"],
     ),
 )
 
