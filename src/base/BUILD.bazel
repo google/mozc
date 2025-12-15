@@ -1094,10 +1094,7 @@ mozc_cc_test(
 mozc_cc_library(
     name = "bits",
     hdrs = ["bits.h"],
-    deps = [
-        "@com_google_absl//absl/base:config",
-        "@com_google_absl//absl/types:span",
-    ],
+    deps = ["@com_google_absl//absl/base:config"],
 )
 
 mozc_cc_test(
@@ -1109,6 +1106,5 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_absl//absl/types:span",
     ],
 )
