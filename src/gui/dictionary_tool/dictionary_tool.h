@@ -43,7 +43,7 @@
 #include "client/client_interface.h"
 #include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_importer.h"
-#include "dictionary/user_dictionary_session.h"
+#include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_pos.h"
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
@@ -56,7 +56,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   Q_OBJECT
 
  public:
-  explicit DictionaryTool(QWidget *parent = nullptr);
+  explicit DictionaryTool(QWidget* parent = nullptr);
 
   // return true DictionaryTool is available.
   bool IsAvailable() const { return is_available_; }
@@ -64,9 +64,9 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
  protected:
   // Override the default implementation to check unsaved
   // modifications on data before closing the window.
-  void closeEvent(QCloseEvent *event) override;
+  void closeEvent(QCloseEvent* event) override;
 
-  bool eventFilter(QObject *obj, QEvent *event) override;
+  bool eventFilter(QObject* obj, QEvent* event) override;
 
  private slots:
   void CreateDictionary();
@@ -83,22 +83,22 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
 
   // Signals to be connected with a particular action by the user.
   void OnDictionarySelectionChanged();
-  void OnItemChanged(QTableWidgetItem *unused_item);
+  void OnItemChanged(QTableWidgetItem* unused_item);
   void OnHeaderClicked(int logicalIndex);
   void OnDeactivate();
 
   // We customize the default behavior of context menu on the table
   // widget for dictionary contents so that the menu is shown only
   // when there is an item under the mouse cursor.
-  void OnContextMenuRequestedForContent(const QPoint &pos);
-  void OnContextMenuRequestedForList(const QPoint &pos);
+  void OnContextMenuRequestedForContent(const QPoint& pos);
+  void OnContextMenuRequestedForList(const QPoint& pos);
 
  private:
   // Data type to provide information on a dictionary.
   struct DictionaryInfo {
     int row;                // Row in the list widget.
     uint64_t id;            // ID of the dictionary.
-    QListWidgetItem *item;  // Item object for the dictionary.
+    QListWidgetItem* item;  // Item object for the dictionary.
   };
 
   // Returns information on the current dictionary.
@@ -109,10 +109,10 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
 
   // Setup GUI components to edit dictionary contents for a given
   // dictionary.
-  void SetupDicContentEditor(const DictionaryInfo &dic_info);
+  void SetupDicContentEditor(const DictionaryInfo& dic_info);
 
   // It's used internally to create a dictionary.
-  void CreateDictionaryHelper(const QString &dic_name);
+  void CreateDictionaryHelper(const QString& dic_name);
 
   bool InitDictionaryList();
 
@@ -120,9 +120,9 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // first parameter is default text printed in a form. The second is
   // message printed on the dialog. It returns an empty string
   // whenever a proper value for dictionary name is input.
-  QString PromptForDictionaryName(const QString &text, const QString &label);
+  QString PromptForDictionaryName(const QString& text, const QString& label);
 
-  void ReportError(const absl::Status &status = absl::UnknownError("Unknown"));
+  void ReportError(const absl::Status& status = absl::UnknownError("Unknown"));
 
   // These two functions are to start/stop monitoring data on the
   // table widget being changed. We validate the value on the widget
@@ -134,10 +134,10 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // Show a special dialog message according to the result
   // of UserDictionaryImporter.
   void ReportImportError(UserDictionaryImporter::ErrorType error,
-                         const QString &dic_name, int added_entries_size);
+                         const QString& dic_name, int added_entries_size);
 
-  void ImportHelper(uint64_t dic_id, const QString &dic_name,
-                    const QString &file_name, UserDictionaryImporter::IMEType,
+  void ImportHelper(uint64_t dic_id, const QString& dic_name,
+                    const QString& file_name, UserDictionaryImporter::IMEType,
                     UserDictionaryImporter::EncodingType encoding_type);
 
   // Save storage contents into the disk and
@@ -156,20 +156,20 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
 
   // Helper functions to check if a file with given name is readable
   // to import or writable to export without trying to open it.
-  static bool IsWritableToExport(const QString &file_name);
-  static bool IsReadableToImport(const QString &file_name);
+  static bool IsWritableToExport(const QString& file_name);
+  static bool IsReadableToImport(const QString& file_name);
 
   // Helper function for DeleteWord and MoveTo.
   // Fills selected word entry rows as a unique sorted sequence.
-  void GetSortedSelectedRows(std::vector<int> *rows) const;
+  void GetSortedSelectedRows(std::vector<int>* rows) const;
 
   // Returns a pointer to the first selected dictionary.
   // Returns nullptr if no dictionary is selected.
-  QListWidgetItem *GetFirstSelectedDictionary() const;
+  QListWidgetItem* GetFirstSelectedDictionary() const;
 
-  ImportDialog *import_dialog_;
-  FindDialog *find_dialog_;
-  std::unique_ptr<mozc::user_dictionary::UserDictionarySession> session_;
+  ImportDialog* import_dialog_;
+  FindDialog* find_dialog_;
+  std::unique_ptr<UserDictionaryStorage> storage_;
 
   // ID of current selected dictionary. This needs to be maintained
   // separate from selection on the list widget because data is saved
@@ -183,24 +183,24 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   QString window_title_;
 
   // Buttons
-  QPushButton *dic_menu_button_;
-  QPushButton *new_word_button_;
-  QPushButton *delete_word_button_;
+  QPushButton* dic_menu_button_;
+  QPushButton* new_word_button_;
+  QPushButton* delete_word_button_;
 
   // Menu for managing dictionary.
-  QMenu *dic_menu_;
+  QMenu* dic_menu_;
 
   // Action inside menu.
   // Sine we have to disable/enable the actions according to the
   // numbers of active dictionary, we define them as a member.
-  QAction *new_action_;
-  QAction *rename_action_;
-  QAction *delete_action_;
-  QAction *find_action_;
-  QAction *import_create_action_;
-  QAction *import_append_action_;
-  QAction *export_action_;
-  QAction *import_default_ime_action_;
+  QAction* new_action_;
+  QAction* rename_action_;
+  QAction* delete_action_;
+  QAction* find_action_;
+  QAction* import_create_action_;
+  QAction* import_append_action_;
+  QAction* export_action_;
+  QAction* import_default_ime_action_;
 
   // status message
   QString statusbar_message_;

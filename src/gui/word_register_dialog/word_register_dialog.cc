@@ -43,7 +43,6 @@
 #include "base/const.h"
 #include "client/client.h"
 #include "data_manager/pos_list_provider.h"
-#include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "gui/base/util.h"
@@ -67,17 +66,16 @@
 namespace mozc {
 namespace gui {
 
+using mozc::UserDictionaryStorage;
 using mozc::user_dictionary::UserDictionary;
 using mozc::user_dictionary::UserDictionaryCommandStatus;
-using mozc::user_dictionary::UserDictionarySession;
-using mozc::user_dictionary::UserDictionaryStorage;
 
 namespace {
 constexpr absl::Duration kSessionTimeout = absl::Milliseconds(100000);
 constexpr int kMaxEditLength = 100;
 constexpr int kMaxReverseConversionLength = 30;
 
-QString GetEnv(const char *envname) {
+QString GetEnv(const char* envname) {
 #if defined(_WIN32)
   const std::wstring wenvname = mozc::win32::Utf8ToWide(envname);
   const DWORD buffer_size =
@@ -92,10 +90,10 @@ QString GetEnv(const char *envname) {
     // The size of wchar_t can be 2 or 4.
     if (sizeof(wchar_t) == sizeof(ushort)) {
       // On Windows the size of wchar_t is 2.
-      return QString::fromUtf16(reinterpret_cast<const ushort *>(buffer.get()));
+      return QString::fromUtf16(reinterpret_cast<const ushort*>(buffer.get()));
     } else {
       // This is a fallback just in case.
-      return QString::fromUcs4(reinterpret_cast<const uint *>(buffer.get()));
+      return QString::fromUcs4(reinterpret_cast<const uint*>(buffer.get()));
     }
   }
   return QLatin1String("");
@@ -110,7 +108,7 @@ QString GetEnv(const char *envname) {
 
 WordRegisterDialog::WordRegisterDialog()
     : is_available_(true),
-      session_(new UserDictionarySession(
+      storage_(new UserDictionaryStorage(
           UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
       window_title_(GuiUtil::ProductName()) {
@@ -131,12 +129,11 @@ WordRegisterDialog::WordRegisterDialog()
 
   client_->set_timeout(kSessionTimeout);
 
-  if (session_->Load() !=
-      UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
-    LOG(WARNING) << "UserDictionarySession::Load() failed";
+  if (!storage_->Load().ok()) {
+    LOG(WARNING) << "UserDictionaryStorage::Load() failed";
   }
 
-  if (!session_->mutable_storage()->Lock()) {
+  if (!storage_->Lock()) {
     QMessageBox::information(
         this, window_title_,
         tr("Close dictionary tool before using word register dialog."));
@@ -148,7 +145,7 @@ WordRegisterDialog::WordRegisterDialog()
   const std::vector<std::string> pos_set = pos_list_provider_.GetPosList();
   CHECK(!pos_set.empty());
 
-  for (const std::string &pos : pos_set) {
+  for (const std::string& pos : pos_set) {
     CHECK(!pos.empty());
     PartOfSpeechcomboBox->addItem(QString::fromUtf8(pos.c_str()));
   }
@@ -159,12 +156,9 @@ WordRegisterDialog::WordRegisterDialog()
       << "The default POS is not 名詞";
 
   // Create new dictionary if empty
-  if (!session_->mutable_storage()->Exists().ok() ||
-      session_->storage().dictionaries_size() == 0) {
+  if (!storage_->Exists().ok() || storage_->dictionaries_size() == 0) {
     const QString name = tr("User Dictionary 1");
-    if (!session_->mutable_storage()
-             ->CreateDictionary(name.toStdString())
-             .ok()) {
+    if (!storage_->CreateDictionary(name.toStdString()).ok()) {
       LOG(ERROR) << "Failed to create a new dictionary.";
       is_available_ = false;
       return;
@@ -173,21 +167,20 @@ WordRegisterDialog::WordRegisterDialog()
 
   // Load Dictionary List
   {
-    const UserDictionaryStorage &storage = session_->storage();
-    CHECK_GT(storage.dictionaries_size(), 0);
-    for (const auto &dictionary : storage.dictionaries()) {
+    CHECK_GT(storage_->dictionaries_size(), 0);
+    for (const auto& dictionary : storage_->GetProto().dictionaries()) {
       DictionarycomboBox->addItem(QString::fromUtf8(dictionary.name().c_str()));
     }
   }
 
-  connect(WordlineEdit, SIGNAL(textChanged(const QString &)), this,
-          SLOT(LineEditChanged(const QString &)));
-  connect(ReadinglineEdit, SIGNAL(textChanged(const QString &)), this,
-          SLOT(LineEditChanged(const QString &)));
+  connect(WordlineEdit, SIGNAL(textChanged(const QString&)), this,
+          SLOT(LineEditChanged(const QString&)));
+  connect(ReadinglineEdit, SIGNAL(textChanged(const QString&)), this,
+          SLOT(LineEditChanged(const QString&)));
   connect(WordlineEdit, SIGNAL(editingFinished()), this,
           SLOT(CompleteReading()));
-  connect(WordRegisterDialogbuttonBox, SIGNAL(clicked(QAbstractButton *)), this,
-          SLOT(Clicked(QAbstractButton *)));
+  connect(WordRegisterDialogbuttonBox, SIGNAL(clicked(QAbstractButton*)), this,
+          SLOT(Clicked(QAbstractButton*)));
   connect(LaunchDictionaryToolpushButton, SIGNAL(clicked()), this,
           SLOT(LaunchDictionaryTool()));
 
@@ -209,7 +202,7 @@ WordRegisterDialog::~WordRegisterDialog() = default;
 
 bool WordRegisterDialog::IsAvailable() const { return is_available_; }
 
-void WordRegisterDialog::LineEditChanged(const QString &str) {
+void WordRegisterDialog::LineEditChanged(const QString& str) {
   UpdateUIStatus();
 }
 
@@ -225,14 +218,14 @@ void WordRegisterDialog::UpdateUIStatus() {
   const bool enabled =
       !ReadinglineEdit->text().isEmpty() && !WordlineEdit->text().isEmpty();
 
-  QAbstractButton *button =
+  QAbstractButton* button =
       WordRegisterDialogbuttonBox->button(QDialogButtonBox::Ok);
   if (button != nullptr) {
     button->setEnabled(enabled);
   }
 }
 
-void WordRegisterDialog::Clicked(QAbstractButton *button) {
+void WordRegisterDialog::Clicked(QAbstractButton* button) {
   switch (WordRegisterDialogbuttonBox->buttonRole(button)) {
     case QDialogButtonBox::AcceptRole:
       switch (SaveEntry()) {
@@ -293,13 +286,12 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
   }
 
   const int index = DictionarycomboBox->currentIndex();
-  if (index < 0 || index >= session_->storage().dictionaries_size()) {
+  if (index < 0 || index >= storage_->dictionaries_size()) {
     LOG(ERROR) << "index is out of range";
     return FATAL_ERROR;
   }
 
-  UserDictionary *dic =
-      session_->mutable_storage()->GetProto().mutable_dictionaries(index);
+  UserDictionary* dic = storage_->GetProto().mutable_dictionaries(index);
   CHECK(dic);
 
   if (dic->name() != DictionarycomboBox->currentText().toStdString().c_str()) {
@@ -307,13 +299,13 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
     return FATAL_ERROR;
   }
 
-  UserDictionary::Entry *entry = dic->add_entries();
+  UserDictionary::Entry* entry = dic->add_entries();
   CHECK(entry);
   entry->set_key(key);
   entry->set_value(value);
   entry->set_pos(pos);
 
-  if (absl::Status s = session_->mutable_storage()->Save(); !s.ok()) {
+  if (absl::Status s = storage_->Save(); !s.ok()) {
     LOG(ERROR) << "Cannot save dictionary: " << s;
     return SAVE_FAILURE;
   }
@@ -340,12 +332,12 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
 }
 
 void WordRegisterDialog::LaunchDictionaryTool() {
-  session_->mutable_storage()->UnLock();
+  storage_->UnLock();
   client_->LaunchTool("dictionary_tool", "");
   QWidget::close();
 }
 
-QString WordRegisterDialog::GetReading(const QString &str) {
+QString WordRegisterDialog::GetReading(const QString& str) {
   if (str.isEmpty()) {
     LOG(ERROR) << "given string is empty";
     return QLatin1String("");
@@ -385,7 +377,7 @@ QString WordRegisterDialog::GetReading(const QString &str) {
   }
 
   std::string key;
-  for (const commands::Preedit::Segment &segment : output.preedit().segment()) {
+  for (const commands::Preedit::Segment& segment : output.preedit().segment()) {
     if (!segment.has_key()) {
       LOG(ERROR) << "No segment";
       return QLatin1String("");
@@ -463,7 +455,7 @@ bool WordRegisterDialog::SetDefaultEntryFromEnvironmentVariable() {
   return true;
 }
 
-QString WordRegisterDialog::TrimValue(const QString &str) const {
+QString WordRegisterDialog::TrimValue(const QString& str) const {
   return str.trimmed()
       .replace(QLatin1Char('\r'), QLatin1String(""))
       .replace(QLatin1Char('\n'), QLatin1String(""));

@@ -58,7 +58,6 @@
 #include "base/vlog.h"
 #include "client/client.h"
 #include "dictionary/user_dictionary_importer.h"
-#include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "gui/base/encoding_util.h"
@@ -86,8 +85,6 @@ namespace {
 
 using ::mozc::user_dictionary::UserDictionary;
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
-using ::mozc::user_dictionary::UserDictionarySession;
-using ::mozc::user_dictionary::UserDictionaryStorage;
 
 inline QString QUtf8(absl::string_view str) {
   return QString::fromUtf8(str.data(), static_cast<int>(str.size()));
@@ -97,7 +94,7 @@ inline QString QUtf8(absl::string_view str) {
 // to reload all user dictionary.
 constexpr absl::Duration kSessionTimeout = absl::Milliseconds(100000);
 
-int GetTableHeight(QTableWidget *widget) {
+int GetTableHeight(QTableWidget* widget) {
   // Dragon Hack:
   // Here we use "龍" to calc font size, as it looks almsot square
   const QRect rect =
@@ -105,8 +102,8 @@ int GetTableHeight(QTableWidget *widget) {
   return static_cast<int>(rect.height() * 1.4);
 }
 
-std::unique_ptr<QProgressDialog> CreateProgressDialog(const QString &message,
-                                                      QWidget *parent,
+std::unique_ptr<QProgressDialog> CreateProgressDialog(const QString& message,
+                                                      QWidget* parent,
                                                       int size) {
   auto progress =
       std::make_unique<QProgressDialog>(message, QString(), 0, size, parent);
@@ -116,7 +113,7 @@ std::unique_ptr<QProgressDialog> CreateProgressDialog(const QString &message,
   progress->setWindowModality(Qt::WindowModal);
   // This cancel button is invisible to users.
   // We don't accept any cancel operation
-  QPushButton *cancel_button = new QPushButton;
+  QPushButton* cancel_button = new QPushButton;
   CHECK(cancel_button);
   progress->setAutoClose(true);
   progress->setCancelButton(cancel_button);
@@ -132,8 +129,8 @@ class UTF16TextLineIterator
     : public UserDictionaryImporter::TextLineIteratorInterface {
  public:
   UTF16TextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
-                        const std::string &filename, const QString &message,
-                        QWidget *parent)
+                        const std::string& filename, const QString& message,
+                        QWidget* parent)
       : stream_(std::make_unique<QTextStream>()) {
     CHECK_EQ(UserDictionaryImporter::UTF16, encoding_type);
     file_.setFileName(QUtf8(filename));
@@ -151,7 +148,7 @@ class UTF16TextLineIterator
 
   bool IsAvailable() const override { return file_.error() == QFile::NoError; }
 
-  bool Next(std::string *line) override {
+  bool Next(std::string* line) override {
     if (stream_->atEnd()) {
       return false;
     }
@@ -199,8 +196,8 @@ class MultiByteTextLineIterator
     : public UserDictionaryImporter::TextLineIteratorInterface {
  public:
   MultiByteTextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
-                            const std::string &filename, const QString &message,
-                            QWidget *parent)
+                            const std::string& filename, const QString& message,
+                            QWidget* parent)
       : encoding_type_(encoding_type),
         ifs_(std::make_unique<InputFileStream>(filename)),
         first_line_(true) {
@@ -219,7 +216,7 @@ class MultiByteTextLineIterator
     return ifs_->good() || ifs_->eof();
   }
 
-  bool Next(std::string *line) override {
+  bool Next(std::string* line) override {
     if (!ifs_->good()) {
       return false;
     }
@@ -276,7 +273,7 @@ class MultiByteTextLineIterator
 
 std::unique_ptr<UserDictionaryImporter::TextLineIteratorInterface>
 CreateTextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
-                       const std::string &filename, QWidget *parent) {
+                       const std::string& filename, QWidget* parent) {
   if (encoding_type == UserDictionaryImporter::ENCODING_AUTO_DETECT) {
     encoding_type = UserDictionaryImporter::GuessFileEncodingType(filename);
   }
@@ -313,11 +310,11 @@ CreateTextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
 }
 }  // namespace
 
-DictionaryTool::DictionaryTool(QWidget *parent)
+DictionaryTool::DictionaryTool(QWidget* parent)
     : QMainWindow(parent),
       import_dialog_(nullptr),
       find_dialog_(nullptr),
-      session_(std::make_unique<UserDictionarySession>(
+      storage_(std::make_unique<UserDictionaryStorage>(
           UserDictionaryUtil::GetUserDictionaryFileName())),
       current_dic_id_(0),
       window_title_(GuiUtil::ProductName()),
@@ -345,12 +342,11 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   client_->set_timeout(kSessionTimeout);
 
-  if (session_->Load() !=
-      UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
-    LOG(WARNING) << "UserDictionarySession::Load() failed";
+  if (!storage_->Load().ok()) {
+    LOG(WARNING) << "UserDictionaryStorage::Load() failed";
   }
 
-  if (!session_->mutable_storage()->Lock()) {
+  if (!storage_->Lock()) {
     QMessageBox::information(
         this, window_title_,
         tr("Another process is accessing the user dictionary file."));
@@ -409,7 +405,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   for (size_t i = 0; i < tmp_pos_vec.size(); ++i) {
     pos_list.append(QUtf8(tmp_pos_vec[i]));
   }
-  ComboBoxDelegate *delegate = new ComboBoxDelegate;
+  ComboBoxDelegate* delegate = new ComboBoxDelegate;
   delegate->SetItemList(pos_list);
   dic_content_->setItemDelegateForColumn(2, delegate);
 
@@ -428,29 +424,29 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   // This is a workaround for MacOSX.
   // QKeysequence::Delete doesn't work on Mac,
   // so we set the key sequence directly.
-  QShortcut *shortcut1 =
+  QShortcut* shortcut1 =
       new QShortcut(QKeySequence(Qt::Key_Backspace), dic_content_);
   // Qt::CTRL = Command key
   // Command+Backspace = delete
-  QShortcut *shortcut2 =
+  QShortcut* shortcut2 =
       new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Backspace), dic_content_);
   connect(shortcut1, SIGNAL(activated()), this, SLOT(DeleteWord()));
   connect(shortcut2, SIGNAL(activated()), this, SLOT(DeleteWord()));
 #else   // __APPLE__
-  QShortcut *shortcut =
+  QShortcut* shortcut =
       new QShortcut(QKeySequence(QKeySequence::Delete), dic_content_);
   connect(shortcut, SIGNAL(activated()), this, SLOT(DeleteWord()));
 #endif  // __APPLE__
 
   dic_content_->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(dic_content_, SIGNAL(customContextMenuRequested(const QPoint &)),
-          this, SLOT(OnContextMenuRequestedForContent(const QPoint &)));
+  connect(dic_content_, SIGNAL(customContextMenuRequested(const QPoint&)), this,
+          SLOT(OnContextMenuRequestedForContent(const QPoint&)));
   connect(dic_content_->horizontalHeader(), SIGNAL(sectionClicked(int)), this,
           SLOT(OnHeaderClicked(int)));
 
   dic_list_->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(dic_list_, SIGNAL(customContextMenuRequested(const QPoint &)), this,
-          SLOT(OnContextMenuRequestedForList(const QPoint &)));
+  connect(dic_list_, SIGNAL(customContextMenuRequested(const QPoint&)), this,
+          SLOT(OnContextMenuRequestedForList(const QPoint&)));
 
   // Set up the menu for dictionary related operations.
   new_action_ = dic_menu_->addAction(tr("New dictionary..."));
@@ -523,7 +519,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   // If this is the first time for the user dictionary is used, create
   // a default dictionary.
-  if (absl::Status s = session_->mutable_storage()->Exists(); !s.ok()) {
+  if (absl::Status s = storage_->Exists(); !s.ok()) {
     LOG_IF(ERROR, !absl::IsNotFound(s))
         << "Cannot check if the storage file exists: " << s;
     CreateDictionaryHelper(tr("User Dictionary 1"));
@@ -541,7 +537,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   qApp->installEventFilter(this);
 }
 
-void DictionaryTool::closeEvent(QCloseEvent *event) {
+void DictionaryTool::closeEvent(QCloseEvent* event) {
   // QEvent::ApplicationDeactivate is not emitted here.
 
   // Change the focus so that the last incomplete itmes on
@@ -567,7 +563,7 @@ void DictionaryTool::OnDeactivate() {
   SaveAndReloadServer().IgnoreError();
 }
 
-bool DictionaryTool::eventFilter(QObject *obj, QEvent *event) {
+bool DictionaryTool::eventFilter(QObject* obj, QEvent* event) {
   // When application focus leaves, reload the server so
   // that new dictionary can be loaded.
   // This is an approximation of dynamic relading.
@@ -610,9 +606,8 @@ void DictionaryTool::OnDictionarySelectionChanged() {
   }
 }
 
-void DictionaryTool::SetupDicContentEditor(const DictionaryInfo &dic_info) {
-  UserDictionary *dic =
-      session_->mutable_storage()->GetUserDictionary(dic_info.id);
+void DictionaryTool::SetupDicContentEditor(const DictionaryInfo& dic_info) {
+  UserDictionary* dic = storage_->GetUserDictionary(dic_info.id);
 
   if (dic == nullptr) {
     LOG(ERROR) << "Failed to load the dictionary: " << dic_info.id;
@@ -638,7 +633,7 @@ void DictionaryTool::SetupDicContentEditor(const DictionaryInfo &dic_info) {
         tr("Updating the current view data..."), this, dic->entries_size()));
 
     for (size_t i = 0; i < dic->entries_size(); ++i) {
-      const UserDictionary::Entry &entry = dic->entries(i);
+      const UserDictionary::Entry& entry = dic->entries(i);
       dic_content_->setItem(i, 0, new QTableWidgetItem(QUtf8(entry.key())));
       dic_content_->setItem(i, 1, new QTableWidgetItem(QUtf8(entry.value())));
       dic_content_->setItem(
@@ -702,16 +697,14 @@ void DictionaryTool::DeleteDictionary() {
     return;
   }
 
-  if (absl::Status s =
-          session_->mutable_storage()->DeleteDictionary(dic_info.id);
-      !s.ok()) {
+  if (absl::Status s = storage_->DeleteDictionary(dic_info.id); !s.ok()) {
     LOG(ERROR) << "Failed to delete the dictionary. " << s;
     ReportError(s);
     return;
   }
 
   modified_ = false;
-  QListWidgetItem *item = dic_list_->takeItem(dic_info.row);
+  QListWidgetItem* item = dic_list_->takeItem(dic_info.row);
   delete item;
 
   UpdateUIStatus();
@@ -731,8 +724,8 @@ void DictionaryTool::RenameDictionary() {
     return;
   }
 
-  if (absl::Status s = session_->mutable_storage()->RenameDictionary(
-          dic_info.id, dic_name.toStdString());
+  if (absl::Status s =
+          storage_->RenameDictionary(dic_info.id, dic_name.toStdString());
       !s.ok()) {
     LOG(ERROR) << "Failed to rename the dictionary. " << s;
     ReportError(s);
@@ -792,7 +785,7 @@ void DictionaryTool::ImportAndAppendDictionary() {
 }
 
 void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
-                                       const QString &dic_name,
+                                       const QString& dic_name,
                                        int added_entries_size) {
   switch (error) {
     case UserDictionaryImporter::IMPORT_NO_ERROR:
@@ -839,7 +832,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
 }
 
 void DictionaryTool::ImportHelper(
-    uint64_t dic_id, const QString &dic_name, const QString &file_name,
+    uint64_t dic_id, const QString& dic_name, const QString& file_name,
     UserDictionaryImporter::IMEType ime_type,
     UserDictionaryImporter::EncodingType encoding_type) {
   if (!IsReadableToImport(file_name)) {
@@ -851,8 +844,7 @@ void DictionaryTool::ImportHelper(
 
   const std::string dic_name_str = dic_name.toStdString();
   if (dic_id == 0) {
-    absl::StatusOr<uint64_t> s =
-        session_->mutable_storage()->CreateDictionary(dic_name_str);
+    absl::StatusOr<uint64_t> s = storage_->CreateDictionary(dic_name_str);
     if (!s.status().ok()) {
       LOG(ERROR) << "Failed to create the dictionary.";
       ReportError(s.status());
@@ -861,7 +853,7 @@ void DictionaryTool::ImportHelper(
     dic_id = s.value();
   }
 
-  UserDictionary *dic = session_->mutable_storage()->GetUserDictionary(dic_id);
+  UserDictionary* dic = storage_->GetUserDictionary(dic_id);
 
   if (dic == nullptr) {
     LOG(ERROR) << "Cannot find dictionary id: " << dic_id;
@@ -941,8 +933,7 @@ void DictionaryTool::ImportFromDefaultIME() {
 
   SyncToStorage();
 
-  UserDictionary *dic =
-      session_->mutable_storage()->GetUserDictionary(dic_info.id);
+  UserDictionary* dic = storage_->GetUserDictionary(dic_info.id);
   DCHECK(dic);
 
   const int old_size = dic->entries_size();
@@ -991,8 +982,8 @@ void DictionaryTool::ExportDictionary() {
 
   SyncToStorage();
 
-  if (absl::Status s = session_->mutable_storage()->ExportDictionary(
-          dic_info.id, file_name.toStdString());
+  if (absl::Status s =
+          storage_->ExportDictionary(dic_info.id, file_name.toStdString());
       !s.ok()) {
     LOG(ERROR) << "Failed to export the dictionary. " << s;
     ReportError(s);
@@ -1023,18 +1014,18 @@ void DictionaryTool::AddWord() {
     new_word_button_->setEnabled(false);
   }
 
-  QTableWidgetItem *item = dic_content_->item(row, 0);
+  QTableWidgetItem* item = dic_content_->item(row, 0);
   dic_content_->setCurrentItem(item);
   dic_content_->editItem(item);
 
   UpdateUIStatus();
 }
 
-void DictionaryTool::GetSortedSelectedRows(std::vector<int> *rows) const {
+void DictionaryTool::GetSortedSelectedRows(std::vector<int>* rows) const {
   DCHECK(rows);
   rows->clear();
 
-  const QList<QTableWidgetItem *> items = dic_content_->selectedItems();
+  const QList<QTableWidgetItem*> items = dic_content_->selectedItems();
   if (items.empty()) {
     return;
   }
@@ -1050,8 +1041,8 @@ void DictionaryTool::GetSortedSelectedRows(std::vector<int> *rows) const {
   rows->resize(end - rows->begin());
 }
 
-QListWidgetItem *DictionaryTool::GetFirstSelectedDictionary() const {
-  QList<QListWidgetItem *> selected_dicts = dic_list_->selectedItems();
+QListWidgetItem* DictionaryTool::GetFirstSelectedDictionary() const {
+  QList<QListWidgetItem*> selected_dicts = dic_list_->selectedItems();
   if (selected_dicts.isEmpty()) {
     LOG(WARNING) << "No current dictionary.";
     return nullptr;
@@ -1107,7 +1098,7 @@ void DictionaryTool::DeleteWord() {
 }
 
 void DictionaryTool::EditPos(const absl::string_view pos) {
-  const QList<QTableWidgetItem *> items = dic_content_->selectedItems();
+  const QList<QTableWidgetItem*> items = dic_content_->selectedItems();
   if (items.empty()) {
     return;
   }
@@ -1125,20 +1116,20 @@ void DictionaryTool::EditPos(const absl::string_view pos) {
 }
 
 void DictionaryTool::MoveTo(int dictionary_row) {
-  UserDictionary *target_dict = nullptr;
+  UserDictionary* target_dict = nullptr;
   {
-    const QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
+    const QListWidgetItem* selected_dict = GetFirstSelectedDictionary();
     if (selected_dict == nullptr) {
       return;
     }
-    QListWidgetItem *target_dict_item = dic_list_->item(dictionary_row);
+    QListWidgetItem* target_dict_item = dic_list_->item(dictionary_row);
     DCHECK(target_dict_item);
     if (target_dict_item == selected_dict) {
       LOG(WARNING) << "Target dictionary is the current dictionary.";
       return;
     }
 
-    target_dict = session_->mutable_storage()->GetUserDictionary(
+    target_dict = storage_->GetUserDictionary(
         target_dict_item->data(Qt::UserRole).toULongLong());
   }
 
@@ -1171,7 +1162,7 @@ void DictionaryTool::MoveTo(int dictionary_row) {
     int progress_index = 0;
     if (target_dict) {
       for (size_t i = 0; i < rows.size(); ++i) {
-        UserDictionary::Entry *entry = target_dict->add_entries();
+        UserDictionary::Entry* entry = target_dict->add_entries();
         const int row = rows[i];
         entry->set_key(dic_content_->item(row, 0)->text().toStdString());
         entry->set_value(dic_content_->item(row, 1)->text().toStdString());
@@ -1202,7 +1193,7 @@ void DictionaryTool::MoveTo(int dictionary_row) {
 }
 
 void DictionaryTool::EditComment() {
-  const QList<QTableWidgetItem *> items = dic_content_->selectedItems();
+  const QList<QTableWidgetItem*> items = dic_content_->selectedItems();
   if (items.empty()) {
     return;
   }
@@ -1234,7 +1225,7 @@ void DictionaryTool::CloseWindow() {
   this->close();
 }
 
-void DictionaryTool::OnItemChanged(QTableWidgetItem *item) {
+void DictionaryTool::OnItemChanged(QTableWidgetItem* item) {
   if (item->column() == 0 && !item->text().isEmpty() &&
       !UserDictionaryUtil::IsValidReading(item->text().toStdString())) {
     QMessageBox::critical(
@@ -1262,20 +1253,20 @@ void DictionaryTool::OnHeaderClicked(int logicalIndex) {
   modified_ = true;
 }
 
-void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
-  QTableWidgetItem *item = dic_content_->itemAt(pos);
+void DictionaryTool::OnContextMenuRequestedForContent(const QPoint& pos) {
+  QTableWidgetItem* item = dic_content_->itemAt(pos);
   // When the mouse pointer is not on an item of the table widget, we
   // don't show context menu.
   if (item == nullptr) {
     return;
   }
 
-  QMenu *menu = new QMenu(this);
-  QAction *add_action = menu->addAction(tr("Add a word"));
+  QMenu* menu = new QMenu(this);
+  QAction* add_action = menu->addAction(tr("Add a word"));
 
   // Count the number of selected words and create delete menu with an
   // appropriate text.
-  const QList<QTableWidgetItem *> items = dic_content_->selectedItems();
+  const QList<QTableWidgetItem*> items = dic_content_->selectedItems();
   QString delete_menu_text = tr("Delete this word");
   QString move_to_menu_text = tr("Move this word to");
   if (!items.empty()) {
@@ -1289,16 +1280,16 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
       }
     }
   }
-  std::vector<std::pair<int, QAction *> > change_dictionary_actions;
+  std::vector<std::pair<int, QAction*> > change_dictionary_actions;
   // "Move to" is available only when we have 2 or more dictionaries.
   if (dic_list_->count() > 1) {
-    QMenu *move_to = menu->addMenu(move_to_menu_text);
+    QMenu* move_to = menu->addMenu(move_to_menu_text);
     change_dictionary_actions.reserve(dic_list_->count() - 1);
     {
-      const QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
+      const QListWidgetItem* selected_dict = GetFirstSelectedDictionary();
       if (selected_dict != nullptr) {
         for (size_t i = 0; i < dic_list_->count(); ++i) {
-          QListWidgetItem *item = dic_list_->item(i);
+          QListWidgetItem* item = dic_list_->item(i);
           DCHECK(item);
           if (item == selected_dict) {
             // Do not add the current dictionary into the "Move to" list.
@@ -1310,18 +1301,18 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
       }
     }
   }
-  QAction *delete_action = menu->addAction(delete_menu_text);
+  QAction* delete_action = menu->addAction(delete_menu_text);
 
   menu->addSeparator();
-  QMenu *change_category_to = menu->addMenu(tr("Change category to"));
+  QMenu* change_category_to = menu->addMenu(tr("Change category to"));
   const std::vector<std::string> pos_list = pos_list_provider_.GetPosList();
-  std::vector<QAction *> change_pos_actions(pos_list.size());
+  std::vector<QAction*> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
     change_pos_actions[i] = change_category_to->addAction(QUtf8(pos_list[i]));
   }
-  QAction *edit_comment_action = menu->addAction(tr("Edit comment"));
+  QAction* edit_comment_action = menu->addAction(tr("Edit comment"));
 
-  QAction *selected_action = menu->exec(QCursor::pos());
+  QAction* selected_action = menu->exec(QCursor::pos());
 
   if (selected_action == add_action) {
     AddWord();
@@ -1350,19 +1341,19 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   }
 }
 
-void DictionaryTool::OnContextMenuRequestedForList(const QPoint &pos) {
-  QListWidgetItem *item = dic_list_->itemAt(pos);
+void DictionaryTool::OnContextMenuRequestedForList(const QPoint& pos) {
+  QListWidgetItem* item = dic_list_->itemAt(pos);
   if (item == nullptr) {
     return;
   }
 
-  QMenu *menu = new QMenu(this);
+  QMenu* menu = new QMenu(this);
 
-  QAction *rename_action = menu->addAction(tr("Rename..."));
-  QAction *delete_action = menu->addAction(tr("Delete"));
-  QAction *import_action = menu->addAction(tr("Import to this dictionary..."));
-  QAction *export_action = menu->addAction(tr("Export this dictionary..."));
-  QAction *selected_action = menu->exec(QCursor::pos());
+  QAction* rename_action = menu->addAction(tr("Rename..."));
+  QAction* delete_action = menu->addAction(tr("Delete"));
+  QAction* import_action = menu->addAction(tr("Import to this dictionary..."));
+  QAction* export_action = menu->addAction(tr("Export this dictionary..."));
+  QAction* selected_action = menu->exec(QCursor::pos());
 
   if ((rename_action != nullptr) && (selected_action == rename_action)) {
     RenameDictionary();
@@ -1378,7 +1369,7 @@ void DictionaryTool::OnContextMenuRequestedForList(const QPoint &pos) {
 DictionaryTool::DictionaryInfo DictionaryTool::current_dictionary() const {
   DictionaryInfo retval = {-1, 0, nullptr};
 
-  QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
+  QListWidgetItem* selected_dict = GetFirstSelectedDictionary();
   if (selected_dict == nullptr) {
     return retval;
   }
@@ -1394,8 +1385,7 @@ void DictionaryTool::SyncToStorage() {
     return;
   }
 
-  UserDictionary *dic =
-      session_->mutable_storage()->GetUserDictionary(current_dic_id_);
+  UserDictionary* dic = storage_->GetUserDictionary(current_dic_id_);
 
   if (dic == nullptr) {
     LOG(ERROR) << "No save dictionary: " << current_dic_id_;
@@ -1405,7 +1395,7 @@ void DictionaryTool::SyncToStorage() {
   dic->clear_entries();
 
   for (int i = 0; i < dic_content_->rowCount(); ++i) {
-    UserDictionary::Entry *entry = dic->add_entries();
+    UserDictionary::Entry* entry = dic->add_entries();
     entry->set_key(dic_content_->item(i, 0)->text().toStdString());
     entry->set_value(dic_content_->item(i, 1)->text().toStdString());
     // TODO(yuryu): remove c_str() after changing ToPosType to take
@@ -1419,9 +1409,9 @@ void DictionaryTool::SyncToStorage() {
   modified_ = false;
 }
 
-void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
+void DictionaryTool::CreateDictionaryHelper(const QString& dic_name) {
   absl::StatusOr<uint64_t> s =
-      session_->mutable_storage()->CreateDictionary(dic_name.toStdString());
+      storage_->CreateDictionary(dic_name.toStdString());
   if (!s.status().ok()) {
     LOG(ERROR) << "Failed to create a new dictionary. " << s;
     ReportError(s.status());
@@ -1430,7 +1420,7 @@ void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
 
   const uint64_t new_dic_id = s.value();
 
-  QListWidgetItem *item = new QListWidgetItem(dic_list_);
+  QListWidgetItem* item = new QListWidgetItem(dic_list_);
   DCHECK(item);
   item->setText(dic_name);
   item->setData(Qt::UserRole, QVariant(static_cast<qulonglong>(new_dic_id)));
@@ -1442,15 +1432,13 @@ void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
 
 bool DictionaryTool::InitDictionaryList() {
   dic_list_->clear();
-  const UserDictionaryStorage &storage = session_->storage();
-
-  for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
-    QListWidgetItem *item = new QListWidgetItem(dic_list_);
+  for (size_t i = 0; i < storage_->dictionaries_size(); ++i) {
+    QListWidgetItem* item = new QListWidgetItem(dic_list_);
     DCHECK(item);
-    item->setText(QUtf8(storage.dictionaries(i).name()));
+    item->setText(QUtf8(storage_->dictionaries(i).name()));
     item->setData(
         Qt::UserRole,
-        QVariant(static_cast<qulonglong>(storage.dictionaries(i).id())));
+        QVariant(static_cast<qulonglong>(storage_->dictionaries(i).id())));
   }
 
   UpdateUIStatus();
@@ -1458,8 +1446,8 @@ bool DictionaryTool::InitDictionaryList() {
   return true;
 }
 
-QString DictionaryTool::PromptForDictionaryName(const QString &text,
-                                                const QString &label) {
+QString DictionaryTool::PromptForDictionaryName(const QString& text,
+                                                const QString& label) {
   bool ok = false;
   QString dic_name;
   do {
@@ -1477,7 +1465,7 @@ QString DictionaryTool::PromptForDictionaryName(const QString &text,
   return dic_name;
 }
 
-void DictionaryTool::ReportError(const absl::Status &s) {
+void DictionaryTool::ReportError(const absl::Status& s) {
   switch (s.raw_code()) {
     case mozc::UserDictionaryStorage::INVALID_CHARACTERS_IN_DICTIONARY_NAME:
       LOG(ERROR) << "Dictionary name contains an invalid character.";
@@ -1511,8 +1499,8 @@ void DictionaryTool::StartMonitoringUserEdit() {
   if (monitoring_user_edit_) {
     return;
   }
-  connect(dic_content_, SIGNAL(itemChanged(QTableWidgetItem *)), this,
-          SLOT(OnItemChanged(QTableWidgetItem *)));
+  connect(dic_content_, SIGNAL(itemChanged(QTableWidgetItem*)), this,
+          SLOT(OnItemChanged(QTableWidgetItem*)));
   monitoring_user_edit_ = true;
 }
 
@@ -1520,13 +1508,13 @@ void DictionaryTool::StopMonitoringUserEdit() {
   if (!monitoring_user_edit_) {
     return;
   }
-  disconnect(dic_content_, SIGNAL(itemChanged(QTableWidgetItem *)), this,
-             SLOT(OnItemChanged(QTableWidgetItem *)));
+  disconnect(dic_content_, SIGNAL(itemChanged(QTableWidgetItem*)), this,
+             SLOT(OnItemChanged(QTableWidgetItem*)));
   monitoring_user_edit_ = false;
 }
 
 absl::Status DictionaryTool::SaveAndReloadServer() {
-  absl::Status status = session_->mutable_storage()->Save();
+  absl::Status status = storage_->Save();
 
   if (!status.ok() && !absl::IsResourceExhausted(status)) {
     LOG(ERROR) << "Cannot save dictionary: " << status;
@@ -1555,12 +1543,12 @@ absl::Status DictionaryTool::SaveAndReloadServer() {
   return status;
 }
 
-bool DictionaryTool::IsReadableToImport(const QString &file_name) {
+bool DictionaryTool::IsReadableToImport(const QString& file_name) {
   QFileInfo file_info(file_name);
   return file_info.isFile() && file_info.isReadable();
 }
 
-bool DictionaryTool::IsWritableToExport(const QString &file_name) {
+bool DictionaryTool::IsWritableToExport(const QString& file_name) {
   QFileInfo file_info(file_name);
   if (file_info.exists()) {
     return file_info.isFile() && file_info.isWritable();
@@ -1578,7 +1566,7 @@ bool DictionaryTool::IsWritableToExport(const QString &file_name) {
 
 void DictionaryTool::UpdateUIStatus() {
   const bool is_enable_new_dic =
-      dic_list_->count() < session_->mutable_storage()->max_dictionary_size();
+      dic_list_->count() < storage_->max_dictionary_size();
   new_action_->setEnabled(is_enable_new_dic);
   import_create_action_->setEnabled(is_enable_new_dic);
 

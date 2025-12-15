@@ -158,7 +158,6 @@ mozc_cc_qt_library(
         "//data_manager:pos_list_provider",
         "//dictionary:user_dictionary",
         "//dictionary:user_dictionary_importer",
-        "//dictionary:user_dictionary_session",
         "//dictionary:user_dictionary_storage",
         "//dictionary:user_dictionary_util",
         "//dictionary:user_pos",

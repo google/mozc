@@ -36,6 +36,7 @@
 #include <memory>
 
 #include "data_manager/pos_list_provider.h"
+#include "dictionary/user_dictionary_storage.h"
 #include "gui/word_register_dialog/ui_word_register_dialog.h"
 
 namespace mozc {
@@ -43,10 +44,6 @@ namespace mozc {
 namespace client {
 class ClientInterface;
 }  // namespace client
-
-namespace user_dictionary {
-class UserDictionarySession;
-}  // namespace user_dictionary
 
 namespace gui {
 class WordRegisterDialog : public QDialog, private Ui::WordRegisterDialog {
@@ -59,8 +56,8 @@ class WordRegisterDialog : public QDialog, private Ui::WordRegisterDialog {
   bool IsAvailable() const;
 
  protected slots:
-  void Clicked(QAbstractButton *button);
-  void LineEditChanged(const QString &str);
+  void Clicked(QAbstractButton* button);
+  void LineEditChanged(const QString& str);
   void CompleteReading();
   void LaunchDictionaryTool();
 
@@ -98,18 +95,18 @@ class WordRegisterDialog : public QDialog, private Ui::WordRegisterDialog {
   bool SetDefaultEntryFromEnvironmentVariable();
 
   // Return reading of value with reverse conversion feature.
-  QString GetReading(const QString &str);
+  QString GetReading(const QString& str);
 
   // remove "\n" "\r" from |value|.
   // remove whitespace from the start and the end.
-  QString TrimValue(const QString &str) const;
+  QString TrimValue(const QString& str) const;
 
   // turn on IME.
   // When the dialog is shown, it is better to turn on IME.
   void EnableIME();
 
   bool is_available_;
-  std::unique_ptr<mozc::user_dictionary::UserDictionarySession> session_;
+  std::unique_ptr<UserDictionaryStorage> storage_;
   std::unique_ptr<client::ClientInterface> client_;
   QString window_title_;
   const PosListProvider pos_list_provider_;
