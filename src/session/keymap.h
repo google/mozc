@@ -51,11 +51,11 @@ struct DirectInputState {
     NONE = 0,
     IME_ON,
     // Switch input mode.
-    INPUT_MODE_HIRAGANA,
-    INPUT_MODE_FULL_KATAKANA,
-    INPUT_MODE_HALF_KATAKANA,
-    INPUT_MODE_FULL_ALPHANUMERIC,
-    INPUT_MODE_HALF_ALPHANUMERIC,
+    COMPOSITION_MODE_HIRAGANA,
+    COMPOSITION_MODE_FULL_KATAKANA,
+    COMPOSITION_MODE_HALF_KATAKANA,
+    COMPOSITION_MODE_FULL_ALPHANUMERIC,
+    COMPOSITION_MODE_HALF_ALPHANUMERIC,
     RECONVERT,
   };
 };
@@ -73,12 +73,12 @@ struct PrecompositionState {
     INSERT_FULL_SPACE,         // Input full-width space
     TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
     // Switch input mode.
-    INPUT_MODE_HIRAGANA,
-    INPUT_MODE_FULL_KATAKANA,
-    INPUT_MODE_HALF_KATAKANA,
-    INPUT_MODE_FULL_ALPHANUMERIC,
-    INPUT_MODE_HALF_ALPHANUMERIC,
-    INPUT_MODE_SWITCH_KANA_TYPE,  // rotate input mode
+    COMPOSITION_MODE_HIRAGANA,
+    COMPOSITION_MODE_FULL_KATAKANA,
+    COMPOSITION_MODE_HALF_KATAKANA,
+    COMPOSITION_MODE_FULL_ALPHANUMERIC,
+    COMPOSITION_MODE_HALF_ALPHANUMERIC,
+    COMPOSITION_MODE_SWITCH_KANA_TYPE,  // rotate input mode
     LAUNCH_CONFIG_DIALOG,
     LAUNCH_DICTIONARY_TOOL,
     LAUNCH_WORD_REGISTER_DIALOG,
@@ -136,11 +136,11 @@ struct CompositionState {
     TRANSLATE_HALF_ASCII,      // F10
     TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
     // Switch input mode.
-    INPUT_MODE_HIRAGANA,
-    INPUT_MODE_FULL_KATAKANA,
-    INPUT_MODE_HALF_KATAKANA,
-    INPUT_MODE_FULL_ALPHANUMERIC,
-    INPUT_MODE_HALF_ALPHANUMERIC,
+    COMPOSITION_MODE_HIRAGANA,
+    COMPOSITION_MODE_FULL_KATAKANA,
+    COMPOSITION_MODE_HALF_KATAKANA,
+    COMPOSITION_MODE_FULL_ALPHANUMERIC,
+    COMPOSITION_MODE_HALF_ALPHANUMERIC,
   };
 };
 
@@ -187,11 +187,11 @@ struct ConversionState {
     TRANSLATE_HALF_ASCII,      // F10
     TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
     // Switch input mode.
-    INPUT_MODE_HIRAGANA,
-    INPUT_MODE_FULL_KATAKANA,
-    INPUT_MODE_HALF_KATAKANA,
-    INPUT_MODE_FULL_ALPHANUMERIC,
-    INPUT_MODE_HALF_ALPHANUMERIC,
+    COMPOSITION_MODE_HIRAGANA,
+    COMPOSITION_MODE_FULL_KATAKANA,
+    COMPOSITION_MODE_HALF_KATAKANA,
+    COMPOSITION_MODE_FULL_ALPHANUMERIC,
+    COMPOSITION_MODE_HALF_ALPHANUMERIC,
     DELETE_SELECTED_CANDIDATE,
     REPORT_BUG,
   };
@@ -322,9 +322,9 @@ class KeyMapManager {
                                  ConversionState::Commands command);
 
 #if defined(__APPLE__)
-  static constexpr bool kInputModeXCommandSupported = false;
+  static constexpr bool kCompositionModeXCommandSupported = false;
 #else   // __APPLE__
-  static constexpr bool kInputModeXCommandSupported = true;
+  static constexpr bool kCompositionModeXCommandSupported = true;
 #endif  // __APPLE__
 
   absl::flat_hash_map<std::string, DirectInputState::Commands>

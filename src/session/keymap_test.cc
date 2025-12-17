@@ -64,12 +64,16 @@ class KeyMapManagerTestPeer : public testing::TestPeer<KeyMapManager> {
   PEER_METHOD(AddCommand);
   PEER_METHOD(LoadStream);
   PEER_METHOD(LoadStreamWithErrors);
+  PEER_METHOD(ParseCommandDirect);
+  PEER_METHOD(ParseCommandPrecomposition);
+  PEER_METHOD(ParseCommandComposition);
+  PEER_METHOD(ParseCommandConversion);
 };
 
 class KeyMapTest : public testing::TestWithTempUserProfile {
  protected:
-  bool isInputModeXCommandSupported() const {
-    return KeyMapManager::kInputModeXCommandSupported;
+  bool isCompositionModeXCommandSupported() const {
+    return KeyMapManager::kCompositionModeXCommandSupported;
   }
 };
 
@@ -377,6 +381,24 @@ TEST_F(KeyMapTest, GetName) {
     EXPECT_TRUE(
         manager.GetNameFromCommandDirect(DirectInputState::RECONVERT, &name));
     EXPECT_EQ(name, "Reconvert");
+
+    if (isCompositionModeXCommandSupported()) {
+      EXPECT_TRUE(manager.GetNameFromCommandDirect(
+          DirectInputState::COMPOSITION_MODE_HIRAGANA, &name));
+      EXPECT_EQ(name, "CompositionModeHiragana");
+      EXPECT_TRUE(manager.GetNameFromCommandDirect(
+          DirectInputState::COMPOSITION_MODE_FULL_KATAKANA, &name));
+      EXPECT_EQ(name, "CompositionModeFullKatakana");
+      EXPECT_TRUE(manager.GetNameFromCommandDirect(
+          DirectInputState::COMPOSITION_MODE_HALF_KATAKANA, &name));
+      EXPECT_EQ(name, "CompositionModeHalfKatakana");
+      EXPECT_TRUE(manager.GetNameFromCommandDirect(
+          DirectInputState::COMPOSITION_MODE_FULL_ALPHANUMERIC, &name));
+      EXPECT_EQ(name, "CompositionModeFullAlphanumeric");
+      EXPECT_TRUE(manager.GetNameFromCommandDirect(
+          DirectInputState::COMPOSITION_MODE_HALF_ALPHANUMERIC, &name));
+      EXPECT_EQ(name, "CompositionModeHalfAlphanumeric");
+    }
   }
   {
     // Precomposition
@@ -393,6 +415,27 @@ TEST_F(KeyMapTest, GetName) {
     EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
         PrecompositionState::RECONVERT, &name));
     EXPECT_EQ(name, "Reconvert");
+
+    if (isCompositionModeXCommandSupported()) {
+      EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
+          PrecompositionState::COMPOSITION_MODE_HIRAGANA, &name));
+      EXPECT_EQ(name, "CompositionModeHiragana");
+      EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
+          PrecompositionState::COMPOSITION_MODE_FULL_KATAKANA, &name));
+      EXPECT_EQ(name, "CompositionModeFullKatakana");
+      EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
+          PrecompositionState::COMPOSITION_MODE_HALF_KATAKANA, &name));
+      EXPECT_EQ(name, "CompositionModeHalfKatakana");
+      EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
+          PrecompositionState::COMPOSITION_MODE_FULL_ALPHANUMERIC, &name));
+      EXPECT_EQ(name, "CompositionModeFullAlphanumeric");
+      EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
+          PrecompositionState::COMPOSITION_MODE_HALF_ALPHANUMERIC, &name));
+      EXPECT_EQ(name, "CompositionModeHalfAlphanumeric");
+      EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
+          PrecompositionState::COMPOSITION_MODE_SWITCH_KANA_TYPE, &name));
+      EXPECT_EQ(name, "CompositionModeSwitchKanaType");
+    }
   }
   {
     // Composition
@@ -406,6 +449,24 @@ TEST_F(KeyMapTest, GetName) {
     EXPECT_TRUE(manager.GetNameFromCommandComposition(
         CompositionState::INSERT_CHARACTER, &name));
     EXPECT_EQ(name, "InsertCharacter");
+
+    if (isCompositionModeXCommandSupported()) {
+      EXPECT_TRUE(manager.GetNameFromCommandComposition(
+          CompositionState::COMPOSITION_MODE_HIRAGANA, &name));
+      EXPECT_EQ(name, "CompositionModeHiragana");
+      EXPECT_TRUE(manager.GetNameFromCommandComposition(
+          CompositionState::COMPOSITION_MODE_FULL_KATAKANA, &name));
+      EXPECT_EQ(name, "CompositionModeFullKatakana");
+      EXPECT_TRUE(manager.GetNameFromCommandComposition(
+          CompositionState::COMPOSITION_MODE_HALF_KATAKANA, &name));
+      EXPECT_EQ(name, "CompositionModeHalfKatakana");
+      EXPECT_TRUE(manager.GetNameFromCommandComposition(
+          CompositionState::COMPOSITION_MODE_FULL_ALPHANUMERIC, &name));
+      EXPECT_EQ(name, "CompositionModeFullAlphanumeric");
+      EXPECT_TRUE(manager.GetNameFromCommandComposition(
+          CompositionState::COMPOSITION_MODE_HALF_ALPHANUMERIC, &name));
+      EXPECT_EQ(name, "CompositionModeHalfAlphanumeric");
+    }
   }
   {
     // Conversion
@@ -419,6 +480,24 @@ TEST_F(KeyMapTest, GetName) {
     EXPECT_TRUE(manager.GetNameFromCommandConversion(
         ConversionState::INSERT_CHARACTER, &name));
     EXPECT_EQ(name, "InsertCharacter");
+
+    if (isCompositionModeXCommandSupported()) {
+      EXPECT_TRUE(manager.GetNameFromCommandConversion(
+          ConversionState::COMPOSITION_MODE_HIRAGANA, &name));
+      EXPECT_EQ(name, "CompositionModeHiragana");
+      EXPECT_TRUE(manager.GetNameFromCommandConversion(
+          ConversionState::COMPOSITION_MODE_FULL_KATAKANA, &name));
+      EXPECT_EQ(name, "CompositionModeFullKatakana");
+      EXPECT_TRUE(manager.GetNameFromCommandConversion(
+          ConversionState::COMPOSITION_MODE_HALF_KATAKANA, &name));
+      EXPECT_EQ(name, "CompositionModeHalfKatakana");
+      EXPECT_TRUE(manager.GetNameFromCommandConversion(
+          ConversionState::COMPOSITION_MODE_FULL_ALPHANUMERIC, &name));
+      EXPECT_EQ(name, "CompositionModeFullAlphanumeric");
+      EXPECT_TRUE(manager.GetNameFromCommandConversion(
+          ConversionState::COMPOSITION_MODE_HALF_ALPHANUMERIC, &name));
+      EXPECT_EQ(name, "CompositionModeHalfAlphanumeric");
+    }
   }
 }
 
@@ -434,6 +513,447 @@ TEST_F(KeyMapTest, DirectModeDoesNotSupportInsertSpace) {
   EXPECT_FALSE(names.contains("InsertAlternateSpace"));
   EXPECT_FALSE(names.contains("InsertHalfSpace"));
   EXPECT_FALSE(names.contains("InsertFullSpace"));
+}
+
+TEST_F(KeyMapTest, DirectStateSupportsCompositionModeCommandStrings) {
+  if (!isCompositionModeXCommandSupported()) {
+    return;
+  }
+
+  KeyMapManager manager;
+  absl::flat_hash_set<std::string> names;
+  manager.AppendAvailableCommandNameDirect(names);
+
+  // CompositionMode* command strings.
+  EXPECT_TRUE(names.contains("CompositionModeHiragana"));
+  EXPECT_TRUE(names.contains("CompositionModeHalfKatakana"));
+  EXPECT_TRUE(names.contains("CompositionModeFullKatakana"));
+  EXPECT_TRUE(names.contains("CompositionModeHalfAlphanumeric"));
+  EXPECT_TRUE(names.contains("CompositionModeFullAlphanumeric"));
+
+  // Legacy InputMode* command strings for backward compat.
+  EXPECT_TRUE(names.contains("InputModeHiragana"));
+  EXPECT_TRUE(names.contains("InputModeHalfKatakana"));
+  EXPECT_TRUE(names.contains("InputModeFullKatakana"));
+  EXPECT_TRUE(names.contains("InputModeHalfAlphanumeric"));
+  EXPECT_TRUE(names.contains("InputModeFullAlphanumeric"));
+}
+
+TEST_F(KeyMapTest, PrecompositionStateSupportsCompositionModeCommandStrings) {
+  if (!isCompositionModeXCommandSupported()) {
+    return;
+  }
+
+  KeyMapManager manager;
+  absl::flat_hash_set<std::string> names;
+  manager.AppendAvailableCommandNamePrecomposition(names);
+
+  // CompositionMode* command strings.
+  EXPECT_TRUE(names.contains("CompositionModeHiragana"));
+  EXPECT_TRUE(names.contains("CompositionModeHalfKatakana"));
+  EXPECT_TRUE(names.contains("CompositionModeFullKatakana"));
+  EXPECT_TRUE(names.contains("CompositionModeHalfAlphanumeric"));
+  EXPECT_TRUE(names.contains("CompositionModeFullAlphanumeric"));
+  EXPECT_TRUE(names.contains("CompositionModeSwitchKanaType"));
+
+  // Legacy InputMode* command strings for backward compat.
+  EXPECT_TRUE(names.contains("InputModeHiragana"));
+  EXPECT_TRUE(names.contains("InputModeHalfKatakana"));
+  EXPECT_TRUE(names.contains("InputModeFullKatakana"));
+  EXPECT_TRUE(names.contains("InputModeHalfAlphanumeric"));
+  EXPECT_TRUE(names.contains("InputModeFullAlphanumeric"));
+  EXPECT_TRUE(names.contains("InputModeSwitchKanaType"));
+}
+
+TEST_F(KeyMapTest, CompositionStateSupportsCompositionModeCommandStrings) {
+  if (!isCompositionModeXCommandSupported()) {
+    return;
+  }
+
+  KeyMapManager manager;
+  absl::flat_hash_set<std::string> names;
+  manager.AppendAvailableCommandNameComposition(names);
+
+  // CompositionMode* command strings.
+  EXPECT_TRUE(names.contains("CompositionModeHiragana"));
+  EXPECT_TRUE(names.contains("CompositionModeHalfKatakana"));
+  EXPECT_TRUE(names.contains("CompositionModeFullKatakana"));
+  EXPECT_TRUE(names.contains("CompositionModeHalfAlphanumeric"));
+  EXPECT_TRUE(names.contains("CompositionModeFullAlphanumeric"));
+
+  // Legacy InputMode* command strings for backward compat.
+  EXPECT_TRUE(names.contains("InputModeHiragana"));
+  EXPECT_TRUE(names.contains("InputModeHalfKatakana"));
+  EXPECT_TRUE(names.contains("InputModeFullKatakana"));
+  EXPECT_TRUE(names.contains("InputModeHalfAlphanumeric"));
+  EXPECT_TRUE(names.contains("InputModeFullAlphanumeric"));
+}
+
+TEST_F(KeyMapTest, ConversionStateSupportsCompositionModeCommandStrings) {
+  if (!isCompositionModeXCommandSupported()) {
+    return;
+  }
+
+  KeyMapManager manager;
+  absl::flat_hash_set<std::string> names;
+  manager.AppendAvailableCommandNameConversion(names);
+
+  // CompositionMode* command strings.
+  EXPECT_TRUE(names.contains("CompositionModeHiragana"));
+  EXPECT_TRUE(names.contains("CompositionModeHalfKatakana"));
+  EXPECT_TRUE(names.contains("CompositionModeFullKatakana"));
+  EXPECT_TRUE(names.contains("CompositionModeHalfAlphanumeric"));
+  EXPECT_TRUE(names.contains("CompositionModeFullAlphanumeric"));
+
+  // Legacy InputMode* command strings for backward compat.
+  EXPECT_TRUE(names.contains("InputModeHiragana"));
+  EXPECT_TRUE(names.contains("InputModeHalfKatakana"));
+  EXPECT_TRUE(names.contains("InputModeFullKatakana"));
+  EXPECT_TRUE(names.contains("InputModeHalfAlphanumeric"));
+  EXPECT_TRUE(names.contains("InputModeFullAlphanumeric"));
+}
+
+TEST_F(KeyMapTest, ParseCompositionModeCommandStringsForDirectState) {
+  KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
+  DirectInputState::Commands command;
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandDirect("CompositionModeHiragana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_HIRAGANA
+                : DirectInputState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandDirect("CompositionModeHalfKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_HALF_KATAKANA
+                : DirectInputState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandDirect("CompositionModeFullKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_FULL_KATAKANA
+                : DirectInputState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandDirect("CompositionModeHalfAlphanumeric",
+                                              &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_HALF_ALPHANUMERIC
+                : DirectInputState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandDirect("CompositionModeFullAlphanumeric",
+                                              &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_FULL_ALPHANUMERIC
+                : DirectInputState::NONE,
+            command);
+}
+
+TEST_F(KeyMapTest, ParseCompositionModeLegacyCommandStringsForDirectState) {
+  KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
+  DirectInputState::Commands command;
+
+  EXPECT_TRUE(manager_peer.ParseCommandDirect("InputModeHiragana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_HIRAGANA
+                : DirectInputState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandDirect("InputModeHalfKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_HALF_KATAKANA
+                : DirectInputState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandDirect("InputModeFullKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_FULL_KATAKANA
+                : DirectInputState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandDirect("InputModeHalfAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_HALF_ALPHANUMERIC
+                : DirectInputState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandDirect("InputModeFullAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? DirectInputState::COMPOSITION_MODE_FULL_ALPHANUMERIC
+                : DirectInputState::NONE,
+            command);
+}
+
+TEST_F(KeyMapTest, ParseCompositionModeCommandStringsForPrecompositionState) {
+  KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
+  PrecompositionState::Commands command;
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition("CompositionModeHiragana",
+                                                      &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_HIRAGANA
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition(
+      "CompositionModeHalfKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_HALF_KATAKANA
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition(
+      "CompositionModeFullKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_FULL_KATAKANA
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition(
+      "CompositionModeHalfAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_HALF_ALPHANUMERIC
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition(
+      "CompositionModeFullAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_FULL_ALPHANUMERIC
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition(
+      "CompositionModeSwitchKanaType", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_SWITCH_KANA_TYPE
+                : PrecompositionState::NONE,
+            command);
+}
+
+TEST_F(KeyMapTest,
+       ParseCompositionModeLegacyCommandStringsForPrecompositionState) {
+  KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
+  PrecompositionState::Commands command;
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandPrecomposition("InputModeHiragana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_HIRAGANA
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition("InputModeHalfKatakana",
+                                                      &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_HALF_KATAKANA
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition("InputModeFullKatakana",
+                                                      &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_FULL_KATAKANA
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition(
+      "InputModeHalfAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_HALF_ALPHANUMERIC
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition(
+      "InputModeFullAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_FULL_ALPHANUMERIC
+                : PrecompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandPrecomposition("InputModeSwitchKanaType",
+                                                      &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? PrecompositionState::COMPOSITION_MODE_SWITCH_KANA_TYPE
+                : PrecompositionState::NONE,
+            command);
+}
+
+TEST_F(KeyMapTest, ParseCompositionModeCommandStringsForCompositionState) {
+  KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
+  CompositionState::Commands command;
+
+  EXPECT_TRUE(manager_peer.ParseCommandComposition("CompositionModeHiragana",
+                                                   &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_HIRAGANA
+                : CompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandComposition(
+      "CompositionModeHalfKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_HALF_KATAKANA
+                : CompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandComposition(
+      "CompositionModeFullKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_FULL_KATAKANA
+                : CompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandComposition(
+      "CompositionModeHalfAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_HALF_ALPHANUMERIC
+                : CompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandComposition(
+      "CompositionModeFullAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_FULL_ALPHANUMERIC
+                : CompositionState::NONE,
+            command);
+}
+
+TEST_F(KeyMapTest,
+       ParseCompositionModeLegacyCommandStringsForCompositionState) {
+  KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
+  CompositionState::Commands command;
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandComposition("InputModeHiragana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_HIRAGANA
+                : CompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandComposition("InputModeHalfKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_HALF_KATAKANA
+                : CompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandComposition("InputModeFullKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_FULL_KATAKANA
+                : CompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandComposition("InputModeHalfAlphanumeric",
+                                                   &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_HALF_ALPHANUMERIC
+                : CompositionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandComposition("InputModeFullAlphanumeric",
+                                                   &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? CompositionState::COMPOSITION_MODE_FULL_ALPHANUMERIC
+                : CompositionState::NONE,
+            command);
+}
+
+TEST_F(KeyMapTest, ParseCompositionModeCommandStringsForConversionState) {
+  KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
+  ConversionState::Commands command;
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandConversion("CompositionModeHiragana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_HIRAGANA
+                : ConversionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandConversion("CompositionModeHalfKatakana",
+                                                  &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_HALF_KATAKANA
+                : ConversionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandConversion("CompositionModeFullKatakana",
+                                                  &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_FULL_KATAKANA
+                : ConversionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandConversion(
+      "CompositionModeHalfAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_HALF_ALPHANUMERIC
+                : ConversionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandConversion(
+      "CompositionModeFullAlphanumeric", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_FULL_ALPHANUMERIC
+                : ConversionState::NONE,
+            command);
+}
+
+TEST_F(KeyMapTest, ParseCompositionModeLegacyCommandStringsForConversionState) {
+  KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
+  ConversionState::Commands command;
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandConversion("InputModeHiragana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_HIRAGANA
+                : ConversionState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandConversion("InputModeHalfKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_HALF_KATAKANA
+                : ConversionState::NONE,
+            command);
+
+  EXPECT_TRUE(
+      manager_peer.ParseCommandConversion("InputModeFullKatakana", &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_FULL_KATAKANA
+                : ConversionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandConversion("InputModeHalfAlphanumeric",
+                                                  &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_HALF_ALPHANUMERIC
+                : ConversionState::NONE,
+            command);
+
+  EXPECT_TRUE(manager_peer.ParseCommandConversion("InputModeFullAlphanumeric",
+                                                  &command));
+  EXPECT_EQ(isCompositionModeXCommandSupported()
+                ? ConversionState::COMPOSITION_MODE_FULL_ALPHANUMERIC
+                : ConversionState::NONE,
+            command);
 }
 
 TEST_F(KeyMapTest, ShiftTabToConvertPrev) {
@@ -661,9 +1181,9 @@ TEST_F(KeyMapTest, ShortcutKeysWithCapsLockIssue5627459) {
   EXPECT_FALSE(manager.GetCommandComposition(key_event, &composition_command));
 }
 
-// InputModeX is not supported on MacOSX.
-TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOsIssue13947207) {
-  if (!isInputModeXCommandSupported()) {
+// CompositionModeX is not supported on MacOSX.
+TEST_F(KeyMapTest, CompositionModeChangeIsNotEnabledOnChromeOsIssue13947207) {
+  if (!isCompositionModeXCommandSupported()) {
     return;
   }
 
@@ -674,7 +1194,7 @@ TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOsIssue13947207) {
     KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
     KeyParser::ParseKey("Hiragana", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-    EXPECT_EQ(conv_command, ConversionState::INPUT_MODE_HIRAGANA);
+    EXPECT_EQ(conv_command, ConversionState::COMPOSITION_MODE_HIRAGANA);
   }
   {  // CHROMEOS
     KeyMapManager manager(GetDefaultConfig(config::Config::CHROMEOS));

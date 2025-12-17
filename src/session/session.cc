@@ -579,15 +579,15 @@ bool Session::SendKeyDirectInputState(commands::Command* command) {
   switch (key_command) {
     case keymap::DirectInputState::IME_ON:
       return IMEOn(command);
-    case keymap::DirectInputState::INPUT_MODE_HIRAGANA:
+    case keymap::DirectInputState::COMPOSITION_MODE_HIRAGANA:
       return CompositionModeHiragana(command);
-    case keymap::DirectInputState::INPUT_MODE_FULL_KATAKANA:
+    case keymap::DirectInputState::COMPOSITION_MODE_FULL_KATAKANA:
       return CompositionModeFullKatakana(command);
-    case keymap::DirectInputState::INPUT_MODE_HALF_KATAKANA:
+    case keymap::DirectInputState::COMPOSITION_MODE_HALF_KATAKANA:
       return CompositionModeHalfKatakana(command);
-    case keymap::DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC:
+    case keymap::DirectInputState::COMPOSITION_MODE_FULL_ALPHANUMERIC:
       return CompositionModeFullASCII(command);
-    case keymap::DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC:
+    case keymap::DirectInputState::COMPOSITION_MODE_HALF_ALPHANUMERIC:
       return CompositionModeHalfASCII(command);
     case keymap::DirectInputState::NONE:
       return EchoBackAndClearUndoContext(command);
@@ -642,17 +642,17 @@ bool Session::SendKeyPrecompositionState(commands::Command* command) {
     case keymap::PrecompositionState::IME_ON:
       return DoNothing(command);
 
-    case keymap::PrecompositionState::INPUT_MODE_HIRAGANA:
+    case keymap::PrecompositionState::COMPOSITION_MODE_HIRAGANA:
       return CompositionModeHiragana(command);
-    case keymap::PrecompositionState::INPUT_MODE_FULL_KATAKANA:
+    case keymap::PrecompositionState::COMPOSITION_MODE_FULL_KATAKANA:
       return CompositionModeFullKatakana(command);
-    case keymap::PrecompositionState::INPUT_MODE_HALF_KATAKANA:
+    case keymap::PrecompositionState::COMPOSITION_MODE_HALF_KATAKANA:
       return CompositionModeHalfKatakana(command);
-    case keymap::PrecompositionState::INPUT_MODE_FULL_ALPHANUMERIC:
+    case keymap::PrecompositionState::COMPOSITION_MODE_FULL_ALPHANUMERIC:
       return CompositionModeFullASCII(command);
-    case keymap::PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC:
+    case keymap::PrecompositionState::COMPOSITION_MODE_HALF_ALPHANUMERIC:
       return CompositionModeHalfASCII(command);
-    case keymap::PrecompositionState::INPUT_MODE_SWITCH_KANA_TYPE:
+    case keymap::PrecompositionState::COMPOSITION_MODE_SWITCH_KANA_TYPE:
       return CompositionModeSwitchKanaType(command);
 
     case keymap::PrecompositionState::LAUNCH_CONFIG_DIALOG:
@@ -804,19 +804,19 @@ bool Session::SendKeyCompositionState(commands::Command* command) {
     case keymap::CompositionState::TOGGLE_ALPHANUMERIC_MODE:
       return ToggleAlphanumericMode(command);
 
-    case keymap::CompositionState::INPUT_MODE_HIRAGANA:
+    case keymap::CompositionState::COMPOSITION_MODE_HIRAGANA:
       return CompositionModeHiragana(command);
 
-    case keymap::CompositionState::INPUT_MODE_FULL_KATAKANA:
+    case keymap::CompositionState::COMPOSITION_MODE_FULL_KATAKANA:
       return CompositionModeFullKatakana(command);
 
-    case keymap::CompositionState::INPUT_MODE_HALF_KATAKANA:
+    case keymap::CompositionState::COMPOSITION_MODE_HALF_KATAKANA:
       return CompositionModeHalfKatakana(command);
 
-    case keymap::CompositionState::INPUT_MODE_FULL_ALPHANUMERIC:
+    case keymap::CompositionState::COMPOSITION_MODE_FULL_ALPHANUMERIC:
       return CompositionModeFullASCII(command);
 
-    case keymap::CompositionState::INPUT_MODE_HALF_ALPHANUMERIC:
+    case keymap::CompositionState::COMPOSITION_MODE_HALF_ALPHANUMERIC:
       return CompositionModeHalfASCII(command);
 
     case keymap::CompositionState::NONE:
@@ -949,19 +949,19 @@ bool Session::SendKeyConversionState(commands::Command* command) {
     case keymap::ConversionState::TOGGLE_ALPHANUMERIC_MODE:
       return ToggleAlphanumericMode(command);
 
-    case keymap::ConversionState::INPUT_MODE_HIRAGANA:
+    case keymap::ConversionState::COMPOSITION_MODE_HIRAGANA:
       return CompositionModeHiragana(command);
 
-    case keymap::ConversionState::INPUT_MODE_FULL_KATAKANA:
+    case keymap::ConversionState::COMPOSITION_MODE_FULL_KATAKANA:
       return CompositionModeFullKatakana(command);
 
-    case keymap::ConversionState::INPUT_MODE_HALF_KATAKANA:
+    case keymap::ConversionState::COMPOSITION_MODE_HALF_KATAKANA:
       return CompositionModeHalfKatakana(command);
 
-    case keymap::ConversionState::INPUT_MODE_FULL_ALPHANUMERIC:
+    case keymap::ConversionState::COMPOSITION_MODE_FULL_ALPHANUMERIC:
       return CompositionModeFullASCII(command);
 
-    case keymap::ConversionState::INPUT_MODE_HALF_ALPHANUMERIC:
+    case keymap::ConversionState::COMPOSITION_MODE_HALF_ALPHANUMERIC:
       return CompositionModeHalfASCII(command);
 
     case keymap::ConversionState::REPORT_BUG:

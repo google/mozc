@@ -591,6 +591,7 @@ mozc_cc_library(
         "//base:config_file_stream",
         "//base:file_stream",
         "//base:util",
+        "//base/container:flat_map",
         "//base/protobuf:repeated_field",
         "//composer:key_event_util",
         "//composer:key_parser",
