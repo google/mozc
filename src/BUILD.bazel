@@ -195,6 +195,9 @@ cc_library(
             "UNICODE",
             "_UNICODE",
         ],
+        prod_linux = [
+            "GOOGLE_JAPANESE_INPUT_BUILD",
+        ],
         prod_macos = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
         ],
