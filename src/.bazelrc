@@ -2,9 +2,10 @@
 startup  --windows_enable_symlinks  # ignored on non-Windows platforms
 
 ## Target platforms
-common:linux      --config=linux_env --define TARGET=oss_linux
-common:oss_linux  --config=linux_env --define TARGET=oss_linux
-common:prod_linux --config=linux_env --define TARGET=prod_linux
+common:linux          --config=linux_env --define TARGET=oss_linux
+common:oss_linux      --config=linux_env --define TARGET=oss_linux
+common:prod_linux     --config=linux_env --define TARGET=prod_linux
+common:prod_linux_dev --config=linux_env --define TARGET=prod_linux --config=dev_channel
 
 common:macos          --config=macos_env --define TARGET=oss_macos
 common:oss_macos      --config=macos_env --define TARGET=oss_macos
