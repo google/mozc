@@ -177,7 +177,7 @@ class UserDictionary::TokensIndex {
 
       for (const UserDictionaryStorage::UserDictionaryEntry& entry :
            dic.entries()) {
-        if (!UserDictionaryUtil::IsValidEntry(user_pos_, entry)) {
+        if (!user_dictionary::IsValidEntry(user_pos_, entry)) {
           continue;
         }
         if (canceled_signal->load()) {
@@ -189,7 +189,7 @@ class UserDictionary::TokensIndex {
         // because the normalization is user-visible.
         // http://b/2480844
         std::string reading = japanese::NormalizeVoicedSoundMark(
-            UserDictionaryUtil::NormalizeReading(entry.key()));
+            user_dictionary::NormalizeReading(entry.key()));
 
         DCHECK(user_dictionary::UserDictionary_PosType_IsValid(entry.pos()));
         static_assert(user_dictionary::UserDictionary_PosType_PosType_MAX <=
@@ -226,7 +226,7 @@ class UserDictionary::TokensIndex {
         } else {
           tokens.clear();
           user_pos_.GetTokens(reading, entry.value(),
-                              UserDictionaryUtil::GetStringPosType(entry.pos()),
+                              user_dictionary::GetStringPosType(entry.pos()),
                               &tokens);
           const absl::string_view comment =
               absl::StripAsciiWhitespace(entry.comment());
@@ -336,7 +336,7 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
                                PosMatcher pos_matcher)
     : UserDictionary::UserDictionary(
           std::move(user_pos), std::move(pos_matcher),
-          UserDictionaryUtil::GetUserDictionaryFileName()) {}
+          user_dictionary::GetUserDictionaryFileName()) {}
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
                                PosMatcher pos_matcher, std::string filename)

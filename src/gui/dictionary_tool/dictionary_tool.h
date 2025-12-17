@@ -133,12 +133,12 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
 
   // Show a special dialog message according to the result
   // of UserDictionaryImporter.
-  void ReportImportError(UserDictionaryImporter::ErrorType error,
+  void ReportImportError(user_dictionary::ErrorType error,
                          const QString& dic_name, int added_entries_size);
 
   void ImportHelper(uint64_t dic_id, const QString& dic_name,
-                    const QString& file_name, UserDictionaryImporter::IMEType,
-                    UserDictionaryImporter::EncodingType encoding_type);
+                    const QString& file_name, user_dictionary::IMEType,
+                    user_dictionary::EncodingType encoding_type);
 
   // Save storage contents into the disk and
   // send Reload command to the server.

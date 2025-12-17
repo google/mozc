@@ -116,7 +116,7 @@ absl::Status UserDictionaryStorage::Load() {
     const UserDictionary& dict = proto_.dictionaries(i);
     if (dict.id() == 0) {
       proto_.mutable_dictionaries(i)->set_id(
-          UserDictionaryUtil::CreateNewDictionaryId(proto_));
+          user_dictionary::CreateNewDictionaryId(proto_));
     }
   }
 
@@ -208,7 +208,7 @@ absl::Status UserDictionaryStorage::ExportDictionary(
   for (size_t i = 0; i < dic.entries_size(); ++i) {
     const UserDictionaryEntry& entry = dic.entries(i);
     ofs << entry.key() << "\t" << entry.value() << "\t"
-        << UserDictionaryUtil::GetStringPosType(entry.pos()) << "\t"
+        << user_dictionary::GetStringPosType(entry.pos()) << "\t"
         << entry.comment() << std::endl;
   }
 
@@ -220,7 +220,7 @@ absl::StatusOr<uint64_t> UserDictionaryStorage::CreateDictionary(
   uint64_t new_dic_id = 0;
 
   UserDictionaryCommandStatus::Status status =
-      UserDictionaryUtil::CreateDictionary(&proto_, dic_name, &new_dic_id);
+      user_dictionary::CreateDictionary(&proto_, dic_name, &new_dic_id);
 
   ExtendedErrorCode error_code = OK;
 
@@ -258,8 +258,7 @@ absl::StatusOr<uint64_t> UserDictionaryStorage::CreateDictionary(
 }
 
 absl::Status UserDictionaryStorage::DeleteDictionary(uint64_t dic_id) {
-  if (!UserDictionaryUtil::DeleteDictionary(&proto_, dic_id, nullptr,
-                                            nullptr)) {
+  if (!user_dictionary::DeleteDictionary(&proto_, dic_id, nullptr, nullptr)) {
     return absl::Status(static_cast<absl::StatusCode>(INVALID_DICTIONARY_ID),
                         "Failed to delete entry");
   }
@@ -298,7 +297,7 @@ absl::Status UserDictionaryStorage::RenameDictionary(
 }
 
 int UserDictionaryStorage::GetUserDictionaryIndex(uint64_t dic_id) const {
-  return UserDictionaryUtil::GetUserDictionaryIndexById(proto_, dic_id);
+  return user_dictionary::GetUserDictionaryIndexById(proto_, dic_id);
 }
 
 absl::StatusOr<uint64_t> UserDictionaryStorage::GetUserDictionaryId(
@@ -314,23 +313,23 @@ absl::StatusOr<uint64_t> UserDictionaryStorage::GetUserDictionaryId(
 
 user_dictionary::UserDictionary* UserDictionaryStorage::GetUserDictionary(
     uint64_t dic_id) {
-  return UserDictionaryUtil::GetMutableUserDictionaryById(&proto_, dic_id);
+  return user_dictionary::GetMutableUserDictionaryById(&proto_, dic_id);
 }
 
 // static
 size_t UserDictionaryStorage::max_entry_size() {
-  return UserDictionaryUtil::max_entry_size();
+  return user_dictionary::max_entry_size();
 }
 
 // static
 size_t UserDictionaryStorage::max_dictionary_size() {
-  return UserDictionaryUtil::max_entry_size();
+  return user_dictionary::max_entry_size();
 }
 
 absl::Status UserDictionaryStorage::IsValidDictionaryName(
     const absl::string_view name) const {
   const UserDictionaryCommandStatus::Status status =
-      UserDictionaryUtil::ValidateDictionaryName(
+      user_dictionary::ValidateDictionaryName(
           user_dictionary::UserDictionaryStorage::default_instance(), name);
 
   ExtendedErrorCode error_code = OK;

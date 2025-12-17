@@ -60,7 +60,7 @@ constexpr wchar_t kVersionIndependentProgIdForMSIME[] = L"MSIME.Japan";
 constexpr GUID kIidIFEDictionary = {
     0x19f7153, 0xe6db, 0x11d0, {0x83, 0xc3, 0x0, 0xc0, 0x4f, 0xdd, 0xb8, 0x2e}};
 
-IFEDictionary *CreateIFEDictionary() {
+IFEDictionary* CreateIFEDictionary() {
   CLSID class_id = GUID_NULL;
   // On Windows 7 and prior, multiple versions of MS-IME can be installed
   // side-by-side. As far as we've observed, the latest version will be chosen
@@ -71,10 +71,10 @@ IFEDictionary *CreateIFEDictionary() {
     LOG(ERROR) << "CLSIDFromProgID() failed: " << result;
     return nullptr;
   }
-  IFEDictionary *obj = nullptr;
+  IFEDictionary* obj = nullptr;
   result =
       ::CoCreateInstance(class_id, nullptr, CLSCTX_INPROC_SERVER,
-                         kIidIFEDictionary, reinterpret_cast<void **>(&obj));
+                         kIidIFEDictionary, reinterpret_cast<void**>(&obj));
   if (FAILED(result)) {
     LOG(ERROR) << "CoCreateInstance() failed: " << result;
     return nullptr;
@@ -85,7 +85,7 @@ IFEDictionary *CreateIFEDictionary() {
 
 class ScopedIFEDictionary {
  public:
-  explicit ScopedIFEDictionary(IFEDictionary *dic) : dic_(dic) {}
+  explicit ScopedIFEDictionary(IFEDictionary* dic) : dic_(dic) {}
 
   ~ScopedIFEDictionary() {
     if (dic_ != nullptr) {
@@ -94,17 +94,16 @@ class ScopedIFEDictionary {
     }
   }
 
-  IFEDictionary &operator*() const { return *dic_; }
-  IFEDictionary *operator->() const { return dic_; }
-  IFEDictionary *get() const { return dic_; }
+  IFEDictionary& operator*() const { return *dic_; }
+  IFEDictionary* operator->() const { return dic_; }
+  IFEDictionary* get() const { return dic_; }
 
  private:
-  IFEDictionary *dic_;
+  IFEDictionary* dic_;
 };
 
 // Iterator for MS-IME user dictionary
-class MSIMEImportIterator
-    : public UserDictionaryImporter::InputIteratorInterface {
+class MSIMEImportIterator : public user_dictionary::InputIteratorInterface {
  public:
   MSIMEImportIterator()
       : buf_(kBufferSize),
@@ -124,7 +123,7 @@ class MSIMEImportIterator
       return;
     }
 
-    POSTBL *pos_table = nullptr;
+    POSTBL* pos_table = nullptr;
     int pos_size = 0;
     result_ = dic_->GetPosTable(&pos_table, &pos_size);
     if (S_OK != result_ || pos_table == nullptr || pos_size == 0) {
@@ -134,9 +133,9 @@ class MSIMEImportIterator
     }
 
     for (int i = 0; i < pos_size; ++i) {
-      pos_map_.try_emplace(pos_table->nPos,
-                           EncodingUtil::SjisToUtf8(
-                               reinterpret_cast<char *>(pos_table->szName)));
+      pos_map_.try_emplace(
+          pos_table->nPos,
+          EncodingUtil::SjisToUtf8(reinterpret_cast<char*>(pos_table->szName)));
       ++pos_table;
     }
 
@@ -147,7 +146,7 @@ class MSIMEImportIterator
     result_ =
         dic_->GetWords(nullptr, nullptr, nullptr, IFED_POS_ALL, IFED_SELECT_ALL,
                        IFED_REG_USER,  // | FED_REG_AUTO
-                       reinterpret_cast<UCHAR *>(&buf_[0]),
+                       reinterpret_cast<UCHAR*>(&buf_[0]),
                        kBufferSize * sizeof(IMEWRD), &size_);
   }
 
@@ -157,7 +156,7 @@ class MSIMEImportIterator
 
   // NOTE: Without "UserDictionaryImporter::", Visual C++ 2008 somehow fails
   //     to look up the type name.
-  bool Next(UserDictionaryImporter::RawEntry *entry) {
+  bool Next(UserDictionaryImporter::RawEntry* entry) {
     if (!IsAvailable()) {
       LOG(ERROR) << "Iterator is not available";
       return false;
@@ -196,10 +195,10 @@ class MSIMEImportIterator
       if (buf_[index_].pvComment != nullptr) {
         if (buf_[index_].uct == IFED_UCT_STRING_SJIS) {
           entry->comment = EncodingUtil::SjisToUtf8(
-              reinterpret_cast<const char *>(buf_[index_].pvComment));
+              reinterpret_cast<const char*>(buf_[index_].pvComment));
         } else if (buf_[index_].uct == IFED_UCT_STRING_UNICODE) {
           entry->comment = mozc::win32::WideToUtf8(
-              reinterpret_cast<const wchar_t *>(buf_[index_].pvComment));
+              reinterpret_cast<const wchar_t*>(buf_[index_].pvComment));
         }
       }
     }
@@ -210,7 +209,7 @@ class MSIMEImportIterator
     } else if (result_ == S_OK) {
       return false;
     } else if (result_ == IFED_S_MORE_ENTRIES) {
-      result_ = dic_->NextWords(reinterpret_cast<UCHAR *>(&buf_[0]),
+      result_ = dic_->NextWords(reinterpret_cast<UCHAR*>(&buf_[0]),
                                 kBufferSize * sizeof(IMEWRD), &size_);
       if (result_ == E_FAIL) {
         LOG(ERROR) << "NextWords() failed";
@@ -236,7 +235,7 @@ class MSIMEImportIterator
 
 namespace gui {
 
-UserDictionaryImporter::InputIteratorInterface *
+UserDictionaryImporter::InputIteratorInterface*
 MSIMEUserDictionarImporter::Create() {
   return new MSIMEImportIterator;
 }
@@ -249,8 +248,7 @@ MSIMEUserDictionarImporter::Create() {
 namespace mozc {
 namespace gui {
 
-UserDictionaryImporter::InputIteratorInterface*
-MSIMEUserDictionarImporter::Create() {
+user_dictionary::InputIteratorInterface* MSIMEUserDictionarImporter::Create() {
   return nullptr;
 }
 

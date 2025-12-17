@@ -126,13 +126,13 @@ std::unique_ptr<QProgressDialog> CreateProgressDialog(const QString& message,
 // Use QTextStream to read UTF16 text -- we can't use ifstream,
 // since ifstream cannot handle Wide character.
 class UTF16TextLineIterator
-    : public UserDictionaryImporter::TextLineIteratorInterface {
+    : public user_dictionary::TextLineIteratorInterface {
  public:
-  UTF16TextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
+  UTF16TextLineIterator(user_dictionary::EncodingType encoding_type,
                         const std::string& filename, const QString& message,
                         QWidget* parent)
       : stream_(std::make_unique<QTextStream>()) {
-    CHECK_EQ(UserDictionaryImporter::UTF16, encoding_type);
+    CHECK_EQ(user_dictionary::UTF16, encoding_type);
     file_.setFileName(QUtf8(filename));
     if (!file_.open(QIODevice::ReadOnly)) {
       LOG(ERROR) << "Cannot open: " << filename;
@@ -193,9 +193,9 @@ class UTF16TextLineIterator
 };
 
 class MultiByteTextLineIterator
-    : public UserDictionaryImporter::TextLineIteratorInterface {
+    : public user_dictionary::TextLineIteratorInterface {
  public:
-  MultiByteTextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
+  MultiByteTextLineIterator(user_dictionary::EncodingType encoding_type,
                             const std::string& filename, const QString& message,
                             QWidget* parent)
       : encoding_type_(encoding_type),
@@ -242,12 +242,12 @@ class MultiByteTextLineIterator
 
     // We can't use QTextCodec as QTextCodec is not enabled by default.
     // We won't enable it as it increases the binary size.
-    if (encoding_type_ == UserDictionaryImporter::SHIFT_JIS) {
+    if (encoding_type_ == user_dictionary::SHIFT_JIS) {
       *line = EncodingUtil::SjisToUtf8(*line);
     }
 
     // strip UTF8 BOM
-    if (first_line_ && encoding_type_ == UserDictionaryImporter::UTF8) {
+    if (first_line_ && encoding_type_ == user_dictionary::UTF8) {
       *line = Util::StripUtf8Bom(*line);
     }
 
@@ -265,26 +265,26 @@ class MultiByteTextLineIterator
   }
 
  private:
-  UserDictionaryImporter::EncodingType encoding_type_;
+  user_dictionary::EncodingType encoding_type_;
   std::unique_ptr<InputFileStream> ifs_;
   std::unique_ptr<QProgressDialog> progress_;
   bool first_line_;
 };
 
-std::unique_ptr<UserDictionaryImporter::TextLineIteratorInterface>
-CreateTextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
+std::unique_ptr<user_dictionary::TextLineIteratorInterface>
+CreateTextLineIterator(user_dictionary::EncodingType encoding_type,
                        const std::string& filename, QWidget* parent) {
-  if (encoding_type == UserDictionaryImporter::ENCODING_AUTO_DETECT) {
-    encoding_type = UserDictionaryImporter::GuessFileEncodingType(filename);
+  if (encoding_type == user_dictionary::ENCODING_AUTO_DETECT) {
+    encoding_type = user_dictionary::GuessFileEncodingType(filename);
   }
 
-  if (encoding_type == UserDictionaryImporter::NUM_ENCODINGS) {
+  if (encoding_type == user_dictionary::NUM_ENCODINGS) {
     LOG(ERROR) << "GuessFileEncodingType() returns UNKNOWN encoding.";
     // set default encoding
 #ifdef _WIN32
-    encoding_type = UserDictionaryImporter::SHIFT_JIS;
+    encoding_type = user_dictionary::SHIFT_JIS;
 #else   // _WIN32
-    encoding_type = UserDictionaryImporter::UTF16;
+    encoding_type = user_dictionary::UTF16;
 #endif  // _WIN32
   }
 
@@ -293,12 +293,12 @@ CreateTextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
   const QString message = QObject::tr("Importing new words...");
 
   switch (encoding_type) {
-    case UserDictionaryImporter::UTF8:
-    case UserDictionaryImporter::SHIFT_JIS:
+    case user_dictionary::UTF8:
+    case user_dictionary::SHIFT_JIS:
       return std::make_unique<MultiByteTextLineIterator>(
           encoding_type, filename, message, parent);
       break;
-    case UserDictionaryImporter::UTF16:
+    case user_dictionary::UTF16:
       return std::make_unique<UTF16TextLineIterator>(encoding_type, filename,
                                                      message, parent);
       break;
@@ -315,7 +315,7 @@ DictionaryTool::DictionaryTool(QWidget* parent)
       import_dialog_(nullptr),
       find_dialog_(nullptr),
       storage_(std::make_unique<UserDictionaryStorage>(
-          UserDictionaryUtil::GetUserDictionaryFileName())),
+          user_dictionary::GetUserDictionaryFileName())),
       current_dic_id_(0),
       window_title_(GuiUtil::ProductName()),
       dic_menu_(new QMenu),
@@ -639,7 +639,7 @@ void DictionaryTool::SetupDicContentEditor(const DictionaryInfo& dic_info) {
       dic_content_->setItem(
           i, 2,
           new QTableWidgetItem(
-              QUtf8(UserDictionaryUtil::GetStringPosType(entry.pos()))));
+              QUtf8(user_dictionary::GetStringPosType(entry.pos()))));
       dic_content_->setItem(i, 3, new QTableWidgetItem(QUtf8(entry.comment())));
       progress->setValue(i);
     }
@@ -784,17 +784,17 @@ void DictionaryTool::ImportAndAppendDictionary() {
                import_dialog_->ime_type(), import_dialog_->encoding_type());
 }
 
-void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
+void DictionaryTool::ReportImportError(user_dictionary::ErrorType error,
                                        const QString& dic_name,
                                        int added_entries_size) {
   switch (error) {
-    case UserDictionaryImporter::IMPORT_NO_ERROR:
+    case user_dictionary::IMPORT_NO_ERROR:
       QMessageBox::information(this, window_title_,
                                tr("%1 entries are imported to %2.")
                                    .arg(added_entries_size)
                                    .arg(dic_name));
       break;
-    case UserDictionaryImporter::IMPORT_NOT_SUPPORTED:
+    case user_dictionary::IMPORT_NOT_SUPPORTED:
       QMessageBox::information(this, window_title_,
                                tr("You have imported a file in an invalid or "
                                   "unsupported file format.\n\n"
@@ -803,7 +803,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
                                   "%1.")
                                    .arg(GuiUtil::ProductName()));
       break;
-    case UserDictionaryImporter::IMPORT_TOO_MANY_WORDS:
+    case user_dictionary::IMPORT_TOO_MANY_WORDS:
       QMessageBox::information(
           this, window_title_,
           tr("%1 doesn't have enough space to import all words in "
@@ -812,7 +812,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
               .arg(dic_name)
               .arg(added_entries_size));
       break;
-    case UserDictionaryImporter::IMPORT_INVALID_ENTRIES:
+    case user_dictionary::IMPORT_INVALID_ENTRIES:
       QMessageBox::information(
           this, window_title_,
           tr("%1 entries are imported to %2.\n\nSome imported "
@@ -822,7 +822,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
               .arg(dic_name)
               .arg(window_title_));
       break;
-    case UserDictionaryImporter::IMPORT_FATAL:
+    case user_dictionary::IMPORT_FATAL:
       QMessageBox::critical(this, window_title_,
                             tr("Failed to open user dictionary"));
       break;
@@ -831,10 +831,10 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
   }
 }
 
-void DictionaryTool::ImportHelper(
-    uint64_t dic_id, const QString& dic_name, const QString& file_name,
-    UserDictionaryImporter::IMEType ime_type,
-    UserDictionaryImporter::EncodingType encoding_type) {
+void DictionaryTool::ImportHelper(uint64_t dic_id, const QString& dic_name,
+                                  const QString& file_name,
+                                  user_dictionary::IMEType ime_type,
+                                  user_dictionary::EncodingType encoding_type) {
   if (!IsReadableToImport(file_name)) {
     LOG(ERROR) << "File is not readable to import.";
     QMessageBox::critical(this, window_title_,
@@ -871,7 +871,7 @@ void DictionaryTool::ImportHelper(
   SyncToStorage();
 
   // Open dictionary
-  std::unique_ptr<UserDictionaryImporter::TextLineIteratorInterface> iter(
+  std::unique_ptr<user_dictionary::TextLineIteratorInterface> iter(
       CreateTextLineIterator(encoding_type, file_name.toStdString(), this));
   if (iter == nullptr) {
     LOG(ERROR) << "CreateTextLineIterator returns nullptr";
@@ -879,9 +879,8 @@ void DictionaryTool::ImportHelper(
   }
 
   const int old_size = dic->entries_size();
-  const UserDictionaryImporter::ErrorType error =
-      UserDictionaryImporter::ImportFromTextLineIterator(ime_type, iter.get(),
-                                                         dic);
+  const user_dictionary::ErrorType error =
+      user_dictionary::ImportFromTextLineIterator(ime_type, iter.get(), dic);
 
   const int added_entries_size = dic->entries_size() - old_size;
 
@@ -938,13 +937,12 @@ void DictionaryTool::ImportFromDefaultIME() {
 
   const int old_size = dic->entries_size();
 
-  UserDictionaryImporter::ErrorType error =
-      UserDictionaryImporter::IMPORT_NOT_SUPPORTED;
+  user_dictionary::ErrorType error = user_dictionary::IMPORT_NOT_SUPPORTED;
   {
-    std::unique_ptr<UserDictionaryImporter::InputIteratorInterface> iter(
+    std::unique_ptr<user_dictionary::InputIteratorInterface> iter(
         MSIMEUserDictionarImporter::Create());
     if (iter) {
-      error = UserDictionaryImporter::ImportFromIterator(iter.get(), dic);
+      error = user_dictionary::ImportFromIterator(iter.get(), dic);
     }
   }
 
@@ -1168,10 +1166,10 @@ void DictionaryTool::MoveTo(int dictionary_row) {
         entry->set_value(dic_content_->item(row, 1)->text().toStdString());
         // TODO(yuryu): remove c_str() after changing ToPosType to take
         // absl::string_view.
-        entry->set_pos(UserDictionaryUtil::ToPosType(
+        entry->set_pos(user_dictionary::ToPosType(
             dic_content_->item(row, 2)->text().toStdString()));
         entry->set_comment(dic_content_->item(row, 3)->text().toStdString());
-        UserDictionaryUtil::SanitizeEntry(entry);
+        user_dictionary::SanitizeEntry(entry);
         progress->setValue(progress_index);
         ++progress_index;
       }
@@ -1227,7 +1225,7 @@ void DictionaryTool::CloseWindow() {
 
 void DictionaryTool::OnItemChanged(QTableWidgetItem* item) {
   if (item->column() == 0 && !item->text().isEmpty() &&
-      !UserDictionaryUtil::IsValidReading(item->text().toStdString())) {
+      !user_dictionary::IsValidReading(item->text().toStdString())) {
     QMessageBox::critical(
         this, window_title_,
         tr("An invalid character is included in the reading."));
@@ -1400,10 +1398,10 @@ void DictionaryTool::SyncToStorage() {
     entry->set_value(dic_content_->item(i, 1)->text().toStdString());
     // TODO(yuryu): remove c_str() after changing ToPosType to take
     // absl::string_view.
-    entry->set_pos(UserDictionaryUtil::ToPosType(
+    entry->set_pos(user_dictionary::ToPosType(
         dic_content_->item(i, 2)->text().toStdString()));
     entry->set_comment(dic_content_->item(i, 3)->text().toStdString());
-    UserDictionaryUtil::SanitizeEntry(entry);
+    user_dictionary::SanitizeEntry(entry);
   }
 
   modified_ = false;

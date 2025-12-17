@@ -49,7 +49,7 @@ namespace gui {
 
 SetupUtil::SetupUtil()
     : storage_(new UserDictionaryStorage(
-          UserDictionaryUtil::GetUserDictionaryFileName())),
+          user_dictionary::GetUserDictionaryFileName())),
       is_userdictionary_locked_(false) {}
 
 bool SetupUtil::LockUserDictionary() {
@@ -123,7 +123,7 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
     dic_id = *dic_id_status;
   }
 
-  UserDictionaryStorage::UserDictionary *dic =
+  UserDictionaryStorage::UserDictionary* dic =
       storage_->GetUserDictionary(dic_id);
   if (dic == nullptr) {
     LOG(ERROR) << "GetUserDictionary returned nullptr";

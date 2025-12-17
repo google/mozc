@@ -43,7 +43,7 @@ class MSIMEUserDictionarImporter {
       delete;
   // Caller must take the ownership.
   // Only available on Windows.
-  static UserDictionaryImporter::InputIteratorInterface *Create();
+  static user_dictionary::InputIteratorInterface* Create();
 };
 
 }  // namespace gui

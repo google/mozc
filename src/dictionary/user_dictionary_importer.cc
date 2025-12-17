@@ -61,6 +61,7 @@
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
+namespace user_dictionary {
 namespace {
 
 using ::mozc::user_dictionary::UserDictionary;
@@ -94,8 +95,7 @@ struct PosMap {
 
 // Convert POS of a third party IME to that of Mozc using the given mapping.
 bool ConvertEntryInternal(const absl::Span<const PosMap> pos_map,
-                          const UserDictionaryImporter::RawEntry& from,
-                          UserDictionary::Entry* to) {
+                          const RawEntry& from, UserDictionary::Entry* to) {
   if (to == nullptr) {
     LOG(ERROR) << "Null pointer is passed.";
     return false;
@@ -136,7 +136,7 @@ bool ConvertEntryInternal(const absl::Span<const PosMap> pos_map,
   to->set_pos(found->mozc_pos);
 
   // Normalize reading.
-  to->set_key(UserDictionaryUtil::NormalizeReading(to->key()));
+  to->set_key(user_dictionary::NormalizeReading(to->key()));
 
   // Copy comment.
   if (!from.comment.empty()) {
@@ -149,7 +149,7 @@ bool ConvertEntryInternal(const absl::Span<const PosMap> pos_map,
   }
 
   // Validation.
-  if (UserDictionaryUtil::ValidateEntry(*to) !=
+  if (user_dictionary::ValidateEntry(*to) !=
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
     return false;
   }
@@ -159,14 +159,14 @@ bool ConvertEntryInternal(const absl::Span<const PosMap> pos_map,
 
 }  // namespace
 
-UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
-    InputIteratorInterface* iter, UserDictionary* user_dic) {
+ErrorType ImportFromIterator(InputIteratorInterface* iter,
+                             UserDictionary* user_dic) {
   if (iter == nullptr || user_dic == nullptr) {
     LOG(ERROR) << "iter or user_dic is nullptr";
     return IMPORT_FATAL;
   }
 
-  const size_t max_size = UserDictionaryUtil::max_entry_size();
+  const size_t max_size = user_dictionary::max_entry_size();
 
   ErrorType ret = IMPORT_NO_ERROR;
 
@@ -207,10 +207,9 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
   return ret;
 }
 
-UserDictionaryImporter::ErrorType
-UserDictionaryImporter::ImportFromTextLineIterator(
-    IMEType ime_type, TextLineIteratorInterface* iter,
-    UserDictionary* user_dic) {
+ErrorType ImportFromTextLineIterator(IMEType ime_type,
+                                     TextLineIteratorInterface* iter,
+                                     UserDictionary* user_dic) {
   TextInputIterator text_iter(ime_type, iter);
   if (text_iter.ime_type() == NUM_IMES) {
     return IMPORT_NOT_SUPPORTED;
@@ -219,15 +218,14 @@ UserDictionaryImporter::ImportFromTextLineIterator(
   return ImportFromIterator(&text_iter, user_dic);
 }
 
-UserDictionaryImporter::StringTextLineIterator::StringTextLineIterator(
-    absl::string_view data)
+StringTextLineIterator::StringTextLineIterator(absl::string_view data)
     : data_(data), first_(data_.begin()) {}
 
-bool UserDictionaryImporter::StringTextLineIterator::IsAvailable() const {
+bool StringTextLineIterator::IsAvailable() const {
   return data_.end() != first_;
 }
 
-bool UserDictionaryImporter::StringTextLineIterator::Next(std::string* line) {
+bool StringTextLineIterator::Next(std::string* line) {
   if (!IsAvailable()) {
     return false;
   }
@@ -251,12 +249,10 @@ bool UserDictionaryImporter::StringTextLineIterator::Next(std::string* line) {
   return true;
 }
 
-void UserDictionaryImporter::StringTextLineIterator::Reset() {
-  first_ = data_.begin();
-}
+void StringTextLineIterator::Reset() { first_ = data_.begin(); }
 
-UserDictionaryImporter::TextInputIterator::TextInputIterator(
-    IMEType ime_type, TextLineIteratorInterface* iter)
+TextInputIterator::TextInputIterator(IMEType ime_type,
+                                     TextLineIteratorInterface* iter)
     : ime_type_(NUM_IMES), iter_(iter) {
   CHECK(iter_);
   if (!iter_->IsAvailable()) {
@@ -275,13 +271,13 @@ UserDictionaryImporter::TextInputIterator::TextInputIterator(
   MOZC_VLOG(1) << "Setting type to: " << static_cast<int>(ime_type_);
 }
 
-bool UserDictionaryImporter::TextInputIterator::IsAvailable() const {
+bool TextInputIterator::IsAvailable() const {
   DCHECK(iter_);
   return (iter_->IsAvailable() && ime_type_ != IME_AUTO_DETECT &&
           ime_type_ != NUM_IMES);
 }
 
-bool UserDictionaryImporter::TextInputIterator::Next(RawEntry* entry) {
+bool TextInputIterator::Next(RawEntry* entry) {
   DCHECK(iter_);
   if (!IsAvailable()) {
     LOG(ERROR) << "iterator is not available";
@@ -356,13 +352,11 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry* entry) {
   return false;
 }
 
-bool UserDictionaryImporter::ConvertEntry(const RawEntry& from,
-                                          UserDictionary::Entry* to) {
+bool ConvertEntry(const RawEntry& from, UserDictionary::Entry* to) {
   return ConvertEntryInternal(kPosMap, from, to);
 }
 
-UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
-    absl::string_view line) {
+IMEType GuessIMEType(absl::string_view line) {
   if (line.empty()) {
     return NUM_IMES;
   }
@@ -405,8 +399,7 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
   return NUM_IMES;
 }
 
-UserDictionaryImporter::IMEType UserDictionaryImporter::DetermineFinalIMEType(
-    IMEType user_ime_type, IMEType guessed_ime_type) {
+IMEType DetermineFinalIMEType(IMEType user_ime_type, IMEType guessed_ime_type) {
   IMEType result_ime_type = NUM_IMES;
 
   if (user_ime_type == IME_AUTO_DETECT) {
@@ -428,8 +421,7 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::DetermineFinalIMEType(
   return result_ime_type;
 }
 
-UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
-    absl::string_view str) {
+EncodingType GuessEncodingType(absl::string_view str) {
   // Unicode BOM.
   if (str.size() >= 2 && ((static_cast<uint8_t>(str[0]) == 0xFF &&
                            static_cast<uint8_t>(str[1]) == 0xFE) ||
@@ -473,8 +465,7 @@ UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
   return SHIFT_JIS;
 }
 
-UserDictionaryImporter::EncodingType
-UserDictionaryImporter::GuessFileEncodingType(const std::string& filename) {
+EncodingType GuessFileEncodingType(const std::string& filename) {
   absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_ONLY);
   if (!mmap.ok()) {
     LOG(ERROR) << "cannot open: " << filename << ": " << mmap.status();
@@ -486,4 +477,5 @@ UserDictionaryImporter::GuessFileEncodingType(const std::string& filename) {
   return GuessEncodingType(mapped_data);
 }
 
+}  // namespace user_dictionary
 }  // namespace mozc

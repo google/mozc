@@ -47,14 +47,14 @@ class ImportDialog : public QDialog, private Ui::ImportDialog {
   Q_OBJECT
 
  public:
-  explicit ImportDialog(QWidget *parent = nullptr);
+  explicit ImportDialog(QWidget* parent = nullptr);
 
   // Accessor methods to get form values.
   QString file_name() const;
   QString dic_name() const;
 
-  UserDictionaryImporter::IMEType ime_type() const;
-  UserDictionaryImporter::EncodingType encoding_type() const;
+  user_dictionary::IMEType ime_type() const;
+  user_dictionary::EncodingType encoding_type() const;
 
   // Show this dialog synchronously. The field for name of a new
   // dictionary is shown.
@@ -68,7 +68,7 @@ class ImportDialog : public QDialog, private Ui::ImportDialog {
   void OnFormValueChanged();
   // Open a dialog that lets the user to select a file to be imported.
   void SelectFile();
-  void Clicked(QAbstractButton *button);
+  void Clicked(QAbstractButton* button);
 
  private:
   // return true if accept button can be enabled

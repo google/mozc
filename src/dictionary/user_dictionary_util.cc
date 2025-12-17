@@ -50,6 +50,7 @@
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
+namespace user_dictionary {
 namespace {
 
 using ::mozc::protobuf::RepeatedPtrField;
@@ -59,8 +60,8 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 constexpr size_t kMaxKeySize = 300;
 constexpr size_t kMaxValueSize = 300;
 constexpr size_t kMaxCommentSize = 300;
-constexpr char kInvalidChars[] = "\n\r\t";
-constexpr char kUserDictionaryFile[] = "user://user_dictionary.db";
+constexpr absl::string_view kInvalidChars = "\n\r\t";
+constexpr absl::string_view kUserDictionaryFile = "user://user_dictionary.db";
 
 // Maximum string length for dictionary name.
 constexpr size_t kMaxDictionaryNameSize = 300;
@@ -71,13 +72,12 @@ constexpr size_t kMaxEntrySize = 1000000;
 
 }  // namespace
 
-size_t UserDictionaryUtil::max_dictionary_size() { return kMaxDictionarySize; }
+size_t max_dictionary_size() { return kMaxDictionarySize; }
 
-size_t UserDictionaryUtil::max_entry_size() { return kMaxEntrySize; }
+size_t max_entry_size() { return kMaxEntrySize; }
 
-bool UserDictionaryUtil::IsValidEntry(
-    const dictionary::UserPos& user_pos,
-    const user_dictionary::UserDictionary::Entry& entry) {
+bool IsValidEntry(const dictionary::UserPos& user_pos,
+                  const user_dictionary::UserDictionary::Entry& entry) {
   return ValidateEntry(entry) ==
          UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
@@ -107,18 +107,17 @@ bool InternalValidateNormalizedReading(const absl::string_view reading) {
 
 }  // namespace
 
-bool UserDictionaryUtil::IsValidReading(const absl::string_view reading) {
+bool IsValidReading(const absl::string_view reading) {
   return InternalValidateNormalizedReading(NormalizeReading(reading));
 }
 
-std::string UserDictionaryUtil::NormalizeReading(
-    const absl::string_view input) {
+std::string NormalizeReading(const absl::string_view input) {
   std::string tmp1 = japanese::FullWidthAsciiToHalfWidthAscii(input);
   std::string tmp2 = japanese::HalfWidthKatakanaToFullWidthKatakana(tmp1);
   return japanese::KatakanaToHiragana(tmp2);
 }
 
-UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
+UserDictionaryCommandStatus::Status ValidateEntry(
     const user_dictionary::UserDictionary::Entry& entry) {
   // Validate reading.
   const std::string& reading = entry.key();
@@ -173,32 +172,28 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
   return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 
-bool UserDictionaryUtil::IsStorageFull(
-    const user_dictionary::UserDictionaryStorage& storage) {
+bool IsStorageFull(const user_dictionary::UserDictionaryStorage& storage) {
   return storage.dictionaries_size() >= kMaxDictionarySize;
 }
 
-bool UserDictionaryUtil::IsDictionaryFull(
-    const user_dictionary::UserDictionary& dictionary) {
+bool IsDictionaryFull(const user_dictionary::UserDictionary& dictionary) {
   return dictionary.entries_size() >= kMaxEntrySize;
 }
 
-const user_dictionary::UserDictionary*
-UserDictionaryUtil::GetUserDictionaryById(
+const user_dictionary::UserDictionary* GetUserDictionaryById(
     const user_dictionary::UserDictionaryStorage& storage,
     uint64_t dictionary_id) {
   int index = GetUserDictionaryIndexById(storage, dictionary_id);
   return index >= 0 ? &storage.dictionaries(index) : nullptr;
 }
 
-user_dictionary::UserDictionary*
-UserDictionaryUtil::GetMutableUserDictionaryById(
+user_dictionary::UserDictionary* GetMutableUserDictionaryById(
     user_dictionary::UserDictionaryStorage* storage, uint64_t dictionary_id) {
   int index = GetUserDictionaryIndexById(*storage, dictionary_id);
   return index >= 0 ? storage->mutable_dictionaries(index) : nullptr;
 }
 
-int UserDictionaryUtil::GetUserDictionaryIndexById(
+int GetUserDictionaryIndexById(
     const user_dictionary::UserDictionaryStorage& storage,
     uint64_t dictionary_id) {
   for (int i = 0; i < storage.dictionaries_size(); ++i) {
@@ -212,13 +207,12 @@ int UserDictionaryUtil::GetUserDictionaryIndexById(
   return -1;
 }
 
-std::string UserDictionaryUtil::GetUserDictionaryFileName() {
+std::string GetUserDictionaryFileName() {
   return ConfigFileStream::GetFileName(kUserDictionaryFile);
 }
 
 // static
-bool UserDictionaryUtil::SanitizeEntry(
-    user_dictionary::UserDictionary::Entry* entry) {
+bool SanitizeEntry(user_dictionary::UserDictionary::Entry* entry) {
   bool modified = false;
   modified |= Sanitize(entry->mutable_key(), kMaxKeySize);
   modified |= Sanitize(entry->mutable_value(), kMaxValueSize);
@@ -232,7 +226,7 @@ bool UserDictionaryUtil::SanitizeEntry(
 }
 
 // static
-bool UserDictionaryUtil::Sanitize(std::string* str, size_t max_size) {
+bool Sanitize(std::string* str, size_t max_size) {
   // First part: Remove invalid characters.
   const int n = absl::StrReplaceAll(
       {
@@ -255,7 +249,7 @@ bool UserDictionaryUtil::Sanitize(std::string* str, size_t max_size) {
   return true;
 }
 
-UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateDictionaryName(
+UserDictionaryCommandStatus::Status ValidateDictionaryName(
     const user_dictionary::UserDictionaryStorage& storage,
     const absl::string_view dictionary_name) {
   if (dictionary_name.empty()) {
@@ -301,7 +295,7 @@ constexpr absl::string_view kPosTypeStringTable[] = {
 };
 }  // namespace
 
-absl::string_view UserDictionaryUtil::GetStringPosType(
+absl::string_view GetStringPosType(
     user_dictionary::UserDictionary::PosType pos_type) {
   if (user_dictionary::UserDictionary::PosType_IsValid(pos_type)) {
     return kPosTypeStringTable[pos_type];
@@ -309,7 +303,7 @@ absl::string_view UserDictionaryUtil::GetStringPosType(
   return {};
 }
 
-user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
+user_dictionary::UserDictionary::PosType ToPosType(
     absl::string_view string_pos_type) {
   for (int i = 0; i < std::size(kPosTypeStringTable); ++i) {
     if (kPosTypeStringTable[i] == string_pos_type) {
@@ -321,7 +315,7 @@ user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
   return static_cast<user_dictionary::UserDictionary::PosType>(-1);
 }
 
-uint64_t UserDictionaryUtil::CreateNewDictionaryId(
+uint64_t CreateNewDictionaryId(
     const user_dictionary::UserDictionaryStorage& storage) {
   static constexpr uint64_t kInvalidDictionaryId = 0;
   absl::BitGen gen;
@@ -343,7 +337,7 @@ uint64_t UserDictionaryUtil::CreateNewDictionaryId(
   return id;
 }
 
-UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
+UserDictionaryCommandStatus::Status CreateDictionary(
     user_dictionary::UserDictionaryStorage* storage,
     const absl::string_view dictionary_name, uint64_t* new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
@@ -375,7 +369,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
   return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 
-bool UserDictionaryUtil::DeleteDictionary(
+bool DeleteDictionary(
     user_dictionary::UserDictionaryStorage* storage, uint64_t dictionary_id,
     int* original_index,
     std::unique_ptr<user_dictionary::UserDictionary>* deleted_dictionary) {
@@ -404,4 +398,5 @@ bool UserDictionaryUtil::DeleteDictionary(
 
   return true;
 }
+}  // namespace user_dictionary
 }  // namespace mozc

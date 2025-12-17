@@ -124,8 +124,7 @@ class UserDictionarySessionHandler {
   // (From the different point of view, this is LRU with max capacity '1'.)
   uint64_t session_id_ = kInvalidSessionId;
   std::unique_ptr<UserDictionarySession> session_;
-  std::string dictionary_path_ =
-      UserDictionaryUtil::GetUserDictionaryFileName();
+  std::string dictionary_path_ = GetUserDictionaryFileName();
 };
 
 }  // namespace user_dictionary

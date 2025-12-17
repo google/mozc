@@ -109,7 +109,7 @@ QString GetEnv(const char* envname) {
 WordRegisterDialog::WordRegisterDialog()
     : is_available_(true),
       storage_(new UserDictionaryStorage(
-          UserDictionaryUtil::GetUserDictionaryFileName())),
+          user_dictionary::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
       window_title_(GuiUtil::ProductName()) {
   setupUi(this);
@@ -265,7 +265,7 @@ void WordRegisterDialog::Clicked(QAbstractButton* button) {
 WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
   const std::string key = ReadinglineEdit->text().toStdString();
   const std::string value = WordlineEdit->text().toStdString();
-  UserDictionary::PosType pos = UserDictionaryUtil::ToPosType(
+  UserDictionary::PosType pos = user_dictionary::ToPosType(
       PartOfSpeechcomboBox->currentText().toStdString());
 
   if (key.empty()) {
@@ -276,7 +276,7 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
     return EMPTY_VALUE;
   }
 
-  if (!UserDictionaryUtil::IsValidReading(key)) {
+  if (!user_dictionary::IsValidReading(key)) {
     return INVALID_KEY;
   }
 
@@ -385,7 +385,7 @@ QString WordRegisterDialog::GetReading(const QString& str) {
     key.append(segment.key());
   }
 
-  if (key.empty() || !UserDictionaryUtil::IsValidReading(key)) {
+  if (key.empty() || !user_dictionary::IsValidReading(key)) {
     LOG(WARNING) << "containing invalid characters";
     return QLatin1String("");
   }

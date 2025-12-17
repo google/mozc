@@ -38,7 +38,7 @@
 namespace mozc {
 namespace gui {
 
-ImportDialog::ImportDialog(QWidget *parent)
+ImportDialog::ImportDialog(QWidget* parent)
     : QDialog(parent,
               // To disable context help on Windows.
               Qt::WindowTitleHint | Qt::WindowSystemMenuHint) {
@@ -49,39 +49,35 @@ ImportDialog::ImportDialog(QWidget *parent)
 #endif  // __APPLE__
 
   // Initialize combo boxes for lists of IMEs and character encodings.
-  ime_combobox_->addItem(
-      tr("Auto detection"),
-      static_cast<int>(UserDictionaryImporter::IME_AUTO_DETECT));
-  ime_combobox_->addItem(tr("Google"),
-                         static_cast<int>(UserDictionaryImporter::MOZC));
+  ime_combobox_->addItem(tr("Auto detection"),
+                         static_cast<int>(user_dictionary::IME_AUTO_DETECT));
+  ime_combobox_->addItem(tr("Google"), static_cast<int>(user_dictionary::MOZC));
 
 #ifdef _WIN32
   ime_combobox_->addItem(tr("Microsoft IME"),
-                         static_cast<int>(UserDictionaryImporter::MSIME));
-  ime_combobox_->addItem(tr("ATOK"),
-                         static_cast<int>(UserDictionaryImporter::ATOK));
+                         static_cast<int>(user_dictionary::MSIME));
+  ime_combobox_->addItem(tr("ATOK"), static_cast<int>(user_dictionary::ATOK));
   ime_combobox_->addItem(tr("Kotoeri"),
-                         static_cast<int>(UserDictionaryImporter::KOTOERI));
-#else  // _WIN32
+                         static_cast<int>(user_dictionary::KOTOERI));
+#else   // _WIN32
   ime_combobox_->addItem(tr("Kotoeri"),
-                         static_cast<int>(UserDictionaryImporter::KOTOERI));
-  ime_combobox_->addItem(tr("ATOK"),
-                         static_cast<int>(UserDictionaryImporter::ATOK));
+                         static_cast<int>(user_dictionary::KOTOERI));
+  ime_combobox_->addItem(tr("ATOK"), static_cast<int>(user_dictionary::ATOK));
   ime_combobox_->addItem(tr("Microsoft IME"),
-                         static_cast<int>(UserDictionaryImporter::MSIME));
+                         static_cast<int>(user_dictionary::MSIME));
 #endif  // _WIN32
 
   encoding_combobox_->addItem(
       tr("Auto detection"),
-      static_cast<int>(UserDictionaryImporter::ENCODING_AUTO_DETECT));
+      static_cast<int>(user_dictionary::ENCODING_AUTO_DETECT));
   encoding_combobox_->addItem(tr("Unicode"),
-                              static_cast<int>(UserDictionaryImporter::UTF16));
-  encoding_combobox_->addItem(
-      tr("Shift JIS"), static_cast<int>(UserDictionaryImporter::SHIFT_JIS));
+                              static_cast<int>(user_dictionary::UTF16));
+  encoding_combobox_->addItem(tr("Shift JIS"),
+                              static_cast<int>(user_dictionary::SHIFT_JIS));
   encoding_combobox_->addItem(tr("UTF-8"),
-                              static_cast<int>(UserDictionaryImporter::UTF8));
+                              static_cast<int>(user_dictionary::UTF8));
 
-  QPushButton *button = buttonbox_->button(QDialogButtonBox::Ok);
+  QPushButton* button = buttonbox_->button(QDialogButtonBox::Ok);
   if (button != nullptr) {
     button->setText(tr("Import"));
   }
@@ -89,13 +85,13 @@ ImportDialog::ImportDialog(QWidget *parent)
   // Signals and slots to connect buttons and actions.
   connect(select_file_pushbutton_, SIGNAL(clicked()), this, SLOT(SelectFile()));
 
-  connect(buttonbox_, SIGNAL(clicked(QAbstractButton *)), this,
-          SLOT(Clicked(QAbstractButton *)));
+  connect(buttonbox_, SIGNAL(clicked(QAbstractButton*)), this,
+          SLOT(Clicked(QAbstractButton*)));
 
   // Signals and slots to manage availability of GUI components.
-  connect(file_name_lineedit_, SIGNAL(textChanged(const QString &)), this,
+  connect(file_name_lineedit_, SIGNAL(textChanged(const QString&)), this,
           SLOT(OnFormValueChanged()));
-  connect(dic_name_lineedit_, SIGNAL(textChanged(const QString &)), this,
+  connect(dic_name_lineedit_, SIGNAL(textChanged(const QString&)), this,
           SLOT(OnFormValueChanged()));
 
   GuiUtil::ReplaceWidgetLabels(this);
@@ -105,13 +101,13 @@ QString ImportDialog::file_name() const { return file_name_lineedit_->text(); }
 
 QString ImportDialog::dic_name() const { return dic_name_lineedit_->text(); }
 
-UserDictionaryImporter::IMEType ImportDialog::ime_type() const {
-  return static_cast<UserDictionaryImporter::IMEType>(
+user_dictionary::IMEType ImportDialog::ime_type() const {
+  return static_cast<user_dictionary::IMEType>(
       ime_combobox_->itemData(ime_combobox_->currentIndex()).toInt());
 }
 
-UserDictionaryImporter::EncodingType ImportDialog::encoding_type() const {
-  return static_cast<UserDictionaryImporter::EncodingType>(
+user_dictionary::EncodingType ImportDialog::encoding_type() const {
+  return static_cast<user_dictionary::EncodingType>(
       encoding_combobox_->itemData(encoding_combobox_->currentIndex()).toInt());
 }
 
@@ -136,7 +132,7 @@ bool ImportDialog::IsAcceptButtonEnabled() const {
 }
 
 void ImportDialog::OnFormValueChanged() {
-  QPushButton *button = buttonbox_->button(QDialogButtonBox::Ok);
+  QPushButton* button = buttonbox_->button(QDialogButtonBox::Ok);
   if (button != nullptr) {
     button->setEnabled(IsAcceptButtonEnabled());
   }
@@ -173,7 +169,7 @@ void ImportDialog::SelectFile() {
   file_name_lineedit_->setText(QDir::toNativeSeparators(filename));
 }
 
-void ImportDialog::Clicked(QAbstractButton *button) {
+void ImportDialog::Clicked(QAbstractButton* button) {
   switch (buttonbox_->buttonRole(button)) {
     case QDialogButtonBox::AcceptRole:
       if (IsAcceptButtonEnabled()) {

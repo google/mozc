@@ -41,16 +41,16 @@
 #include "testing/gunit.h"
 
 namespace mozc {
+namespace user_dictionary {
 namespace {
 
-class TestInputIterator
-    : public UserDictionaryImporter::InputIteratorInterface {
+class TestInputIterator : public InputIteratorInterface {
  public:
   TestInputIterator() : index_(0), is_available_(false), entries_(nullptr) {}
 
   bool IsAvailable() const override { return is_available_; }
 
-  bool Next(UserDictionaryImporter::RawEntry* entry) override {
+  bool Next(RawEntry* entry) override {
     if (!is_available_) {
       return false;
     }
@@ -65,17 +65,14 @@ class TestInputIterator
     return true;
   }
 
-  void set_entries(
-      const std::vector<UserDictionaryImporter::RawEntry>* entries) {
-    entries_ = entries;
-  }
+  void set_entries(const std::vector<RawEntry>* entries) { entries_ = entries; }
 
   void set_available(bool is_available) { is_available_ = is_available; }
 
  public:
   int index_;
   bool is_available_;
-  const std::vector<UserDictionaryImporter::RawEntry>* entries_;
+  const std::vector<RawEntry>* entries_;
 };
 
 }  // namespace
@@ -88,12 +85,11 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
       "すずき\t鈴木\t人名\n"
       "あめりか\tアメリカ\t地名:en";
 
-  UserDictionaryImporter::StringTextLineIterator iter(kInput);
-  UserDictionaryStorage::UserDictionary user_dic;
+  StringTextLineIterator iter(kInput);
+  user_dictionary::UserDictionary user_dic;
 
-  EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
-                UserDictionaryImporter::MOZC, &iter, &user_dic),
-            UserDictionaryImporter::IMPORT_NO_ERROR);
+  EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
+            IMPORT_NO_ERROR);
 
   ASSERT_EQ(user_dic.entries_size(), 5);
 
@@ -139,12 +135,11 @@ TEST(UserDictionaryImporter, ImportFromGboardTextTest) {
       "せかい\t世界\t\n"
       "あめりか\tアメリカ\ten\n";
 
-  UserDictionaryImporter::StringTextLineIterator iter(kInput);
-  UserDictionaryStorage::UserDictionary user_dic;
+  StringTextLineIterator iter(kInput);
+  user_dictionary::UserDictionary user_dic;
 
-  EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
-                UserDictionaryImporter::GBOARD_V1, &iter, &user_dic),
-            UserDictionaryImporter::IMPORT_NO_ERROR);
+  EXPECT_EQ(ImportFromTextLineIterator(GBOARD_V1, &iter, &user_dic),
+            IMPORT_NO_ERROR);
 
   ASSERT_EQ(user_dic.entries_size(), 3);
 
@@ -175,22 +170,20 @@ TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
       "\"大阪\",\"地名\"\n"
       "// last line";
   {
-    UserDictionaryImporter::StringTextLineIterator iter(kInput);
-    UserDictionaryStorage::UserDictionary user_dic;
+    StringTextLineIterator iter(kInput);
+    user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
-                  UserDictionaryImporter::MOZC, &iter, &user_dic),
-              UserDictionaryImporter::IMPORT_NOT_SUPPORTED);
+    EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
+              IMPORT_NOT_SUPPORTED);
 
     EXPECT_EQ(user_dic.entries_size(), 0);
   }
   {
-    UserDictionaryImporter::StringTextLineIterator iter(kInput);
-    UserDictionaryStorage::UserDictionary user_dic;
+    StringTextLineIterator iter(kInput);
+    user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
-                  UserDictionaryImporter::KOTOERI, &iter, &user_dic),
-              UserDictionaryImporter::IMPORT_NO_ERROR);
+    EXPECT_EQ(ImportFromTextLineIterator(KOTOERI, &iter, &user_dic),
+              IMPORT_NO_ERROR);
 
     ASSERT_EQ(user_dic.entries_size(), 2);
 
@@ -211,12 +204,11 @@ TEST(UserDictionaryImporter, ImportSpecialPosTagTest) {
       "おおさか\t大阪\t短縮よみ\n"
       "すずき\t鈴木\t品詞なし\n";
   {
-    UserDictionaryImporter::StringTextLineIterator iter(kInput);
-    UserDictionaryStorage::UserDictionary user_dic;
+    StringTextLineIterator iter(kInput);
+    user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
-                  UserDictionaryImporter::MOZC, &iter, &user_dic),
-              UserDictionaryImporter::IMPORT_NO_ERROR);
+    EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
+              IMPORT_NO_ERROR);
 
     ASSERT_EQ(user_dic.entries_size(), 3);
 
@@ -246,12 +238,11 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
       "すずき\t鈴木\t人名\n";
   {
     const std::string kMsImeInput(absl::StrCat("!Microsoft IME\n", kInput));
-    UserDictionaryImporter::StringTextLineIterator iter(kMsImeInput);
-    UserDictionaryStorage::UserDictionary user_dic;
+    StringTextLineIterator iter(kMsImeInput);
+    user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
-                  UserDictionaryImporter::MSIME, &iter, &user_dic),
-              UserDictionaryImporter::IMPORT_NO_ERROR);
+    EXPECT_EQ(ImportFromTextLineIterator(MSIME, &iter, &user_dic),
+              IMPORT_NO_ERROR);
 
     ASSERT_EQ(user_dic.entries_size(), 3);
 
@@ -270,12 +261,11 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
               user_dictionary::UserDictionary::PERSONAL_NAME);
   }
   {
-    UserDictionaryImporter::StringTextLineIterator iter(kInput);
-    UserDictionaryStorage::UserDictionary user_dic;
+    StringTextLineIterator iter(kInput);
+    user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
-                  UserDictionaryImporter::MOZC, &iter, &user_dic),
-              UserDictionaryImporter::IMPORT_NO_ERROR);
+    EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
+              IMPORT_NO_ERROR);
 
     ASSERT_EQ(user_dic.entries_size(), 3);
 
@@ -302,12 +292,11 @@ TEST(UserDictionaryImporter, ImportFromInvalidTextTest) {
       "東京\t\t地名\tコメント\n"
       "すずき\t鈴木\t人名\n";
 
-  UserDictionaryImporter::StringTextLineIterator iter(kInput);
-  UserDictionaryStorage::UserDictionary user_dic;
+  StringTextLineIterator iter(kInput);
+  user_dictionary::UserDictionary user_dic;
 
-  EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
-                UserDictionaryImporter::MOZC, &iter, &user_dic),
-            UserDictionaryImporter::IMPORT_INVALID_ENTRIES);
+  EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
+            IMPORT_INVALID_ENTRIES);
 
   ASSERT_EQ(user_dic.entries_size(), 1);
 
@@ -319,49 +308,49 @@ TEST(UserDictionaryImporter, ImportFromInvalidTextTest) {
 
 TEST(UserDictionaryImporter, ImportFromIteratorInvalidTest) {
   TestInputIterator iter;
-  UserDictionaryStorage::UserDictionary user_dic;
+  user_dictionary::UserDictionary user_dic;
   EXPECT_FALSE(iter.IsAvailable());
-  EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
-            UserDictionaryImporter::IMPORT_NO_ERROR);
+  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
 }
 
 TEST(UserDictionaryImporter, ImportFromIteratorAlreadyFullTest) {
   TestInputIterator iter;
   iter.set_available(true);
-  UserDictionaryStorage::UserDictionary user_dic;
+  user_dictionary::UserDictionary user_dic;
 
-  std::vector<UserDictionaryImporter::RawEntry> entries;
+  std::vector<RawEntry> entries;
   {
-    UserDictionaryImporter::RawEntry entry;
+    RawEntry entry;
     entry.key = "aa";
     entry.value = "aa";
     entry.pos = "名詞";
     entries.push_back(entry);
   }
 
-  for (int i = 0; i < UserDictionaryStorage::max_entry_size(); ++i) {
+  for (int i = 0; i < ::mozc::UserDictionaryStorage::max_entry_size(); ++i) {
     user_dic.add_entries();
   }
 
   iter.set_available(true);
   iter.set_entries(&entries);
 
-  EXPECT_EQ(user_dic.entries_size(), UserDictionaryStorage::max_entry_size());
+  EXPECT_EQ(user_dic.entries_size(),
+            ::mozc::UserDictionaryStorage::max_entry_size());
 
   EXPECT_TRUE(iter.IsAvailable());
-  EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
-            UserDictionaryImporter::IMPORT_TOO_MANY_WORDS);
+  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_TOO_MANY_WORDS);
 
-  EXPECT_EQ(user_dic.entries_size(), UserDictionaryStorage::max_entry_size());
+  EXPECT_EQ(user_dic.entries_size(),
+            ::mozc::UserDictionaryStorage::max_entry_size());
 }
 
 TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
   TestInputIterator iter;
-  UserDictionaryStorage::UserDictionary user_dic;
+  user_dictionary::UserDictionary user_dic;
 
   static constexpr size_t kSizes[] = {10, 100, 1000, 5000, 12000};
   for (const size_t size : kSizes) {
-    std::vector<UserDictionaryImporter::RawEntry> entries;
+    std::vector<RawEntry> entries;
     entries.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       entries.push_back({
@@ -374,16 +363,14 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
     iter.set_available(true);
     iter.set_entries(&entries);
 
-    if (size <= UserDictionaryStorage::max_entry_size()) {
-      EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
-                UserDictionaryImporter::IMPORT_NO_ERROR);
+    if (size <= ::mozc::UserDictionaryStorage::max_entry_size()) {
+      EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
     } else {
-      EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
-                UserDictionaryImporter::IMPORT_TOO_MANY_WORDS);
+      EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_TOO_MANY_WORDS);
     }
 
     const size_t valid_size =
-        std::min(UserDictionaryStorage::max_entry_size(), size);
+        std::min(::mozc::UserDictionaryStorage::max_entry_size(), size);
     ASSERT_EQ(user_dic.entries_size(), valid_size);
     for (size_t i = 0; i < valid_size; ++i) {
       EXPECT_EQ(user_dic.entries(i).key(), entries[i].key);
@@ -396,11 +383,11 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
 
 TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
   TestInputIterator iter;
-  UserDictionaryStorage::UserDictionary user_dic;
+  user_dictionary::UserDictionary user_dic;
 
   static constexpr size_t kSizes[] = {10, 100, 1000};
   for (const size_t size : kSizes) {
-    std::vector<UserDictionaryImporter::RawEntry> entries;
+    std::vector<RawEntry> entries;
     entries.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       absl::string_view pos;
@@ -417,8 +404,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
     iter.set_available(true);
     iter.set_entries(&entries);
 
-    EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
-              UserDictionaryImporter::IMPORT_INVALID_ENTRIES);
+    EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_INVALID_ENTRIES);
     EXPECT_EQ(user_dic.entries_size(), size / 2);
   }
 }
@@ -426,19 +412,19 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
 TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
   TestInputIterator iter;
   iter.set_available(true);
-  UserDictionaryStorage::UserDictionary user_dic;
+  user_dictionary::UserDictionary user_dic;
 
   {
-    UserDictionaryStorage::UserDictionaryEntry* entry = user_dic.add_entries();
+    auto* entry = user_dic.add_entries();
     entry->set_key("aa");
     entry->set_value("aa");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
   }
 
-  std::vector<UserDictionaryImporter::RawEntry> entries;
+  std::vector<RawEntry> entries;
 
   {
-    UserDictionaryImporter::RawEntry entry;
+    RawEntry entry;
     entry.key = "aa";
     entry.value = "aa";
     entry.pos = "名詞";
@@ -447,13 +433,12 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
 
   iter.set_entries(&entries);
 
-  EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
-            UserDictionaryImporter::IMPORT_NO_ERROR);
+  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
 
   EXPECT_EQ(user_dic.entries_size(), 1);
 
   {
-    UserDictionaryImporter::RawEntry entry;
+    RawEntry entry;
     entry.key = "bb";
     entry.value = "bb";
     entry.pos = "名詞";
@@ -462,134 +447,85 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
 
   iter.set_entries(&entries);
 
-  EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
-            UserDictionaryImporter::IMPORT_NO_ERROR);
+  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
 
   EXPECT_EQ(user_dic.entries_size(), 2);
 
-  EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
-            UserDictionaryImporter::IMPORT_NO_ERROR);
+  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
 
   EXPECT_EQ(user_dic.entries_size(), 2);
 }
 
 TEST(UserDictionaryImporter, GuessIMETypeTest) {
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType(""),
-            UserDictionaryImporter::NUM_IMES);
+  EXPECT_EQ(GuessIMEType(""), NUM_IMES);
 
-  EXPECT_EQ(
-      UserDictionaryImporter::GuessIMEType("!Microsoft IME Dictionary Tool"),
-      UserDictionaryImporter::MSIME);
+  EXPECT_EQ(GuessIMEType("!Microsoft IME Dictionary Tool"), MSIME);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("!!ATOK_TANGO_TEXT_HEADER_1"),
-            UserDictionaryImporter::ATOK);
+  EXPECT_EQ(GuessIMEType("!!ATOK_TANGO_TEXT_HEADER_1"), ATOK);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("!!DICUT10"),
-            UserDictionaryImporter::NUM_IMES);
+  EXPECT_EQ(GuessIMEType("!!DICUT10"), NUM_IMES);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("!!DICUT"),
-            UserDictionaryImporter::NUM_IMES);
+  EXPECT_EQ(GuessIMEType("!!DICUT"), NUM_IMES);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("!!DICUT11"),
-            UserDictionaryImporter::ATOK);
+  EXPECT_EQ(GuessIMEType("!!DICUT11"), ATOK);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("!!DICUT17"),
-            UserDictionaryImporter::ATOK);
+  EXPECT_EQ(GuessIMEType("!!DICUT17"), ATOK);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("!!DICUT20"),
-            UserDictionaryImporter::ATOK);
+  EXPECT_EQ(GuessIMEType("!!DICUT20"), ATOK);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("\"foo\",\"bar\",\"buz\""),
-            UserDictionaryImporter::KOTOERI);
+  EXPECT_EQ(GuessIMEType("\"foo\",\"bar\",\"buz\""), KOTOERI);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("\"comment\""),
-            UserDictionaryImporter::KOTOERI);
+  EXPECT_EQ(GuessIMEType("\"comment\""), KOTOERI);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("foo\tbar\tbuz"),
-            UserDictionaryImporter::MOZC);
+  EXPECT_EQ(GuessIMEType("foo\tbar\tbuz"), MOZC);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("foo\tbar"),
-            UserDictionaryImporter::MOZC);
+  EXPECT_EQ(GuessIMEType("foo\tbar"), MOZC);
 
-  EXPECT_EQ(
-      UserDictionaryImporter::GuessIMEType("# Gboard Dictionary Version:1"),
-      UserDictionaryImporter::GBOARD_V1);
+  EXPECT_EQ(GuessIMEType("# Gboard Dictionary Version:1"), GBOARD_V1);
 
-  EXPECT_EQ(UserDictionaryImporter::GuessIMEType("foo"),
-            UserDictionaryImporter::NUM_IMES);
+  EXPECT_EQ(GuessIMEType("foo"), NUM_IMES);
 }
 
 TEST(UserDictionaryImporter, DetermineFinalIMETypeTest) {
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::IME_AUTO_DETECT,
-                UserDictionaryImporter::MSIME),
-            UserDictionaryImporter::MSIME);
+  EXPECT_EQ(DetermineFinalIMEType(IME_AUTO_DETECT, MSIME), MSIME);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::IME_AUTO_DETECT,
-                UserDictionaryImporter::ATOK),
-            UserDictionaryImporter::ATOK);
+  EXPECT_EQ(DetermineFinalIMEType(IME_AUTO_DETECT, ATOK), ATOK);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::IME_AUTO_DETECT,
-                UserDictionaryImporter::KOTOERI),
-            UserDictionaryImporter::KOTOERI);
+  EXPECT_EQ(DetermineFinalIMEType(IME_AUTO_DETECT, KOTOERI), KOTOERI);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::IME_AUTO_DETECT,
-                UserDictionaryImporter::GBOARD_V1),
-            UserDictionaryImporter::GBOARD_V1);
+  EXPECT_EQ(DetermineFinalIMEType(IME_AUTO_DETECT, GBOARD_V1), GBOARD_V1);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::IME_AUTO_DETECT,
-                UserDictionaryImporter::NUM_IMES),
-            UserDictionaryImporter::NUM_IMES);
+  EXPECT_EQ(DetermineFinalIMEType(IME_AUTO_DETECT, NUM_IMES), NUM_IMES);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::MOZC, UserDictionaryImporter::MSIME),
-            UserDictionaryImporter::MOZC);
+  EXPECT_EQ(DetermineFinalIMEType(MOZC, MSIME), MOZC);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::MOZC, UserDictionaryImporter::ATOK),
-            UserDictionaryImporter::MOZC);
+  EXPECT_EQ(DetermineFinalIMEType(MOZC, ATOK), MOZC);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::MOZC, UserDictionaryImporter::KOTOERI),
-            UserDictionaryImporter::NUM_IMES);
+  EXPECT_EQ(DetermineFinalIMEType(MOZC, KOTOERI), NUM_IMES);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::MSIME, UserDictionaryImporter::MSIME),
-            UserDictionaryImporter::MSIME);
+  EXPECT_EQ(DetermineFinalIMEType(MSIME, MSIME), MSIME);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::ATOK, UserDictionaryImporter::MSIME),
-            UserDictionaryImporter::NUM_IMES);
+  EXPECT_EQ(DetermineFinalIMEType(ATOK, MSIME), NUM_IMES);
 
-  EXPECT_EQ(UserDictionaryImporter::DetermineFinalIMEType(
-                UserDictionaryImporter::ATOK, UserDictionaryImporter::KOTOERI),
-            UserDictionaryImporter::NUM_IMES);
+  EXPECT_EQ(DetermineFinalIMEType(ATOK, KOTOERI), NUM_IMES);
 }
 
 TEST(UserDictionaryImporter, GuessEncodingTypeTest) {
   {
     constexpr absl::string_view kStr = "これはテストです。";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
-              UserDictionaryImporter::UTF8);
+    EXPECT_EQ(GuessEncodingType(kStr), UTF8);
   }
   {
     constexpr absl::string_view kStr = "私の名前は中野ですABC";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
-              UserDictionaryImporter::UTF8);
+    EXPECT_EQ(GuessEncodingType(kStr), UTF8);
   }
   {
     constexpr absl::string_view kStr = "ABCDEFG abcdefg";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
-              UserDictionaryImporter::UTF8);
+    EXPECT_EQ(GuessEncodingType(kStr), UTF8);
   }
   {
     constexpr absl::string_view kStr = "ハロー";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
-              UserDictionaryImporter::UTF8);
+    EXPECT_EQ(GuessEncodingType(kStr), UTF8);
   }
 
   {
@@ -597,36 +533,31 @@ TEST(UserDictionaryImporter, GuessEncodingTypeTest) {
     constexpr absl::string_view kStr =
         "\x82\xE6\x82\xEB\x82\xB5\x82\xAD"
         "\x82\xA8\x8A\xE8\x82\xA2\x82\xB5\x82\xDC\x82\xB7";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
-              UserDictionaryImporter::SHIFT_JIS);
+    EXPECT_EQ(GuessEncodingType(kStr), SHIFT_JIS);
   }
 
   {
     // "東京" in Shift-JIS
     constexpr absl::string_view kStr = "\x93\x8C\x8B\x9E";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
-              UserDictionaryImporter::SHIFT_JIS);
+    EXPECT_EQ(GuessEncodingType(kStr), SHIFT_JIS);
   }
 
   {
     // BOM of UTF-16
     constexpr absl::string_view kStr = "\xFF\xFE";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
-              UserDictionaryImporter::UTF16);
+    EXPECT_EQ(GuessEncodingType(kStr), UTF16);
   }
 
   {
     // BOM of UTF-16
     constexpr absl::string_view kStr = "\xFE\xFF";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
-              UserDictionaryImporter::UTF16);
+    EXPECT_EQ(GuessEncodingType(kStr), UTF16);
   }
 
   {
     // BOM of UTF-8
     constexpr absl::string_view kStr = "\xEF\xBB\xBF";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
-              UserDictionaryImporter::UTF8);
+    EXPECT_EQ(GuessEncodingType(kStr), UTF8);
   }
 }
 
@@ -650,7 +581,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
   };
 
   for (const absl::string_view data : kTestData) {
-    UserDictionaryImporter::StringTextLineIterator iter(data);
+    StringTextLineIterator iter(data);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
     EXPECT_EQ(line, "abcde");
@@ -667,7 +598,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
   // Test empty line with CR.
   {
     constexpr absl::string_view kInput = "\r\rabcde";
-    UserDictionaryImporter::StringTextLineIterator iter(kInput);
+    StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
     EXPECT_EQ(line, "");
@@ -683,7 +614,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
   // Test empty line with LF.
   {
     constexpr absl::string_view kInput = "\n\nabcde";
-    UserDictionaryImporter::StringTextLineIterator iter(kInput);
+    StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
     EXPECT_EQ(line, "");
@@ -699,7 +630,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
   // Test empty line with CRLF.
   {
     constexpr absl::string_view kInput = "\r\n\r\nabcde";
-    UserDictionaryImporter::StringTextLineIterator iter(kInput);
+    StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
     EXPECT_EQ(line, "");
@@ -716,7 +647,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
   // At the moment, \n\r is processed as two empty lines.
   {
     constexpr absl::string_view kInput = "\n\rabcde";
-    UserDictionaryImporter::StringTextLineIterator iter(kInput);
+    StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
     EXPECT_EQ(line, "");
@@ -730,4 +661,5 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
   }
 }
 
+}  // namespace user_dictionary
 }  // namespace mozc

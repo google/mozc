@@ -127,8 +127,7 @@ class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
 
   bool RunUndo(mozc::UserDictionaryStorage* storage) override {
     UserDictionary* dictionary =
-        UserDictionaryUtil::GetMutableUserDictionaryById(&storage->GetProto(),
-                                                         dictionary_id_);
+        GetMutableUserDictionaryById(&storage->GetProto(), dictionary_id_);
     if (dictionary == nullptr) {
       return false;
     }
@@ -149,8 +148,7 @@ class UndoAddEntryCommand : public UserDictionarySession::UndoCommand {
 
   bool RunUndo(mozc::UserDictionaryStorage* storage) override {
     UserDictionary* dictionary =
-        UserDictionaryUtil::GetMutableUserDictionaryById(&storage->GetProto(),
-                                                         dictionary_id_);
+        GetMutableUserDictionaryById(&storage->GetProto(), dictionary_id_);
     if (dictionary == nullptr || dictionary->entries_size() == 0) {
       return false;
     }
@@ -173,8 +171,7 @@ class UndoEditEntryCommand : public UserDictionarySession::UndoCommand {
 
   bool RunUndo(mozc::UserDictionaryStorage* storage) override {
     UserDictionary* dictionary =
-        UserDictionaryUtil::GetMutableUserDictionaryById(&storage->GetProto(),
-                                                         dictionary_id_);
+        GetMutableUserDictionaryById(&storage->GetProto(), dictionary_id_);
     if (dictionary == nullptr || index_ < 0 ||
         dictionary->entries_size() <= index_) {
       return false;
@@ -217,8 +214,7 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
 
   bool RunUndo(mozc::UserDictionaryStorage* storage) override {
     UserDictionary* dictionary =
-        UserDictionaryUtil::GetMutableUserDictionaryById(&storage->GetProto(),
-                                                         dictionary_id_);
+        GetMutableUserDictionaryById(&storage->GetProto(), dictionary_id_);
     if (dictionary == nullptr) {
       return false;
     }
@@ -277,8 +273,7 @@ class UndoImportFromStringCommand : public UserDictionarySession::UndoCommand {
 
   bool RunUndo(mozc::UserDictionaryStorage* storage) override {
     UserDictionary* dictionary =
-        UserDictionaryUtil::GetMutableUserDictionaryById(&storage->GetProto(),
-                                                         dictionary_id_);
+        GetMutableUserDictionaryById(&storage->GetProto(), dictionary_id_);
     if (dictionary == nullptr) {
       return false;
     }
@@ -323,9 +318,8 @@ UserDictionarySession::SetDefaultDictionaryName(
   // Validate the name for the default dictionary. The name is used to create
   // a dictionary "for an empty storage", so check the validity with the
   // default instance of UserDictionaryStorage.
-  UserDictionaryCommandStatus::Status status =
-      UserDictionaryUtil::ValidateDictionaryName(
-          UserDictionaryStorage::default_instance(), dictionary_name);
+  UserDictionaryCommandStatus::Status status = ValidateDictionaryName(
+      UserDictionaryStorage::default_instance(), dictionary_name);
   if (status == UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
     strings::Assign(default_dictionary_name_, dictionary_name);
   }
@@ -428,8 +422,8 @@ UserDictionaryCommandStatus::Status UserDictionarySession::Undo() {
 UserDictionaryCommandStatus::Status UserDictionarySession::CreateDictionary(
     const absl::string_view dictionary_name, uint64_t* new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
-      UserDictionaryUtil::CreateDictionary(&storage_->GetProto(),
-                                           dictionary_name, new_dictionary_id);
+      user_dictionary::CreateDictionary(&storage_->GetProto(), dictionary_name,
+                                        new_dictionary_id);
   if (status == UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
     AddUndoCommand(std::make_unique<UndoCreateDictionaryCommand>());
   }
@@ -452,9 +446,9 @@ UserDictionarySession::DeleteDictionaryInternal(uint64_t dictionary_id,
                                                 bool ensure_non_empty_storage) {
   int original_index;
   std::unique_ptr<UserDictionary> deleted_dictionary;
-  if (!UserDictionaryUtil::DeleteDictionary(&storage_->GetProto(),
-                                            dictionary_id, &original_index,
-                                            &deleted_dictionary)) {
+  if (!user_dictionary::DeleteDictionary(&storage_->GetProto(), dictionary_id,
+                                         &original_index,
+                                         &deleted_dictionary)) {
     // Failed to delete the dictionary.
     return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
   }
@@ -475,8 +469,8 @@ UserDictionarySession::DeleteDictionaryInternal(uint64_t dictionary_id,
 UserDictionaryCommandStatus::Status UserDictionarySession::RenameDictionary(
     const uint64_t dictionary_id, const absl::string_view dictionary_name) {
   std::string original_name;
-  const UserDictionary* dictionary = UserDictionaryUtil::GetUserDictionaryById(
-      storage_->GetProto(), dictionary_id);
+  const UserDictionary* dictionary =
+      GetUserDictionaryById(storage_->GetProto(), dictionary_id);
   if (dictionary != nullptr) {
     // Note that if dictionary is null, it means the dictionary_id is invalid
     // so following RenameDictionary will fail, and error handling is done
@@ -513,18 +507,17 @@ UserDictionaryCommandStatus::Status UserDictionarySession::RenameDictionary(
 
 UserDictionaryCommandStatus::Status UserDictionarySession::AddEntry(
     uint64_t dictionary_id, const UserDictionary::Entry& entry) {
-  UserDictionary* dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
-      &storage_->GetProto(), dictionary_id);
+  UserDictionary* dictionary =
+      GetMutableUserDictionaryById(&storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
     return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
   }
 
-  if (UserDictionaryUtil::IsDictionaryFull(*dictionary)) {
+  if (IsDictionaryFull(*dictionary)) {
     return UserDictionaryCommandStatus::ENTRY_SIZE_LIMIT_EXCEEDED;
   }
 
-  const UserDictionaryCommandStatus::Status status =
-      UserDictionaryUtil::ValidateEntry(entry);
+  const UserDictionaryCommandStatus::Status status = ValidateEntry(entry);
   if (status != UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
     // Invalid entry.
     return status;
@@ -532,7 +525,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::AddEntry(
 
   UserDictionary::Entry* new_entry = dictionary->add_entries();
   *new_entry = entry;
-  UserDictionaryUtil::SanitizeEntry(new_entry);
+  SanitizeEntry(new_entry);
 
   AddUndoCommand(std::make_unique<UndoAddEntryCommand>(dictionary_id));
   return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
@@ -540,8 +533,8 @@ UserDictionaryCommandStatus::Status UserDictionarySession::AddEntry(
 
 UserDictionaryCommandStatus::Status UserDictionarySession::EditEntry(
     uint64_t dictionary_id, int index, const UserDictionary::Entry& entry) {
-  UserDictionary* dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
-      &storage_->GetProto(), dictionary_id);
+  UserDictionary* dictionary =
+      GetMutableUserDictionaryById(&storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
     return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
   }
@@ -550,8 +543,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::EditEntry(
     return UserDictionaryCommandStatus::ENTRY_INDEX_OUT_OF_RANGE;
   }
 
-  const UserDictionaryCommandStatus::Status status =
-      UserDictionaryUtil::ValidateEntry(entry);
+  const UserDictionaryCommandStatus::Status status = ValidateEntry(entry);
   if (status != UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
     // Invalid entry.
     return status;
@@ -562,14 +554,14 @@ UserDictionaryCommandStatus::Status UserDictionarySession::EditEntry(
                                                         *target_entry));
 
   *target_entry = entry;
-  UserDictionaryUtil::SanitizeEntry(target_entry);
+  SanitizeEntry(target_entry);
   return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
     uint64_t dictionary_id, std::vector<int> index_list) {
-  UserDictionary* dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
-      &storage_->GetProto(), dictionary_id);
+  UserDictionary* dictionary =
+      GetMutableUserDictionaryById(&storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
     return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
   }
@@ -605,8 +597,8 @@ UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
 
 UserDictionaryCommandStatus::Status UserDictionarySession::ImportFromString(
     const uint64_t dictionary_id, const absl::string_view data) {
-  UserDictionary* dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
-      &storage_->GetProto(), dictionary_id);
+  UserDictionary* dictionary =
+      GetMutableUserDictionaryById(&storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
     return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
   }
@@ -627,26 +619,26 @@ UserDictionaryCommandStatus::Status UserDictionarySession::ImportFromString(
 UserDictionaryCommandStatus::Status
 UserDictionarySession::ImportFromStringInternal(UserDictionary* dictionary,
                                                 const absl::string_view data) {
-  UserDictionaryImporter::ErrorType import_result;
+  ErrorType import_result;
   {
-    UserDictionaryImporter::StringTextLineIterator iter(data);
-    import_result = UserDictionaryImporter::ImportFromTextLineIterator(
-        UserDictionaryImporter::IME_AUTO_DETECT, &iter, dictionary);
+    StringTextLineIterator iter(data);
+    import_result =
+        ImportFromTextLineIterator(IME_AUTO_DETECT, &iter, dictionary);
   }
 
-  LOG_IF(WARNING, import_result != UserDictionaryImporter::IMPORT_NO_ERROR)
+  LOG_IF(WARNING, import_result != IMPORT_NO_ERROR)
       << "Import failed: " << import_result;
 
   // Return status code.
   switch (import_result) {
-    case UserDictionaryImporter::IMPORT_NO_ERROR:
+    case IMPORT_NO_ERROR:
       // Succeeded.
       return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 
     // Failed on some reasons.
-    case UserDictionaryImporter::IMPORT_TOO_MANY_WORDS:
+    case IMPORT_TOO_MANY_WORDS:
       return UserDictionaryCommandStatus::IMPORT_TOO_MANY_WORDS;
-    case UserDictionaryImporter::IMPORT_INVALID_ENTRIES:
+    case IMPORT_INVALID_ENTRIES:
       return UserDictionaryCommandStatus::IMPORT_INVALID_ENTRIES;
     default:
       LOG(ERROR) << "Unknown error: " << import_result;
@@ -659,8 +651,8 @@ UserDictionarySession::ImportToNewDictionaryFromString(
     const absl::string_view dictionary_name, const absl::string_view data,
     uint64_t* new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
-      UserDictionaryUtil::CreateDictionary(&storage_->GetProto(),
-                                           dictionary_name, new_dictionary_id);
+      user_dictionary::CreateDictionary(&storage_->GetProto(), dictionary_name,
+                                        new_dictionary_id);
   if (status != UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
     return status;
   }
@@ -668,8 +660,8 @@ UserDictionarySession::ImportToNewDictionaryFromString(
   // We can use undo command for CreateDictionary here, too.
   AddUndoCommand(std::make_unique<UndoCreateDictionaryCommand>());
 
-  UserDictionary* dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
-      &storage_->GetProto(), *new_dictionary_id);
+  UserDictionary* dictionary =
+      GetMutableUserDictionaryById(&storage_->GetProto(), *new_dictionary_id);
   if (dictionary == nullptr) {
     // The dictionary should be always found.
     return UserDictionaryCommandStatus::UNKNOWN_ERROR;
@@ -687,7 +679,7 @@ bool UserDictionarySession::EnsureNonEmptyStorage() {
   // Creates a dictionary with the default name. Should never fail.
   uint64_t new_dictionary_id;
   UserDictionaryCommandStatus::Status status =
-      UserDictionaryUtil::CreateDictionary(
+      user_dictionary::CreateDictionary(
           &storage_->GetProto(), default_dictionary_name_, &new_dictionary_id);
   CHECK_EQ(status,
            UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);

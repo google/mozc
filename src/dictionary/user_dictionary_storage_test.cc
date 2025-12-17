@@ -214,12 +214,11 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
     ifs.read(&file_string[0], file_string.size());
     ifs.close();
   }
-  UserDictionaryImporter::StringTextLineIterator iter(file_string);
+  user_dictionary::StringTextLineIterator iter(file_string);
 
   UserDictionaryStorage::UserDictionary dic2;
-  EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
-                UserDictionaryImporter::MOZC, &iter, &dic2),
-            UserDictionaryImporter::IMPORT_NO_ERROR);
+  EXPECT_EQ(ImportFromTextLineIterator(user_dictionary::MOZC, &iter, &dic2),
+            user_dictionary::IMPORT_NO_ERROR);
 
   dic2.set_id(id);
   dic2.set_name("test");

@@ -269,8 +269,8 @@ void UserDictionarySessionHandler::GetEntrySize(
     return;
   }
 
-  const UserDictionary* dictionary = UserDictionaryUtil::GetUserDictionaryById(
-      session_->storage(), command.dictionary_id());
+  const UserDictionary* dictionary =
+      GetUserDictionaryById(session_->storage(), command.dictionary_id());
   if (dictionary == nullptr) {
     status->set_status(UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID);
     return;
@@ -293,8 +293,8 @@ void UserDictionarySessionHandler::GetEntries(
     return;
   }
 
-  const UserDictionary* dictionary = UserDictionaryUtil::GetUserDictionaryById(
-      session_->storage(), command.dictionary_id());
+  const UserDictionary* dictionary =
+      GetUserDictionaryById(session_->storage(), command.dictionary_id());
   if (dictionary == nullptr) {
     status->set_status(UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID);
     return;
@@ -328,7 +328,7 @@ void UserDictionarySessionHandler::CheckNewDictionaryAvailability(
     return;
   }
 
-  if (UserDictionaryUtil::IsStorageFull(session->storage())) {
+  if (IsStorageFull(session->storage())) {
     status->set_status(
         UserDictionaryCommandStatus::DICTIONARY_SIZE_LIMIT_EXCEEDED);
     return;
@@ -407,14 +407,14 @@ void UserDictionarySessionHandler::CheckNewEntryAvailability(
     return;
   }
 
-  const UserDictionary* dictionary = UserDictionaryUtil::GetUserDictionaryById(
-      session->storage(), command.dictionary_id());
+  const UserDictionary* dictionary =
+      GetUserDictionaryById(session->storage(), command.dictionary_id());
   if (dictionary == nullptr) {
     status->set_status(UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID);
     return;
   }
 
-  if (UserDictionaryUtil::IsDictionaryFull(*dictionary)) {
+  if (IsDictionaryFull(*dictionary)) {
     status->set_status(UserDictionaryCommandStatus::ENTRY_SIZE_LIMIT_EXCEEDED);
     return;
   }
