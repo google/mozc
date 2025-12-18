@@ -269,10 +269,7 @@ class UserDictionary::TokensIndex {
 
 class UserDictionary::UserDictionaryReloader {
  public:
-  explicit UserDictionaryReloader(UserDictionary* dic)
-      : modified_at_(0), dic_(dic) {
-    DCHECK(dic_);
-  }
+  explicit UserDictionaryReloader(UserDictionary& dic) : dic_(dic) {}
 
   UserDictionaryReloader(const UserDictionaryReloader&) = delete;
   UserDictionaryReloader& operator=(const UserDictionaryReloader&) = delete;
@@ -282,14 +279,14 @@ class UserDictionary::UserDictionaryReloader {
   // When the user dictionary exists AND the modification time has been updated,
   // reloads the dictionary.  Returns true when reloader thread is started.
   bool MaybeStartReload() {
-    if (reload_.has_value() && !reload_->Ready()) {
+    if (reload_.IsRunning()) {
       // Previously started reload is still running.
       // TODO(tomokinat): test this path.
       return false;
     }
 
     absl::StatusOr<FileTimeStamp> modification_time =
-        FileUtil::GetModificationTime(dic_->GetFileName());
+        FileUtil::GetModificationTime(dic_.GetFileName());
     if (!modification_time.ok()) {
       // If the file doesn't exist, return doing nothing.
       // Therefore if the file is deleted after first reload,
@@ -304,19 +301,15 @@ class UserDictionary::UserDictionaryReloader {
     }
     modified_at_ = *modification_time;
     // Runs `ThreadMain()` in a background thread.
-    reload_.emplace([this] { ThreadMain(); });
+    reload_.Schedule([this] { ThreadMain(); });
     return true;
   }
 
-  void Wait() {
-    if (reload_.has_value()) {
-      reload_->Wait();
-    }
-  }
+  void Wait() { reload_.Wait(); }
 
  private:
   void ThreadMain() {
-    UserDictionaryStorage storage(dic_->GetFileName());
+    UserDictionaryStorage storage(dic_.GetFileName());
 
     // Load from file
     if (absl::Status s = storage.Load(); !s.ok()) {
@@ -324,12 +317,12 @@ class UserDictionary::UserDictionaryReloader {
       return;
     }
 
-    dic_->Load(storage.GetProto());
+    dic_.Load(storage.GetProto());
   }
 
-  std::optional<BackgroundFuture<void>> reload_;
-  FileTimeStamp modified_at_;
-  UserDictionary* dic_ = nullptr;
+  TaskManager reload_;
+  FileTimeStamp modified_at_ = 0;
+  UserDictionary& dic_;
 };
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
@@ -340,7 +333,7 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
                                PosMatcher pos_matcher, std::string filename)
-    : reloader_(std::make_unique<UserDictionaryReloader>(this)),
+    : reloader_(std::make_unique<UserDictionaryReloader>(*this)),
       user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
       tokens_(std::make_shared<TokensIndex>(*user_pos_)),
@@ -556,6 +549,7 @@ bool UserDictionary::HasSuppressedEntries() const {
 }
 
 bool UserDictionary::Reload() {
+  LOG(ERROR) << "@@@@ Reload start";
   if (!reloader_->MaybeStartReload()) {
     LOG(INFO) << "MaybeStartReload() didn't start reloading";
   }
