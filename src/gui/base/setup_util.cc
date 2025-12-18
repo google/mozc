@@ -130,15 +130,15 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
     return false;
   }
 
-  std::unique_ptr<UserDictionaryImporter::InputIteratorInterface> iter(
+  std::unique_ptr<user_dictionary::InputIteratorInterface> iter(
       MSIMEUserDictionarImporter::Create());
   if (!iter) {
     LOG(ERROR) << "ImportFromMSIME failed";
     return false;
   }
 
-  if (UserDictionaryImporter::ImportFromIterator(iter.get(), dic) !=
-      UserDictionaryImporter::IMPORT_NO_ERROR) {
+  if (user_dictionary::ImportFromIterator(iter.get(), dic) !=
+      user_dictionary::IMPORT_NO_ERROR) {
     LOG(ERROR) << "ImportFromMSIME failed";
     return false;
   }
