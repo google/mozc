@@ -154,9 +154,7 @@ class MSIMEImportIterator : public user_dictionary::InputIteratorInterface {
     return result_ == IFED_S_MORE_ENTRIES || result_ == S_OK;
   }
 
-  // NOTE: Without "UserDictionaryImporter::", Visual C++ 2008 somehow fails
-  //     to look up the type name.
-  bool Next(UserDictionaryImporter::RawEntry* entry) {
+  bool Next(user_dictionary::RawEntry* entry) {
     if (!IsAvailable()) {
       LOG(ERROR) << "Iterator is not available";
       return false;
@@ -235,8 +233,7 @@ class MSIMEImportIterator : public user_dictionary::InputIteratorInterface {
 
 namespace gui {
 
-UserDictionaryImporter::InputIteratorInterface*
-MSIMEUserDictionarImporter::Create() {
+user_dictionary::InputIteratorInterface* MSIMEUserDictionarImporter::Create() {
   return new MSIMEImportIterator;
 }
 
