@@ -86,6 +86,9 @@ enum PredictionType {
   // Usually Kana-modifiers are expanded.
   // TODO(taku): This label should be migrated to TYPING_CORRECTION.
   KEY_EXPANDED_IN_DICTIONARY = 32768,
+
+  // Disables rescoring. Keeps the original cost.
+  DISABLE_RESCORING = 16384,
 };
 // Bitfield to store a set of PredictionType.
 using PredictionTypes = int32_t;
