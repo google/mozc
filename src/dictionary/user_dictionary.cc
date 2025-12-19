@@ -562,13 +562,7 @@ bool UserDictionary::Load(
     const user_dictionary::UserDictionaryStorage& storage) {
   const size_t size = GetTokens()->size();
 
-  // If UserDictionary is pretty big, we first remove the
-  // current dictionary to save memory usage.
-#ifdef __ANDROID__
-  constexpr size_t kVeryBigUserDictionarySize = 5000;
-#else   // __ANDROID__
   constexpr size_t kVeryBigUserDictionarySize = 100000;
-#endif  // __ANDROID__
 
   if (size >= kVeryBigUserDictionarySize) {
     auto placeholder_empty_tokens = std::make_shared<TokensIndex>(*user_pos_);
