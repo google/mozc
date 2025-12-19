@@ -199,9 +199,9 @@ TEST(KeyEventTransformerTest, Kana) {
     const char* kFullPeriod = "．";
 
     {
-      SCOPED_TRACE("KUTEN_TOUTEN");
+      SCOPED_TRACE("TOUTEN_KUTEN");
       config::Config config;
-      config.set_punctuation_method(config::Config::KUTEN_TOUTEN);
+      config.set_punctuation_method(config::Config::TOUTEN_KUTEN);
       table->ReloadConfig(config);
 
       TestKanaTransformation(kFullKuten, ',', kFullKuten);
@@ -217,18 +217,18 @@ TEST(KeyEventTransformerTest, Kana) {
       TestKanaTransformation(kFullTouten, '.', kFullPeriod);
     }
     {
-      SCOPED_TRACE("KUTEN_PERIOD");
+      SCOPED_TRACE("TOUTEN_PERIOD");
       config::Config config;
-      config.set_punctuation_method(config::Config::KUTEN_PERIOD);
+      config.set_punctuation_method(config::Config::TOUTEN_PERIOD);
       table->ReloadConfig(config);
 
       TestKanaTransformation(kFullKuten, ',', kFullKuten);
       TestKanaTransformation(kFullTouten, '.', kFullPeriod);
     }
     {
-      SCOPED_TRACE("COMMA_TOUTEN");
+      SCOPED_TRACE("COMMA_KUTEN");
       config::Config config;
-      config.set_punctuation_method(config::Config::COMMA_TOUTEN);
+      config.set_punctuation_method(config::Config::COMMA_KUTEN);
       table->ReloadConfig(config);
 
       TestKanaTransformation(kFullKuten, ',', kFullComma);

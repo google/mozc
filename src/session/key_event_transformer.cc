@@ -59,14 +59,14 @@ void KeyEventTransformer::ReloadConfig(const Config& config) {
   table_.clear();
   const Config::PunctuationMethod punctuation = config.punctuation_method();
   if (punctuation == Config::COMMA_PERIOD ||
-      punctuation == Config::COMMA_TOUTEN) {
+      punctuation == Config::COMMA_KUTEN) {
     KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32_t>(','));
     key_event.set_key_string("，");
     table_.emplace("、", key_event);
   }
   if (punctuation == Config::COMMA_PERIOD ||
-      punctuation == Config::KUTEN_PERIOD) {
+      punctuation == Config::TOUTEN_PERIOD) {
     KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32_t>('.'));
     key_event.set_key_string("．");

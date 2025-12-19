@@ -136,14 +136,14 @@ TEST_F(TableTest, Punctuations) {
     absl::string_view input;
     absl::string_view expected;
   } test_cases[] = {
-      {config::Config::KUTEN_TOUTEN, ",", "、"},
-      {config::Config::KUTEN_TOUTEN, ".", "。"},
+      {config::Config::TOUTEN_KUTEN, ",", "、"},
+      {config::Config::TOUTEN_KUTEN, ".", "。"},
       {config::Config::COMMA_PERIOD, ",", "，"},
       {config::Config::COMMA_PERIOD, ".", "．"},
-      {config::Config::KUTEN_PERIOD, ",", "、"},
-      {config::Config::KUTEN_PERIOD, ".", "．"},
-      {config::Config::COMMA_TOUTEN, ",", "，"},
-      {config::Config::COMMA_TOUTEN, ".", "。"},
+      {config::Config::TOUTEN_PERIOD, ",", "、"},
+      {config::Config::TOUTEN_PERIOD, ".", "．"},
+      {config::Config::COMMA_KUTEN, ",", "，"},
+      {config::Config::COMMA_KUTEN, ".", "。"},
   };
 
   commands::Request request;
@@ -1008,8 +1008,8 @@ TEST_F(TableTest, TableManager) {
   constexpr config::Config::PreeditMethod preedit_method[] = {
       config::Config::ROMAN, config::Config::KANA};
   constexpr config::Config::PunctuationMethod punctuation_method[] = {
-      config::Config::KUTEN_TOUTEN, config::Config::COMMA_PERIOD,
-      config::Config::KUTEN_PERIOD, config::Config::COMMA_TOUTEN};
+      config::Config::TOUTEN_KUTEN, config::Config::COMMA_PERIOD,
+      config::Config::TOUTEN_PERIOD, config::Config::COMMA_KUTEN};
   constexpr config::Config::SymbolMethod symbol_method[] = {
       config::Config::CORNER_BRACKET_MIDDLE_DOT,
       config::Config::SQUARE_BRACKET_SLASH,
@@ -1045,7 +1045,7 @@ TEST_F(TableTest, TableManager) {
     request.set_special_romanji_table(Request::DEFAULT_TABLE);
     config::Config config;
     config.set_preedit_method(Config::ROMAN);
-    config.set_punctuation_method(Config::KUTEN_TOUTEN);
+    config.set_punctuation_method(Config::TOUTEN_KUTEN);
     config.set_symbol_method(Config::CORNER_BRACKET_MIDDLE_DOT);
     config.set_custom_roman_table(kRule);
     std::shared_ptr<const Table> table =

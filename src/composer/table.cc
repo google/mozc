@@ -248,7 +248,7 @@ bool Table::InitializeWithRequestAndConfig(const commands::Request& request,
   if (entry == nullptr ||
       (entry->result() == kKuten && entry->pending().empty())) {
     if (punctuation_method == config::Config::COMMA_PERIOD ||
-        punctuation_method == config::Config::COMMA_TOUTEN) {
+        punctuation_method == config::Config::COMMA_KUTEN) {
       AddRule(",", kComma, "");
     } else {
       AddRule(",", kKuten, "");
@@ -260,7 +260,7 @@ bool Table::InitializeWithRequestAndConfig(const commands::Request& request,
   if (entry == nullptr ||
       (entry->result() == kTouten && entry->pending().empty())) {
     if (punctuation_method == config::Config::COMMA_PERIOD ||
-        punctuation_method == config::Config::KUTEN_PERIOD) {
+        punctuation_method == config::Config::TOUTEN_PERIOD) {
       AddRule(".", kPeriod, "");
     } else {
       AddRule(".", kTouten, "");

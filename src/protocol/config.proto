@@ -142,12 +142,12 @@ message Config {
   optional bytes custom_roman_table = 43;
 
   enum PunctuationMethod {
-    KUTEN_TOUTEN = 0;
+    TOUTEN_KUTEN = 0;
     COMMA_PERIOD = 1;
-    KUTEN_PERIOD = 2;
-    COMMA_TOUTEN = 3;
+    TOUTEN_PERIOD = 2;
+    COMMA_KUTEN = 3;
   }
-  optional PunctuationMethod punctuation_method = 45 [default = KUTEN_TOUTEN];
+  optional PunctuationMethod punctuation_method = 45 [default = TOUTEN_KUTEN];
 
   enum SymbolMethod {
     CORNER_BRACKET_MIDDLE_DOT = 0;
