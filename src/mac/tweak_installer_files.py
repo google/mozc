@@ -206,14 +206,13 @@ def Codesign(top_dir: str, identity: str) -> None:
       shutil.rmtree(os.path.join(cur_dir, dir_name))
       dirs.remove(dir_name)  # skip walking the removed directory.
 
-  args = [
-      '--force',
-      '--options=runtime',
-      '--sign',
-      identity,
-      '--keychain',
-      'login.keychain',
-  ]
+  args = ['--force', '--sign', identity, '--keychain', 'login.keychain']
+
+  # --option=runtime is required for notarization.
+  # On the other hand, do not add the option for the pseudo identity ('-').
+  # https://github.com/google/mozc/issues/1412
+  if identity != '-':
+    args.append('--option=runtime')
 
   # codesign libqcocoa.dylib
   file_name = 'libqcocoa.dylib'
