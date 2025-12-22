@@ -182,18 +182,6 @@ cc_library(
         ],
         oss_windows = [
             "MOZC_BUILD",
-            "WINVER=0x0A00",
-            "_WIN32_WINNT=0x0A00",
-            "_ATL_ALL_WARNINGS",
-            "_ATL_ALLOW_CHAR_UNSIGNED",
-            "_ATL_CSTRING_EXPLICIT_CONSTRUCTORS",
-            "_ATL_NO_AUTOMATIC_NAMESPACE",
-            "_ATL_NO_HOSTING",
-            "ID_TRACE_LEVEL=1",
-            "_MIDL_USE_GUIDDEF_",
-            "PSAPI_VERSION=2",
-            "UNICODE",
-            "_UNICODE",
         ],
         prod_linux = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
@@ -209,6 +197,9 @@ cc_library(
         ],
         windows = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
+        ],
+    ) + mozc_select(
+        windows = [
             "WINVER=0x0A00",
             "_WIN32_WINNT=0x0A00",
             "_ATL_ALL_WARNINGS",
