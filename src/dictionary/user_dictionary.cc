@@ -549,7 +549,6 @@ bool UserDictionary::HasSuppressedEntries() const {
 }
 
 bool UserDictionary::Reload() {
-  LOG(ERROR) << "@@@@ Reload start";
   if (!reloader_->MaybeStartReload()) {
     LOG(INFO) << "MaybeStartReload() didn't start reloading";
   }
