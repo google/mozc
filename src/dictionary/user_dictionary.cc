@@ -50,6 +50,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/strings/assign.h"
@@ -60,6 +61,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
@@ -623,4 +625,128 @@ void UserDictionary::PopulateTokenFromUserPosToken(
 }
 
 }  // namespace dictionary
+
+namespace user_dictionary {
+
+namespace {
+// Gets or Creates the dictionary and dic_id with the name `dic_name`.
+std::pair<UserDictionary*, uint64_t> GetUserDictionary(
+    ::mozc::UserDictionaryStorage& storage, absl::string_view dic_name) {
+  absl::StatusOr<uint64_t> dic_id = storage.GetUserDictionaryId(dic_name);
+
+  if (!dic_id.ok()) {
+    dic_id = storage.CreateDictionary(dic_name);
+  }
+
+  if (!dic_id.ok()) return {nullptr, 0};
+
+  return {storage.GetUserDictionary(dic_id.value()), dic_id.value()};
+}
+}  // namespace
+
+AsyncUserDictionaryImporter::AsyncUserDictionaryImporter(
+    dictionary::UserDictionaryInterface& dic)
+    : dic_(dic) {}
+
+AsyncUserDictionaryImporter::~AsyncUserDictionaryImporter() {
+  canceled_signal_.store(true);
+  task_.Wait();
+}
+
+void AsyncUserDictionaryImporter::Import(std::string name, std::string tsv) {
+  if (name.empty()) return;
+
+  {
+    ImportData import_data{.name = std::move(name), .data = std::move(tsv)};
+
+    absl::MutexLock lock(mutex_);
+    queue_.emplace_back(std::move(import_data));
+  }
+
+  if (!task_.IsRunning()) {
+    task_.Schedule([this]() { StartImportLoop(); });
+  }
+}
+
+std::optional<AsyncUserDictionaryImporter::ImportData>
+AsyncUserDictionaryImporter::PopPendingImportData() {
+  absl::MutexLock lock(mutex_);
+
+  if (queue_.empty()) return std::nullopt;
+
+  std::optional<ImportData> result(std::move(queue_.front()));
+  queue_.pop_front();
+
+  return result;
+}
+
+bool AsyncUserDictionaryImporter::HasPendingImportData() const {
+  absl::MutexLock lock(mutex_);
+  return !queue_.empty();
+}
+
+void AsyncUserDictionaryImporter::StartImportLoop() {
+  while (HasPendingImportData()) {
+    if (IsCanceled()) return;
+
+    ::mozc::UserDictionaryStorage storage(dic_.GetFileName());
+
+    // Storage is loaded and saved on every request. While there is a risk of
+    // overwriting data that failed to load, force to overwrite the data to
+    // ensure the import is completed. This overwrite may also result in a
+    // successful load.
+    if (absl::Status s = storage.Load(); (!s.ok() && !absl::IsNotFound(s))) {
+      LOG(ERROR) << "Failed to load user dictionary storage: " << s;
+    }
+
+    while (true) {
+      if (IsCanceled()) return;
+
+      std::optional<ImportData> import_data = PopPendingImportData();
+      if (!import_data.has_value()) {
+        break;
+      }
+
+      const auto [user_dictionary, id] =
+          GetUserDictionary(storage, import_data->name);
+
+      if (!user_dictionary) {
+        LOG(ERROR) << "Cannot find/create dictionary: " << import_data->name;
+        continue;
+      }
+
+      user_dictionary->clear_entries();
+
+      if (import_data->data.empty()) {
+        storage.DeleteDictionary(id).IgnoreError();
+      } else {
+        StringTextLineIterator iter(import_data->data);
+        // ImportFromTextLineIterator raises a warning even if it fails to load
+        // some data. We ignore the error to load entries successfully loaded.
+        if (const ErrorType import_result = ImportFromTextLineIterator(
+                IME_AUTO_DETECT, &iter, user_dictionary);
+            import_result != IMPORT_NO_ERROR) {
+          LOG(WARNING) << "All entries are not imported: " << import_result;
+        }
+      }
+    }
+
+    if (IsCanceled()) return;
+
+    // Enables the entries immediately. dic.Load() is thread-safe.
+    LOG_IF(ERROR, !dic_.Load(storage.GetProto()))
+        << "Failed to load dictionary from storage";
+
+    // Serialize.
+    LOG_IF(ERROR, !storage.Lock()) << "Failed to lock storage";
+
+    if (absl::Status s = storage.Save(); !s.ok()) {
+      LOG(ERROR) << "Failed to save to storage: " << s;
+    }
+
+    LOG_IF(ERROR, !storage.UnLock()) << "Failed to unlock storage";
+  }
+}
+
+}  // namespace user_dictionary
 }  // namespace mozc

@@ -144,6 +144,7 @@ mozc_cc_library(
         ":dictionary_interface",
         ":dictionary_token",
         ":pos_matcher",
+        ":user_dictionary_importer",
         ":user_dictionary_storage",
         ":user_dictionary_util",
         ":user_pos",
@@ -157,6 +158,7 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/log",
@@ -164,6 +166,7 @@ mozc_cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -184,7 +187,8 @@ mozc_cc_test(
         ":user_pos",
         "//base:file_util",
         "//base:random",
-        "//base:singleton",
+        "//base:system_util",
+        "//base:thread",
         "//base/file:temp_dir",
         "//config:config_handler",
         "//data_manager/testing:mock_data_manager",

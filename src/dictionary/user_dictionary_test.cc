@@ -47,6 +47,8 @@
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/random.h"
+#include "base/system_util.h"
+#include "base/thread.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -1052,6 +1054,101 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
                                      &token);
   EXPECT_EQ(token.cost, 5000);
 }
+
+TEST_F(UserDictionaryTest, AsyncImportTest) {
+  const std::string filename = FileUtil::JoinPath(
+      SystemUtil::GetUserProfileDirectory(), "async_import_test.db");
+
+  const testing::MockDataManager mock_data_manager;
+
+  auto make_dic = [&]() {
+    return UserDictionary(UserPos::CreateFromDataManager(mock_data_manager),
+                          PosMatcher(mock_data_manager.GetPosMatcherData()),
+                          filename);
+  };
+
+  auto dic = make_dic();
+
+  constexpr int kThreadsSize = 100;
+  constexpr int kEntrySize = 1000;
+
+  auto make_tsv_dic = [](int i) {
+    std::string tsv;
+    for (int n = 0; n < kEntrySize; ++n) {
+      absl::StrAppendFormat(&tsv, "key_%2.2d%4.4d\tvalue_%2.2d%4.4d\t名詞\n", i,
+                            n, i, n);
+    }
+    // Adds one invalid line.
+    absl::StrAppendFormat(&tsv, "__INVALID__");
+    return tsv;
+  };
+
+  {
+    // Import TSV dictionary asynchronously.
+    user_dictionary::AsyncUserDictionaryImporter importer(dic);
+
+    std::vector<Thread> threads;
+    for (int i = 0; i < kThreadsSize; ++i) {
+      threads.emplace_back([&, i]() {
+        importer.Import(absl::StrCat("dic", i), make_tsv_dic(i));
+      });
+    }
+
+    for (auto& thread : threads) {
+      thread.Join();
+    }
+
+    // The importing process is canceled in destructor so we need to call
+    // Wait() explicitly.
+    importer.Wait();
+  }
+
+  EXPECT_OK(FileUtil::FileExists(filename));
+
+  auto check_entries = [](const UserDictionary& dic) {
+    const ConversionRequest convreq = ConversionRequestBuilder().Build();
+    for (int i = 0; i < kThreadsSize; ++i) {
+      for (int n = 0; n < kEntrySize; ++n) {
+        const std::string key = absl::StrFormat("key_%2.2d%4.4d", i, n);
+        MockCallback mock_callback;
+        EXPECT_CALL(mock_callback, OnKey(Eq(key)))
+            .Times(1)
+            .WillRepeatedly(
+                Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+        EXPECT_CALL(mock_callback, OnActualKey(_, _, _))
+            .Times(1)
+            .WillRepeatedly(
+                Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+        dic.LookupExact(key, convreq, &mock_callback);
+      }
+    }
+  };
+
+  check_entries(dic);
+
+  auto dic_reloaded = make_dic();
+
+  // reload data.
+  {
+    dic_reloaded.Reload();
+    dic_reloaded.WaitForReloader();
+    check_entries(dic_reloaded);
+  }
+
+  // Clear dictionary with empty TSV.
+  {
+    user_dictionary::AsyncUserDictionaryImporter importer(dic_reloaded);
+
+    importer.Import("dic0", "");
+    importer.Wait();
+
+    mozc::UserDictionaryStorage storage(filename);
+    EXPECT_OK(storage.Load());
+    EXPECT_FALSE(storage.GetUserDictionaryId("dic0").ok());
+    EXPECT_TRUE(storage.GetUserDictionaryId("dic1").ok());
+  }
+}
+
 }  // namespace
 }  // namespace dictionary
 }  // namespace mozc
