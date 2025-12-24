@@ -109,9 +109,9 @@ def run_wix4(args) -> None:
   if branding == 'GoogleJapaneseInput':
     upgrade_code = 'C1A818AF-6EC9-49EF-ADCF-35A40475D156'
     omaha_guid = 'DDCCD2A9-025E-4142-BCEB-F467B88CF830'
-    omaha_client_key = 'Software\\Google\\Update\\Clients\\' + omaha_guid
+    omaha_client_key = f'Software\\Google\\Update\\Clients\\{{{omaha_guid}}}'
     omaha_clientstate_key = (
-        'Software\\Google\\Update\\ClientState\\' + omaha_guid
+        f'Software\\Google\\Update\\ClientState\\{{{omaha_guid}}}'
     )
   elif branding == 'Mozc':
     upgrade_code = 'DD94B570-B5E2-4100-9D42-61930C611D8A'
