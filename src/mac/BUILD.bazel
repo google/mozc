@@ -385,6 +385,7 @@ mozc_objc_library(
 
 mozc_macos_application(
     name = "uninstaller_macos",
+    app_icons = ["//data/images/mac:product_icon.icns"],
     bundle_name = "Uninstall" +
                   mozc_select(
                       default = "GoogleJapaneseInput",
