@@ -147,10 +147,7 @@ def mozc_macos_qt_application(name, bundle_name, deps):
         bundle_name = bundle_name,
         infoplists = ["//gui:mozc_tool_info_plist"],
         minimum_os_version = MACOS_MIN_OS_VER,
-        resources = [
-            "//data/images/mac:candidate_window_logo.tiff",
-            "//gui:qt_conf",
-        ],
+        resources = ["//gui:qt_conf"],
         visibility = [
             "//:__subpackages__",
             "//:__subpackages__",
