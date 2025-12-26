@@ -35,6 +35,7 @@
 """
 
 import argparse
+import os
 
 from build_tools import mozc_version
 
@@ -66,6 +67,18 @@ def ParseOptions():
   parser.add_argument('--output', dest='output', required=True)
   parser.add_argument('--input', dest='input', required=True)
   parser.add_argument('--build_type', dest='build_type', default='stable')
+  parser.add_argument(
+      '--use_mozc_version_env',
+      dest='use_mozc_version_env',
+      action='store_true',
+      default=False,
+      help=(
+          'If true and MOZC_VERSION environment variable is set, the variable'
+          ' is used as the version string. Otherwise the template file is used.'
+          ' The value is a four-digit number (e.g. 2.31.5840.0) or a single'
+          ' build number (e.g. 5840).'
+      ),
+  )
 
   return parser.parse_args()
 
@@ -74,8 +87,12 @@ def main():
   """The main function."""
   options = ParseOptions()
 
+  mozc_version_env = os.getenv('MOZC_VERSION')
   version_placeholder = '@@@MOZC_VERSION@@@'
-  if options.version_file:
+
+  if options.use_mozc_version_env and mozc_version_env:
+    version = mozc_version_env
+  elif options.version_file:
     version = mozc_version.MozcVersion(options.version_file).GetVersionString()
   else:
     version = version_placeholder

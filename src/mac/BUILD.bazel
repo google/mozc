@@ -429,6 +429,7 @@ genrule(
         " //build_tools:tweak_macinstaller_script)",
         " --output $@",
         " --input $<",
+        " --use_mozc_version_env",  # Use MOZC_VERSION environment variable if set.
         " --version_file" +
         " $(location //base:mozc_version_txt)" +
         " --build_type ",
