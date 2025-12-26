@@ -29,4 +29,8 @@
 
 exports_files([
     "mozc_tool_info",
+    "ConfigDialog/English.lproj/InfoPlist.strings",
+    "ConfigDialog/Japanese.lproj/InfoPlist.strings",
+    "DictionaryTool/English.lproj/InfoPlist.strings",
+    "DictionaryTool/Japanese.lproj/InfoPlist.strings",
 ])

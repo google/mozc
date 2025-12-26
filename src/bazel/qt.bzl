@@ -134,7 +134,7 @@ def mozc_qt_rcc(name, qrc_name, qrc_file, srcs, outs):
         ),
     )
 
-def mozc_macos_qt_application(name, bundle_name, deps):
+def mozc_macos_qt_application(name, bundle_name, deps, strings = []):
     macos_application(
         name = name,
         tags = ["manual", "notap"],
@@ -161,6 +161,7 @@ def mozc_macos_qt_application(name, bundle_name, deps):
                 "@qt_mac//:QtWidgets_mac",
             ],
         ),
+        strings = strings,
     )
 
 register_extension_info(

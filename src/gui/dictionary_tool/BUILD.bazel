@@ -27,7 +27,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("//:build_defs.bzl", "mozc_select")
+load(
+    "//:build_defs.bzl",
+    "mozc_infoplist_strings",
+    "mozc_select",
+)
 load(
     "//bazel:qt.bzl",
     "mozc_cc_qt_binary",
@@ -198,8 +202,28 @@ mozc_cc_qt_binary(
     deps = [":dictionary_tool_main_lib"],
 )
 
+mozc_infoplist_strings(
+    name = "infolist_strings_en",
+    srcs = [
+        "//data/mac:DictionaryTool/English.lproj/InfoPlist.strings",
+    ],
+    outs = ["English.lproj/InfoPlist.strings"],
+)
+
+mozc_infoplist_strings(
+    name = "infolist_strings_ja",
+    srcs = [
+        "//data/mac:DictionaryTool/Japanese.lproj/InfoPlist.strings",
+    ],
+    outs = ["Japanese.lproj/InfoPlist.strings"],
+)
+
 mozc_macos_qt_application(
     name = "dictionary_tool_macos",
     bundle_name = "DictionaryTool",
+    strings = [
+        ":infolist_strings_en",
+        ":infolist_strings_ja",
+    ],
     deps = [":dictionary_tool_main_lib"],
 )

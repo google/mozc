@@ -27,7 +27,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("//:build_defs.bzl", "mozc_select")
+load(
+    "//:build_defs.bzl",
+    "mozc_infoplist_strings",
+    "mozc_select",
+)
 load(
     "//bazel:qt.bzl",
     "mozc_cc_qt_binary",
@@ -243,8 +247,28 @@ mozc_cc_qt_binary(
     deps = [":config_dialog_main_lib"],
 )
 
+mozc_infoplist_strings(
+    name = "infolist_strings_en",
+    srcs = [
+        "//data/mac:ConfigDialog/English.lproj/InfoPlist.strings",
+    ],
+    outs = ["English.lproj/InfoPlist.strings"],
+)
+
+mozc_infoplist_strings(
+    name = "infolist_strings_ja",
+    srcs = [
+        "//data/mac:ConfigDialog/Japanese.lproj/InfoPlist.strings",
+    ],
+    outs = ["Japanese.lproj/InfoPlist.strings"],
+)
+
 mozc_macos_qt_application(
     name = "config_dialog_macos",
     bundle_name = "ConfigDialog",
+    strings = [
+        ":infolist_strings_en",
+        ":infolist_strings_ja",
+    ],
     deps = [":config_dialog_main_lib"],
 )
