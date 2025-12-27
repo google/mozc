@@ -104,12 +104,7 @@ class EngineInterface {
     return false;
   }
 
-  // Evaluates user dictionary command.
-  virtual bool EvaluateUserDictionaryCommand(
-      const user_dictionary::UserDictionaryCommand& command,
-      user_dictionary::UserDictionaryCommandStatus* status) {
-    return false;
-  }
+  virtual void ImportUserDictionary(std::string name, std::string tsv) {}
 
  protected:
   EngineInterface() = default;

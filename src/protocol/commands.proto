@@ -1080,10 +1080,13 @@ message Input {
 
     GET_SERVER_VERSION = 19;
 
+    // Import user dictionary from client.
+    IMPORT_USER_DICTIONARY = 31;
+
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
-    NUM_OF_COMMANDS = 31;
+    NUM_OF_COMMANDS = 32;
   }
   required CommandType type = 1;
 
@@ -1144,6 +1147,9 @@ message Input {
 
   optional mozc.user_dictionary.UserDictionaryCommand user_dictionary_command =
       13;
+
+  optional mozc.user_dictionary.UserDictionaryImportData
+      user_dictionary_import_data = 17;
 
   // A flag to control if the server should return suggest-results or not.
   // If this is set to false, regardless of other configurations,

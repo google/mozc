@@ -145,6 +145,11 @@ message UserDictionaryStorage {
   reserved 10;  // deprecated storage_type
 }
 
+message UserDictionaryImportData {
+  optional string dictionary_name = 1;
+  optional string data = 2;  // TSV data.
+}
+
 message UserDictionaryCommand {
   enum CommandType {
     // Does nothing.

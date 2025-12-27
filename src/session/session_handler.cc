@@ -356,8 +356,8 @@ bool SessionHandler::EvalCommand(commands::Command* command) {
     case commands::Input::CLEANUP:
       eval_succeeded = Cleanup(command);
       break;
-    case commands::Input::SEND_USER_DICTIONARY_COMMAND:
-      eval_succeeded = SendUserDictionaryCommand(command);
+    case commands::Input::IMPORT_USER_DICTIONARY:
+      eval_succeeded = ImportUserDictionary(command);
       break;
     case commands::Input::SEND_ENGINE_RELOAD_REQUEST:
       eval_succeeded = SendEngineReloadRequest(command);
@@ -619,17 +619,28 @@ bool SessionHandler::Cleanup(commands::Command* command) {
   return true;
 }
 
-bool SessionHandler::SendUserDictionaryCommand(commands::Command* command) {
-  if (!command->input().has_user_dictionary_command()) {
+bool SessionHandler::ImportUserDictionary(commands::Command* command) {
+  if (!command->input().has_user_dictionary_import_data()) {
     return false;
   }
-  user_dictionary::UserDictionaryCommandStatus status;
-  if (!engine_->EvaluateUserDictionaryCommand(
-          command->input().user_dictionary_command(), &status)) {
+
+  auto* user_dictionary_import_data =
+      command->mutable_input()->mutable_user_dictionary_import_data();
+
+  if (!user_dictionary_import_data ||
+      !user_dictionary_import_data->has_dictionary_name() ||
+      !user_dictionary_import_data->has_data()) {
     return false;
   }
-  *command->mutable_output()->mutable_user_dictionary_command_status() =
-      std::move(status);
+
+  // ImportUserDictionary is async. It returns immediately.
+  engine_->ImportUserDictionary(
+      std::move(*user_dictionary_import_data->mutable_dictionary_name()),
+      std::move(*user_dictionary_import_data->mutable_data()));
+
+  // Since `data` is moved, clear the proto for safety.
+  command->mutable_input()->clear_user_dictionary_import_data();
+
   return true;
 }
 
