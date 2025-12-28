@@ -31,7 +31,7 @@
 
 load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
 load("//bazel:stubs.bzl", "bzl_library")
-load("//data/version:mozc_version_template.bzl", "BUILD", "MAJOR", "MINOR", "REVISION_MACOS")
+load("//data/version:mozc_version_template.bzl", "DEFAULT_BUILD_LABEL_MACOS")
 
 exports_files(
     ["mozc_version_template.bzl"],
@@ -50,9 +50,20 @@ bzl_library(
     visibility = ["//visibility:private"],
 )
 
+# The version can be specifyed by the --embed_label flag.
+# e.g. bazel build --embed_label="2.32.5994.101" package
+# The default version is specified by DEFAULT_BUILD_LABEL_MACOS in mozc_version_template.bzl.
+# LINT.IfChange
 apple_bundle_version(
     name = "version_macos",
-    build_version = "%d.%d.%d.%d" % (MAJOR, MINOR, BUILD, REVISION_MACOS),
-    short_version_string = "%d.%d.%d" % (MAJOR, MINOR, BUILD),
+    build_label_pattern = "{version}.{revision}",  # e.g. 2.32.5994.101
+    build_version = "{version}.{revision}",  # e.g. 2.32.5994.101
+    capture_groups = {
+        "version": "\\d+\\.\\d+\\.\\d+",  # e.g. 2.32.5994
+        "revision": "\\d+",  # e.g. 101
+    },
+    fallback_build_label = DEFAULT_BUILD_LABEL_MACOS,  # e.g. 2.32.5994.101
+    short_version_string = "{version}",  # e.g. 2.32.5994
     visibility = ["//:__subpackages__"],
 )
+# LINT.ThenChange(//data/version/mozc_version_template.bzl)

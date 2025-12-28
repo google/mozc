@@ -40,7 +40,9 @@ BUILD = BUILD_OSS
 # Represent the platform and release channel.
 REVISION = 100
 
-REVISION_MACOS = REVISION + 1
+# LINT.IfChange
+DEFAULT_BUILD_LABEL_MACOS = "%d.%d.%d.%d" % (MAJOR, MINOR, BUILD, REVISION + 1)
+# LINT.ThenChange(//data/version/BUILD.bazel)
 
 # This version represents the version of Mozc IME engine (converter, predictor,
 # etc.).  This version info is included both in the Mozc server and in the Mozc
