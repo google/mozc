@@ -1119,6 +1119,9 @@ TEST_F(UserDictionaryTest, AsyncImportTest) {
             .Times(1)
             .WillRepeatedly(
                 Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+        EXPECT_CALL(mock_callback, OnToken(_, _, _))
+            .WillRepeatedly(
+                Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
         dic.LookupExact(key, convreq, &mock_callback);
       }
     }

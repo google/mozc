@@ -172,7 +172,9 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "user_dictionary_test",
-    size = "small",
+    # The size is "large" because AsyncImportTest takes long time.
+    # https://github.com/google/mozc/issues/1418
+    size = "large",
     srcs = [
         "user_dictionary_test.cc",
     ],
