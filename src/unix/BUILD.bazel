@@ -92,6 +92,7 @@ genrule(
         ":icons",
         "//gui/tool:mozc_tool",
         "//server:mozc_server",
+        "//unix/cli:mozc_client_cli",
         "//unix/emacs:mozc_emacs_helper",
         "//unix/ibus:gen_mozc_xml",
         "//unix/ibus:ibus_mozc",
