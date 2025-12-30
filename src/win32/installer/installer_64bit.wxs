@@ -90,8 +90,11 @@
        Windows 11 22H2      22621
        Windows 11 23H2      22631
        Windows 11 24H2      26100
+
+       Note that this needs to be a secure property. Otherwise, it becomes an unexpected value in
+       the repair/uninstall mode. See https://github.com/google/mozc/issues/1410
     -->
-    <Property Id="OS_BUILD_NUMBER">
+    <Property Id="OS_BUILD_NUMBER" Secure="yes">
       <RegistrySearch Id="CurrentBuildNumberValue" Type="raw" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" />
     </Property>
     <Launch Condition="(OS_BUILD_NUMBER AND (OS_BUILD_NUMBER &gt;= 10240)) OR (REMOVE=&quot;ALL&quot;)" Message="Google 日本語入力をインストールするには Windows 10 以降にアップグレードする必要があります。" />
@@ -101,7 +104,11 @@
     <Media Id="1" Cabinet="GoogleJapaneseInput.cab" EmbedCab="yes" CompressionLevel="high" />
 
     <?if $(var.MozcTIP64ArmPath) == "" and $(var.MozcTIP64XPath) == "" ?>
-      <Property Id="PROCESSOR_ARCHITECTURE">
+      <!--
+        This needs to be a secure property. Otherwise, it becomes an unexpected value in the
+        repair/uninstall mode. See https://github.com/google/mozc/issues/1410
+      -->
+      <Property Id="PROCESSOR_ARCHITECTURE" Secure="yes">
         <RegistrySearch Id="ProcessorArchitectureValue" Type="raw" Root="HKLM" Key="System\CurrentControlSet\Control\Session Manager\Environment" Name="PROCESSOR_ARCHITECTURE" />
       </Property>
       <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="ARM64 環境へのインストールは未対応です" />
