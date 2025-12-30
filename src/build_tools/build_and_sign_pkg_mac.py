@@ -66,21 +66,8 @@ def CodesignPackage(product_dir):
   # modules here all at once, rather than each build of the module.
   product_name = 'Mozc'
   app_res = product_name + '.app/Contents/Resources/'
-  breakpad = 'Contents/Frameworks/Breakpad.framework/Versions/A/Resources/breakpadUtilities.dylib'
   libqcocoa = 'Contents/Frameworks/QtCore.framework/Versions/Current/Resources/plugins/platforms/libqcocoa.dylib'
   targets = [
-      'ConfigDialog.app/' + breakpad,
-      'DictionaryTool.app/' + breakpad,
-      product_name + '.app/' + breakpad,
-      app_res + product_name + 'Converter.app/' + breakpad,
-      app_res + product_name + 'Prelauncher.app/' + breakpad,
-      app_res + product_name + 'Renderer.app/' + breakpad,
-      app_res + 'AboutDialog.app/' + breakpad,
-      app_res + 'ConfigDialog.app/' + breakpad,
-      app_res + 'DictionaryTool.app/' + breakpad,
-      app_res + 'ErrorMessageDialog.app/' + breakpad,
-      app_res + 'WordRegisterDialog.app/' + breakpad,
-  ] + [
       'ConfigDialog.app/' + libqcocoa,
       app_res + 'ConfigDialog.app/' + libqcocoa,
   ] + [

@@ -34,32 +34,15 @@
     # gui/gui.gyp).
     'copying_frameworks%': [],
   },
-  'link_settings': {
-    'libraries': [
-      '<(mac_breakpad_framework)',
-    ],
-  },
-  'dependencies': ['<(mozc_oss_src_dir)/base/base.gyp:breakpad'],
   'copies': [
     {
       'files': [
-        '<(mac_breakpad_framework)',
         '<@(copying_frameworks)',
       ],
       'destination': '<(PRODUCT_DIR)/<(product_name).app/Contents/Frameworks',
     },
   ],
   'postbuilds': [
-    {
-      'postbuild_name': 'dump symbols',
-      'action': [
-        '<(python)', '<(mozc_oss_src_dir)/build_tools/redirect.py',
-        '${BUILT_PRODUCTS_DIR}/<(product_name)_x86_64.breakpad',
-        '<(mac_breakpad_tools_dir)/dump_syms',
-        '-a', 'x86_64',
-        '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
-      ],
-    },
     {
       'postbuild_name': 'strip binary',
       'action': [

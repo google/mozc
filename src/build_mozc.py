@@ -159,7 +159,7 @@ def GetGypFileNames(options):
   gyp_file_names.extend(glob.glob('%s/dictionary/*/*.gyp' % OSS_SRC_DIR))
   # Include subdirectory of rewriter
   gyp_file_names.extend(glob.glob('%s/rewriter/*/*.gyp' % OSS_SRC_DIR))
-  # Include subdirectory of win32 and breakpad for Windows
+  # Include subdirectory of win32 for Windows
   if options.target_platform == 'Windows':
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % OSS_SRC_DIR))
   elif options.target_platform == 'Linux':
