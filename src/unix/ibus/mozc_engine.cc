@@ -236,8 +236,7 @@ MozcEngine::MozcEngine()
       client_(CreateAndConfigureClient()),
       preedit_handler_(std::make_unique<PreeditHandler>()),
       use_mozc_candidate_window_(false),
-      mozc_candidate_window_handler_(
-          std::make_unique<renderer::RendererClient>()),
+      mozc_candidate_window_handler_(renderer::RendererClient::Create()),
       preedit_method_(config::Config::ROMAN) {
   ibus_config_.Initialize();
   use_mozc_candidate_window_ = UseMozcCandidateWindow(ibus_config_);
