@@ -457,7 +457,9 @@ mozc_cc_library(
     srcs = ["user_dictionary_importer.cc"],
     hdrs = ["user_dictionary_importer.h"],
     textual_hdrs = [":pos_map"],
-    visibility = ["//gui:__subpackages__"],
+    visibility = [
+        "//gui:__subpackages__",
+    ],
     deps = [
         ":user_dictionary_util",
         "//base:hash",
