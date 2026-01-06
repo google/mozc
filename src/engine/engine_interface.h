@@ -104,6 +104,8 @@ class EngineInterface {
     return false;
   }
 
+  virtual void ImportUserDictionary(std::string name, std::string tsv) {}
+
   // Evaluates user dictionary command.
   virtual bool EvaluateUserDictionaryCommand(
       const user_dictionary::UserDictionaryCommand& command,

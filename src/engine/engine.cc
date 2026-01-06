@@ -30,6 +30,7 @@
 #include "engine/engine.h"
 
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "absl/log/check.h"
@@ -42,7 +43,7 @@
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager.h"
-#include "dictionary/user_dictionary_session_handler.h"
+#include "dictionary/user_dictionary.h"
 #include "engine/data_loader.h"
 #include "engine/minimal_converter.h"
 #include "engine/modules.h"
@@ -101,6 +102,10 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules) {
   auto rewriter_factory = [](const engine::Modules& modules) {
     return std::make_unique<Rewriter>(modules);
   };
+
+  async_user_dictionary_importer_ =
+      std::make_unique<user_dictionary::AsyncUserDictionaryImporter>(
+          modules->GetUserDictionary());
 
   auto converter = std::make_shared<converter::Converter>(
       std::move(modules), immutable_converter_factory, predictor_factory,
@@ -173,6 +178,12 @@ bool Engine::SendSupplementalModelReloadRequest(
     converter_->modules().GetSupplementalModel().LoadAsync(request);
   }
   return true;
+}
+
+void Engine::ImportUserDictionary(std::string name, std::string tsv) {
+  if (async_user_dictionary_importer_) {
+    async_user_dictionary_importer_->Import(std::move(name), std::move(tsv));
+  }
 }
 
 bool Engine::EvaluateUserDictionaryCommand(
