@@ -16,7 +16,7 @@
   #define MOZC_RES_INTERNAL_NAME ""
 #endif
 #ifndef MOZC_RES_LEGAL_COPYRIGHT
-  #define MOZC_RES_LEGAL_COPYRIGHT "Copyright 2025 Google LLC. All Rights Reserved."
+  #define MOZC_RES_LEGAL_COPYRIGHT "Copyright 2026 Google LLC. All Rights Reserved."
 #endif
 #ifndef MOZC_RES_ORIGINAL_FILENAME
   #define MOZC_RES_ORIGINAL_FILENAME ""

@@ -1,4 +1,4 @@
 /* Localized versions of Info.plist keys */
 
 CFBundleName = "${CF_BUNDLE_NAME_JA} 環境設定";
-NSHumanReadableCopyright = "Copyright 2025 Google LLC";
+NSHumanReadableCopyright = "Copyright 2026 Google LLC";
