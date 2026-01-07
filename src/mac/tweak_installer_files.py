@@ -157,6 +157,14 @@ def TweakForProductbuild(
       ('InstallerSections.plist', 'Plugins/'),
       ('postflight.sh', 'scripts/postinstall'),
       ('preflight.sh', 'scripts/preinstall'),
+      (
+          'Resources/en.lproj/Localizable.strings',
+          f'root/Applications/{folder}/.localized/en.strings',
+      ),
+      (
+          'Resources/ja.lproj/Localizable.strings',
+          f'root/Applications/{folder}/.localized/ja.strings',
+      ),
   ]
 
   # For the dev channel, add the dev confirm section to the installer.
