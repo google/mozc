@@ -58,7 +58,7 @@ class IosEngine {
 
   // Initializes the underlying engine instance with the specified data.  If it
   // fails to load, falls back to the embedded (low quality) engine.
-  explicit IosEngine(const std::string &data_file_path);
+  explicit IosEngine(const std::string& data_file_path);
 
   ~IosEngine();
 
@@ -69,33 +69,33 @@ class IosEngine {
 
   // Sets request to mobile spec.  Acceptable |keyboard_layout| are:
   // "12KEYS", "QWERTY_JA".
-  bool SetMobileRequest(const std::string &keyboard_layout,
-                        commands::Command *command);
+  bool SetMobileRequest(const std::string& keyboard_layout,
+                        commands::Command* command);
 
   // Fills mobile settings to config.
-  static void FillMobileConfig(config::Config *config);
+  static void FillMobileConfig(config::Config* config);
 
   // Sets the config to the engine.
-  bool SetConfig(const config::Config &config, commands::Command *command);
+  bool SetConfig(const config::Config& config, commands::Command* command);
 
   // Creates a session.  If there's already a created session, it is deleted.
   // The created session is managed by this instance.
-  bool CreateSession(commands::Command *command);
+  bool CreateSession(commands::Command* command);
 
   // Deletes the session currently managed.
-  bool DeleteSession(commands::Command *command);
+  bool DeleteSession(commands::Command* command);
 
   // Resets the current context.  If the reset is already done before,
   // nothing happens and false is returned. false is returned on error too.
-  bool ResetContext(commands::Command *command);
+  bool ResetContext(commands::Command* command);
 
   // Sends a special key event (e.g., backspace, arrows).
   bool SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
-                      commands::Command *command);
+                      commands::Command* command);
 
   // Sends a normal key event.  When |character| is one byte, it is sent as
   // key_code; otherwise it is sent as key_string.
-  bool SendKey(const std::string &character, commands::Command *command);
+  bool SendKey(const std::string& character, commands::Command* command);
 
   // Maybe creates a new chunk by sending STOP_KEY_TOGGLING command. This method
   // is intended to be used by a timer thread to exit toggle state in 12-key
@@ -107,25 +107,25 @@ class IosEngine {
   // event is occurred.  The use of underlying engine means some events have
   // occurred when the timer thread calls this method, so it's expected not to
   // send the special key to the engine.
-  bool MaybeCreateNewChunk(commands::Command *command);
+  bool MaybeCreateNewChunk(commands::Command* command);
 
   // Sends a session command.
-  bool SendSessionCommand(const commands::SessionCommand &session_command,
-                          commands::Command *command);
+  bool SendSessionCommand(const commands::SessionCommand& session_command,
+                          commands::Command* command);
 
   // Convenient aliases for SendSessionCommand.
-  bool Submit(commands::Command *command) {
+  bool Submit(commands::Command* command) {
     commands::SessionCommand session_command;
     session_command.set_type(commands::SessionCommand::SUBMIT);
     return SendSessionCommand(session_command, command);
   }
-  bool SubmitCandidate(int index, commands::Command *command) {
+  bool SubmitCandidate(int index, commands::Command* command) {
     commands::SessionCommand session_command;
     session_command.set_type(commands::SessionCommand::SUBMIT_CANDIDATE);
     session_command.set_id(index);
     return SendSessionCommand(session_command, command);
   }
-  bool UndoOrRewind(commands::Command *command) {
+  bool UndoOrRewind(commands::Command* command) {
     commands::SessionCommand session_command;
     session_command.set_type(commands::SessionCommand::UNDO_OR_REWIND);
     return SendSessionCommand(session_command, command);
@@ -138,11 +138,11 @@ class IosEngine {
   // should be formatted as: READING<tab>WORD<tab>POS.  If the content is empty,
   // it deletes the user dictionary.  This method is intended to be used for iOS
   // system dictionary.
-  bool ImportUserDictionary(const std::string &tsv_content,
-                            commands::Command *command);
+  bool ImportUserDictionary(const std::string& tsv_content,
+                            commands::Command* command);
 
   // Clear user input history of both conversion and prediction from storage.
-  bool ClearUserHistory(commands::Command *command);
+  bool ClearUserHistory(commands::Command* command);
 
  private:
   // A configuration of Mozc engine, which corresponds to each of input layout.
@@ -159,46 +159,19 @@ class IosEngine {
     InputConfig digit_config;
   };
 
-  class ScopedUserDictionarySession {
-   public:
-    explicit ScopedUserDictionarySession(IosEngine *engine);
-    ~ScopedUserDictionarySession();
-
-    ScopedUserDictionarySession(const ScopedUserDictionarySession &) = delete;
-    ScopedUserDictionarySession &operator=(
-        const ScopedUserDictionarySession &) = delete;
-
-    uint64_t user_dict_session_id() const { return user_dict_session_id_; }
-
-   private:
-    IosEngine *engine_;
-    uint64_t user_dict_session_id_;
-  };
-
   static InputConfigTuple GetInputConfigTupleFromLayoutName(
-      const std::string &layout);
+      const std::string& layout);
 
-  bool EvalCommandLockGuarded(commands::Command *command);
+  bool EvalCommandLockGuarded(commands::Command* command);
   bool SetSpecialRomajiTable(commands::Request::SpecialRomanjiTable table);
-  bool LoadUserDictionaryIfExists(uint64_t user_dict_session_id,
-                                  commands::Command *command);
-  bool DeleteUserDictionaryIfExists(uint64_t user_dict_session_id,
-                                    const std::string &dictionary_name,
-                                    commands::Command *command);
-  bool ImportDataToNewUserDictionary(uint64_t user_dict_session_id,
-                                     const std::string &dictionary_name,
-                                     const std::string &tsv_content,
-                                     commands::Command *command);
-  bool SaveUserDictionary(uint64_t user_dict_session_id,
-                          commands::Command *command);
-  bool Reload(commands::Command *command);
+  bool Reload(commands::Command* command);
 
   absl::Mutex mutex_;
   std::unique_ptr<SessionHandler> session_handler_ ABSL_PT_GUARDED_BY(mutex_);
   uint64_t session_id_ = 0;
   commands::Request current_request_;
   InputConfigTuple current_config_tuple_;
-  InputConfig *current_input_config_ = nullptr;
+  InputConfig* current_input_config_ = nullptr;
 
   // Command called just before. NONE is used as a n/a value.
   commands::SessionCommand::CommandType previous_command_;
