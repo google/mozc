@@ -102,6 +102,14 @@ def main():
   else:
     omaha_tag = 'external-stable'
 
+  # Check if the combination of build type and version is valid.
+  is_valid = ((omaha_tag == 'external-dev' and version.endswith('.101')) or
+              (omaha_tag == 'external-stable' and version.endswith('.1')))
+  if options.version_file and not is_valid:
+    raise ValueError(
+        f'Invalid build type {options.build_type} and version {version}'
+    )
+
   variables = [
       (
           '@@@MOZC_APPLICATIONS_DIR@@@',
