@@ -165,7 +165,7 @@ bool ResultFilter::ShouldRemove(const Result& result, int added_num) {
   const size_t lookup_key_len = Util::CharsLen(request_key_);
 
   if (suffix_nwp_transition_cost_threshold_ > 0 && lookup_key_len == 0 &&
-      result.types & PredictionType::SUFFIX &&
+      history_rid_ != 0 && result.types & PredictionType::SUFFIX &&
       connector_.GetTransitionCost(history_rid_, result.lid) >
           suffix_nwp_transition_cost_threshold_) {
     return true;
