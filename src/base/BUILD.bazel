@@ -749,7 +749,10 @@ mozc_run_build_tool(
         macos = ["--target_platform=Mac"],
         wasm = ["--target_platform=Wasm"],
         windows = ["--target_platform=Windows"],
-    ),
+    ) + select({
+        "//:dev_channel": ["--channel=dev"],
+        "//conditions:default": ["--channel=stable"],
+    }),
     tool = "//build_tools:mozc_version",
     visibility = ["//:__subpackages__"],
 )

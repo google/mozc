@@ -105,12 +105,15 @@ def _GetRevisionForPlatform(revision, target_platform):
   return revision
 
 
-def _ParseVersionTemplateFile(template_path, target_platform, version_override):
+def _ParseVersionTemplateFile(
+    template_path, target_platform, channel, version_override
+):
   """Parses a version definition file.
 
   Args:
     template_path: A filename which has the version definition.
     target_platform: The target platform on which the programs run.
+    channel: The build channel (dev, stable, or default).
     version_override: An optional string to override version number.
       If it is a single number, it means a build number (e.g. "4500").
       If it is a four numbers, it means a full version (e.g. "2.28.4500.0").
@@ -133,9 +136,15 @@ def _ParseVersionTemplateFile(template_path, target_platform, version_override):
           val = template_dict[val]
         template_dict[var] = val
 
+  if channel == 'dev':
+    revision = '100'
+  elif channel == 'stable':
+    revision = '0'
+  else:  # 'default'
+    revision = template_dict.get('REVISION', None)
+
   # Some properties need to be tweaked.
-  template_dict['REVISION'] = _GetRevisionForPlatform(
-      template_dict.get('REVISION', None), target_platform)
+  template_dict['REVISION'] = _GetRevisionForPlatform(revision, target_platform)
 
   template_dict['TARGET_PLATFORM'] = target_platform
   if version_override:
@@ -194,6 +203,7 @@ def GenerateVersionFileFromTemplate(template_path,
                                     output_path,
                                     version_format,
                                     target_platform,
+                                    channel='default',
                                     version_override=None):
   """Generates version file from template file and given parameters.
 
@@ -204,6 +214,7 @@ def GenerateVersionFileFromTemplate(template_path,
       (the timestamp is not updated).
     version_format: A string which contains version patterns.
     target_platform: The target platform on which the programs run.
+    channel: The build channel (dev, stable, or default).
     version_override: An optional string to override BUILD number
       in the template.
       If it is a single number, it means a build number (e.g. "4500").
@@ -211,7 +222,7 @@ def GenerateVersionFileFromTemplate(template_path,
   """
 
   properties = _ParseVersionTemplateFile(template_path, target_platform,
-                                         version_override)
+                                         channel, version_override)
   version_definition = _GetVersionInFormat(properties, version_format)
   old_content = ''
   if os.path.exists(output_path):
@@ -228,7 +239,7 @@ def GenerateVersionFileFromTemplate(template_path,
 
 
 def GenerateVersionFile(version_template_path, version_path, target_platform,
-                        version_override=None):
+                        channel='default', version_override=None):
   """Reads the version template file and stores it into version_path.
 
   This doesn't update the "version_path" if nothing will be changed to
@@ -238,6 +249,7 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
     version_template_path: a file name which contains the template of version.
     version_path: a file name to be stored the official version.
     target_platform: target platform name. c.f. --target_platform option
+    channel: The build channel (dev, stable, or default).
     version_override: an optional string to override version number.
       If it is a single number, it means a build number (e.g. "4500").
       If it is a four numbers, it means a full version (e.g. "2.28.4500.0").
@@ -258,6 +270,7 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
       version_path,
       version_format,
       target_platform=target_platform,
+      channel=channel,
       version_override=version_override)
 
 
@@ -364,6 +377,14 @@ def main():
                     help='Overrides BUILD number in the template.')
   parser.add_option('--build_changelist_file', dest='build_changelist_file',
                     help='Filepath containing the BUILD number.')
+  parser.add_option(
+      '--channel',
+      dest='channel',
+      type='choice',
+      choices=['dev', 'stable', 'default'],
+      default='default',
+      help='Build channel (dev, stable, or default).',
+  )
   (options, args) = parser.parse_args()
   assert not args, 'Unexpected arguments.'
   assert options.template_path, 'No --template_path was specified.'
@@ -381,6 +402,7 @@ def main():
       version_template_path=options.template_path,
       version_path=options.output,
       target_platform=options.target_platform,
+      channel=options.channel,
       version_override=version_override)
 
 if __name__ == '__main__':
