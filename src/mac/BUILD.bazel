@@ -29,6 +29,7 @@
 
 load(
     "//:build_defs.bzl",
+    "MOZC_TAGS",
     "mozc_macos_application",
     "mozc_macos_bundle",
     "mozc_objc_library",
@@ -434,6 +435,8 @@ genrule(
         " $(location //base:mozc_version_txt)" +
         " --build_type ",
     ]) + BUILD_TYPE_SELECT,  # "dev" or "stable".
+    # macOS only since the script validates if the version string is proper for macOS.
+    tags = MOZC_TAGS.MAC_ONLY,
     tools = [
         "//base:mozc_version_txt",
         "//build_tools:tweak_macinstaller_script",
@@ -484,6 +487,8 @@ genrule(
     ),
     outs = ["installer.zip"],
     cmd = "$(location :zip_files) --inputs $(SRCS) --output $@",
+    # macOS only since this rule depends on :tweak_postflight that works only for macOS.
+    tags = MOZC_TAGS.MAC_ONLY,
     tools = [
         ":zip_files",
     ],
