@@ -636,6 +636,9 @@ message DecoderExperimentParams {
   // The candidate will not be filtered if this value is zero.
   optional int32 suffix_nwp_transition_cost_threshold = 107 [default = 0];
 
+  // Predicts candidate staring with white space.
+  optional bool user_history_predict_space_prefix = 134 [default = false];
+
   // Stores inner segment boundary in user history cache.
   // This information is going to be shared with user_segment_rewriter.
   optional bool user_history_cache_inner_segment_boundary = 135
