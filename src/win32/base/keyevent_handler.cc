@@ -880,6 +880,38 @@ KeyEventHandlerResult KeyEventHandler::ImeToAsciiEx(
   }
   output->Clear();
 
+  // Although Mozc has not explicitly supported any key-up message, there exist
+  // some situations where the client has to send key message when it receives
+  // a key-up message.  Currently we have following exceptions.
+  // - Shift/Control/Alt keys
+  //    The Mozc protocol had originally allowed the client to ignore key-up
+  //    events of these modifier keys but later has changed to expect the
+  //    client to send a key message which contains only modifiers field and
+  //    mode field to support b/2269058 and b/1995170.
+  if (is_key_down) {
+    // This is an ugly workaround to determine which key-up message for a
+    // modifier key should be sent to the server.  Currently, the Mozc server
+    // expects the client to send such a key-up message only when a modifier
+    // key is released just after the same key is pressed, that is, any other
+    // key is not pressed between the key-down and key-up of a modifier key.
+    // Here are some examples, where [D] and [U] mean 'key down' and 'key up'.
+    //   (1) [D]Shift -> [D]A -> [U]Shift -> [U]A
+    //      In this case, only 'A' will be sent to the server
+    //   (2) [D]Shift -> [U]Shift -> [D]A -> [U]A
+    //      In this case, 'Shift' and 'A' will be sent to the server.
+    //   (3) [D]Shift -> [D]Control -> [U]Shift -> [U]Control
+    //      In this case, no key message will be sent to the server.
+    //   (4) [D]Shift -> [D]Control -> [U]Control -> [U]Shift
+    //      In this case, 'Control+Shift' will be sent to the server.  Note
+    //      that |KeyEvent::modifier_keys| will contain all the modifier keys
+    //      when the client receives '[U]Control'.
+    // Unfortunately, it is currently client's responsibility to remember the
+    // key sequence to generate appropriate key messages as expected by the
+    // server.  Strictly speaking, the Mozc client is actually stateful in
+    // this sense.
+    next_state->last_down_key = virtual_key;
+  }
+
   KeyEvent key;
   KeyEventHandlerResult result =
       HandleKey(virtual_key, scan_code, is_key_down, keyboard_status, behavior,

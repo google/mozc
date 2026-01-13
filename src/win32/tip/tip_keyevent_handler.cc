@@ -428,17 +428,19 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
     Context mozc_context;
     FillMozcContextForOnKey(text_service, context, &mozc_context);
 
-    InputState unused_next_state;
+    InputState next_state;
     const KeyEventHandlerResult result = KeyEventHandler::ImeToAsciiEx(
         vk, key_info.GetScanCode(), is_key_down, keyboard_status, behavior,
         ime_state, mozc_context, private_context->GetClient(), keyboard.get(),
-        &unused_next_state, &temporal_output);
+        &next_state, &temporal_output);
 
     if (!result.succeeded) {
       // no message generated.
       *eaten = FALSE;
       return S_OK;
     }
+
+    *private_context->mutable_last_down_key() = next_state.last_down_key;
 
     const TipInputModeManager::Action action =
         text_service->GetThreadContext()->GetInputModeManager()->OnKey(
