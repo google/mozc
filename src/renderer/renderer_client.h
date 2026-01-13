@@ -33,6 +33,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/base/nullability.h"
 #include "client/client_interface.h"
 #include "ipc/ipc.h"
 #include "protocol/renderer_command.pb.h"
@@ -76,27 +77,21 @@ class RendererLauncherInterface {
 };
 
 // IPC-based client for out-proc renderer.
-class RendererClient : public RendererInterface {
+class RendererClient final : public RendererInterface {
  public:
-  RendererClient();
-  RendererClient(RendererClient&&) = default;
-  RendererClient& operator=(RendererClient&&) = default;
+  enum class RendererPathCheckMode {
+    ENABLED,
+    DISABLED,
+  };
+
+  static std::unique_ptr<RendererClient> Create();
+
+  static std::unique_ptr<RendererClient> CreateForTesting(
+      IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
+      RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
+      RendererPathCheckMode renderer_path_check_mode);
+
   ~RendererClient() override;
-
-  // set IPC factory
-  void SetIPCClientFactory(
-      IPCClientFactoryInterface* ipc_client_factory_interface);
-
-  // set StartRendererInterface
-  void SetRendererLauncherInterface(
-      RendererLauncherInterface* renderer_launcher_interface);
-
-  // send_command_interface is not used in the client.
-  // Currently, mouse handling must be implemented in each
-  // platform separately.
-  // TODO(taku): move win32 code into RendererClient
-  void SetSendCommandInterface(
-      client::SendCommandInterface* send_command_interface) override {}
 
   // activate renderer server
   bool Activate() override;
@@ -112,26 +107,31 @@ class RendererClient : public RendererInterface {
 
   bool ExecCommand(const commands::RendererCommand& command) override;
 
-  // Don't check the renderer server path.
-  // DO NOT call it except for testing
-  void DisableRendererServerCheck();
-
   // Sets the flag of error dialog suppression.
   void set_suppress_error_dialog(bool suppress);
 
  private:
+  RendererClient(
+      std::string name,
+      IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
+      RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
+      bool disable_renderer_path_check_for_testing);
+
+  IPCClientFactoryInterface* absl_nonnull GetIPCClientFactory() const;
+  RendererLauncherInterface* absl_nonnull GetRendererLauncher() const;
+
   std::unique_ptr<IPCClientInterface> CreateIPCClient() const;
 
   bool is_window_visible_;
-  bool disable_renderer_path_check_;
   int version_mismatch_nums_;
-  std::string name_;
-  std::string renderer_path_;
+  const std::string name_;
+  std::unique_ptr<RendererLauncherInterface> default_renderer_launcher_;
 
-  IPCClientFactoryInterface* ipc_client_factory_interface_;
-
-  std::unique_ptr<RendererLauncherInterface> renderer_launcher_;
-  RendererLauncherInterface* renderer_launcher_interface_;
+  // Behavior overrides for testing
+  IPCClientFactoryInterface* const absl_nullable
+      ipc_client_factory_for_testing_;
+  RendererLauncherInterface* const absl_nullable renderer_launcher_for_testing_;
+  const bool disable_renderer_path_check_for_testing_;
 };
 
 }  // namespace renderer

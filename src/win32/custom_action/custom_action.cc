@@ -251,8 +251,9 @@ UINT __stdcall ShutdownServer(MSIHANDLE msi_handle) {
       LOG_ERROR_FOR_OMAHA();
     }
   }
-  mozc::renderer::RendererClient renderer_client;
-  if (!renderer_client.Shutdown(true)) {
+  std::unique_ptr<mozc::renderer::RendererClient> renderer_client =
+      mozc::renderer::RendererClient::Create();
+  if (!renderer_client->Shutdown(true)) {
     // This is not fatal as Windows Installer can replace executables even when
     // they are still running. Just log error then go ahead.
     LOG_ERROR_FOR_OMAHA();

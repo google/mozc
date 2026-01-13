@@ -222,7 +222,7 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   mode_ = mozc::commands::DIRECT;
   suppressSuggestion_ = false;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
-  mozcRenderer_ = std::make_unique<mozc::renderer::RendererClient>();
+  mozcRenderer_ = mozc::renderer::RendererClient::Create();
   mozcClient_ = mozc::client::ClientFactory::NewClient();
   lastKeyDownTime_ = 0;
   lastKeyCode_ = 0;
