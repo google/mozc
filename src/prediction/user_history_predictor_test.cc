@@ -5522,23 +5522,7 @@ TEST_F(UserHistoryPredictorTest, PredictPrefixSpace) {
     predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   };
 
-  // predict_space_prefix is disabled.
   {
-    convert_unigram("らーめん", "ラーメン");
-    // user puts space after ラーメン
-    context_.set_preceding_text("ラーメン　");
-    convert_unigram("しぶや", "渋谷");
-
-    const ConversionRequest convreq1 = SetUpInputForSuggestionWithHistory(
-        "", "らーめん", "ラーメン", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq1);
-    EXPECT_TRUE(results.empty());
-  }
-
-  // predict_space_prefix is enabled.
-  {
-    request_.mutable_decoder_experiment_params()
-        ->set_user_history_predict_space_prefix(true);
     request_.set_display_value_capability(commands::Request::PLAIN_TEXT);
 
     predictor->ClearAllHistory();
