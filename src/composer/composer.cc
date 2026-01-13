@@ -1096,7 +1096,7 @@ bool Composer::EnableInsert() const {
 }
 
 void Composer::AutoSwitchMode() {
-  if (!config_->use_auto_ime_turn_off()) {
+  if (!config_->auto_switch_composition_mode()) {
     return;
   }
 

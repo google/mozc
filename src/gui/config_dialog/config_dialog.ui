@@ -730,7 +730,7 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_9">
        <item row="0" column="0" colspan="7">
-        <widget class="QCheckBox" name="useAutoImeTurnOff">
+        <widget class="QCheckBox" name="autoSwitchCompositionMode">
          <property name="text">
           <string>Automatically switch to halfwidth</string>
          </property>
@@ -1820,7 +1820,7 @@
   <tabstop>numberConversionCheckBox</tabstop>
   <tabstop>calculatorCheckBox</tabstop>
   <tabstop>spellingCorrectionCheckBox</tabstop>
-  <tabstop>useAutoImeTurnOff</tabstop>
+  <tabstop>autoSwitchCompositionMode</tabstop>
   <tabstop>useAutoConversion</tabstop>
   <tabstop>kutenCheckBox</tabstop>
   <tabstop>toutenCheckBox</tabstop>

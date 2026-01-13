@@ -1243,9 +1243,9 @@ TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
   EXPECT_EQ(composer_->GetStringForPreedit(), "カＴあｋアな");
 }
 
-TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
+TEST_F(ComposerTest, AutoSwitchCompositionModeEnabled) {
   config_->set_preedit_method(Config::ROMAN);
-  config_->set_use_auto_ime_turn_off(true);
+  config_->set_auto_switch_composition_mode(true);
 
   table_->InitializeWithRequestAndConfig(*request_, *config_);
 
@@ -1352,9 +1352,9 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   }
 }
 
-TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
+TEST_F(ComposerTest, AutoSwitchCompositionModeDisabled) {
   config_->set_preedit_method(Config::ROMAN);
-  config_->set_use_auto_ime_turn_off(false);
+  config_->set_auto_switch_composition_mode(false);
 
   table_->InitializeWithRequestAndConfig(*request_, *config_);
 
@@ -1385,9 +1385,9 @@ TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
   EXPECT_EQ(composer_->GetStringForPreedit(), "ｈっｔｐ：・・");
 }
 
-TEST_F(ComposerTest, AutoIMETurnOffKana) {
+TEST_F(ComposerTest, AutoSwitchCompositionModeKana) {
   config_->set_preedit_method(Config::KANA);
-  config_->set_use_auto_ime_turn_off(true);
+  config_->set_auto_switch_composition_mode(true);
 
   table_->InitializeWithRequestAndConfig(*request_, *config_);
 

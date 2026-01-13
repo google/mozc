@@ -524,7 +524,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
       config.information_list_config().use_local_usage_dictionary());
 
   // tab3
-  SET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);
+  SET_CHECKBOX(autoSwitchCompositionMode, auto_switch_composition_mode);
 
   SET_CHECKBOX(useAutoConversion, use_auto_conversion);
   kutenCheckBox->setChecked(config.auto_conversion_key() &
@@ -612,7 +612,7 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
       localUsageDictionaryCheckBox->isChecked());
 
   // tab3
-  GET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);
+  GET_CHECKBOX(autoSwitchCompositionMode, auto_switch_composition_mode);
 
   GET_CHECKBOX(useAutoConversion, use_auto_conversion);
 
