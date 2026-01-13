@@ -140,28 +140,28 @@
         <translation>Activate IME</translation>
     </message>
     <message>
-        <source>InputModeSwitchKanaType</source>
-        <translation>Set input mode to next kana type</translation>
+        <source>CompositionModeSwitchKanaType</source>
+        <translation>Set composition mode to next kana type</translation>
     </message>
     <message>
-        <source>InputModeFullAlphanumeric</source>
-        <translation>Set input mode to full-width alphanumeric</translation>
+        <source>CompositionModeFullAlphanumeric</source>
+        <translation>Set composition mode to full-width alphanumeric</translation>
     </message>
     <message>
-        <source>InputModeFullKatakana</source>
-        <translation>Set input mode to full-width katakana</translation>
+        <source>CompositionModeFullKatakana</source>
+        <translation>Set composition mode to full-width katakana</translation>
     </message>
     <message>
-        <source>InputModeHalfAlphanumeric</source>
-        <translation>Set input mode to half-width alphanumeric</translation>
+        <source>CompositionModeHalfAlphanumeric</source>
+        <translation>Set composition mode to half-width alphanumeric</translation>
     </message>
     <message>
-        <source>InputModeHalfKatakana</source>
-        <translation>Set input mode to half-width katakana</translation>
+        <source>CompositionModeHalfKatakana</source>
+        <translation>Set composition mode to half-width katakana</translation>
     </message>
     <message>
-        <source>InputModeHiragana</source>
-        <translation>Set input mode to Hiragana</translation>
+        <source>CompositionModeHiragana</source>
+        <translation>Set composition mode to Hiragana</translation>
     </message>
     <message>
         <source>InsertAlternateSpace</source>

@@ -140,27 +140,27 @@
         <translation>IME を有効化</translation>
     </message>
     <message>
-        <source>InputModeSwitchKanaType</source>
+        <source>CompositionModeSwitchKanaType</source>
         <translation>次のかな文字種に入力切替</translation>
     </message>
     <message>
-        <source>InputModeFullAlphanumeric</source>
+        <source>CompositionModeFullAlphanumeric</source>
         <translation>全角英数に入力切替</translation>
     </message>
     <message>
-        <source>InputModeFullKatakana</source>
+        <source>CompositionModeFullKatakana</source>
         <translation>全角カタカナに入力切替</translation>
     </message>
     <message>
-        <source>InputModeHalfAlphanumeric</source>
+        <source>CompositionModeHalfAlphanumeric</source>
         <translation>半角英数に入力切替</translation>
     </message>
     <message>
-        <source>InputModeHalfKatakana</source>
+        <source>CompositionModeHalfKatakana</source>
         <translation>半角カタカナに入力切替</translation>
     </message>
     <message>
-        <source>InputModeHiragana</source>
+        <source>CompositionModeHiragana</source>
         <translation>ひらがなに入力切替</translation>
     </message>
     <message>
