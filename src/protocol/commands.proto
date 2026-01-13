@@ -1064,8 +1064,8 @@ message Input {
     reserved "READ_ALL_FROM_STORAGE";
     reserved "CLEAR_STORAGE";
 
-    // Send a command for user dictionary session.
-    SEND_USER_DICTIONARY_COMMAND = 26;
+    reserved 26;
+    reserved "SEND_USER_DICTIONARY_COMMAND";
 
     // Send an engine_reload_request (ID: 15) to reload the engine.
     SEND_ENGINE_RELOAD_REQUEST = 27;
@@ -1145,8 +1145,7 @@ message Input {
   }
   repeated TouchEvent touch_events = 12;
 
-  optional mozc.user_dictionary.UserDictionaryCommand user_dictionary_command =
-      13;
+  reserved 13;  // deprecated user_dictionary_command
 
   optional mozc.user_dictionary.UserDictionaryImportData
       user_dictionary_import_data = 17;
@@ -1379,8 +1378,7 @@ message Output {
   reserved 19;  // Deprecated storage_entry
   reserved 20;  // Deprecated cloud_sync_status
 
-  optional mozc.user_dictionary.UserDictionaryCommandStatus
-      user_dictionary_command_status = 21;
+  reserved 21;  // Deprecated user_dictionary_command_status
 
   optional mozc.EngineReloadResponse engine_reload_response = 22;
 

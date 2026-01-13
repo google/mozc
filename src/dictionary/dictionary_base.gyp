@@ -106,8 +106,6 @@
         '<(gen_out_dir)/pos_map.inc',
         'user_dictionary.cc',
         'user_dictionary_importer.cc',
-        'user_dictionary_session.cc',
-        'user_dictionary_session_handler.cc',
         'user_dictionary_storage.cc',
         'user_dictionary_util.cc',
       ],

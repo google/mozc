@@ -359,9 +359,6 @@ bool SessionHandler::EvalCommand(commands::Command* command) {
     case commands::Input::IMPORT_USER_DICTIONARY:
       eval_succeeded = ImportUserDictionary(command);
       break;
-    case commands::Input::SEND_USER_DICTIONARY_COMMAND:
-      eval_succeeded = SendUserDictionaryCommand(command);
-      break;
     case commands::Input::SEND_ENGINE_RELOAD_REQUEST:
       eval_succeeded = SendEngineReloadRequest(command);
       break;
@@ -644,20 +641,6 @@ bool SessionHandler::ImportUserDictionary(commands::Command* command) {
   // Since `data` is moved, clear the proto for safety.
   command->mutable_input()->clear_user_dictionary_import_data();
 
-  return true;
-}
-
-bool SessionHandler::SendUserDictionaryCommand(commands::Command* command) {
-  if (!command->input().has_user_dictionary_command()) {
-    return false;
-  }
-  user_dictionary::UserDictionaryCommandStatus status;
-  if (!engine_->EvaluateUserDictionaryCommand(
-          command->input().user_dictionary_command(), &status)) {
-    return false;
-  }
-  *command->mutable_output()->mutable_user_dictionary_command_status() =
-      std::move(status);
   return true;
 }
 

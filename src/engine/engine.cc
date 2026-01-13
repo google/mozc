@@ -50,7 +50,6 @@
 #include "engine/supplemental_model_interface.h"
 #include "prediction/predictor.h"
 #include "protocol/engine_builder.pb.h"
-#include "protocol/user_dictionary_storage.pb.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -184,12 +183,6 @@ void Engine::ImportUserDictionary(std::string name, std::string tsv) {
   if (async_user_dictionary_importer_) {
     async_user_dictionary_importer_->Import(std::move(name), std::move(tsv));
   }
-}
-
-bool Engine::EvaluateUserDictionaryCommand(
-    const user_dictionary::UserDictionaryCommand& command,
-    user_dictionary::UserDictionaryCommandStatus* status) {
-  return user_dictionary_session_handler_.Evaluate(command, status);
 }
 
 }  // namespace mozc

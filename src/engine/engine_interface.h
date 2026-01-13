@@ -39,7 +39,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/engine_builder.pb.h"
-#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 
@@ -105,13 +104,6 @@ class EngineInterface {
   }
 
   virtual void ImportUserDictionary(std::string name, std::string tsv) {}
-
-  // Evaluates user dictionary command.
-  virtual bool EvaluateUserDictionaryCommand(
-      const user_dictionary::UserDictionaryCommand& command,
-      user_dictionary::UserDictionaryCommandStatus* status) {
-    return false;
-  }
 
  protected:
   EngineInterface() = default;

@@ -42,7 +42,6 @@
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/user_dictionary.h"
-#include "dictionary/user_dictionary_session_handler.h"
 #include "engine/data_loader.h"
 #include "engine/engine_converter.h"
 #include "engine/engine_converter_interface.h"
@@ -129,10 +128,6 @@ class Engine : public EngineInterface {
 
   void ImportUserDictionary(std::string name, std::string tsv) override;
 
-  bool EvaluateUserDictionaryCommand(
-      const user_dictionary::UserDictionaryCommand& command,
-      user_dictionary::UserDictionaryCommandStatus* status) override;
-
   void SetAlwaysWaitForTesting(bool value) { always_wait_for_testing_ = value; }
 
  private:
@@ -151,10 +146,6 @@ class Engine : public EngineInterface {
   std::unique_ptr<DataLoader::Response> loader_response_;
   std::unique_ptr<user_dictionary::AsyncUserDictionaryImporter>
       async_user_dictionary_importer_;
-  // Do not initialized with Init() because the cost of initialization is
-  // negligible.
-  user_dictionary::UserDictionarySessionHandler
-      user_dictionary_session_handler_;
   bool always_wait_for_testing_ = false;
 };
 

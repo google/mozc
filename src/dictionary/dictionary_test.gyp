@@ -41,8 +41,6 @@
         'single_kanji_dictionary_test.cc',
         'suffix_dictionary_test.cc',
         'user_dictionary_importer_test.cc',
-        'user_dictionary_session_handler_test.cc',
-        'user_dictionary_session_test.cc',
         'user_dictionary_storage_test.cc',
         'user_dictionary_test.cc',
         'user_dictionary_util_test.cc',
