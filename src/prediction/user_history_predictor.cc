@@ -1781,14 +1781,6 @@ UserHistoryPredictor::MakeLearningSegments(
 
     std::vector<SegmentForLearning> segments = make_learning_segments(result);
 
-    // TODO(taku): disable space_prefix when the client doesn't have
-    // display_value capability.
-    if (!request.request()
-             .decoder_experiment_params()
-             .user_history_predict_space_prefix()) {
-      return {segments, !kHasPrefixSpace};
-    }
-
     absl::string_view space_prefix = get_space_prefix();
     if (!segments.empty() || space_prefix.empty()) {
       return {segments, !space_prefix.empty()};
