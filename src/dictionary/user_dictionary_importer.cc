@@ -44,6 +44,7 @@
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -65,7 +66,6 @@ namespace user_dictionary {
 namespace {
 
 using ::mozc::user_dictionary::UserDictionary;
-using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 size_t HashOf(const UserDictionary::Entry& entry) {
   DCHECK(UserDictionary::PosType_IsValid(entry.pos()));
@@ -149,26 +149,21 @@ bool ConvertEntryInternal(const absl::Span<const PosMap> pos_map,
   }
 
   // Validation.
-  if (user_dictionary::ValidateEntry(*to) !=
-      UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
-    return false;
-  }
-
-  return true;
+  return user_dictionary::ValidateEntry(*to).ok();
 }
 
 }  // namespace
 
-ErrorType ImportFromIterator(InputIteratorInterface* iter,
-                             UserDictionary* user_dic) {
+absl::Status ImportFromIterator(InputIteratorInterface* iter,
+                                UserDictionary* user_dic) {
   if (iter == nullptr || user_dic == nullptr) {
     LOG(ERROR) << "iter or user_dic is nullptr";
-    return IMPORT_FATAL;
+    return ToStatus(ExtendedErrorCode::IMPORT_FATAL);
   }
 
   const size_t max_size = user_dictionary::max_entry_size();
 
-  ErrorType ret = IMPORT_NO_ERROR;
+  ExtendedErrorCode ret = ExtendedErrorCode::OK;
 
   absl::flat_hash_set<size_t> existent_entries;
   for (const auto& entry : user_dic->entries()) {
@@ -179,7 +174,7 @@ ErrorType ImportFromIterator(InputIteratorInterface* iter,
   while (iter->Next(&raw_entry)) {
     if (user_dic->entries_size() >= max_size) {
       LOG(WARNING) << "Too many words in one dictionary";
-      return IMPORT_TOO_MANY_WORDS;
+      return ToStatus(ExtendedErrorCode::IMPORT_TOO_MANY_WORDS);
     }
 
     if (raw_entry.key.empty() && raw_entry.value.empty() &&
@@ -192,7 +187,7 @@ ErrorType ImportFromIterator(InputIteratorInterface* iter,
     UserDictionary::Entry entry;
     if (!ConvertEntry(raw_entry, &entry)) {
       LOG(WARNING) << "Entry is not valid";
-      ret = IMPORT_INVALID_ENTRIES;
+      ret = ExtendedErrorCode::IMPORT_INVALID_ENTRIES;
       continue;
     }
 
@@ -204,15 +199,15 @@ ErrorType ImportFromIterator(InputIteratorInterface* iter,
     user_dic->mutable_entries()->Add(std::move(entry));
   }
 
-  return ret;
+  return ret == ExtendedErrorCode::OK ? absl::OkStatus() : ToStatus(ret);
 }
 
-ErrorType ImportFromTextLineIterator(IMEType ime_type,
-                                     TextLineIteratorInterface* iter,
-                                     UserDictionary* user_dic) {
+absl::Status ImportFromTextLineIterator(IMEType ime_type,
+                                        TextLineIteratorInterface* iter,
+                                        UserDictionary* user_dic) {
   TextInputIterator text_iter(ime_type, iter);
   if (text_iter.ime_type() == NUM_IMES) {
-    return IMPORT_NOT_SUPPORTED;
+    return ToStatus(ExtendedErrorCode::IMPORT_NOT_SUPPORTED);
   }
 
   return ImportFromIterator(&text_iter, user_dic);

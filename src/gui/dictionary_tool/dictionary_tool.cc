@@ -84,7 +84,6 @@ namespace gui {
 namespace {
 
 using ::mozc::user_dictionary::UserDictionary;
-using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 inline QString QUtf8(absl::string_view str) {
   return QString::fromUtf8(str.data(), static_cast<int>(str.size()));
@@ -784,11 +783,11 @@ void DictionaryTool::ImportAndAppendDictionary() {
                import_dialog_->ime_type(), import_dialog_->encoding_type());
 }
 
-void DictionaryTool::ReportImportError(user_dictionary::ErrorType error,
+void DictionaryTool::ReportImportError(absl::Status status,
                                        const QString& dic_name,
                                        int added_entries_size) {
-  switch (error) {
-    case user_dictionary::IMPORT_NO_ERROR:
+  switch (status.raw_code()) {
+    case user_dictionary::OK:
       QMessageBox::information(this, window_title_,
                                tr("%1 entries are imported to %2.")
                                    .arg(added_entries_size)
@@ -879,7 +878,7 @@ void DictionaryTool::ImportHelper(uint64_t dic_id, const QString& dic_name,
   }
 
   const int old_size = dic->entries_size();
-  const user_dictionary::ErrorType error =
+  const absl::Status status =
       user_dictionary::ImportFromTextLineIterator(ime_type, iter.get(), dic);
 
   const int added_entries_size = dic->entries_size() - old_size;
@@ -894,7 +893,7 @@ void DictionaryTool::ImportHelper(uint64_t dic_id, const QString& dic_name,
 
   UpdateUIStatus();
 
-  ReportImportError(error, dic_name, added_entries_size);
+  ReportImportError(status, dic_name, added_entries_size);
 }
 
 void DictionaryTool::ImportFromDefaultIME() {
@@ -937,12 +936,12 @@ void DictionaryTool::ImportFromDefaultIME() {
 
   const int old_size = dic->entries_size();
 
-  user_dictionary::ErrorType error = user_dictionary::IMPORT_NOT_SUPPORTED;
+  absl::Status status = absl::OkStatus();
   {
     std::unique_ptr<user_dictionary::InputIteratorInterface> iter(
         MSIMEUserDictionarImporter::Create());
     if (iter) {
-      error = user_dictionary::ImportFromIterator(iter.get(), dic);
+      status = user_dictionary::ImportFromIterator(iter.get(), dic);
     }
   }
 
@@ -951,7 +950,7 @@ void DictionaryTool::ImportFromDefaultIME() {
   OnDictionarySelectionChanged();
   UpdateUIStatus();
 
-  ReportImportError(error, dic_info.item->text(), added_entries_size);
+  ReportImportError(status, dic_info.item->text(), added_entries_size);
 #endif  // _WIN32
 }
 
@@ -1465,23 +1464,23 @@ QString DictionaryTool::PromptForDictionaryName(const QString& text,
 
 void DictionaryTool::ReportError(const absl::Status& s) {
   switch (s.raw_code()) {
-    case mozc::UserDictionaryStorage::INVALID_CHARACTERS_IN_DICTIONARY_NAME:
+    case mozc::user_dictionary::DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER:
       LOG(ERROR) << "Dictionary name contains an invalid character.";
       QMessageBox::critical(
           this, window_title_,
           tr("An invalid character is included in the dictionary name."));
       break;
-    case mozc::UserDictionaryStorage::EMPTY_DICTIONARY_NAME:
+    case mozc::user_dictionary::DICTIONARY_NAME_EMPTY:
       LOG(ERROR) << "Dictionary name is empty.";
       QMessageBox::critical(this, window_title_,
                             tr("Dictionary name is empty."));
       break;
-    case mozc::UserDictionaryStorage::TOO_LONG_DICTIONARY_NAME:
+    case mozc::user_dictionary::DICTIONARY_NAME_TOO_LONG:
       LOG(ERROR) << "Dictionary name is too long.";
       QMessageBox::critical(this, window_title_,
                             tr("Dictionary name is too long."));
       break;
-    case mozc::UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME:
+    case mozc::user_dictionary::DICTIONARY_NAME_DUPLICATED:
       LOG(ERROR) << "duplicated dictionary name";
       QMessageBox::critical(this, window_title_,
                             tr("Dictionary already exists."));

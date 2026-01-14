@@ -160,28 +160,20 @@ class TextInputIterator : public InputIteratorInterface {
   std::string first_line_;
 };
 
-enum ErrorType {
-  IMPORT_NO_ERROR,
-  IMPORT_NOT_SUPPORTED,
-  IMPORT_TOO_MANY_WORDS,
-  IMPORT_INVALID_ENTRIES,
-  IMPORT_FATAL,
-  IMPORT_UNKNOWN_ERROR
-};
-
 // Convert POS's of other IME's into Mozc's.
 bool ConvertEntry(const RawEntry& from,
                   user_dictionary::UserDictionary::Entry* to);
 
 // Import a dictionary from InputIteratorInterface.
 // This is the most generic interface.
-ErrorType ImportFromIterator(InputIteratorInterface* iter,
-                             user_dictionary::UserDictionary* dic);
+// raw_code() may store the ExtendedErrorCode.
+absl::Status ImportFromIterator(InputIteratorInterface* iter,
+                                user_dictionary::UserDictionary* dic);
 
 // Import a dictionary from TextLineIterator.
-ErrorType ImportFromTextLineIterator(IMEType ime_type,
-                                     TextLineIteratorInterface* iter,
-                                     user_dictionary::UserDictionary* dic);
+absl::Status ImportFromTextLineIterator(IMEType ime_type,
+                                        TextLineIteratorInterface* iter,
+                                        user_dictionary::UserDictionary* dic);
 
 }  // namespace user_dictionary
 }  // namespace mozc

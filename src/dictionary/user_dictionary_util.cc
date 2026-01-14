@@ -39,6 +39,7 @@
 
 #include "absl/log/log.h"
 #include "absl/random/random.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "base/config_file_stream.h"
@@ -54,7 +55,6 @@ namespace user_dictionary {
 namespace {
 
 using ::mozc::protobuf::RepeatedPtrField;
-using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 // Maximum string length in UserDictionaryEntry's field
 constexpr size_t kMaxKeySize = 300;
@@ -78,8 +78,7 @@ size_t max_entry_size() { return kMaxEntrySize; }
 
 bool IsValidEntry(const dictionary::UserPos& user_pos,
                   const user_dictionary::UserDictionary::Entry& entry) {
-  return ValidateEntry(entry) ==
-         UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
+  return ValidateEntry(entry).ok();
 }
 
 namespace {
@@ -107,6 +106,10 @@ bool InternalValidateNormalizedReading(const absl::string_view reading) {
 
 }  // namespace
 
+absl::Status ToStatus(ExtendedErrorCode code) {
+  return absl::Status(static_cast<absl::StatusCode>(code), "Extended Error");
+}
+
 bool IsValidReading(const absl::string_view reading) {
   return InternalValidateNormalizedReading(NormalizeReading(reading));
 }
@@ -117,59 +120,59 @@ std::string NormalizeReading(const absl::string_view input) {
   return japanese::KatakanaToHiragana(tmp2);
 }
 
-UserDictionaryCommandStatus::Status ValidateEntry(
+absl::Status ValidateEntry(
     const user_dictionary::UserDictionary::Entry& entry) {
   // Validate reading.
   const std::string& reading = entry.key();
   if (reading.empty()) {
     MOZC_VLOG(1) << "key is empty";
-    return UserDictionaryCommandStatus::READING_EMPTY;
+    return ToStatus(ExtendedErrorCode::READING_EMPTY);
   }
   if (reading.size() > kMaxKeySize) {
     MOZC_VLOG(1) << "Too long key.";
-    return UserDictionaryCommandStatus::READING_TOO_LONG;
+    return ToStatus(ExtendedErrorCode::READING_TOO_LONG);
   }
   if (reading.find_first_of(kInvalidChars) != std::string::npos ||
       !strings::IsValidUtf8(reading)) {
     MOZC_VLOG(1) << "Invalid reading";
-    return UserDictionaryCommandStatus::READING_CONTAINS_INVALID_CHARACTER;
+    return ToStatus(ExtendedErrorCode::READING_CONTAINS_INVALID_CHARACTER);
   }
 
   // Validate word.
   const std::string& word = entry.value();
   if (word.empty()) {
-    return UserDictionaryCommandStatus::WORD_EMPTY;
+    return ToStatus(ExtendedErrorCode::WORD_EMPTY);
   }
   if (word.size() > kMaxValueSize) {
     MOZC_VLOG(1) << "Too long value.";
-    return UserDictionaryCommandStatus::WORD_TOO_LONG;
+    return ToStatus(ExtendedErrorCode::WORD_TOO_LONG);
   }
   if (word.find_first_of(kInvalidChars) != std::string::npos ||
       !strings::IsValidUtf8(word)) {
     MOZC_VLOG(1) << "Invalid character in value.";
-    return UserDictionaryCommandStatus::WORD_CONTAINS_INVALID_CHARACTER;
+    return ToStatus(ExtendedErrorCode::WORD_CONTAINS_INVALID_CHARACTER);
   }
 
   // Validate comment.
   const std::string& comment = entry.comment();
   if (comment.size() > kMaxCommentSize) {
     MOZC_VLOG(1) << "Too long comment.";
-    return UserDictionaryCommandStatus::COMMENT_TOO_LONG;
+    return ToStatus(ExtendedErrorCode::COMMENT_TOO_LONG);
   }
   if (comment.find_first_of(kInvalidChars) != std::string::npos ||
       !strings::IsValidUtf8(comment)) {
     MOZC_VLOG(1) << "Invalid character in comment.";
-    return UserDictionaryCommandStatus::COMMENT_CONTAINS_INVALID_CHARACTER;
+    return ToStatus(ExtendedErrorCode::COMMENT_CONTAINS_INVALID_CHARACTER);
   }
 
   // Validate pos.
   if (!entry.has_pos() ||
       !user_dictionary::UserDictionary::PosType_IsValid(entry.pos())) {
     MOZC_VLOG(1) << "Invalid POS";
-    return UserDictionaryCommandStatus::INVALID_POS_TYPE;
+    return ToStatus(ExtendedErrorCode::INVALID_POS_TYPE);
   }
 
-  return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
+  return absl::OkStatus();
 }
 
 bool IsStorageFull(const user_dictionary::UserDictionaryStorage& storage) {
@@ -249,30 +252,30 @@ bool Sanitize(std::string* str, size_t max_size) {
   return true;
 }
 
-UserDictionaryCommandStatus::Status ValidateDictionaryName(
+absl::Status ValidateDictionaryName(
     const user_dictionary::UserDictionaryStorage& storage,
     const absl::string_view dictionary_name) {
   if (dictionary_name.empty()) {
     MOZC_VLOG(1) << "Empty dictionary name.";
-    return UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY;
+    return ToStatus(ExtendedErrorCode::DICTIONARY_NAME_EMPTY);
   }
   if (dictionary_name.size() > kMaxDictionaryNameSize) {
     MOZC_VLOG(1) << "Too long dictionary name";
-    return UserDictionaryCommandStatus::DICTIONARY_NAME_TOO_LONG;
+    return ToStatus(ExtendedErrorCode::DICTIONARY_NAME_TOO_LONG);
   }
   if (dictionary_name.find_first_of(kInvalidChars) != std::string::npos) {
     MOZC_VLOG(1) << "Invalid character in dictionary name: " << dictionary_name;
-    return UserDictionaryCommandStatus ::
-        DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER;
+    return ToStatus(
+        ExtendedErrorCode::DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER);
   }
   for (int i = 0; i < storage.dictionaries_size(); ++i) {
     if (storage.dictionaries(i).name() == dictionary_name) {
       LOG(ERROR) << "duplicated dictionary name";
-      return UserDictionaryCommandStatus::DICTIONARY_NAME_DUPLICATED;
+      return ToStatus(ExtendedErrorCode::DICTIONARY_NAME_DUPLICATED);
     }
   }
 
-  return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
+  return absl::OkStatus();
 }
 
 namespace {
@@ -337,36 +340,36 @@ uint64_t CreateNewDictionaryId(
   return id;
 }
 
-UserDictionaryCommandStatus::Status CreateDictionary(
-    user_dictionary::UserDictionaryStorage* storage,
-    const absl::string_view dictionary_name, uint64_t* new_dictionary_id) {
-  UserDictionaryCommandStatus::Status status =
-      ValidateDictionaryName(*storage, dictionary_name);
-  if (status != UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
+absl::Status CreateDictionary(user_dictionary::UserDictionaryStorage* storage,
+                              const absl::string_view dictionary_name,
+                              uint64_t* new_dictionary_id) {
+  absl::Status status = ValidateDictionaryName(*storage, dictionary_name);
+  if (!status.ok()) {
     LOG(ERROR) << "Invalid dictionary name is passed";
     return status;
   }
 
   if (IsStorageFull(*storage)) {
     LOG(ERROR) << "too many dictionaries";
-    return UserDictionaryCommandStatus::DICTIONARY_SIZE_LIMIT_EXCEEDED;
+    return ToStatus(ExtendedErrorCode::DICTIONARY_SIZE_LIMIT_EXCEEDED);
   }
 
   if (new_dictionary_id == nullptr) {
     LOG(ERROR) << "new_dictionary_id is nullptr";
-    return UserDictionaryCommandStatus::UNKNOWN_ERROR;
+    return ToStatus(ExtendedErrorCode::UNKNOWN_ERROR);
   }
 
   *new_dictionary_id = CreateNewDictionaryId(*storage);
   user_dictionary::UserDictionary* dictionary = storage->add_dictionaries();
   if (dictionary == nullptr) {
     LOG(ERROR) << "add_dictionaries failed.";
-    return UserDictionaryCommandStatus::UNKNOWN_ERROR;
+    return ToStatus(ExtendedErrorCode::UNKNOWN_ERROR);
   }
 
   dictionary->set_id(*new_dictionary_id);
   dictionary->set_name(dictionary_name);
-  return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
+
+  return absl::OkStatus();
 }
 
 bool DeleteDictionary(

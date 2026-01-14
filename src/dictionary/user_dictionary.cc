@@ -723,10 +723,10 @@ void AsyncUserDictionaryImporter::StartImportLoop() {
         StringTextLineIterator iter(import_data->data);
         // ImportFromTextLineIterator raises a warning even if it fails to load
         // some data. We ignore the error to load entries successfully loaded.
-        if (const ErrorType import_result = ImportFromTextLineIterator(
-                IME_AUTO_DETECT, &iter, user_dictionary);
-            import_result != IMPORT_NO_ERROR) {
-          LOG(WARNING) << "All entries are not imported: " << import_result;
+        if (absl::Status s = ImportFromTextLineIterator(IME_AUTO_DETECT, &iter,
+                                                        user_dictionary);
+            !s.ok()) {
+          LOG(WARNING) << "All entries are not imported: " << s;
         }
       }
     }

@@ -46,6 +46,7 @@
 #include "base/random.h"
 #include "base/system_util.h"
 #include "dictionary/user_dictionary_importer.h"
+#include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -56,6 +57,7 @@ namespace {
 
 #define EXPECT_NOT_OK(expr) EXPECT_FALSE((expr).ok())
 
+using ::mozc::user_dictionary::ExtendedErrorCode;
 using ::mozc::user_dictionary::UserDictionary;
 
 class UserDictionaryStorageTest : public testing::TestWithTempUserProfile {
@@ -125,14 +127,14 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
 
   // duplicated
   EXPECT_EQ(storage.CreateDictionary("test0").status().raw_code(),
-            UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME);
+            ExtendedErrorCode::DICTIONARY_NAME_DUPLICATED);
 
   // invalid id
   EXPECT_NOT_OK(storage.RenameDictionary(0, ""));
 
   // duplicated
   EXPECT_EQ(storage.RenameDictionary(id[0], "test1").raw_code(),
-            UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME);
+            ExtendedErrorCode::DICTIONARY_NAME_DUPLICATED);
 
   // no name
   EXPECT_OK(storage.RenameDictionary(id[0], "test0"));
@@ -217,8 +219,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
   user_dictionary::StringTextLineIterator iter(file_string);
 
   UserDictionaryStorage::UserDictionary dic2;
-  EXPECT_EQ(ImportFromTextLineIterator(user_dictionary::MOZC, &iter, &dic2),
-            user_dictionary::IMPORT_NO_ERROR);
+  EXPECT_OK(ImportFromTextLineIterator(user_dictionary::MOZC, &iter, &dic2));
 
   dic2.set_id(id);
   dic2.set_name("test");

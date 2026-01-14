@@ -45,6 +45,56 @@
 namespace mozc {
 namespace user_dictionary {
 
+// Extended error code stored in absl::Status. We use the absl's canonical
+// error code (absl::StatusCode) for general resource management. Extended
+// Error code is mainly used for the dictionary management. When
+// absl::IsUnknown(status) is true, we can access the extended error code
+// via status.raw_code(). Otherwise, canonical error code is used.
+enum ExtendedErrorCode {
+  OK = 0,
+
+  // Migrated from UserDictionaryCommandStatus::Status.
+  UNKNOWN_ERROR = 100,
+
+  FILE_NOT_FOUND,
+  INVALID_FILE_FORMAT,
+
+  // Note: currently if we receive this error status,
+  // the file is actually saved.
+  FILE_SIZE_LIMIT_EXCEEDED,
+  DICTIONARY_SIZE_LIMIT_EXCEEDED,
+  ENTRY_SIZE_LIMIT_EXCEEDED,
+
+  UNKNOWN_DICTIONARY_ID,
+  ENTRY_INDEX_OUT_OF_RANGE,
+
+  // Errors for dictionary names.
+  DICTIONARY_NAME_EMPTY,
+  DICTIONARY_NAME_TOO_LONG,
+  DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER,
+  DICTIONARY_NAME_DUPLICATED,
+
+  // Errors for entry data.
+  READING_EMPTY,
+  READING_TOO_LONG,
+  READING_CONTAINS_INVALID_CHARACTER,
+  WORD_EMPTY,
+  WORD_TOO_LONG,
+  WORD_CONTAINS_INVALID_CHARACTER,
+  INVALID_POS_TYPE,
+  COMMENT_TOO_LONG,
+  COMMENT_CONTAINS_INVALID_CHARACTER,
+
+  // Errors for importing.
+  IMPORT_TOO_MANY_WORDS,
+  IMPORT_NOT_SUPPORTED,
+  IMPORT_INVALID_ENTRIES,
+  IMPORT_FATAL,
+  IMPORT_UNKNOWN_ERROR
+};
+
+absl::Status ToStatus(ExtendedErrorCode code);
+
 size_t max_dictionary_size();
 size_t max_entry_size();
 
@@ -80,8 +130,7 @@ bool IsValidEntry(const dictionary::UserPos& user_pos,
 //   - if it isn't exceed the max length
 //   - if it doesn't contain invalid character
 // - Checks if a valid pos type is set.
-user_dictionary::UserDictionaryCommandStatus::Status ValidateEntry(
-    const user_dictionary::UserDictionary::Entry& entry);
+absl::Status ValidateEntry(const user_dictionary::UserDictionary::Entry& entry);
 
 // Sanitizes a dictionary entry so that it's acceptable to the
 // class. A user of the class may want this function to make sure an
@@ -95,7 +144,7 @@ bool SanitizeEntry(user_dictionary::UserDictionary::Entry* entry);
 bool Sanitize(std::string* str, size_t max_size);
 
 // Returns the error status of the validity for the given dictionary name.
-user_dictionary::UserDictionaryCommandStatus::Status ValidateDictionaryName(
+absl::Status ValidateDictionaryName(
     const user_dictionary::UserDictionaryStorage& storage,
     absl::string_view dictionary_name);
 
@@ -139,9 +188,9 @@ uint64_t CreateNewDictionaryId(
     const user_dictionary::UserDictionaryStorage& storage);
 
 // Creates dictionary with the given name.
-user_dictionary::UserDictionaryCommandStatus::Status CreateDictionary(
-    user_dictionary::UserDictionaryStorage* storage,
-    absl::string_view dictionary_name, uint64_t* new_dictionary_id);
+absl::Status CreateDictionary(user_dictionary::UserDictionaryStorage* storage,
+                              absl::string_view dictionary_name,
+                              uint64_t* new_dictionary_id);
 
 // Deletes dictionary specified by the given dictionary_id.
 // If the deleted_dictionary is not nullptr, the pointer to the

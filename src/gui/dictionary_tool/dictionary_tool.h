@@ -44,6 +44,7 @@
 #include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
@@ -133,8 +134,8 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
 
   // Show a special dialog message according to the result
   // of UserDictionaryImporter.
-  void ReportImportError(user_dictionary::ErrorType error,
-                         const QString& dic_name, int added_entries_size);
+  void ReportImportError(absl::Status status, const QString& dic_name,
+                         int added_entries_size);
 
   void ImportHelper(uint64_t dic_id, const QString& dic_name,
                     const QString& file_name, user_dictionary::IMEType,

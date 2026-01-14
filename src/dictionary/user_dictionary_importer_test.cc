@@ -37,7 +37,9 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -88,8 +90,7 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
   StringTextLineIterator iter(kInput);
   user_dictionary::UserDictionary user_dic;
 
-  EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
-            IMPORT_NO_ERROR);
+  EXPECT_OK(ImportFromTextLineIterator(MOZC, &iter, &user_dic));
 
   ASSERT_EQ(user_dic.entries_size(), 5);
 
@@ -138,8 +139,7 @@ TEST(UserDictionaryImporter, ImportFromGboardTextTest) {
   StringTextLineIterator iter(kInput);
   user_dictionary::UserDictionary user_dic;
 
-  EXPECT_EQ(ImportFromTextLineIterator(GBOARD_V1, &iter, &user_dic),
-            IMPORT_NO_ERROR);
+  EXPECT_OK(ImportFromTextLineIterator(GBOARD_V1, &iter, &user_dic));
 
   ASSERT_EQ(user_dic.entries_size(), 3);
 
@@ -173,7 +173,7 @@ TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
     StringTextLineIterator iter(kInput);
     user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
+    EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic).raw_code(),
               IMPORT_NOT_SUPPORTED);
 
     EXPECT_EQ(user_dic.entries_size(), 0);
@@ -182,8 +182,7 @@ TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
     StringTextLineIterator iter(kInput);
     user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(ImportFromTextLineIterator(KOTOERI, &iter, &user_dic),
-              IMPORT_NO_ERROR);
+    EXPECT_OK(ImportFromTextLineIterator(KOTOERI, &iter, &user_dic));
 
     ASSERT_EQ(user_dic.entries_size(), 2);
 
@@ -207,8 +206,7 @@ TEST(UserDictionaryImporter, ImportSpecialPosTagTest) {
     StringTextLineIterator iter(kInput);
     user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
-              IMPORT_NO_ERROR);
+    EXPECT_OK(ImportFromTextLineIterator(MOZC, &iter, &user_dic));
 
     ASSERT_EQ(user_dic.entries_size(), 3);
 
@@ -241,8 +239,7 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
     StringTextLineIterator iter(kMsImeInput);
     user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(ImportFromTextLineIterator(MSIME, &iter, &user_dic),
-              IMPORT_NO_ERROR);
+    EXPECT_OK(ImportFromTextLineIterator(MSIME, &iter, &user_dic));
 
     ASSERT_EQ(user_dic.entries_size(), 3);
 
@@ -264,8 +261,7 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
     StringTextLineIterator iter(kInput);
     user_dictionary::UserDictionary user_dic;
 
-    EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
-              IMPORT_NO_ERROR);
+    EXPECT_OK(ImportFromTextLineIterator(MOZC, &iter, &user_dic));
 
     ASSERT_EQ(user_dic.entries_size(), 3);
 
@@ -295,7 +291,7 @@ TEST(UserDictionaryImporter, ImportFromInvalidTextTest) {
   StringTextLineIterator iter(kInput);
   user_dictionary::UserDictionary user_dic;
 
-  EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic),
+  EXPECT_EQ(ImportFromTextLineIterator(MOZC, &iter, &user_dic).raw_code(),
             IMPORT_INVALID_ENTRIES);
 
   ASSERT_EQ(user_dic.entries_size(), 1);
@@ -310,7 +306,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidTest) {
   TestInputIterator iter;
   user_dictionary::UserDictionary user_dic;
   EXPECT_FALSE(iter.IsAvailable());
-  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
+  EXPECT_OK(ImportFromIterator(&iter, &user_dic));
 }
 
 TEST(UserDictionaryImporter, ImportFromIteratorAlreadyFullTest) {
@@ -338,7 +334,8 @@ TEST(UserDictionaryImporter, ImportFromIteratorAlreadyFullTest) {
             ::mozc::UserDictionaryStorage::max_entry_size());
 
   EXPECT_TRUE(iter.IsAvailable());
-  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_TOO_MANY_WORDS);
+  EXPECT_EQ(ImportFromIterator(&iter, &user_dic).raw_code(),
+            IMPORT_TOO_MANY_WORDS);
 
   EXPECT_EQ(user_dic.entries_size(),
             ::mozc::UserDictionaryStorage::max_entry_size());
@@ -364,9 +361,10 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
     iter.set_entries(&entries);
 
     if (size <= ::mozc::UserDictionaryStorage::max_entry_size()) {
-      EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
+      EXPECT_OK(ImportFromIterator(&iter, &user_dic));
     } else {
-      EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_TOO_MANY_WORDS);
+      EXPECT_EQ(ImportFromIterator(&iter, &user_dic).raw_code(),
+                IMPORT_TOO_MANY_WORDS);
     }
 
     const size_t valid_size =
@@ -404,7 +402,8 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
     iter.set_available(true);
     iter.set_entries(&entries);
 
-    EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_INVALID_ENTRIES);
+    EXPECT_EQ(ImportFromIterator(&iter, &user_dic).raw_code(),
+              IMPORT_INVALID_ENTRIES);
     EXPECT_EQ(user_dic.entries_size(), size / 2);
   }
 }
@@ -433,7 +432,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
 
   iter.set_entries(&entries);
 
-  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
+  EXPECT_OK(ImportFromIterator(&iter, &user_dic));
 
   EXPECT_EQ(user_dic.entries_size(), 1);
 
@@ -447,11 +446,11 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
 
   iter.set_entries(&entries);
 
-  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
+  EXPECT_OK(ImportFromIterator(&iter, &user_dic));
 
   EXPECT_EQ(user_dic.entries_size(), 2);
 
-  EXPECT_EQ(ImportFromIterator(&iter, &user_dic), IMPORT_NO_ERROR);
+  EXPECT_OK(ImportFromIterator(&iter, &user_dic));
 
   EXPECT_EQ(user_dic.entries_size(), 2);
 }

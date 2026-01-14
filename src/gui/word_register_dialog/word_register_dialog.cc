@@ -68,7 +68,6 @@ namespace gui {
 
 using mozc::UserDictionaryStorage;
 using mozc::user_dictionary::UserDictionary;
-using mozc::user_dictionary::UserDictionaryCommandStatus;
 
 namespace {
 constexpr absl::Duration kSessionTimeout = absl::Milliseconds(100000);

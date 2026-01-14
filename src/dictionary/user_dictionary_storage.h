@@ -80,24 +80,6 @@ class UserDictionaryStorage {
   using UserDictionary = user_dictionary::UserDictionary;
   using UserDictionaryEntry = user_dictionary::UserDictionary::Entry;
 
-  // Extended error code stored in absl::Status. We use the absl's canonical
-  // error code (absl::StatusCode) for general resource management. Extended
-  // Error code is mainly used for the dictionary management. When
-  // absl::IsUnknown(status) is true, we can access the extended error code
-  // via status.raw_code(). Otherwise, canonical error code is used.
-  enum ExtendedErrorCode : int {
-    OK = 0,  // default (absl::StatusCode::kOk)
-    // Reasonably big offset not to overwerap with canonical error code.
-    INVALID_DICTIONARY_ID = 100,
-    INVALID_CHARACTERS_IN_DICTIONARY_NAME,
-    EMPTY_DICTIONARY_NAME,
-    DUPLICATED_DICTIONARY_NAME,
-    TOO_LONG_DICTIONARY_NAME,
-    TOO_MANY_DICTIONARIES,
-    TOO_MANY_ENTRIES,
-    ERROR_TYPE_SIZE
-  };
-
   explicit UserDictionaryStorage(std::string filename);
   virtual ~UserDictionaryStorage();
 

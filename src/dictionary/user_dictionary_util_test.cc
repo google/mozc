@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
 
@@ -43,7 +44,6 @@ namespace user_dictionary {
 namespace {
 
 using ::mozc::user_dictionary::UserDictionary;
-using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 TEST(UserDictionaryUtilTest, TestIsValidReading) {
   EXPECT_TRUE(IsValidReading("ABYZabyz0189"));
@@ -170,97 +170,96 @@ TEST(UserDictionaryUtilTest, ValidateEntry) {
   base_entry.set_comment("コメント");
 
   UserDictionary::Entry entry = base_entry;
-  EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-            ValidateEntry(entry));
+  EXPECT_OK(ValidateEntry(entry));
 
   entry = base_entry;
   entry.clear_key();
-  EXPECT_EQ(UserDictionaryCommandStatus::READING_EMPTY, ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::READING_EMPTY, ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.set_key(std::string(500, 'a'));
-  EXPECT_EQ(UserDictionaryCommandStatus::READING_TOO_LONG,
-            ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::READING_TOO_LONG,
+            ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.set_key("a\nb");
-  EXPECT_EQ(UserDictionaryCommandStatus::READING_CONTAINS_INVALID_CHARACTER,
-            ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::READING_CONTAINS_INVALID_CHARACTER,
+            ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.set_key("あ\xE3\x84う");  // Invalid UTF-8. "い" is "E3 81 84".
-  EXPECT_EQ(UserDictionaryCommandStatus::READING_CONTAINS_INVALID_CHARACTER,
-            ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::READING_CONTAINS_INVALID_CHARACTER,
+            ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.set_key("ふ頭");  // Non-Hiragana chararcters are also acceptable.
-  EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-            ValidateEntry(entry));
+  EXPECT_OK(ValidateEntry(entry));
 
   entry = base_entry;
   entry.clear_value();
-  EXPECT_EQ(UserDictionaryCommandStatus::WORD_EMPTY, ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::WORD_EMPTY, ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.set_value(std::string(500, 'a'));
-  EXPECT_EQ(UserDictionaryCommandStatus::WORD_TOO_LONG, ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::WORD_TOO_LONG, ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.set_value("a\nb");
-  EXPECT_EQ(UserDictionaryCommandStatus::WORD_CONTAINS_INVALID_CHARACTER,
-            ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::WORD_CONTAINS_INVALID_CHARACTER,
+            ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.set_value("あ\x81\x84う");  // Invalid UTF-8. "い" is "E3 81 84".
-  EXPECT_EQ(UserDictionaryCommandStatus::WORD_CONTAINS_INVALID_CHARACTER,
-            ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::WORD_CONTAINS_INVALID_CHARACTER,
+            ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.clear_comment();
-  EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-            ValidateEntry(entry));
+  EXPECT_OK(ValidateEntry(entry));
 
   entry = base_entry;
   entry.set_comment(std::string(500, 'a'));
-  EXPECT_EQ(UserDictionaryCommandStatus::COMMENT_TOO_LONG,
-            ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::COMMENT_TOO_LONG,
+            ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.set_comment("a\nb");
-  EXPECT_EQ(UserDictionaryCommandStatus::COMMENT_CONTAINS_INVALID_CHARACTER,
-            ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::COMMENT_CONTAINS_INVALID_CHARACTER,
+            ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.set_comment("あ\xE3う");  // Invalid UTF-8. "い" is "E3 81 84".
-  EXPECT_EQ(UserDictionaryCommandStatus::COMMENT_CONTAINS_INVALID_CHARACTER,
-            ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::COMMENT_CONTAINS_INVALID_CHARACTER,
+            ValidateEntry(entry).raw_code());
 
   entry = base_entry;
   entry.clear_pos();
-  EXPECT_EQ(UserDictionaryCommandStatus::INVALID_POS_TYPE,
-            ValidateEntry(entry));
+  EXPECT_EQ(ExtendedErrorCode::INVALID_POS_TYPE,
+            ValidateEntry(entry).raw_code());
 }
 
 TEST(UserDictionaryUtilTest, ValidateDictionaryName) {
-  EXPECT_EQ(
-      UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY,
-      ValidateDictionaryName(
-          user_dictionary::UserDictionaryStorage::default_instance(), ""));
+  EXPECT_EQ(ExtendedErrorCode::DICTIONARY_NAME_EMPTY,
+            ValidateDictionaryName(
+                user_dictionary::UserDictionaryStorage::default_instance(), "")
+                .raw_code());
 
-  EXPECT_EQ(UserDictionaryCommandStatus::DICTIONARY_NAME_TOO_LONG,
+  EXPECT_EQ(ExtendedErrorCode::DICTIONARY_NAME_TOO_LONG,
             ValidateDictionaryName(
                 user_dictionary::UserDictionaryStorage::default_instance(),
-                std::string(500, 'a')));
+                std::string(500, 'a'))
+                .raw_code());
 
   EXPECT_EQ(
-      UserDictionaryCommandStatus ::DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER,
+      ExtendedErrorCode::DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER,
       ValidateDictionaryName(
-          user_dictionary::UserDictionaryStorage::default_instance(), "a\nbc"));
+          user_dictionary::UserDictionaryStorage::default_instance(), "a\nbc")
+          .raw_code());
 
   user_dictionary::UserDictionaryStorage storage;
   storage.add_dictionaries()->set_name("abc");
-  EXPECT_EQ(UserDictionaryCommandStatus::DICTIONARY_NAME_DUPLICATED,
-            ValidateDictionaryName(storage, "abc"));
+  EXPECT_EQ(ExtendedErrorCode::DICTIONARY_NAME_DUPLICATED,
+            ValidateDictionaryName(storage, "abc").raw_code());
 }
 
 TEST(UserDictionaryUtilTest, IsStorageFull) {
@@ -337,8 +336,8 @@ TEST(UserDictionaryUtilTest, CreateDictionary) {
   uint64_t dictionary_id;
 
   // Check dictionary validity.
-  EXPECT_EQ(UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY,
-            CreateDictionary(&storage, "", &dictionary_id));
+  EXPECT_EQ(ExtendedErrorCode::DICTIONARY_NAME_EMPTY,
+            CreateDictionary(&storage, "", &dictionary_id).raw_code());
 
   // Check the limit of the number of dictionaries.
   storage.Clear();
@@ -346,15 +345,15 @@ TEST(UserDictionaryUtilTest, CreateDictionary) {
     storage.add_dictionaries();
   }
 
-  EXPECT_EQ(CreateDictionary(&storage, "new dictionary", &dictionary_id),
-            UserDictionaryCommandStatus::DICTIONARY_SIZE_LIMIT_EXCEEDED);
+  EXPECT_EQ(
+      CreateDictionary(&storage, "new dictionary", &dictionary_id).raw_code(),
+      ExtendedErrorCode::DICTIONARY_SIZE_LIMIT_EXCEEDED);
 
   storage.Clear();
-  EXPECT_EQ(CreateDictionary(&storage, "new dictionary", nullptr),
-            UserDictionaryCommandStatus::UNKNOWN_ERROR);
+  EXPECT_EQ(CreateDictionary(&storage, "new dictionary", nullptr).raw_code(),
+            ExtendedErrorCode::UNKNOWN_ERROR);
 
-  ASSERT_EQ(CreateDictionary(&storage, "new dictionary", &dictionary_id),
-            UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
+  ASSERT_OK(CreateDictionary(&storage, "new dictionary", &dictionary_id));
 
   EXPECT_PROTO_PEQ(
       "dictionaries <\n"

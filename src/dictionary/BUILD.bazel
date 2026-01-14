@@ -326,6 +326,7 @@ mozc_cc_test(
     deps = [
         ":user_dictionary_importer",
         ":user_dictionary_storage",
+        ":user_dictionary_util",
         "//base:file_stream",
         "//base:file_util",
         "//base:mmap",
@@ -359,6 +360,7 @@ mozc_cc_library(
         "//protocol:user_dictionary_storage_cc_proto",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -401,6 +403,7 @@ mozc_cc_library(
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
@@ -414,6 +417,7 @@ mozc_cc_test(
     deps = [
         ":user_dictionary_importer",
         ":user_dictionary_storage",
+        ":user_dictionary_util",
         "//protocol:user_dictionary_storage_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
