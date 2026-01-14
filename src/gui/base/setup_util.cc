@@ -137,8 +137,7 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
     return false;
   }
 
-  if (user_dictionary::ImportFromIterator(iter.get(), dic) !=
-      user_dictionary::IMPORT_NO_ERROR) {
+  if (!user_dictionary::ImportFromIterator(iter.get(), dic).ok()) {
     LOG(ERROR) << "ImportFromMSIME failed";
     return false;
   }
