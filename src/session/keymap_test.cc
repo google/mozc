@@ -531,12 +531,12 @@ TEST_F(KeyMapTest, DirectStateSupportsCompositionModeCommandStrings) {
   EXPECT_TRUE(names.contains("CompositionModeHalfAlphanumeric"));
   EXPECT_TRUE(names.contains("CompositionModeFullAlphanumeric"));
 
-  // Legacy InputMode* command strings for backward compat.
-  EXPECT_TRUE(names.contains("InputModeHiragana"));
-  EXPECT_TRUE(names.contains("InputModeHalfKatakana"));
-  EXPECT_TRUE(names.contains("InputModeFullKatakana"));
-  EXPECT_TRUE(names.contains("InputModeHalfAlphanumeric"));
-  EXPECT_TRUE(names.contains("InputModeFullAlphanumeric"));
+  // Legacy InputMode* command strings are not exposed.
+  EXPECT_FALSE(names.contains("InputModeHiragana"));
+  EXPECT_FALSE(names.contains("InputModeHalfKatakana"));
+  EXPECT_FALSE(names.contains("InputModeFullKatakana"));
+  EXPECT_FALSE(names.contains("InputModeHalfAlphanumeric"));
+  EXPECT_FALSE(names.contains("InputModeFullAlphanumeric"));
 }
 
 TEST_F(KeyMapTest, PrecompositionStateSupportsCompositionModeCommandStrings) {
@@ -556,13 +556,13 @@ TEST_F(KeyMapTest, PrecompositionStateSupportsCompositionModeCommandStrings) {
   EXPECT_TRUE(names.contains("CompositionModeFullAlphanumeric"));
   EXPECT_TRUE(names.contains("CompositionModeSwitchKanaType"));
 
-  // Legacy InputMode* command strings for backward compat.
-  EXPECT_TRUE(names.contains("InputModeHiragana"));
-  EXPECT_TRUE(names.contains("InputModeHalfKatakana"));
-  EXPECT_TRUE(names.contains("InputModeFullKatakana"));
-  EXPECT_TRUE(names.contains("InputModeHalfAlphanumeric"));
-  EXPECT_TRUE(names.contains("InputModeFullAlphanumeric"));
-  EXPECT_TRUE(names.contains("InputModeSwitchKanaType"));
+  // Legacy InputMode* command strings are not exposed.
+  EXPECT_FALSE(names.contains("InputModeHiragana"));
+  EXPECT_FALSE(names.contains("InputModeHalfKatakana"));
+  EXPECT_FALSE(names.contains("InputModeFullKatakana"));
+  EXPECT_FALSE(names.contains("InputModeHalfAlphanumeric"));
+  EXPECT_FALSE(names.contains("InputModeFullAlphanumeric"));
+  EXPECT_FALSE(names.contains("InputModeSwitchKanaType"));
 }
 
 TEST_F(KeyMapTest, CompositionStateSupportsCompositionModeCommandStrings) {
@@ -581,12 +581,12 @@ TEST_F(KeyMapTest, CompositionStateSupportsCompositionModeCommandStrings) {
   EXPECT_TRUE(names.contains("CompositionModeHalfAlphanumeric"));
   EXPECT_TRUE(names.contains("CompositionModeFullAlphanumeric"));
 
-  // Legacy InputMode* command strings for backward compat.
-  EXPECT_TRUE(names.contains("InputModeHiragana"));
-  EXPECT_TRUE(names.contains("InputModeHalfKatakana"));
-  EXPECT_TRUE(names.contains("InputModeFullKatakana"));
-  EXPECT_TRUE(names.contains("InputModeHalfAlphanumeric"));
-  EXPECT_TRUE(names.contains("InputModeFullAlphanumeric"));
+  // Legacy InputMode* command strings are not exposed.
+  EXPECT_FALSE(names.contains("InputModeHiragana"));
+  EXPECT_FALSE(names.contains("InputModeHalfKatakana"));
+  EXPECT_FALSE(names.contains("InputModeFullKatakana"));
+  EXPECT_FALSE(names.contains("InputModeHalfAlphanumeric"));
+  EXPECT_FALSE(names.contains("InputModeFullAlphanumeric"));
 }
 
 TEST_F(KeyMapTest, ConversionStateSupportsCompositionModeCommandStrings) {
@@ -605,12 +605,12 @@ TEST_F(KeyMapTest, ConversionStateSupportsCompositionModeCommandStrings) {
   EXPECT_TRUE(names.contains("CompositionModeHalfAlphanumeric"));
   EXPECT_TRUE(names.contains("CompositionModeFullAlphanumeric"));
 
-  // Legacy InputMode* command strings for backward compat.
-  EXPECT_TRUE(names.contains("InputModeHiragana"));
-  EXPECT_TRUE(names.contains("InputModeHalfKatakana"));
-  EXPECT_TRUE(names.contains("InputModeFullKatakana"));
-  EXPECT_TRUE(names.contains("InputModeHalfAlphanumeric"));
-  EXPECT_TRUE(names.contains("InputModeFullAlphanumeric"));
+  // Legacy InputMode* command strings are not exposed.
+  EXPECT_FALSE(names.contains("InputModeHiragana"));
+  EXPECT_FALSE(names.contains("InputModeHalfKatakana"));
+  EXPECT_FALSE(names.contains("InputModeFullKatakana"));
+  EXPECT_FALSE(names.contains("InputModeHalfAlphanumeric"));
+  EXPECT_FALSE(names.contains("InputModeFullAlphanumeric"));
 }
 
 TEST_F(KeyMapTest, ParseCompositionModeCommandStringsForDirectState) {

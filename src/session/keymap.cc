@@ -93,21 +93,30 @@ static constexpr char kLegacyCommandStringInputModeHalfAlphanumeric[] =
 static constexpr char kLegacyCommandStringInputModeSwitchKanaType[] =
     "InputModeSwitchKanaType";
 
-static constexpr auto kCommandStringsToLegacyCommandStrings =
+static constexpr auto kLegacyCommandStringsToCommandStrings =
     CreateFlatMap<absl::string_view, absl::string_view>({
-        {kCommandStringCompositionModeHiragana,
-         kLegacyCommandStringInputModeHiragana},
-        {kCommandStringCompositionModeFullKatakana,
-         kLegacyCommandStringInputModeFullKatakana},
-        {kCommandStringCompositionModeHalfKatakana,
-         kLegacyCommandStringInputModeHalfKatakana},
-        {kCommandStringCompositionModeFullAlphanumeric,
-         kLegacyCommandStringInputModeFullAlphanumeric},
-        {kCommandStringCompositionModeHalfAlphanumeric,
-         kLegacyCommandStringInputModeHalfAlphanumeric},
-        {kCommandStringCompositionModeSwitchKanaType,
-         kLegacyCommandStringInputModeSwitchKanaType},
+        {kLegacyCommandStringInputModeHiragana,
+         kCommandStringCompositionModeHiragana},
+        {kLegacyCommandStringInputModeFullKatakana,
+         kCommandStringCompositionModeFullKatakana},
+        {kLegacyCommandStringInputModeHalfKatakana,
+         kCommandStringCompositionModeHalfKatakana},
+        {kLegacyCommandStringInputModeFullAlphanumeric,
+         kCommandStringCompositionModeFullAlphanumeric},
+        {kLegacyCommandStringInputModeHalfAlphanumeric,
+         kCommandStringCompositionModeHalfAlphanumeric},
+        {kLegacyCommandStringInputModeSwitchKanaType,
+         kCommandStringCompositionModeSwitchKanaType},
     });
+
+constexpr absl::string_view NormalizeCommand(absl::string_view command_string) {
+  if (const absl::string_view* const normalized =
+          kLegacyCommandStringsToCommandStrings.FindOrNull(command_string);
+      normalized != nullptr) {
+    return *normalized;
+  }
+  return command_string;
+}
 }  // namespace
 
 // static
@@ -422,48 +431,24 @@ void KeyMapManager::RegisterDirectCommand(const std::string& command_string,
                                           DirectInputState::Commands command) {
   command_direct_map_[command_string] = command;
   reverse_command_direct_map_[command] = command_string;
-
-  const absl::string_view* legacy_command_string =
-      kCommandStringsToLegacyCommandStrings.FindOrNull(command_string);
-  if (legacy_command_string != nullptr) {
-    command_direct_map_[*legacy_command_string] = command;
-  }
 }
 
 void KeyMapManager::RegisterPrecompositionCommand(
     const std::string& command_string, PrecompositionState::Commands command) {
   command_precomposition_map_[command_string] = command;
   reverse_command_precomposition_map_[command] = command_string;
-
-  const absl::string_view* legacy_command_string =
-      kCommandStringsToLegacyCommandStrings.FindOrNull(command_string);
-  if (legacy_command_string != nullptr) {
-    command_precomposition_map_[*legacy_command_string] = command;
-  }
 }
 
 void KeyMapManager::RegisterCompositionCommand(
     const std::string& command_string, CompositionState::Commands command) {
   command_composition_map_[command_string] = command;
   reverse_command_composition_map_[command] = command_string;
-
-  const absl::string_view* legacy_command_string =
-      kCommandStringsToLegacyCommandStrings.FindOrNull(command_string);
-  if (legacy_command_string != nullptr) {
-    command_composition_map_[*legacy_command_string] = command;
-  }
 }
 
 void KeyMapManager::RegisterConversionCommand(
     const std::string& command_string, ConversionState::Commands command) {
   command_conversion_map_[command_string] = command;
   reverse_command_conversion_map_[command] = command_string;
-
-  const absl::string_view* legacy_command_string =
-      kCommandStringsToLegacyCommandStrings.FindOrNull(command_string);
-  if (legacy_command_string != nullptr) {
-    command_conversion_map_[*legacy_command_string] = command;
-  }
 }
 
 void KeyMapManager::InitCommandData() {
@@ -811,7 +796,7 @@ bool KeyMapManager::GetCommandPrediction(
 bool KeyMapManager::ParseCommandDirect(
     const std::string& command_string,
     DirectInputState::Commands* command) const {
-  const auto it = command_direct_map_.find(command_string);
+  const auto it = command_direct_map_.find(NormalizeCommand(command_string));
   if (it == command_direct_map_.end()) {
     return false;
   }
@@ -823,7 +808,8 @@ bool KeyMapManager::ParseCommandDirect(
 bool KeyMapManager::ParseCommandPrecomposition(
     const std::string& command_string,
     PrecompositionState::Commands* command) const {
-  const auto it = command_precomposition_map_.find(command_string);
+  const auto it =
+      command_precomposition_map_.find(NormalizeCommand(command_string));
   if (it == command_precomposition_map_.end()) {
     return false;
   }
@@ -834,7 +820,8 @@ bool KeyMapManager::ParseCommandPrecomposition(
 bool KeyMapManager::ParseCommandComposition(
     const std::string& command_string,
     CompositionState::Commands* command) const {
-  const auto it = command_composition_map_.find(command_string);
+  const auto it =
+      command_composition_map_.find(NormalizeCommand(command_string));
   if (it == command_composition_map_.end()) {
     return false;
   }
@@ -845,7 +832,8 @@ bool KeyMapManager::ParseCommandComposition(
 bool KeyMapManager::ParseCommandConversion(
     const std::string& command_string,
     ConversionState::Commands* command) const {
-  const auto it = command_conversion_map_.find(command_string);
+  const auto it =
+      command_conversion_map_.find(NormalizeCommand(command_string));
   if (it == command_conversion_map_.end()) {
     return false;
   }
