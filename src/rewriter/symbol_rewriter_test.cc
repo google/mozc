@@ -99,6 +99,18 @@ bool HasCandidateAndDescription(const Segments& segments, int index,
   return false;
 }
 
+int GetCandidateIndex(const Segments& segments, int index,
+                      const absl::string_view key) {
+  for (size_t i = 0; i < segments.segment(index).candidates_size(); ++i) {
+    const converter::Candidate& candidate =
+        segments.segment(index).candidate(i);
+    if (candidate.value == key) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 bool HasCandidate(const Segments& segments, int index,
                   const absl::string_view value) {
   return HasCandidateAndDescription(segments, index, value, "");
@@ -176,6 +188,10 @@ TEST_F(SymbolRewriterTest, HentaiganaSymbolTest) {
   {
     Segments segments;
     AddSegment("あ", {"あ"}, &segments);
+    constexpr int kCandidatesSize = 100;
+    for (int i = 0; i < kCandidatesSize; ++i) {
+      AddCandidate("test", segments.mutable_segment(0));
+    }
     EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(
         HasCandidateAndDescription(segments, 0, "\U0001B002", "安の変体仮名"));
@@ -183,6 +199,10 @@ TEST_F(SymbolRewriterTest, HentaiganaSymbolTest) {
         HasCandidateAndDescription(segments, 0, "\U0001B003", "愛の変体仮名"));
     EXPECT_FALSE(
         HasCandidateAndDescription(segments, 0, "\U0001B007", "伊の変体仮名"));
+
+    // Kana variants are put at bottom.
+    EXPECT_GT(GetCandidateIndex(segments, 0, "\U0001B002"), kCandidatesSize);
+    EXPECT_GT(GetCandidateIndex(segments, 0, "\U0001B003"), kCandidatesSize);
   }
   {
     Segments segments;
