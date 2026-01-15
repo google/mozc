@@ -409,9 +409,11 @@ TEST(EngineOutputTest, FillAllCandidateWords_Attributes) {
   EXPECT_EQ(candidates_proto.candidates(1).attributes(0),
             commands::CandidateAttribute::USER_DICTIONARY);
 
-  EXPECT_EQ(candidates_proto.candidates(2).attributes_size(), 1);
+  EXPECT_EQ(candidates_proto.candidates(2).attributes_size(), 2);
   EXPECT_EQ(candidates_proto.candidates(2).attributes(0),
             commands::CandidateAttribute::USER_HISTORY);
+  EXPECT_EQ(candidates_proto.candidates(2).attributes(1),
+            commands::CandidateAttribute::DELETABLE);
 
   EXPECT_EQ(candidates_proto.candidates(3).attributes_size(), 1);
   EXPECT_EQ(candidates_proto.candidates(3).attributes(0),

@@ -114,6 +114,7 @@ void FillCandidateWord(const converter::Candidate& segment_candidate,
   if (segment_candidate.attributes &
       converter::Attribute::USER_HISTORY_PREDICTION) {
     candidate_word_proto->add_attributes(commands::USER_HISTORY);
+    candidate_word_proto->add_attributes(commands::DELETABLE);
   }
   if (segment_candidate.attributes &
       converter::Attribute::SPELLING_CORRECTION) {
