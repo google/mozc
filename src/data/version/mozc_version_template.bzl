@@ -27,12 +27,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-MAJOR = 2
+MAJOR = 3
 
-MINOR = 32
+MINOR = 33
 
 # BUILD number used for the OSS version.
-BUILD_OSS = 5994
+BUILD_OSS = 6079
 
 # Number to be increased. This value may be replaced by other tools.
 BUILD = BUILD_OSS
