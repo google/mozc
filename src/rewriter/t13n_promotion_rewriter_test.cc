@@ -336,9 +336,15 @@ TEST_F(T13nPromotionRewriterTest, PromoteLatinT13n) {
   EXPECT_EQ(GetCandidateIndexByValue("go", segments.conversion_segment(0)), -1);
 
   EXPECT_TRUE(rewriter.Rewrite(mobile_conv_request, &segments));
-  EXPECT_LE(GetCandidateIndexByValue("go", segments.conversion_segment(0)), 4);
+  EXPECT_LE(GetCandidateIndexByValue("go", segments.conversion_segment(0)), 3);
+  EXPECT_LE(GetCandidateIndexByValue("GO", segments.conversion_segment(0)), 4);
+  EXPECT_LE(GetCandidateIndexByValue("Go", segments.conversion_segment(0)), 5);
   EXPECT_LE(GetCandidateIndexByValue("ｇｏ", segments.conversion_segment(0)),
-            4);
+            6);
+  EXPECT_LE(GetCandidateIndexByValue("ＧＯ", segments.conversion_segment(0)),
+            7);
+  EXPECT_LE(GetCandidateIndexByValue("Ｇｏ", segments.conversion_segment(0)),
+            8);
 }
 
 TEST_F(T13nPromotionRewriterTest, PromoteLatinT13nSkipExisting) {

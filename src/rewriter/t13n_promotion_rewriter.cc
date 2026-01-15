@@ -75,12 +75,12 @@ bool MaybeInsertLatinT13n(Segment* segment) {
 
   static constexpr transliteration::TransliterationType kLatinT13nTypes[] = {
       transliteration::HALF_ASCII,
-      transliteration::FULL_ASCII,
       transliteration::HALF_ASCII_UPPER,
-      transliteration::FULL_ASCII_UPPER,
       transliteration::HALF_ASCII_LOWER,
-      transliteration::FULL_ASCII_LOWER,
       transliteration::HALF_ASCII_CAPITALIZED,
+      transliteration::FULL_ASCII,
+      transliteration::FULL_ASCII_UPPER,
+      transliteration::FULL_ASCII_LOWER,
       transliteration::FULL_ASCII_CAPITALIZED,
   };
 
