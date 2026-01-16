@@ -184,10 +184,8 @@ absl::StatusOr<TempFile> TempDirectory::CreateTempFile() const {
   if (fd < 0) {
     return absl::ErrnoToStatus(errno, "mkstemp failed");
   }
-  while (close(fd) != 0) {
-    if (errno != EINTR) {
-      return absl::ErrnoToStatus(errno, "close failed");
-    }
+  if (close(fd) != 0) {
+    return absl::ErrnoToStatus(errno, "close failed");
   }
   return TempFile(std::move(temp_file));
 #endif  // !_WIN32
