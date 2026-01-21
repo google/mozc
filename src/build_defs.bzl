@@ -319,6 +319,7 @@ def mozc_win32_cc_prod_binary(
         name,
         executable_name_map = {},  # @unused
         srcs = [],
+        defines = [],
         deps = [],
         features = None,
         linkopts = [],
@@ -343,6 +344,7 @@ def mozc_win32_cc_prod_binary(
       name: name of the target.
       executable_name_map: a map from the branding name to the executable name.
       srcs: .cc files to build the executable.
+      defines: preprocessor definitions to be specified.
       deps: deps to build the executable.
       features: features to be passed to mozc_cc_binary.
       linkopts: linker options to build the executable.
@@ -393,6 +395,7 @@ def mozc_win32_cc_prod_binary(
     mozc_cc_binary(
         name = intermediate_name,
         srcs = srcs,
+        defines = defines,
         deps = deps,
         features = features,
         # '/CETCOMPAT' is available only on x86/x64 architectures.
