@@ -129,25 +129,25 @@ TEST_F(RendererServerTest, IPCTest) {
   absl::SleepFor(absl::Seconds(1));
 
   DummyRendererLauncher launcher;
-  RendererClient client;
-  client.SetIPCClientFactory(&on_memory_client_factory);
-  client.DisableRendererServerCheck();
-  client.SetRendererLauncherInterface(&launcher);
+  std::unique_ptr<RendererClient> client = RendererClient::CreateForTesting(
+      &on_memory_client_factory, &launcher,
+      RendererClient::RendererPathCheckMode::DISABLED);
+
   commands::RendererCommand command;
   command.set_type(commands::RendererCommand::NOOP);
 
   // renderer is called via IPC
-  client.ExecCommand(command);
+  client->ExecCommand(command);
   EXPECT_EQ(renderer.counter(), 1);
 
-  client.ExecCommand(command);
-  client.ExecCommand(command);
-  client.ExecCommand(command);
+  client->ExecCommand(command);
+  client->ExecCommand(command);
+  client->ExecCommand(command);
   EXPECT_EQ(renderer.counter(), 4);
 
   // Gracefully shutdown the server.
   renderer.Shutdown();
-  client.ExecCommand(command);
+  client->ExecCommand(command);
   server->Wait();
 }
 

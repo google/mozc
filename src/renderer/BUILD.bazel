@@ -69,7 +69,9 @@ mozc_cc_library(
         "//ipc:named_event",
         "//protocol:renderer_cc_proto",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:nullability",
         "@com_google_absl//absl/log",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ] + mozc_select(

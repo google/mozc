@@ -61,7 +61,7 @@ int RunPrelaunchProcesses(int argc, char *argv[]) {
 
   {
     std::unique_ptr<mozc::renderer::RendererClient> renderer_client =
-        std::make_unique<mozc::renderer::RendererClient>();
+        mozc::renderer::RendererClient::Create();
     renderer_client->set_suppress_error_dialog(true);
     renderer_client->Activate();
   }

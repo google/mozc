@@ -104,7 +104,8 @@ class SenderThread {
       return;
     }
 
-    RendererClient renderer_client;
+    std::unique_ptr<mozc::renderer::RendererClient> renderer_client =
+        mozc::renderer::RendererClient::Create();
     while (true) {
       const HANDLE handles[] = {quit_event_.get(), command_event_.get()};
       const DWORD wait_result = ::WaitForMultipleObjects(
@@ -130,7 +131,7 @@ class SenderThread {
         command.Swap(&renderer_command_);
         command_event_.ResetEvent();
       }
-      if (!renderer_client.ExecCommand(command)) {
+      if (!renderer_client->ExecCommand(command)) {
         DLOG(ERROR) << "RendererClient::ExecCommand failed.";
       }
     }

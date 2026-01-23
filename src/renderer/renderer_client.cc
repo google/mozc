@@ -36,9 +36,12 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
+#include "absl/base/nullability.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -332,24 +335,19 @@ class RendererLauncher : public RendererLauncherInterface {
   std::optional<BackgroundFuture<void>> launcher_;
 };
 
-RendererClient::RendererClient()
+RendererClient::RendererClient(
+    std::string name,
+    IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
+    RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
+    bool disable_renderer_path_check_for_testing)
     : is_window_visible_(false),
-      disable_renderer_path_check_(false),
       version_mismatch_nums_(0),
-      ipc_client_factory_interface_(IPCClientFactory::GetIPCClientFactory()),
-      renderer_launcher_(new RendererLauncher),
-      renderer_launcher_interface_(nullptr) {
-  renderer_launcher_interface_ = renderer_launcher_.get();
-
-  name_ = kServiceName;
-  const std::string desktop_name(SystemUtil::GetDesktopNameAsString());
-  if (!desktop_name.empty()) {
-    name_ += ".";
-    name_ += desktop_name;
-  }
-
-  renderer_path_ = SystemUtil::GetRendererPath();
-}
+      name_(std::move(name)),
+      default_renderer_launcher_(std::make_unique<RendererLauncher>()),
+      ipc_client_factory_for_testing_(ipc_client_factory_for_testing),
+      renderer_launcher_for_testing_(renderer_launcher_for_testing),
+      disable_renderer_path_check_for_testing_(
+          disable_renderer_path_check_for_testing) {}
 
 RendererClient::~RendererClient() {
   if (!IsAvailable() || !is_window_visible_) {
@@ -359,16 +357,6 @@ RendererClient::~RendererClient() {
   command.set_visible(false);
   command.set_type(commands::RendererCommand::UPDATE);
   ExecCommand(command);
-}
-
-void RendererClient::SetIPCClientFactory(
-    IPCClientFactoryInterface* ipc_client_factory_interface) {
-  ipc_client_factory_interface_ = ipc_client_factory_interface;
-}
-
-void RendererClient::SetRendererLauncherInterface(
-    RendererLauncherInterface* renderer_launcher_interface) {
-  renderer_launcher_interface_ = renderer_launcher_interface;
 }
 
 bool RendererClient::Activate() {
@@ -381,11 +369,7 @@ bool RendererClient::Activate() {
 }
 
 bool RendererClient::IsAvailable() const {
-  if (renderer_launcher_interface_ == nullptr) {
-    LOG(ERROR) << "renderer_launcher_interface is nullptr";
-    return false;
-  }
-  return renderer_launcher_interface_->IsAvailable();
+  return GetRendererLauncher()->IsAvailable();
 }
 
 bool RendererClient::Shutdown(bool force) {
@@ -402,7 +386,7 @@ bool RendererClient::Shutdown(bool force) {
   }
 
   if (force) {
-    if (!renderer_launcher_interface_->ForceTerminateRenderer(name_)) {
+    if (!GetRendererLauncher()->ForceTerminateRenderer(name_)) {
       LOG(ERROR) << "ForceTerminateServer failed";
       return false;
     }
@@ -415,34 +399,19 @@ bool RendererClient::Shutdown(bool force) {
   return true;
 }
 
-void RendererClient::DisableRendererServerCheck() {
-  disable_renderer_path_check_ = true;
-}
-
 void RendererClient::set_suppress_error_dialog(bool suppress) {
-  if (renderer_launcher_interface_ == nullptr) {
-    LOG(ERROR) << "RendererLauncher is nullptr";
-    return;
-  }
-  renderer_launcher_interface_->set_suppress_error_dialog(suppress);
+  GetRendererLauncher()->set_suppress_error_dialog(suppress);
 }
 
 bool RendererClient::ExecCommand(const commands::RendererCommand& command) {
-  if (renderer_launcher_interface_ == nullptr) {
-    LOG(ERROR) << "RendererLauncher is nullptr";
-    return false;
-  }
+  RendererLauncherInterface* absl_nonnull renderer_launcher =
+      GetRendererLauncher();
 
-  if (ipc_client_factory_interface_ == nullptr) {
-    LOG(ERROR) << "IPCClientFactory is nullptr";
-    return false;
-  }
-
-  if (!renderer_launcher_interface_->CanConnect()) {
-    renderer_launcher_interface_->SetPendingCommand(command);
+  if (!renderer_launcher->CanConnect()) {
+    renderer_launcher->SetPendingCommand(command);
     // Check CanConnect() again, as the status might be changed
     // after SetPendingCommand().
-    if (!renderer_launcher_interface_->CanConnect()) {
+    if (!renderer_launcher->CanConnect()) {
       MOZC_VLOG(1) << "renderer_launcher::CanConnect() return false";
       return true;
     }
@@ -476,10 +445,10 @@ bool RendererClient::ExecCommand(const commands::RendererCommand& command) {
       return true;
     }
     LOG(WARNING) << "cannot connect to renderer. restarting";
-    renderer_launcher_interface_->SetPendingCommand(command);
-    renderer_launcher_interface_->StartRenderer(name_, renderer_path_,
-                                                disable_renderer_path_check_,
-                                                ipc_client_factory_interface_);
+    renderer_launcher->SetPendingCommand(command);
+    renderer_launcher->StartRenderer(name_, SystemUtil::GetRendererPath(),
+                                     disable_renderer_path_check_for_testing_,
+                                     GetIPCClientFactory());
     return true;
   }
 
@@ -487,15 +456,15 @@ bool RendererClient::ExecCommand(const commands::RendererCommand& command) {
     LOG(WARNING) << "Protocol version mismatch: "
                  << static_cast<int>(IPC_PROTOCOL_VERSION) << " "
                  << client->GetServerProtocolVersion();
-    if (!renderer_launcher_interface_->ForceTerminateRenderer(name_)) {
+    if (!renderer_launcher->ForceTerminateRenderer(name_)) {
       LOG(ERROR) << "ForceTerminateServer failed";
     }
     ++version_mismatch_nums_;
-    renderer_launcher_interface_->SetPendingCommand(command);
+    renderer_launcher->SetPendingCommand(command);
     return true;
   } else if (IPC_PROTOCOL_VERSION < client->GetServerProtocolVersion()) {
     version_mismatch_nums_ = INT_MAX;
-    renderer_launcher_interface_->OnFatal(
+    renderer_launcher->OnFatal(
         RendererLauncherInterface::RENDERER_VERSION_MISMATCH);
     LOG(ERROR) << "client protocol version is older than "
                << "renderer protocol version.";
@@ -506,7 +475,7 @@ bool RendererClient::ExecCommand(const commands::RendererCommand& command) {
                               Version::GetMozcVersion())) {
     LOG(WARNING) << "Version mismatch: " << client->GetServerProductVersion()
                  << " " << Version::GetMozcVersion();
-    renderer_launcher_interface_->SetPendingCommand(command);
+    renderer_launcher->SetPendingCommand(command);
     commands::RendererCommand shutdown_command;
     shutdown_command.set_type(commands::RendererCommand::SHUTDOWN);
     CallCommand(client.get(), shutdown_command);
@@ -519,14 +488,48 @@ bool RendererClient::ExecCommand(const commands::RendererCommand& command) {
   return true;
 }
 
+IPCClientFactoryInterface* absl_nonnull
+RendererClient::GetIPCClientFactory() const {
+  if (ipc_client_factory_for_testing_ != nullptr) {
+    return ipc_client_factory_for_testing_;
+  }
+  return IPCClientFactory::GetIPCClientFactory();  // This is singleton
+}
+
+RendererLauncherInterface* absl_nonnull
+RendererClient::GetRendererLauncher() const {
+  if (renderer_launcher_for_testing_ != nullptr) {
+    return renderer_launcher_for_testing_;
+  }
+  return default_renderer_launcher_.get();
+}
+
 std::unique_ptr<IPCClientInterface> RendererClient::CreateIPCClient() const {
-  if (ipc_client_factory_interface_ == nullptr) {
-    return nullptr;
+  return GetIPCClientFactory()->NewClient(
+      name_, disable_renderer_path_check_for_testing_
+                 ? ""
+                 : SystemUtil::GetRendererPath());
+}
+
+std::unique_ptr<RendererClient> RendererClient::Create() {
+  return RendererClient::CreateForTesting(nullptr, nullptr,
+                                          RendererPathCheckMode::ENABLED);
+}
+
+std::unique_ptr<RendererClient> RendererClient::CreateForTesting(
+    IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
+    RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
+    RendererPathCheckMode renderer_path_check_mode) {
+  std::string name = kServiceName;
+  const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
+  if (!desktop_name.empty()) {
+    absl::StrAppend(&name, ".", desktop_name);
   }
-  if (disable_renderer_path_check_) {
-    return ipc_client_factory_interface_->NewClient(name_, "");
-  }
-  return ipc_client_factory_interface_->NewClient(name_, renderer_path_);
+  const bool disable_renderer_path_check_for_testing =
+      (renderer_path_check_mode == RendererPathCheckMode::DISABLED);
+  return std::unique_ptr<RendererClient>(new RendererClient(
+      name, ipc_client_factory_for_testing, renderer_launcher_for_testing,
+      disable_renderer_path_check_for_testing));
 }
 
 }  // namespace renderer
