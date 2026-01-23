@@ -44,6 +44,12 @@ class TsfRegistrar {
   TsfRegistrar(const TsfRegistrar &) = delete;
   TsfRegistrar &operator=(const TsfRegistrar &) = delete;
 
+  // Registers the DLL specified with |path| as a COM server.
+  static HRESULT RegisterCOMServer(const wchar_t *path, DWORD length);
+
+  // Unregisters the DLL from registry.
+  static void UnregisterCOMServer();
+
   // Registers this COM server to the profile store for input processors.
   // The caller is responsible for initializing COM before call this function.
   static HRESULT RegisterProfiles(std::wstring_view resource_dll_path);

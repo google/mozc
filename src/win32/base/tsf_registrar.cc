@@ -49,6 +49,13 @@ namespace mozc {
 namespace win32 {
 namespace {
 
+// Defines the constant strings used in the TsfRegistrar::RegisterCOMServer()
+// function and the TsfRegistrar::UnregisterCOMServer() function.
+constexpr wchar_t kTipInfoKeyPrefix[] = L"CLSID\\";
+constexpr wchar_t kTipInProcServer32[] = L"InProcServer32";
+constexpr wchar_t kTipThreadingModel[] = L"ThreadingModel";
+constexpr wchar_t kTipTextServiceModel[] = L"Apartment";
+
 // The categories this text service is registered under.
 // This needs to be const as the included constants are defined as const.
 const GUID kCategories[] = {
@@ -62,6 +69,94 @@ const GUID kCategories[] = {
 };
 
 }  // namespace
+
+// Register this module as a COM server.
+// This function creates two registry entries for this module:
+//   * "HKCR\CLSID\{xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx}", and;
+//   * "HKCR\CLSID\{xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx}\InProcServer32".
+// Also, this function Writes:
+//   * The description of this module;
+//   * The path to this module, and;
+//   * The type of this module (threading moddel).
+HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t *path, DWORD length) {
+  if (length == 0) {
+    return E_OUTOFMEMORY;
+  }
+  // Open the registry key "HKEY_CLASSES_ROOT\CLSID", which stores information
+  // of all COM modules installed in this PC.
+  // To register a COM module to Windows, we should create a key of its GUID
+  // and fill the information below:
+  //  * The description of this module (optional);
+  //  * The ProgID of this module (optional);
+  //  * The absolute path to this module;
+  //  * The threading model of this module.
+  ATL::CRegKey parent;
+  LONG result = parent.Open(HKEY_CLASSES_ROOT, &kTipInfoKeyPrefix[0],
+                            KEY_READ | KEY_WRITE);
+  if (result != ERROR_SUCCESS) {
+    return HRESULT_FROM_WIN32(result);
+  }
+
+  // Create a sub-key for this COM module and set its description.
+  // These operations are allowed only for administrators.
+  wchar_t ime_key[64] = {};
+  if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), &ime_key[0],
+                         std::size(ime_key))) {
+    return E_OUTOFMEMORY;
+  }
+
+  ATL::CRegKey key;
+  result = key.Create(parent, &ime_key[0], REG_NONE, REG_OPTION_NON_VOLATILE,
+                      KEY_READ | KEY_WRITE, nullptr, nullptr);
+  if (result != ERROR_SUCCESS) {
+    return HRESULT_FROM_WIN32(result);
+  }
+
+  std::wstring description = Utf8ToWide(mozc::kProductNameInEnglish);
+
+  result = key.SetStringValue(nullptr, description.c_str(), REG_SZ);
+  if (result != ERROR_SUCCESS) {
+    return HRESULT_FROM_WIN32(result);
+  }
+
+  // Write the absolute path to this module and its threading model.
+  // Windows use these values to load this module and set it up.
+  result = key.SetKeyValue(&kTipInProcServer32[0], &path[0], nullptr);
+  if (result != ERROR_SUCCESS) {
+    return HRESULT_FROM_WIN32(result);
+  }
+
+  result = key.SetKeyValue(&kTipInProcServer32[0], &kTipTextServiceModel[0],
+                           &kTipThreadingModel[0]);
+  if (result != ERROR_SUCCESS) {
+    return HRESULT_FROM_WIN32(result);
+  }
+
+  return HRESULT_FROM_WIN32(key.Close());
+}
+
+// Unregisters this module from Windows.
+// This function just deletes the all registry keys under
+// "HKCR\CLSID\{xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx}".
+void TsfRegistrar::UnregisterCOMServer() {
+  // Create the registry key for this COM server.
+  // Only Administrators can create keys under HKEY_CLASSES_ROOT.
+  wchar_t ime_key[64] = {};
+  if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), &ime_key[0],
+                         std::size(ime_key))) {
+    return;
+  }
+
+  ATL::CRegKey key;
+  HRESULT result =
+      key.Open(HKEY_CLASSES_ROOT, &kTipInfoKeyPrefix[0], KEY_READ | KEY_WRITE);
+  if (result != ERROR_SUCCESS) {
+    return;
+  }
+
+  key.RecurseDeleteKey(&ime_key[0]);
+  key.Close();
+}
 
 // Register this COM server to the profile store for input processors.
 // After completing this operation, Windows can treat this module as a
