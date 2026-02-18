@@ -58,8 +58,10 @@ void AddSingletonFinalizer(void (*finalizer)()) ABSL_LOCKS_EXCLUDED(mu) {
 
 void FinalizeSingletons() ABSL_LOCKS_EXCLUDED(internal::mu) {
   absl::MutexLock lock(internal::mu);
-  for (auto func : internal::finalizers) {
-    func();
+  // Run the finalizers in the reverse order of their registration for safer
+  // destruction (e.g. in case one singleton depends on another).
+  for (int i = internal::size - 1; i >= 0; --i) {
+    internal::finalizers[i]();
   }
   internal::size = 0;
 }
