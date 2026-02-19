@@ -563,3 +563,4 @@ OK:	せんこうとともに	選考とともに	Conversion Expected 99	閃光と
 OK:	おふろはいりません	お風呂入りません	Conversion Expected	お風呂入りません	2.31.5851
 FAILED:	おちゃはいりません	お茶入りません	Conversion Expected	お茶はいりません	2.31.5851
 OK:	きいてください	聞いてください	Conversion Expected 9	聞いてください	2.31.5851
+FAILED:	おきにめしたなら	お気に目下なら	Conversion Expected	お気に召したなら	3.33.6089
