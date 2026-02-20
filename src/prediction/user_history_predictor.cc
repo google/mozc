@@ -1519,6 +1519,9 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     if (result_entry->spelling_correction()) {
       result.candidate_attributes |= converter::Attribute::SPELLING_CORRECTION;
     }
+    if (result_entry->bigram_boost()) {
+      result.types |= prediction::BIGRAM;
+    }
     absl::string_view description = result_entry->description();
     // If we have stored description, set it exactly.
     if (!description.empty()) {

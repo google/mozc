@@ -38,6 +38,7 @@
 #include "absl/types/span.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
@@ -50,7 +51,10 @@ class Predictor : public PredictorInterface {
   Predictor() = default;
   Predictor(const engine::Modules& modules, const ConverterInterface& converter,
             const ImmutableConverterInterface& immutable_converters);
-  Predictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
+
+  // Test only method.
+  Predictor(const engine::Modules& modules,
+            std::unique_ptr<PredictorInterface> dictionary_predictor,
             std::unique_ptr<PredictorInterface> user_history_predictor);
 
   std::vector<Result> Predict(const ConversionRequest& request) const;
@@ -90,10 +94,18 @@ class Predictor : public PredictorInterface {
   bool Wait() override;
 
  private:
+  friend class PredictorTestPeer;
+
   std::vector<Result> PredictForDesktop(const ConversionRequest& request) const;
 
   std::vector<Result> PredictForMixedConversion(
       const ConversionRequest& request) const;
+
+  // Returns true if the top dictionary result should be promoted.
+  bool PromoteTopDictionaryResult(
+      const ConversionRequest& request,
+      absl::Span<const Result> user_history_results,
+      absl::Span<const Result> dictionary_results) const;
 
   // Mix user_history_results and dictionary_results.
   std::vector<Result> MixCandidates(
@@ -103,6 +115,7 @@ class Predictor : public PredictorInterface {
 
   std::unique_ptr<PredictorInterface> dictionary_predictor_;
   std::unique_ptr<PredictorInterface> user_history_predictor_;
+  const dictionary::PosMatcher pos_matcher_;
 };
 
 }  // namespace mozc::prediction

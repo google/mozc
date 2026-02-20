@@ -30,6 +30,7 @@
 #include "prediction/predictor.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -52,6 +53,7 @@
 #include "request/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "testing/test_peer.h"
 
 namespace mozc::prediction {
 namespace {
@@ -148,6 +150,13 @@ class MockPredictor : public PredictorInterface {
 
 }  // namespace
 
+class PredictorTestPeer : public testing::TestPeer<Predictor> {
+ public:
+  explicit PredictorTestPeer(Predictor& predictor)
+      : testing::TestPeer<Predictor>(predictor) {}
+  PEER_METHOD(PromoteTopDictionaryResult);
+};
+
 class MixedDecodingPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
@@ -157,6 +166,12 @@ class MixedDecodingPredictorTest : public ::testing::Test {
     request_ = std::make_unique<commands::Request>();
     request_test_util::FillMobileRequest(request_.get());
     composer_ = std::make_unique<composer::Composer>(*request_, *config_);
+
+    auto modules = engine::ModulesPresetBuilder()
+                       .PresetDictionary(std::make_unique<MockDictionary>())
+                       .Build(std::make_unique<testing::MockDataManager>());
+    CHECK_OK(modules);
+    modules_ = std::move(modules.value());
   }
 
   ConversionRequest CreateConversionRequest(
@@ -174,13 +189,14 @@ class MixedDecodingPredictorTest : public ::testing::Test {
   std::unique_ptr<mozc::composer::Composer> composer_;
   std::unique_ptr<commands::Request> request_;
   std::unique_ptr<config::Config> config_;
+  std::unique_ptr<engine::Modules> modules_;
   Result history_result_;
   commands::Context context_;
 };
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobileSuggestion) {
   auto predictor = std::make_unique<Predictor>(
-      std::make_unique<CheckCandSizeDictionaryPredictor>(200),
+      *modules_, std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
@@ -189,7 +205,7 @@ TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobileSuggestion) {
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialSuggestion) {
   auto predictor = std::make_unique<Predictor>(
-      std::make_unique<CheckCandSizeDictionaryPredictor>(200),
+      *modules_, std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       // We don't call history predictor
       std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1));
   const ConversionRequest convreq =
@@ -199,7 +215,7 @@ TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialSuggestion) {
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePrediction) {
   auto predictor = std::make_unique<Predictor>(
-      std::make_unique<CheckCandSizeDictionaryPredictor>(200),
+      *modules_, std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
@@ -207,14 +223,9 @@ TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePrediction) {
 }
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialPrediction) {
-  std::unique_ptr<engine::Modules> modules =
-      engine::ModulesPresetBuilder()
-          .PresetDictionary(std::make_unique<MockDictionary>())
-          .Build(std::make_unique<testing::MockDataManager>())
-          .value();
   auto predictor = std::make_unique<Predictor>(
-      std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<UserHistoryPredictor>(*modules));
+      *modules_, std::make_unique<CheckCandSizeDictionaryPredictor>(200),
+      std::make_unique<UserHistoryPredictor>(*modules_));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PARTIAL_PREDICTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
@@ -231,8 +242,8 @@ TEST_F(MixedDecodingPredictorTest, CallPredictForRequestMobile) {
       .Times(AtMost(1))
       .WillOnce(Return(results));
 
-  auto predictor =
-      std::make_unique<Predictor>(std::move(predictor1), std::move(predictor2));
+  auto predictor = std::make_unique<Predictor>(*modules_, std::move(predictor1),
+                                               std::move(predictor2));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
@@ -246,6 +257,11 @@ class PredictorTest : public ::testing::Test {
 
     request_ = std::make_unique<commands::Request>();
     composer_ = std::make_unique<composer::Composer>(*request_, *config_);
+    auto modules = engine::ModulesPresetBuilder()
+                       .PresetDictionary(std::make_unique<MockDictionary>())
+                       .Build(std::make_unique<testing::MockDataManager>());
+    CHECK_OK(modules);
+    modules_ = std::move(modules.value());
   }
 
   ConversionRequest CreateConversionRequest(
@@ -264,31 +280,32 @@ class PredictorTest : public ::testing::Test {
   std::unique_ptr<mozc::composer::Composer> composer_;
   std::unique_ptr<commands::Request> request_;
   std::unique_ptr<config::Config> config_;
+  std::unique_ptr<engine::Modules> modules_;
   commands::Context context_;
   Result history_result_;
 };
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
-  auto predictor =
-      std::make_unique<Predictor>(std::make_unique<NullPredictor>(true),
-                                  std::make_unique<NullPredictor>(true));
+  auto predictor = std::make_unique<Predictor>(
+      *modules_, std::make_unique<NullPredictor>(true),
+      std::make_unique<NullPredictor>(true));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
 }
 
 TEST_F(PredictorTest, MixedReturnValue) {
-  auto predictor =
-      std::make_unique<Predictor>(std::make_unique<NullPredictor>(true),
-                                  std::make_unique<NullPredictor>(false));
+  auto predictor = std::make_unique<Predictor>(
+      *modules_, std::make_unique<NullPredictor>(true),
+      std::make_unique<NullPredictor>(false));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
-  auto predictor =
-      std::make_unique<Predictor>(std::make_unique<NullPredictor>(false),
-                                  std::make_unique<NullPredictor>(false));
+  auto predictor = std::make_unique<Predictor>(
+      *modules_, std::make_unique<NullPredictor>(false),
+      std::make_unique<NullPredictor>(false));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(predictor->Predict(convreq).empty());
@@ -298,6 +315,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
   const int suggestions_size =
       config::ConfigHandler::DefaultConfig().suggestions_size();
   auto predictor = std::make_unique<Predictor>(
+      *modules_,
       // -1 as UserHistoryPredictor returns 1 result.
       std::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size - 1),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
@@ -310,6 +328,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
   constexpr int kPredictionSize = 100;
   auto predictor = std::make_unique<Predictor>(
+      *modules_,
       // -1 as UserHistoryPredictor returns 1 result.
       std::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize - 1),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
@@ -330,8 +349,8 @@ TEST_F(PredictorTest, CallPredictForRequest) {
       .Times(AtMost(1))
       .WillOnce(Return(results));
 
-  auto predictor =
-      std::make_unique<Predictor>(std::move(predictor1), std::move(predictor2));
+  auto predictor = std::make_unique<Predictor>(*modules_, std::move(predictor1),
+                                               std::move(predictor2));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
@@ -342,8 +361,8 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   auto predictor2 = std::make_unique<NullPredictor>(true);
   const auto* pred1 = predictor1.get();  // Keep the reference
   const auto* pred2 = predictor2.get();  // Keep the reference
-  auto predictor =
-      std::make_unique<Predictor>(std::move(predictor1), std::move(predictor2));
+  auto predictor = std::make_unique<Predictor>(*modules_, std::move(predictor1),
+                                               std::move(predictor2));
   config_->set_presentation_mode(true);
   const ConversionRequest convreq1 =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
@@ -387,7 +406,8 @@ TEST_F(MixedDecodingPredictorTest, FillPos) {
       .WillOnce(Return(predictor_results));
 
   auto predictor = std::make_unique<Predictor>(
-      std::move(mock_dictionary_predictor), std::move(mock_history_predictor));
+      *modules_, std::move(mock_dictionary_predictor),
+      std::move(mock_history_predictor));
 
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
@@ -418,9 +438,9 @@ TEST_F(MixedDecodingPredictorTest, MixCandidates) {
     EXPECT_CALL(*mock_dictionary_predictor, Predict(_))
         .WillOnce(Return(std::move(predictor_results)));
 
-    auto predictor =
-        std::make_unique<Predictor>(std::move(mock_dictionary_predictor),
-                                    std::move(mock_history_predictor));
+    auto predictor = std::make_unique<Predictor>(
+        *modules_, std::move(mock_dictionary_predictor),
+        std::move(mock_history_predictor));
 
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::SUGGESTION);
@@ -462,6 +482,56 @@ TEST_F(MixedDecodingPredictorTest, MixCandidates) {
 
     EXPECT_FALSE(is_top_no_deletable(std::move(predictor_results),
                                      std::move(history_results)));
+  }
+}
+
+TEST_F(MixedDecodingPredictorTest, PromoteTopDictionaryResultTest) {
+  auto predictor1 = std::make_unique<NullPredictor>(true);
+  auto predictor2 = std::make_unique<NullPredictor>(true);
+  auto predictor = std::make_unique<Predictor>(*modules_, std::move(predictor1),
+                                               std::move(predictor2));
+  const uint16_t general_noun_id = modules_->GetPosMatcher().GetGeneralNounId();
+  const uint16_t proper_noun_id = modules_->GetPosMatcher().GetUniqueNounId();
+
+  PredictorTestPeer peer(*predictor);
+
+  {
+    request_->mutable_decoder_experiment_params()->set_candidate_mixing_mode(1);
+    request_->mutable_decoder_experiment_params()
+        ->set_candidate_mixing_min_post_correction_prob(0.5);
+
+    ConversionRequest convreq =
+        CreateConversionRequest(ConversionRequest::SUGGESTION);
+    std::vector<Result> predictor_results(2), history_results(2);
+
+    history_results[0].key = "こうかい";
+    history_results[0].value = "後悔";
+
+    predictor_results[0].key = "こうかい";
+    predictor_results[0].value = "公開";
+    predictor_results[0].types |= prediction::POST_CORRECTION;
+    predictor_results[0].post_correction_prob = 0.9;
+
+    // dictionary results must contain the top history result to
+    // evaluate the POS id (not a proper noun).
+    predictor_results[1].key = "こうかい";
+    predictor_results[1].value = "後悔";
+    predictor_results[1].lid = general_noun_id;
+    predictor_results[1].rid = general_noun_id;
+
+    EXPECT_TRUE(peer.PromoteTopDictionaryResult(convreq, history_results,
+                                                predictor_results));
+
+    // Low probability
+    predictor_results[0].post_correction_prob = 0.1;
+    EXPECT_FALSE(peer.PromoteTopDictionaryResult(convreq, history_results,
+                                                 predictor_results));
+
+    // history top is proper noun.
+    predictor_results[0].post_correction_prob = 0.9;
+    predictor_results[1].lid = proper_noun_id;
+    EXPECT_FALSE(peer.PromoteTopDictionaryResult(convreq, history_results,
+                                                 predictor_results));
   }
 }
 
