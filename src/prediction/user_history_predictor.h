@@ -174,10 +174,6 @@ class UserHistoryPredictor : public PredictorInterface {
   // Returns true if prev_entry has a next_fp link to entry
   static bool HasBigramEntry(const Entry& entry, const Entry& prev_entry);
 
-  // Returns true if `entry` is valid.
-  static bool IsValidResult(const ConversionRequest& request,
-                            const Entry& entry);
-
   // Rewrite the prefix white spaces in result.(value|key) to
   // full or half width form depending on the config.
   // If display_value capability is available, sets result.display_value.

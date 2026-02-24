@@ -1294,6 +1294,15 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
       return false;
     }
 
+    // full sentence entry is not reused as history now.
+    // TODO(taku): reuse it in exact-match case.
+    if (CacheInnerSegmentBoundaryEnabled(request) &&
+        IsMixedConversionEnabled(request) &&
+        entry.inner_segment_boundary_size() >= 2 &&
+        entry.suggestion_freq() <= 1) {
+      return true;
+    }
+
     if (!IsValidEntryIgnoringRemovedField(entry)) {
       return true;
     }
@@ -1344,39 +1353,6 @@ UserHistoryPredictor::GetInputKeyFromRequest(const ConversionRequest& request) {
   }
 
   return {request_key, query_base, std::move(expanded)};
-}
-
-bool UserHistoryPredictor::IsValidResult(const ConversionRequest& request,
-                                         const Entry& entry) {
-  // Suppress broken utf8 string just in case.
-  if (!Util::IsValidUtf8(entry.value())) {
-    DLOG(ERROR) << "Invalid UTF8: " << absl::BytesToHexString(entry.value());
-    return false;
-  }
-
-  // The full sentence candidate was not cached nor suggested before.
-  // Here we filter the full sentence candidate to emulate the previous
-  // behavior. The full sentence is allowed only when the key exceeds
-  // the key of the last segment. When the frequency >= 2, no filtering
-  // is applied because the suggested full sentence is repeatedly selected.
-  // e.g., entry="きょうの|てんき"
-  //      request={き,きょ...,きょう,きょうの} -> NG.
-  //              {きょうのて,きようのてん,きようのてんき} -> OK.
-  if (IsMixedConversionEnabled(request) &&
-      entry.inner_segment_boundary_size() >= 2 &&
-      entry.suggestion_freq() <= 1 &&
-      CacheInnerSegmentBoundaryEnabled(request)) {
-    const converter::InnerSegments inner_segments(
-        entry.key(), entry.value(), entry.inner_segment_boundary());
-    absl::string_view min_required_key =
-        inner_segments.GetPrefixKeyAndValue(inner_segments.size() - 1).first;
-    if (request.key().size() <= min_required_key.size()) {
-      return false;
-    }
-  }
-
-  // No suppression rule on desktop for the sake of simplicity.
-  return true;
 }
 
 // static
@@ -1483,7 +1459,10 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
       break;
     }
 
-    if (!IsValidResult(request, *result_entry)) {
+    // Suppress broken utf8 string just in case.
+    if (!Util::IsValidUtf8(result_entry->value())) {
+      DLOG(ERROR) << "Invalid UTF8: "
+                  << absl::BytesToHexString(result_entry->value());
       continue;
     }
 
@@ -1514,8 +1493,10 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     result.candidate_attributes |=
         converter::Attribute::USER_HISTORY_PREDICTION |
         converter::Attribute::NO_VARIANTS_EXPANSION;
-    absl::c_copy(result_entry->inner_segment_boundary(),
-                 std::back_inserter(result.inner_segment_boundary));
+    // Do not populate inner segment information from entry to result,
+    // as this information may introduce unexpected side-effect during the
+    // the training. Inner segment information should only be fed from
+    // the realtime decoder.
     if (result_entry->spelling_correction()) {
       result.candidate_attributes |= converter::Attribute::SPELLING_CORRECTION;
     }
@@ -1567,10 +1548,7 @@ void UserHistoryPredictor::InsertNextEntry(uint64_t fp, Entry& entry) {
 }
 
 bool UserHistoryPredictor::IsValidEntry(const Entry& entry) const {
-  if (entry.removed() || !IsValidEntryIgnoringRemovedField(entry)) {
-    return false;
-  }
-  return true;
+  return !entry.removed() && IsValidEntryIgnoringRemovedField(entry);
 }
 
 bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
@@ -1770,32 +1748,23 @@ UserHistoryPredictor::MakeLearningSegments(
   auto make_learning_segments = [&](const Result& result) {
     std::vector<SegmentForLearning> segments;
 
-    if (CacheInnerSegmentBoundaryEnabled(request) &&
-        result.inner_segments().size() >= 2 &&
-        (result.candidate_attributes &
-         converter::Attribute::USER_HISTORY_PREDICTION)) {
-      // The result with USER_HISTORY_PREDICTION was treated as a single
-      // segment. We would like to preserve this behavior in order to promote
-      // the full sentence candidate when it is typed before.
-      // Without this treatment, shorter inner segments are continuously
-      // being suggested.
-      segments.push_back({0, 0, result.key, result.value, result.key,
-                          result.value, GetDescription(result)});
-    } else {
-      const bool is_single_segment = result.inner_segments().size() <= 1;
-      // TODO(taku): result.(key|value) may start with kPrefixZeroSpace.
-      // It would be better to remove them to increase the coverage
-      // of bigram-prediction.
-      for (const auto& iter : result.inner_segments()) {
-        const int key_begin =
-            std::distance(result.key.data(), iter.GetKey().data());
-        const int value_begin =
-            std::distance(result.value.data(), iter.GetValue().data());
-        segments.push_back({key_begin, value_begin, iter.GetKey(),
-                            iter.GetValue(), iter.GetContentKey(),
-                            iter.GetContentValue(),
-                            is_single_segment ? GetDescription(result) : ""});
-      }
+    // Note: History predictions are currently learned as single segments
+    // even if they have boundaries in storage. This is because
+    // `result.inner_segment_boundary` is not populated for
+    // `USER_HISTORY_PREDICTION` results in `MakeResults`.
+    const bool is_single_segment = result.inner_segments().size() <= 1;
+    // TODO(taku): result.(key|value) may start with kPrefixZeroSpace.
+    // It would be better to remove them to increase the coverage
+    // of bigram-prediction.
+    for (const auto& iter : result.inner_segments()) {
+      const int key_begin =
+          std::distance(result.key.data(), iter.GetKey().data());
+      const int value_begin =
+          std::distance(result.value.data(), iter.GetValue().data());
+      segments.push_back({key_begin, value_begin, iter.GetKey(),
+                          iter.GetValue(), iter.GetContentKey(),
+                          iter.GetContentValue(),
+                          is_single_segment ? GetDescription(result) : ""});
     }
 
     return segments;

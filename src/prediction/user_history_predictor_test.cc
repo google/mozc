@@ -112,7 +112,6 @@ class UserHistoryPredictorTestPeer
 
   PEER_STATIC_METHOD(GetScore);
   PEER_STATIC_METHOD(GetMatchType);
-  PEER_STATIC_METHOD(IsValidResult);
   PEER_STATIC_METHOD(MaybeRewritePrefixSpace);
   PEER_STATIC_METHOD(RomanFuzzyPrefixMatch);
   PEER_STATIC_METHOD(MaybeRomanMisspelledKey);
@@ -2505,92 +2504,6 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   entry.set_value("bar");
   EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
   EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
-}
-
-TEST_F(UserHistoryPredictorTest, IsValidResult) {
-  // desktop
-  {
-    UserHistoryPredictor::Entry entry;
-    Request request;
-    request.set_mixed_conversion(false);
-    const ConversionRequest convreq =
-        ConversionRequestBuilder()
-            .SetRequestView(request)
-            .SetRequestType(ConversionRequest::SUGGESTION)
-            .Build();
-
-    // Always return GOOD_RESULT
-    entry.set_bigram_boost(true);
-    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, entry));
-
-    entry.set_bigram_boost(false);
-    entry.set_suggestion_freq(1);
-    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, entry));
-  }
-
-  // mobile
-  {
-    UserHistoryPredictor::Entry entry;
-    Request request;
-    request.set_mixed_conversion(true);
-    const ConversionRequest convreq =
-        ConversionRequestBuilder().SetRequestView(request).Build();
-
-    entry.set_suggestion_freq(1);
-    entry.set_value("よろしく");
-    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, entry));
-
-    entry.set_suggestion_freq(2);                 // high freq
-    entry.set_value("よろしくおねがいします。");  // too long
-    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, entry));
-
-    entry.set_suggestion_freq(1);                 // low freq
-    entry.set_value("よろしくおねがいします。");  // too long
-    EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidResult(convreq, entry));
-  }
-
-  // entry with cache-inner-segment mode.
-  {
-    UserHistoryPredictor::Entry entry;
-    Request request;
-    request.mutable_decoder_experiment_params()
-        ->set_user_history_cache_inner_segment_boundary(true);
-    request.set_mixed_conversion(true);
-
-    entry.set_value("今日は晴れ");
-    entry.set_key("きょうははれ");
-
-    // 今日は|晴れ
-    entry.add_inner_segment_boundary(
-        converter::EncodeLengths(12, 9, 9, 6).value());
-    entry.add_inner_segment_boundary(
-        converter::EncodeLengths(6, 6, 6, 6).value());
-
-    auto is_valid = [&](absl::string_view key, int suggestion_freq) {
-      entry.set_suggestion_freq(suggestion_freq);
-      const ConversionRequest convreq = ConversionRequestBuilder()
-                                            .SetRequestView(request)
-                                            .SetKey(key)
-                                            .Build();
-      return UserHistoryPredictorTestPeer::IsValidResult(convreq, entry);
-    };
-
-    // when the freq == 1, valid if the query exceeds the last segment.
-    EXPECT_FALSE(is_valid("き", 1));
-    EXPECT_FALSE(is_valid("きょ", 1));
-    EXPECT_FALSE(is_valid("きょう", 1));
-    EXPECT_FALSE(is_valid("きょうは", 1));
-    EXPECT_TRUE(is_valid("きょうはは", 1));
-    EXPECT_TRUE(is_valid("きょうははれ", 1));
-
-    // When the freq >= 2, always true.
-    EXPECT_TRUE(is_valid("き", 2));
-    EXPECT_TRUE(is_valid("きょ", 2));
-    EXPECT_TRUE(is_valid("きょう", 2));
-    EXPECT_TRUE(is_valid("きょうは", 2));
-    EXPECT_TRUE(is_valid("きょうはは", 2));
-    EXPECT_TRUE(is_valid("きょうははれ", 2));
-  }
 }
 
 TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
