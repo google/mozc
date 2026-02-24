@@ -899,14 +899,23 @@ absl::CivilMinute GetCivilMinuteWithDiff(int type, int diff,
 
 std::vector<std::string> GetConversions(
     const DateRewriter::DateData& data,
-    absl::Span<const std::string> extra_formats) {
+    absl::Span<const std::string> extra_date_formats,
+    absl::Span<const std::string> extra_datetime_formats) {
   std::vector<std::string> results;
   const absl::TimeZone tz = Clock::GetTimeZone();
   const absl::CivilMinute cm = GetCivilMinuteWithDiff(data.type, data.diff, tz);
 
-  for (const absl::string_view extra_format : extra_formats) {
+  if (data.type == DATE) {
     const absl::Time at = absl::FromCivil(cm, tz);
-    results.push_back(absl::FormatTime(extra_format, at, tz));
+    for (const absl::string_view date_format : extra_date_formats) {
+      results.push_back(absl::FormatTime(date_format, at, tz));
+    }
+  }
+  if (data.type == DATE_AND_CURRENT_TIME) {
+    const absl::Time at = absl::FromCivil(cm, tz);
+    for (const absl::string_view datetime_format : extra_datetime_formats) {
+      results.push_back(absl::FormatTime(datetime_format, at, tz));
+    }
   }
 
   switch (data.type) {
@@ -966,9 +975,10 @@ std::vector<std::string> GetConversions(
 }
 }  // namespace
 
-bool DateRewriter::RewriteDate(Segment* segment,
-                               absl::Span<const std::string> extra_formats,
-                               size_t& num_done_out) {
+bool DateRewriter::RewriteDate(
+    Segment* segment, absl::Span<const std::string> extra_date_formats,
+    absl::Span<const std::string> extra_datetime_formats,
+    size_t& num_done_out) {
   absl::string_view key = segment->key();
   auto rit = std::find_if(std::begin(kDateData), std::end(kDateData),
                           [&key](auto data) { return key == data.key; });
@@ -977,7 +987,8 @@ bool DateRewriter::RewriteDate(Segment* segment,
   }
 
   const DateData& data = *rit;
-  std::vector<std::string> conversions = GetConversions(data, extra_formats);
+  std::vector<std::string> conversions =
+      GetConversions(data, extra_date_formats, extra_datetime_formats);
   if (conversions.empty()) {
     return false;
   }
@@ -1455,15 +1466,20 @@ int DateRewriter::capability(const ConversionRequest& request) const {
 
 namespace {
 std::string ConvertExtraFormat(const absl::string_view base) {
+  // std::strftime format used by absl::FormatTime.
+  // https://en.cppreference.com/w/cpp/chrono/c/strftime.html
   return absl::StrReplaceAll(base, {{"%", "%%"},
-                                    {"{YEAR}", "%Y"},
-                                    {"{MONTH}", "%m"},
-                                    {"{DATE}", "%d"},
+                                    {"{YEAR}", "%Y"},    // 4 digits
+                                    {"{MONTH}", "%m"},   // (01 to 12)
+                                    {"{DATE}", "%d"},    // (01 to 31)
+                                    {"{HOUR}", "%H"},    // (01 to 23)
+                                    {"{MINUTE}", "%M"},  // (00 to 59)
                                     {"{{}", "{"}});
 }
 
 std::vector<std::string> GetExtraFormats(
-    const dictionary::DictionaryInterface* const dictionary) {
+    const dictionary::DictionaryInterface* const dictionary,
+    const absl::string_view format_key) {
   if (dictionary == nullptr) {
     return {};
   }
@@ -1489,7 +1505,7 @@ std::vector<std::string> GetExtraFormats(
   std::vector<std::string> extra_formats;
   EntryCollector callback(extra_formats);
   ConversionRequest crequest;
-  dictionary->LookupExact(DateRewriter::kExtraFormatKey, crequest, &callback);
+  dictionary->LookupExact(format_key, crequest, &callback);
 
   return extra_formats;
 }
@@ -1533,7 +1549,10 @@ bool DateRewriter::Rewrite(const ConversionRequest& request,
   }
 
   bool modified = false;
-  const std::vector<std::string> extra_formats = GetExtraFormats(dictionary_);
+  const std::vector<std::string> extra_date_formats =
+      GetExtraFormats(dictionary_, kExtraDateFormatKey);
+  const std::vector<std::string> extra_datetime_formats =
+      GetExtraFormats(dictionary_, kExtraDatetimeFormatKey);
   size_t num_done = 1;
   for (Segments::range rest_segments = conversion_segments;
        !rest_segments.empty(); rest_segments = rest_segments.drop(num_done)) {
@@ -1544,7 +1563,8 @@ bool DateRewriter::Rewrite(const ConversionRequest& request,
     }
 
     if (RewriteAd(rest_segments, num_done) ||
-        RewriteDate(seg, extra_formats, num_done) ||
+        RewriteDate(seg, extra_date_formats, extra_datetime_formats,
+                    num_done) ||
         RewriteEra(rest_segments, num_done)) {
       modified = true;
       continue;
