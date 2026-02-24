@@ -82,7 +82,7 @@ class TestInputIterator : public InputIteratorInterface {
 TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
   constexpr absl::string_view kInput =
       "きょうと\t京都\t名詞\n"
-      "おおさか\t大阪\t地名\n"
+      "おおさか\t大阪\t地名*\n"  // suffix "*" is removed.
       "とうきょう\t東京\t地名\tコメント\n"
       "すずき\t鈴木\t人名\n"
       "あめりか\tアメリカ\t地名:en";

@@ -113,8 +113,8 @@ bool ConvertEntryInternal(const absl::Span<const PosMap> pos_map,
 
   // ATOK's POS has a special marker for distinguishing auto-registered
   // words/manually-registered words. Remove the mark here.
-  absl::ConsumePrefix(&pos, "$");
-  absl::ConsumePrefix(&pos, "*");
+  absl::ConsumeSuffix(&pos, "$");
+  absl::ConsumeSuffix(&pos, "*");
 
   // Search for mapping for the given POS.
   const auto found = absl::c_lower_bound(
