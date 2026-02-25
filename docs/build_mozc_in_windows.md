@@ -174,81 +174,9 @@ even if downloaded from https://github.com/google/mozc/.
 
 --------------------------------------------------------------------------------
 
-## Build with GYP (maintenance mode)
+## Build Mozc for Linux Desktop with GYP (deprecated):
 
-GYP build is in maintenance mode.
+⚠️ The GYP build is deprecated and no longer supported.
 
-While the existing targets are supported by both GYP and Bazel as much as
-possible, new targets will be supported by Bazel only.
-
-Targets only for Bazel:
-
-*   AUX dictionary (`//data/dictionary_oss:aux_dictionary`)
-*   Filtered dictionary (`//data/dictionary_oss:filtered_dictionary`)
-*   SVS character input instead of CJK compatibility ideographs
-    (`//rewriter:single_kanji_rewriter`)
-*   Zip code conversion (`//server:mozc_server`)
-
-Here are the build commands to build Mozc using GYP and then install it:
-
-```
-python -m pip install six
-
-git clone https://github.com/google/mozc.git
-cd mozc\src
-
-python build_tools/update_deps.py
-python build_tools/build_qt.py --release --confirm_license
-python build_mozc.py gyp
-python build_mozc.py build -c Release package
-
-out_win\Release\Mozc64.msi
-```
-
-### Build Mozc with GYP
-
-If you have already built Qt, the following commands should be sufficient to
-build the Mozc installers.
-
-```
-python build_mozc.py gyp
-python build_mozc.py build -c Release package
-```
-
-If you want to build Mozc without Qt dependencies, specify `--noqt` option as
-follows. Note that if you specify `--noqt`, `mozc_tool.exe` will be built as a
-mock version that does nothing.
-
-```
-python build_mozc.py gyp --noqt
-python build_mozc.py build -c Release package
-```
-
-If you need debug information, you can build debug version of Mozc as follows.
-
-```
-python build_mozc.py build_tools/build_qt.py --release --debug --confirm_license
-python build_mozc.py build -c Debug package
-```
-
-### Clean up the Tree with GYP
-
-To clean up the tree, execute the following. This will remove executables and
-intermediate files like object files, generated source files, project files,
-etc.
-
-```
-python build_mozc.py clean
-```
-
-### Run unit tests with GYP
-
-You can run unit tests as follows.
-
-```
-python build_mozc.py gyp --noqt
-python build_mozc.py runtests -c Release
-```
-
-Note that you can specify the `--qtdir=` option instead of `--noqt` in the GYP
-phase, as there are currently no unit tests that depend on Qt.
+Please check the previous version for more information.
+https://github.com/google/mozc/blob/3.33.6089/docs/build_mozc_in_windows.md#build-with-gyp-maintenance-mode
