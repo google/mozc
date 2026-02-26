@@ -1702,33 +1702,5 @@ TEST_F(DictionaryPredictorTest, FilterNwpSuffixCandidates) {
   }
 }
 
-TEST_F(DictionaryPredictorTest, DemoteFirstN_test) {
-  // Tests of DemoteFirstN in result.h
-  const std::vector<std::string> results = {"d1", "k1", "d2", "k2", "d3", "k3",
-                                            "d4", "k4", "d5", "k5", "d6", "k6",
-                                            "d7", "k7", "d8", "k8", "d9", "k9"};
-  auto demote = [&](int n) {
-    std::vector<std::string> input = results;
-    DemoteFirstN(absl::MakeSpan(input), n,
-                 [](const std::string& x) { return x[0] == 'd'; });
-    return absl::StrJoin(input, " ");
-  };
-
-  EXPECT_EQ(demote(0), "d1 k1 d2 k2 d3 k3 d4 k4 d5 k5 d6 k6 d7 k7 d8 k8 d9 k9");
-  EXPECT_EQ(demote(1), "k1 d1 d2 k2 d3 k3 d4 k4 d5 k5 d6 k6 d7 k7 d8 k8 d9 k9");
-  EXPECT_EQ(demote(2), "k1 k2 d1 d2 d3 k3 d4 k4 d5 k5 d6 k6 d7 k7 d8 k8 d9 k9");
-  EXPECT_EQ(demote(3), "k1 k2 k3 d1 d2 d3 d4 k4 d5 k5 d6 k6 d7 k7 d8 k8 d9 k9");
-  EXPECT_EQ(demote(4), "k1 k2 k3 k4 d1 d2 d3 d4 d5 k5 d6 k6 d7 k7 d8 k8 d9 k9");
-  EXPECT_EQ(demote(5), "k1 k2 k3 k4 k5 d1 d2 d3 d4 d5 d6 k6 d7 k7 d8 k8 d9 k9");
-  EXPECT_EQ(demote(6), "k1 k2 k3 k4 k5 k6 d1 d2 d3 d4 d5 d6 d7 k7 d8 k8 d9 k9");
-  EXPECT_EQ(demote(7), "k1 k2 k3 k4 k5 k6 k7 d1 d2 d3 d4 d5 d6 d7 d8 k8 d9 k9");
-  EXPECT_EQ(demote(8), "k1 k2 k3 k4 k5 k6 k7 k8 d1 d2 d3 d4 d5 d6 d7 d8 d9 k9");
-  EXPECT_EQ(demote(9), "k1 k2 k3 k4 k5 k6 k7 k8 k9 d1 d2 d3 d4 d5 d6 d7 d8 d9");
-  EXPECT_EQ(demote(10),
-            "k1 k2 k3 k4 k5 k6 k7 k8 k9 d1 d2 d3 d4 d5 d6 d7 d8 d9");
-  EXPECT_EQ(demote(100),
-            "k1 k2 k3 k4 k5 k6 k7 k8 k9 d1 d2 d3 d4 d5 d6 d7 d8 d9");
-}
-
 }  // namespace
 }  // namespace mozc::prediction
