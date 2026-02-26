@@ -564,3 +564,22 @@ OK:	おふろはいりません	お風呂入りません	Conversion Expected	お
 FAILED:	おちゃはいりません	お茶入りません	Conversion Expected	お茶はいりません	2.31.5851
 OK:	きいてください	聞いてください	Conversion Expected 9	聞いてください	2.31.5851
 FAILED:	おきにめしたなら	お気に目下なら	Conversion Expected	お気に召したなら	3.33.6089
+FAILED:	ことここにいたる	ことここに至る	Conversion Expected	事ここに至る	3.33.6089
+OK:	みもふたもない	身も蓋もない	Conversion Expected	身も蓋もない	3.33.6089
+FAILED:	にのくがつげない	二の句が告げない	Conversion Expected	二の句が継げない	3.33.6089
+OK:	けがのこうみょう	怪我の功名	Conversion Expected	怪我の功名	3.33.6089
+OK:	たなからぼたもち	店からぼたもち	Conversion Expected 2	棚からぼたもち	3.33.6089
+OK:	たなからぼたもち	店からぼたもち	Conversion Expected 2	棚からぼた餅	3.33.6089
+OK:	ふこうちゅうのさいわい	不幸中の幸い	Conversion Expected	不幸中の幸い	3.33.6089
+OK:	まったなし	待ったなし	Conversion Expected	待ったなし	3.33.6089
+FAILED:	こうかふこうか	効果不効果	Conversion Expected	幸か不幸か	3.33.6089
+FAILED:	こともなげに	こともなげに	Conversion Expected	事もなげに	3.33.6089
+FAILED:	やぶからぼうに	ヤブから棒に	Conversion Expected	藪から棒に	3.33.6089
+FAILED:	にっちもさっちも	にっちもさっちも	Conversion Expected 2	二進も三進も	3.33.6089
+FAILED:	のるかそるか	乗る過疎るか	Conversion Expected	のるかそるか	3.33.6089
+FAILED:	おしもおされもせぬ	押しもオサレもせぬ	Conversion Expected	押しも押されもせぬ	3.33.6089
+OK:	おしもおされぬ	押しも押されぬ	Conversion Expected	押しも押されぬ	3.33.6089
+OK:	ぬきさしならぬ	抜き差しならぬ	Conversion Expected	抜き差しならぬ	3.33.6089
+OK:	へんむてき	片務的	Conversion Expected	片務的	3.33.6089
+FAILED:	そうむてき	総務的	Conversion Expected	双務的	3.33.6089
+FAILED:	かこつ	過去つ	Conversion Expected	仮骨	3.33.6089

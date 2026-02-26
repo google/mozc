@@ -64,3 +64,22 @@ regression	おふろはいりません	お風呂入りません	Conversion Expec
 regression	おちゃはいりません	お茶はいりません	Conversion Expected
 regression	きいてください	聞いてください	Conversion Expected 9
 regression	おきにめしたなら	お気に召したなら	Conversion Expected
+regression	ことここにいたる	事ここに至る	Conversion Expected
+regression	みもふたもない	身も蓋もない	Conversion Expected
+regression	にのくがつげない	二の句が継げない	Conversion Expected
+regression	けがのこうみょう	怪我の功名	Conversion Expected
+regression	たなからぼたもち	棚からぼたもち	Conversion Expected 2
+regression	たなからぼたもち	棚からぼた餅	Conversion Expected 2
+regression	ふこうちゅうのさいわい	不幸中の幸い	Conversion Expected
+regression	まったなし	待ったなし	Conversion Expected
+regression	こうかふこうか	幸か不幸か	Conversion Expected
+regression	こともなげに	事もなげに	Conversion Expected
+regression	やぶからぼうに	藪から棒に	Conversion Expected
+regression	にっちもさっちも	二進も三進も	Conversion Expected 2
+regression	のるかそるか	のるかそるか	Conversion Expected
+regression	おしもおされもせぬ	押しも押されもせぬ	Conversion Expected
+regression	おしもおされぬ	押しも押されぬ	Conversion Expected
+regression	ぬきさしならぬ	抜き差しならぬ	Conversion Expected
+regression	へんむてき	片務的	Conversion Expected
+regression	そうむてき	双務的	Conversion Expected
+regression	かこつ	仮骨	Conversion Expected
