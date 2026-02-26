@@ -145,15 +145,15 @@ bool IsAndroidPuaEmoji(absl::string_view s) {
 }
 
 bool StartsWithPunctuation(absl::string_view value) {
-  return absl::c_find_if(kPunctuations, [&value](absl::string_view x) {
-           return absl::StartsWith(value, x);
-         }) != std::end(kPunctuations);
+  return absl::c_any_of(kPunctuations, [&value](absl::string_view x) {
+    return absl::StartsWith(value, x);
+  });
 }
 
 bool EndsWithPunctuation(absl::string_view value) {
-  return absl::c_find_if(kPunctuations, [&value](absl::string_view x) {
-           return absl::EndsWith(value, x);
-         }) != std::end(kPunctuations);
+  return absl::c_any_of(kPunctuations, [&value](absl::string_view x) {
+    return absl::EndsWith(value, x);
+  });
 }
 
 // Returns romanaized string.
@@ -1430,9 +1430,9 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
   };
 
   auto is_redandant_entry = [&](const Entry& entry) {
-    return absl::c_find_if(entries, [&](const Entry* inserted_entry) {
-             return is_redandant(entry.value(), inserted_entry->value());
-           }) != entries.end();
+    return absl::c_any_of(entries, [&](const Entry* inserted_entry) {
+      return is_redandant(entry.value(), inserted_entry->value());
+    });
   };
 
   // Replace `entry` with the one entry in `entries`.
