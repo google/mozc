@@ -1,4 +1,5 @@
 [Mozc - a Japanese Input Method Editor designed for multi-platform](https://github.com/google/mozc)
+テスト用のFork
 ===================================
 
 Copyright 2010-2026 Google LLC
