@@ -173,7 +173,10 @@ bool EngineConverter::ConvertWithPreferences(
 
   segment_index_ = 0;
   state_ = CONVERSION;
-  candidate_list_visible_ = false;
+  // If TalkBack is enabled, the candidate list should be always visible to
+  // propagate the candidate words to TalkBack. Otherwise, the candidate list
+  // is not visible on the first conversion.
+  candidate_list_visible_ = request_->is_a11y_talkback_enabled();
   UpdateCandidateList();
   InitializeSelectedCandidateIndices();
   return true;

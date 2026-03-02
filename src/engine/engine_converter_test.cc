@@ -496,6 +496,25 @@ TEST_F(EngineConverterTest, ConvertWithSpellingCorrection) {
   EXPECT_TRUE(IsCandidateListVisible(converter));
 }
 
+TEST_F(EngineConverterTest, ConvertWithA11yTalkbackEnabled) {
+  request_->set_is_a11y_talkback_enabled(true);
+  auto mock_converter = std::make_shared<MockConverter>();
+  EngineConverter converter(mock_converter, request_, config_);
+  {
+    Segments segments;
+    SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
+    FillT13Ns(&segments, composer_.get());
+    EXPECT_CALL(*mock_converter, StartConversion(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+
+  composer_->InsertCharacterPreedit(kChars_Aiueo);
+  EXPECT_TRUE(converter.Convert(*composer_));
+  ASSERT_TRUE(converter.IsActive());
+  EXPECT_TRUE(IsCandidateListVisible(converter));
+}
+
 TEST_F(EngineConverterTest, ConvertToTransliteration) {
   auto mock_converter = std::make_shared<MockConverter>();
   EngineConverter converter(mock_converter, request_, config_);

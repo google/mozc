@@ -91,18 +91,25 @@ TEST_F(A11yDescriptionRewriterTest, WithoutData) {
             RewriterInterface::NOT_AVAILABLE);
 }
 
-TEST_F(A11yDescriptionRewriterTest, FeatureDisabled) {
-  ConversionRequest non_a11y_conv_request;
-  commands::Request a11y_request;
+TEST_F(A11yDescriptionRewriterTest, Capability) {
+  ConversionRequest request_default;
 
-  a11y_request.set_enable_a11y_description(true);
-  const ConversionRequest a11y_conv_request =
-      ConversionRequestBuilder().SetRequest(a11y_request).Build();
+  commands::Request request_a11y_description;
+  request_a11y_description.set_enable_a11y_description(true);
+  const ConversionRequest conv_request_a11y_description =
+      ConversionRequestBuilder().SetRequest(request_a11y_description).Build();
 
-  EXPECT_EQ(GetRewriter()->capability(a11y_conv_request),
-            RewriterInterface::ALL);
-  EXPECT_EQ(GetRewriter()->capability(non_a11y_conv_request),
+  commands::Request request_talkback;
+  request_talkback.set_is_a11y_talkback_enabled(true);
+  const ConversionRequest conv_request_talkback =
+      ConversionRequestBuilder().SetRequest(request_talkback).Build();
+
+  EXPECT_EQ(GetRewriter()->capability(request_default),
             RewriterInterface::NOT_AVAILABLE);
+  EXPECT_EQ(GetRewriter()->capability(conv_request_a11y_description),
+            RewriterInterface::ALL);
+  EXPECT_EQ(GetRewriter()->capability(conv_request_talkback),
+            RewriterInterface::ALL);
 }
 
 TEST_F(A11yDescriptionRewriterTest, AddA11yDescriptionForSingleCharacter) {

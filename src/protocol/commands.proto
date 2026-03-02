@@ -663,14 +663,15 @@ message DecoderExperimentParams {
 
   // Minimum post correction probability to promote dictionary suggestion
   // over the history suggestion.
-  optional float candidate_mixing_min_post_correction_prob = 141 [default = 0.0];
+  optional float candidate_mixing_min_post_correction_prob = 141
+      [default = 0.0];
 }
 
 // Clients' request to the server.
 // Users cannot modify this.
 // In the future each request may be able to be overwritten by Config.
 // The server does not have to obey this request.
-// Next ID: 25
+// Next ID: 26
 message Request {
   // Enable zero query suggestion.
   optional bool zero_query_suggestion = 1
@@ -904,6 +905,12 @@ message Request {
   // Enables a11y support for candidates.
   // If this field is set to true, a11y description is set to each candidate.
   optional bool enable_a11y_description = 20 [default = false];
+
+  // Whether TalkBack is enabled.
+  // Some conversion behaviors should be changed when TalkBack is enabled.
+  // e.g. The candidate window should be always visible to propagate the
+  // candidate words to TalkBack.
+  optional bool is_a11y_talkback_enabled = 25 [default = false];
 
   // Additional Character Group represents certain group of characters, that can
   // be additionaly requested from the client side, based on font-availability

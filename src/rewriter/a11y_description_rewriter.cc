@@ -224,7 +224,12 @@ void A11yDescriptionRewriter::AddA11yDescription(
 
 int A11yDescriptionRewriter::capability(
     const ConversionRequest& request) const {
-  if (description_map_ && request.request().enable_a11y_description()) {
+  // Enable the rewriter when TalkBack is enabled or enable_a11y_description is
+  // explicitly set to true.
+  const bool enable_a11y_description =
+      request.request().is_a11y_talkback_enabled() ||
+      request.request().enable_a11y_description();
+  if (description_map_ && enable_a11y_description) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::NOT_AVAILABLE;
