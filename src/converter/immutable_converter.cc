@@ -1169,7 +1169,7 @@ bool ImmutableConverter::MakeLattice(const ConversionRequest& request,
 
   {
     std::string key = absl::StrCat(history_key, conversion_key);
-    lattice->SetKey(std::move(key));
+    lattice->SetKey(std::move(key), request.options().bos_id);
   }
 
   if (is_reverse) {

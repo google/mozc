@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -199,6 +200,11 @@ class ConversionRequest {
     // Request.is_incognito_mode() is false. Use this flag to dynamically change
     // the incognito_mode per client request.
     bool incognito_mode = false;
+
+    // Overrides the bos_id to a specific POS id to specify the context
+    // information. Note that the bos_id must be in the valid range.
+    // POS id 0 is reserved for the default BOS/EOS.
+    uint16_t bos_id = 0;
   };
 
   static_assert(std::is_trivially_copyable<Options>::value,

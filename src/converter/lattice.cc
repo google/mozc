@@ -51,9 +51,9 @@
 namespace mozc {
 namespace {
 
-Node* InitBOSNode(Node* bos_node, uint16_t position) {
+Node* InitBOSNode(Node* bos_node, uint16_t position, uint16_t bos_id) {
   DCHECK(bos_node);
-  bos_node->rid = 0;  // 0 is reserved for EOS/BOS
+  bos_node->rid = bos_id;  // 0 is reserved for EOS/BOS
   bos_node->lid = 0;
   bos_node->key.clear();
   bos_node->value = "BOS";
@@ -81,7 +81,7 @@ Node* InitEOSNode(Node* eos_node, uint16_t position) {
 
 }  // namespace
 
-void Lattice::SetKey(std::string key) {
+void Lattice::SetKey(std::string key, uint16_t bos_id) {
   Clear();
   key_ = std::move(key);
   begin_nodes_.resize(key_.size() + 1);
@@ -97,7 +97,7 @@ void Lattice::SetKey(std::string key) {
     nodes.reserve(32);
   }
 
-  Node* bos_node = InitBOSNode(NewNode(), 0);
+  Node* bos_node = InitBOSNode(NewNode(), 0, bos_id);
   Node* eos_node = InitEOSNode(NewNode(), static_cast<uint16_t>(key_.size()));
 
   end_nodes_[0].push_back(bos_node);

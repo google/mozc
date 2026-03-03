@@ -50,7 +50,9 @@ class Lattice {
   NodeAllocator* node_allocator() const { return node_allocator_.get(); }
 
   // set key and initializes lattice with key.
-  void SetKey(std::string key);
+  // overrides `bos_id` to change the left context id.
+  // Note that `bos_id` must be in the valid range.
+  void SetKey(std::string key, uint16_t bos_id = 0);
 
   // return key.
   absl::string_view key() const { return key_; }
