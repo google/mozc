@@ -128,20 +128,21 @@ class MockDataAndPredictor {
   explicit MockDataAndPredictor(
       std::unique_ptr<engine::SupplementalModelInterface> supplemental_model) {
     auto mock_aggregator = std::make_unique<MockAggregator>();
-    auto mock_decoder = std::make_unique<MockRealtimeDecoder>();
+    mock_decoder_ = std::make_unique<MockRealtimeDecoder>();
     modules_ = engine::ModulesPresetBuilder()
                    .PresetSupplementalModel(std::move(supplemental_model))
                    .Build(std::make_unique<testing::MockDataManager>())
                    .value();
     // TODO(taku): avoid sharing the pointer owned by std::unique_ptr.
     mock_aggregator_ = mock_aggregator.get();
-    mock_decoder_ = mock_decoder.get();
     predictor_ = absl::WrapUnique(new DictionaryPredictor(
-        *modules_, std::move(mock_aggregator), std::move(mock_decoder)));
+        *modules_, std::move(mock_aggregator), *mock_decoder_));
   }
 
   MockAggregator* mutable_aggregator() { return mock_aggregator_; }
-  MockRealtimeDecoder* mutable_realtime_decoder() { return mock_decoder_; }
+  MockRealtimeDecoder* mutable_realtime_decoder() {
+    return mock_decoder_.get();
+  }
 
   const Connector& connector() { return modules_->GetConnector(); }
   const PosMatcher& pos_matcher() { return modules_->GetPosMatcher(); }
@@ -155,7 +156,7 @@ class MockDataAndPredictor {
 
  private:
   MockAggregator* mock_aggregator_ = nullptr;
-  MockRealtimeDecoder* mock_decoder_ = nullptr;
+  std::unique_ptr<MockRealtimeDecoder> mock_decoder_;
   std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<DictionaryPredictor> predictor_;
 };

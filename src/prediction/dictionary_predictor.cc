@@ -128,23 +128,22 @@ void MaybeFixRealtimeTopCost(const ConversionRequest& request,
 
 }  // namespace
 
-DictionaryPredictor::DictionaryPredictor(
-    const engine::Modules& modules,
-    std::unique_ptr<const RealtimeDecoder> decoder)
-    : DictionaryPredictor(modules, nullptr, std::move(decoder)) {
+DictionaryPredictor::DictionaryPredictor(const engine::Modules& modules,
+                                         const RealtimeDecoder& decoder)
+    : DictionaryPredictor(modules, nullptr, decoder) {
   // Explicitly allocate aggregator_ as decoder is unique_ptr and cannot be
   // passed to the constructor of DictionaryPredictor and
   // DictionaryPredictionAggregator at the same time.
   aggregator_ = std::make_unique<prediction::DictionaryPredictionAggregator>(
-      modules, *decoder_);
+      modules, decoder_);
 }
 
 DictionaryPredictor::DictionaryPredictor(
     const engine::Modules& modules,
     std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
-    std::unique_ptr<const RealtimeDecoder> decoder)
+    const RealtimeDecoder& decoder)
     : aggregator_(std::move(aggregator)),
-      decoder_(std::move(decoder)),
+      decoder_(decoder),
       connector_(modules.GetConnector()),
       segmenter_(modules.GetSegmenter()),
       suggestion_filter_(modules.GetSuggestionFilter()),
@@ -737,7 +736,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
                                     .SetKey(remain_key)
                                     .Build();
 
-  if (const std::vector<Result> results = decoder_->Decode(req);
+  if (const std::vector<Result> results = decoder_.Decode(req);
       !results.empty()) {
     const Result& top_result = results.front();
     penalty = connector_.GetTransitionCost(result_rid, top_result.lid) +

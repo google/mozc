@@ -98,9 +98,10 @@ void MaybeFillFallbackPos(absl::Span<Result> results) {
 Predictor::Predictor(const engine::Modules& modules,
                      const ConverterInterface& converter,
                      const ImmutableConverterInterface& immutable_converter)
-    : dictionary_predictor_(std::make_unique<DictionaryPredictor>(
-          modules,
-          std::make_unique<RealtimeDecoder>(immutable_converter, converter))),
+    : realtime_decoder_(
+          std::make_unique<RealtimeDecoder>(immutable_converter, converter)),
+      dictionary_predictor_(
+          std::make_unique<DictionaryPredictor>(modules, *realtime_decoder_)),
       user_history_predictor_(std::make_unique<UserHistoryPredictor>(modules)),
       pos_matcher_(modules.GetPosMatcher()) {
   DCHECK(dictionary_predictor_);
