@@ -583,3 +583,4 @@ OK:	ぬきさしならぬ	抜き差しならぬ	Conversion Expected	抜き差し
 OK:	へんむてき	片務的	Conversion Expected	片務的	3.33.6089
 FAILED:	そうむてき	総務的	Conversion Expected	双務的	3.33.6089
 FAILED:	かこつ	過去つ	Conversion Expected	仮骨	3.33.6089
+OK:	ねんのため	念の為	Conversion Expected 3	念のため	3.33.6089
