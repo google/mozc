@@ -205,6 +205,10 @@ class ConversionRequest {
     // information. Note that the bos_id must be in the valid range.
     // POS id 0 is reserved for the default BOS/EOS.
     uint16_t bos_id = 0;
+
+    // Disables to add prefix penalty.
+    // Used to calculate the cost of a suffix of a word.
+    bool disable_prefix_penalty = false;
   };
 
   static_assert(std::is_trivially_copyable<Options>::value,

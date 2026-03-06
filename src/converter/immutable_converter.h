@@ -113,7 +113,8 @@ class ImmutableConverter : public ImmutableConverterInterface {
   // If the last node ends with "prefix", give an extra
   // wcost penalty. In this case  "無" doesn't tend to appear at
   // user input.
-  void ApplyPrefixSuffixPenalty(absl::string_view conversion_key,
+  void ApplyPrefixSuffixPenalty(const ConversionRequest& request,
+                                absl::string_view conversion_key,
                                 Lattice* lattice) const;
 
   bool Viterbi(const Segments& segments, Lattice* lattice) const;

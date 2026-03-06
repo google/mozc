@@ -1206,7 +1206,7 @@ bool ImmutableConverter::MakeLattice(const ConversionRequest& request,
     return false;
   }
 
-  ApplyPrefixSuffixPenalty(conversion_key, lattice);
+  ApplyPrefixSuffixPenalty(request, conversion_key, lattice);
 
   // Re-segment personal-names, numbers ...etc
   if (request.request_type() == ConversionRequest::CONVERSION) {
@@ -1402,17 +1402,22 @@ void ImmutableConverter::MakeLatticeNodesForConversionSegments(
 }
 
 void ImmutableConverter::ApplyPrefixSuffixPenalty(
-    absl::string_view conversion_key, Lattice* lattice) const {
+    const ConversionRequest& request, absl::string_view conversion_key,
+    Lattice* lattice) const {
   absl::string_view key = lattice->key();
   DCHECK_LE(conversion_key.size(), key.size());
-  for (Node* node : lattice->begin_nodes(key.size() - conversion_key.size())) {
-    // TODO(taku):
-    // We might be able to tweak the penalty according to
-    // the size of history segments.
-    // If history-segments is non-empty, we can make the
-    // penalty smaller so that history context is more likely
-    // selected.
-    node->wcost += segmenter_.GetPrefixPenalty(node->lid);
+
+  if (!request.options().disable_prefix_penalty) {
+    for (Node* node :
+         lattice->begin_nodes(key.size() - conversion_key.size())) {
+      // TODO(taku):
+      // We might be able to tweak the penalty according to
+      // the size of history segments.
+      // If history-segments is non-empty, we can make the
+      // penalty smaller so that history context is more likely
+      // selected.
+      node->wcost += segmenter_.GetPrefixPenalty(node->lid);
+    }
   }
 
   for (Node* node : lattice->end_nodes(key.size())) {
