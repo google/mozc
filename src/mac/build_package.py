@@ -35,6 +35,7 @@ This script creates a .pkg file with pkgbuild and productbuild
 
 import argparse
 import os
+import plistlib
 import shutil
 import tempfile
 
@@ -73,10 +74,31 @@ def main():
     # Use the unzip command to extract symbolic links properly.
     util.RunOrDie(['unzip', '-q', args.input, '-d', tmp_dir])
     os.chdir(os.path.join(tmp_dir, 'installer'))
+
+    # Generate a component property list from the root directory, then clear
+    # BundleOverwriteAction to prevent atomic bundle replacement during
+    # upgrades. With 'upgrade' (the default), the installer deletes the old
+    # bundle and installs the new one atomically, which can invalidate the
+    # macOS IME registration. With an empty action, the installer simply
+    # overwrites files in place, preserving the existing registration.
+    # https://github.com/google/mozc/issues/1439
+    component_plist = 'component.plist'
+    util.RunOrDie(
+        ['/usr/bin/pkgbuild', '--analyze', '--root', 'root', component_plist]
+    )
+    with open(component_plist, 'rb') as f:
+      components = plistlib.load(f)
+    for component in components:
+      component['BundleOverwriteAction'] = ''
+    with open(component_plist, 'wb') as f:
+      plistlib.dump(components, f)
+
     pkgbuild_commands = [
         '/usr/bin/pkgbuild',
         '--root',
         'root',
+        '--component-plist',
+        component_plist,
         '--identifier',
         identifier,
         '--scripts',
