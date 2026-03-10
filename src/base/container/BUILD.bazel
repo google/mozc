@@ -186,3 +186,27 @@ mozc_cc_test(
         "@com_google_absl//absl/types:span",
     ],
 )
+
+mozc_cc_library(
+    name = "flat_concurrent_cache",
+    hdrs = ["flat_concurrent_cache.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/hash",
+        "@com_google_absl//absl/log:check",
+    ],
+)
+
+mozc_cc_test(
+    name = "flat_concurrent_cache_test",
+    size = "small",
+    srcs = ["flat_concurrent_cache_test.cc"],
+    deps = [
+        ":flat_concurrent_cache",
+        "//base:thread",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/hash",
+        "@com_google_absl//absl/strings",
+    ],
+)
