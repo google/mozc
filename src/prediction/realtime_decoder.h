@@ -37,6 +37,7 @@
 #include "absl/log/check.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
+#include "engine/modules.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 
@@ -83,6 +84,38 @@ class RealtimeDecoder {
   std::optional<std::reference_wrapper<const ImmutableConverterInterface>>
       immutable_converter_;
   std::optional<std::reference_wrapper<const ConverterInterface>> converter_;
+};
+
+// A special decoder that takes a specific phrase prefix as a constraint and
+// decodes the remaining suffix. The results are cached. Since the cache
+// persists all data indefinitely, instantiate this class as a local variable.
+class CachedSuffixDecoder {
+ public:
+  CachedSuffixDecoder(const engine::Modules& modules,
+                      const RealtimeDecoder& decoder);
+
+  // Decodes suffix with the prefix rid as constraint.
+  // Request is used to pass configurations or flags that are not directly
+  // required for the conversion. Actual conversion key is passed via `suffix`.
+  // TODO(taku): Remove `request`.
+  // Note that we cannot use ConversionRequest::history_rid() as the prefix_rid,
+  // as history_rid is not used as the constraint of realtime decoding.
+  // TODO(tau): Clarify the spec of the context information.
+  std::optional<Result> DecodeSuffix(const ConversionRequest& request,
+                                     uint16_t prefix_rid,
+                                     absl::string_view suffix);
+
+  // Decode full key with the same cache.
+  // TODO(taku): Remove `request`.
+  std::optional<Result> Decode(const ConversionRequest& request,
+                               absl::string_view key);
+
+ private:
+  // TODO(taku): Better to replace it with a concurrent LRU cache.
+  absl::flat_hash_map<uint64, Result> cache_;
+
+  const engine::Modules& modules_;
+  const RealtimeDecoder& decoder_;
 };
 
 }  // namespace mozc::prediction

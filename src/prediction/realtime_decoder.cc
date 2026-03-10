@@ -35,6 +35,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
@@ -48,6 +49,7 @@
 #include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
+#include "engine/modules.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 
@@ -256,6 +258,59 @@ std::vector<Result> RealtimeDecoder::ReverseDecode(
   }
 
   return {};
+}
+
+CachedSuffixDecoder::CachedSuffixDecoder(const engine::Modules& modules,
+                                         const RealtimeDecoder& decoder)
+    : modules_(modules), decoder_(decoder) {}
+
+std::optional<Result> CachedSuffixDecoder::Decode(
+    const ConversionRequest& request, absl::string_view key) {
+  return DecodeSuffix(request, 0, key);
+}
+
+std::optional<Result> CachedSuffixDecoder::DecodeSuffix(
+    const ConversionRequest& request, uint16_t prefix_rid,
+    absl::string_view suffix) {
+  if (suffix.empty()) return std::nullopt;
+
+  const uint64_t hash = absl::HashOf(prefix_rid, suffix);
+
+  if (const auto it = cache_.find(hash); it != cache_.end()) {
+    return it->second;
+  }
+
+  ConversionRequest::Options options = request.options();
+  options.max_conversion_candidates_size = 1;
+  options.create_partial_candidates = false;
+  options.kana_modifier_insensitive_conversion = false;
+  options.use_actual_converter_for_realtime_conversion = false;
+
+  const bool has_prefix = prefix_rid != 0;
+
+  if (has_prefix) {
+    // The left context of the suffix must be prefix_rid.
+    options.bos_id = prefix_rid;
+    // suffix is not a beginning of the input, so disable the prefix penalty.
+    options.disable_prefix_penalty = true;
+  }
+
+  const ConversionRequest req = ConversionRequestBuilder()
+                                    .SetConversionRequestView(request)
+                                    .SetOptions(std::move(options))
+                                    .SetEmptyHistoryResult()
+                                    .SetKey(suffix)
+                                    .Build();
+
+  std::vector<Result> results = decoder_.Decode(req);
+  if (results.empty()) {
+    return std::nullopt;
+  }
+
+  Result top_result = std::move(results[0]);
+  cache_.emplace(hash, top_result);
+
+  return top_result;
 }
 
 }  // namespace mozc::prediction

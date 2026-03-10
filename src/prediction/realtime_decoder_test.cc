@@ -30,6 +30,8 @@
 #include "prediction/realtime_decoder.h"
 
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -40,6 +42,8 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/inner_segment.h"
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
+#include "engine/modules.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
@@ -51,6 +55,7 @@ using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::SetArgPointee;
+using ::testing::Truly;
 
 // Simple immutable converter mock for the realtime conversion test
 class MockImmutableConverter : public ImmutableConverterInterface {
@@ -75,6 +80,14 @@ class MockImmutableConverter : public ImmutableConverterInterface {
     candidate->key = key;
     return true;
   }
+};
+
+class MockRealtimeDecoder : public RealtimeDecoder {
+ public:
+  MockRealtimeDecoder() = default;
+  ~MockRealtimeDecoder() override = default;
+  MOCK_METHOD(std::vector<Result>, Decode, (const ConversionRequest& request),
+              (const, override));
 };
 
 TEST(RealtimeDecoderTest, Decode) {
@@ -194,6 +207,84 @@ TEST(RealtimeDecoderTest, Decode) {
       }
     }
     EXPECT_TRUE(realtime_top_found);
+  }
+}
+
+TEST(CachedSuffixDecoderTest, DecodeSuffix) {
+  auto modules_status =
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>());
+  ASSERT_OK(modules_status);
+  auto modules = std::move(modules_status.value());
+
+  MockRealtimeDecoder realtime_decoder;
+
+  std::vector<Result> results(1);
+  results[0].value = "さんに";
+  results[0].key = "さんに";
+  results[0].cost = 1000;
+
+  // prefix is a personal name.
+  const uint16_t name_id = modules->GetPosMatcher().GetFirstNameId();
+
+  // Only called once as the result is cached.
+  EXPECT_CALL(realtime_decoder, Decode(Truly([&](const ConversionRequest& req) {
+                const auto& options = req.options();
+                return (options.max_conversion_candidates_size == 1 &&
+                        !options.create_partial_candidates &&
+                        !options.kana_modifier_insensitive_conversion &&
+                        !options.use_actual_converter_for_realtime_conversion &&
+                        options.bos_id == name_id &&
+                        options.disable_prefix_penalty &&
+                        req.key() == results[0].key);
+              })))
+      .WillOnce(Return(results));
+
+  CachedSuffixDecoder decoder(*modules, realtime_decoder);
+
+  for (int i = 0; i < 10; ++i) {
+    const ConversionRequest convreq = ConversionRequestBuilder().Build();
+    const auto result =
+        decoder.DecodeSuffix(convreq, name_id, "さんに").value();
+    EXPECT_EQ(result.key, results[0].key);
+    EXPECT_EQ(result.value, results[0].value);
+    EXPECT_EQ(result.cost, results[0].cost);
+  }
+}
+
+TEST(CachedSuffixDecoderTest, Decode) {
+  auto modules_status =
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>());
+  ASSERT_OK(modules_status);
+  auto modules = std::move(modules_status.value());
+
+  MockRealtimeDecoder realtime_decoder;
+
+  std::vector<Result> results(1);
+  results[0].value = "拓さんに";
+  results[0].key = "たくさんに";
+  results[0].cost = 1000;
+
+  // Only called once as the result is cached.
+  EXPECT_CALL(realtime_decoder, Decode(Truly([&](const ConversionRequest& req) {
+                const auto& options = req.options();
+                return (options.max_conversion_candidates_size == 1 &&
+                        !options.create_partial_candidates &&
+                        !options.kana_modifier_insensitive_conversion &&
+                        !options.use_actual_converter_for_realtime_conversion &&
+                        options.bos_id == 0 &&
+                        !options.disable_prefix_penalty &&
+                        req.key() == results[0].key);
+              })))
+      .WillOnce(Return(results));
+
+  CachedSuffixDecoder decoder(*modules, realtime_decoder);
+
+  for (int i = 0; i < 10; ++i) {
+    const ConversionRequest convreq = ConversionRequestBuilder().Build();
+    const auto result = decoder.Decode(convreq, "たくさんに").value();
+    EXPECT_EQ(result.key, results[0].key);
+    EXPECT_EQ(result.value, results[0].value);
+    EXPECT_EQ(result.cost, results[0].cost);
   }
 }
 
