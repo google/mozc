@@ -70,6 +70,7 @@ def Xcodebuild(projdir, target, arch, sdk, deployment_target, outdir):
   version_code = '{}{:>02}00'.format(*deployment_target.split('.'))
   cflags = ' '.join([
       '-Wno-switch',  # For common/dwarf/dwarf2reader.cc
+      '-Wno-deprecated-declarations',
       '-DMAC_OS_X_VERSION_MAX_ALLOWED=' + version_code,
   ])
   ProcessCall([

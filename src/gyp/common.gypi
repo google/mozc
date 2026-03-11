@@ -44,7 +44,7 @@
     'compiler_host%': '',
 
     # Versioning stuff for Mac.
-    'mac_sdk%': '15.0',
+    'mac_sdk%': '26.0',
     'mac_deployment_target%': '12.0',
 
     # warning_cflags will be shared with Mac and Linux.
@@ -257,6 +257,9 @@
           'CLANG_CXX_LIBRARY': 'libc++',
           'OTHER_CPLUSPLUSFLAGS': [
             '$(inherited)',
+          ],
+          'OTHER_LDFLAGS': [
+            '-headerpad_max_install_names',
           ],
           'SYMROOT': '<(build_base)',
           'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
