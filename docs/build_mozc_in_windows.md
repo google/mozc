@@ -174,7 +174,7 @@ even if downloaded from https://github.com/google/mozc/.
 
 --------------------------------------------------------------------------------
 
-## Build Mozc for Linux Desktop with GYP (deprecated):
+## Build with GYP (deprecated):
 
 ⚠️ The GYP build is deprecated and no longer supported.
 
