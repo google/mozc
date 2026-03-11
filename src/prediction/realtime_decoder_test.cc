@@ -43,7 +43,6 @@
 #include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "engine/modules.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
@@ -210,12 +209,7 @@ TEST(RealtimeDecoderTest, Decode) {
   }
 }
 
-TEST(CachedSuffixDecoderTest, DecodeSuffix) {
-  auto modules_status =
-      engine::Modules::Create(std::make_unique<testing::MockDataManager>());
-  ASSERT_OK(modules_status);
-  auto modules = std::move(modules_status.value());
-
+TEST(SuffixDecoderTest, DecodeSuffix) {
   MockRealtimeDecoder realtime_decoder;
 
   std::vector<Result> results(1);
@@ -224,7 +218,7 @@ TEST(CachedSuffixDecoderTest, DecodeSuffix) {
   results[0].cost = 1000;
 
   // prefix is a personal name.
-  const uint16_t name_id = modules->GetPosMatcher().GetFirstNameId();
+  const uint16_t name_id = 20;
 
   // Only called once as the result is cached.
   EXPECT_CALL(realtime_decoder, Decode(Truly([&](const ConversionRequest& req) {
@@ -239,7 +233,7 @@ TEST(CachedSuffixDecoderTest, DecodeSuffix) {
               })))
       .WillOnce(Return(results));
 
-  CachedSuffixDecoder decoder(*modules, realtime_decoder);
+  const SuffixDecoder decoder(realtime_decoder);
 
   for (int i = 0; i < 10; ++i) {
     const ConversionRequest convreq = ConversionRequestBuilder().Build();
@@ -251,12 +245,7 @@ TEST(CachedSuffixDecoderTest, DecodeSuffix) {
   }
 }
 
-TEST(CachedSuffixDecoderTest, Decode) {
-  auto modules_status =
-      engine::Modules::Create(std::make_unique<testing::MockDataManager>());
-  ASSERT_OK(modules_status);
-  auto modules = std::move(modules_status.value());
-
+TEST(SuffixDecoderTest, Decode) {
   MockRealtimeDecoder realtime_decoder;
 
   std::vector<Result> results(1);
@@ -277,7 +266,7 @@ TEST(CachedSuffixDecoderTest, Decode) {
               })))
       .WillOnce(Return(results));
 
-  CachedSuffixDecoder decoder(*modules, realtime_decoder);
+  const SuffixDecoder decoder(realtime_decoder);
 
   for (int i = 0; i < 10; ++i) {
     const ConversionRequest convreq = ConversionRequestBuilder().Build();

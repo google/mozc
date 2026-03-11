@@ -49,7 +49,6 @@
 #include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
-#include "engine/modules.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 
@@ -260,24 +259,24 @@ std::vector<Result> RealtimeDecoder::ReverseDecode(
   return {};
 }
 
-CachedSuffixDecoder::CachedSuffixDecoder(const engine::Modules& modules,
-                                         const RealtimeDecoder& decoder)
-    : modules_(modules), decoder_(decoder) {}
+SuffixDecoder::SuffixDecoder(const RealtimeDecoder& decoder)
+    : cache_(256), decoder_(decoder) {}
 
-std::optional<Result> CachedSuffixDecoder::Decode(
-    const ConversionRequest& request, absl::string_view key) {
+std::optional<Result> SuffixDecoder::Decode(const ConversionRequest& request,
+                                            absl::string_view key) const {
   return DecodeSuffix(request, 0, key);
 }
 
-std::optional<Result> CachedSuffixDecoder::DecodeSuffix(
+std::optional<Result> SuffixDecoder::DecodeSuffix(
     const ConversionRequest& request, uint16_t prefix_rid,
-    absl::string_view suffix) {
+    absl::string_view suffix) const {
   if (suffix.empty()) return std::nullopt;
 
   const uint64_t hash = absl::HashOf(prefix_rid, suffix);
 
-  if (const auto it = cache_.find(hash); it != cache_.end()) {
-    return it->second;
+  Result result;
+  if (cache_.Lookup(hash, &result)) {
+    return result;
   }
 
   ConversionRequest::Options options = request.options();
@@ -307,10 +306,10 @@ std::optional<Result> CachedSuffixDecoder::DecodeSuffix(
     return std::nullopt;
   }
 
-  Result top_result = std::move(results[0]);
-  cache_.emplace(hash, top_result);
+  result = results[0];
+  cache_.Insert(hash, std::move(results[0]));
 
-  return top_result;
+  return result;
 }
 
 }  // namespace mozc::prediction
