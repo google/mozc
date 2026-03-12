@@ -55,6 +55,8 @@
 namespace mozc::prediction {
 namespace {
 
+static constexpr int kSuffixCacheSize = 256;
+
 // TODO(taku): Defines this function as a common utility function.
 Segments MakeSegments(const ConversionRequest& request) {
   converter::Segments segments;
@@ -120,6 +122,14 @@ std::optional<Result> ConversionSegmentsToResult(const Segments& segments) {
   return result;
 }
 }  // namespace
+
+RealtimeDecoder::RealtimeDecoder() : suffix_cache_(kSuffixCacheSize) {}
+RealtimeDecoder::RealtimeDecoder(
+    const ImmutableConverterInterface& immutable_converter,
+    const ConverterInterface& converter)
+    : immutable_converter_(std::cref(immutable_converter)),
+      converter_(std::cref(converter)),
+      suffix_cache_(kSuffixCacheSize) {}
 
 bool RealtimeDecoder::PushBackTopConversionResult(
     const ConversionRequest& request, std::vector<Result>* results) const {
@@ -259,15 +269,7 @@ std::vector<Result> RealtimeDecoder::ReverseDecode(
   return {};
 }
 
-SuffixDecoder::SuffixDecoder(const RealtimeDecoder& decoder)
-    : cache_(256), decoder_(decoder) {}
-
-std::optional<Result> SuffixDecoder::Decode(const ConversionRequest& request,
-                                            absl::string_view key) const {
-  return DecodeSuffix(request, 0, key);
-}
-
-std::optional<Result> SuffixDecoder::DecodeSuffix(
+std::optional<Result> RealtimeDecoder::DecodeSuffix(
     const ConversionRequest& request, uint16_t prefix_rid,
     absl::string_view suffix) const {
   if (suffix.empty()) return std::nullopt;
@@ -275,7 +277,7 @@ std::optional<Result> SuffixDecoder::DecodeSuffix(
   const uint64_t hash = absl::HashOf(prefix_rid, suffix);
 
   Result result;
-  if (cache_.Lookup(hash, &result)) {
+  if (suffix_cache_.Lookup(hash, &result)) {
     return result;
   }
 
@@ -301,13 +303,13 @@ std::optional<Result> SuffixDecoder::DecodeSuffix(
                                     .SetKey(suffix)
                                     .Build();
 
-  std::vector<Result> results = decoder_.Decode(req);
+  std::vector<Result> results = Decode(req);
   if (results.empty()) {
     return std::nullopt;
   }
 
   result = results[0];
-  cache_.Insert(hash, std::move(results[0]));
+  suffix_cache_.Insert(hash, std::move(results[0]));
 
   return result;
 }

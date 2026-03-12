@@ -83,8 +83,8 @@ class MockImmutableConverter : public ImmutableConverterInterface {
 
 class MockRealtimeDecoder : public RealtimeDecoder {
  public:
-  MockRealtimeDecoder() = default;
-  ~MockRealtimeDecoder() override = default;
+  using RealtimeDecoder::RealtimeDecoder;
+
   MOCK_METHOD(std::vector<Result>, Decode, (const ConversionRequest& request),
               (const, override));
 };
@@ -209,71 +209,40 @@ TEST(RealtimeDecoderTest, Decode) {
   }
 }
 
-TEST(SuffixDecoderTest, DecodeSuffix) {
-  MockRealtimeDecoder realtime_decoder;
+TEST(RealtimeDecoderTest, DecodeSuffix) {
+  MockConverter converter;
+  MockImmutableConverter immutable_converter;
+
+  const MockRealtimeDecoder decoder(immutable_converter, converter);
 
   std::vector<Result> results(1);
   results[0].value = "さんに";
   results[0].key = "さんに";
   results[0].cost = 1000;
 
-  // prefix is a personal name.
-  const uint16_t name_id = 20;
+  for (const uint16_t prefix_rid : {0, 20, 100}) {
+    // Only called once as the result is cached.
+    EXPECT_CALL(
+        decoder, Decode(Truly([&](const ConversionRequest& req) {
+          const auto& options = req.options();
+          return (options.max_conversion_candidates_size == 1 &&
+                  !options.create_partial_candidates &&
+                  !options.kana_modifier_insensitive_conversion &&
+                  !options.use_actual_converter_for_realtime_conversion &&
+                  options.bos_id == prefix_rid &&
+                  (prefix_rid > 0 == options.disable_prefix_penalty) &&
+                  req.key() == results[0].key);
+        })))
+        .WillOnce(Return(results));
 
-  // Only called once as the result is cached.
-  EXPECT_CALL(realtime_decoder, Decode(Truly([&](const ConversionRequest& req) {
-                const auto& options = req.options();
-                return (options.max_conversion_candidates_size == 1 &&
-                        !options.create_partial_candidates &&
-                        !options.kana_modifier_insensitive_conversion &&
-                        !options.use_actual_converter_for_realtime_conversion &&
-                        options.bos_id == name_id &&
-                        options.disable_prefix_penalty &&
-                        req.key() == results[0].key);
-              })))
-      .WillOnce(Return(results));
-
-  const SuffixDecoder decoder(realtime_decoder);
-
-  for (int i = 0; i < 10; ++i) {
-    const ConversionRequest convreq = ConversionRequestBuilder().Build();
-    const auto result =
-        decoder.DecodeSuffix(convreq, name_id, "さんに").value();
-    EXPECT_EQ(result.key, results[0].key);
-    EXPECT_EQ(result.value, results[0].value);
-    EXPECT_EQ(result.cost, results[0].cost);
-  }
-}
-
-TEST(SuffixDecoderTest, Decode) {
-  MockRealtimeDecoder realtime_decoder;
-
-  std::vector<Result> results(1);
-  results[0].value = "拓さんに";
-  results[0].key = "たくさんに";
-  results[0].cost = 1000;
-
-  // Only called once as the result is cached.
-  EXPECT_CALL(realtime_decoder, Decode(Truly([&](const ConversionRequest& req) {
-                const auto& options = req.options();
-                return (options.max_conversion_candidates_size == 1 &&
-                        !options.create_partial_candidates &&
-                        !options.kana_modifier_insensitive_conversion &&
-                        !options.use_actual_converter_for_realtime_conversion &&
-                        options.bos_id == 0 &&
-                        !options.disable_prefix_penalty &&
-                        req.key() == results[0].key);
-              })))
-      .WillOnce(Return(results));
-
-  const SuffixDecoder decoder(realtime_decoder);
-
-  for (int i = 0; i < 10; ++i) {
-    const ConversionRequest convreq = ConversionRequestBuilder().Build();
-    const auto result = decoder.Decode(convreq, "たくさんに").value();
-    EXPECT_EQ(result.key, results[0].key);
-    EXPECT_EQ(result.value, results[0].value);
-    EXPECT_EQ(result.cost, results[0].cost);
+    for (int i = 0; i < 10; ++i) {
+      const ConversionRequest convreq = ConversionRequestBuilder().Build();
+      const auto result =
+          decoder.DecodeSuffix(convreq, prefix_rid, "さんに").value();
+      EXPECT_EQ(result.key, results[0].key);
+      EXPECT_EQ(result.value, results[0].value);
+      EXPECT_EQ(result.cost, results[0].cost);
+    }
   }
 }
 

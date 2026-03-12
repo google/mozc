@@ -48,11 +48,9 @@ namespace mozc::prediction {
 // Predictor.
 class RealtimeDecoder {
  public:
-  RealtimeDecoder() = default;
+  RealtimeDecoder();
   RealtimeDecoder(const ImmutableConverterInterface& immutable_converter,
-                  const ConverterInterface& converter)
-      : immutable_converter_(std::cref(immutable_converter)),
-        converter_(std::cref(converter)) {}
+                  const ConverterInterface& converter);
   virtual ~RealtimeDecoder() = default;
 
   // Decodes `request`. The request type must not be CONVERSION because
@@ -62,6 +60,19 @@ class RealtimeDecoder {
   // value is reading, key is the input.
   virtual std::vector<Result> ReverseDecode(
       const ConversionRequest& request) const;
+
+  // Decodes suffix with the prefix rid as constraint.
+  // Request is used to pass configurations or flags that are not directly
+  // required for the conversion. Actual conversion key is passed via `suffix`.
+  // When `prefix_rid` is zero, performs the full decoding. The result is
+  // automatically cached. Note that we cannot use
+  // ConversionRequest::history_rid() as the prefix_rid, as history_rid is not
+  // used as the constraint of realtime decoding.
+  // TODO(taku): Remove `request`.
+  // TODO(taku): Clarify the spec of the context information.
+  virtual std::optional<Result> DecodeSuffix(const ConversionRequest& request,
+                                             uint16_t prefix_rid,
+                                             absl::string_view suffix) const;
 
  private:
   bool PushBackTopConversionResult(const ConversionRequest& request,
@@ -84,36 +95,10 @@ class RealtimeDecoder {
   std::optional<std::reference_wrapper<const ImmutableConverterInterface>>
       immutable_converter_;
   std::optional<std::reference_wrapper<const ConverterInterface>> converter_;
+
+  // Cache for DecodeSuffix.
+  mutable FlatConcurrentCache<uint64_t, Result> suffix_cache_;
 };
-
-// A special decoder that takes a specific phrase prefix as a constraint and
-// decodes the remaining suffix. The results are automatically cached.
-class SuffixDecoder {
- public:
-  SuffixDecoder(const RealtimeDecoder& decoder);
-
-  // Decodes suffix with the prefix rid as constraint.
-  // Request is used to pass configurations or flags that are not directly
-  // required for the conversion. Actual conversion key is passed via `suffix`.
-  // TODO(taku): Remove `request`.
-  // Note that we cannot use ConversionRequest::history_rid() as the prefix_rid,
-  // as history_rid is not used as the constraint of realtime decoding.
-  // TODO(tau): Clarify the spec of the context information.
-  std::optional<Result> DecodeSuffix(const ConversionRequest& request,
-                                     uint16_t prefix_rid,
-                                     absl::string_view suffix) const;
-
-  // Decode full key with the same cache.
-  // TODO(taku): Remove `request`.
-  std::optional<Result> Decode(const ConversionRequest& request,
-                               absl::string_view key) const;
-
- private:
-  mutable FlatConcurrentCache<uint64_t, Result> cache_;
-
-  const RealtimeDecoder& decoder_;
-};
-
 }  // namespace mozc::prediction
 
 #endif  // MOZC_PREDICTION_REALTIME_DECODER_H_
