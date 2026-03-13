@@ -166,6 +166,15 @@ class DictionaryPredictor : public PredictorInterface {
                                      bool is_suggestion,
                                      size_t total_candidates_size);
 
+  // New prefix penalty scorer based on RealtimeDecoder::SuffixDecode.
+  int CalculatePrefixPenaltyNew(const ConversionRequest& request,
+                                const Result& result) const;
+
+  // Old prefix penalty scorer.
+  int CalculatePrefixPenaltyLegacy(
+      const ConversionRequest& request, const Result& result,
+      absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const;
+
   int CalculatePrefixPenalty(
       const ConversionRequest& request, const Result& result,
       absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const;

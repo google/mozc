@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 142
+// Next ID: 144
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -665,6 +665,14 @@ message DecoderExperimentParams {
   // over the history suggestion.
   optional float candidate_mixing_min_post_correction_prob = 141
       [default = 0.0];
+
+  // Uses new RealtimeDecoder::DecodeSuffix to compute the penalty of
+  // partial suggestion. New method can compute more precise penalty.
+  optional bool use_suffix_decoder_for_prefix_penalty = 142 [default = false];
+
+  // Cost penalty added to the partial candidate. Partial candidate should not
+  // be ranked lower than normal full candidates.
+  optional int32 partial_candidate_cost_penalty = 143 [default = 5000];
 }
 
 // Clients' request to the server.

@@ -695,7 +695,41 @@ bool DictionaryPredictor::IsAggressiveSuggestion(size_t query_len,
   return false;
 }
 
-int DictionaryPredictor::CalculatePrefixPenalty(
+int DictionaryPredictor::CalculatePrefixPenaltyNew(
+    const ConversionRequest& request, const Result& result) const {
+  if (request.key() == result.key ||
+      request.key().size() <= result.key.size()) {
+    LOG(WARNING) << "Invalid prefix key: " << result.key;
+    return 0;
+  }
+
+  absl::string_view suffix =
+      absl::string_view(request.key()).substr(result.key.size());
+
+  // The resdult of DecodeSuffix is cached.
+  auto res = decoder_.DecodeSuffix(request, result.rid, suffix);
+  int penalty = res.has_value() ? res.value().cost : Result::kInvalidCost;
+
+  // In the previous CalculatePrefixPenalty code, we added the
+  // transition cost from prefix.rid to suffix.lid. However, this treatment is
+  // not precise. decoder_.Decode() returns the result of "unconstrained full
+  // conversion" -- the transition cost from BOS and per-segment prefix penalty
+  // are added to the result. Consequently, the penalty calculate in the
+  // previous code was overestimated.
+  //
+  // By using decoder_.DecodeSuffix(), we can calculate the accurate suffix
+  // cost using the prefix.rid as the BOS id and preventing to add prefix
+  // penalty to the suffix. However, this treatment results in a lower penalty
+  // than before. To handle this inconsistency, we add larger additional penalty
+  // here. The default penalty is 5000.
+  penalty += request.request()
+                 .decoder_experiment_params()
+                 .partial_candidate_cost_penalty();
+
+  return penalty;
+}
+
+int DictionaryPredictor::CalculatePrefixPenaltyLegacy(
     const ConversionRequest& request, const Result& result,
     absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const {
   if (request.key() == result.key) {
@@ -753,6 +787,16 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   penalty += kPrefixCandidateCostOffset;
   (*cache)[cache_key] = penalty;
   return penalty;
+}
+
+int DictionaryPredictor::CalculatePrefixPenalty(
+    const ConversionRequest& request, const Result& result,
+    absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const {
+  return request.request()
+                 .decoder_experiment_params()
+                 .use_suffix_decoder_for_prefix_penalty()
+             ? CalculatePrefixPenaltyNew(request, result)
+             : CalculatePrefixPenaltyLegacy(request, result, cache);
 }
 
 void DictionaryPredictor::MaybeRescoreResults(
