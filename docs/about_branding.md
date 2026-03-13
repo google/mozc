@@ -10,7 +10,7 @@ License Agreement       | Available on the installation page                    
 Target Platform         | Windows, macOS, Android (Gboard), ChromeOS                                  | Linux, Windows, macOS, Android (library)
 Version String          | GoogleJapaneseInput                                                         | Mozc
 Logo                    | Colorful                                                                    | Orange
-Code Location           | Google internal                                                             | [GitHub](https://github.com/google/mozc)
+Code Location           | Google internal                                                             | [GitHub](https://github.com/smartberry1122)
 System Dictionary       | Google internal                                                             | [OSS dictionary](https://github.com/google/mozc/blob/master/src/data/dictionary_oss/README.txt)
 Collocation Data        | Google internal                                                             | [Placeholder only](https://github.com/google/mozc/blob/master/src/data/dictionary_oss/collocation.txt)
 Reading Correction Data | Google internal                                                             | [Placeholder only](https://github.com/google/mozc/blob/master/src/data/dictionary_oss/reading_correction.tsv)
