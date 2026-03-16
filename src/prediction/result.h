@@ -78,6 +78,9 @@ enum PredictionType {
   // entries from a supplemental model.
   SUPPLEMENTAL_MODEL = 512,
 
+  // Weak user history candidate which doesn't need to rank at the top.
+  WEAK_USER_HISTORY_PREDICTION = 4096,
+
   // Suggests from |converter_|. The difference from REALTIME is that it uses
   // the full converter with rewriter, history, etc.
   // TODO(noriyukit): This label should be integrated with REALTIME. This is

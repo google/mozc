@@ -225,7 +225,7 @@ TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePrediction) {
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialPrediction) {
   auto predictor = std::make_unique<Predictor>(
       *modules_, std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<UserHistoryPredictor>(*modules_));
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PARTIAL_PREDICTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());

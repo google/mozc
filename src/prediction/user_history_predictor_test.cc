@@ -72,6 +72,7 @@
 #include "dictionary/dictionary_mock.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_mock.h"
+#include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "prediction/user_history_storage.h"
@@ -102,6 +103,19 @@ using ::testing::Return;
 
 constexpr int kRevertId = 1234;
 
+class MockRealtimeDecoder : public RealtimeDecoder {
+ public:
+  ~MockRealtimeDecoder() override = default;
+
+  MOCK_METHOD(std::vector<Result>, Decode, (const ConversionRequest& request),
+              (const, override));
+
+  MOCK_METHOD(std::optional<Result>, DecodeSuffix,
+              (const ConversionRequest& request, uint16_t prefix_rid,
+               absl::string_view suffix),
+              (const.override));
+};
+
 }  // namespace
 
 class UserHistoryPredictorTestPeer
@@ -130,6 +144,7 @@ class UserHistoryPredictorTestPeer
   PEER_VARIABLE(storage_);
   PEER_DECLARE(MatchType);
   PEER_DECLARE(EntryPriorityQueue);
+  PEER_DECLARE(Attribute);
 };
 
 // Needs to call UpdateHistoryResult() to update history_result_.
@@ -161,6 +176,10 @@ class SegmentsProxy {
                     absl::string_view value) {
     segments_[segment_index].results[candidate_index].value = value;
     UpdateHistoryResult();
+  }
+
+  Result* MutableCandidate(size_t segment_index, int candidate_index) {
+    return &segments_[segment_index].results[candidate_index];
   }
 
   void PushBackInnerSegmentBoundary(int segment_index, int candidate_index,
@@ -591,6 +610,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
  private:
   struct DataAndPredictor {
     std::unique_ptr<engine::Modules> modules;
+    std::unique_ptr<RealtimeDecoder> realtime_decoder;
     std::unique_ptr<UserHistoryPredictor> predictor;
   };
 
@@ -600,7 +620,9 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
                        .PresetDictionary(std::make_unique<MockDictionary>())
                        .Build(std::make_unique<testing::MockDataManager>())
                        .value();
-    ret->predictor = std::make_unique<UserHistoryPredictor>(*ret->modules);
+    ret->realtime_decoder = std::make_unique<MockRealtimeDecoder>();
+    ret->predictor = std::make_unique<UserHistoryPredictor>(
+        *ret->modules, *ret->realtime_decoder);
     ret->predictor->Wait();
     return ret;
   }
@@ -2418,7 +2440,8 @@ TEST_F(UserHistoryPredictorTest, GetScore) {
     entry2.set_key("foo");
     entry2.set_value("ABC");
     entry2.set_last_access_time(10);
-    entry2.set_bigram_boost(true);
+    entry2.set_attributes(
+        UserHistoryPredictorTestPeer::Attribute::BIGRAM_BOOST);
 
     EXPECT_GT(UserHistoryPredictorTestPeer::GetScore(entry2),
               UserHistoryPredictorTestPeer::GetScore(entry1));
@@ -2431,7 +2454,8 @@ TEST_F(UserHistoryPredictorTest, GetScore) {
     entry1.set_key("abc");
     entry1.set_value("ABCD");
     entry1.set_last_access_time(10);
-    entry1.set_bigram_boost(true);
+    entry1.set_attributes(
+        UserHistoryPredictorTestPeer::Attribute::BIGRAM_BOOST);
 
     entry2.set_key("foo");
     entry2.set_value("ABC");
@@ -4874,7 +4898,9 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
           .PresetSupplementalModel(std::move(mock))
           .Build(std::make_unique<testing::MockDataManager>())
           .value();
-  auto predictor = std::make_unique<UserHistoryPredictor>(*modules);
+  auto realtime_decoder = std::make_unique<MockRealtimeDecoder>();
+  auto predictor =
+      std::make_unique<UserHistoryPredictor>(*modules, *realtime_decoder);
   predictor->Wait();
 
   ScopedClockMock clock(absl::FromUnixSeconds(1));
@@ -5177,7 +5203,9 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
           .PresetSupplementalModel(std::move(mock))
           .Build(std::make_unique<testing::MockDataManager>())
           .value();
-  auto predictor = std::make_unique<UserHistoryPredictor>(*modules);
+  auto realtime_decoder = std::make_unique<MockRealtimeDecoder>();
+  auto predictor =
+      std::make_unique<UserHistoryPredictor>(*modules, *realtime_decoder);
 
   auto has_entry = [&](absl::string_view key, absl::string_view value) {
     UserHistoryPredictorTestPeer predictor_peer(*predictor);
@@ -5663,6 +5691,143 @@ TEST_F(UserHistoryPredictorTest, AddHistoryEntryTest) {
   EXPECT_FALSE(IsSuggested(predictor, "おおさか", "大阪"));
   EXPECT_TRUE(predictor->AddHistoryEntry(" おおさか   ", "  大阪 "));
   EXPECT_TRUE(IsSuggested(predictor, "おおさか", "大阪"));
+}
+
+TEST_F(UserHistoryPredictorTest, PartialMatchTest) {
+  std::unique_ptr<engine::Modules> modules =
+      engine::ModulesPresetBuilder()
+          .PresetDictionary(std::make_unique<MockDictionary>())
+          .Build(std::make_unique<testing::MockDataManager>())
+          .value();
+  auto realtime_decoder = std::make_unique<MockRealtimeDecoder>();
+  auto predictor =
+      std::make_unique<UserHistoryPredictor>(*modules, *realtime_decoder);
+  predictor->Wait();
+
+  commands::DecoderExperimentParams* params =
+      request_.mutable_decoder_experiment_params();
+  params->set_user_history_allow_partial_match(true);
+  params->set_user_history_cache_inner_segment_boundary(true);
+  request_.set_mixed_conversion(true);
+
+  const uint16_t first_name_id = modules->GetPosMatcher().GetFirstNameId();
+
+  EXPECT_CALL(*realtime_decoder, DecodeSuffix(_, _, _))
+      .WillRepeatedly([&](const ConversionRequest& request, uint16_t prefix_rid,
+                          absl::string_view suffix) {
+        Result result;
+        result.key = suffix;
+        if (suffix == "たくさん") {
+          EXPECT_EQ(prefix_rid, 0);
+          result.value = "沢山";
+          result.cost = 5000;
+          return result;
+        } else if (suffix == "たくの") {
+          EXPECT_EQ(prefix_rid, 0);
+          result.value = "宅の";
+          result.cost = 1000;
+          result.inner_segment_boundary =
+              converter::InnerSegmentBoundaryBuilder()
+                  .Add(9, 6, 6, 3)  // 宅|の
+                  .Build(result.key, result.value);
+          return result;
+        }
+
+        // "の", "さん"
+        result.key = result.value = suffix;
+        result.cost = 500;
+        result.lid = modules->GetPosMatcher().GetFunctionalId();
+        EXPECT_EQ(prefix_rid, first_name_id);
+        return result;
+      });
+
+  SegmentsProxy segments_proxy;
+
+  // Learn "拓"
+  {
+    const ConversionRequest convreq =
+        SetUpInputForConversion("たく", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "拓");
+    segments_proxy.MutableCandidate(0, 0)->rid = first_name_id;
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+    EXPECT_TRUE(IsSuggested(predictor.get(), "たく", "拓"));
+  }
+
+  std::vector<Result> results;
+
+  // Cost-based filtering.  Rejected by boundary-based filtering.
+  {
+    segments_proxy.Clear();
+    const ConversionRequest convreq =
+        SetUpInputForPrediction("たくさん", &composer_, &segments_proxy);
+
+    // trans(bos, first_name_id) + prefix_penalty(first_name_id) = 3599.
+    // 3599 is added to the prefix wcost.
+
+    // 3599 + 500(wcost) + {5000, 2000} > 5000(full_cost) -> NG
+    params->set_user_history_partial_prefix_wcost(5000);
+    params->set_user_history_partial_weak_prefix_wcost(2000);
+    results = predictor->Predict(convreq);
+    EXPECT_TRUE(results.empty());
+
+    // 3599 + 500(wcost) + {2000} > 5000(full_cost) -> NG
+    // 3599 + 500(wcost) + {0} < 5000(full_cost) -> OK, but weak mode.
+    params->set_user_history_partial_prefix_wcost(2000);
+    params->set_user_history_partial_weak_prefix_wcost(0);
+    results = predictor->Predict(convreq);
+    EXPECT_FALSE(results.empty());  // Weak.
+    EXPECT_EQ(results[0].value, "拓さん");
+    EXPECT_EQ(results[0].key, "たくさん");
+    EXPECT_TRUE(results[0].types & prediction::WEAK_USER_HISTORY_PREDICTION);
+    EXPECT_EQ("たくさん,拓さん,たく,拓", GetKeyValueWithBoundary(results[0]));
+
+    // 3599 + 500(wcost) + {100, 0} < 5000(full_cost) -> OK
+    params->set_user_history_partial_prefix_wcost(100);
+    params->set_user_history_partial_weak_prefix_wcost(0);
+    results = predictor->Predict(convreq);
+    EXPECT_FALSE(results.empty());  // Not weak.
+    EXPECT_EQ(results[0].value, "拓さん");
+    EXPECT_EQ(results[0].key, "たくさん");
+    EXPECT_FALSE(results[0].types & prediction::WEAK_USER_HISTORY_PREDICTION);
+    EXPECT_EQ("たくさん,拓さん,たく,拓", GetKeyValueWithBoundary(results[0]));
+  }
+
+  // Boundary-based filtering -> always non-weak mode.
+  {
+    segments_proxy.Clear();
+    const ConversionRequest convreq =
+        SetUpInputForPrediction("たくの", &composer_, &segments_proxy);
+    // Too aggressive wcost so that cost-based filtering rejects the partial
+    // match.
+    params->set_user_history_partial_prefix_wcost(10000);
+    params->set_user_history_partial_weak_prefix_wcost(10000);
+    results = predictor->Predict(convreq);
+    EXPECT_FALSE(results.empty());
+    EXPECT_EQ(results[0].value, "拓の");
+    EXPECT_EQ(results[0].key, "たくの");
+    EXPECT_FALSE(results[0].types & prediction::WEAK_USER_HISTORY_PREDICTION);
+    EXPECT_EQ("たくの,拓の,たく,拓", GetKeyValueWithBoundary(results[0]));
+  }
+
+  // General noun is typed recently -> Weak mode.
+  {
+    segments_proxy.Clear();
+    const ConversionRequest convreq =
+        SetUpInputForPrediction("たく", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "宅");  // General noun.
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+    EXPECT_TRUE(IsSuggested(predictor.get(), "たく", "拓"));
+    EXPECT_TRUE(IsSuggested(predictor.get(), "たく", "宅"));
+
+    const ConversionRequest convreq2 =
+        SetUpInputForPrediction("たくの", &composer_, &segments_proxy);
+    results = predictor->Predict(convreq2);
+    EXPECT_EQ(results.size(), 1);
+    EXPECT_EQ(results[0].value, "拓の");  // Weak.
+    EXPECT_EQ(results[0].key, "たくの");
+    EXPECT_TRUE(results[0].types & prediction::WEAK_USER_HISTORY_PREDICTION);
+    EXPECT_EQ("たくの,拓の,たく,拓", GetKeyValueWithBoundary(results[0]));
+  }
 }
 
 }  // namespace mozc::prediction

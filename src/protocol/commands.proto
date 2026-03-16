@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 144
+// Next ID: 147
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -650,6 +650,20 @@ message DecoderExperimentParams {
   // This information is going to be shared with user_segment_rewriter.
   optional bool user_history_cache_inner_segment_boundary = 135
       [default = false];
+
+  // Allows partial (prefix) match in user history decoding.
+  optional bool user_history_allow_partial_match = 144 [default = false];
+
+  // The wcost of the prefix in a partial match.
+  // Shows the prefix match when [prefix_wcost + suffix_cost <= full_cost].
+  optional int32 user_history_partial_prefix_wcost = 145 [default = 2000];
+
+  // The cost of the prefix in a partial match.
+  // Shows the prefix match as a weak candidate when
+  // [weak_prefix_wcost + suffix_cost <= full_cost].
+  // weak_prefix_wcost should be smaller than prefix_wcost.
+  // The default wcost is zero, which is the most optimistic setting.
+  optional int32 user_history_partial_weak_prefix_wcost = 146 [default = 0];
 
   // Position of the first symbol rewriter candidate (0-origin).
   optional int32 symbol_rewriter_candidate_position = 132 [default = 3];

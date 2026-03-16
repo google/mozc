@@ -119,6 +119,7 @@ mozc_cc_library(
     hdrs = ["user_history_predictor.h"],
     deps = [
         ":predictor_interface",
+        ":realtime_decoder",
         ":result",
         ":user_history_predictor_cc_proto",
         ":user_history_storage",
@@ -164,6 +165,7 @@ mozc_cc_test(
         "nowin",
     ],  # TODO(yuryu): depends on //base:encryptor
     deps = [
+        ":realtime_decoder",
         ":result",
         ":user_history_predictor",
         ":user_history_predictor_cc_proto",

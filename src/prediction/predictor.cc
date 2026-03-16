@@ -102,7 +102,8 @@ Predictor::Predictor(const engine::Modules& modules,
           std::make_unique<RealtimeDecoder>(immutable_converter, converter)),
       dictionary_predictor_(
           std::make_unique<DictionaryPredictor>(modules, *realtime_decoder_)),
-      user_history_predictor_(std::make_unique<UserHistoryPredictor>(modules)),
+      user_history_predictor_(
+          std::make_unique<UserHistoryPredictor>(modules, *realtime_decoder_)),
       pos_matcher_(modules.GetPosMatcher()) {
   DCHECK(dictionary_predictor_);
   DCHECK(user_history_predictor_);

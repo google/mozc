@@ -68,19 +68,23 @@ message UserHistory {
     // The front element is the oldest, and the back element is the newest.
     repeated fixed64 next_entry_fps = 23 [packed = true];
 
-    // internally used in UserHistoryPredictor.
-    optional bool bigram_boost = 20 [default = false];
-
-    // internally used in UserHistoryPredictor.
-    optional bool spelling_correction = 21 [default = false];
-
     // This entry is removed.
     optional bool removed = 8 [default = false];
 
     // Inner segment boundary. See converter/inner_segment.h
     repeated fixed32 inner_segment_boundary = 24;
 
+    // Allow the entry to be a content key/value of other segment.
+    optional bool allow_partial_match = 25 [default = false];
+
+    // This field is used to hold various information for ranking and filtering.
+    // It is intended for internal use only and should be cleared during
+    // serialization.
+    optional uint32 attributes = 26 [default = 0];
+
     reserved 9;  // Deprecated entry_type
+    reserved 20; // Deprecated bigram_boost
+    reserved 21; // Deprecated spelling_correction
   }
 
   repeated Entry entries = 6;

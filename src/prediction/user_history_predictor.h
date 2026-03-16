@@ -52,6 +52,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "prediction/user_history_storage.h"
@@ -62,7 +63,9 @@ namespace mozc::prediction {
 
 class UserHistoryPredictor : public PredictorInterface {
  public:
-  explicit UserHistoryPredictor(const engine::Modules& modules);
+  UserHistoryPredictor(const engine::Modules& modules,
+                       const RealtimeDecoder& realtime_decoder);
+
   ~UserHistoryPredictor() override;
 
   std::vector<Result> Predict(const ConversionRequest& request) const override;
@@ -140,6 +143,10 @@ class UserHistoryPredictor : public PredictorInterface {
     // identify the existence of the space using the surrounding context and the
     // head segment in the LRU cache.
     bool has_space_prefix = false;
+
+    // Allows partial match training on the content_value of the first segment.
+    // Partial match is allowed when the token seems to be a proper noun.
+    bool allow_partial_match = false;
   };
 
   friend class UserHistoryPredictorTestPeer;
@@ -151,6 +158,25 @@ class UserHistoryPredictor : public PredictorInterface {
     RIGHT_PREFIX_MATCH,  // right string is a prefix of left string
     LEFT_EMPTY_MATCH,    // left string is empty (for zero_query_suggestion)
     EXACT_MATCH,         // right string == left string
+  };
+
+  enum Attribute {
+    // Bigram entry. Should have special bonus.
+    BIGRAM_BOOST = 1,
+
+    // Needs to populate spelling correction information from Entry to Result.
+    SPELLING_CORRECTION = 2,
+
+    // This candidate should be placed below the default top candidate.
+    // Its confidence score is low.
+    WEAK_CANDIDATE = 4,
+
+    // Force to populate inner segment boundary from Entry to Result.
+    // By default, boundary information is not passed to the Result. For
+    // candidates that have never been input before, e.g. partial match
+    // candidates, they are treated as standard conversions and their boundary
+    // information is populated to the Result.
+    POPULATE_INNER_SEGMENT_BOUNDARY = 8,
   };
 
   // Returns true if this predictor should return results for the input.
@@ -204,6 +230,23 @@ class UserHistoryPredictor : public PredictorInterface {
     Entry* absl_nullable Pop();
     Entry* absl_nonnull NewEntry();
 
+    // During the linear-search on LRU entries, keep track of the
+    // partially-matched entry.
+    void RecordPartialEntry(const Entry& entry) {
+      (entry.allow_partial_match() ? partial_entry_count_[entry.key()].second
+                                   : partial_entry_count_[entry.key()].first)++;
+    }
+
+    // Returns the counts of partially-matched entry so far.
+    // Returns [disallowed_count, allowed_count].
+    // When disallowed_count > 0,  we do not push new partial entry via Push(),
+    // The user has recently entered a partial match candidate, but the model is
+    // simply not displaying it.
+    std::pair<int, int> GetPartialCount(absl::string_view partial_key) const {
+      const auto it = partial_entry_count_.find(partial_key);
+      return (it != partial_entry_count_.end()) ? it->second : std::pair{0, 0};
+    }
+
    private:
     using QueueElement = std::pair<uint64_t, Entry*>;
     using Agenda = std::priority_queue<QueueElement>;
@@ -215,6 +258,8 @@ class UserHistoryPredictor : public PredictorInterface {
     Agenda agenda_;
     Arena<Entry> pool_;
     absl::flat_hash_set<size_t> seen_;
+    absl::flat_hash_map<absl::string_view, std::pair<int, int>>
+        partial_entry_count_;
   };
 
   using DicCache = mozc::storage::LruCache<uint64_t, Entry>;
@@ -250,6 +295,21 @@ class UserHistoryPredictor : public PredictorInterface {
       uint64_t& left_most_last_access_time, std::string& result_key,
       std::string& result_value,
       converter::InnerSegmentBoundary& result_inner_segment_boundary) const;
+
+  // For the RIGHT_PREFIX match, we will generate a candidate with partially
+  // matching prefixes using a realtime_decoder.
+  // |entry_queue| is passed to keep track of other prefix match candidates.
+  // Prefix matching is only allowed when the prefix is a proper noun.
+  // When a non-proper-noun is more recent in LRU, we demote the current
+  // prefix matches in order to follow the LRU principle.
+  // |result_attribute| is passed to set various configurations of the
+  // result as it have different behaviors.
+  bool GetKeyValueForPartialMatch(
+      const ConversionRequest& request, absl::string_view request_key,
+      const Entry& entry, std::string& result_key, std::string& result_value,
+      uint32_t& result_attribute,
+      converter::InnerSegmentBoundary& result_inner_segment_boundary,
+      EntryPriorityQueue& entry_queue) const;
 
   ConstEntrySnapshot LookupPrevEntry(const ConversionRequest& request) const;
 
@@ -354,14 +414,15 @@ class UserHistoryPredictor : public PredictorInterface {
   // |inner_segment_boundary| inner segment boundary information.
   // |key_begin,value_begin|: string byte offset on result.(key|value).
   // |next_fp|: fingerprints of the next segment.
+  // |allow_partial_match|: allow key/value to be a content_key/value.
   // |last_access_time|: the time when this entry was created.
   // Entry's contents and request_type will be checked before insertion.
   void Insert(const ConversionRequest& request, int32_t key_begin,
               int32_t value_begin, absl::string_view key,
               absl::string_view value, absl::string_view description,
               converter::InnerSegmentBoundarySpan inner_segment_boundary,
-              absl::Span<const uint64_t> next_fps, uint64_t last_access_time,
-              RevertEntries& revert_entries);
+              absl::Span<const uint64_t> next_fps, bool allow_partial_match,
+              uint64_t last_access_time, RevertEntries& revert_entries);
 
   // Inserts a new |fp| into |entry|.
   // it makes a bigram connection from entry to next_entry.
@@ -424,6 +485,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // after Revert().  Note that `last_committed_entries_` is not associated with
   // revert_id and shared across different context (text view).
   mutable AtomicSharedPtr<const RevertEntries> last_committed_entries_;
+
+  const RealtimeDecoder& decoder_;
 };
 
 }  // namespace mozc::prediction
