@@ -510,19 +510,6 @@ def is_linux() -> bool:
   return os.name == 'posix' and os.uname()[0] == 'Linux'
 
 
-def update_submodules(dryrun: bool = False) -> None:
-  """Run 'git submodule update --init --recursive'.
-
-  Args:
-    dryrun: true to perform dryrun.
-  """
-  command = ' '.join(['git', 'submodule', 'update', '--init', '--recursive'])
-  if dryrun:
-    print(f'dryrun: subprocess.run({command}, shell=True, check=True)')
-  else:
-    subprocess.run(command, shell=True, check=True)
-
-
 def exec_command(
     args: list[str], cwd: os.PathLike[str], progress: bool = False
 ) -> None:
@@ -586,7 +573,6 @@ def main():
   parser.add_argument('--nomsys2', action='store_true', default=False)
   parser.add_argument('--nowix', action='store_true', default=False)
   parser.add_argument('--nondk', action='store_true', default=False)
-  parser.add_argument('--nosubmodules', action='store_true', default=False)
   parser.add_argument('--cache_only', action='store_true', default=False)
 
   args = parser.parse_args()
@@ -631,9 +617,6 @@ def main():
   for ndk in [NDK_LINUX, NDK_MAC]:
     if ndk in archives:
       extract_ndk(ndk, args.dryrun)
-
-  if not args.nosubmodules:
-    update_submodules(args.dryrun)
 
 
 if __name__ == '__main__':

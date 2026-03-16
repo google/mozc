@@ -59,10 +59,10 @@ RUN curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/ba
   && mv bazelisk-linux-amd64 /home/mozc_builder/bin/bazelisk \
   && chmod u+x /home/mozc_builder/bin/bazelisk
 
-# check out Mozc source with submodules
+# check out Mozc source
 RUN mkdir /home/mozc_builder/work/mozc
 # COPY --chown=mozc_builder:mozc_builder src/ /home/mozc_builder/work/mozc/src/
-RUN git clone https://github.com/google/mozc.git -b master --single-branch --recursive
+RUN git clone https://github.com/google/mozc.git -b master --single-branch
 
 WORKDIR /home/mozc_builder/work/mozc/src
 ENTRYPOINT bash
