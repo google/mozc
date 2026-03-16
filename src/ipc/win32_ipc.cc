@@ -445,7 +445,8 @@ void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
 
 IPCServer::IPCServer(const std::string &name, int32_t num_connections,
                      absl::Duration timeout)
-    : connected_(false),
+    : name_(name),
+      connected_(false),
       quit_event_(CreateManualResetEvent()),
       pipe_event_(CreateManualResetEvent()),
       timeout_(timeout) {

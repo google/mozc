@@ -51,6 +51,8 @@ namespace mozc {
 namespace renderer {
 namespace {
 
+constexpr char kTestServiceName[] = "renderer_test";
+
 std::string UpdateVersion(int diff) {
   std::vector<std::string> tokens =
       absl::StrSplit(Version::GetMozcVersion(), '.', absl::SkipEmpty());
@@ -188,7 +190,8 @@ class RendererClientTest : public ::testing::Test {
 
   std::unique_ptr<RendererClient> NewClient() {
     return RendererClient::CreateForTesting(
-        &factory_, &launcher_, RendererClient::RendererPathCheckMode::ENABLED);
+        kTestServiceName, &factory_, &launcher_,
+        RendererClient::RendererPathCheckMode::ENABLED);
   }
 
   void Reset() { client_params_.counter = 0; }

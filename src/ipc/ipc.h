@@ -261,7 +261,10 @@ class IPCServer {
   }
 #endif  // __APPLE__
 
+  const std::string& GetServiceName() const { return name_; }
+
  private:
+  std::string name_;
   bool connected_;
 #ifdef _WIN32
   wil::unique_event_nothrow quit_event_;
@@ -274,7 +277,6 @@ class IPCServer {
   wil::unique_hfile pipe_handle_;
   wil::unique_event_nothrow pipe_event_;
 #elif defined(__APPLE__)
-  std::string name_;
   MachPortManagerInterface *mach_port_manager_;
 #else   // _WIN32
   int socket_;

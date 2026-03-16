@@ -338,7 +338,10 @@ bool IPCClient::Connected() const { return connected_; }
 // Server
 IPCServer::IPCServer(const std::string &name, int32_t num_connections,
                      absl::Duration timeout)
-    : connected_(false), socket_(kInvalidSocket), timeout_(timeout) {
+    : name_(name),
+      connected_(false),
+      socket_(kInvalidSocket),
+      timeout_(timeout) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
   if (!manager->CreateNewPathName() && !manager->LoadPathName()) {
     LOG(ERROR) << "Cannot prepare IPC path name";

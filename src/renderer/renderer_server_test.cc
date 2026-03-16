@@ -76,6 +76,8 @@ class TestRenderer : public RendererInterface {
 
 class TestRendererServer : public RendererServer {
  public:
+  TestRendererServer() : RendererServer(true /* for_testing */) {}
+
   int StartMessageLoop() override { return 0; }
 
   // Not async for testing
@@ -130,7 +132,7 @@ TEST_F(RendererServerTest, IPCTest) {
 
   DummyRendererLauncher launcher;
   std::unique_ptr<RendererClient> client = RendererClient::CreateForTesting(
-      &on_memory_client_factory, &launcher,
+      server->GetServiceName(), &on_memory_client_factory, &launcher,
       RendererClient::RendererPathCheckMode::DISABLED);
 
   commands::RendererCommand command;

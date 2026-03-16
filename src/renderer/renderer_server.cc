@@ -39,6 +39,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "base/random.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 #include "client/client_interface.h"
@@ -76,14 +77,18 @@ constexpr int kNumConnections = 10;
 constexpr absl::Duration kIPCServerTimeOut = absl::Milliseconds(1000);
 constexpr char kServiceName[] = "renderer";
 
-std::string GetServiceName() {
+std::string ConstructServiceName(bool for_testing) {
   std::string name = kServiceName;
+  if (for_testing) {
+    absl::StrAppend(&name, ".test.", Random().Utf8String(16, 'a', 'z'));
+  }
   const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
   if (!desktop_name.empty()) {
     absl::StrAppend(&name, ".", desktop_name);
   }
   return name;
 }
+
 }  // namespace
 
 class RendererServerSendCommand : public client::SendCommandInterface {
@@ -130,8 +135,11 @@ class RendererServerSendCommand : public client::SendCommandInterface {
   uint32_t receiver_handle_;
 };
 
-RendererServer::RendererServer()
-    : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut),
+RendererServer::RendererServer() : RendererServer(false) {}
+
+RendererServer::RendererServer(bool for_testing)
+    : IPCServer(ConstructServiceName(for_testing), kNumConnections,
+                kIPCServerTimeOut),
       renderer_interface_(nullptr),
       timeout_(0),
       send_command_(new RendererServerSendCommand) {

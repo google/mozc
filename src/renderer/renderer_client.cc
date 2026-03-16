@@ -512,19 +512,20 @@ std::unique_ptr<IPCClientInterface> RendererClient::CreateIPCClient() const {
 }
 
 std::unique_ptr<RendererClient> RendererClient::Create() {
-  return RendererClient::CreateForTesting(nullptr, nullptr,
-                                          RendererPathCheckMode::ENABLED);
-}
-
-std::unique_ptr<RendererClient> RendererClient::CreateForTesting(
-    IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
-    RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
-    RendererPathCheckMode renderer_path_check_mode) {
   std::string name = kServiceName;
   const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
   if (!desktop_name.empty()) {
     absl::StrAppend(&name, ".", desktop_name);
   }
+  return std::unique_ptr<RendererClient>(new RendererClient(
+      name, nullptr, nullptr, false));
+}
+
+std::unique_ptr<RendererClient> RendererClient::CreateForTesting(
+    const std::string& name,
+    IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
+    RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
+    RendererPathCheckMode renderer_path_check_mode) {
   const bool disable_renderer_path_check_for_testing =
       (renderer_path_check_mode == RendererPathCheckMode::DISABLED);
   return std::unique_ptr<RendererClient>(new RendererClient(
