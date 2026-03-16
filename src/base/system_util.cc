@@ -138,7 +138,7 @@ class LocalAppDataDirectoryCache {
   // Note that __try and __except does not guarantees that any destruction
   // of internal C++ objects when a non-C++ exception occurs except that
   // /EHa compiler option is specified.
-  // Since Mozc uses /EHs option in common.gypi, we must admit potential
+  // Do not use /EHs option, otherwise we must admit potential
   // memory leakes when any non-C++ exception occues in TryGetLocalAppData.
   // See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
   static HRESULT __declspec(nothrow) SafeTryGetLocalAppData(std::string* dir) {
@@ -357,7 +357,7 @@ class ProgramFilesX86Cache {
   // Note that __try and __except does not guarantees that any destruction
   // of internal C++ objects when a non-C++ exception occurs except that
   // /EHa compiler option is specified.
-  // Since Mozc uses /EHs option in common.gypi, we must admit potential
+  // Do not use /EHs option, otherwise we must admit potential
   // memory leakes when any non-C++ exception occues in TryProgramFilesPath.
   // See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
   static HRESULT __declspec(nothrow) SafeTryProgramFilesPath(

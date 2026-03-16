@@ -52,9 +52,7 @@ version of Bazel you are using.
 GCC or Clang is needed to build Mozc.
 
 While Linux continuous builds currently use GCC, Mozc's C++ code is designed to
-be compatible with Clang (for macOS, Windows, Android, and Google internal use)
-and Visual C++ 2022 (for Windows GYP build, which is going to be deprecated) as
-well.
+be compatible with Clang (for macOS, Windows, Android, and Google internal use).
 
 💡 See [`.github/workflows/linux.yaml`](../.github/workflows/linux.yaml) on which
 version of GCC is tested against.

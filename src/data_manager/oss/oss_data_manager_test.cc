@@ -51,14 +51,7 @@ class OssDataManagerTest : public DataManagerTestBase {
             1,
             mozc::testing::GetSourceFilesInDirOrDie(
                 {"data", "dictionary_oss"},
-#ifdef MOZC_GYP_BUILD
-                {"dictionary00.txt", "dictionary01.txt", "dictionary02.txt",
-                 "dictionary03.txt", "dictionary04.txt", "dictionary05.txt",
-                 "dictionary06.txt", "dictionary07.txt", "dictionary08.txt",
-                 "dictionary09.txt"}
-#else   // MOZC_GYP_BUILD
                 {"aux_dictionary.txt", "dictionary.txt"}
-#endif  // MOZC_GYP_BUILD
                 ),
             mozc::testing::GetSourceFilesInDirOrDie(
                 {"data", "dictionary_oss"}, {"suggestion_filter.txt"})) {

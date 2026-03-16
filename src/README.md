@@ -40,10 +40,6 @@ requirements.
     *   Utilities used for build (e.g. code generation).
 *   [bazel/](bazel/)
     *   Build rules and tools for Bazel build.
-*   [gyp/](gyp/)
-    *   Build rules and tools for GYP.
-*   [protobuf/](protobuf/)
-    *   Build rules and tools of GYP for Protocol Buffers.
 
 ### Base
 

@@ -30,8 +30,7 @@
 
 """A helper script to update OSS Mozc build dependencies.
 
-This helper script takes care of updaring build dependencies for legacy GYP
-build for OSS Mozc.
+This helper script takes care of updating build dependencies.
 """
 
 import argparse
