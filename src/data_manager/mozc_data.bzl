@@ -679,7 +679,7 @@ def mozc_dataset(
 
     native.genrule(
         name = name + "@version",
-        srcs = ["//data/version:mozc_version_template.bzl"],
+        srcs = ["//:version.bzl"],
         outs = ["version.data"],
         cmd = (
             "$(location //data_manager:gen_data_version) " +

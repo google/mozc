@@ -736,7 +736,7 @@ mozc_run_build_tool(
     name = "mozc_version_txt",
     srcs = {
         "--template_path": [
-            "//data/version:mozc_version_template.bzl",
+            "//:version.bzl",
         ],
     },
     outs = {

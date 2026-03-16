@@ -257,6 +257,23 @@ bzl_library(
     visibility = ["//:__subpackages__"],
 )
 
+exports_files(
+    ["version.bzl"],
+    visibility = [
+        "//base:__pkg__",
+        "//data_manager:__subpackages__",
+        "//tools:__subpackages__",
+        "//tools/release:__pkg__",
+    ],
+)
+
+bzl_library(
+    name = "version_bzl",
+    srcs = ["version.bzl"],
+    test_size = "small",
+    visibility = ["//visibility:private"],
+)
+
 filegroup(
     name = "package",
     srcs = mozc_select(
