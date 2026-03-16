@@ -385,7 +385,7 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
 
 bool TransliterationRewriter::Rewrite(const ConversionRequest& request,
                                       Segments* segments) const {
-  if (request.skip_slow_rewriters()) {
+  if (request.options().skip_slow_rewriters) {
     return false;
   }
 

@@ -462,7 +462,7 @@ TEST(ImmutableConverterTest, EnableAutoPartialSuggestion) {
       ConversionRequestBuilder()
           .SetOptions({.create_partial_candidates = true})
           .Build();
-  EXPECT_TRUE(conversion_request.create_partial_candidates());
+  EXPECT_TRUE(conversion_request.options().create_partial_candidates);
   EXPECT_TRUE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 

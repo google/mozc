@@ -237,22 +237,6 @@ class ConversionRequest {
     return *composer_data_;
   }
 
-  bool use_actual_converter_for_realtime_conversion() const {
-    return options_.use_actual_converter_for_realtime_conversion;
-  }
-
-  bool create_partial_candidates() const {
-    return options_.create_partial_candidates;
-  }
-
-  bool enable_user_history_for_conversion() const {
-    return options_.enable_user_history_for_conversion;
-  }
-
-  ComposerKeySelection composer_key_selection() const {
-    return options_.composer_key_selection;
-  }
-
   const commands::Request& request() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return *request_;
   }
@@ -270,10 +254,6 @@ class ConversionRequest {
     return *history_result_;
   }
 
-  // TODO(noriyukit): Remove these methods after removing skip_slow_rewriters_
-  // flag.
-  bool skip_slow_rewriters() const { return options_.skip_slow_rewriters; }
-
   bool IsKanaModifierInsensitiveConversion() const {
     return request_->kana_modifier_insensitive_conversion() &&
            config_->use_kana_modifier_insensitive_conversion() &&
@@ -281,26 +261,6 @@ class ConversionRequest {
   }
 
   bool IsZeroQuerySuggestion() const { return key().empty(); }
-
-  size_t max_conversion_candidates_size() const {
-    return options_.max_conversion_candidates_size;
-  }
-
-  size_t max_user_history_prediction_candidates_size() const {
-    return options_.max_user_history_prediction_candidates_size;
-  }
-
-  size_t max_user_history_prediction_candidates_size_for_zero_query() const {
-    return options_.max_user_history_prediction_candidates_size_for_zero_query;
-  }
-
-  size_t max_dictionary_prediction_candidates_size() const {
-    return options_.max_dictionary_prediction_candidates_size;
-  }
-
-  bool use_already_typing_corrected_key() const {
-    return options_.use_already_typing_corrected_key;
-  }
 
   // Clients needs to check ConversionRequest::incognito_mode() instead
   // of Config::incognito_mode() or Request::is_incognito_mode(), as the

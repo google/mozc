@@ -1301,13 +1301,14 @@ std::vector<Result> UserHistoryPredictor::Predict(
   const bool is_zero_query =
       IsZeroQuerySuggestionEnabled(request) && is_empty_input;
   size_t max_prediction_size =
-      request.max_user_history_prediction_candidates_size();
+      request.options().max_user_history_prediction_candidates_size;
   size_t max_prediction_char_coverage =
       params.user_history_prediction_max_char_coverage();
 
   if (is_zero_query) {
     max_prediction_size =
-        request.max_user_history_prediction_candidates_size_for_zero_query();
+        request.options()
+            .max_user_history_prediction_candidates_size_for_zero_query;
   } else if (max_prediction_char_coverage > 0) {
     // When char coverage feature is enabled,
     // set a fixed value so that we can enumerate enough candidates.

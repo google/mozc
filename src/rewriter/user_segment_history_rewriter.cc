@@ -701,7 +701,7 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest& request,
     return false;
   }
 
-  if (!request.enable_user_history_for_conversion()) {
+  if (!request.options().enable_user_history_for_conversion) {
     MOZC_VLOG(2) << "user history for conversion is disabled";
     return false;
   }

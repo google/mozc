@@ -226,8 +226,9 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
                    return ResultCostLess()(rhs, lhs);
                  });
 
-  const size_t max_candidates_size = std::min(
-      request.max_dictionary_prediction_candidates_size(), results.size());
+  const size_t max_candidates_size = std::min<size_t>(
+      request.options().max_dictionary_prediction_candidates_size,
+      results.size());
 
   filter::ResultFilter filter(request, pos_matcher_, connector_,
                               suggestion_filter_);

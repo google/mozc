@@ -539,9 +539,9 @@ DictionaryPredictionAggregator::AggregateResultsForMixedConversion(
   }
 
   // Always aggregate realtime results when mixed conversion mode.
-  AggregateRealtime(request, GetRealtimeCandidateMaxSize(request),
-                    request.use_actual_converter_for_realtime_conversion(),
-                    &results);
+  AggregateRealtime(
+      request, GetRealtimeCandidateMaxSize(request),
+      request.options().use_actual_converter_for_realtime_conversion, &results);
 
   // In partial suggestion or prediction, only realtime candidates are used.
   if (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
@@ -599,9 +599,10 @@ std::vector<Result> DictionaryPredictionAggregator::AggregateResultsForDesktop(
   }
 
   if (ShouldAggregateRealTimeConversionResults(request)) {
-    AggregateRealtime(request, GetRealtimeCandidateMaxSize(request),
-                      request.use_actual_converter_for_realtime_conversion(),
-                      &results);
+    AggregateRealtime(
+        request, GetRealtimeCandidateMaxSize(request),
+        request.options().use_actual_converter_for_realtime_conversion,
+        &results);
   }
 
   // Desktop mode never sets PARTIAL mode, so we may use DCHECK after the
@@ -1075,7 +1076,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForUnigram(
     PredictionTypes types, size_t lookup_limit,
     std::vector<Result>* results) const {
   const absl::btree_set<std::string> empty_expanded;
-  if (request.use_already_typing_corrected_key()) {
+  if (request.options().use_already_typing_corrected_key) {
     PredictiveLookupCallback callback(types, lookup_limit, request.key().size(),
                                       empty_expanded, zip_code_id_, unknown_id_,
                                       results);
@@ -1117,7 +1118,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
     std::vector<Result>* results) const {
   absl::btree_set<std::string> expanded;
 
-  if (request.use_already_typing_corrected_key()) {
+  if (request.options().use_already_typing_corrected_key) {
     const std::string request_key = absl::StrCat(history_key, request.key());
     PredictiveBigramLookupCallback callback(
         types, lookup_limit, request_key.size(), expanded, history_key,
@@ -1265,11 +1266,12 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
     return kRealtimeCandidatesSizeForHandwriting;
   }
 
-  const size_t size_limit = request.max_dictionary_prediction_candidates_size();
+  const size_t size_limit =
+      request.options().max_dictionary_prediction_candidates_size;
 
   // Set the initial values to max_size and default_size.
   size_t max_size = size_limit;
-  if (request.create_partial_candidates()) {
+  if (request.options().create_partial_candidates) {
     max_size = 20;
   }
   size_t default_size = 10;

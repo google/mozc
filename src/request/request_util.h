@@ -49,7 +49,7 @@ inline bool IsAutoPartialSuggestionEnabled(
 
 inline bool ShouldFilterNoisyNumberCandidate(
     const ConversionRequest& conversion_request) {
-  return conversion_request.create_partial_candidates();
+  return conversion_request.options().create_partial_candidates;
 }
 
 }  // namespace request_util

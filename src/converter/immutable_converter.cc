@@ -1689,14 +1689,14 @@ bool ImmutableConverter::MakeSegments(const ConversionRequest& request,
 void ImmutableConverter::InsertCandidatesForConversion(
     const ConversionRequest& request, const Lattice& lattice,
     absl::Span<const uint16_t> group, Segments* segments) const {
-  DCHECK(!request.create_partial_candidates());
+  DCHECK(!request.options().create_partial_candidates);
   // Currently, we assume that REVERSE_CONVERSION only
   // requires 1 result.
   // TODO(taku): support to set the size on REVESER_CONVERSION mode.
   const size_t max_candidates_size =
       ((request.request_type() == ConversionRequest::REVERSE_CONVERSION)
            ? 1
-           : request.max_conversion_candidates_size());
+           : request.options().max_conversion_candidates_size);
 
   // InsertCandidates inserts new segments after the existing
   // conversion segments. So we have to erase old conversion segments.
@@ -1758,7 +1758,7 @@ void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
   {
     // Candidates for the first segment of each n-best path.
     InsertCandidates(request, &tmp_segments, lattice, group,
-                     request.max_conversion_candidates_size() -
+                     request.options().max_conversion_candidates_size -
                          target_segment->candidates_size(),
                      FIRST_INNER_SEGMENT);
     constexpr int kMaxCostDiffForFirstInnerSegment = 3107;  // 500*log(500)
@@ -1793,9 +1793,10 @@ void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
 void ImmutableConverter::InsertCandidatesForPrediction(
     const ConversionRequest& request, const Lattice& lattice,
     absl::Span<const uint16_t> group, Segments* segments) const {
-  const size_t max_candidates_size = request.max_conversion_candidates_size();
+  const size_t max_candidates_size =
+      request.options().max_conversion_candidates_size;
 
-  if (!request.create_partial_candidates()) {
+  if (!request.options().create_partial_candidates) {
     // Desktop (or physical keyboard / handwriting in Mobile)
     InsertCandidates(request, segments, lattice, group, max_candidates_size,
                      SINGLE_SEGMENT);

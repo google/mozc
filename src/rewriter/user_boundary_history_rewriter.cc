@@ -183,7 +183,7 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest& request,
     return;
   }
 
-  if (!request.enable_user_history_for_conversion()) {
+  if (!request.options().enable_user_history_for_conversion) {
     MOZC_VLOG(2) << "user history for conversion is disabled";
     return;
   }
@@ -210,12 +210,12 @@ UserBoundaryHistoryRewriter::CheckResizeSegmentsRequest(
     return std::nullopt;
   }
 
-  if (!request.enable_user_history_for_conversion()) {
+  if (!request.options().enable_user_history_for_conversion) {
     MOZC_VLOG(2) << "user history for conversion is disabled";
     return std::nullopt;
   }
 
-  if (request.skip_slow_rewriters()) {
+  if (request.options().skip_slow_rewriters) {
     return std::nullopt;
   }
 
