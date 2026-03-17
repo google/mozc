@@ -339,6 +339,22 @@ bool Predictor::PromoteTopDictionaryResult(
          params.candidate_mixing_min_post_correction_prob();
 }
 
+// static
+void Predictor::DemoteWeakUserHistory(absl::Span<Result> results) {
+  auto is_weak = [](const Result& result) {
+    return result.types & prediction::WEAK_USER_HISTORY_PREDICTION;
+  };
+
+  if (results.empty() || !is_weak(results.front())) {
+    return;
+  }
+
+  if (auto first_no_weak = absl::c_find_if_not(results, is_weak);
+      first_no_weak != results.end()) {
+    std::rotate(results.begin(), first_no_weak, std::next(first_no_weak));
+  }
+}
+
 std::vector<Result> Predictor::MixCandidates(
     const ConversionRequest& request, std::vector<Result> user_history_results,
     std::vector<Result> dictionary_results) const {
@@ -371,6 +387,8 @@ std::vector<Result> Predictor::MixCandidates(
     insert_results(user_history_results);
     insert_results(dictionary_results);
   }
+
+  DemoteWeakUserHistory(absl::MakeSpan(results));
 
   return results;
 }

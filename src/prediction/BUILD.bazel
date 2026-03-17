@@ -532,7 +532,9 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:test_peer",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

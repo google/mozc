@@ -37,7 +37,10 @@
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
 #include "converter/attribute.h"
@@ -155,6 +158,7 @@ class PredictorTestPeer : public testing::TestPeer<Predictor> {
   explicit PredictorTestPeer(Predictor& predictor)
       : testing::TestPeer<Predictor>(predictor) {}
   PEER_METHOD(PromoteTopDictionaryResult);
+  PEER_STATIC_METHOD(DemoteWeakUserHistory);
 };
 
 class MixedDecodingPredictorTest : public ::testing::Test {
@@ -425,13 +429,10 @@ TEST_F(MixedDecodingPredictorTest, FillPos) {
 }
 
 TEST_F(MixedDecodingPredictorTest, MixCandidates) {
-  auto is_top_no_deletable = [&](std::vector<Result> predictor_results,
-                                 std::vector<Result> history_results) {
+  auto predict = [&](std::vector<Result> predictor_results,
+                     std::vector<Result> history_results) {
     auto mock_dictionary_predictor = std::make_unique<MockPredictor>();
     auto mock_history_predictor = std::make_unique<MockPredictor>();
-
-    const size_t expected_size =
-        predictor_results.size() + history_results.size();
 
     EXPECT_CALL(*mock_history_predictor, Predict(_))
         .WillOnce(Return(std::move(history_results)));
@@ -444,8 +445,15 @@ TEST_F(MixedDecodingPredictorTest, MixCandidates) {
 
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::SUGGESTION);
-    const std::vector<Result> results = predictor->Predict(convreq);
+    return predictor->Predict(convreq);
+  };
 
+  auto is_top_no_deletable = [&](std::vector<Result> predictor_results,
+                                 std::vector<Result> history_results) {
+    const size_t expected_size =
+        predictor_results.size() + history_results.size();
+    const std::vector<Result> results =
+        predict(std::move(predictor_results), std::move(history_results));
     EXPECT_EQ(results.size(), expected_size);
     return results[0].candidate_attributes & converter::Attribute::NO_DELETABLE;
   };
@@ -482,6 +490,21 @@ TEST_F(MixedDecodingPredictorTest, MixCandidates) {
 
     EXPECT_FALSE(is_top_no_deletable(std::move(predictor_results),
                                      std::move(history_results)));
+  }
+
+  {
+    // history top has WEAK_USER_HISTORY_PREDICTION attribute.
+    std::vector<Result> predictor_results(1), history_results(1);
+
+    predictor_results[0].value = "dic_value";
+    history_results[0].value = "history_value";
+    history_results[0].types |= prediction::WEAK_USER_HISTORY_PREDICTION;
+    std::vector<Result> mixed_results =
+        predict(std::move(predictor_results), std::move(history_results));
+
+    // swapped.
+    EXPECT_EQ(mixed_results[0].value, "dic_value");
+    EXPECT_EQ(mixed_results[1].value, "history_value");
   }
 }
 
@@ -533,6 +556,36 @@ TEST_F(MixedDecodingPredictorTest, PromoteTopDictionaryResultTest) {
     EXPECT_FALSE(peer.PromoteTopDictionaryResult(convreq, history_results,
                                                  predictor_results));
   }
+}
+
+TEST_F(MixedDecodingPredictorTest, DemoteWeakUserHistoryTest) {
+  // sets WEAK_USER_HISTORY_PREDICTION attributes to
+  // the results[index], and call DemoteWeakUserHistory.
+  auto demote = [](absl::Span<const int> index) {
+    std::vector<Result> results(5);
+    for (int i = 0; i < results.size(); ++i) {
+      results[i].value = absl::StrCat(i);
+    }
+    for (const int i : index) {
+      results[i].types |= prediction::WEAK_USER_HISTORY_PREDICTION;
+    }
+    PredictorTestPeer::DemoteWeakUserHistory(absl::MakeSpan(results));
+    std::vector<absl::string_view> v;
+    for (int i = 0; i < results.size(); ++i) v.emplace_back(results[i].value);
+    return absl::StrJoin(v, ",");
+  };
+
+  EXPECT_EQ(demote({}), "0,1,2,3,4");
+  EXPECT_EQ(demote({0}), "1,0,2,3,4");
+  EXPECT_EQ(demote({0, 1}), "2,0,1,3,4");
+  EXPECT_EQ(demote({0, 1, 2}), "3,0,1,2,4");
+  EXPECT_EQ(demote({0, 1, 2, 3}), "4,0,1,2,3");
+  EXPECT_EQ(demote({0, 2}), "1,0,2,3,4");
+  EXPECT_EQ(demote({0, 2, 3}), "1,0,2,3,4");
+  EXPECT_EQ(demote({0, 3}), "1,0,2,3,4");
+  EXPECT_EQ(demote({1}), "0,1,2,3,4");
+  EXPECT_EQ(demote({1, 2}), "0,1,2,3,4");
+  EXPECT_EQ(demote({1, 2, 3}), "0,1,2,3,4");
 }
 
 }  // namespace mozc::prediction
