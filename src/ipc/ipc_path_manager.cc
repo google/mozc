@@ -412,6 +412,19 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
   }
 
 #ifdef __linux__
+  // On some Linux distributions (Solus, for example), /usr/lib is a symlink to
+  // /usr/lib64. readlink(/proc/<pid>/exe) always returns the fully
+  // canonicalized path, while the comptime configured server_path may contain
+  // unresolved symlinks.
+  const std::string expected_server_path(server_path);
+  const auto is_equivalent =
+      FileUtil::IsEquivalent(server_path_, expected_server_path);
+
+  if (is_equivalent.value_or(false)) {
+    server_path_ = expected_server_path;
+    return true;
+  }
+
   if (absl::StrCat(server_path, " (deleted)") == server_path_) {
     LOG(WARNING) << server_path << " on disk is modified";
     // If a user updates the server binary on disk during the server is running,
