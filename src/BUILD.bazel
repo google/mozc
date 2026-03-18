@@ -31,6 +31,7 @@
 #   Declaration of package_group for visibility managing.
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load(
     "//:build_defs.bzl",
@@ -40,6 +41,7 @@ load(
     "mozc_select_enable_usage_rewriter",
 )
 load("//:config.bzl", "BAZEL_TOOLS_PREFIX")
+load("//:version.bzl", "DEFAULT_BUILD_LABEL_MACOS")
 load("//bazel:stubs.bzl", "bzl_library")
 
 package(default_visibility = ["//:__subpackages__"])
@@ -234,6 +236,34 @@ cc_library(
     }),
 )
 
+exports_files(
+    ["version.bzl"],
+    visibility = [
+        "//base:__pkg__",
+        "//data_manager:__subpackages__",
+        "//tools:__subpackages__",
+        "//tools/release:__pkg__",
+    ],
+)
+
+# The version can be specifyed by the --embed_label flag.
+# e.g. bazel build --embed_label="2.32.5994.101" package
+# The default version is specified by DEFAULT_BUILD_LABEL_MACOS in version.bzl.
+# LINT.IfChange
+apple_bundle_version(
+    name = "version_macos",
+    build_label_pattern = "{version}.{revision}",  # e.g. 2.32.5994.101
+    build_version = "{version}.{revision}",  # e.g. 2.32.5994.101
+    capture_groups = {
+        "version": "\\d+\\.\\d+\\.\\d+",  # e.g. 2.32.5994
+        "revision": "\\d+",  # e.g. 101
+    },
+    fallback_build_label = DEFAULT_BUILD_LABEL_MACOS,  # e.g. 2.32.5994.101
+    short_version_string = "{version}",  # e.g. 2.32.5994
+    visibility = ["//:__subpackages__"],
+)
+# LINT.ThenChange(//version.bzl)
+
 bzl_library(
     name = "build_defs_bzl",
     srcs = ["build_defs.bzl"],
@@ -255,16 +285,6 @@ bzl_library(
     srcs = ["config.bzl"],
     test_size = "small",
     visibility = ["//:__subpackages__"],
-)
-
-exports_files(
-    ["version.bzl"],
-    visibility = [
-        "//base:__pkg__",
-        "//data_manager:__subpackages__",
-        "//tools:__subpackages__",
-        "//tools/release:__pkg__",
-    ],
 )
 
 bzl_library(

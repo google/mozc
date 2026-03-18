@@ -737,7 +737,7 @@ def mozc_macos_application(name, bundle_name, infoplists, strings = [], bundle_i
         infoplists = _tweak_infoplists(name, infoplists),
         strings = _tweak_strings(name, strings),
         minimum_os_version = MACOS_MIN_OS_VER,
-        version = "//data/version:version_macos",
+        version = "//:version_macos",
         target_compatible_with = ["@platforms//os:macos"],
         tags = tags + MOZC_TAGS.MAC_ONLY,
         **kwargs
@@ -762,7 +762,7 @@ def mozc_macos_bundle(name, bundle_name, infoplists, strings = [], bundle_id = N
         infoplists = _tweak_infoplists(name, infoplists),
         strings = _tweak_strings(name, strings),
         minimum_os_version = MACOS_MIN_OS_VER,
-        version = "//data/version:version_macos",
+        version = "//:version_macos",
         target_compatible_with = ["@platforms//os:macos"],
         tags = tags + MOZC_TAGS.MAC_ONLY,
         **kwargs
