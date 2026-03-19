@@ -121,6 +121,29 @@ class RewriterInterface {
   // on settings UI.
   virtual void Clear() {}
 
+  // We plan to deprecate the following rewriters in the future, as equivalent
+  // functionalities have already been implemented. To experimentally disable
+  // them, we will use the disable_legacy_rewriter_mode mendel flag to suppress
+  // their behavior.
+  // TODO(taku): Remove this function once the migration finishes.
+  enum LegacyRewriterType {
+    kDisableUserSegmentHistory = 1,
+    kDisableUserBoundaryHistory = 2,
+    kDisableCollocation = 4,
+  };
+
+  // Returns true if (disable_legacy_rewriter_mode() & mode) and
+  // mixed_conversion is true.
+  // TODO(taku): Remove this function once the migration finishes.
+  static bool DisableLaegacyRewriterInMixedConversion(
+      const ConversionRequest& request, int mode) {
+    return (request.request().mixed_conversion() &&
+            (request.request()
+                 .decoder_experiment_params()
+                 .disable_legacy_rewriter_mode() &
+             mode));
+  }
+
  protected:
   RewriterInterface() = default;
 };

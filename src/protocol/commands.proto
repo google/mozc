@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 147
+// Next ID: 148
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -687,6 +687,11 @@ message DecoderExperimentParams {
   // Cost penalty added to the partial candidate. Partial candidate should not
   // be ranked lower than normal full candidates.
   optional int32 partial_candidate_cost_penalty = 143 [default = 5000];
+
+  // Mode to disable legacy rewriters. This flag is used in migration
+  // experiments from legacy modules to new supplemental model and user history
+  // predictor.
+  optional int32 disable_legacy_rewriter_mode = 147 [default = 0];
 }
 
 // Clients' request to the server.

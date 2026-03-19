@@ -60,6 +60,7 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "rewriter/variants_rewriter.h"
 #include "storage/lru_storage.h"
 #include "transliteration/transliteration.h"
@@ -717,6 +718,11 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest& request,
       LOG(ERROR) << "candidate size is 0";
       return false;
     }
+  }
+
+  if (DisableLaegacyRewriterInMixedConversion(request,
+                                              kDisableUserSegmentHistory)) {
+    return false;
   }
 
   return true;

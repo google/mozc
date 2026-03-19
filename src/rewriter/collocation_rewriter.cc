@@ -54,6 +54,7 @@
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "rewriter/collocation_util.h"
+#include "rewriter/rewriter_interface.h"
 #include "storage/existence_filter.h"
 
 namespace mozc {
@@ -542,6 +543,10 @@ std::unique_ptr<CollocationRewriter> CollocationRewriter::Create(
 
 bool CollocationRewriter::Rewrite(const ConversionRequest& request,
                                   Segments* segments) const {
+  if (DisableLaegacyRewriterInMixedConversion(request, kDisableCollocation)) {
+    return false;
+  }
+
   return RewriteCollocation(segments);
 }
 

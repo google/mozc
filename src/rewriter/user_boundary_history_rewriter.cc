@@ -219,6 +219,11 @@ UserBoundaryHistoryRewriter::CheckResizeSegmentsRequest(
     return std::nullopt;
   }
 
+  if (DisableLaegacyRewriterInMixedConversion(request,
+                                              kDisableUserBoundaryHistory)) {
+    return std::nullopt;
+  }
+
   const size_t target_segments_size = segments.conversion_segments_size();
 
   // No effective segments found
