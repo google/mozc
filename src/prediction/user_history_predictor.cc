@@ -68,6 +68,7 @@
 #include "converter/attribute.h"
 #include "converter/inner_segment.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
@@ -1998,28 +1999,7 @@ UserHistoryPredictor::MakeLearningSegments(
       make_history_learning_segments(request.history_result());
   learning_segments.conversion_segments = make_learning_segments(result);
   learning_segments.inner_segment_boundary = result.inner_segment_boundary;
-
-  learning_segments.allow_partial_match = [&]() {
-    // heuristically determine the `result` is a proper noun.
-    // Too short key.
-    if (result.candidate_attributes &
-            converter::Attribute::USER_HISTORY_PREDICTION ||
-        Util::CharsLen(result.key) <= 1) {
-      return false;
-    }
-    const Util::ScriptType stype = Util::GetScriptType(result.value);
-    const auto& pos_matcher = modules_.GetPosMatcher();
-    // Heuristically detect whether the prefix value is a proper noun.
-    return (stype == Util::KATAKANA || stype == Util::NUMBER ||
-            stype == Util::ALPHABET ||                  // Unusual script type
-            result.types & prediction::SINGLE_KANJI ||  // Single kanji
-            result.types & prediction::NUMBER ||        // Number
-            pos_matcher.IsUniqueNoun(result.lid) ||     // proper noun POS
-            pos_matcher.IsUniqueNoun(result.rid) ||
-            // Re ranked single-kanji.
-            (stype == Util::KANJI && Util::CharsLen(result.value) == 1 &&
-             result.candidate_attributes & converter::Attribute::RERANKED));
-  }();
+  learning_segments.allow_partial_match = IsProperNoun(request, result);
 
   return learning_segments;
 }
@@ -2394,6 +2374,41 @@ int32_t UserHistoryPredictor::GuessRevertedValueOffset(
   }
 
   return 0;
+}
+
+bool UserHistoryPredictor::IsProperNoun(const ConversionRequest& request,
+                                        const Result& result) const {
+  // Too short input.
+  if (Util::CharsLen(result.key) <= 1) return false;
+
+  const auto& pos_matcher = modules_.GetPosMatcher();
+
+  // Returns true if there is proper noun entry with `request_key`.
+  auto is_proper_noun_key_in_dic = [&](absl::string_view request_key) {
+    bool found = false;
+    dictionary::InlineCallback cb;
+    cb.OnToken([&](absl::string_view key, absl::string_view value,
+                   const dictionary::Token& token) {
+      if (pos_matcher.IsUniqueNoun(token.lid) ||
+          pos_matcher.IsUniqueNoun(token.rid)) {
+        found = true;
+        return dictionary::InlineCallback::TRAVERSE_DONE;
+      }
+      return dictionary::InlineCallback::TRAVERSE_CONTINUE;
+    });
+    modules_.GetDictionary().LookupExact(request_key, request, &cb);
+    return found;
+  };
+
+  const Util::ScriptType stype = Util::GetScriptType(result.value);
+  // Heuristically detect whether the prefix value is a proper noun.
+  return (stype == Util::KATAKANA || stype == Util::NUMBER ||
+          stype == Util::ALPHABET ||                  // Unusual script type
+          result.types & prediction::SINGLE_KANJI ||  // Single kanji
+          result.types & prediction::NUMBER ||        // Number
+          pos_matcher.IsUniqueNoun(result.lid) ||     // proper noun POS
+          pos_matcher.IsUniqueNoun(result.rid) ||
+          (stype == Util::KANJI && is_proper_noun_key_in_dic(result.key)));
 }
 
 // Example

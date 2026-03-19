@@ -70,6 +70,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
+#include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_mock.h"
 #include "prediction/realtime_decoder.h"
@@ -141,6 +142,7 @@ class UserHistoryPredictorTestPeer
   PEER_METHOD(RomanFuzzyLookupEntry);
   PEER_METHOD(LookupEntry);
   PEER_METHOD(RemoveNgramChain);
+  PEER_METHOD(IsProperNoun);
   PEER_VARIABLE(storage_);
   PEER_DECLARE(MatchType);
   PEER_DECLARE(EntryPriorityQueue);
@@ -5691,6 +5693,88 @@ TEST_F(UserHistoryPredictorTest, AddHistoryEntryTest) {
   EXPECT_FALSE(IsSuggested(predictor, "おおさか", "大阪"));
   EXPECT_TRUE(predictor->AddHistoryEntry(" おおさか   ", "  大阪 "));
   EXPECT_TRUE(IsSuggested(predictor, "おおさか", "大阪"));
+}
+
+TEST_F(UserHistoryPredictorTest, IsProperNounTest) {
+  auto mock_dictionary = std::make_unique<MockDictionary>();
+  MockDictionary* dictionary = mock_dictionary.get();
+  std::unique_ptr<engine::Modules> modules =
+      engine::ModulesPresetBuilder()
+          .PresetDictionary(std::move(mock_dictionary))
+          .Build(std::make_unique<testing::MockDataManager>())
+          .value();
+  auto realtime_decoder = std::make_unique<MockRealtimeDecoder>();
+  auto predictor =
+      std::make_unique<UserHistoryPredictor>(*modules, *realtime_decoder);
+  predictor->Wait();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
+
+  EXPECT_CALL(*dictionary, LookupExact(_, _, _))
+      .WillRepeatedly([&](absl::string_view key,
+                          const ConversionRequest& request,
+                          dictionary::DictionaryInterface::Callback* cb) {
+        dictionary::Token token;
+        // "たなか" is registered as proper noun.
+        if (key == "たなか") {
+          token.lid = token.rid = modules->GetPosMatcher().GetLastNameId();
+          EXPECT_EQ(cb->OnToken(key, "", token),
+                    dictionary::InlineCallback::TRAVERSE_DONE);
+          return true;
+        }
+        token.lid = token.rid = 0;
+        EXPECT_EQ(cb->OnToken(key, "", token),
+                  dictionary::InlineCallback::TRAVERSE_CONTINUE);
+        return false;
+      });
+
+  const ConversionRequest req = ConversionRequestBuilder().Build();
+
+  Result result;
+
+  result.key = "あ";
+  result.value = "あいう";
+  EXPECT_FALSE(predictor_peer.IsProperNoun(req, result));
+
+  result.key = "あいう";
+  result.value = "カタカナ";
+  EXPECT_TRUE(predictor_peer.IsProperNoun(req, result));
+
+  result.key = "やま";
+  result.value = "山";
+  result.types = prediction::SINGLE_KANJI;
+  EXPECT_TRUE(predictor_peer.IsProperNoun(req, result));
+
+  result.key = "123";
+  result.value = "123";
+  result.types = prediction::NUMBER;
+  EXPECT_TRUE(predictor_peer.IsProperNoun(req, result));
+
+  result.key = "やました";
+  result.value = "山下";
+  result.types = 0;
+  result.lid = result.rid = modules->GetPosMatcher().GetLastNameId();
+  EXPECT_TRUE(predictor_peer.IsProperNoun(req, result));
+
+  // "たなか" is registered as proper noun.
+  result.key = "たなか";
+  result.value = "田中";
+  result.types = 0;
+  result.lid = result.rid = 0;
+  EXPECT_TRUE(predictor_peer.IsProperNoun(req, result));
+
+  // "たなか" is registered as proper noun, but value must be Kanji.
+  result.key = "たなか";
+  result.value = "たなか";
+  result.types = 0;
+  result.lid = result.rid = 0;
+  EXPECT_FALSE(predictor_peer.IsProperNoun(req, result));
+
+  // "じんるい" is registered as proper noun.
+  result.key = "じんるい";
+  result.value = "人類";
+  result.types = 0;
+  result.lid = result.rid = 0;
+  EXPECT_FALSE(predictor_peer.IsProperNoun(req, result));
 }
 
 TEST_F(UserHistoryPredictorTest, PartialMatchTest) {

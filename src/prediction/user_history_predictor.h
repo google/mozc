@@ -471,6 +471,9 @@ class UserHistoryPredictor : public PredictorInterface {
   // Users may use the backspace key just to remove the last few characters.
   void MaybeProcessPartialRevertEntry(const ConversionRequest& request) const;
 
+  bool IsProperNoun(const ConversionRequest& request,
+                    const Result& result) const;
+
   const dictionary::DictionaryInterface& dictionary_;
   const dictionary::UserDictionaryInterface& user_dictionary_;
   const engine::Modules& modules_;
