@@ -1484,29 +1484,22 @@ std::vector<std::string> GetExtraFormats(
     return {};
   }
 
-  // Callback to store extra date formats in the user dictionary into `tokens`.
-  class EntryCollector : public dictionary::DictionaryInterface::Callback {
-   public:
-    explicit EntryCollector(std::vector<std::string>& tokens)
-        : tokens_(tokens) {}
-    ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                       const dictionary::Token& token) override {
-      if (token.attributes != dictionary::Token::USER_DICTIONARY) {
-        return TRAVERSE_CONTINUE;
-      }
-      tokens_.push_back(ConvertExtraFormat(token.value));
-      return TRAVERSE_DONE;
-    }
-    std::vector<std::string>& tokens_;
-  };
-
   // Lookup the extra format key from the user dictionary and store the results
   // into `extra_formats`.
   std::vector<std::string> extra_formats;
-  EntryCollector callback(extra_formats);
-  ConversionRequest crequest;
-  dictionary->LookupExact(format_key, crequest, &callback);
+  dictionary::InlineCallback cb;
+  cb.OnToken([&](absl::string_view key, absl::string_view actual_key,
+                 const dictionary::Token& token) {
+    using enum dictionary::DictionaryInterface::Callback::ResultType;
+    if (token.attributes != dictionary::Token::USER_DICTIONARY) {
+      return TRAVERSE_CONTINUE;
+    }
+    extra_formats.push_back(ConvertExtraFormat(token.value));
+    return TRAVERSE_DONE;
+  });
 
+  ConversionRequest crequest;
+  dictionary->LookupExact(format_key, crequest, &cb);
   return extra_formats;
 }
 }  // namespace
