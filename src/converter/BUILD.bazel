@@ -289,7 +289,7 @@ mozc_cc_test(
         "nbest_generator_test.cc",
     ],
     deps = [
-        ":immutable_converter_no_factory",
+        ":immutable_converter",
         ":lattice",
         ":nbest_generator",
         ":node",
@@ -416,12 +416,14 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "immutable_converter_no_factory",
+    name = "immutable_converter",
     srcs = [
         "immutable_converter.cc",
     ],
     hdrs = ["immutable_converter.h"],
-    visibility = ["//engine:__pkg__"],
+    visibility = [
+        "//engine:__pkg__",
+    ],
     deps = [
         ":attribute",
         ":connector",
@@ -467,7 +469,7 @@ mozc_cc_test(
     ],
     deps = [
         ":attribute",
-        ":immutable_converter_no_factory",
+        ":immutable_converter",
         ":inner_segment",
         ":lattice",
         ":node",
@@ -556,8 +558,8 @@ mozc_cc_test(
         ":attribute",
         ":converter",
         ":converter_interface",
+        ":immutable_converter",
         ":immutable_converter_interface",
-        ":immutable_converter_no_factory",
         ":inner_segment",
         ":segments",
         ":segments_matchers",
@@ -679,7 +681,7 @@ mozc_cc_test(
     srcs = ["reverse_converter_test.cc"],
     visibility = ["//prediction:__pkg__"],
     deps = [
-        ":immutable_converter_no_factory",
+        ":immutable_converter",
         ":reverse_converter",
         ":segments",
         "//data_manager/testing:mock_data_manager",
@@ -775,7 +777,7 @@ mozc_cc_binary(
     testonly = True,
     srcs = ["immutable_converter_main.cc"],
     deps = [
-        ":immutable_converter_no_factory",
+        ":immutable_converter",
         ":lattice",
         ":node",
         ":segments",
