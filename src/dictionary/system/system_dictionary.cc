@@ -71,10 +71,9 @@
 #include "base/util.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/file/codec_factory.h"
-#include "dictionary/file/codec_interface.h"
+#include "dictionary/file/codec.h"
 #include "dictionary/file/dictionary_file.h"
-#include "dictionary/system/codec_interface.h"
+#include "dictionary/system/codec.h"
 #include "dictionary/system/key_expansion_table.h"
 #include "dictionary/system/token_decode_iterator.h"
 #include "dictionary/system/words_info.h"
@@ -129,7 +128,7 @@ void SetKeyExpansion(const char key, const absl::string_view expansion,
   key_expansion_table->Add(key, expansion);
 }
 
-void BuildHiraganaExpansionTable(const SystemDictionaryCodecInterface& codec,
+void BuildHiraganaExpansionTable(const SystemDictionaryCodec& codec,
                                  KeyExpansionTable* encoded_table) {
   for (size_t index = 0; index < std::size(kHiraganaExpansionTable); ++index) {
     std::string encoded;
@@ -181,10 +180,10 @@ class TokenScanIterator {
 
   TokenScanIterator(const TokenScanIterator&) = delete;
   TokenScanIterator& operator=(const TokenScanIterator&) = delete;
-  TokenScanIterator(const SystemDictionaryCodecInterface* codec,
+  TokenScanIterator(const SystemDictionaryCodec& codec,
                     const BitVectorBasedArray& token_array)
       : codec_(codec),
-        termination_flag_(codec->GetTokensTerminationFlag()),
+        termination_flag_(codec.GetTokensTerminationFlag()),
         state_(HAS_NEXT),
         offset_(0),
         tokens_offset_(0),
@@ -219,7 +218,7 @@ class TokenScanIterator {
     result_.value_id = -1;
     result_.index = index_;
     result_.tokens_offset = tokens_offset_;
-    const bool is_last_token = !(codec_->ReadTokenForReverseLookup(
+    const bool is_last_token = !(codec_.ReadTokenForReverseLookup(
         encoded_tokens_ptr_ + offset_, &result_.value_id, &read_bytes));
     if (is_last_token) {
       int tokens_size = offset_ + read_bytes - tokens_offset_;
@@ -234,7 +233,7 @@ class TokenScanIterator {
     }
   }
 
-  const SystemDictionaryCodecInterface* codec_;
+  const SystemDictionaryCodec& codec_;
   const uint8_t* encoded_tokens_ptr_;
   const uint8_t termination_flag_;
   State state_;
@@ -275,7 +274,7 @@ class SystemDictionary::ReverseLookupIndex {
  public:
   ReverseLookupIndex(const ReverseLookupIndex&) = delete;
   ReverseLookupIndex& operator=(const ReverseLookupIndex&) = delete;
-  ReverseLookupIndex(const SystemDictionaryCodecInterface* codec,
+  ReverseLookupIndex(const SystemDictionaryCodec& codec,
                      const BitVectorBasedArray& token_array) {
     // Gets id size.
     int value_id_max = -1;
@@ -375,11 +374,10 @@ struct SystemDictionary::PredictiveLookupSearchState {
 
 SystemDictionary::Builder::Builder(absl::string_view filename)
     : spec_(new Specification(Specification::FILENAME, filename, nullptr, -1,
-                              NONE, nullptr, nullptr)) {}
+                              NONE)) {}
 
 SystemDictionary::Builder::Builder(const char* ptr, int len)
-    : spec_(new Specification(Specification::IMAGE, "", ptr, len, NONE, nullptr,
-                              nullptr)) {}
+    : spec_(new Specification(Specification::IMAGE, "", ptr, len, NONE)) {}
 
 SystemDictionary::Builder& SystemDictionary::Builder::SetOptions(
     Options options) {
@@ -387,24 +385,13 @@ SystemDictionary::Builder& SystemDictionary::Builder::SetOptions(
   return *this;
 }
 
-SystemDictionary::Builder& SystemDictionary::Builder::SetCodec(
-    const SystemDictionaryCodecInterface* codec) {
-  spec_->codec = codec;
-  return *this;
-}
-
 absl::StatusOr<std::unique_ptr<SystemDictionary>>
 SystemDictionary::Builder::Build() {
-  if (spec_->codec == nullptr) {
-    spec_->codec = SystemDictionaryCodecFactory::GetCodec();
-  }
+  auto codec = std::make_unique<SystemDictionaryCodec>();
+  auto file_codec = std::make_unique<DictionaryFileCodec>();
 
-  if (spec_->file_codec == nullptr) {
-    spec_->file_codec = DictionaryFileCodecFactory::GetCodec();
-  }
-
-  auto instance =
-      absl::WrapUnique(new SystemDictionary(spec_->codec, spec_->file_codec));
+  auto instance = absl::WrapUnique(
+      new SystemDictionary(std::move(codec), std::move(file_codec)));
 
   switch (spec_->type) {
     case Specification::FILENAME: {
@@ -441,11 +428,12 @@ SystemDictionary::Builder::Build() {
 }
 
 SystemDictionary::SystemDictionary(
-    const SystemDictionaryCodecInterface* codec,
-    const DictionaryFileCodecInterface* file_codec)
+    std::unique_ptr<const SystemDictionaryCodec> codec,
+    std::unique_ptr<const DictionaryFileCodec> file_codec)
     : frequent_pos_(nullptr),
-      codec_(codec),
-      dictionary_file_(new DictionaryFile(file_codec)) {}
+      codec_(std::move(codec)),
+      file_codec_(std::move(file_codec)),
+      dictionary_file_(new DictionaryFile(*file_codec_)) {}
 
 SystemDictionary::~SystemDictionary() = default;
 
@@ -496,7 +484,7 @@ void SystemDictionary::InitReverseLookupIndex() {
     return;
   }
   reverse_lookup_index_ =
-      std::make_unique<ReverseLookupIndex>(codec_, token_array_);
+      std::make_unique<ReverseLookupIndex>(*codec_, token_array_);
 }
 
 bool SystemDictionary::HasKey(absl::string_view key) const {
@@ -544,7 +532,7 @@ bool SystemDictionary::HasValue(absl::string_view value) const {
   const uint8_t* encoded_tokens_ptr = GetTokenArrayPtr(token_array_, key_id);
 
   // Check tokens.
-  for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_, key,
+  for (TokenDecodeIterator iter(*codec_, value_trie_, frequent_pos_, key,
                                 encoded_tokens_ptr);
        !iter.Done(); iter.Next()) {
     const Token* token = iter.Get().token;
@@ -703,7 +691,7 @@ void SystemDictionary::LookupPredictive(
     }
 
     const int key_id = key_trie_.GetKeyIdOfTerminalNode(state.node);
-    for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_,
+    for (TokenDecodeIterator iter(*codec_, value_trie_, frequent_pos_,
                                   actual_key,
                                   GetTokenArrayPtr(token_array_, key_id));
          !iter.Done(); iter.Next()) {
@@ -741,7 +729,7 @@ template <typename Func>
 void RunCallbackOnEachPrefix(const LoudsTrie& key_trie,
                              const LoudsTrie& value_trie,
                              const BitVectorBasedArray& token_array,
-                             const SystemDictionaryCodecInterface* codec,
+                             const SystemDictionaryCodec& codec,
                              const uint32_t* frequent_pos, const char* key,
                              absl::string_view encoded_key,
                              DictionaryInterface::Callback* callback,
@@ -758,7 +746,7 @@ void RunCallbackOnEachPrefix(const LoudsTrie& key_trie,
     }
     const absl::string_view encoded_prefix = encoded_key.substr(0, i);
     const absl::string_view prefix(key,
-                                   codec->GetDecodedKeyLength(encoded_prefix));
+                                   codec.GetDecodedKeyLength(encoded_prefix));
 
     switch (callback->OnKey(prefix)) {
       case Callback::TRAVERSE_DONE:
@@ -885,7 +873,7 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
     }
 
     const int key_id = key_trie_.GetKeyIdOfTerminalNode(node);
-    for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_,
+    for (TokenDecodeIterator iter(*codec_, value_trie_, frequent_pos_,
                                   *actual_prefix,
                                   GetTokenArrayPtr(token_array_, key_id));
          !iter.Done(); iter.Next()) {
@@ -933,7 +921,7 @@ void SystemDictionary::LookupPrefix(absl::string_view key,
   codec_->EncodeKey(key, &encoded_key);
 
   if (!conversion_request.IsKanaModifierInsensitiveConversion()) {
-    RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, codec_,
+    RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, *codec_,
                             frequent_pos_, key.data(), encoded_key, callback,
                             SelectAllTokens());
     return;
@@ -965,7 +953,7 @@ void SystemDictionary::LookupExact(absl::string_view key,
     return;
   }
   // Callback on each token.
-  for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_, key,
+  for (TokenDecodeIterator iter(*codec_, value_trie_, frequent_pos_, key,
                                 GetTokenArrayPtr(token_array_, key_id));
        !iter.Done(); iter.Next()) {
     if (callback->OnToken(key, key, *iter.Get().token) !=
@@ -1073,7 +1061,7 @@ void SystemDictionary::RegisterReverseLookupTokensForT13N(
   std::string hiragana_value = japanese_util::KatakanaToHiragana(value);
   std::string encoded_key;
   codec_->EncodeKey(hiragana_value, &encoded_key);
-  RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, codec_,
+  RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, *codec_,
                           frequent_pos_, hiragana_value.data(), encoded_key,
                           callback,
                           FilterTokenForRegisterReverseLookupTokensForT13N());
@@ -1108,7 +1096,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
 
 void SystemDictionary::ScanTokens(const absl::btree_set<int>& id_set,
                                   ReverseLookupCache* cache) const {
-  for (TokenScanIterator iter(codec_, token_array_); !iter.Done();
+  for (TokenScanIterator iter(*codec_, token_array_); !iter.Done();
        iter.Next()) {
     const TokenScanIterator::Result& result = iter.Get();
     if (result.value_id != -1 && id_set.contains(result.value_id)) {
@@ -1139,7 +1127,7 @@ void SystemDictionary::RegisterReverseLookupResults(
         continue;
       }
       for (TokenDecodeIterator iter(
-               codec_, value_trie_, frequent_pos_, tokens_key,
+               *codec_, value_trie_, frequent_pos_, tokens_key,
                encoded_tokens_ptr + reverse_result.tokens_offset);
            !iter.Done(); iter.Next()) {
         const TokenInfo& token_info = iter.Get();

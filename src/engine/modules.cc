@@ -111,8 +111,8 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
     if (!sysdic.ok()) {
       return std::move(sysdic).status();
     }
-    auto value_dic = std::make_unique<ValueDictionary>(
-        *pos_matcher_, &(*sysdic)->value_trie());
+    auto value_dic = std::make_unique<ValueDictionary>(*pos_matcher_,
+                                                       (*sysdic)->value_trie());
     RETURN_IF_NULL(user_dictionary_);
     RETURN_IF_NULL(pos_matcher_);
     dictionary_ = std::make_unique<DictionaryImpl>(

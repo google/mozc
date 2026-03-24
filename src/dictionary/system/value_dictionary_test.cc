@@ -41,7 +41,7 @@
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/system/codec_interface.h"
+#include "dictionary/system/codec.h"
 #include "request/conversion_request.h"
 #include "storage/louds/louds_trie.h"
 #include "storage/louds/louds_trie_builder.h"
@@ -76,7 +76,7 @@ class ValueDictionaryTest : public ::testing::Test {
 
   void AddValue(const absl::string_view value) {
     std::string encoded;
-    SystemDictionaryCodecFactory::GetCodec()->EncodeValue(value, &encoded);
+    codec_.EncodeValue(value, &encoded);
     louds_trie_builder_->Add(encoded);
   }
 
@@ -84,7 +84,7 @@ class ValueDictionaryTest : public ::testing::Test {
     louds_trie_builder_->Build();
     louds_trie_->Open(
         reinterpret_cast<const uint8_t*>(louds_trie_builder_->image().data()));
-    return new ValueDictionary(pos_matcher_, louds_trie_.get());
+    return new ValueDictionary(pos_matcher_, *louds_trie_);
   }
 
   void InitToken(const absl::string_view value, Token* token) const {
@@ -100,6 +100,7 @@ class ValueDictionaryTest : public ::testing::Test {
  protected:
   const PosMatcher pos_matcher_;
   ConversionRequest convreq_;
+  const SystemDictionaryCodec codec_;
   std::unique_ptr<LoudsTrieBuilder> louds_trie_builder_;
   std::unique_ptr<LoudsTrie> louds_trie_;
 };

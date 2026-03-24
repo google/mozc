@@ -42,7 +42,6 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 
 namespace mozc {
@@ -199,6 +198,9 @@ constexpr uint8_t kUpperCrammedIDMask = 0x3f;
 // This token is last token for a index word
 constexpr uint8_t kLastTokenFlag = 0x80;
 }  // namespace
+
+// TODO(taku): Swaps the if-elase blocks to prevent "ifndef".
+#ifndef GOOGLE_JAPANESE_INPUT_BUILD
 
 std::string SystemDictionaryCodec::GetSectionNameForKey() const {
   return kKeySectionName;
@@ -476,6 +478,10 @@ bool SystemDictionaryCodec::ReadTokenForReverseLookup(const uint8_t* ptr,
   *read_bytes = offset;
   return !(flags & kLastTokenFlag);
 }
+
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
+
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 namespace {
 
@@ -811,25 +817,7 @@ void ReadValueInfo(const uint8_t* ptr, uint8_t flags, int* value_id,
     *value_id = id;
   }
 }
+
 }  // namespace
-
-namespace {
-SystemDictionaryCodecInterface* g_system_dictionary_codec = nullptr;
-typedef SystemDictionaryCodec DefaultSystemDictionaryCodec;
-}  // namespace
-
-SystemDictionaryCodecInterface* SystemDictionaryCodecFactory::GetCodec() {
-  if (g_system_dictionary_codec == nullptr) {
-    return Singleton<DefaultSystemDictionaryCodec>::get();
-  } else {
-    return g_system_dictionary_codec;
-  }
-}
-
-void SystemDictionaryCodecFactory::SetCodec(
-    SystemDictionaryCodecInterface* codec) {
-  g_system_dictionary_codec = codec;
-}
-
 }  // namespace dictionary
 }  // namespace mozc

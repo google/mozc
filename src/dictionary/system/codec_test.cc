@@ -43,7 +43,6 @@
 #include "base/random.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "testing/gunit.h"
 
@@ -122,15 +121,9 @@ namespace {
 
 class SystemDictionaryCodecTest : public ::testing::Test {
  protected:
-  void SetUp() override {
-    SystemDictionaryCodecFactory::SetCodec(nullptr);
-    ResetAllTokens();
-  }
+  void SetUp() override { ResetAllTokens(); }
 
-  void TearDown() override {
-    SystemDictionaryCodecFactory::SetCodec(nullptr);
-    ResetAllTokens();
-  }
+  void TearDown() override { ResetAllTokens(); }
 
   void ResetAllTokens() {
     ClearTokens(&source_tokens_);
@@ -316,7 +309,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
   mutable mozc::Random random_;
 };
 
-class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
+class SystemDictionaryCodecMock : public SystemDictionaryCodec {
  public:
   std::string GetSectionNameForKey() const override { return "Mock"; }
   std::string GetSectionNameForValue() const override { return "Mock"; }
@@ -352,18 +345,8 @@ class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
   uint8_t GetTokensTerminationFlag() const override { return 0xff; }
 };
 
-TEST_F(SystemDictionaryCodecTest, FactoryTest) {
-  std::unique_ptr<SystemDictionaryCodecMock> mock =
-      std::make_unique<SystemDictionaryCodecMock>();
-  SystemDictionaryCodecFactory::SetCodec(mock.get());
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
-  EXPECT_EQ(codec->GetSectionNameForKey(), "Mock");
-}
-
 TEST_F(SystemDictionaryCodecTest, KeyCodecKanaTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   const std::string original = "よみ";
   std::string encoded;
   codec->EncodeKey(original, &encoded);
@@ -377,8 +360,7 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecKanaTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   const std::string original = "・ー";
   std::string encoded;
   codec->EncodeKey(original, &encoded);
@@ -408,8 +390,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, ValueCodecKanaTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   const std::string original = "もジ";
   std::string encoded;
   codec->EncodeValue(original, &encoded);
@@ -421,8 +402,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecKanaTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, ValueCodecAsciiTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   const std::string original = "word";
   std::string encoded;
   codec->EncodeValue(original, &encoded);
@@ -434,8 +414,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecAsciiTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenDefaultPosTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(1);
   SetDefaultPos(&source_tokens_[0]);
   std::string encoded;
@@ -447,8 +426,7 @@ TEST_F(SystemDictionaryCodecTest, TokenDefaultPosTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenFrequentPosTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(1);
   SetFrequentPos(&source_tokens_[0]);
   std::string encoded;
@@ -460,8 +438,7 @@ TEST_F(SystemDictionaryCodecTest, TokenFrequentPosTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenSamePosTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   {
     InitTokens(2);
     SetDefaultPos(&source_tokens_[0]);
@@ -488,8 +465,7 @@ TEST_F(SystemDictionaryCodecTest, TokenSamePosTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomPosTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(50);
   SetRandPos();
   std::string encoded;
@@ -501,8 +477,7 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomPosTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenDefaultCostTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(1);
   SetDefaultCost(&source_tokens_[0]);
   std::string encoded;
@@ -514,8 +489,7 @@ TEST_F(SystemDictionaryCodecTest, TokenDefaultCostTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenSmallCostTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(1);
   SetSmallCost(&source_tokens_[0]);
   std::string encoded;
@@ -527,8 +501,7 @@ TEST_F(SystemDictionaryCodecTest, TokenSmallCostTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomCostTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(50);
   SetRandCost();
   std::string encoded;
@@ -540,8 +513,7 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomCostTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenDefaultValueTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(1);
   SetDefaultValue(&source_tokens_[0]);
   std::string encoded;
@@ -553,8 +525,7 @@ TEST_F(SystemDictionaryCodecTest, TokenDefaultValueTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, UCS4CharactersTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   const std::string codepoint_including =
       // "𠀋𡈽𡌛𡑮𡢽𠮟𡚴𡸴𣇄𣗄𣜿𣝣𣳾𤟱𥒎𥔎𥝱𥧄𥶡𦫿𦹀𧃴𧚄𨉷𨏍𪆐𠂉"
       "\xf0\xa0\x80\x8b\xf0\xa1\x88\xbd\xf0\xa1\x8c\x9b\xf0\xa1\x91\xae\xf0"
@@ -656,8 +627,7 @@ TEST_F(SystemDictionaryCodecTest, UCS4CharactersTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenSameValueTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(2);
   SetDefaultValue(&source_tokens_[0]);
   SetSameValue(&source_tokens_[1]);
@@ -670,8 +640,7 @@ TEST_F(SystemDictionaryCodecTest, TokenSameValueTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomValueTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(50);
   SetRandValue();
   std::string encoded;
@@ -683,8 +652,7 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomValueTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomLabelTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(50);
   SetRandLabel();
   std::string encoded;
@@ -696,8 +664,7 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomLabelTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(50);
   SetRandPos();
   SetRandCost();
@@ -712,8 +679,7 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   InitTokens(50);
   SetRandPos();
   SetRandCost();
@@ -745,11 +711,7 @@ TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, CodecTest) {
-  std::unique_ptr<SystemDictionaryCodec> impl =
-      std::make_unique<SystemDictionaryCodec>();
-  SystemDictionaryCodecFactory::SetCodec(impl.get());
-  SystemDictionaryCodecInterface* codec =
-      SystemDictionaryCodecFactory::GetCodec();
+  auto codec = std::make_unique<SystemDictionaryCodec>();
   {  // Token
     InitTokens(50);
     SetRandPos();

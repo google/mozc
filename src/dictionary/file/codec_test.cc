@@ -43,8 +43,6 @@
 #include "base/file/temp_dir.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "dictionary/file/codec_factory.h"
-#include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -59,28 +57,19 @@ class CodecTest : public ::testing::Test {
   CodecTest() : test_file_(testing::MakeTempFileOrDie()) {}
 
  protected:
-  void SetUp() override { DictionaryFileCodecFactory::SetCodec(nullptr); }
-
-  void TearDown() override {
-    // Reset to default setting
-    DictionaryFileCodecFactory::SetCodec(nullptr);
-  }
-
-  void AddSection(const DictionaryFileCodecInterface *codec,
-                  const absl::string_view name, const char *ptr, int len,
-                  std::vector<DictionaryFileSection> *sections) const {
-    CHECK(codec);
+  void AddSection(const DictionaryFileCodec& codec,
+                  const absl::string_view name, const char* ptr, int len,
+                  std::vector<DictionaryFileSection>* sections) const {
     CHECK(sections);
     sections->push_back(
-        DictionaryFileSection(ptr, len, codec->GetSectionName(name)));
+        DictionaryFileSection(ptr, len, codec.GetSectionName(name)));
   }
 
-  bool FindSection(const DictionaryFileCodecInterface *codec,
+  bool FindSection(const DictionaryFileCodec& codec,
                    absl::Span<const DictionaryFileSection> sections,
-                   const absl::string_view name, int *index) const {
-    CHECK(codec);
+                   const absl::string_view name, int* index) const {
     CHECK(index);
-    const std::string name_find = codec->GetSectionName(name);
+    const std::string name_find = codec.GetSectionName(name);
     for (size_t i = 0; i < sections.size(); ++i) {
       if (sections[i].name == name_find) {
         *index = i;
@@ -90,7 +79,7 @@ class CodecTest : public ::testing::Test {
     return false;
   }
 
-  bool CheckValue(const DictionaryFileSection &section,
+  bool CheckValue(const DictionaryFileSection& section,
                   const absl::string_view expected) const {
     const std::string value(section.ptr, section.len);
     return (expected == value);
@@ -99,57 +88,8 @@ class CodecTest : public ::testing::Test {
   TempFile test_file_;
 };
 
-class CodecMock : public DictionaryFileCodecInterface {
- public:
-  void WriteSections(absl::Span<const DictionaryFileSection> sections,
-                     std::ostream *ofs) const override {
-    const std::string value = "placeholder value";
-    ofs->write(value.data(), value.size());
-  }
-
-  absl::Status ReadSections(
-      const char *image, int length,
-      std::vector<DictionaryFileSection> *sections) const override {
-    sections->emplace_back(nullptr, 0, "placeholder name");
-    return absl::Status();
-  }
-
-  std::string GetSectionName(const absl::string_view name) const override {
-    return "placeholder section name";
-  }
-};
-
-TEST_F(CodecTest, FactoryTest) {
-  CodecMock codec_mock;
-  DictionaryFileCodecFactory::SetCodec(&codec_mock);
-  const DictionaryFileCodecInterface *codec =
-      DictionaryFileCodecFactory::GetCodec();
-  ASSERT_NE(codec, nullptr);
-  std::vector<DictionaryFileSection> sections;
-  {
-    OutputFileStream ofs;
-    ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
-    codec->WriteSections(sections, &ofs);
-  }
-  {
-    absl::StatusOr<std::string> content =
-        FileUtil::GetContents(test_file_.path());
-    ASSERT_OK(content);
-    EXPECT_EQ(*content, "placeholder value");
-  }
-  {
-    EXPECT_EQ(sections.size(), 0);
-    EXPECT_OK(codec->ReadSections(nullptr, 0, &sections));
-    EXPECT_EQ(sections.size(), 1);
-    EXPECT_EQ(sections[0].name, "placeholder name");
-  }
-  { EXPECT_EQ(codec->GetSectionName("test"), "placeholder section name"); }
-}
-
 TEST_F(CodecTest, DefaultTest) {
-  const DictionaryFileCodecInterface *codec =
-      DictionaryFileCodecFactory::GetCodec();
-  ASSERT_NE(codec, nullptr);
+  const DictionaryFileCodec codec;
   {
     std::vector<DictionaryFileSection> write_sections;
     const std::string value0 = "Value 0 test";
@@ -160,13 +100,13 @@ TEST_F(CodecTest, DefaultTest) {
                &write_sections);
     OutputFileStream ofs;
     ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
-    codec->WriteSections(write_sections, &ofs);
+    codec.WriteSections(write_sections, &ofs);
   }
   // sections will reference this buffer.
   absl::StatusOr<std::string> buf = FileUtil::GetContents(test_file_.path());
   std::vector<DictionaryFileSection> sections;
   ASSERT_OK(buf);
-  ASSERT_OK(codec->ReadSections(buf->data(), buf->size(), &sections));
+  ASSERT_OK(codec.ReadSections(buf->data(), buf->size(), &sections));
   ASSERT_EQ(2, sections.size());
   int index = -1;
   ASSERT_TRUE(FindSection(codec, sections, "Section 0", &index));
@@ -179,11 +119,7 @@ TEST_F(CodecTest, DefaultTest) {
 }
 
 TEST_F(CodecTest, RandomizedCodecTest) {
-  DictionaryFileCodec internal_codec;
-  DictionaryFileCodecFactory::SetCodec(&internal_codec);
-  const DictionaryFileCodecInterface *codec =
-      DictionaryFileCodecFactory::GetCodec();
-  ASSERT_NE(codec, nullptr);
+  const DictionaryFileCodec codec;
   {
     std::vector<DictionaryFileSection> write_sections;
     const std::string value0 = "Value 0 test";
@@ -194,13 +130,13 @@ TEST_F(CodecTest, RandomizedCodecTest) {
                &write_sections);
     OutputFileStream ofs;
     ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
-    codec->WriteSections(write_sections, &ofs);
+    codec.WriteSections(write_sections, &ofs);
   }
   // sections will reference this buffer.
   absl::StatusOr<std::string> buf = FileUtil::GetContents(test_file_.path());
   std::vector<DictionaryFileSection> sections;
   ASSERT_OK(buf);
-  ASSERT_OK(codec->ReadSections(buf->data(), buf->size(), &sections));
+  ASSERT_OK(codec.ReadSections(buf->data(), buf->size(), &sections));
   ASSERT_EQ(2, sections.size());
   int index = -1;
   ASSERT_TRUE(FindSection(codec, sections, "Section 0", &index));

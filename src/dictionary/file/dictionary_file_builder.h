@@ -35,7 +35,7 @@
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
-#include "dictionary/file/codec_interface.h"
+#include "dictionary/file/codec.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {
@@ -43,21 +43,22 @@ namespace dictionary {
 
 class DictionaryFileBuilder {
  public:
-  explicit DictionaryFileBuilder(DictionaryFileCodecInterface *file_codec);
-  DictionaryFileBuilder(const DictionaryFileBuilder &) = delete;
-  DictionaryFileBuilder &operator=(const DictionaryFileBuilder &) = delete;
+  DictionaryFileBuilder() = delete;
+  explicit DictionaryFileBuilder(const DictionaryFileCodec& file_codec);
+  DictionaryFileBuilder(const DictionaryFileBuilder&) = delete;
+  DictionaryFileBuilder& operator=(const DictionaryFileBuilder&) = delete;
   virtual ~DictionaryFileBuilder();
 
   // Adds a section from a file
   bool AddSectionFromFile(absl::string_view section_name,
-                          const std::string &file_name);
+                          const std::string& file_name);
 
   // Writes the image of dictionary file to a file.
-  void WriteImageToFile(const std::string &file_name) const;
+  void WriteImageToFile(const std::string& file_name) const;
 
  private:
   // DictionaryFileBuilder does not take the ownership of |file_codec_|.
-  DictionaryFileCodecInterface *file_codec_;
+  const DictionaryFileCodec& file_codec_;
   std::vector<DictionaryFileSection> sections_;
   absl::flat_hash_set<std::string> added_;
 };

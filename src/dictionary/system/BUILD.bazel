@@ -39,20 +39,10 @@ load(
 package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
-    name = "codec_interface",
-    hdrs = ["codec_interface.h"],
-    deps = [
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
-mozc_cc_library(
     name = "codec",
     srcs = ["codec.cc"],
     hdrs = [
         "codec.h",
-        "codec_interface.h",
     ],
     deps = [
         ":words_info",
@@ -90,7 +80,7 @@ mozc_cc_library(
     name = "token_decode_iterator",
     hdrs = ["token_decode_iterator.h"],
     deps = [
-        ":codec_interface",
+        ":codec",
         ":words_info",
         "//base:japanese_util",
         "//dictionary:dictionary_token",
@@ -118,8 +108,7 @@ mozc_cc_library(
         "//base/strings:unicode",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
-        "//dictionary/file:codec_factory",
-        "//dictionary/file:codec_interface",
+        "//dictionary/file:codec",
         "//dictionary/file:dictionary_file",
         "//request:conversion_request",
         "//storage/louds:bit_vector_based_array",
@@ -169,8 +158,7 @@ mozc_cc_library(
         "//base:util",
         "//base:vlog",
         "//dictionary:dictionary_token",
-        "//dictionary/file:codec_factory",
-        "//dictionary/file:codec_interface",
+        "//dictionary/file:codec",
         "//dictionary/file:section",
         "//storage/louds:bit_vector_based_array_builder",
         "//storage/louds:louds_trie_builder",

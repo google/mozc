@@ -44,7 +44,7 @@ mozc_cc_library(
     hdrs = ["dictionary_file.h"],
     visibility = ["//dictionary:__subpackages__"],
     deps = [
-        ":codec_interface",
+        ":codec",
         ":section",
         "//base:mmap",
         "@com_google_absl//absl/log:check",
@@ -59,7 +59,7 @@ mozc_cc_library(
     srcs = ["dictionary_file_builder.cc"],
     hdrs = ["dictionary_file_builder.h"],
     deps = [
-        ":codec_interface",
+        ":codec",
         ":section",
         "//base:file_stream",
         "@com_google_absl//absl/container:flat_hash_set",
@@ -74,7 +74,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["dictionary_file_test.cc"],
     deps = [
-        ":codec_factory",
+        ":codec",
         ":dictionary_file",
         ":dictionary_file_builder",
         "//base:file_util",
@@ -82,18 +82,6 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/log:check",
-    ],
-)
-
-mozc_cc_library(
-    name = "codec_interface",
-    hdrs = ["codec_interface.h"],
-    visibility = ["//dictionary:__subpackages__"],
-    deps = [
-        ":section",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -108,8 +96,8 @@ mozc_cc_library(
     name = "codec",
     srcs = ["codec.cc"],
     hdrs = ["codec.h"],
+    visibility = ["//dictionary:__subpackages__"],
     deps = [
-        ":codec_interface",
         ":codec_util",
         ":section",
         "//base:bits",
@@ -120,20 +108,6 @@ mozc_cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
-    ],
-)
-
-mozc_cc_library(
-    name = "codec_factory",
-    srcs = ["codec_factory.cc"],
-    hdrs = [
-        "codec_factory.h",
-    ],
-    visibility = ["//dictionary:__subpackages__"],
-    deps = [
-        ":codec",
-        ":codec_interface",
-        "//base:singleton",
     ],
 )
 
@@ -150,8 +124,6 @@ mozc_cc_test(
     srcs = ["codec_test.cc"],
     deps = [
         ":codec",
-        ":codec_factory",
-        ":codec_interface",
         ":section",
         "//base:file_stream",
         "//base:file_util",

@@ -73,7 +73,7 @@ std::unique_ptr<DictionaryData> CreateDictionaryData() {
           .Build()
           .value();
   auto val_dict = std::make_unique<ValueDictionary>(*ret->pos_matcher,
-                                                    &sys_dict->value_trie());
+                                                    sys_dict->value_trie());
 
   std::unique_ptr<UserPos> user_pos =
       UserPos::CreateFromDataManager(data_manager);

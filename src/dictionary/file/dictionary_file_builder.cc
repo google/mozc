@@ -37,17 +37,15 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/file_stream.h"
-#include "dictionary/file/codec_interface.h"
+#include "dictionary/file/codec.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {
 namespace dictionary {
 
 DictionaryFileBuilder::DictionaryFileBuilder(
-    DictionaryFileCodecInterface *file_codec)
-    : file_codec_(file_codec) {
-  DCHECK(file_codec_);
-}
+    const DictionaryFileCodec& file_codec)
+    : file_codec_(file_codec) {}
 
 DictionaryFileBuilder::~DictionaryFileBuilder() {
   for (std::vector<DictionaryFileSection>::iterator itr = sections_.begin();
@@ -57,7 +55,7 @@ DictionaryFileBuilder::~DictionaryFileBuilder() {
 }
 
 bool DictionaryFileBuilder::AddSectionFromFile(
-    const absl::string_view section_name, const std::string &file_name) {
+    const absl::string_view section_name, const std::string& file_name) {
   if (added_.find(section_name) != added_.end()) {
     DLOG(INFO) << "Already added: " << section_name;
     return false;
@@ -72,19 +70,19 @@ bool DictionaryFileBuilder::AddSectionFromFile(
 
   // Reads the file
   ifs.seekg(0, std::ios::beg);
-  char *ptr = new char[len];
+  char* ptr = new char[len];
   ifs.read(ptr, len);
 
   sections_.push_back(DictionaryFileSection(ptr, len, ""));
-  sections_.back().name = file_codec_->GetSectionName(section_name);
+  sections_.back().name = file_codec_.GetSectionName(section_name);
   return true;
 }
 
 void DictionaryFileBuilder::WriteImageToFile(
-    const std::string &file_name) const {
+    const std::string& file_name) const {
   LOG(INFO) << "Start writing dictionary file to " << file_name;
   OutputFileStream ofs(file_name, std::ios::binary);
-  file_codec_->WriteSections(sections_, &ofs);
+  file_codec_.WriteSections(sections_, &ofs);
   LOG(INFO) << "Generated";
 }
 

@@ -41,9 +41,8 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/file/codec_factory.h"
-#include "dictionary/file/codec_interface.h"
-#include "dictionary/system/codec_interface.h"
+#include "dictionary/file/codec.h"
+#include "dictionary/system/codec.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
@@ -63,11 +62,13 @@ class SystemDictionaryBuilder final {
     std::vector<TokenInfo> tokens;
   };
 
-  SystemDictionaryBuilder() = default;
-  // This class does not have the ownership of |codec|.
-  SystemDictionaryBuilder(const SystemDictionaryCodecInterface* codec,
-                          const DictionaryFileCodecInterface* file_codec)
-      : codec_(codec), file_codec_(file_codec) {}
+  SystemDictionaryBuilder()
+      : codec_(std::make_unique<const SystemDictionaryCodec>()),
+        file_codec_(std::make_unique<const DictionaryFileCodec>()) {}
+
+  SystemDictionaryBuilder(std::unique_ptr<const SystemDictionaryCodec> codec,
+                          std::unique_ptr<const DictionaryFileCodec> file_codec)
+      : codec_(std::move(codec)), file_codec_(std::move(file_codec)) {}
 
   SystemDictionaryBuilder(const SystemDictionaryBuilder&) = delete;
   SystemDictionaryBuilder& operator=(const SystemDictionaryBuilder&) = delete;
@@ -111,10 +112,8 @@ class SystemDictionaryBuilder final {
   // mapping from {left_id, right_id} to POS index (0--255)
   std::map<uint32_t, int> frequent_pos_;
 
-  const SystemDictionaryCodecInterface* codec_ =
-      SystemDictionaryCodecFactory::GetCodec();
-  const DictionaryFileCodecInterface* file_codec_ =
-      DictionaryFileCodecFactory::GetCodec();
+  std::unique_ptr<const SystemDictionaryCodec> codec_;
+  std::unique_ptr<const DictionaryFileCodec> file_codec_;
 };
 
 }  // namespace dictionary

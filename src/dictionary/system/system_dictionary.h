@@ -41,9 +41,9 @@
 #include "absl/strings/string_view.h"
 #include "base/thread.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/file/codec_interface.h"
+#include "dictionary/file/codec.h"
 #include "dictionary/file/dictionary_file.h"
-#include "dictionary/system/codec_interface.h"
+#include "dictionary/system/codec.h"
 #include "dictionary/system/key_expansion_table.h"
 #include "request/conversion_request.h"
 #include "storage/louds/bit_vector_based_array.h"
@@ -67,7 +67,6 @@ class SystemDictionary : public DictionaryInterface {
   // Usage:
   //   SystemDictionary::Builder builder(filename);
   //   builder.SetOptions(SystemDictionary::NONE);
-  //   builder.SetCodec(nullptr);
   //   SystemDictionary *dictionary = builder.Build();
   //   ...
   //   delete dictionary;
@@ -84,11 +83,6 @@ class SystemDictionary : public DictionaryInterface {
     // Sets options (default: NONE)
     Builder& SetOptions(Options options);
 
-    // Sets codec (default: nullptr)
-    // Uses default codec if this is nullptr
-    // Doesn't take the ownership of |codec|.
-    Builder& SetCodec(const SystemDictionaryCodecInterface* codec);
-
     // Builds and returns system dictionary.
     absl::StatusOr<std::unique_ptr<SystemDictionary>> Build();
 
@@ -100,15 +94,8 @@ class SystemDictionary : public DictionaryInterface {
       };
 
       Specification(InputType t, absl::string_view fn, const char* p, int l,
-                    Options o, const SystemDictionaryCodecInterface* codec,
-                    const DictionaryFileCodecInterface* file_codec)
-          : type(t),
-            filename(fn),
-            ptr(p),
-            len(l),
-            options(o),
-            codec(codec),
-            file_codec(file_codec) {}
+                    Options o)
+          : type(t), filename(fn), ptr(p), len(l), options(o) {}
 
       InputType type;
 
@@ -120,8 +107,6 @@ class SystemDictionary : public DictionaryInterface {
       const int len;
 
       Options options;
-      const SystemDictionaryCodecInterface* codec;
-      const DictionaryFileCodecInterface* file_codec;
     };
 
     std::unique_ptr<Specification> spec_;
@@ -162,8 +147,8 @@ class SystemDictionary : public DictionaryInterface {
   class ReverseLookupIndex;
   struct PredictiveLookupSearchState;
 
-  SystemDictionary(const SystemDictionaryCodecInterface* codec,
-                   const DictionaryFileCodecInterface* file_codec);
+  SystemDictionary(std::unique_ptr<const SystemDictionaryCodec> codec,
+                   std::unique_ptr<const DictionaryFileCodec> file_codec);
 
   bool OpenDictionaryFile(bool enable_reverse_lookup_index);
 
@@ -193,7 +178,8 @@ class SystemDictionary : public DictionaryInterface {
   storage::louds::LoudsTrie value_trie_;
   storage::louds::BitVectorBasedArray token_array_;
   const uint32_t* frequent_pos_;
-  const SystemDictionaryCodecInterface* codec_;
+  std::unique_ptr<const SystemDictionaryCodec> codec_;
+  std::unique_ptr<const DictionaryFileCodec> file_codec_;
   KeyExpansionTable hiragana_expansion_table_;
   std::unique_ptr<DictionaryFile> dictionary_file_;
   mutable AtomicSharedPtr<ReverseLookupCache> reverse_lookup_cache_;

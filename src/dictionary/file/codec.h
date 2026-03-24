@@ -42,29 +42,29 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {
 namespace dictionary {
 
-class DictionaryFileCodec : public DictionaryFileCodecInterface {
+class DictionaryFileCodec {
  public:
   DictionaryFileCodec() = default;
-  DictionaryFileCodec(const DictionaryFileCodec &) = delete;
-  DictionaryFileCodec &operator=(const DictionaryFileCodec &) = delete;
+  DictionaryFileCodec(const DictionaryFileCodec&) = delete;
+  DictionaryFileCodec& operator=(const DictionaryFileCodec&) = delete;
+  virtual ~DictionaryFileCodec() {}
 
-  void WriteSections(absl::Span<const DictionaryFileSection> sections,
-                     std::ostream *ofs) const override;
-  absl::Status ReadSections(
-      const char *image, int length,
-      std::vector<DictionaryFileSection> *sections) const override;
-  std::string GetSectionName(absl::string_view name) const override;
+  virtual void WriteSections(absl::Span<const DictionaryFileSection> sections,
+                             std::ostream* ofs) const;
+  virtual absl::Status ReadSections(
+      const char* image, int length,
+      std::vector<DictionaryFileSection>* sections) const;
+  virtual std::string GetSectionName(absl::string_view name) const;
 
  private:
-  void WriteHeader(std::ostream *ofs) const;
-  void WriteSection(const DictionaryFileSection &section,
-                    std::ostream *ofs) const;
+  void WriteHeader(std::ostream* ofs) const;
+  void WriteSection(const DictionaryFileSection& section,
+                    std::ostream* ofs) const;
 
   // Seed value for name string finger print
   // Made it mutable for reading sections. std::atomic is used to make it
