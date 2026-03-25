@@ -47,35 +47,6 @@
 namespace mozc {
 namespace dictionary {
 namespace {
-void EncodeDecodeKeyImpl(absl::string_view src, std::string* dst);
-size_t GetEncodedDecodedKeyLengthImpl(absl::string_view src);
-
-uint8_t GetFlagsForToken(absl::Span<const TokenInfo> tokens, int index);
-
-uint8_t GetFlagForPos(const TokenInfo& token_info, const Token* token);
-
-uint8_t GetFlagForValue(const TokenInfo& token_info, const Token* token);
-
-void EncodeCost(const TokenInfo& token_info, uint8_t* dst, int* offset);
-
-void EncodePos(const TokenInfo& token_info, uint8_t flags, uint8_t* dst,
-               int* offset);
-
-void EncodeValueInfo(const TokenInfo& token_info, uint8_t flags, uint8_t* dst,
-                     int* offset);
-
-uint8_t ReadFlags(uint8_t val);
-
-void DecodeCost(const uint8_t* ptr, TokenInfo* token, int* offset);
-
-void DecodePos(const uint8_t* ptr, uint8_t flags, TokenInfo* token,
-               int* offset);
-
-void DecodeValueInfo(const uint8_t* ptr, uint8_t flags, TokenInfo* token_info,
-                     int* offset);
-
-void ReadValueInfo(const uint8_t* ptr, uint8_t flags, int* value_id,
-                   int* offset);
 
 //// Constants for section name ////
 constexpr char kKeySectionName[] = "k";
@@ -197,10 +168,345 @@ constexpr uint8_t kUpperCrammedIDMask = 0x3f;
 //// Last token flag ////
 // This token is last token for a index word
 constexpr uint8_t kLastTokenFlag = 0x80;
+
+// Swap the area for Hiragana, prolonged sound mark and middle dot with
+// the one for control codes and alphabets.
+//
+// U+3041 - U+305F ("ぁ" - "た") <=> U+0001 - U+001F
+// U+3060 - U+3095 ("だ" - "ゕ") <=> U+0040 - U+0075
+// U+30FB - U+30FC ("・" - "ー") <=> U+0076 - U+0077
+//
+// U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
+void EncodeDecodeKeyImpl(const absl::string_view src, std::string* dst) {
+  for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
+    static_assert(sizeof(uint32_t) == sizeof(char32_t),
+                  "char32 must be 32-bit integer size.");
+    uint32_t code = iter.Get();
+    int32_t offset = 0;
+    if ((code >= 0x0001 && code <= 0x001f) ||
+        (code >= 0x3041 && code <= 0x305f)) {
+      offset = 0x3041 - 0x0001;
+    } else if ((code >= 0x0040 && code <= 0x0075) ||
+               (code >= 0x3060 && code <= 0x3095)) {
+      offset = 0x3060 - 0x0040;
+    } else if ((code >= 0x0076 && code <= 0x0077) ||
+               (code >= 0x30FB && code <= 0x30FC)) {
+      offset = 0x30FB - 0x0076;
+    }
+    if (code < 0x80) {
+      code += offset;
+    } else {
+      code -= offset;
+    }
+    DCHECK_GT(code, 0);
+    Util::CodepointToUtf8Append(code, dst);
+  }
+}
+
+size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src) {
+  size_t size = src.size();
+  for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
+    static_assert(sizeof(uint32_t) == sizeof(char32_t),
+                  "char32 must be 32-bit integer size.");
+    uint32_t code = iter.Get();
+    if ((code >= 0x3041 && code <= 0x3095) ||
+        (code >= 0x30FB && code <= 0x30FC)) {
+      // This code point takes three bytes in UTF-8 encoding,
+      // and will be swapped with a code point which takes one byte in UTF-8
+      // encoding.
+      size -= 2;
+      continue;
+    }
+    if ((code >= 0x0001 && code <= 0x001F) ||
+        (code >= 0x0040 && code <= 0x0077)) {
+      // Vice versa on above.
+      size += 2;
+      continue;
+    }
+  }
+  return size;
+}
+
+uint8_t GetFlagForPos(const TokenInfo& token_info, const Token* token) {
+  CHECK(token);
+  const uint16_t lid = token->lid;
+  const uint16_t rid = token->rid;
+  if (lid > kPosMax || rid > kPosMax) {
+    // We can use LOG(FATAL) here, as this code runs in dictionary_builder.
+    LOG(FATAL) << "Too large pos id: lid " << lid << ", rid " << rid;
+  }
+
+  if (token_info.pos_type == TokenInfo::FREQUENT_POS) {
+    return kFrequentPosFlag;
+  } else if (token_info.pos_type == TokenInfo::SAME_AS_PREV_POS) {
+    return kSameAsPrevPosFlag;
+  } else if (lid == rid) {
+    return kMonoPosFlag;
+  } else {
+    return kFullPosFlag;
+  }
+}
+
+uint8_t GetFlagForValue(const TokenInfo& token_info, const Token* token) {
+  CHECK(token);
+  if (token_info.value_type == TokenInfo::SAME_AS_PREV_VALUE) {
+    return kSameAsPrevValueFlag;
+  } else if (token_info.value_type == TokenInfo::AS_IS_HIRAGANA) {
+    return kAsIsHiraganaValueFlag;
+  } else if (token_info.value_type == TokenInfo::AS_IS_KATAKANA) {
+    return kAsIsKatakanaValueFlag;
+  } else {
+    return kNormalValueFlag;
+  }
+}
+
+// Return flags for token
+uint8_t GetFlagsForToken(absl::Span<const TokenInfo> tokens, int index) {
+  // Determines the flags for this token.
+  uint8_t flags = 0;
+  if (index == tokens.size() - 1) {
+    flags |= kLastTokenFlag;
+  }
+
+  const TokenInfo& token_info = tokens[index];
+  const Token* token = token_info.token;
+
+  // Special treatment for spelling correction.
+  if (token->attributes & Token::SPELLING_CORRECTION) {
+    flags |= kSpellingCorrectionFlag;
+  }
+
+  // Pos flag
+  flags |= GetFlagForPos(token_info, token);
+
+  if (index == 0) {
+    CHECK_NE(flags & kPosTypeFlagMask, kSameAsPrevPosFlag)
+        << "First token cannot become the SameAsPrevPos.";
+  }
+
+  // Value flag
+  flags |= GetFlagForValue(token_info, token);
+  if (index == 0) {
+    CHECK_NE(flags & kValueTypeFlagMask, kSameAsPrevValueFlag)
+        << "First token cannot become the SameAsPrevValue.";
+  }
+
+  if ((flags & kUpperCrammedIDMask) == 0) {
+    // Lower 6bits are available. Use it for value trie id.
+    flags |= kCrammedIDFlag;
+  }
+  return flags;
+}
+
+void EncodeCost(const TokenInfo& token_info, uint8_t* dst, int* offset) {
+  const Token* token = token_info.token;
+  CHECK_LE(token->cost, kCostMax) << "Assuming cost is within 15bits.";
+  if (token_info.cost_type == TokenInfo::CAN_USE_SMALL_ENCODING) {
+    dst[*offset] = (token->cost >> 8) | kSmallCostFlag;
+    *offset += 1;
+  } else {
+    dst[*offset] = token->cost >> 8;
+    dst[*offset + 1] = token->cost & 0xff;
+    *offset += 2;
+  }
+}
+
+void EncodePos(const TokenInfo& token_info, uint8_t flags, uint8_t* dst,
+               int* offset) {
+  const uint8_t pos_flag = flags & kPosTypeFlagMask;
+  const Token* token = token_info.token;
+  const uint16_t lid = token->lid;
+  const uint16_t rid = token->rid;
+  switch (pos_flag) {
+    case kFullPosFlag: {
+      // 3 bytes
+      dst[*offset] = (lid & 255);
+      dst[*offset + 1] = ((rid << 4) & 255) | (lid >> 8);
+      dst[*offset + 2] = (rid >> 4) & 255;
+      *offset += 3;
+      break;
+    }
+    case kMonoPosFlag: {
+      // 2 bytes
+      dst[*offset] = (lid & 255);
+      dst[*offset + 1] = (lid >> 8);
+      *offset += 2;
+      break;
+    }
+    case kFrequentPosFlag: {
+      // Frequent 1 byte pos.
+      const int id = token_info.id_in_frequent_pos_map;
+      CHECK_GE(id, 0);
+      dst[*offset] = id;
+      *offset += 1;
+      break;
+    }
+    case kSameAsPrevPosFlag: {
+      break;
+    }
+    default: {
+      // We can use LOG(FATAL) here. This code runs in dictionary_builder.
+      LOG(FATAL) << "Should not come here";
+      break;
+    }
+  }
+}
+
+void EncodeValueInfo(const TokenInfo& token_info, uint8_t flags, uint8_t* dst,
+                     int* offset) {
+  const uint8_t value_type_flag = flags & kValueTypeFlagMask;
+  if (value_type_flag != kNormalValueFlag) {
+    // No need to store id for word trie
+    return;
+  }
+  const uint32_t id = token_info.id_in_value_trie;
+  if (id > kValueTrieIdMax) {  // 22 bits
+    // We can use LOG(FATAL) here.
+    LOG(FATAL) << "Too large word trie (should be less than 2^22)\t" << id;
+  }
+
+  if (flags & kCrammedIDFlag) {
+    dst[*offset] = id & 255;
+    dst[*offset + 1] = (id >> 8) & 255;
+    // Uses lower 6 bits of flags.
+    dst[0] |= (id >> 16) & kUpperCrammedIDMask;
+    *offset += 2;
+  } else {
+    dst[*offset] = id & 255;
+    dst[*offset + 1] = (id >> 8) & 255;
+    dst[*offset + 2] = (id >> 16) & 255;
+    *offset += 3;
+  }
+}
+
+uint8_t ReadFlags(uint8_t val) {
+  uint8_t ret = val;
+  if (ret & kCrammedIDFlag) {
+    ret &= kUpperFlagsMask;
+  }
+  return ret;
+}
+
+void DecodeCost(const uint8_t* ptr, TokenInfo* token_info, int* offset) {
+  DCHECK(ptr);
+  DCHECK(token_info);
+  DCHECK(offset);
+  if (ptr[*offset] & kSmallCostFlag) {
+    token_info->token->cost = ((ptr[*offset] & kSmallCostMask) << 8);
+    *offset += 1;
+  } else {
+    token_info->token->cost = (ptr[*offset] << 8);
+    token_info->token->cost += ptr[*offset + 1];
+    *offset += 2;
+  }
+}
+
+void DecodePos(const uint8_t* ptr, uint8_t flags, TokenInfo* token_info,
+               int* offset) {
+  DCHECK(ptr);
+  DCHECK(token_info);
+  DCHECK(offset);
+  const uint8_t pos_flag = (flags & kPosTypeFlagMask);
+  Token* token = token_info->token;
+  switch (pos_flag) {
+    case kFrequentPosFlag: {
+      const int pos_id = ptr[*offset];
+      token_info->pos_type = TokenInfo::FREQUENT_POS;
+      token_info->id_in_frequent_pos_map = pos_id;
+      *offset += 1;
+      break;
+    }
+    case kSameAsPrevPosFlag: {
+      token_info->pos_type = TokenInfo::SAME_AS_PREV_POS;
+      break;
+    }
+    case kMonoPosFlag: {
+      const uint16_t id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
+      token->lid = id;
+      token->rid = id;
+      *offset += 2;
+      break;
+    }
+    case kFullPosFlag: {
+      token->lid = ptr[*offset];
+      token->lid += ((ptr[*offset + 1] & 0x0f) << 8);
+      token->rid = (ptr[*offset + 1] >> 4);
+      token->rid += (ptr[*offset + 2] << 4);
+      *offset += 3;
+      break;
+    }
+    default: {
+      DLOG(FATAL) << "should never come here";
+      break;
+    }
+  }
+}
+
+void DecodeValueInfo(const uint8_t* ptr, uint8_t flags, TokenInfo* token_info,
+                     int* offset) {
+  DCHECK(ptr);
+  DCHECK(token_info);
+  DCHECK(offset);
+  const uint8_t value_flag = (flags & kValueTypeFlagMask);
+  switch (value_flag) {
+    case kAsIsHiraganaValueFlag: {
+      token_info->value_type = TokenInfo::AS_IS_HIRAGANA;
+      break;
+    }
+    case kAsIsKatakanaValueFlag: {
+      token_info->value_type = TokenInfo::AS_IS_KATAKANA;
+      break;
+    }
+    case kSameAsPrevValueFlag: {
+      token_info->value_type = TokenInfo::SAME_AS_PREV_VALUE;
+      break;
+    }
+    case kNormalValueFlag: {
+      token_info->value_type = TokenInfo::DEFAULT_VALUE;
+      uint32_t id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
+      if (flags & kCrammedIDFlag) {
+        id |= ((ptr[0] & kUpperCrammedIDMask) << 16);
+        *offset += 2;
+      } else {
+        id |= (ptr[*offset + 2] << 16);
+        *offset += 3;
+      }
+      token_info->id_in_value_trie = id;
+      break;
+    }
+    default: {
+      DLOG(FATAL) << "should never come here";
+      break;
+    }
+  }
+}
+
+// Get value id only for reverse conversion
+void ReadValueInfo(const uint8_t* ptr, uint8_t flags, int* value_id,
+                   int* offset) {
+  DCHECK(ptr);
+  DCHECK(value_id);
+  DCHECK(offset);
+  *value_id = -1;
+  const uint8_t value_flag = (flags & kValueTypeFlagMask);
+  if (value_flag == kNormalValueFlag) {
+    uint32_t id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
+    if (flags & kCrammedIDFlag) {
+      id |= ((ptr[0] & kUpperCrammedIDMask) << 16);
+      *offset += 2;
+    } else {
+      id |= (ptr[*offset + 2] << 16);
+      *offset += 3;
+    }
+    *value_id = id;
+  }
+}
+
 }  // namespace
 
-// TODO(taku): Swaps the if-elase blocks to prevent "ifndef".
-#ifndef GOOGLE_JAPANESE_INPUT_BUILD
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 std::string SystemDictionaryCodec::GetSectionNameForKey() const {
   return kKeySectionName;
@@ -479,345 +785,7 @@ bool SystemDictionaryCodec::ReadTokenForReverseLookup(const uint8_t* ptr,
   return !(flags & kLastTokenFlag);
 }
 
-#else   // GOOGLE_JAPANESE_INPUT_BUILD
-
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-namespace {
-
-// Swap the area for Hiragana, prolonged sound mark and middle dot with
-// the one for control codes and alphabets.
-//
-// U+3041 - U+305F ("ぁ" - "た") <=> U+0001 - U+001F
-// U+3060 - U+3095 ("だ" - "ゕ") <=> U+0040 - U+0075
-// U+30FB - U+30FC ("・" - "ー") <=> U+0076 - U+0077
-//
-// U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
-void EncodeDecodeKeyImpl(const absl::string_view src, std::string* dst) {
-  for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    static_assert(sizeof(uint32_t) == sizeof(char32_t),
-                  "char32 must be 32-bit integer size.");
-    uint32_t code = iter.Get();
-    int32_t offset = 0;
-    if ((code >= 0x0001 && code <= 0x001f) ||
-        (code >= 0x3041 && code <= 0x305f)) {
-      offset = 0x3041 - 0x0001;
-    } else if ((code >= 0x0040 && code <= 0x0075) ||
-               (code >= 0x3060 && code <= 0x3095)) {
-      offset = 0x3060 - 0x0040;
-    } else if ((code >= 0x0076 && code <= 0x0077) ||
-               (code >= 0x30FB && code <= 0x30FC)) {
-      offset = 0x30FB - 0x0076;
-    }
-    if (code < 0x80) {
-      code += offset;
-    } else {
-      code -= offset;
-    }
-    DCHECK_GT(code, 0);
-    Util::CodepointToUtf8Append(code, dst);
-  }
-}
-
-size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src) {
-  size_t size = src.size();
-  for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    static_assert(sizeof(uint32_t) == sizeof(char32_t),
-                  "char32 must be 32-bit integer size.");
-    uint32_t code = iter.Get();
-    if ((code >= 0x3041 && code <= 0x3095) ||
-        (code >= 0x30FB && code <= 0x30FC)) {
-      // This code point takes three bytes in UTF-8 encoding,
-      // and will be swapped with a code point which takes one byte in UTF-8
-      // encoding.
-      size -= 2;
-      continue;
-    }
-    if ((code >= 0x0001 && code <= 0x001F) ||
-        (code >= 0x0040 && code <= 0x0077)) {
-      // Vice versa on above.
-      size += 2;
-      continue;
-    }
-  }
-  return size;
-}
-
-// Return flags for token
-uint8_t GetFlagsForToken(absl::Span<const TokenInfo> tokens, int index) {
-  // Determines the flags for this token.
-  uint8_t flags = 0;
-  if (index == tokens.size() - 1) {
-    flags |= kLastTokenFlag;
-  }
-
-  const TokenInfo& token_info = tokens[index];
-  const Token* token = token_info.token;
-
-  // Special treatment for spelling correction.
-  if (token->attributes & Token::SPELLING_CORRECTION) {
-    flags |= kSpellingCorrectionFlag;
-  }
-
-  // Pos flag
-  flags |= GetFlagForPos(token_info, token);
-
-  if (index == 0) {
-    CHECK_NE(flags & kPosTypeFlagMask, kSameAsPrevPosFlag)
-        << "First token cannot become the SameAsPrevPos.";
-  }
-
-  // Value flag
-  flags |= GetFlagForValue(token_info, token);
-  if (index == 0) {
-    CHECK_NE(flags & kValueTypeFlagMask, kSameAsPrevValueFlag)
-        << "First token cannot become the SameAsPrevValue.";
-  }
-
-  if ((flags & kUpperCrammedIDMask) == 0) {
-    // Lower 6bits are available. Use it for value trie id.
-    flags |= kCrammedIDFlag;
-  }
-  return flags;
-}
-
-uint8_t GetFlagForPos(const TokenInfo& token_info, const Token* token) {
-  CHECK(token);
-  const uint16_t lid = token->lid;
-  const uint16_t rid = token->rid;
-  if (lid > kPosMax || rid > kPosMax) {
-    // We can use LOG(FATAL) here, as this code runs in dictionary_builder.
-    LOG(FATAL) << "Too large pos id: lid " << lid << ", rid " << rid;
-  }
-
-  if (token_info.pos_type == TokenInfo::FREQUENT_POS) {
-    return kFrequentPosFlag;
-  } else if (token_info.pos_type == TokenInfo::SAME_AS_PREV_POS) {
-    return kSameAsPrevPosFlag;
-  } else if (lid == rid) {
-    return kMonoPosFlag;
-  } else {
-    return kFullPosFlag;
-  }
-}
-
-uint8_t GetFlagForValue(const TokenInfo& token_info, const Token* token) {
-  CHECK(token);
-  if (token_info.value_type == TokenInfo::SAME_AS_PREV_VALUE) {
-    return kSameAsPrevValueFlag;
-  } else if (token_info.value_type == TokenInfo::AS_IS_HIRAGANA) {
-    return kAsIsHiraganaValueFlag;
-  } else if (token_info.value_type == TokenInfo::AS_IS_KATAKANA) {
-    return kAsIsKatakanaValueFlag;
-  } else {
-    return kNormalValueFlag;
-  }
-}
-
-void EncodeCost(const TokenInfo& token_info, uint8_t* dst, int* offset) {
-  const Token* token = token_info.token;
-  CHECK_LE(token->cost, kCostMax) << "Assuming cost is within 15bits.";
-  if (token_info.cost_type == TokenInfo::CAN_USE_SMALL_ENCODING) {
-    dst[*offset] = (token->cost >> 8) | kSmallCostFlag;
-    *offset += 1;
-  } else {
-    dst[*offset] = token->cost >> 8;
-    dst[*offset + 1] = token->cost & 0xff;
-    *offset += 2;
-  }
-}
-
-void EncodePos(const TokenInfo& token_info, uint8_t flags, uint8_t* dst,
-               int* offset) {
-  const uint8_t pos_flag = flags & kPosTypeFlagMask;
-  const Token* token = token_info.token;
-  const uint16_t lid = token->lid;
-  const uint16_t rid = token->rid;
-  switch (pos_flag) {
-    case kFullPosFlag: {
-      // 3 bytes
-      dst[*offset] = (lid & 255);
-      dst[*offset + 1] = ((rid << 4) & 255) | (lid >> 8);
-      dst[*offset + 2] = (rid >> 4) & 255;
-      *offset += 3;
-      break;
-    }
-    case kMonoPosFlag: {
-      // 2 bytes
-      dst[*offset] = (lid & 255);
-      dst[*offset + 1] = (lid >> 8);
-      *offset += 2;
-      break;
-    }
-    case kFrequentPosFlag: {
-      // Frequent 1 byte pos.
-      const int id = token_info.id_in_frequent_pos_map;
-      CHECK_GE(id, 0);
-      dst[*offset] = id;
-      *offset += 1;
-      break;
-    }
-    case kSameAsPrevPosFlag: {
-      break;
-    }
-    default: {
-      // We can use LOG(FATAL) here. This code runs in dictionary_builder.
-      LOG(FATAL) << "Should not come here";
-      break;
-    }
-  }
-}
-
-void EncodeValueInfo(const TokenInfo& token_info, uint8_t flags, uint8_t* dst,
-                     int* offset) {
-  const uint8_t value_type_flag = flags & kValueTypeFlagMask;
-  if (value_type_flag != kNormalValueFlag) {
-    // No need to store id for word trie
-    return;
-  }
-  const uint32_t id = token_info.id_in_value_trie;
-  if (id > kValueTrieIdMax) {  // 22 bits
-    // We can use LOG(FATAL) here.
-    LOG(FATAL) << "Too large word trie (should be less than 2^22)\t" << id;
-  }
-
-  if (flags & kCrammedIDFlag) {
-    dst[*offset] = id & 255;
-    dst[*offset + 1] = (id >> 8) & 255;
-    // Uses lower 6 bits of flags.
-    dst[0] |= (id >> 16) & kUpperCrammedIDMask;
-    *offset += 2;
-  } else {
-    dst[*offset] = id & 255;
-    dst[*offset + 1] = (id >> 8) & 255;
-    dst[*offset + 2] = (id >> 16) & 255;
-    *offset += 3;
-  }
-}
-
-uint8_t ReadFlags(uint8_t val) {
-  uint8_t ret = val;
-  if (ret & kCrammedIDFlag) {
-    ret &= kUpperFlagsMask;
-  }
-  return ret;
-}
-
-void DecodeCost(const uint8_t* ptr, TokenInfo* token_info, int* offset) {
-  DCHECK(ptr);
-  DCHECK(token_info);
-  DCHECK(offset);
-  if (ptr[*offset] & kSmallCostFlag) {
-    token_info->token->cost = ((ptr[*offset] & kSmallCostMask) << 8);
-    *offset += 1;
-  } else {
-    token_info->token->cost = (ptr[*offset] << 8);
-    token_info->token->cost += ptr[*offset + 1];
-    *offset += 2;
-  }
-}
-
-void DecodePos(const uint8_t* ptr, uint8_t flags, TokenInfo* token_info,
-               int* offset) {
-  DCHECK(ptr);
-  DCHECK(token_info);
-  DCHECK(offset);
-  const uint8_t pos_flag = (flags & kPosTypeFlagMask);
-  Token* token = token_info->token;
-  switch (pos_flag) {
-    case kFrequentPosFlag: {
-      const int pos_id = ptr[*offset];
-      token_info->pos_type = TokenInfo::FREQUENT_POS;
-      token_info->id_in_frequent_pos_map = pos_id;
-      *offset += 1;
-      break;
-    }
-    case kSameAsPrevPosFlag: {
-      token_info->pos_type = TokenInfo::SAME_AS_PREV_POS;
-      break;
-    }
-    case kMonoPosFlag: {
-      const uint16_t id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
-      token->lid = id;
-      token->rid = id;
-      *offset += 2;
-      break;
-    }
-    case kFullPosFlag: {
-      token->lid = ptr[*offset];
-      token->lid += ((ptr[*offset + 1] & 0x0f) << 8);
-      token->rid = (ptr[*offset + 1] >> 4);
-      token->rid += (ptr[*offset + 2] << 4);
-      *offset += 3;
-      break;
-    }
-    default: {
-      DLOG(FATAL) << "should never come here";
-      break;
-    }
-  }
-}
-
-void DecodeValueInfo(const uint8_t* ptr, uint8_t flags, TokenInfo* token_info,
-                     int* offset) {
-  DCHECK(ptr);
-  DCHECK(token_info);
-  DCHECK(offset);
-  const uint8_t value_flag = (flags & kValueTypeFlagMask);
-  switch (value_flag) {
-    case kAsIsHiraganaValueFlag: {
-      token_info->value_type = TokenInfo::AS_IS_HIRAGANA;
-      break;
-    }
-    case kAsIsKatakanaValueFlag: {
-      token_info->value_type = TokenInfo::AS_IS_KATAKANA;
-      break;
-    }
-    case kSameAsPrevValueFlag: {
-      token_info->value_type = TokenInfo::SAME_AS_PREV_VALUE;
-      break;
-    }
-    case kNormalValueFlag: {
-      token_info->value_type = TokenInfo::DEFAULT_VALUE;
-      uint32_t id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
-      if (flags & kCrammedIDFlag) {
-        id |= ((ptr[0] & kUpperCrammedIDMask) << 16);
-        *offset += 2;
-      } else {
-        id |= (ptr[*offset + 2] << 16);
-        *offset += 3;
-      }
-      token_info->id_in_value_trie = id;
-      break;
-    }
-    default: {
-      DLOG(FATAL) << "should never come here";
-      break;
-    }
-  }
-}
-
-// Get value id only for reverse conversion
-void ReadValueInfo(const uint8_t* ptr, uint8_t flags, int* value_id,
-                   int* offset) {
-  DCHECK(ptr);
-  DCHECK(value_id);
-  DCHECK(offset);
-  *value_id = -1;
-  const uint8_t value_flag = (flags & kValueTypeFlagMask);
-  if (value_flag == kNormalValueFlag) {
-    uint32_t id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
-    if (flags & kCrammedIDFlag) {
-      id |= ((ptr[0] & kUpperCrammedIDMask) << 16);
-      *offset += 2;
-    } else {
-      id |= (ptr[*offset + 2] << 16);
-      *offset += 3;
-    }
-    *value_id = id;
-  }
-}
-
-}  // namespace
 }  // namespace dictionary
 }  // namespace mozc
