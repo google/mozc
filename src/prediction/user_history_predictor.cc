@@ -527,6 +527,24 @@ bool UserHistoryPredictor::RemoveEntryWithInnerSegment(absl::string_view key,
 bool UserHistoryPredictor::ClearHistoryEntry(absl::string_view key,
                                              absl::string_view value) {
   bool deleted = false;
+
+  // The stored data uses the kPrefixZeroSpace for the prefix space, so
+  // we replace the prefix space with kPrefixZeroSpace.
+  std::string normalized_key, normalized_value;
+  auto maybe_normalize_prefix_space =
+      [](absl::string_view str, std::string& buffer) -> absl::string_view {
+    for (absl::string_view space : {kPrefixFullSpace, kPrefixHalfSpace}) {
+      if (absl::StartsWith(str, space)) {
+        buffer = absl::StrCat(kPrefixZeroSpace, str.substr(space.size()));
+        return buffer;
+      }
+    }
+    return str;
+  };
+
+  key = maybe_normalize_prefix_space(key, normalized_key);
+  value = maybe_normalize_prefix_space(value, normalized_value);
+
   {
     // Finds the history entry that has the exactly same key and value and has
     // not been removed yet. If exists, remove it.

@@ -3700,25 +3700,37 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryUnigram) {
   // Tests ClearHistoryEntry() for unigram history.
   UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  // Add a unigram history ("japanese", "Japanese").
-  UserHistoryPredictor::Entry* e =
-      InsertEntry(predictor, "japanese", "Japanese");
-  e->set_last_access_time(1);
+  {
+    // Add a unigram history ("japanese", "Japanese").
+    UserHistoryPredictor::Entry* e =
+        InsertEntry(predictor, "japanese", "Japanese");
+    e->set_last_access_time(1);
 
-  // "Japanese" should be suggested and predicted from "japan".
-  EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
+    // "Japanese" should be suggested and predicted from "japan".
+    EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "Japanese"));
 
-  // Delete the history.
-  EXPECT_TRUE(predictor->ClearHistoryEntry("japanese", "Japanese"));
+    // Delete the history.
+    EXPECT_TRUE(predictor->ClearHistoryEntry("japanese", "Japanese"));
 
-  EXPECT_TRUE(e->removed());
+    EXPECT_TRUE(e->removed());
 
-  // "Japanese" should be never be suggested nor predicted.
-  constexpr absl::string_view kKey = "japanese";
-  for (size_t i = 0; i < kKey.size(); ++i) {
-    absl::string_view prefix = kKey.substr(0, i);
-    EXPECT_FALSE(IsSuggested(predictor, prefix, "Japanese"));
-    EXPECT_FALSE(IsPredicted(predictor, prefix, "Japanese"));
+    // "Japanese" should be never be suggested nor predicted.
+    constexpr absl::string_view kKey = "japanese";
+    for (size_t i = 0; i < kKey.size(); ++i) {
+      absl::string_view prefix = kKey.substr(0, i);
+      EXPECT_FALSE(IsSuggested(predictor, prefix, "Japanese"));
+      EXPECT_FALSE(IsPredicted(predictor, prefix, "Japanese"));
+    }
+  }
+
+  // Prefix space.
+  {
+    // The data is stored with zero width sapce.
+    UserHistoryPredictor::Entry* e =
+        InsertEntry(predictor, "\u200bとうきょう", "\u200b東京");
+    EXPECT_FALSE(e->removed());
+    EXPECT_TRUE(predictor->ClearHistoryEntry(" とうきょう", " 東京"));
+    EXPECT_TRUE(e->removed());
   }
 }
 
