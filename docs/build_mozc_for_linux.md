@@ -10,7 +10,7 @@ If you are not sure what the following commands do, please check the
 descriptions below and make sure the operations before running them.
 
 ```
-git clone https://github.com/google/mozc.git --recursive
+git clone https://github.com/google/mozc.git
 cd mozc/src
 
 bazelisk build package --config oss_linux --config release_build
@@ -102,7 +102,7 @@ macro defined in
 You can download Mozc source code as follows.
 
 ```
-git clone https://github.com/google/mozc.git --recursive
+git clone https://github.com/google/mozc.git
 cd mozc/src
 ```
 
