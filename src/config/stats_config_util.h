@@ -54,7 +54,7 @@ class StatsConfigUtil {
   // Get send stats config from proper field.
   //  Windows: registry
   //  Mac: text file
-  // If the return value is true, we turn on breakpad and usage stats.
+  // If the return value is true, we turn on usage stats.
   // TODO(toshiyuki): plist for Mac
   static bool IsEnabled();
 

@@ -83,9 +83,6 @@ class SystemUtil {
   // <server directory>/documents but it can change among platforms.
   static std::string GetDocumentDirectory();
 
-  // Returns the directory path crash dumps are stored.
-  static std::string GetCrashReportDirectory();
-
   // return the username.  This function's name was GetUserName.
   // Since Windows reserves GetUserName as a macro, we have changed
   // the name to GetUserNameAsString.

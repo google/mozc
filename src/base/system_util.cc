@@ -507,12 +507,6 @@ std::string SystemUtil::GetDocumentDirectory() {
 #endif  // __linux__, __APPLE__
 }
 
-std::string SystemUtil::GetCrashReportDirectory() {
-  constexpr char kCrashReportDirectory[] = "CrashReports";
-  return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
-                            kCrashReportDirectory);
-}
-
 std::string SystemUtil::GetUserNameAsString() {
 #if defined(_WIN32)
   wchar_t wusername[UNLEN + 1];
