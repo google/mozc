@@ -86,19 +86,11 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "codec_util",
-    srcs = ["codec_util.cc"],
-    hdrs = ["codec_util.h"],
-    deps = ["@com_google_absl//absl/log:check"],
-)
-
-mozc_cc_library(
     name = "codec",
     srcs = ["codec.cc"],
     hdrs = ["codec.h"],
     visibility = ["//dictionary:__subpackages__"],
     deps = [
-        ":codec_util",
         ":section",
         "//base:bits",
         "//base:hash",

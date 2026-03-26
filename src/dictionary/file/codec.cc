@@ -46,11 +46,29 @@
 #include "base/bits.h"
 #include "base/hash.h"
 #include "base/vlog.h"
-#include "dictionary/file/codec_util.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {
 namespace dictionary {
+namespace filecodec_util {
+
+void WriteInt32(int32_t value, std::ostream* ofs) {
+  DCHECK(ofs);
+  ofs->write(reinterpret_cast<const char*>(&value), sizeof(value));
+}
+
+int RoundUp4(int length) {
+  const int rem = (length % 4);
+  return length + ((4 - rem) % 4);
+}
+
+void Pad4(int length, std::ostream* ofs) {
+  DCHECK(ofs);
+  for (int i = length; (i % 4) != 0; ++i) {
+    (*ofs) << '\0';
+  }
+}
+}  // namespace filecodec_util
 
 void DictionaryFileCodec::WriteSections(
     absl::Span<const DictionaryFileSection> sections, std::ostream* ofs) const {
