@@ -61,7 +61,7 @@ void Utf8ToSjis(absl::string_view input, std::string *output) {
     return;
   }
 
-  std::unique_ptr<char[]> sjis(new char[output_length_without_null]);
+  auto sjis = std::make_unique<char[]>(output_length_without_null);
   const int actual_output_length_without_null = ::WideCharToMultiByte(
       kCodePageShiftJIS, 0, utf16.data(), utf16.size(), sjis.get(),
       output_length_without_null, nullptr, nullptr);
@@ -97,7 +97,7 @@ std::wstring StringUtil::KeyToReading(absl::string_view key) {
     return L"";
   }
 
-  std::unique_ptr<char[]> halfwidth_chars(new char[halfwidth_len_without_null]);
+  auto halfwidth_chars = std::make_unique<char[]>(halfwidth_len_without_null);
   const size_t actual_halfwidth_len_without_null =
       ::LCMapStringA(lcid, LCMAP_HALFWIDTH, sjis.c_str(), sjis.size(),
                      halfwidth_chars.get(), halfwidth_len_without_null);
@@ -112,8 +112,7 @@ std::wstring StringUtil::KeyToReading(absl::string_view key) {
     return L"";
   }
 
-  std::unique_ptr<wchar_t[]> wide_output(
-      new wchar_t[output_length_without_null]);
+  auto wide_output = std::make_unique<wchar_t[]>(output_length_without_null);
   const int actual_output_length_without_null = ::MultiByteToWideChar(
       cp_sjis, 0, halfwidth_chars.get(), actual_halfwidth_len_without_null,
       wide_output.get(), output_length_without_null);

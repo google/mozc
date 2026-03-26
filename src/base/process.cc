@@ -130,7 +130,7 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t* pid) {
 
   // The |lpCommandLine| parameter of CreateProcessW should be writable
   // so that we create a std::unique_ptr<wchar_t[]> here.
-  std::unique_ptr<wchar_t[]> wpath2(new wchar_t[wpath.size() + 1]);
+  auto wpath2 = std::make_unique<wchar_t[]>(wpath.size() + 1);
   if (0 != wcscpy_s(wpath2.get(), wpath.size() + 1, wpath.c_str())) {
     return false;
   }

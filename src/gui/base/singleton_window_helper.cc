@@ -79,7 +79,7 @@ bool ReadWindowInfo(const std::string &lock_name,
       return false;
     }
 
-    std::unique_ptr<char[]> buf(new char[size]);
+    auto buf = std::make_unique<char[]>(size);
 
     DWORD read_size = 0;
     if (!::ReadFile(handle.get(), buf.get(), size, &read_size, nullptr)) {

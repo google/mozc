@@ -117,8 +117,8 @@ int main(int argc, char** argv) {
   mozc::dictionary::SystemDictionaryBuilder builder;
   builder.BuildFromTokens(loader.tokens());
 
-  std::unique_ptr<std::ostream> output_stream(new mozc::OutputFileStream(
-      absl::GetFlag(FLAGS_output), std::ios::out | std::ios::binary));
+  auto output_stream = std::make_unique<mozc::OutputFileStream>(
+      absl::GetFlag(FLAGS_output), std::ios::out | std::ios::binary);
   builder.WriteToStream(absl::GetFlag(FLAGS_output), output_stream.get());
 
   return 0;

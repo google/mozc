@@ -134,7 +134,7 @@ RendererServer::RendererServer()
     : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut),
       renderer_interface_(nullptr),
       timeout_(0),
-      send_command_(new RendererServerSendCommand) {
+      send_command_(std::make_unique<RendererServerSendCommand>()) {
   watch_dog_ = std::make_unique<ProcessWatchDog>(
       [this](ProcessWatchDog::SignalType type) {
         if (type == ProcessWatchDog::SignalType::PROCESS_SIGNALED ||

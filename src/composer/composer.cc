@@ -448,7 +448,7 @@ void GetTransliterations(const Composition& composition,
 
 std::shared_ptr<const commands::Request> GetSharedDefaultRequest() {
   static const absl::NoDestructor<std::shared_ptr<const commands::Request>>
-      kRequest(new commands::Request);
+      kRequest(std::make_shared<commands::Request>());
   return *kRequest;
 }
 

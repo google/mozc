@@ -30,9 +30,9 @@
 #include "gui/base/setup_util.h"
 
 #include <cstdint>
+#include <memory>
 
 #include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_dictionary_util.h"
 
 #ifdef _WIN32
 #include <algorithm>
@@ -48,7 +48,8 @@ namespace mozc {
 namespace gui {
 
 SetupUtil::SetupUtil()
-    : storage_(new UserDictionaryStorage()), is_userdictionary_locked_(false) {}
+    : storage_(std::make_unique<UserDictionaryStorage>()),
+      is_userdictionary_locked_(false) {}
 
 bool SetupUtil::LockUserDictionary() {
   is_userdictionary_locked_ = storage_->Lock();

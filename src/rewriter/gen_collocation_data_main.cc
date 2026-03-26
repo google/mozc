@@ -39,6 +39,7 @@
 
 #include <ios>
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -68,14 +69,16 @@ void Convert() {
     entries.push_back(line);
   }
 
+  std::unique_ptr<std::ostream> ofs_ptr;
   std::ostream* ofs = &std::cout;
   if (!absl::GetFlag(FLAGS_output).empty()) {
     if (absl::GetFlag(FLAGS_binary_mode)) {
-      ofs = new OutputFileStream(absl::GetFlag(FLAGS_output),
-                                 std::ios::out | std::ios::binary);
+      ofs_ptr = std::make_unique<OutputFileStream>(
+          absl::GetFlag(FLAGS_output), std::ios::out | std::ios::binary);
     } else {
-      ofs = new OutputFileStream(absl::GetFlag(FLAGS_output));
+      ofs_ptr = std::make_unique<OutputFileStream>(absl::GetFlag(FLAGS_output));
     }
+    ofs = ofs_ptr.get();
   }
 
   if (absl::GetFlag(FLAGS_binary_mode)) {
@@ -84,10 +87,6 @@ void Convert() {
     const std::string kNameSpace = "CollocationData";
     OutputExistenceHeader(entries, kNameSpace, ofs,
                           absl::GetFlag(FLAGS_error_rate));
-  }
-
-  if (ofs != &std::cout) {
-    delete ofs;
   }
 }
 }  // namespace

@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <ios>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -86,7 +87,8 @@ UserDictionaryStorage::UserDictionaryStorage()
 
 UserDictionaryStorage::UserDictionaryStorage(std::string filename)
     : filename_(std::move(filename)),
-      process_mutex_(new ProcessMutex(FileUtil::Basename(filename_))) {}
+      process_mutex_(
+          std::make_unique<ProcessMutex>(FileUtil::Basename(filename_))) {}
 
 UserDictionaryStorage::~UserDictionaryStorage() { UnLock(); }
 

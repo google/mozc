@@ -107,7 +107,7 @@ absl::string_view SerializedStringArray::SerializeToBuffer(
   const size_type header_byte_size = 4 * (1 + 2 * strs.size());
 
   // Calculate the offsets of each string.
-  std::unique_ptr<uint32_t[]> offsets(new uint32_t[strs.size()]);
+  auto offsets = std::make_unique<uint32_t[]>(strs.size());
   difference_type current_offset =
       header_byte_size;  // The offset for first string.
   for (difference_type i = 0; i < strs.size(); ++i) {
@@ -119,7 +119,7 @@ absl::string_view SerializedStringArray::SerializeToBuffer(
 
   // At this point, |current_offset| is the byte length of the whole binary
   // image.  Allocate a necessary buffer as uint32_t array.
-  buffer->reset(new uint32_t[(current_offset + 3) / 4]);
+  *buffer = std::make_unique<uint32_t[]>((current_offset + 3) / 4);
 
   (*buffer)[0] = static_cast<uint32_t>(strs.size());
   for (difference_type i = 0; i < strs.size(); ++i) {

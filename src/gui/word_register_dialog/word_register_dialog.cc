@@ -82,7 +82,7 @@ QString GetEnv(const char* envname) {
   if (buffer_size == 0) {
     return QLatin1String("");
   }
-  std::unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_size]);
+  auto buffer = std::make_unique<wchar_t[]>(buffer_size);
   const DWORD num_copied =
       ::GetEnvironmentVariable(wenvname.c_str(), buffer.get(), buffer_size);
   if (num_copied > 0) {
@@ -107,7 +107,7 @@ QString GetEnv(const char* envname) {
 
 WordRegisterDialog::WordRegisterDialog()
     : is_available_(true),
-      storage_(new UserDictionaryStorage()),
+      storage_(std::make_unique<UserDictionaryStorage>()),
       client_(client::ClientFactory::NewClient()),
       window_title_(GuiUtil::ProductName()) {
   setupUi(this);

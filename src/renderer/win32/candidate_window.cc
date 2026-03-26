@@ -35,6 +35,7 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -233,10 +234,10 @@ void FillSolidRect(HDC dc, const RECT* rect, COLORREF color) {
 // ------------------------------------------------------------------------
 
 CandidateWindow::CandidateWindow()
-    : candidate_window_(new commands::CandidateWindow),
+    : candidate_window_(std::make_unique<commands::CandidateWindow>()),
       footer_logo_display_size_(0, 0),
       send_command_interface_(nullptr),
-      table_layout_(new TableLayout),
+      table_layout_(std::make_unique<TableLayout>()),
       text_renderer_(TextRenderer::Create()),
       indicator_width_(0),
       metrics_changed_(false),

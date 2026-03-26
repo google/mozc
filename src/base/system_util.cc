@@ -560,7 +560,7 @@ UserSidImpl::UserSidImpl() {
 
   DWORD length = 0;
   ::GetTokenInformation(htoken, TokenUser, nullptr, 0, &length);
-  std::unique_ptr<char[]> buf(new char[length]);
+  auto buf = std::make_unique<char[]>(length);
   PTOKEN_USER p_user = reinterpret_cast<PTOKEN_USER>(buf.get());
 
   if (length == 0 ||
@@ -617,7 +617,7 @@ std::string GetObjectNameAsString(HANDLE handle) {
     return "";
   }
 
-  std::unique_ptr<char[]> buf(new char[size]);
+  auto buf = std::make_unique<char[]>(size);
   DWORD return_size = 0;
   if (!::GetUserObjectInformationA(handle, UOI_NAME, buf.get(), size,
                                    &return_size)) {

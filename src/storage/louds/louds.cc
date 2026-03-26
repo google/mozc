@@ -31,7 +31,7 @@
 
 #include <cstddef>
 #include <cstdint>
-
+#include <memory>
 namespace mozc {
 namespace storage {
 namespace louds {
@@ -60,7 +60,7 @@ void Louds::Init(const uint8_t *image, int length, size_t bitvec_lb0_cache_size,
   if (cache_size == 0) {
     return;
   }
-  select_cache_.reset(new int[cache_size]);
+  select_cache_ = std::make_unique<int[]>(cache_size);
 
   if (select0_cache_size > 0) {
     // Precompute Select0(i) + 1 for i in (0, select0_cache_size).

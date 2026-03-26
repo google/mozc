@@ -373,11 +373,12 @@ struct SystemDictionary::PredictiveLookupSearchState {
 };
 
 SystemDictionary::Builder::Builder(absl::string_view filename)
-    : spec_(new Specification(Specification::FILENAME, filename, nullptr, -1,
-                              NONE)) {}
+    : spec_(std::make_unique<Specification>(Specification::FILENAME, filename,
+                                              nullptr, -1, NONE)) {}
 
 SystemDictionary::Builder::Builder(const char* ptr, int len)
-    : spec_(new Specification(Specification::IMAGE, "", ptr, len, NONE)) {}
+    : spec_(std::make_unique<Specification>(Specification::IMAGE, "", ptr, len,
+                                              NONE)) {}
 
 SystemDictionary::Builder& SystemDictionary::Builder::SetOptions(
     Options options) {
@@ -433,7 +434,7 @@ SystemDictionary::SystemDictionary(
     : frequent_pos_(nullptr),
       codec_(std::move(codec)),
       file_codec_(std::move(file_codec)),
-      dictionary_file_(new DictionaryFile(*file_codec_)) {}
+      dictionary_file_(std::make_unique<DictionaryFile>(*file_codec_)) {}
 
 SystemDictionary::~SystemDictionary() = default;
 

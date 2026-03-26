@@ -100,7 +100,7 @@ bool SerializeToBase64WString(const mozc::protobuf::Message &message,
   }
 
   const int serialized_len = message.ByteSize();
-  std::unique_ptr<BYTE[]> serialized(new BYTE[serialized_len]);
+  auto serialized = std::make_unique<BYTE[]>(serialized_len);
   if (!message.SerializeToArray(serialized.get(), serialized_len)) {
     LOG(ERROR) << "SerializeAsArray failed";
     return false;
@@ -113,7 +113,7 @@ bool SerializeToBase64WString(const mozc::protobuf::Message &message,
   if (result == FALSE) {
     return false;
   }
-  std::unique_ptr<wchar_t[]> base64_string(new wchar_t[base64_string_len]);
+  auto base64_string = std::make_unique<wchar_t[]>(base64_string_len);
   result = ::CryptBinaryToString(serialized.get(), serialized_len,
                                  CRYPT_STRING_BASE64, base64_string.get(),
                                  &base64_string_len);
@@ -141,7 +141,7 @@ bool DeserializeFromBase64WString(const std::wstring &src,
   if (result == FALSE) {
     return false;
   }
-  std::unique_ptr<BYTE[]> buffer(new BYTE[buffer_len]);
+  auto buffer = std::make_unique<BYTE[]>(buffer_len);
   result = ::CryptStringToBinary(src.c_str(), src.size(), CRYPT_STRING_BASE64,
                                  buffer.get(), &buffer_len, nullptr, nullptr);
   if (result == FALSE) {
@@ -214,8 +214,7 @@ bool StartServiceInternal(const ScopedSCHandle &service_handle,
     return true;
   }
 
-  std::unique_ptr<const wchar_t *[]> args(
-      new const wchar_t *[arguments.size()]);
+  auto args = std::make_unique<const wchar_t *[]>(arguments.size());
   for (size_t i = 0; i < arguments.size(); ++i) {
     args[i] = arguments[i].c_str();
   }
@@ -376,7 +375,7 @@ bool GetServiceConfig(const ScopedSCHandle &service_handle,
     return false;
   }
 
-  std::unique_ptr<char[]> buf(new char[size]);
+  auto buf = std::make_unique<char[]>(size);
   LPQUERY_SERVICE_CONFIG service_config =
       reinterpret_cast<LPQUERY_SERVICE_CONFIG>(buf.get());
 

@@ -69,7 +69,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
   {
     std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(kPath));
     ASSERT_NE(nullptr, ifs.get());
-    std::unique_ptr<char[]> buf(new char[kData.size() + 1]);
+    auto buf = std::make_unique<char[]>(kData.size() + 1);
     ifs->read(buf.get(), kData.size());
     buf.get()[kData.size()] = '\0';
     EXPECT_EQ(buf.get(), kData);
@@ -126,7 +126,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
     std::unique_ptr<std::istream> ifs(ConfigFileStream::OpenReadBinary(
         "user://" + std::string(kTestFileName)));
     ASSERT_NE(nullptr, ifs.get());
-    std::unique_ptr<char[]> buf(new char[kBinaryDataSize]);
+    auto buf = std::make_unique<char[]>(kBinaryDataSize);
     ifs->read(buf.get(), kBinaryDataSize);
     // Check if all the data are loaded as binary mode.
     for (size_t i = 0; i < kBinaryDataSize; ++i) {

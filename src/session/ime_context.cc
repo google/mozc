@@ -52,7 +52,7 @@ namespace {
 
 std::shared_ptr<const keymap::KeyMapManager> GetSharedDefaultKeyMapManager() {
   static const absl::NoDestructor<std::shared_ptr<const keymap::KeyMapManager>>
-      kDefaultKeyMapManager(new keymap::KeyMapManager);
+      kDefaultKeyMapManager(std::make_shared<keymap::KeyMapManager>());
   return *kDefaultKeyMapManager;
 }
 

@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 
 #include "absl/log/check.h"
 #include "base/coordinates.h"
@@ -58,11 +59,11 @@ const POINT kInvalidMousePosition = {-65535, -65535};
 }  // namespace
 
 WindowManager::WindowManager()
-    : main_window_(new CandidateWindow),
-      cascading_window_(new CandidateWindow),
-      indicator_window_(new IndicatorWindow),
-      infolist_window_(new InfolistWindow),
-      layout_manager_(new LayoutManager),
+    : main_window_(std::make_unique<CandidateWindow>()),
+      cascading_window_(std::make_unique<CandidateWindow>()),
+      indicator_window_(std::make_unique<IndicatorWindow>()),
+      infolist_window_(std::make_unique<InfolistWindow>()),
+      layout_manager_(std::make_unique<LayoutManager>()),
       send_command_interface_(nullptr),
       last_position_(kInvalidMousePosition),
       candidates_finger_print_(0),

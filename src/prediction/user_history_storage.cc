@@ -77,7 +77,7 @@ constexpr absl::string_view kFileName = "user://.history.db";
 }  // namespace
 
 UserHistoryStorage::UserHistoryStorage(absl::string_view filename)
-    : dic_(new DicCache(kLruCacheSize)), filename_(filename) {
+    : dic_(std::make_unique<DicCache>(kLruCacheSize)), filename_(filename) {
   AsyncLoad();
 }
 

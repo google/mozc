@@ -87,8 +87,7 @@ std::wstring LANGIDToString(LANGID langid) {
 bool UninstallHelper::RestoreUserIMEEnvironmentMain() {
   const UINT num_element =
       ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
-  std::unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
-      new LAYOUTORTIPPROFILE[num_element]);
+  auto buffer = std::make_unique<LAYOUTORTIPPROFILE[]>(num_element);
   const UINT num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
                                                    buffer.get(), num_element);
 

@@ -100,7 +100,7 @@ class GsettingsObserver {
 CandidateWindowHandler::CandidateWindowHandler(
     std::unique_ptr<renderer::RendererInterface> renderer)
     : renderer_(std::move(renderer)),
-      last_update_output_(new commands::Output()),
+      last_update_output_(std::make_unique<commands::Output>()),
       use_custom_font_description_(false) {}
 
 CandidateWindowHandler::~CandidateWindowHandler() {}

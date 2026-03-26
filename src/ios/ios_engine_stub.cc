@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <memory>
 #include <string>
 
 #include "ios/ios_engine.h"
@@ -42,7 +43,7 @@ class SessionHandler {
 namespace ios {
 
 IosEngine::IosEngine(const std::string &data_file_path)
-    : session_handler_(new SessionHandler), session_id_(0) {}
+    : session_handler_(std::make_unique<SessionHandler>()), session_id_(0) {}
 
 IosEngine::~IosEngine() = default;
 

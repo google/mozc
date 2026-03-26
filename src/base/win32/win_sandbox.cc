@@ -747,7 +747,7 @@ class ScopedTokenInfo {
     if (num_bytes == 0) {
       return;
     }
-    buffer_.reset(new BYTE[num_bytes]);
+    buffer_ = std::make_unique<BYTE[]>(num_bytes);
     TokenDataType* all_token_groups =
         reinterpret_cast<TokenDataType*>(buffer_.get());
     if (!::GetTokenInformation(token, TokenClass, all_token_groups, num_bytes,

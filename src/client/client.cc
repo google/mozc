@@ -98,7 +98,7 @@ constexpr absl::Duration kDeleteSessionOnDestructorTimeout = absl::Seconds(1);
 
 Client::Client()
     : id_(0),
-      server_launcher_(new ServerLauncher),
+      server_launcher_(std::make_unique<ServerLauncher>()),
       timeout_(kDefaultTimeout),
       server_status_(SERVER_UNKNOWN),
       server_protocol_version_(0),

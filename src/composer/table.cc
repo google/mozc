@@ -560,7 +560,7 @@ const Table& Table::GetDefaultTable() {
 
 std::shared_ptr<const Table> Table::GetSharedDefaultTable() {
   static absl::NoDestructor<std::shared_ptr<const Table>> kDefaultSharedTable(
-      new Table());
+      std::make_shared<Table>());
   return *kDefaultSharedTable;
 }
 

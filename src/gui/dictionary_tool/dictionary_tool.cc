@@ -313,7 +313,7 @@ DictionaryTool::DictionaryTool(QWidget* parent)
     : QMainWindow(parent),
       import_dialog_(nullptr),
       find_dialog_(nullptr),
-      storage_(new UserDictionaryStorage()),
+      storage_(std::make_unique<UserDictionaryStorage>()),
       current_dic_id_(0),
       window_title_(GuiUtil::ProductName()),
       dic_menu_(new QMenu),

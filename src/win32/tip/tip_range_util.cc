@@ -169,7 +169,7 @@ HRESULT TipRangeUtil::GetText(ITfRange *range, TfEditCookie edit_cookie,
   // Use a buffer on heap for longer size case.
   {
     constexpr size_t kBufferSize = 1024;
-    std::unique_ptr<wchar_t[]> buffer(new wchar_t[kBufferSize]);
+    auto buffer = std::make_unique<wchar_t[]>(kBufferSize);
     while (true) {
       ULONG fetched = 0;
       const HRESULT result = range_view->GetText(
