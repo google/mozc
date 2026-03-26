@@ -78,7 +78,7 @@ constexpr char kFileDelimiter = '/';
 
 }  // namespace
 
-// Ad-hoc workadound against macro problem on Windows.
+// Ad-hoc workaround against macro problem on Windows.
 // On Windows, following macros, defined when you include <windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.
@@ -472,11 +472,6 @@ absl::StatusOr<bool> FileUtilImpl::IsEquivalent(zstring_view filename1,
     return absl::UnknownError("No such file or directory");
   }
 
-#ifdef __APPLE__
-  return absl::UnimplementedError(
-      "std::filesystem is only available on macOS 10.15, iOS 13.0, or later");
-#else   // __APPLE__
-
   const std::filesystem::path src = filename1.c_str();
   const std::filesystem::path dst = filename2.c_str();
 
@@ -487,7 +482,6 @@ absl::StatusOr<bool> FileUtilImpl::IsEquivalent(zstring_view filename1,
   }
   return absl::UnknownError(
       absl::StrCat(error_code.value(), " ", error_code.message()));
-#endif  // __APPLE__
 }
 
 absl::Status FileUtil::AtomicRename(zstring_view from, zstring_view to) {
@@ -526,8 +520,8 @@ absl::Status FileUtilImpl::AtomicRename(zstring_view from,
   }
   return absl::OkStatus();
 #else   // !_WIN32
-  // Mac OSX: use rename(2), but rename(2) on Mac OSX
-  // is not properly implemented, atomic rename is POSIX spec though.
+  // macOS: use rename(2), but rename(2) on macOS is not properly implemented,
+  // atomic rename is POSIX spec though.
   // http://www.weirdnet.nl/apple/rename.html
   if (const int r = rename(from.c_str(), to.c_str()); r != 0) {
     const int err = errno;
@@ -543,11 +537,6 @@ absl::Status FileUtil::CreateHardLink(zstring_view from, zstring_view to) {
 }
 
 absl::Status FileUtilImpl::CreateHardLink(zstring_view from, zstring_view to) {
-#ifdef __APPLE__
-  return absl::UnimplementedError(
-      "std::filesystem is only available on macOS 10.15, iOS 13.0, or later.");
-#else   // __APPLE__
-
   const std::filesystem::path src = from.c_str();
   const std::filesystem::path dst = to.c_str();
 
@@ -558,7 +547,6 @@ absl::Status FileUtilImpl::CreateHardLink(zstring_view from, zstring_view to) {
         absl::StrCat(error_code.message(), " (code=", error_code.value(), ")"));
   }
   return absl::OkStatus();
-#endif  // __APPLE__
 }
 
 std::string FileUtil::JoinPath(
