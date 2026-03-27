@@ -76,6 +76,9 @@ class RendererServer : public IPCServer {
   virtual bool AsyncExecCommand(absl::string_view proto_message) = 0;
 
  protected:
+  // For testing purposes where a custom service name needs to be specified.
+  explicit RendererServer(bool for_testing);
+
   // implement Message Loop function.
   // This function should be blocking.
   // The return value is supposed to be used for the arg of exit().

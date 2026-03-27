@@ -87,6 +87,7 @@ class RendererClient final : public RendererInterface {
   static std::unique_ptr<RendererClient> Create();
 
   static std::unique_ptr<RendererClient> CreateForTesting(
+      const std::string& name,
       IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
       RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
       RendererPathCheckMode renderer_path_check_mode);
