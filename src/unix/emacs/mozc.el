@@ -345,7 +345,11 @@ EVENT is the last input event, which is usually passed by the command loop."
        ((mozc-protobuf-get output 'consumed)
         (let ((result (mozc-protobuf-get output 'result))
               (preedit (mozc-protobuf-get output 'preedit))
-              (candidates (mozc-protobuf-get output 'candidate-window)))
+              ;; Support both 'candidate-window (new) and 'candidates (old).
+              ;; 'candidates is also checked for backward compatibility with
+              ;; older versions of mozc_emacs_helper (see: #1424).
+              (candidates (or (mozc-protobuf-get output 'candidate-window)
+                              (mozc-protobuf-get output 'candidates))))
           (if (not (or result preedit))
               (mozc-clean-up-changes-on-buffer)  ; nothing to show
             (when result  ; Insert the result first.
