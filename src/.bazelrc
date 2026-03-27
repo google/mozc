@@ -68,6 +68,8 @@ common:windows_env --enable_runfiles
 build:windows_env --build_tag_filters=-nowin
 test:windows_env   --test_tag_filters=-nowin
 
+build:win_universal_installer --//:win_universal_installer
+
 # Android specific options
 build:android_env --copt "-DOS_ANDROID"
 build:android_env --build_tag_filters=-noandroid

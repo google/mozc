@@ -31,6 +31,7 @@
 #   Declaration of package_group for visibility managing.
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load(
@@ -341,5 +342,27 @@ selects.config_setting_group(
         "//bazel/cc_target_os:windows",
         "//bazel/cc_target_os:oss_windows",
         "//bazel/cc_target_os:prod_windows",
+    ],
+)
+
+bool_flag(
+    name = "win_universal_installer",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "local_win_universal_installer",
+    flag_values = {
+        "//:win_universal_installer": "True",
+    },
+)
+
+# Currently "enable_win_universal_installer" flag is compatible only with
+# "@platforms//cpu:x86_64".
+selects.config_setting_group(
+    name = "enable_win_universal_installer",
+    match_all = [
+        ":local_win_universal_installer",
+        "@platforms//cpu:x86_64",
     ],
 )

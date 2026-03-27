@@ -35,6 +35,10 @@
 #include <msiquery.h>
 // clang-format on
 
+#if defined(MOZC_ENABLE_WIN_UNIVERSAL_INSTALLER)
+#include <wow64apiset.h>
+#endif  // defined(MOZC_ENABLE_WIN_UNIVERSAL_INSTALLER)
+
 #undef StrCat  // NOLINT: TODO: triggers clang-tidy, defined by windows.h.
 
 #include <cstdarg>
@@ -451,6 +455,39 @@ UINT __stdcall RegisterTIP(MSIHANDLE msi_handle) {
   mozc::ScopedCOMInitializer com_initializer;
   HRESULT result = S_OK;
 
+#if defined(MOZC_ENABLE_WIN_UNIVERSAL_INSTALLER)
+  // Unlike 32-bit TIP DLL, which is always x86, the expected 64-bit TIP DLL
+  // can be x64 or ARM64X depending on the target environment. This is why
+  // only 64-bit TIP DLL is dynamically registered here.
+
+  // |IsWow64Process2| is added in Windows 10 1709 / Windows Server 1709. Let's
+  // check if the API is available before calling it.
+  // TODO: Directly call |IsWow64Process2| after we stop supporting Windows 10.
+  USHORT process_machine = IMAGE_FILE_MACHINE_UNKNOWN;
+  USHORT native_machine = IMAGE_FILE_MACHINE_UNKNOWN;
+  auto IsWow64Process2Func = reinterpret_cast<decltype(&::IsWow64Process2)>(
+      ::GetProcAddress(::GetModuleHandleA("kernel32.dll"), "IsWow64Process2"));
+  if (IsWow64Process2Func != nullptr) [[likely]] {
+    result = IsWow64Process2Func(::GetCurrentProcess(), &process_machine,
+                                 &native_machine);
+  } else {
+    // Fallback to x64.
+    result = E_NOTIMPL;
+  }
+  const bool is_arm64_machine =
+      SUCCEEDED(result) && native_machine == IMAGE_FILE_MACHINE_ARM64;
+  const std::wstring& tip64_path = GetMozcComponentPath(
+      is_arm64_machine ? mozc::kMozcTIP64X : mozc::kMozcTIP64);
+
+  result = mozc::win32::TsfRegistrar::RegisterCOMServer(tip64_path.c_str(),
+                                                        tip64_path.length());
+  if (FAILED(result)) {
+    LOG_ERROR_FOR_OMAHA();
+    UnregisterTIP(msi_handle);
+    return ERROR_INSTALL_FAILURE;
+  }
+#endif  // defined(MOZC_ENABLE_WIN_UNIVERSAL_INSTALLER)
+
   // The path here is to retrieve Win32 resources such as icon and product name,
   // which does not need to match the native CPU architecture. Here we use
   // 32-bit TIP DLL as it is always installed even on an ARM64 target.
@@ -484,6 +521,13 @@ UINT __stdcall UnregisterTIP(MSIHANDLE msi_handle) {
 
   mozc::win32::TsfRegistrar::UnregisterCategories();
   mozc::win32::TsfRegistrar::UnregisterProfiles();
+
+#if defined(MOZC_ENABLE_WIN_UNIVERSAL_INSTALLER)
+  // Unlike 32-bit TIP DLL, which is always x86, the expected 64-bit TIP DLL
+  // can be x64 or ARM64X depending on the target environment. This is why
+  // only 64-bit TIP DLL is dynamically unregistered here.
+  mozc::win32::TsfRegistrar::UnregisterCOMServer();
+#endif  // defined(MOZC_ENABLE_WIN_UNIVERSAL_INSTALLER)
 
   return ERROR_SUCCESS;
 }
