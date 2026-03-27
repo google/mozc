@@ -29,6 +29,7 @@
 
 # Build rules for the Windows installer.
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//:build_defs.bzl", "mozc_py_binary")
 load("//:config.bzl", "BRANDING")
 
@@ -65,6 +66,14 @@ _WXS_FILE = ":installer_oss_64bit.wxs" if BRANDING == "Mozc" else ":installer_64
 
 _MSI_FILE = "Mozc64.msi" if BRANDING == "Mozc" else "GoogleJapaneseInput64.msi"
 
+selects.config_setting_group(
+    name = "build_arm64_binaries",
+    match_any = [
+        "@platforms//cpu:arm64",
+        "//:enable_win_universal_installer",
+    ],
+)
+
 genrule(
     name = "installer",
     srcs = [
@@ -83,7 +92,7 @@ genrule(
         "@qt_win//:bin/Qt6Core.dll",
         "@wix//:wix.exe",
     ] + select({
-        "@platforms//cpu:arm64": [
+        ":build_arm64_binaries": [
             "//win32/tip:mozc_tip64arm",
             "//win32/tip:mozc_tip64x",
         ],
@@ -109,7 +118,7 @@ genrule(
         "--wix_path=$(location @wix//:wix.exe)",
         "--branding=" + BRANDING,
     ]) + select({
-        "@platforms//cpu:arm64": " " + " ".join([
+        ":build_arm64_binaries": " " + " ".join([
             "--mozc_tip64arm=$(location //win32/tip:mozc_tip64arm)",
             "--mozc_tip64x=$(location //win32/tip:mozc_tip64x)",
         ]),
@@ -120,6 +129,9 @@ genrule(
     }) + select({
         "@platforms//cpu:x86_64": " --arch=x64",
         "@platforms//cpu:arm64": " --arch=arm64",
+        "//conditions:default": "",
+    }) + select({
+        "//:enable_win_universal_installer": " --enable_win_universal_installer",
         "//conditions:default": "",
     }),
     target_compatible_with = _TARGET_COMPATIBLE_WITH,

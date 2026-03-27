@@ -154,6 +154,8 @@ def run_wix4(args) -> None:
         '-define', f'MozcTIP64ArmPath={mozc_tip64arm}',
         '-define', f'MozcTIP64XPath={mozc_tip64x}',
     ]
+    if args.enable_win_universal_installer:
+      commands += ['-define', 'MozcUniversalInstaller=Yes']
   exec_command(commands, cwd=os.getcwd())
 
 
@@ -185,6 +187,12 @@ def main():
       dest='arch',
       default='x64',
       choices=['x64', 'arm64'],
+  )
+  parser.add_argument(
+      '--enable_win_universal_installer',
+      dest='enable_win_universal_installer',
+      default=False,
+      action='store_true',
   )
 
   args = parser.parse_args()

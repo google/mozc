@@ -41,6 +41,10 @@ mozc_win32_cc_prod_binary(
         "custom_action.h",
         "resource.h",
     ],
+    defines = select({
+        "//:enable_win_universal_installer": ["MOZC_ENABLE_WIN_UNIVERSAL_INSTALLER"],
+        "//conditions:default": [],
+    }),
     executable_name_map = {
         "Mozc": "mozc_installer_helper.dll",
         "GoogleJapaneseInput": "GoogleIMEJaInstallerHelper.dll",

@@ -126,6 +126,22 @@ python build_tools/build_qt.py --release --confirm_license --target_arch=arm64
 bazelisk build --config oss_windows --config release_build package --platforms=//:windows-arm64
 ```
 
+### Build `Mozc64.msi` for both X64 and ARM64
+
+To built a X64 installer that is also compatible with ARM64 machines, run the
+following commands:
+
+```
+python build_tools/build_qt.py --release --confirm_license
+bazelisk build --config oss_windows --config release_build --config win_universal_installer package
+```
+
+To build the above installer, the following Visual Studio components also need
+to be installed:
+
+*   MSVC v143 - VS 2022 C++ ARM64/ARM64EC build tools (Latest)
+*   C++ ATL for latest v143 build tools (ARM64/ARM64EC)
+
 ## Bazel command examples
 
 ### Bazel User Guide
