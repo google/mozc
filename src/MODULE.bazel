@@ -119,11 +119,11 @@ bazel_dep(
     repo_name = "build_bazel_rules_swift",
 )
 
-# rules_cc: 0.2.2 2025-08-28
+# rules_cc: 0.2.17 2026-02-18
 # https://github.com/bazelbuild/rules_cc/
 bazel_dep(
     name = "rules_cc",
-    version = "0.2.2",
+    version = "0.2.17",
 )
 single_version_override(
     module_name = "rules_cc",
@@ -134,7 +134,7 @@ single_version_override(
         "bazel/rules_cc_windows_cc_configure.bzl.patch",
         "bazel/rules_cc_windows_cc_toolchain_config.bzl.patch",
     ],
-    version = "0.2.2",
+    version = "0.2.17",
 )
 
 cc_configure = use_extension(
