@@ -16,6 +16,10 @@ set TMP_MOZC_BASH_PATH=
 set TMP_MOZC_BAZEL_WRAPPER_DIR=
 set TMP_MOZC_SRC_DIR=
 
+:: For debugging.
+echo BAZEL_LLVM=%BAZEL_LLVM%
+echo BAZEL_REAL=%BAZEL_REAL%
+
 %BAZEL_REAL% %* & call:myexit
 
 :myexit
