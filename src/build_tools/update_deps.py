@@ -243,8 +243,9 @@ def llvm_extract_filter(
       paths = info.name.split('/')
       if '..' in paths:
         continue
-      if len(paths) < 1:
+      if len(paths) < 2:
         continue
+
       skipping = True
       if (
           len(paths) == 3
@@ -254,10 +255,13 @@ def llvm_extract_filter(
         skipping = False
       elif len(paths) >= 2 and paths[1] in ['include', 'lib']:
         skipping = False
+
+      new_path = '/'.join(paths[1:])
       if skipping:
-        printer.print_line('skipping   ' + info.name)
+        printer.print_line('skipping   ' + new_path)
         continue
-      printer.print_line('extracting ' + info.name)
+      printer.print_line('extracting ' + new_path)
+      info.name = new_path
       yield info
 
 
@@ -293,6 +297,7 @@ class StatefulLLVMExtractionFilter:
       skipping = False
     elif len(paths) >= 2 and paths[1] in ['include', 'lib']:
       skipping = False
+
     new_path = '/'.join(paths[1:])
     if skipping:
       self.printer.print_line('skipping   ' + new_path)
