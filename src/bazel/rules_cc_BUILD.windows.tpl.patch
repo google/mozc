@@ -8,7 +8,7 @@
          "x64_windows_msys": ":cc-compiler-x64_windows_msys",
          "x64_windows": ":cc-compiler-x64_windows",
          "x64_x86_windows": ":cc-compiler-x64_x86_windows",
-@@ -621,6 +622,75 @@ toolchain(
+@@ -670,6 +671,75 @@ toolchain(
      toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
  )
  
@@ -84,7 +84,7 @@
  cc_toolchain(
      name = "cc-compiler-arm64_windows-clang-cl",
      toolchain_identifier = "clang_cl_arm64",
-@@ -668,6 +738,7 @@
+@@ -719,6 +789,7 @@
          "strip": "wrapper/bin/msvc_nop.bat",
      },
      archiver_flags = ["/MACHINE:ARM64"],
