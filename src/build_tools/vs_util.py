@@ -35,7 +35,8 @@ import os
 import pathlib
 import subprocess
 import sys
-from typing import Union
+from typing import Union, Literal
+import warnings
 
 
 def get_vcvarsall(
@@ -54,6 +55,61 @@ def get_vcvarsall(
     FileNotFoundError: When 'vcvarsall.bat' cannot be found.
     ChildProcessError: When 'vcvarsall.bat' cannot be executed.
   """
+  
+  def get_vcvarsall_cmd(arch: Literal["arm64", "x64"], vswhere_path: pathlib.Path, vs_version: int, range: Literal['=', '>']) -> list[str]:
+    cmd = [
+      vswhere_path,
+      '-products',
+      'Microsoft.VisualStudio.Product.Enterprise',
+      'Microsoft.VisualStudio.Product.Professional',
+      'Microsoft.VisualStudio.Product.Community',
+      'Microsoft.VisualStudio.Product.BuildTools',
+      '-find',
+      'VC/Auxiliary/Build/vcvarsall.bat',
+      '-version',
+    ]
+    # See https://github.com/microsoft/vswhere/wiki/Versions
+    if range == '=':
+      cmd += [
+        f'[{vs_version}, {vs_version + 1})',
+      ]
+    else:
+      cmd += [
+        f'[{vs_version + 1},)',
+      ]
+    
+    cmd += [
+    '-latest',
+    '-utf8',
+    ]
+    cmd += [
+        '-requires',
+        'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
+    ]
+    if arch == "arm64":
+      cmd += ['Microsoft.VisualStudio.Component.VC.Tools.ARM64']
+    return cmd
+  
+  def run_vswhere(cmd: list[str]) -> list[str]:
+    process = subprocess.Popen(
+      cmd,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+      shell=False,
+      text=True,
+      encoding='utf-8',
+    )
+    stdout, stderr = process.communicate()
+    exitcode = process.wait()
+    if exitcode != 0:
+      msgs = ['Failed to execute vswhere.exe']
+      if stdout:
+        msgs += ['-----stdout-----', stdout]
+      if stderr:
+        msgs += ['-----stderr-----', stderr]
+      raise ChildProcessError('\n'.join(msgs))
+    return stdout.splitlines()
+
   if path_hint is not None:
     path = pathlib.Path(path_hint).resolve()
     if path.exists():
@@ -75,50 +131,25 @@ def get_vcvarsall(
         'Consider using --vcvarsall_path option e.g.\n'
         r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
     )
+  
+  preferred_vs_version = 17
+  is_arm64 = arch.endswith('arm64')
+  arch_str = 'arm64' if is_arm64 else 'x64'
 
-  cmd = [
-      str(vswhere_path),
-      '-products',
-      'Microsoft.VisualStudio.Product.Enterprise',
-      'Microsoft.VisualStudio.Product.Professional',
-      'Microsoft.VisualStudio.Product.Community',
-      'Microsoft.VisualStudio.Product.BuildTools',
-      '-find',
-      'VC/Auxiliary/Build/vcvarsall.bat',
-      '-version',
-      '[17,18)',  # See https://github.com/microsoft/vswhere/wiki/Versions
-      '-latest',
-      '-utf8',
-  ]
-  cmd += [
-      '-requires',
-      'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
-  ]
-  if arch.endswith('arm64'):
-    cmd += ['Microsoft.VisualStudio.Component.VC.Tools.ARM64']
+  cmd = get_vcvarsall_cmd(arch_str, vswhere_path, preferred_vs_version, '=')
 
-  process = subprocess.Popen(
-      cmd,
-      stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE,
-      shell=False,
-      text=True,
-      encoding='utf-8',
-  )
-  stdout, stderr = process.communicate()
-  exitcode = process.wait()
-  if exitcode != 0:
-    msgs = ['Failed to execute vswhere.exe']
-    if stdout:
-      msgs += ['-----stdout-----', stdout]
-    if stderr:
-      msgs += ['-----stderr-----', stderr]
-    raise ChildProcessError('\n'.join(msgs))
-
-  lines = stdout.splitlines()
+  lines = run_vswhere(cmd)
   if len(lines) > 0:
     vcvarsall = pathlib.Path(lines[0])
     if vcvarsall.exists():
+      return vcvarsall
+    
+  cmd = get_vcvarsall_cmd(arch_str, vswhere_path, preferred_vs_version, '>')
+  lines = run_vswhere(cmd)
+  if len(lines) > 0:
+    vcvarsall = pathlib.Path(lines[0])
+    if vcvarsall.exists():
+      warnings.warn(f'Using Visual Studio newer than {preferred_vs_version} has not been supported yet.', RuntimeWarning)
       return vcvarsall
 
   msg = 'Could not find vcvarsall.bat.'
