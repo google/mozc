@@ -29,19 +29,19 @@
 
 module(name = "mozc")
 
-# absl-cpp: 20250814.0 2025-08-15
+# absl-cpp: 20260107.1 2026-02-12
 # https://github.com/abseil/abseil-cpp
 bazel_dep(
     name = "abseil-cpp",
-    version = "20250814.0",
+    version = "20260107.1",
     repo_name = "com_google_absl",
 )
 
-# protobuf: 32.0 2025-08-15
+# protobuf: 34.1 2026-03-20
 # https://github.com/protocolbuffers/protobuf
 bazel_dep(
     name = "protobuf",
-    version = "32.0",
+    version = "34.1",
     repo_name = "com_google_protobuf",
 )
 
@@ -60,63 +60,43 @@ bazel_dep(
     version = "1.0.0",
 )
 
-# bazel_skylib: 1.8.1 2024-07-08
+# bazel_skylib: 1.9.0 2025-12-16
 # https://github.com/bazelbuild/bazel-skylib/
 bazel_dep(
     name = "bazel_skylib",
-    version = "1.8.1",
+    version = "1.9.0",
 )
 
-# rules_pkg: 1.1.0 2025-03-06
+# rules_pkg: 1.2.0 2025-12-04
 # https://github.com/bazelbuild/rules_pkg
 bazel_dep(
     name = "rules_pkg",
-    version = "1.1.0",
-)
-single_version_override(
-    module_name = "rules_pkg",
-    patches = [
-        # Patch to fix the failure of Bazel fetch.
-        "bazel/rules_pkg_MODULE.bazel.patch",
-    ],
-    version = "1.1.0",
+    version = "1.2.0",
 )
 
-# rules_python: 1.5.4 2025-08-28
+# rules_python: 1.9.0 2026-02-24
 # https://github.com/bazelbuild/rules_python/
 bazel_dep(
     name = "rules_python",
-    version = "1.5.4",
+    version = "1.9.0",
 )
 
-# Bazel macOS build (4.1.2 2025-08-07)
+# rules_apple: 4.5.2 2026-03-27
 # https://github.com/bazelbuild/rules_apple
 bazel_dep(
     name = "rules_apple",
-    version = "4.1.2",
+    version = "4.5.2",
     repo_name = "build_bazel_rules_apple",
 )
 
-# Apple Support for Bazel (1.23.1 2025-08-29)
+# apple_support: 2.4.0 2026-03-27
 # https://github.com/bazelbuild/apple_support/
 ## this must come above 'rules_cc'
 ## https://github.com/bazelbuild/apple_support/blob/d87e8b07f3345e750834dbb6ce38c7c7d3b8b44b/README.md#bazel-7-setup
 bazel_dep(
     name = "apple_support",
-    version = "1.23.1",
+    version = "2.4.0",
     repo_name = "build_bazel_apple_support",
-)
-
-# rules_swift: 3.1.2 2025-08-06
-# https://github.com/bazelbuild/rules_swift/
-# While Mozc does not directly depends on rules_swift, it is still indirectly
-# used by rules_apple. To avoid the build failure on Windows, its version needs
-# to be 2.5.0 or higher.
-# https://github.com/bazelbuild/rules_swift/issues/1502
-bazel_dep(
-    name = "rules_swift",
-    version = "3.1.2",
-    repo_name = "build_bazel_rules_swift",
 )
 
 # rules_cc: 0.2.17 2026-02-18
@@ -145,8 +125,12 @@ use_repo(cc_configure, "local_config_cc")
 
 register_toolchains("@local_config_cc//:all")
 
-# Android NDK rules (0.1.3 2025-01-31)
+# rules_android_ndk: 0.1.3 2025-01-31
 # https://github.com/bazelbuild/rules_android_ndk
+#
+# Note, 0.1.5 has been already released, but it's not available at Bazel-central-registry yet.
+# https://github.com/bazelbuild/rules_android_ndk/tags
+# https://github.com/bazelbuild/bazel-central-registry/tree/main/modules/rules_android_ndk
 bazel_dep(
     name = "rules_android_ndk",
     version = "0.1.3",
