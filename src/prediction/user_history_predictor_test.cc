@@ -5789,6 +5789,76 @@ TEST_F(UserHistoryPredictorTest, IsProperNounTest) {
   EXPECT_FALSE(predictor_peer.IsProperNoun(req, result));
 }
 
+TEST_F(UserHistoryPredictorTest, ExactMatchTest) {
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  SegmentsProxy segments_proxy;
+  std::vector<Result> results;
+
+  request_.set_mixed_conversion(true);
+  request_.mutable_decoder_experiment_params()
+      ->set_user_history_cache_inner_segment_boundary(true);
+
+  // Create full sentence entry with boundary information.
+  // By default, full sentence is allowed to be suggested when the freq >= 2.
+  // However, allow full sentence to be suggested when
+  // allow_exact_match flag is true and the query is exact match.
+  constexpr absl::string_view kKey = "わたしのなまえはなかのです";
+  constexpr absl::string_view kValue = "私の名前は中野です";
+  {
+    const ConversionRequest convreq1 =
+        SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, kValue);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 6, 9, 3);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 9, 9, 6);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 15, 12, 9, 6);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    UserHistoryPredictorTestPeer predictor_peer(*predictor);
+    auto entry = predictor_peer.storage_().MutableLookup(kKey, kValue);
+    EXPECT_TRUE(entry);
+    segments_proxy.Clear();
+  }
+
+  for (bool allow_exact_match : {false, true}) {
+    for (int freq : {1, 2}) {
+      request_.mutable_decoder_experiment_params()
+          ->set_user_history_allow_exact_match(allow_exact_match);
+
+      UserHistoryPredictorTestPeer predictor_peer(*predictor);
+      auto entry = predictor_peer.storage_().MutableLookup(kKey, kValue);
+      ASSERT_TRUE(entry);
+      entry->set_suggestion_freq(freq);
+      ASSERT_EQ(entry->inner_segment_boundary_size(), 3);
+
+      // Partial
+      segments_proxy.Clear();
+      const ConversionRequest convreq1 = SetUpInputForPrediction(
+          "わたしのなまえは", &composer_, &segments_proxy);
+      results = predictor->Predict(convreq1);
+      // Partial matche is allowed when the entry is typed twice or more.
+      if (freq >= 2) {
+        EXPECT_FALSE(results.empty());
+      } else {
+        EXPECT_TRUE(results.empty());
+      }
+
+      // Exact
+      segments_proxy.Clear();
+      const ConversionRequest convreq2 =
+          SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
+      results = predictor->Predict(convreq2);
+      if (allow_exact_match || freq >= 2) {
+        EXPECT_FALSE(results.empty());
+        EXPECT_EQ(results[0].value, kValue);
+        EXPECT_EQ(results[0].key, kKey);
+      } else {
+        EXPECT_TRUE(results.empty());
+      }
+    }
+  }
+}
+
 TEST_F(UserHistoryPredictorTest, PartialMatchTest) {
   std::unique_ptr<engine::Modules> modules =
       engine::ModulesPresetBuilder()

@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 148
+// Next ID: 149
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -692,6 +692,11 @@ message DecoderExperimentParams {
   // experiments from legacy modules to new supplemental model and user history
   // predictor.
   optional int32 disable_legacy_rewriter_mode = 147 [default = 0];
+
+  // Allow exact match in user_history decoding even when
+  // the frequency is low.
+  // This flag is used when user_history_cache_inner_segment_boundary is true.
+  optional bool user_history_allow_exact_match = 148 [default = false];
 }
 
 // Clients' request to the server.

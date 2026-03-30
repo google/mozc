@@ -132,6 +132,14 @@ bool AllowPartialMatch(const ConversionRequest& request) {
              .user_history_allow_partial_match();
 }
 
+bool AllowExactMatch(const ConversionRequest& request) {
+  return IsMixedConversionEnabled(request) &&
+         CacheInnerSegmentBoundaryEnabled(request) &&
+         request.request()
+             .decoder_experiment_params()
+             .user_history_allow_exact_match();
+}
+
 bool IsZeroQuerySuggestionEnabled(const ConversionRequest& request) {
   return request.request().zero_query_suggestion();
 }
@@ -142,6 +150,15 @@ bool IsZeroQuerySuggestionEnabled(const ConversionRequest& request) {
 bool IsEmojiEntry(const UserHistoryPredictor::Entry& entry) {
   return (entry.has_description() &&
           absl::StrContains(entry.description(), kEmojiDescription));
+}
+
+// Full sentence entry with low frequency should not be suggested.
+bool IsLowFreqFullSentenceEntry(const ConversionRequest& request,
+                                const UserHistoryPredictor::Entry& entry) {
+  return (CacheInnerSegmentBoundaryEnabled(request) &&
+          IsMixedConversionEnabled(request) &&
+          entry.inner_segment_boundary_size() >= 2 &&
+          entry.suggestion_freq() <= 1);
 }
 
 // http://unicode.org/~scherer/emoji4unicode/snapshot/full.html
@@ -1116,6 +1133,17 @@ bool UserHistoryPredictor::LookupEntry(
     return false;
   }
 
+  // Full sentence with low frequency is not suggested, but
+  // allow exact match when AllowExactMatch() returns true.
+  // if (low_freq_full_sentence_entry) {
+  //   if (exact_match && allow_exact_match) { keep the process. }
+  //   return false
+  // }
+  if (IsLowFreqFullSentenceEntry(request, entry) &&
+      !(mtype == MatchType::EXACT_MATCH && AllowExactMatch(request))) {
+    return false;
+  }
+
   // For mobile, prefer exact match.
   const bool prefer_exact_match = IsMixedConversionEnabled(request);
 
@@ -1482,15 +1510,6 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
       return false;
     }
 
-    // full sentence entry is not reused as history now.
-    // TODO(taku): reuse it in exact-match case.
-    if (CacheInnerSegmentBoundaryEnabled(request) &&
-        IsMixedConversionEnabled(request) &&
-        entry.inner_segment_boundary_size() >= 2 &&
-        entry.suggestion_freq() <= 1) {
-      return true;
-    }
-
     if (!IsValidEntryIgnoringRemovedField(entry)) {
       return true;
     }
@@ -1498,8 +1517,18 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
     // Lookup key from elm_value and prev_entry.
     // If a new entry is found, the entry is pushed to the entry_queue.
     if (LookupEntry(request, request_key, base_key, expanded.get(), entry,
-                    prev_entry, entry_queue) ||
-        RomanFuzzyLookupEntry(roman_request_key, entry, entry_queue) ||
+                    prev_entry, entry_queue)) {
+      return true;
+    }
+
+    // Full sentence entry is not reused in non-standard lookup, e.g.
+    // RomanFuzzy, ZeroQuery, and Typing correction.
+    if (IsLowFreqFullSentenceEntry(request, entry)) {
+      return true;
+    }
+
+    // Non-standard lookup.
+    if (RomanFuzzyLookupEntry(roman_request_key, entry, entry_queue) ||
         ZeroQueryLookupEntry(request, request_key, entry, prev_entry,
                              entry_queue)) {
       return true;
