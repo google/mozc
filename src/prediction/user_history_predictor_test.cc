@@ -5831,7 +5831,7 @@ TEST_F(UserHistoryPredictorTest, ExactMatchTest) {
       entry->set_suggestion_freq(freq);
       ASSERT_EQ(entry->inner_segment_boundary_size(), 3);
 
-      // Partial
+      // Short partial
       segments_proxy.Clear();
       const ConversionRequest convreq1 = SetUpInputForPrediction(
           "わたしのなまえは", &composer_, &segments_proxy);
@@ -5843,11 +5843,24 @@ TEST_F(UserHistoryPredictorTest, ExactMatchTest) {
         EXPECT_TRUE(results.empty());
       }
 
+      // Partial that reaches to the last segment.
+      segments_proxy.Clear();
+      const ConversionRequest convreq2 = SetUpInputForPrediction(
+          "わたしのなまえはな", &composer_, &segments_proxy);
+      results = predictor->Predict(convreq2);
+      if (allow_exact_match || freq >= 2) {
+        EXPECT_FALSE(results.empty());
+        EXPECT_EQ(results[0].value, kValue);
+        EXPECT_EQ(results[0].key, kKey);
+      } else {
+        EXPECT_TRUE(results.empty());
+      }
+
       // Exact
       segments_proxy.Clear();
-      const ConversionRequest convreq2 =
+      const ConversionRequest convreq3 =
           SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
-      results = predictor->Predict(convreq2);
+      results = predictor->Predict(convreq3);
       if (allow_exact_match || freq >= 2) {
         EXPECT_FALSE(results.empty());
         EXPECT_EQ(results[0].value, kValue);
