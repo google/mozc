@@ -4,11 +4,11 @@
      Returns:
          A final dict of configuration attributes and values.
      """
--    ndk_path = ctx.attr.path or ctx.os.environ.get("ANDROID_NDK_HOME", None)
+-    ndk_path = ctx.attr.path or ctx.getenv("ANDROID_NDK_HOME", None)
 -    if not ndk_path:
 -        fail("Either the ANDROID_NDK_HOME environment variable or the " +
 -             "path attribute of android_ndk_repository must be set.")
-+    ndk_path = ctx.attr.path or ctx.os.environ.get("ANDROID_NDK_HOME", "")
++    ndk_path = ctx.attr.path or ctx.getenv("ANDROID_NDK_HOME", "")
      if ndk_path.startswith("$WORKSPACE_ROOT"):
          ndk_path = str(ctx.workspace_root) + ndk_path.removeprefix("$WORKSPACE_ROOT")
 
