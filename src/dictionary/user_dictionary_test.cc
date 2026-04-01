@@ -58,6 +58,7 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -981,7 +982,11 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
       mock_data_manager.GetPosMatcherData());
 
   UserPos::Token user_token{.key = "key", .value = "value", .id = 10};
+  user_token.set_pos_type(user_dictionary::UserDictionary::
+                              SA_IRREGULAR_CONJUGATION_NOUN);  // 名詞サ変
 
+  const int expected_cost =
+      user_dictionary::GetCostFromPosType(user_token.pos_type());
   Token token;
 
   dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
@@ -990,7 +995,7 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
   EXPECT_EQ(token.value, "value");
   EXPECT_EQ(token.lid, 10);
   EXPECT_EQ(token.rid, 10);
-  EXPECT_EQ(token.cost, 5000);
+  EXPECT_EQ(token.cost, expected_cost);
   EXPECT_EQ(token.attributes, Token::USER_DICTIONARY);
 
   user_token.add_attribute(UserPos::Token::NON_JA_LOCALE);
@@ -999,57 +1004,53 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
   EXPECT_EQ(token.cost, 10000);
 
   user_token.attributes = 0;
-  user_token.add_attribute(UserPos::Token::ISOLATED_WORD);
+  user_token.set_pos_type(user_dictionary::UserDictionary::ABBREVIATION);
   dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
                                      &token);
   EXPECT_EQ(token.cost, 200);
 
   user_token.attributes = 0;
-  user_token.add_attribute(UserPos::Token::SUGGESTION_ONLY);
+  user_token.set_pos_type(user_dictionary::UserDictionary::SUGGESTION_ONLY);
   dic->PopulateTokenFromUserPosToken(
       user_token, UserDictionary::UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.lid, pos_matcher.GetUnknownId());
   EXPECT_EQ(token.rid, pos_matcher.GetUnknownId());
-  EXPECT_EQ(token.cost, 5000);
+  EXPECT_EQ(token.cost, expected_cost);
 
   user_token.attributes = 0;
-  user_token.add_attribute(UserPos::Token::NO_POS);
+  user_token.set_pos_type(user_dictionary::UserDictionary::NO_POS);
   dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREDICTIVE,
                                      &token);
   // NO_POS id is set via user_pos.def.
-  EXPECT_EQ(token.cost, 5000);
+  EXPECT_EQ(token.cost, expected_cost);
 
   user_token.attributes = 0;
+  user_token.set_pos_type(user_dictionary::UserDictionary::NO_POS);
 
   user_token.key = "a";  // one char
-  user_token.add_attribute(UserPos::Token::NO_POS);
   dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
                                      &token);
-  EXPECT_EQ(token.cost, 5000 + 2000 * 3);
+  EXPECT_EQ(token.cost, expected_cost + 2000 * 3);
 
   user_token.key = "aa";
-  user_token.add_attribute(UserPos::Token::NO_POS);
   dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
                                      &token);
-  EXPECT_EQ(token.cost, 5000 + 2000 * 2);
+  EXPECT_EQ(token.cost, expected_cost + 2000 * 2);
 
   user_token.key = "aaa";
-  user_token.add_attribute(UserPos::Token::NO_POS);
   dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
                                      &token);
-  EXPECT_EQ(token.cost, 5000 + 2000);
+  EXPECT_EQ(token.cost, expected_cost + 2000);
 
   user_token.key = "aaaa";
-  user_token.add_attribute(UserPos::Token::NO_POS);
   dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
                                      &token);
-  EXPECT_EQ(token.cost, 5000);
+  EXPECT_EQ(token.cost, expected_cost);
 
   user_token.key = "aaaaaaa";
-  user_token.add_attribute(UserPos::Token::NO_POS);
   dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
                                      &token);
-  EXPECT_EQ(token.cost, 5000);
+  EXPECT_EQ(token.cost, expected_cost);
 }
 
 TEST_F(UserDictionaryTest, AsyncImportTest) {

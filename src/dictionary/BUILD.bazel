@@ -186,6 +186,7 @@ mozc_cc_test(
         ":pos_matcher",
         ":user_dictionary",
         ":user_dictionary_storage",
+        ":user_dictionary_util",
         ":user_pos",
         "//base:file_util",
         "//base:random",
@@ -354,7 +355,6 @@ mozc_cc_library(
         "//:__subpackages__",
     ],
     deps = [
-        ":user_pos",
         "//base:vlog",
         "//base/strings:japanese",
         "//base/strings:unicode",
@@ -484,10 +484,12 @@ mozc_cc_library(
         "//rewriter:__pkg__",
     ],
     deps = [
+        ":user_dictionary_util",
         "//base:bits",
         "//base/container:serialized_string_array",
         "//base/strings:assign",
         "//data_manager",
+        "//protocol:user_dictionary_storage_cc_proto",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",

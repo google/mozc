@@ -106,31 +106,16 @@ TEST_F(UserPosTest, UserPosGetTokensTest) {
 TEST_F(UserPosTest, UserPosGetTokensWithAttributesTest) {
   std::vector<UserPos::Token> tokens;
 
-  tokens = user_pos_->GetTokens("test", "test", "サジェストのみ");
-  EXPECT_EQ(tokens.size(), 1);
-  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::SUGGESTION_ONLY));
-
-  tokens = user_pos_->GetTokens("test", "test", "短縮よみ");
-  EXPECT_EQ(tokens.size(), 1);
-  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::ISOLATED_WORD));
-
-  tokens = user_pos_->GetTokens("test", "test", "品詞なし");
-  EXPECT_EQ(tokens.size(), 1);
-  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::NO_POS));
-
   tokens = user_pos_->GetTokens("test", "test", "サジェストのみ", "en");
   EXPECT_EQ(tokens.size(), 1);
-  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::SUGGESTION_ONLY));
   EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::NON_JA_LOCALE));
 
   tokens = user_pos_->GetTokens("test", "test", "短縮よみ", "en");
   EXPECT_EQ(tokens.size(), 1);
-  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::ISOLATED_WORD));
   EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::NON_JA_LOCALE));
 
   tokens = user_pos_->GetTokens("test", "test", "品詞なし", "en");
   EXPECT_EQ(tokens.size(), 1);
-  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::NO_POS));
   EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::NON_JA_LOCALE));
 }
 
@@ -173,8 +158,8 @@ TEST_F(UserPosTest, ConjugationTest) {
 }
 
 TEST_F(UserPosTest, SwapToken) {
-  UserPos::Token token1 = {"key1", "value1", 1, 1, "comment1"};
-  UserPos::Token token2 = {"key2", "value2", 2, 2, "comment2"};
+  UserPos::Token token1 = {"key1", "value1", 1, 1, 1, "comment1"};
+  UserPos::Token token2 = {"key2", "value2", 2, 2, 2, "comment2"};
 
   using std::swap;
   swap(token1, token2);
@@ -183,12 +168,14 @@ TEST_F(UserPosTest, SwapToken) {
   EXPECT_EQ(token1.value, "value2");
   EXPECT_EQ(token1.id, 2);
   EXPECT_EQ(token1.attributes, 2);
+  EXPECT_EQ(token1.raw_pos_type, 2);
   EXPECT_EQ(token1.comment, "comment2");
 
   EXPECT_EQ(token2.key, "key1");
   EXPECT_EQ(token2.value, "value1");
   EXPECT_EQ(token2.id, 1);
   EXPECT_EQ(token2.attributes, 1);
+  EXPECT_EQ(token2.raw_pos_type, 1);
   EXPECT_EQ(token2.comment, "comment1");
 }
 
@@ -196,17 +183,11 @@ TEST_F(UserPosTest, Attributes) {
   UserPos::Token token;
 
   EXPECT_EQ(token.attributes, 0);
-  token.add_attribute(UserPos::Token::NO_POS);
-  token.add_attribute(UserPos::Token::SUGGESTION_ONLY);
+  token.add_attribute(UserPos::Token::NON_JA_LOCALE);
+  EXPECT_TRUE(token.has_attribute(UserPos::Token::NON_JA_LOCALE));
 
-  EXPECT_TRUE(token.has_attribute(UserPos::Token::NO_POS));
-  EXPECT_TRUE(token.has_attribute(UserPos::Token::SUGGESTION_ONLY));
-  EXPECT_FALSE(token.has_attribute(UserPos::Token::ISOLATED_WORD));
-
-  token.remove_attribute(UserPos::Token::SUGGESTION_ONLY);
-  EXPECT_TRUE(token.has_attribute(UserPos::Token::NO_POS));
-  EXPECT_FALSE(token.has_attribute(UserPos::Token::SUGGESTION_ONLY));
-  EXPECT_FALSE(token.has_attribute(UserPos::Token::ISOLATED_WORD));
+  token.remove_attribute(UserPos::Token::NON_JA_LOCALE);
+  EXPECT_FALSE(token.has_attribute(UserPos::Token::NON_JA_LOCALE));
 }
 
 }  // namespace dictionary

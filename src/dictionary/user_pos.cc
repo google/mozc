@@ -120,18 +120,7 @@ std::vector<UserPos::Token> UserPos::GetTokens(absl::string_view key,
   // TODO(taku)  Change the cost by seeing cost_type
   const bool is_non_ja_locale = !locale.empty() && !locale.starts_with("ja");
 
-  constexpr absl::string_view kIsolatedWordPos = "短縮よみ";
-  constexpr absl::string_view kSuggestionOnlyPos = "サジェストのみ";
-  constexpr absl::string_view kNoPos = "品詞なし";
-
-  uint16_t attributes = 0;
-  if (pos == kIsolatedWordPos) {
-    attributes = UserPos::Token::ISOLATED_WORD;
-  } else if (pos == kSuggestionOnlyPos) {
-    attributes = UserPos::Token::SUGGESTION_ONLY;
-  } else if (pos == kNoPos) {
-    attributes = UserPos::Token::NO_POS;
-  }
+  uint8_t attributes = 0;
   if (is_non_ja_locale) {
     attributes |= UserPos::Token::NON_JA_LOCALE;
   }

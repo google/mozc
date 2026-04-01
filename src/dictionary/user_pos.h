@@ -44,6 +44,7 @@
 #include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "data_manager/data_manager.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 namespace dictionary {
@@ -89,19 +90,18 @@ class UserPos {
   struct Token {
     std::string key;
     std::string value;
-    uint16_t id = 0;
-    uint16_t attributes = 0;
+    uint16_t id = 0;  // internal POS id used for lid/rid.
+    uint8_t attributes = 0;
+    uint8_t raw_pos_type = 0;  // POS information. UserDictionary::PosType.
     // The actual cost of user dictionary entries are populated
     // in the dictionary lookup time via PopulateTokenFromUserPosToken.
     std::string comment;  // This field comes from user dictionary.
 
     // Attribute is used to dynamically assign cost, and is independent from the
     // POS.
+    // TODO(taku): Better to remove it as we only have one field.
     enum Attribute {
-      NO_POS = 1,           // The default POS on Android.
-      ISOLATED_WORD = 2,    // 短縮よみ
-      SUGGESTION_ONLY = 4,  //  SUGGESTION only.
-      NON_JA_LOCALE = 8     // Locale is not Japanese.
+      NON_JA_LOCALE = 1  // Locale is not Japanese.
     };
 
     inline void add_attribute(Attribute attr) { attributes |= attr; }
@@ -109,6 +109,14 @@ class UserPos {
       return attributes & attr;
     }
     inline void remove_attribute(Attribute attr) { attributes &= ~attr; }
+    inline user_dictionary::UserDictionary::PosType pos_type() const {
+      return static_cast<::mozc::user_dictionary::UserDictionary::PosType>(
+          raw_pos_type);
+    }
+    inline void set_pos_type(
+        user_dictionary::UserDictionary::PosType pos_type) {
+      raw_pos_type = static_cast<uint8_t>(pos_type);
+    }
   };
 
   class iterator {
@@ -220,6 +228,7 @@ class UserPos {
   virtual int GetPosListDefaultIndex() const { return pos_list_default_index_; }
   virtual bool IsValidPos(absl::string_view pos) const;
   virtual std::optional<uint16_t> GetPosIds(absl::string_view pos) const;
+  // TODO(b/491702414): Accepts PosType instead of string pos.
   virtual std::vector<UserPos::Token> GetTokens(absl::string_view key,
                                                 absl::string_view value,
                                                 absl::string_view pos,
