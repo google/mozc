@@ -48,7 +48,7 @@ std::string GetServiceName() {
   std::string name = kServiceName;
   const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
   if (!desktop_name.empty()) {
-    name += ".";
+    name += '.';
     name += desktop_name;
   }
   return name;

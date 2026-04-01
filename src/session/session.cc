@@ -1528,7 +1528,7 @@ bool Session::InsertCharacter(commands::Command* command) {
           commands::Request::SPACE_OR_CONVERT_COMMITTING_COMPOSITION &&
       context_->state() == ImeContext::COMPOSITION &&
       // TODO(komatsu): Support FullWidthSpace
-      composition.ends_with(" ")) {
+      composition.ends_with(' ')) {
     should_commit = true;
   }
 
@@ -2343,7 +2343,7 @@ bool Session::Convert(commands::Command* command) {
       command->input().key().has_special_key() &&
       command->input().key().special_key() == commands::KeyEvent::SPACE) {
     // TODO(komatsu): Consider FullWidth Space too.
-    if (!composition.ends_with(" ") ||
+    if (!composition.ends_with(' ') ||
         context_->composer().GetLength() != context_->composer().GetCursor()) {
       if (context_->GetRequest().space_on_alphanumeric() ==
           commands::Request::COMMIT) {

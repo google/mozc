@@ -154,7 +154,7 @@ std::optional<std::string> GetNumberHistory(const ConversionRequest& request) {
 }
 
 bool IsEmailPrefix(absl::string_view str) {
-  return str.ends_with("@") && mozc::Util::IsAscii(str);
+  return str.ends_with('@') && mozc::Util::IsAscii(str);
 }
 
 class PredictiveLookupCallback : public DictionaryInterface::Callback {

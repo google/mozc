@@ -1813,7 +1813,7 @@ bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
     return false;
   }
 
-  if (entry.key().ends_with(" ")) {
+  if (entry.key().ends_with(' ')) {
     // Invalid user history entry from alphanumeric input.
     return false;
   }

@@ -658,7 +658,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   // 10^100 as "100000 ... 0"
   std::string input = "1";
   for (size_t i = 0; i < 100; ++i) {
-    input += "0";
+    input += '0';
   }
 
   candidate->key = input;
