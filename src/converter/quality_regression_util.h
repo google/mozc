@@ -38,7 +38,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/types/span.h"
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 
@@ -96,7 +95,6 @@ class QualityRegressionUtil {
   std::shared_ptr<const ConverterInterface> converter_;
   commands::Request request_;
   config::Config config_;
-  Segments segments_;
 };
 
 }  // namespace quality_regression

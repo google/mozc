@@ -82,12 +82,12 @@ constexpr absl::string_view kSuggestionNotExpect = "Suggestion Not Expected";
 constexpr absl::string_view kZeroQueryExpect = "ZeroQuery Expected";
 constexpr absl::string_view kZeroQueryNotExpect = "ZeroQuery Not Expected";
 
-int GetRank(absl::string_view value, const Segments* segments,
-            size_t current_segment) {
-  if (current_segment == segments->segments_size()) {
+int32_t GetRank(absl::string_view value, const Segments& segments,
+                size_t current_segment) {
+  if (current_segment == segments.segments_size()) {
     return value.empty() ? 0 : -1;
   }
-  const Segment& seg = segments->segment(current_segment);
+  const Segment& seg = segments.segment(current_segment);
   int rank = 0;
   absl::flat_hash_set<absl::string_view> dedup;
   for (const Candidate* cand : seg.candidates()) {
@@ -246,8 +246,8 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
   const int expected_rank = item.expected_rank;
 
   CHECK(actual_value);
-  segments_.Clear();
-  converter_->ResetConversion(&segments_);
+  Segments segments;
+  converter_->ResetConversion(&segments);
   actual_value->clear();
 
   auto table = std::make_shared<composer::Table>();
@@ -262,13 +262,13 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
                                            .SetRequestView(request_)
                                            .SetConfigView(config_)
                                            .Build();
-    if (!converter_->StartConversion(conv_req, &segments_)) {
+    if (!converter_->StartConversion(conv_req, &segments)) {
       return absl::UnknownError(absl::StrCat(
           "StartConversionForRequest failed: ", item.OutputAsTSV()));
     }
   } else if (command == kReverseConversionExpect ||
              command == kReverseConversionNotExpect) {
-    if (!converter_->StartReverseConversion(&segments_, key)) {
+    if (!converter_->StartReverseConversion(&segments, key)) {
       return absl::UnknownError("StartReverseConversion failed");
     }
   } else if (command == kPredictionExpect || command == kPredictionNotExpect) {
@@ -286,7 +286,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
                                            .SetConfigView(config_)
                                            .SetOptions(std::move(options))
                                            .Build();
-    if (!converter_->StartPrediction(conv_req, &segments_)) {
+    if (!converter_->StartPrediction(conv_req, &segments)) {
       return absl::UnknownError(absl::StrCat(
           "StartPredictionForRequest failed: ", item.OutputAsTSV()));
     }
@@ -301,7 +301,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
             .SetOptions({.request_type = ConversionRequest::SUGGESTION,
                          .use_actual_converter_for_realtime_conversion = true})
             .Build();
-    if (!converter_->StartPrediction(conv_req, &segments_)) {
+    if (!converter_->StartPrediction(conv_req, &segments)) {
       return absl::UnknownError(absl::StrCat(
           "StartPrediction for suggestion failed: ", item.OutputAsTSV()));
     }
@@ -320,15 +320,15 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
               .SetOptions({.request_type = ConversionRequest::SUGGESTION,
                            .max_conversion_candidates_size = 10})
               .Build();
-      if (!converter_->StartPrediction(conv_req, &segments_)) {
+      if (!converter_->StartPrediction(conv_req, &segments)) {
         return absl::UnknownError(absl::StrCat(
             "StartSuggestion for suggestion failed: ", item.OutputAsTSV()));
       }
-      if (!converter_->CommitSegmentValue(&segments_, 0, 0)) {
+      if (!converter_->CommitSegmentValue(&segments, 0, 0)) {
         return absl::UnknownError(
             absl::StrCat("CommitSegmentValue failed: ", item.OutputAsTSV()));
       }
-      converter_->FinishConversion(conv_req, &segments_);
+      converter_->FinishConversion(conv_req, &segments);
     }
     {
       // Issues zero-query request.
@@ -341,11 +341,11 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
               .SetOptions({.request_type = ConversionRequest::PREDICTION,
                            .max_conversion_candidates_size = 10})
               .Build();
-      if (!converter_->StartPrediction(conv_req, &segments_)) {
+      if (!converter_->StartPrediction(conv_req, &segments)) {
         return absl::UnknownError(absl::StrCat(
             "StartPredictionForRequest failed: ", item.OutputAsTSV()));
       }
-      segments_.clear_history_segments();
+      segments.clear_history_segments();
     }
   } else {
     return absl::InvalidArgumentError(
@@ -354,13 +354,13 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
 
   // No results is OK if "prediction not expect" command
   if ((command == kPredictionNotExpect || command == kSuggestionNotExpect) &&
-      (segments_.segments_size() == 0 ||
-       (segments_.segments_size() >= 1 &&
-        segments_.segment(0).candidates_size() == 0))) {
+      (segments.segments_size() == 0 ||
+       (segments.segments_size() >= 1 &&
+        segments.segment(0).candidates_size() == 0))) {
     return true;
   }
 
-  for (const Segment& segment : segments_) {
+  for (const Segment& segment : segments) {
     absl::StrAppend(actual_value, segment.candidate(0).value);
   }
 
@@ -371,7 +371,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     return (actual_value->find(expected_value) == std::string::npos);
   }
 
-  const int32_t actual_rank = GetRank(expected_value, &segments_, 0);
+  const int32_t actual_rank = GetRank(expected_value, segments, 0);
 
   bool result = (actual_rank >= 0 && actual_rank <= expected_rank);
 
