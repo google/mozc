@@ -71,6 +71,34 @@ bool ValueLess(absl::string_view lhs, absl::string_view rhs) {
   return lhs.size() < rhs.size();
 }
 
+// "less than" here means "has higher priority (= lower cost)".
+bool TiebreakLess(const Result& lhs, const Result& rhs) {
+  // Key is the primary tiebreaker.
+  if (lhs.key != rhs.key) {
+    return lhs.key < rhs.key;
+  }
+  // Prioritize the result with candidate_attributes.
+  if (lhs.candidate_attributes != rhs.candidate_attributes) {
+    if (lhs.candidate_attributes == 0) {
+      return false;
+    }
+    return lhs.candidate_attributes < rhs.candidate_attributes;
+  }
+  // Then, use the rest of the fields.
+  return std::tie(lhs.wcost, lhs.cost, lhs.types, lhs.lid, lhs.rid,
+                  lhs.consumed_key_size, lhs.penalty, lhs.cost_before_rescoring,
+                  lhs.removed, lhs.typing_correction_score,
+                  lhs.typing_correction_adjustment, lhs.post_correction_prob,
+                  lhs.description, lhs.display_value,
+                  lhs.inner_segment_boundary) <
+         std::tie(rhs.wcost, rhs.cost, rhs.types, rhs.lid, rhs.rid,
+                  rhs.consumed_key_size, rhs.penalty, rhs.cost_before_rescoring,
+                  rhs.removed, rhs.typing_correction_score,
+                  rhs.typing_correction_adjustment, rhs.post_correction_prob,
+                  rhs.description, rhs.display_value,
+                  rhs.inner_segment_boundary);
+}
+
 }  // namespace result_internal
 
 using ::mozc::converter::Attribute;

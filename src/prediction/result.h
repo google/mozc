@@ -33,7 +33,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
-#include <vector>
 
 #include "absl/base/no_destructor.h"
 #include "absl/base/nullability.h"
@@ -202,6 +201,11 @@ namespace result_internal {
 //  "テスト1" < "テスト00"
 bool ValueLess(absl::string_view lhs, absl::string_view rhs);
 
+// TiebreakLess returns if lhs is less than rhs by comparing the two results.
+// This is used for tie breaking when cost, wcost and value are the same.
+// "less than" here means "has higher priority (= lower cost)".
+bool TiebreakLess(const Result& lhs, const Result& rhs);
+
 }  // namespace result_internal
 
 // Comparator for sorting prediction candidates.
@@ -209,20 +213,26 @@ bool ValueLess(absl::string_view lhs, absl::string_view rhs);
 // assume that cost(A) < cost(AB).
 struct ResultWCostLess {
   bool operator()(const Result& lhs, const Result& rhs) const {
-    if (lhs.wcost == rhs.wcost) {
+    if (lhs.wcost != rhs.wcost) {
+      return lhs.wcost < rhs.wcost;
+    }
+    if (lhs.value != rhs.value) {
       return result_internal::ValueLess(lhs.value, rhs.value);
     }
-    return lhs.wcost < rhs.wcost;
+    return result_internal::TiebreakLess(lhs, rhs);
   }
 };
 
 // Returns true if `lhs` is less than `rhs`
 struct ResultCostLess {
   bool operator()(const Result& lhs, const Result& rhs) const {
-    if (lhs.cost == rhs.cost) {
+    if (lhs.cost != rhs.cost) {
+      return lhs.cost < rhs.cost;
+    }
+    if (lhs.value != rhs.value) {
       return result_internal::ValueLess(lhs.value, rhs.value);
     }
-    return lhs.cost < rhs.cost;
+    return result_internal::TiebreakLess(lhs, rhs);
   }
 };
 

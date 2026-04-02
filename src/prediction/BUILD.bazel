@@ -270,6 +270,15 @@ mozc_cc_library(
     ],
 )
 
+mozc_cc_test(
+    name = "result_test",
+    srcs = ["result_test.cc"],
+    deps = [
+        ":result",
+        "//testing:gunit_main",
+    ],
+)
+
 mozc_cc_library(
     name = "result_filter",
     srcs = ["result_filter.cc"],
