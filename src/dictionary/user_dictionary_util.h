@@ -134,6 +134,22 @@ bool Sanitize(std::string* str, size_t max_size);
 // Returns the error status of the validity for the given dictionary name.
 absl::Status ValidateDictionaryName(absl::string_view dictionary_name);
 
+// TODO(b/491702414): Move PosType related functions to `user_pos.h`.
+// Returns the string representation of PosType, or empty string if the given
+// pos is invalid.
+// For historical reason, the pos was represented in Japanese characters.
+absl::string_view GetStringPosType(
+    user_dictionary::UserDictionary::PosType pos_type);
+
+// Returns the cost of PosType. if cost is not defined, the default cost
+// is returned.
+uint16_t GetCostFromPosType(user_dictionary::UserDictionary::PosType pos_type);
+
+// Returns the string representation of PosType. INVALID if the given pos is
+// invalid.
+user_dictionary::UserDictionary::PosType ToPosType(
+    absl::string_view string_pos_type);
+
 }  // namespace user_dictionary
 }  // namespace mozc
 

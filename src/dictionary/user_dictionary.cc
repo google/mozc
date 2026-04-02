@@ -205,9 +205,14 @@ class UserDictionary::TokensIndex {
         } else {
           const absl::string_view comment =
               absl::StripAsciiWhitespace(entry.comment());
-          for (auto& token :
-               user_pos_.GetTokens(reading, entry.value(), entry.pos())) {
+          for (auto& token : user_pos_.GetTokens(
+                   reading, entry.value(),
+                   user_dictionary::GetStringPosType(entry.pos()))) {
             strings::Assign(token.comment, comment);
+            // TODO(b/491702414): Better to populate `pos_type` inside
+            // GetTokens(), but it requires to reverse-lookup from string-pos to
+            // pos_type, which takes an additional lookup cost of binary-search.
+            token.set_pos_type(entry.pos());
             user_pos_tokens_.push_back(std::move(token));
           }
         }
@@ -574,7 +579,8 @@ void UserDictionary::PopulateTokenFromUserPosToken(
   if (user_pos_token.has_attribute(UserPos::Token::NON_JA_LOCALE)) {
     token->cost = 10000;
   } else {
-    token->cost = UserPos::GetCostFromPosType(user_pos_token.pos_type());
+    token->cost =
+        user_dictionary::GetCostFromPosType(user_pos_token.pos_type());
     DCHECK_GT(token->cost, 0);
   }
 

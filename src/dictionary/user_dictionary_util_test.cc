@@ -249,6 +249,21 @@ TEST(UserDictionaryUtilTest, ValidateDictionaryName) {
             ValidateDictionaryName("a\nbc").raw_code());
 }
 
+TEST(UserDictionaryUtilTest, ToPosType) {
+  EXPECT_EQ(ToPosType("品詞なし"), UserDictionary::NO_POS);
+  EXPECT_EQ(ToPosType("サジェストのみ"), UserDictionary::SUGGESTION_ONLY);
+  EXPECT_EQ(ToPosType("動詞ワ行五段"), UserDictionary::WA_GROUP1_VERB);
+  EXPECT_EQ(ToPosType("抑制単語"), UserDictionary::SUPPRESSION_WORD);
+}
+
+TEST(UserDictionaryUtilTest, GetStringPosType) {
+  EXPECT_EQ(GetStringPosType(UserDictionary::NO_POS), "品詞なし");
+  EXPECT_EQ(GetStringPosType(UserDictionary::SUGGESTION_ONLY),
+            "サジェストのみ");
+  EXPECT_EQ(GetStringPosType(UserDictionary::WA_GROUP1_VERB), "動詞ワ行五段");
+  EXPECT_EQ(GetStringPosType(UserDictionary::SUPPRESSION_WORD), "抑制単語");
+}
+
 }  // namespace
 }  // namespace user_dictionary
 }  // namespace mozc
