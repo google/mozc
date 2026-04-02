@@ -45,6 +45,7 @@
 #include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
+#include "dictionary/user_pos.h"
 #include "gui/base/util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
@@ -263,7 +264,7 @@ void WordRegisterDialog::Clicked(QAbstractButton* button) {
 WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
   const std::string key = ReadinglineEdit->text().toStdString();
   const std::string value = WordlineEdit->text().toStdString();
-  UserDictionary::PosType pos = user_dictionary::ToPosType(
+  UserDictionary::PosType pos = dictionary::UserPos::ToPosType(
       PartOfSpeechcomboBox->currentText().toStdString());
 
   if (key.empty()) {

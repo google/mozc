@@ -305,6 +305,7 @@ mozc_cc_library(
     ],
     deps = [
         ":user_dictionary_util",
+        ":user_pos",
         "//base:config_file_stream",
         "//base:file_stream",
         "//base:file_util",
@@ -484,15 +485,19 @@ mozc_cc_library(
         "//rewriter:__pkg__",
     ],
     deps = [
-        ":user_dictionary_util",
         "//base:bits",
         "//base/container:serialized_string_array",
         "//base/strings:assign",
         "//data_manager",
         "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -504,6 +509,7 @@ mozc_cc_test(
         ":user_pos",
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
