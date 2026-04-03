@@ -29,10 +29,9 @@
 
 #include "dictionary/user_dictionary_util.h"
 
-#include <cstdint>
-#include <memory>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"
@@ -192,7 +191,7 @@ TEST(UserDictionaryUtilTest, ValidateEntry) {
             ValidateEntry(entry).raw_code());
 
   entry = base_entry;
-  entry.set_key("ふ頭");  // Non-Hiragana chararcters are also acceptable.
+  entry.set_key("ふ頭");  // Non-Hiragana characters are also acceptable.
   EXPECT_OK(ValidateEntry(entry));
 
   entry = base_entry;

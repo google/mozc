@@ -376,6 +376,7 @@ mozc_cc_test(
         "//protocol:user_dictionary_storage_cc_proto",
         "//testing:gunit_main",
         "//testing:testing_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
