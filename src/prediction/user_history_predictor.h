@@ -484,8 +484,8 @@ class UserHistoryPredictor : public PredictorInterface {
   const dictionary::UserDictionaryInterface& user_dictionary_;
   const engine::Modules& modules_;
 
-  // TODO(taku): Moves UserHistory to modules.
-  UserHistoryStorage storage_;
+  // Initialized via modules_.
+  UserHistoryStorage& storage_;
 
   // Internal LRU cache to store dic_key/Entry to be reverted.
   storage::LruCache<uint64_t, RevertEntries> revert_cache_;

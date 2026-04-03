@@ -71,6 +71,9 @@ mozc_cc_library(
     name = "user_history_storage",
     srcs = ["user_history_storage.cc"],
     hdrs = ["user_history_storage.h"],
+    visibility = [
+        "//engine:__pkg__",
+    ],
     deps = [
         ":user_history_predictor_cc_proto",
         "//base:config_file_stream",

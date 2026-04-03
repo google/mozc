@@ -160,6 +160,7 @@ mozc_cc_library(
         "//dictionary/system:system_dictionary",
         "//dictionary/system:value_dictionary",
         "//prediction:suggestion_filter",
+        "//prediction:user_history_storage",
         "//prediction:zero_query_dict",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",

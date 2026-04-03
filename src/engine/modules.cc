@@ -54,6 +54,7 @@
 #include "dictionary/user_pos.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/suggestion_filter.h"
+#include "prediction/user_history_storage.h"
 
 
 using ::mozc::dictionary::DictionaryImpl;
@@ -131,6 +132,11 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
     RETURN_IF_NULL(suffix_dictionary_);
   }
 
+  if (!user_history_storage_) {
+    user_history_storage_ = std::make_unique<prediction::UserHistoryStorage>();
+    RETURN_IF_NULL(user_history_storage_);
+  }
+
   auto status_or_connector = Connector::CreateFromDataManager(*data_manager_);
   if (!status_or_connector.ok()) {
     return std::move(status_or_connector).status();
@@ -190,6 +196,7 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   RETURN_IF_NULL(suffix_dictionary_);
   RETURN_IF_NULL(pos_group_);
   RETURN_IF_NULL(single_kanji_dictionary_);
+  RETURN_IF_NULL(user_history_storage_);
   RETURN_IF_NULL(supplemental_model_);
 
   return absl::Status();

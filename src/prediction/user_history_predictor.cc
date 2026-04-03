@@ -339,6 +339,7 @@ UserHistoryPredictor::UserHistoryPredictor(const engine::Modules& modules,
     : dictionary_(modules.GetDictionary()),
       user_dictionary_(modules.GetUserDictionary()),
       modules_(modules),
+      storage_(modules_.GetUserHistoryStorage()),
       revert_cache_(kRevertCacheSize),
       decoder_(decoder) {}
 

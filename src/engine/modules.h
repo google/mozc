@@ -43,6 +43,7 @@
 #include "dictionary/single_kanji_dictionary.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/suggestion_filter.h"
+#include "prediction/user_history_storage.h"
 #include "prediction/zero_query_dict.h"
 
 namespace mozc {
@@ -110,6 +111,11 @@ class Modules {
     return zero_query_number_dict_;
   }
 
+  prediction::UserHistoryStorage& GetUserHistoryStorage() const {
+    DCHECK(user_history_storage_);
+    return *user_history_storage_;
+  }
+
   engine::SupplementalModelInterface& GetSupplementalModel() const {
     DCHECK(supplemental_model_);
     return *supplemental_model_;
@@ -132,6 +138,7 @@ class Modules {
   std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary_;
   std::unique_ptr<dictionary::DictionaryInterface> dictionary_;
   std::unique_ptr<const dictionary::PosGroup> pos_group_;
+  std::unique_ptr<prediction::UserHistoryStorage> user_history_storage_;
   SuggestionFilter suggestion_filter_;
   std::unique_ptr<const dictionary::SingleKanjiDictionary>
       single_kanji_dictionary_;
