@@ -295,6 +295,29 @@ run_binary(
     tool = ":gen_pos_map",
 )
 
+mozc_py_binary(
+    name = "gen_pos_cost_map",
+    srcs = ["gen_pos_cost_map.py"],
+    visibility = ["//data_manager:__subpackages__"],
+    deps = [
+        "//build_tools:code_generator_util",
+    ],
+)
+
+run_binary(
+    name = "pos_cost_map",
+    srcs = [
+        "//data/rules:user_pos.def",
+    ],
+    outs = ["pos_cost_map.inc"],
+    args = [
+        "--user_pos_file=" +
+        "$(location //data/rules:user_pos.def)",
+        "--output=$(location pos_cost_map.inc)",
+    ],
+    tool = ":gen_pos_cost_map",
+)
+
 mozc_cc_library(
     name = "user_dictionary_storage",
     srcs = ["user_dictionary_storage.cc"],
@@ -481,6 +504,7 @@ mozc_cc_library(
     name = "user_pos",
     srcs = ["user_pos.cc"],
     hdrs = ["user_pos.h"],
+    textual_hdrs = [":pos_cost_map"],
     visibility = [
         "//converter:__pkg__",
         "//engine:__pkg__",
