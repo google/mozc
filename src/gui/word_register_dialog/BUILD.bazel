@@ -87,6 +87,7 @@ mozc_cc_qt_library(
         "//dictionary:user_dictionary",
         "//dictionary:user_dictionary_storage",
         "//dictionary:user_dictionary_util",
+        "//dictionary:user_pos",
         "//gui/base:gui_base",
         "//gui/base:singleton_window_helper",
         "//protocol:commands_cc_proto",

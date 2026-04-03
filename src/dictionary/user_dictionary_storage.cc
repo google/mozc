@@ -51,6 +51,7 @@
 #include "base/protobuf/coded_stream.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
 #include "dictionary/user_dictionary_util.h"
+#include "dictionary/user_pos.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -234,7 +235,7 @@ absl::Status UserDictionaryStorage::ExportDictionary(
   for (size_t i = 0; i < dic.entries_size(); ++i) {
     const UserDictionaryEntry& entry = dic.entries(i);
     ofs << entry.key() << "\t" << entry.value() << "\t"
-        << user_dictionary::GetStringPosType(entry.pos()) << "\t"
+        << dictionary::UserPos::GetStringPosType(entry.pos()) << "\t"
         << entry.comment() << std::endl;
   }
 
