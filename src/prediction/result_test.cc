@@ -83,6 +83,19 @@ TEST(ResultTest, ResultCostLessTest) {
     EXPECT_FALSE(cost_less(r2, r1));
   }
 
+  // Same cost and value, but one of different candidate_attributes is 0.
+  {
+    Result r1, r2;
+    r1.cost = 100;
+    r2.cost = 100;
+    r1.value = "value";
+    r2.value = "value";
+    r1.candidate_attributes = 1;
+    r2.candidate_attributes = 0;
+    EXPECT_TRUE(cost_less(r1, r2));
+    EXPECT_FALSE(cost_less(r2, r1));
+  }
+
   // Same cost, value, types, attributes, but different lid.
   {
     Result r1, r2;

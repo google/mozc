@@ -82,6 +82,9 @@ bool TiebreakLess(const Result& lhs, const Result& rhs) {
     if (lhs.candidate_attributes == 0) {
       return false;
     }
+    if (rhs.candidate_attributes == 0) {
+      return true;
+    }
     return lhs.candidate_attributes < rhs.candidate_attributes;
   }
   // Then, use the rest of the fields.
