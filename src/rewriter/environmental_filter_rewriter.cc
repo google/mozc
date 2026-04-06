@@ -199,10 +199,9 @@ bool NormalizeCandidate(converter::Candidate* candidate,
 }
 
 absl::flat_hash_map<EmojiVersion, std::vector<std::u32string>>
-ExtractTargetEmojis(
-    absl::Span<const EmojiVersion> target_versions,
-    const absl::string_view token_array_data,
-    const absl::string_view string_array_data) {
+ExtractTargetEmojis(absl::Span<const EmojiVersion> target_versions,
+                    const absl::string_view token_array_data,
+                    const absl::string_view string_array_data) {
   SerializedStringArray string_array;
   string_array.Set(string_array_data);
 
@@ -210,11 +209,13 @@ ExtractTargetEmojis(
   for (const EmojiVersion target_version : target_versions) {
     results[target_version] = {};
   }
-  const EmojiDataIterator end_iter =
-      EmojiDataIterator(token_array_data.data() + token_array_data.size());
-  for (auto iter = EmojiDataIterator(token_array_data.data()); iter != end_iter;
-       ++iter) {
-    const uint32_t unicode_version_index = iter.unicode_version_index();
+
+  const absl::Span<const EmojiData> tokens = absl::MakeConstSpan(
+      reinterpret_cast<const EmojiData*>(token_array_data.data()),
+      token_array_data.size() / sizeof(EmojiData));
+
+  for (const EmojiData& token : tokens) {
+    const uint32_t unicode_version_index = token.unicode_version_index;
     // unicode_version_index will not be negative.
     if (unicode_version_index > EMOJI_MAX_VERSION) {
       continue;
@@ -224,7 +225,7 @@ ExtractTargetEmojis(
     if (!results.contains(version)) {
       continue;
     }
-    const absl::string_view utf8_emoji = string_array[iter.emoji_index()];
+    const absl::string_view utf8_emoji = string_array[token.emoji_index];
     results[version].push_back(Util::Utf8ToUtf32(utf8_emoji));
   }
   return results;

@@ -38,6 +38,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
@@ -67,54 +68,27 @@ class UsageRewriter : public RewriterInterface {
  private:
   friend class UsageRewriterTestPeer;
 
-  static constexpr size_t kUsageItemSize = 5;
+  struct UsageDictItem {
+    uint32_t usage_id = 0;
+    uint32_t key_index = 0;
+    uint32_t value_index = 0;
+    uint32_t conjugation_id = 0;
+    uint32_t meaning_index = 0;
+  } ABSL_ATTRIBUTE_PACKED;
 
-  class UsageDictItemIterator {
-   public:
-    using iterator_cateogry = std::input_iterator_tag;
-    using value_type = size_t;
-
-    UsageDictItemIterator() : ptr_(nullptr) {}
-    explicit UsageDictItemIterator(const char* ptr)
-        : ptr_(std::launder(reinterpret_cast<const uint32_t*>(ptr))) {}
-
-    size_t usage_id() const { return *ptr_; }
-    size_t key_index() const { return *(ptr_ + 1); }
-    size_t value_index() const { return *(ptr_ + 2); }
-    size_t conjugation_id() const { return *(ptr_ + 3); }
-    size_t meaning_index() const { return *(ptr_ + 4); }
-
-    UsageDictItemIterator& operator++() {
-      ptr_ += kUsageItemSize;
-      return *this;
-    }
-
-    bool IsValid() const { return ptr_ != nullptr; }
-
-    friend bool operator==(UsageDictItemIterator x, UsageDictItemIterator y) {
-      return x.ptr_ == y.ptr_;
-    }
-
-    friend bool operator!=(UsageDictItemIterator x, UsageDictItemIterator y) {
-      return x.ptr_ != y.ptr_;
-    }
-
-   private:
-    const uint32_t* ptr_;
-  };
+  static_assert(sizeof(UsageDictItem) == 20);
 
   using StrPair = std::pair<std::string, std::string>;
   static std::string GetKanjiPrefixAndOneHiragana(absl::string_view word);
 
-  UsageDictItemIterator LookupUnmatchedUsageHeuristically(
+  const UsageDictItem* LookupUnmatchedUsageHeuristically(
       const converter::Candidate& candidate) const;
-  UsageDictItemIterator LookupUsage(
-      const converter::Candidate& candidate) const;
+  const UsageDictItem* LookupUsage(const converter::Candidate& candidate) const;
 
-  absl::flat_hash_map<StrPair, UsageDictItemIterator> key_value_usageitem_map_;
+  absl::flat_hash_map<StrPair, const UsageDictItem*> key_value_usageitem_map_;
   const dictionary::PosMatcher pos_matcher_;
   const dictionary::DictionaryInterface* dictionary_;
-  const uint32_t* base_conjugation_suffix_;
+  const uint32_t* base_conjugation_suffix_ = nullptr;
   SerializedStringArray string_array_;
 
  private:

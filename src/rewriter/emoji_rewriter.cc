@@ -34,13 +34,16 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/japanese_util.h"
 #include "base/strings/assign.h"
@@ -99,44 +102,45 @@ int GetEmojiCost(const Segment& segment) {
   return segment.candidates_size() == 0 ? 0 : segment.candidate(0).cost;
 }
 
-void GatherAllEmojiData(EmojiDataIterator begin, EmojiDataIterator end,
-                        const SerializedStringArray& string_array,
-                        EmojiEntryList* utf8_emoji_list) {
-  for (; begin != end; ++begin) {
-    absl::string_view utf8_emoji = string_array[begin.emoji_index()];
+EmojiEntryList GatherAllEmojiData(absl::Span<const EmojiData> emoji_data,
+                                  const SerializedStringArray& string_array) {
+  EmojiEntryList utf8_emoji_list;
+  for (const EmojiData& token : emoji_data) {
+    absl::string_view utf8_emoji = string_array[token.emoji_index];
     if (utf8_emoji.empty()) {
       continue;
     }
-    utf8_emoji_list->emplace_back(utf8_emoji,
-                                  string_array[begin.description_utf8_index()]);
+    utf8_emoji_list.emplace_back(utf8_emoji,
+                                 string_array[token.description_utf8_index]);
   }
 
-  std::sort(utf8_emoji_list->begin(), utf8_emoji_list->end());
+  absl::c_sort(utf8_emoji_list);
+  return utf8_emoji_list;
 }
 
 std::vector<std::unique_ptr<converter::Candidate>> CreateAllEmojiData(
     absl::string_view key, const int cost, EmojiEntryList utf8_emoji_list) {
   std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(utf8_emoji_list.size());
-  for (const auto& emoji_entry : utf8_emoji_list) {
-    candidates.push_back(
-        CreateCandidate(key, emoji_entry.first, emoji_entry.second, cost));
+  for (const auto& [value, description] : utf8_emoji_list) {
+    candidates.emplace_back(CreateCandidate(key, value, description, cost));
   }
   return candidates;
 }
 
 std::vector<std::unique_ptr<converter::Candidate>> CreateEmojiData(
-    absl::string_view key, const int cost, EmojiRewriter::IteratorRange range,
+    absl::string_view key, const int cost,
+    const absl::Span<const EmojiData> range,
     const SerializedStringArray& string_array) {
   std::vector<std::unique_ptr<converter::Candidate>> candidates;
-  candidates.reserve(range.second - range.first);
-  for (auto iter = range.first; iter != range.second; ++iter) {
-    absl::string_view utf8_emoji = string_array[iter.emoji_index()];
+  candidates.reserve(range.size());
+  for (const EmojiData& token : range) {
+    absl::string_view utf8_emoji = string_array[token.emoji_index];
     if (utf8_emoji.empty()) {
       continue;
     }
     candidates.push_back(CreateCandidate(
-        key, utf8_emoji, string_array[iter.description_utf8_index()], cost));
+        key, utf8_emoji, string_array[token.description_utf8_index], cost));
   }
   return candidates;
 }
@@ -164,7 +168,7 @@ bool EmojiRewriter::Rewrite(const ConversionRequest& request,
     return false;
   }
 
-  CHECK(segments != nullptr);
+  DCHECK(segments);
   return RewriteCandidates(segments);
 }
 
@@ -172,15 +176,28 @@ bool EmojiRewriter::IsEmojiCandidate(const converter::Candidate& candidate) {
   return absl::StrContains(candidate.description, kEmoji);
 }
 
-std::pair<EmojiDataIterator, EmojiDataIterator> EmojiRewriter::LookUpToken(
+absl::Span<const EmojiData> EmojiRewriter::LookUpToken(
     absl::string_view key) const {
   // Search string array for key.
-  auto iter = std::lower_bound(string_array_.begin(), string_array_.end(), key);
-  if (iter == string_array_.end() || *iter != key) {
-    return std::pair<EmojiDataIterator, EmojiDataIterator>(end(), end());
-  }
-  // Search token array for the string index.
-  return std::equal_range(begin(), end(), iter.index());
+  const absl::Span<const EmojiData> tokens = GetEmojiTokens();
+  const auto [it_begin, it_end] = std::equal_range(
+      // The `lhs/rhs` can be either EmojiData or absl::string_view.
+      tokens.begin(), tokens.end(), key, [&](const auto& lhs, const auto& rhs) {
+        auto get_key_string = [&](const auto& arg) {
+          // The `arg` can be either EmojiData or absl::string_view,
+          // depending on whether lower_bound or upper_bound is used.
+          // The compiler selects the correct type at compile time using the
+          // following block
+          if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                       EmojiData>) {
+            return string_array_[arg.key_index];  // key in tokens
+          } else {
+            return arg;  // key in query.
+          }
+        };
+        return get_key_string(lhs) < get_key_string(rhs);
+      });
+  return absl::MakeConstSpan(it_begin, it_end);
 }
 
 bool EmojiRewriter::RewriteCandidates(Segments* segments) const {
@@ -199,6 +216,8 @@ bool EmojiRewriter::RewriteCandidates(Segments* segments) const {
     return true;
   };
 
+  const absl::Span<const EmojiData> tokens = GetEmojiTokens();
+
   for (Segment& segment : segments->conversion_segments()) {
     reading = japanese_util::FullWidthAsciiToHalfWidthAscii(segment.key());
     if (reading.empty()) {
@@ -207,8 +226,8 @@ bool EmojiRewriter::RewriteCandidates(Segments* segments) const {
 
     if (reading == kEmojiKey) {
       // When key is "えもじ", we expect to expand all Emoji characters.
-      EmojiEntryList utf8_emoji_list;
-      GatherAllEmojiData(begin(), end(), string_array_, &utf8_emoji_list);
+      const EmojiEntryList utf8_emoji_list =
+          GatherAllEmojiData(tokens, string_array_);
       if (utf8_emoji_list.empty()) {
         continue;
       }
@@ -221,7 +240,7 @@ bool EmojiRewriter::RewriteCandidates(Segments* segments) const {
     }
 
     const auto range = LookUpToken(reading);
-    if (range.first == range.second) {
+    if (range.empty()) {
       MOZC_VLOG(2) << "Token not found: " << reading;
       continue;
     }

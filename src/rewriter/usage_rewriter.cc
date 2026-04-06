@@ -29,6 +29,8 @@
 
 #include "rewriter/usage_rewriter.h"
 
+#include "absl/types/span.h"
+
 #ifndef NO_USAGE_REWRITER
 #include <cstddef>
 #include <cstdint>
@@ -55,9 +57,7 @@ using ::mozc::dictionary::DictionaryInterface;
 
 UsageRewriter::UsageRewriter(const DataManager& data_manager,
                              const DictionaryInterface& dictionary)
-    : pos_matcher_(data_manager.GetPosMatcherData()),
-      dictionary_(&dictionary),
-      base_conjugation_suffix_(nullptr) {
+    : pos_matcher_(data_manager.GetPosMatcherData()), dictionary_(&dictionary) {
   absl::string_view base_conjugation_suffix_data;
   absl::string_view conjugation_suffix_data;
   absl::string_view conjugation_suffix_index_data;
@@ -80,26 +80,27 @@ UsageRewriter::UsageRewriter(const DataManager& data_manager,
     string_array_.Set({"\0\0\0\0", 4});
   }
 
-  UsageDictItemIterator begin(usage_items_data.data());
-  UsageDictItemIterator end(usage_items_data.data() + usage_items_data.size());
+  absl::Span<const UsageDictItem> tokens = absl::MakeConstSpan(
+      reinterpret_cast<const UsageDictItem*>(usage_items_data.data()),
+      usage_items_data.size() / sizeof(UsageDictItem));
 
   // TODO(taku): To reduce memory footprint, better to replace it with
   // binary search over the conjugation_suffix_data directly.
-  for (; begin != end; ++begin) {
-    for (size_t i = conjugation_suffix_data_index[begin.conjugation_id()];
-         i < conjugation_suffix_data_index[begin.conjugation_id() + 1]; ++i) {
-      const absl::string_view key = string_array_[begin.key_index()];
-      const absl::string_view value = string_array_[begin.value_index()];
+  for (const UsageDictItem& token : tokens) {
+    const absl::string_view key = string_array_[token.key_index];
+    const absl::string_view value = string_array_[token.value_index];
+    for (size_t i = conjugation_suffix_data_index[token.conjugation_id];
+         i < conjugation_suffix_data_index[token.conjugation_id + 1]; ++i) {
       const absl::string_view key_suffix =
           string_array_[conjugation_suffix[2 * i + 1]];
       const absl::string_view value_suffix =
           string_array_[conjugation_suffix[2 * i]];
       const StrPair key_value1(absl::StrCat(key, key_suffix),
                                absl::StrCat(value, value_suffix));
-      key_value_usageitem_map_[key_value1] = begin;
+      key_value_usageitem_map_[key_value1] = &token;
 
       const StrPair key_value2("", key_value1.second);
-      key_value_usageitem_map_[key_value2] = begin;
+      key_value_usageitem_map_[key_value2] = &token;
     }
   }
 }
@@ -140,47 +141,46 @@ std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
   return "";
 }
 
-UsageRewriter::UsageDictItemIterator
+const UsageRewriter::UsageDictItem*
 UsageRewriter::LookupUnmatchedUsageHeuristically(
     const converter::Candidate& candidate) const {
   // We check Unknown POS ("名詞,サ変接続") as well, since
   // target verbs/adjectives may be in web dictionary.
   if (!pos_matcher_.IsContentWordWithConjugation(candidate.lid) &&
       !pos_matcher_.IsUnknown(candidate.lid)) {
-    return UsageDictItemIterator();
+    return nullptr;
   }
 
   const std::string value =
       GetKanjiPrefixAndOneHiragana(candidate.content_value);
   if (value.empty()) {
-    return UsageDictItemIterator();
+    return nullptr;
   }
 
   // key is empty;
-  StrPair key_value("", value);
+  const StrPair key_value("", value);
   const auto itr = key_value_usageitem_map_.find(key_value);
   if (itr == key_value_usageitem_map_.end()) {
-    return UsageDictItemIterator();
+    return nullptr;
   }
   // Check result key part is a prefix of the content_key.
-  const absl::string_view key = string_array_[itr->second.key_index()];
+  const absl::string_view key = string_array_[itr->second->key_index];
   if (candidate.content_key.starts_with(key)) {
     return itr->second;
   }
 
-  return UsageDictItemIterator();
+  return nullptr;
 }
 
-UsageRewriter::UsageDictItemIterator UsageRewriter::LookupUsage(
+const UsageRewriter::UsageDictItem* UsageRewriter::LookupUsage(
     const converter::Candidate& candidate) const {
   const absl::string_view key = candidate.content_key;
   const absl::string_view value = candidate.content_value;
-  StrPair key_value(key, value);
-  const auto itr = key_value_usageitem_map_.find(key_value);
-  if (itr != key_value_usageitem_map_.end()) {
+  const StrPair key_value(key, value);
+  if (const auto itr = key_value_usageitem_map_.find(key_value);
+      itr != key_value_usageitem_map_.end()) {
     return itr->second;
   }
-
   return LookupUnmatchedUsageHeuristically(candidate);
 }
 
@@ -214,44 +214,43 @@ bool UsageRewriter::Rewrite(const ConversionRequest& request,
       ++usage_id_for_user_comment;
 
       // First, search the user dictionary for comment.
-      if (dictionary_ != nullptr) {
-        if (dictionary_->LookupComment(segment->candidate(j).content_key,
-                                       segment->candidate(j).content_value,
-                                       request, &comment)) {
-          converter::Candidate* candidate = segment->mutable_candidate(j);
-          candidate->usage_id = usage_id_for_user_comment;
-          candidate->usage_title = segment->candidate(j).content_value;
-          candidate->usage_description = std::move(comment);
-          comment.clear();
-          modified = true;
-          continue;
-        }
+      if (dictionary_ &&
+          dictionary_->LookupComment(segment->candidate(j).content_key,
+                                     segment->candidate(j).content_value,
+                                     request, &comment)) {
+        converter::Candidate* candidate = segment->mutable_candidate(j);
+        candidate->usage_id = usage_id_for_user_comment;
+        candidate->usage_title = segment->candidate(j).content_value;
+        candidate->usage_description = std::move(comment);
+        comment.clear();
+        modified = true;
+        continue;
       }
 
       // If comment isn't in the user dictionary, search the system usage
       // dictionary.
-      const UsageDictItemIterator iter = LookupUsage(segment->candidate(j));
-      if (iter.IsValid()) {
+      if (const UsageDictItem* token = LookupUsage(segment->candidate(j));
+          token) {
         converter::Candidate* candidate = segment->mutable_candidate(j);
         DCHECK(candidate);
-        candidate->usage_id = iter.usage_id();
+        candidate->usage_id = token->usage_id;
 
         const absl::string_view value_suffix =
-            string_array_[base_conjugation_suffix_[2 * iter.conjugation_id()]];
-        candidate->usage_title.assign(string_array_[iter.value_index()].data(),
-                                      string_array_[iter.value_index()].size());
+            string_array_[base_conjugation_suffix_[2 * token->conjugation_id]];
+        candidate->usage_title.assign(string_array_[token->value_index].data(),
+                                      string_array_[token->value_index].size());
         candidate->usage_title.append(value_suffix.data(), value_suffix.size());
 
         candidate->usage_description.assign(
-            string_array_[iter.meaning_index()].data(),
-            string_array_[iter.meaning_index()].size());
+            string_array_[token->meaning_index].data(),
+            string_array_[token->meaning_index].size());
 
         MOZC_VLOG(2) << i << ":" << j << ":" << candidate->content_key << ":"
                      << candidate->content_value << ":"
-                     << string_array_[iter.key_index()] << ":"
-                     << string_array_[iter.value_index()] << ":"
-                     << iter.conjugation_id() << ":"
-                     << string_array_[iter.meaning_index()];
+                     << string_array_[token->key_index] << ":"
+                     << string_array_[token->value_index] << ":"
+                     << token->conjugation_id << ":"
+                     << string_array_[token->meaning_index];
         modified = true;
       }
     }
