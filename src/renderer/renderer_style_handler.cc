@@ -131,8 +131,8 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle* style) {
 
   RendererStyle::RGBAColor* color = style->add_footer_border_colors();
   color->set_r(96);
-  color->set_r(96);
-  color->set_r(96);
+  color->set_g(96);
+  color->set_b(96);
 
   style->mutable_footer_top_color()->set_r(0xff);
   style->mutable_footer_top_color()->set_g(0xff);
