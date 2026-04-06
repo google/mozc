@@ -1355,13 +1355,18 @@ bool UserHistoryPredictor::LookupEntry(
 
 std::vector<Result> UserHistoryPredictor::Predict(
     const ConversionRequest& request) const {
-  MaybeProcessPartialRevertEntry(request);
+  const bool is_empty_input = request.key().empty();
+  // Workaround for b/499745591
+  // Predict() may be triggered when BS key is pressed, which is not expected.
+  // Need to call MaybeProcessPartialRevertEntry when the new input has started.
+  if (!is_empty_input) {
+    MaybeProcessPartialRevertEntry(request);
+  }
 
   if (!ShouldPredict(request)) {
     return {};
   }
 
-  const bool is_empty_input = request.key().empty();
   ConstEntrySnapshot prev_entry = LookupPrevEntry(request);
   if (is_empty_input && !prev_entry) {
     MOZC_VLOG(1) << "If request_key_len is 0, prev_entry must be set";

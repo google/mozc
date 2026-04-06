@@ -5427,6 +5427,20 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   }
 
+  // Zero query. partial-revert handling is invoked when user has
+  // started new input.
+  {
+    init_predictor();
+    results = suggest_with_context("", "佐藤さんは京都大学を卒業し");
+    EXPECT_TRUE(results.empty());
+
+    EXPECT_FALSE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_FALSE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_FALSE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_FALSE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
+  }
+
   // Adds extra characters directly w/o using IME.
   {
     init_predictor();
