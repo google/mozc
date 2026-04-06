@@ -389,16 +389,15 @@ bool FillFooter(const commands::Category category,
         }
         if (cand.has_annotation() && cand.annotation().deletable()) {
           // TODO(noriyukit): Change the message depending on user's keymap.
-#if defined(__APPLE__)
-          constexpr absl::string_view kDeleteInstruction =
-              "control+fn+deleteで履歴から削除";
-#elif defined(OS_CHROMEOS)
-          constexpr absl::string_view kDeleteInstruction =
-              "ctrl+search+backspaceで履歴から削除";
-#else   // !__APPLE__ && !OS_CHROMEOS
-          constexpr absl::string_view kDeleteInstruction =
-              "Ctrl+Delで履歴から削除";
-#endif  // __APPLE__ || OS_CHROMEOS
+          const absl::string_view kDeleteInstruction = []() {
+            if constexpr (port::IsAppleBase()) {
+              return "control+fn+deleteで履歴から削除";
+            } else if constexpr (port::IsChromeos()) {
+              return "ctrl+search+backspaceで履歴から削除";
+            } else {
+              return "Ctrl+Delで履歴から削除";
+            }
+          }();
           footer->set_label(kDeleteInstruction);
           show_build_number = false;
         }

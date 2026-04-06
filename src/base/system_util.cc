@@ -39,6 +39,7 @@
 #include "absl/synchronization/mutex.h"
 #include "base/const.h"
 #include "base/environ.h"
+#include "base/port.h"
 #include "base/file_util.h"
 #include "base/singleton.h"
 
@@ -232,88 +233,87 @@ class LocalAppDataDirectoryCache {
 #endif  // _WIN32
 
 std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
-#if defined(OS_CHROMEOS)
-  // TODO(toka): Must use passed in user profile dir which passed in. If mojo
-  // platform the user profile is determined on runtime.
-  // It's hack, the user profile dir should be passed in. Although the value in
-  // NaCL platform is correct.
-  return "/mutable";
-
-#elif defined(__wasm__)
-  // Do nothing for WebAssembly.
-  return "";
-
-#elif defined(__ANDROID__)
-  // For android, we do nothing here because user profile directory,
-  // of which the path depends on active user,
-  // is injected from Java layer.
-  return "";
-
-#elif defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
-  // On iOS, use Caches directory instead of Application Spport directory
-  // because the support directory doesn't exist by default.  Also, it is backed
-  // up by iTunes and iCloud.
-  return FileUtil::JoinPath({MacUtil::GetCachesDirectory(), kProductPrefix});
+  if constexpr (port::IsChromeos()) {
+    // TODO(toka): Must use passed in user profile dir which passed in. If mojo
+    // platform the user profile is determined on runtime.
+    // It's hack, the user profile dir should be passed in. Although the value
+    // in NaCL platform is correct.
+    return "/mutable";
+  } else if constexpr (port::IsWasm()) {
+    // Do nothing for WebAssembly.
+    return "";
+  } else if constexpr (port::IsAndroid()) {
+    // For android, we do nothing here because user profile directory,
+    // of which the path depends on active user,
+    // is injected from Java layer.
+    return "";
+  } else {
+#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
+    // On iOS, use Caches directory instead of Application Support directory
+    // because the support directory doesn't exist by default.  Also, it is
+    // backed up by iTunes and iCloud.
+    return FileUtil::JoinPath({MacUtil::GetCachesDirectory(), kProductPrefix});
 
 #elif defined(_WIN32)
-  DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
-  std::string dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
+    DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
+    std::string dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-  dir = FileUtil::JoinPath(dir, kCompanyNameInEnglish);
-  if (absl::Status s = FileUtil::CreateDirectory(dir); !s.ok()) {
-    LOG(ERROR) << s;
-  }
+    dir = FileUtil::JoinPath(dir, kCompanyNameInEnglish);
+    if (absl::Status s = FileUtil::CreateDirectory(dir); !s.ok()) {
+      LOG(ERROR) << s;
+    }
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-  return FileUtil::JoinPath(dir, kProductNameInEnglish);
+    return FileUtil::JoinPath(dir, kProductNameInEnglish);
 
 #elif defined(TARGET_OS_OSX) && TARGET_OS_OSX
-  std::string dir = MacUtil::GetApplicationSupportDirectory();
+    std::string dir = MacUtil::GetApplicationSupportDirectory();
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-  dir = FileUtil::JoinPath(dir, "Google");
-  // The permission of ~/Library/Application Support/Google seems to be 0755.
-  // TODO(komatsu): nice to make a wrapper function.
-  ::mkdir(dir.c_str(), 0755);
-  return FileUtil::JoinPath(dir, "JapaneseInput");
+    dir = FileUtil::JoinPath(dir, "Google");
+    // The permission of ~/Library/Application Support/Google seems to be 0755.
+    // TODO(komatsu): nice to make a wrapper function.
+    ::mkdir(dir.c_str(), 0755);
+    return FileUtil::JoinPath(dir, "JapaneseInput");
 #else   //  GOOGLE_JAPANESE_INPUT_BUILD
-  return FileUtil::JoinPath(dir, "Mozc");
+    return FileUtil::JoinPath(dir, "Mozc");
 #endif  //  GOOGLE_JAPANESE_INPUT_BUILD
 
 #elif defined(__linux__)
-  // 1. If "$HOME/.mozc" already exists,
-  //    use "$HOME/.mozc" for backward compatibility.
-  // 2. If $XDG_CONFIG_HOME is defined
-  //    use "$XDG_CONFIG_HOME/mozc".
-  // 3. Otherwise
-  //    use "$HOME/.config/mozc" as the default value of $XDG_CONFIG_HOME
-  // https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-  const std::string home = Environ::GetEnv("HOME");
-  if (home.empty()) {
-    char buf[1024];
-    struct passwd pw, *ppw;
-    const uid_t uid = geteuid();
-    CHECK_EQ(0, getpwuid_r(uid, &pw, buf, sizeof(buf), &ppw))
-        << "Can't get passwd entry for uid " << uid << ".";
-    CHECK_LT(0, strlen(pw.pw_dir))
-        << "Home directory for uid " << uid << " is not set.";
-    return FileUtil::JoinPath(pw.pw_dir, ".mozc");
-  }
+    // 1. If "$HOME/.mozc" already exists,
+    //    use "$HOME/.mozc" for backward compatibility.
+    // 2. If $XDG_CONFIG_HOME is defined
+    //    use "$XDG_CONFIG_HOME/mozc".
+    // 3. Otherwise
+    //    use "$HOME/.config/mozc" as the default value of $XDG_CONFIG_HOME
+    // https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    const std::string home = Environ::GetEnv("HOME");
+    if (home.empty()) {
+      char buf[1024];
+      struct passwd pw, *ppw;
+      const uid_t uid = geteuid();
+      CHECK_EQ(0, getpwuid_r(uid, &pw, buf, sizeof(buf), &ppw))
+          << "Can't get passwd entry for uid " << uid << ".";
+      CHECK_LT(0, strlen(pw.pw_dir))
+          << "Home directory for uid " << uid << " is not set.";
+      return FileUtil::JoinPath(pw.pw_dir, ".mozc");
+    }
 
-  std::string old_dir = FileUtil::JoinPath(home, ".mozc");
-  if (FileUtil::DirectoryExists(old_dir).ok()) {
-    return old_dir;
-  }
+    std::string old_dir = FileUtil::JoinPath(home, ".mozc");
+    if (FileUtil::DirectoryExists(old_dir).ok()) {
+      return old_dir;
+    }
 
-  const std::string xdg_config_home = Environ::GetEnv("XDG_CONFIG_HOME");
-  if (!xdg_config_home.empty()) {
-    return FileUtil::JoinPath(xdg_config_home, "mozc");
-  }
-  return FileUtil::JoinPath(home, ".config/mozc");
+    const std::string xdg_config_home = Environ::GetEnv("XDG_CONFIG_HOME");
+    if (!xdg_config_home.empty()) {
+      return FileUtil::JoinPath(xdg_config_home, "mozc");
+    }
+    return FileUtil::JoinPath(home, ".config/mozc");
 
 #else  // Supported platforms
 #error Undefined target platform.
 
 #endif  // Platforms
+  }
 }
 
 }  // namespace
