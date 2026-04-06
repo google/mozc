@@ -37,62 +37,68 @@ namespace mozc {
 namespace {
 
 #if defined(_WIN32)
-static_assert(TargetIsWindows());
-static_assert(!TargetIsLinux());
-static_assert(!TargetIsAndroid());
-static_assert(!TargetIsDarwin());
-static_assert(!TargetIsOSX());
-static_assert(!TargetIsIPhone());
-static_assert(!TargetIsWASM());
-static_assert(!TargetIsChromeOS());
+static_assert(port::IsWindows());
+static_assert(!port::IsLinux());
+static_assert(!port::IsLinuxBase());
+static_assert(!port::IsAndroid());
+static_assert(!port::IsAppleBase());
+static_assert(!port::IsMacos());
+static_assert(!port::IsIos());
+static_assert(!port::IsWasm());
+static_assert(!port::IsChromeos());
 #endif  // _WIN32
 
 #if defined(__APPLE__)
-static_assert(!TargetIsWindows());
-static_assert(!TargetIsLinux());
-static_assert(!TargetIsAndroid());
-static_assert(TargetIsDarwin());
-static_assert(!TargetIsWASM());
-static_assert(!TargetIsChromeOS());
+static_assert(!port::IsWindows());
+static_assert(!port::IsLinux());
+static_assert(!port::IsLinuxBase());
+static_assert(!port::IsAndroid());
+static_assert(port::IsAppleBase());
+static_assert(!port::IsWasm());
+static_assert(!port::IsChromeos());
 #if TARGET_OS_OSX
-static_assert(TargetIsOSX());
-static_assert(!TargetIsIPhone());
+static_assert(port::IsMacos());
+static_assert(!port::IsIos());
 #elif TARGET_OS_IPHONE
-static_assert(!TargetIsOSX());
-static_assert(TargetIsIPhone());
+static_assert(!port::IsMacos());
+static_assert(port::IsIos());
 #endif  // TARGET_OS_IPHONE
 #endif  // __APPLE__
 
 #if defined(__linux__)
-static_assert(!TargetIsWindows());
-static_assert(TargetIsLinux());
-static_assert(!TargetIsDarwin());
-static_assert(!TargetIsOSX());
-static_assert(!TargetIsIPhone());
-static_assert(!TargetIsWASM());
+static_assert(!port::IsWindows());
+static_assert(port::IsLinuxBase());
+static_assert(!port::IsAppleBase());
+static_assert(!port::IsMacos());
+static_assert(!port::IsIos());
+static_assert(!port::IsWasm());
 #if defined(__ANDROID__)
-static_assert(TargetIsAndroid());
+static_assert(!port::IsLinux());
+static_assert(port::IsAndroid());
 #else   // __ANDROID__
-static_assert(!TargetIsAndroid());
+static_assert(port::IsLinux());
+static_assert(!port::IsAndroid());
 #endif  // !__ANDROID__
 #endif  // !__linux__
 
 #ifdef OS_CHROMEOS
-static_assert(TargetIsLinux());
-static_assert(TargetIsChromeOS());
+static_assert(!port::IsLinux());
+static_assert(port::IsLinuxBase());
+static_assert(port::IsChromeos());
 #else   // OS_CHROMEOS
-static_assert(!TargetIsChromeOS());
+static_assert(!port::IsChromeos());
 #endif  // !OS_CHROMEOS
 
 #if defined(__wasm__)
-static_assert(!TargetIsWindows());
-static_assert(!TargetIsLinux());
-static_assert(!TargetIsAndroid());
-static_assert(!TargetIsDarwin());
-static_assert(!TargetIsOSX());
-static_assert(!TargetIsIPhone());
-static_assert(TargetIsWASM());
-static_assert(!TargetIsChromeOS());
+static_assert(!port::IsWindows());
+static_assert(!port::IsLinux());
+static_assert(!port::IsLinuxBase());
+static_assert(!port::IsAndroid());
+static_assert(!port::IsAppleBase());
+static_assert(!port::IsMacos());
+static_assert(!port::IsIos());
+static_assert(port::IsWasm());
+static_assert(!port::IsChromeos());
 #endif  // __wasm__
 
 }  // namespace

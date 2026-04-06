@@ -87,7 +87,7 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   EXPECT_FALSE(manager->GetServerProductVersion().empty());
   EXPECT_GT(manager->GetServerProcessId(), 0);
   EXPECT_EQ(path, path_created);
-  if constexpr (TargetIsLinux()) {
+  if constexpr (port::IsLinuxBase()) {
     // On Linux, |path| should be abstract (see man unix(7) for details.)
     ASSERT_FALSE(path.empty());
     EXPECT_EQ(path[0], '\0');

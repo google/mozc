@@ -55,7 +55,7 @@ int GetTableHeight(QTableWidget *widget) {
   // Here we use "龍" to calc font size, as it looks almost square
   const QRect rect =
       QFontMetrics(widget->font()).boundingRect(QStringLiteral("龍"));
-  if constexpr (TargetIsWindows()) {
+  if constexpr (port::IsWindows()) {
     return static_cast<int>(rect.height() * 1.3);
   } else {
     return static_cast<int>(rect.height() * 1.4);
@@ -75,7 +75,7 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
   CHECK_GT(column_size_, 0);
 
   // Mac style
-  if constexpr (TargetIsDarwin()) {
+  if constexpr (port::IsAppleBase()) {
     editorTableWidget->setShowGrid(false);
     layout()->setContentsMargins(0, 0, 0, 4);
     gridLayout->setHorizontalSpacing(12);

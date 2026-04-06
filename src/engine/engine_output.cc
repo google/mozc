@@ -289,7 +289,7 @@ void FillUsages(const Segment& segment, const CandidateList& cand_list,
 
   commands::InformationList* usages = candidate_window_proto->mutable_usages();
 
-  if (TargetIsAndroid()) {
+  if (port::IsAndroid()) {
     usages->set_delay(1000);
   }
 

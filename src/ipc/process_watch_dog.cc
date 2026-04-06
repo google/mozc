@@ -77,7 +77,7 @@ ProcessWatchDog::~ProcessWatchDog() {
 }
 
 bool ProcessWatchDog::SetId(ProcessId process_id, ThreadId thread_id) {
-  if constexpr (!TargetIsWindows()) {
+  if constexpr (!port::IsWindows()) {
     LOG_IF(ERROR, thread_id != kUnknownThreadId)
         << "Linux/Mac don't allow to capture ThreadID";
   }

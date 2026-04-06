@@ -64,7 +64,7 @@ namespace mozc {
 namespace {
 
 std::string CreateProcessMutexFileName(const absl::string_view name) {
-  absl::string_view hidden_prefix = TargetIsWindows() ? "" : ".";
+  absl::string_view hidden_prefix = port::IsWindows() ? "" : ".";
   std::string basename = absl::StrCat(hidden_prefix, name, ".lock");
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }

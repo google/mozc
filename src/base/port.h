@@ -35,16 +35,18 @@
 #endif  // __APPLE__
 
 namespace mozc {
-namespace port_internal {
+namespace port {
+namespace internal {
+
 // PlatformType represents a mutually exclusive list of target platforms.
 enum class PlatformType {
   kWindows,   // Windows
   kLinux,     // Linux, excluding Android (different from target_is_linux)
-  kOSX,       // OSX
+  kMacos,     // macOS
   kAndroid,   // Android
-  kIPhone,    // Darwin-based firmware, devices, or simulator
-  kWASM,      // WASM
-  kChromeOS,  // ChromeOS
+  kIos,       // iOS Devices or Simulator
+  kWasm,      // WebAssembly
+  kChromeos,  // ChromeOS
 };
 
 // kTargetPlatform is the current build target platform.
@@ -52,7 +54,7 @@ enum class PlatformType {
 #if defined(__ANDROID__)
 inline constexpr PlatformType kTargetPlatform = PlatformType::kAndroid;
 #elif defined(OS_CHROMEOS)  // __ANDROID__
-inline constexpr PlatformType kTargetPlatform = PlatformType::kChromeOS;
+inline constexpr PlatformType kTargetPlatform = PlatformType::kChromeos;
 #else                                        // OS_CHROMEOS
 inline constexpr PlatformType kTargetPlatform = PlatformType::kLinux;
 #endif                                       // !OS_CHROMEOS
@@ -60,20 +62,21 @@ inline constexpr PlatformType kTargetPlatform = PlatformType::kLinux;
 inline constexpr PlatformType kTargetPlatform = PlatformType::kWindows;
 #elif defined(__APPLE__)                     // _WIN32
 #if TARGET_OS_OSX
-inline constexpr PlatformType kTargetPlatform = PlatformType::kOSX;
+inline constexpr PlatformType kTargetPlatform = PlatformType::kMacos;
 #elif TARGET_OS_IPHONE  // TARGET_OS_OSX
-inline constexpr PlatformType kTargetPlatform = PlatformType::kIPhone;
+inline constexpr PlatformType kTargetPlatform = PlatformType::kIos;
 #else                   // TARGET_OS_IPHONE
 #error "Unsupported Apple platform target."
 #endif                   // !TARGET_OS_IPHONE
 #elif defined(__wasm__)  // __APPLE__
-inline constexpr PlatformType kTargetPlatform = PlatformType::kWASM;
+inline constexpr PlatformType kTargetPlatform = PlatformType::kWasm;
 #else                    // __wasm__
 #error "Unsupported target platform."
 #endif  // !__wasm__
-}  // namespace port_internal
 
-// The following TargetIs functions are a modern alternative for ifdef macros.
+}  // namespace internal
+
+// The following port::Is functions are a modern alternative for ifdef macros.
 // You can use standard C++ semantics like 'if constexpr' and 'std::conditional'
 // to switch compiling code for different platforms. Unlike ifdef preprocessor
 // directives, all codes are always evaluated and required to be well-formed,
@@ -92,7 +95,7 @@ inline constexpr PlatformType kTargetPlatform = PlatformType::kWASM;
 // - Switching code with if constexpr. The non-taken branch will be discarded.
 //
 // int Func() {
-//   if constexpr (TargetIsWindows()) {
+//   if constexpr (port::IsWindows()) {
 //     // Windows implementation.
 //   } else {
 //     // Other platforms.
@@ -101,63 +104,63 @@ inline constexpr PlatformType kTargetPlatform = PlatformType::kWASM;
 //
 // - Defining a type alias based on platforms.
 //
-// using Type = std::conditional_t<TargetIsWindows(), WindowsType, OtherType>;
+// using Type = std::conditional_t<port::IsWindows(), WindowsType, OtherType>;
 //
 // - Defining a constant with different values.
 //
-// constexpr absl::Duration kTimeout = TargetIsIPhone() ?
+// constexpr absl::Duration kTimeout = port::IsIos() ?
 //              absl::Milliseconds(100) : absl::Milliseconds(10);
 //
 
 // The build target is Windows.
-constexpr bool TargetIsWindows() {
-  return port_internal::kTargetPlatform ==
-         port_internal::PlatformType::kWindows;
+constexpr bool IsWindows() {
+  return internal::kTargetPlatform == internal::PlatformType::kWindows;
 }
 
 // The build target is Linux, including Android and ChromeOS.
-constexpr bool TargetIsLinux() {
-  return port_internal::kTargetPlatform ==
-             port_internal::PlatformType::kLinux ||
-         port_internal::kTargetPlatform ==
-             port_internal::PlatformType::kAndroid ||
-         port_internal::kTargetPlatform ==
-             port_internal::PlatformType::kChromeOS;
+constexpr bool IsLinuxBase() {
+  return internal::kTargetPlatform == internal::PlatformType::kLinux ||
+         internal::kTargetPlatform == internal::PlatformType::kAndroid ||
+         internal::kTargetPlatform == internal::PlatformType::kChromeos;
+}
+
+// The build target is Linux, excluding Android and ChromeOS.
+constexpr bool IsLinux() {
+  return internal::kTargetPlatform == internal::PlatformType::kLinux;
 }
 
 // The build target is Android.
-constexpr bool TargetIsAndroid() {
-  return port_internal::kTargetPlatform ==
-         port_internal::PlatformType::kAndroid;
+constexpr bool IsAndroid() {
+  return internal::kTargetPlatform == internal::PlatformType::kAndroid;
 }
 
-// The build target is Darwin, like OSX and iPhone.
-constexpr bool TargetIsDarwin() {
-  return port_internal::kTargetPlatform == port_internal::PlatformType::kOSX ||
-         port_internal::kTargetPlatform == port_internal::PlatformType::kIPhone;
+// The build target is Apple based, like macOS and iOS.
+constexpr bool IsAppleBase() {
+  return internal::kTargetPlatform == internal::PlatformType::kMacos ||
+         internal::kTargetPlatform == internal::PlatformType::kIos;
 }
 
-// The build target is OSX.
-constexpr bool TargetIsOSX() {
-  return port_internal::kTargetPlatform == port_internal::PlatformType::kOSX;
+// The build target is macOS.
+constexpr bool IsMacos() {
+  return internal::kTargetPlatform == internal::PlatformType::kMacos;
 }
 
-// The build target is firmware, devices, or simulator. Note "iPhone" here means
-// the same as TARGET_OS_IPHONE, not the iPhone device.
-constexpr bool TargetIsIPhone() {
-  return port_internal::kTargetPlatform == port_internal::PlatformType::kIPhone;
+// The build target is iOS firmware, devices, or simulator.
+constexpr bool IsIos() {
+  return internal::kTargetPlatform == internal::PlatformType::kIos;
 }
 
 // The build target is WASM.
-constexpr bool TargetIsWASM() {
-  return port_internal::kTargetPlatform == port_internal::PlatformType::kWASM;
+constexpr bool IsWasm() {
+  return internal::kTargetPlatform == internal::PlatformType::kWasm;
 }
 
 // The build target is ChromeOS.
-constexpr bool TargetIsChromeOS() {
-  return port_internal::kTargetPlatform ==
-         port_internal::PlatformType::kChromeOS;
+constexpr bool IsChromeos() {
+  return internal::kTargetPlatform == internal::PlatformType::kChromeos;
 }
+
+}  // namespace port
 
 // MSVC uses a vendor-specific attribute for [[no_unique_address]].
 // https://en.cppreference.com/w/cpp/language/attributes/no_unique_address

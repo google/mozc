@@ -79,7 +79,7 @@ void AddCharacterFormRule(const absl::string_view group,
 bool GetPlatformSpecificDefaultEmojiSetting() {
   // Disable Unicode emoji conversion by default on specific platforms.
   bool use_emoji_conversion_default = true;
-  if constexpr (TargetIsAndroid()) {
+  if constexpr (port::IsAndroid()) {
     use_emoji_conversion_default = false;
   }
   return use_emoji_conversion_default;
@@ -327,9 +327,9 @@ std::string ConfigHandler::GetConfigFileNameForTesting() {
 }
 
 Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
-  if constexpr (TargetIsOSX()) {
+  if constexpr (port::IsMacos()) {
     return Config::KOTOERI;
-  } else if constexpr (TargetIsChromeOS()) {
+  } else if constexpr (port::IsChromeos()) {
     return Config::CHROMEOS;
   } else {
     return Config::MSIME;

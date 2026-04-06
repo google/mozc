@@ -584,7 +584,7 @@ std::string FileUtil::Basename(zstring_view filename) {
 }
 
 std::string FileUtil::NormalizeDirectorySeparator(zstring_view path) {
-  if constexpr (TargetIsWindows()) {
+  if constexpr (port::IsWindows()) {
     constexpr absl::string_view kFileDelimiterForUnix = "/";
     constexpr absl::string_view kFileDelimiterForWindows = "\\";
     return absl::StrReplaceAll(

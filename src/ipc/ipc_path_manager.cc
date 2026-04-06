@@ -96,7 +96,7 @@ constexpr size_t kKeySize = 32;
 // to the embedded resource files
 std::string GetIPCKeyFileName(const std::string &name) {
   std::string basename =
-      absl::StrCat(TargetIsWindows() ? "" : ".",  // hidden file on POSIX
+      absl::StrCat(port::IsWindows() ? "" : ".",  // hidden file on POSIX
                    name, ".ipc");
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
@@ -245,7 +245,7 @@ bool IPCPathManager::LoadPathName() {
     return true;
   }
 
-  if constexpr (TargetIsWindows()) {
+  if constexpr (port::IsWindows()) {
     // Fill the default values as fallback.
     // Applications conerted by Desktop App Converter (DAC) does not read
     // a file of ipc session name in the LocalLow directory.
@@ -426,7 +426,7 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
 }
 
 bool IPCPathManager::ShouldReload() const {
-  if constexpr (TargetIsWindows()) {
+  if constexpr (port::IsWindows()) {
     // In windows, no reloading mechanism is necessary because IPC files
     // are automatically removed.
     return false;
