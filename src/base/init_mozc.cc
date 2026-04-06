@@ -32,6 +32,7 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 #include "base/system_util.h"
 
 #ifdef _WIN32
@@ -70,12 +71,14 @@ LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS* ExceptionInfo) {
 }
 #endif  // _WIN32
 
-std::string GetLogFilePathFromProgramName(const std::string& program_name) {
-  const std::string basename = FileUtil::Basename(program_name) + ".log";
-  if (absl::GetFlag(FLAGS_log_dir).empty()) {
-    return FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), basename);
-  }
-  return FileUtil::JoinPath(absl::GetFlag(FLAGS_log_dir), basename);
+std::string GetLogFilePathFromProgramName(absl::string_view program_name) {
+  const std::string basename = program_name.empty()
+                                   ? "UNKNOWN.log"
+                                   : FileUtil::Basename(program_name) + ".log";
+  const std::string& flag_log_dir = absl::GetFlag(FLAGS_log_dir);
+  const std::string log_dir =
+      flag_log_dir.empty() ? SystemUtil::GetLoggingDirectory() : flag_log_dir;
+  return FileUtil::JoinPath(log_dir, basename);
 }
 
 void ParseCommandLineFlags(int argc, char** argv) {
@@ -90,7 +93,9 @@ void ParseCommandLineFlags(int argc, char** argv) {
 }  // namespace
 
 void InitMozc(const char* arg0, int* argc, char*** argv) {
-  mozc::SystemUtil::SetProgramInvocationName(*argv[0]);
+  absl::string_view program_name = (arg0 != nullptr ? arg0 : "");
+  mozc::SystemUtil::SetProgramInvocationName(program_name);
+
 #ifdef _WIN32
   // InitMozc() is supposed to be used for code generator or
   // other programs which are not included in the production code.
@@ -100,8 +105,6 @@ void InitMozc(const char* arg0, int* argc, char*** argv) {
   ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
 #endif  // _WIN32
   ParseCommandLineFlags(*argc, *argv);
-
-  const std::string program_name = *argc > 0 ? (*argv)[0] : "UNKNOWN";
   RegisterLogFileSink(GetLogFilePathFromProgramName(program_name));
 }
 

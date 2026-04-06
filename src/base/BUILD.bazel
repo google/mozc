@@ -55,6 +55,7 @@ mozc_cc_library(
         ":log_file",
         ":system_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings:string_view",
     ] + mozc_select(
         android = ["//base"],
         client = [
