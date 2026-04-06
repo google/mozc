@@ -74,7 +74,7 @@ mozc_cc_binary(
         ":double_array",
         "@com_google_absl//absl/log:check",
         "//base:file_stream",
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "@com_google_absl//absl/flags:flag",
         # For OSS, darts is also required.
         # http://chasen.org/~taku/software/darts/

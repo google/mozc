@@ -199,7 +199,7 @@ mozc_cc_binary(
         ":dataset_writer",
         "//base:file_stream",
         "//base:file_util",
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "//base:number_util",
         "//base:vlog",
         "@com_google_absl//absl/flags:flag",

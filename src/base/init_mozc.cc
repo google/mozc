@@ -40,10 +40,7 @@
 #include "absl/flags/parse.h"
 #include "base/file_util.h"
 #include "base/log_file.h"
-
-#ifndef MOZC_BUILDTOOL_BUILD
 #include "base/system_util.h"
-#endif  // MOZC_BUILDTOOL_BUILD
 
 // Even if log_dir is modified in the middle of the process, the
 // logging directory will not be changed because the logging stream is
@@ -79,11 +76,7 @@ LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS* ExceptionInfo) {
 std::string GetLogFilePathFromProgramName(const std::string& program_name) {
   const std::string basename = FileUtil::Basename(program_name) + ".log";
   if (absl::GetFlag(FLAGS_log_dir).empty()) {
-#ifdef MOZC_BUILDTOOL_BUILD
-    return basename;
-#else   // MOZC_BUILDTOOL_BUILD
     return FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), basename);
-#endif  // !MOZC_BUILDTOOL_BUILD
   }
   return FileUtil::JoinPath(absl::GetFlag(FLAGS_log_dir), basename);
 }

@@ -616,7 +616,7 @@ mozc_cc_binary(
         ":pos_matcher",
         ":text_dictionary_loader",
         "//base:file_stream",
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "//data_manager",
         "//dictionary/system:system_dictionary_builder",
         "@com_google_absl//absl/flags:flag",

@@ -47,34 +47,6 @@ load("//build_tools:embed_file.bzl", "mozc_embed_file")
 package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
-    name = "init_mozc_buildtool",
-    srcs = ["init_mozc.cc"],
-    hdrs = ["init_mozc.h"],
-    local_defines = ["MOZC_BUILDTOOL_BUILD"],
-    visibility = ["//:__subpackages__"],
-    deps = [
-        ":log_file",
-        ":system_util",
-        "@com_google_absl//absl/flags:flag",
-    ] + mozc_select(
-        android = ["//base"],
-        client = [
-            ":file_util",
-            "@com_google_absl//absl/flags:parse",
-        ],
-        default = ["//base"],
-        ios = ["//base"],
-        linux = ["//base"],
-        macos = ["//base"],
-        oss = [
-            ":file_util",
-            "@com_google_absl//absl/flags:parse",
-        ],
-        windows = ["//base"],
-    ),
-)
-
-mozc_cc_library(
     name = "init_mozc",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],

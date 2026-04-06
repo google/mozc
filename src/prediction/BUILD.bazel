@@ -606,7 +606,7 @@ mozc_cc_binary(
     deps = [
         "//base:codegen_bytearray_stream",
         "//base:file_stream",
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "//base:multifile",
         "//base:util",
         "//storage:existence_filter",

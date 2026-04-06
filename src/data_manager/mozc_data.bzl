@@ -446,7 +446,7 @@ def mozc_dataset(
             ],
         visibility = ["//tools:__subpackages__"],
         deps = [
-            "//base:init_mozc_buildtool",
+            "//base:init_mozc",
             "//converter:gen_segmenter_bitarray",
             "//:macro",
             "@com_google_absl//absl/flags:flag",

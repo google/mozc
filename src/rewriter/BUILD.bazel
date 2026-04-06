@@ -920,7 +920,7 @@ mozc_cc_binary(
     deps = [
         ":dictionary_generator",
         "//base:file_stream",
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "//base:util",
         "//base:vlog",
         "//base/file:temp_dir",
@@ -945,7 +945,7 @@ mozc_cc_binary(
     visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//base:file_stream",
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "//data_manager:serialized_dictionary",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/flags:flag",
@@ -1056,7 +1056,7 @@ mozc_cc_binary(
     srcs = ["gen_single_kanji_noun_prefix_data.cc"],
     visibility = ["//data_manager:__subpackages__"],
     deps = [
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "//data_manager:serialized_dictionary",
         "@com_google_absl//absl/flags:flag",
     ],
@@ -1333,7 +1333,7 @@ mozc_cc_binary(
     visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//base:file_stream",
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "//base/container:serialized_string_array",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
@@ -1618,7 +1618,7 @@ mozc_cc_binary(
     deps = [
         ":gen_existence_data",
         "//base:file_stream",
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
     ],
@@ -1634,7 +1634,7 @@ mozc_cc_binary(
     deps = [
         ":gen_existence_data",
         "//base:file_stream",
-        "//base:init_mozc_buildtool",
+        "//base:init_mozc",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
