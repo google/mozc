@@ -53,12 +53,12 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":log_file",
+        ":system_util",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
         android = ["//base"],
         client = [
             ":file_util",
-            ":system_util",
             "@com_google_absl//absl/flags:parse",
         ],
         default = ["//base"],
@@ -67,7 +67,6 @@ mozc_cc_library(
         macos = ["//base"],
         oss = [
             ":file_util",
-            ":system_util",
             "@com_google_absl//absl/flags:parse",
         ],
         windows = ["//base"],

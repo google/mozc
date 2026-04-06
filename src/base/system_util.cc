@@ -36,6 +36,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "base/const.h"
 #include "base/environ.h"
@@ -81,6 +82,26 @@
 
 namespace mozc {
 namespace {
+
+class ProgramInvocationNameHolder final {
+ public:
+  ProgramInvocationNameHolder() = default;
+  ~ProgramInvocationNameHolder() = default;
+
+  void Set(absl::string_view name) {
+    absl::MutexLock l(mutex_);
+    name_ = std::string(name);
+  }
+
+  std::string Get() const {
+    absl::MutexLock l(mutex_);
+    return name_;
+  }
+
+ private:
+  std::string name_;
+  mutable absl::Mutex mutex_;
+};
 
 class UserProfileDirectoryImpl final {
  public:
@@ -841,6 +862,18 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.
+}
+
+void SystemUtil::SetProgramInvocationName(absl::string_view name) {
+  Singleton<ProgramInvocationNameHolder>::get()->Set(name);
+}
+
+std::string SystemUtil::GetProgramRunfilesDirectory() {
+  const std::string name = Singleton<ProgramInvocationNameHolder>::get()->Get();
+  if (name.empty()) {
+    return "";
+  }
+  return absl::StrCat(name, ".runfiles");
 }
 
 }  // namespace mozc

@@ -32,6 +32,7 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "base/system_util.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -40,7 +41,6 @@
 #include "absl/flags/parse.h"
 #include "base/file_util.h"
 #include "base/log_file.h"
-#include "base/system_util.h"
 
 // Even if log_dir is modified in the middle of the process, the
 // logging directory will not be changed because the logging stream is
@@ -94,6 +94,7 @@ void ParseCommandLineFlags(int argc, char** argv) {
 
 void InitMozc(const char* arg0, int* argc, char*** argv) {
   absl::SetFlag(&FLAGS_program_invocation_name, *argv[0]);
+  mozc::SystemUtil::SetProgramInvocationName(*argv[0]);
 #ifdef _WIN32
   // InitMozc() is supposed to be used for code generator or
   // other programs which are not included in the production code.

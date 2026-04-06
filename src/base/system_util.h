@@ -33,6 +33,8 @@
 #include <cstdint>
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 
 // SystemUtil class supports utility methods which are related to OSes or user
@@ -133,6 +135,12 @@ class SystemUtil {
 
   // retrieve total physical memory. returns 0 if any error occurs.
   static uint64_t GetTotalPhysicalMemory();
+
+  // Sets program invocation name to use it for runfiles directory.
+  static void SetProgramInvocationName(absl::string_view name);
+
+  // Returns argv[0] + ".runfiles".
+  static std::string GetProgramRunfilesDirectory();
 };
 
 }  // namespace mozc

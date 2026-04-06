@@ -65,7 +65,9 @@ mozc_cc_binary(
     ),
     deps = [
         ":ios_engine",
+        "//base:file_util",
         "//base:init_mozc",
+        "//base:system_util",
         "//base/strings:unicode",
         "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",
