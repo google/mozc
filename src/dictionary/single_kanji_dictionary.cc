@@ -38,9 +38,11 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
@@ -49,118 +51,6 @@
 
 namespace mozc {
 namespace dictionary {
-namespace {
-
-// A random access iterator over uint32_t array that increments a pointer by N:
-// iter     -> array[0]
-// iter + 1 -> array[N]
-// iter + 2 -> array[2 * N]
-// ...
-template <size_t N>
-class Uint32ArrayIterator {
- public:
-  using iterator_category = std::random_access_iterator_tag;
-  using value_type = uint32_t;
-  using difference_type = std::ptrdiff_t;
-  using pointer = uint32_t*;
-  using reference = uint32_t&;
-
-  explicit Uint32ArrayIterator(const uint32_t* ptr) : ptr_(ptr) {}
-
-  uint32_t operator*() const { return *ptr_; }
-
-  uint32_t operator[](size_t i) const {
-    DCHECK_LT(i, N);
-    return ptr_[i];
-  }
-
-  void swap(Uint32ArrayIterator& x) {
-    using std::swap;
-    swap(ptr_, x.ptr_);
-  }
-
-  friend void swap(Uint32ArrayIterator& x, Uint32ArrayIterator& y) {
-    x.swap(y);
-  }
-
-  Uint32ArrayIterator& operator++() {
-    ptr_ += N;
-    return *this;
-  }
-
-  Uint32ArrayIterator operator++(int) {
-    const uint32_t* tmp = ptr_;
-    ptr_ += N;
-    return Uint32ArrayIterator(tmp);
-  }
-
-  Uint32ArrayIterator& operator--() {
-    ptr_ -= N;
-    return *this;
-  }
-
-  Uint32ArrayIterator operator--(int) {
-    const uint32_t* tmp = ptr_;
-    ptr_ -= N;
-    return Uint32ArrayIterator(tmp);
-  }
-
-  Uint32ArrayIterator& operator+=(ptrdiff_t n) {
-    ptr_ += n * N;
-    return *this;
-  }
-
-  Uint32ArrayIterator& operator-=(ptrdiff_t n) {
-    ptr_ -= n * N;
-    return *this;
-  }
-
-  friend Uint32ArrayIterator operator+(Uint32ArrayIterator x, ptrdiff_t n) {
-    return Uint32ArrayIterator(x.ptr_ + n * N);
-  }
-
-  friend Uint32ArrayIterator operator+(ptrdiff_t n, Uint32ArrayIterator x) {
-    return Uint32ArrayIterator(x.ptr_ + n * N);
-  }
-
-  friend Uint32ArrayIterator operator-(Uint32ArrayIterator x, ptrdiff_t n) {
-    return Uint32ArrayIterator(x.ptr_ - n * N);
-  }
-
-  friend ptrdiff_t operator-(Uint32ArrayIterator x, Uint32ArrayIterator y) {
-    return (x.ptr_ - y.ptr_) / N;
-  }
-
-  friend bool operator==(Uint32ArrayIterator x, Uint32ArrayIterator y) {
-    return x.ptr_ == y.ptr_;
-  }
-
-  friend bool operator!=(Uint32ArrayIterator x, Uint32ArrayIterator y) {
-    return x.ptr_ != y.ptr_;
-  }
-
-  friend bool operator<(Uint32ArrayIterator x, Uint32ArrayIterator y) {
-    return x.ptr_ < y.ptr_;
-  }
-
-  friend bool operator<=(Uint32ArrayIterator x, Uint32ArrayIterator y) {
-    return x.ptr_ <= y.ptr_;
-  }
-
-  friend bool operator>(Uint32ArrayIterator x, Uint32ArrayIterator y) {
-    return x.ptr_ > y.ptr_;
-  }
-
-  friend bool operator>=(Uint32ArrayIterator x, Uint32ArrayIterator y) {
-    return x.ptr_ >= y.ptr_;
-  }
-
- private:
-  const uint32_t* ptr_;
-};
-
-}  // namespace
-
 SingleKanjiDictionary::SingleKanjiDictionary(const DataManager& data_manager) {
   absl::string_view string_array_data;
   absl::string_view variant_type_array_data;
@@ -212,21 +102,30 @@ SingleKanjiDictionary::SingleKanjiDictionary(const DataManager& data_manager) {
 std::vector<std::string> SingleKanjiDictionary::LookupKanjiEntries(
     absl::string_view key, bool use_svs) const {
   std::vector<std::string> kanji_list;
-  const uint32_t* token_array =
-      reinterpret_cast<const uint32_t*>(single_kanji_token_array_.data());
-  const size_t token_array_size =
-      single_kanji_token_array_.size() / sizeof(uint32_t);
 
-  const Uint32ArrayIterator<2> end(token_array + token_array_size);
+  struct Token {
+    uint32_t key_index = 0;
+    uint32_t value_index = 0;
+  } ABSL_ATTRIBUTE_PACKED;
+
+  static_assert(sizeof(Token) == 8);
+
+  absl::Span<const Token> tokens = absl::MakeConstSpan(
+      reinterpret_cast<const Token*>(single_kanji_token_array_.data()),
+      single_kanji_token_array_.size() / sizeof(Token));
+
   const auto iter = std::lower_bound(
-      Uint32ArrayIterator<2>(token_array), end, key,
-      [this](uint32_t index, const absl::string_view target_key) {
-        return this->single_kanji_string_array_[index] < target_key;
+      tokens.begin(), tokens.end(), key,
+      [&](const Token& token, absl::string_view target_key) {
+        return single_kanji_string_array_[token.key_index] < target_key;
       });
-  if (iter == end || single_kanji_string_array_[iter[0]] != key) {
+
+  if (iter == tokens.end() ||
+      single_kanji_string_array_[iter->key_index] != key) {
     return kanji_list;
   }
-  const absl::string_view values = single_kanji_string_array_[iter[1]];
+
+  const absl::string_view values = single_kanji_string_array_[iter->value_index];
   if (use_svs) {
     std::string svs_values;
     if (TextNormalizer::NormalizeTextToSvs(values, &svs_values)) {
@@ -264,22 +163,32 @@ std::vector<std::string> SingleKanjiDictionary::LookupKanjiEntries(
 bool SingleKanjiDictionary::GenerateDescription(absl::string_view kanji_surface,
                                                 std::string* desc) const {
   DCHECK(desc);
-  const uint32_t* token_array =
-      reinterpret_cast<const uint32_t*>(variant_token_array_.data());
-  const size_t token_array_size =
-      variant_token_array_.size() / sizeof(uint32_t);
 
-  const Uint32ArrayIterator<3> end(token_array + token_array_size);
+  struct Token {
+    uint32_t target_index = 0;
+    uint32_t original_index = 0;
+    uint32_t variant_type = 0;
+  } ABSL_ATTRIBUTE_PACKED;
+
+  static_assert(sizeof(Token) == 12);
+
+  absl::Span<const Token> tokens = absl::MakeConstSpan(
+      reinterpret_cast<const Token*>(variant_token_array_.data()),
+      variant_token_array_.size() / sizeof(Token));
+
   const auto iter = std::lower_bound(
-      Uint32ArrayIterator<3>(token_array), end, kanji_surface,
-      [this](uint32_t index, const absl::string_view target_key) {
-        return this->variant_string_array_[index] < target_key;
+      tokens.begin(), tokens.end(), kanji_surface,
+      [&](const Token& token, absl::string_view target_key) {
+        return variant_string_array_[token.target_index] < target_key;
       });
-  if (iter == end || variant_string_array_[iter[0]] != kanji_surface) {
+
+  if (iter == tokens.end() ||
+      variant_string_array_[iter->target_index] != kanji_surface) {
     return false;
   }
-  const absl::string_view original = variant_string_array_[iter[1]];
-  const uint32_t type_id = iter[2];
+
+  const absl::string_view original = variant_string_array_[iter->original_index];
+  const uint32_t type_id = iter->variant_type;
   DCHECK_LT(type_id, variant_type_array_.size());
   // Format like "XXXのYYY"
   *desc = absl::StrCat(original, "の", variant_type_array_[type_id]);

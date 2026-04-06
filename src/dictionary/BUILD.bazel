@@ -708,8 +708,10 @@ mozc_cc_library(
         "//base/container:serialized_string_array",
         "//data_manager",
         "//data_manager:serialized_dictionary",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
