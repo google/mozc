@@ -58,9 +58,6 @@ ABSL_RETIRED_FLAG(
     "[Deprecated; no-op] Enables colored log messages on tty devices");
 
 
-ABSL_FLAG(std::string, program_invocation_name, "",
-          "Program name copied from argv[0].");
-
 namespace mozc {
 namespace {
 
@@ -93,7 +90,6 @@ void ParseCommandLineFlags(int argc, char** argv) {
 }  // namespace
 
 void InitMozc(const char* arg0, int* argc, char*** argv) {
-  absl::SetFlag(&FLAGS_program_invocation_name, *argv[0]);
   mozc::SystemUtil::SetProgramInvocationName(*argv[0]);
 #ifdef _WIN32
   // InitMozc() is supposed to be used for code generator or
