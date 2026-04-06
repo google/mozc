@@ -108,6 +108,7 @@ class FileUtilImpl : public FileUtilInterface {
   absl::Status CreateHardLink(zstring_view from, zstring_view to) override;
   absl::StatusOr<FileTimeStamp> GetModificationTime(
       zstring_view filename) const override;
+  absl::StatusOr<std::string> ReadSymlink(zstring_view filename) const override;
 };
 
 using FileUtilSingleton = SingletonMockable<FileUtilInterface, FileUtilImpl>;
@@ -622,6 +623,23 @@ absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
   }
   return stat_info.st_mtime;
 #endif  // _WIN32
+}
+
+absl::StatusOr<std::string> FileUtil::ReadSymlink(zstring_view filename) {
+  return FileUtilSingleton::Get()->ReadSymlink(filename);
+}
+
+absl::StatusOr<std::string> FileUtilImpl::ReadSymlink(
+    zstring_view filename) const {
+  const std::filesystem::path path = filename.c_str();
+  std::error_code error_code;
+  const std::filesystem::path link_path =
+      std::filesystem::read_symlink(path, error_code);
+  if (error_code) {
+    return absl::UnknownError(
+        absl::StrCat(error_code.message(), " (code=", error_code.value(), ")"));
+  }
+  return link_path.string();
 }
 
 absl::StatusOr<std::string> FileUtil::GetContents(

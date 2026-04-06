@@ -164,6 +164,12 @@ class FileUtilMock : public FileUtilInterface {
     return files_[filename.view()];
   }
 
+  absl::StatusOr<std::string> ReadSymlink(
+      zstring_view filename) const override {
+    // The mock does not support symbolic links. It returns the same filename.
+    return std::string(filename.view());
+  }
+
   // Use FileTimeStamp as time stamp and also file id.
   // 0 means that the file is removed.
   mutable absl::btree_map<std::string, FileTimeStamp> files_;

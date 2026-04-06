@@ -29,7 +29,6 @@
 
 #include "ipc/ipc_path_manager.h"
 
-#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -247,7 +246,7 @@ bool IPCPathManager::LoadPathName() {
 
   if constexpr (port::IsWindows()) {
     // Fill the default values as fallback.
-    // Applications conerted by Desktop App Converter (DAC) does not read
+    // Applications converted by Desktop App Converter (DAC) does not read
     // a file of ipc session name in the LocalLow directory.
     // For a workaround, let applications to connect the named pipe directly.
     // See: b/71338191.
@@ -394,19 +393,26 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
 #ifdef __linux__
   // load from /proc/<pid>/exe
   std::string proc = absl::StrFormat("/proc/%u/exe", pid);
-  char filename[512];
-  const ssize_t size = readlink(proc.c_str(), filename, sizeof(filename) - 1);
-  if (size == -1) {
-    LOG(ERROR) << "readlink failed: " << strerror(errno);
+  absl::StatusOr<std::string> filename = FileUtil::ReadSymlink(proc);
+  if (!filename.ok()) {
+    LOG(ERROR) << "readlink failed: " << filename.status();
     return false;
   }
-  filename[size] = '\0';
 
-  server_path_ = filename;
+  server_path_ = filename.value();
   server_pid_ = pid;
 #endif  // __linux__
 
   MOZC_VLOG(1) << "server path: " << server_path << " " << server_path_;
+
+  // `server_path` must not be a symbolic link.
+  // Since Mozc is designed to run from a specific file location, we do not
+  // support executing it via symbolic links. We believe this restriction
+  // ensures the client communicates with the correct server and minimizes the
+  // risk of the server entering an invalid state.
+  //
+  // If Mozc is called from a symbolic link, please update src/config.bzl to
+  // point to the canonical file path.
   if (server_path == server_path_) {
     return true;
   }
