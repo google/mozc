@@ -101,15 +101,15 @@ NDK_MAC = ArchiveInfo(
 )
 
 NINJA_MAC = ArchiveInfo(
-    url='https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-mac.zip',
-    size=277298,
-    sha256='21915277db59756bfc61f6f281c1f5e3897760b63776fd3d360f77dd7364137f',
+    url='https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip',
+    size=314051,
+    sha256='c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b',
 )
 
 NINJA_WIN = ArchiveInfo(
-    url='https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-win.zip',
-    size=285411,
-    sha256='d0ee3da143211aa447e750085876c9b9d7bcdd637ab5b2c5b41349c617f22f3b',
+    url='https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip',
+    size=291570,
+    sha256='07fc8261b42b20e71d1720b39068c2e14ffcee6396b76fb7a795fb460b78dc65',
 )
 
 LLVM_WIN = ArchiveInfo(
