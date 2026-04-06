@@ -163,12 +163,12 @@ class FileUtil {
     return JoinPath({path1, path2});
   }
 
-  static std::string Basename(zstring_view filename);
-  static std::string Dirname(zstring_view filename);
+  static std::string Basename(absl::string_view filename);
+  static std::string Dirname(absl::string_view filename);
 
   // Returns the normalized path by replacing '/' with '\\' on Windows.
   // Does nothing on other platforms.
-  static std::string NormalizeDirectorySeparator(zstring_view path);
+  static std::string NormalizeDirectorySeparator(absl::string_view path);
 
   // Returns the modification time in `modified_at`.
   // Returns false if something went wrong.

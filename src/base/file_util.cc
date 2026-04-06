@@ -566,32 +566,30 @@ std::string FileUtil::JoinPath(
 }
 
 // TODO(taku): what happens if filename == '/foo/bar/../bar/..
-std::string FileUtil::Dirname(zstring_view filename) {
-  const std::string filename_str(filename.c_str());
-  const std::string::size_type p = filename_str.find_last_of(kFileDelimiter);
-  if (p == std::string::npos) {
+std::string FileUtil::Dirname(absl::string_view filename) {
+  const size_t p = filename.find_last_of(kFileDelimiter);
+  if (p == absl::string_view::npos) {
     return "";
   }
-  return filename_str.substr(0, p);
+  return std::string(filename.substr(0, p));
 }
 
-std::string FileUtil::Basename(zstring_view filename) {
-  std::string filename_str(filename.c_str());
-  const std::string::size_type p = filename_str.find_last_of(kFileDelimiter);
-  if (p == std::string::npos) {
-    return filename_str;
+std::string FileUtil::Basename(absl::string_view filename) {
+  const size_t p = filename.find_last_of(kFileDelimiter);
+  if (p == absl::string_view::npos) {
+    return std::string(filename);
   }
-  return filename_str.substr(p + 1, filename_str.size() - p);
+  return std::string(filename.substr(p + 1));
 }
 
-std::string FileUtil::NormalizeDirectorySeparator(zstring_view path) {
+std::string FileUtil::NormalizeDirectorySeparator(absl::string_view path) {
   if constexpr (port::IsWindows()) {
     constexpr absl::string_view kFileDelimiterForUnix = "/";
     constexpr absl::string_view kFileDelimiterForWindows = "\\";
     return absl::StrReplaceAll(
         path, {{kFileDelimiterForUnix, kFileDelimiterForWindows}});
   }
-  return std::string(path.view());
+  return std::string(path);
 }
 
 absl::StatusOr<FileTimeStamp> FileUtil::GetModificationTime(
