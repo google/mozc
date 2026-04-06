@@ -29,16 +29,18 @@
 
 #include "base/init_mozc.h"
 
-#include <string>
-
-#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "base/port.h"
 #include "base/system_util.h"
+
 
 #ifdef _WIN32
 #include <windows.h>
 #endif  // _WIN32
 
+#include <string>
+
+#include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "base/file_util.h"
 #include "base/log_file.h"
@@ -58,7 +60,6 @@ ABSL_RETIRED_FLAG(
     bool, colored_log, true,
     "[Deprecated; no-op] Enables colored log messages on tty devices");
 
-
 namespace mozc {
 namespace {
 
@@ -69,6 +70,16 @@ LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS* ExceptionInfo) {
   ::ExitProcess(static_cast<UINT>(-1));
   return EXCEPTION_EXECUTE_HANDLER;
 }
+
+void SetUnhandledExceptionFilterForWindows() {
+  // InitMozc() is supposed to be used for code generator or other programs
+  // which are not included in the production code. In these code, we don't
+  // want to show any error messages when exceptions are raised. This is
+  // important to keep our continuous build stable.
+  ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
+}
+#else  // _WIN32
+void SetUnhandledExceptionFilterForWindows() {}
 #endif  // _WIN32
 
 std::string GetLogFilePathFromProgramName(absl::string_view program_name) {
@@ -91,19 +102,16 @@ void ParseCommandLineFlags(int argc, char** argv) {
 }
 
 }  // namespace
+}  // namespace mozc
 
+namespace mozc {
 void InitMozc(const char* arg0, int* argc, char*** argv) {
   absl::string_view program_name = (arg0 != nullptr ? arg0 : "");
   mozc::SystemUtil::SetProgramInvocationName(program_name);
 
-#ifdef _WIN32
-  // InitMozc() is supposed to be used for code generator or
-  // other programs which are not included in the production code.
-  // In these code, we don't want to show any error messages when
-  // exceptions are raised. This is important to keep
-  // our continuous build stable.
-  ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    SetUnhandledExceptionFilterForWindows();
+  }
   ParseCommandLineFlags(*argc, *argv);
   RegisterLogFileSink(GetLogFilePathFromProgramName(program_name));
 }
