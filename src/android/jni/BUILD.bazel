@@ -51,7 +51,6 @@ mozc_cc_library(
     # Scheuklappen: keep
     visibility = ["//visibility:private"],
     deps = [
-        "//base:singleton",
         "//base:system_util",
         "//base:util",
         "//data_manager",
