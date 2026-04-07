@@ -101,7 +101,7 @@
     <Property Id="OS_BUILD_NUMBER" Secure="yes">
       <RegistrySearch Id="CurrentBuildNumberValue" Type="raw" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" />
     </Property>
-    <Launch Condition="(OS_BUILD_NUMBER AND (OS_BUILD_NUMBER &gt;= 10240)) OR (REMOVE=&quot;ALL&quot;)" Message="Mozc をインストールするには Windows 10 以降にアップグレードする必要があります。" />
+    <Launch Condition="(OS_BUILD_NUMBER AND (OS_BUILD_NUMBER &gt;= 17763)) OR (REMOVE=&quot;ALL&quot;)" Message="Mozc をインストールするには Windows 10 1809 以降にアップグレードする必要があります。" />
 
     <!-- Check if the user have the administrative privileges. -->
     <Launch Condition="Privileged" Message="Mozc をインストールするには管理者権限が必要です。" />
