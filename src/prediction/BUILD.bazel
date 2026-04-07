@@ -581,7 +581,9 @@ mozc_cc_library(
     deps = [
         "//base:bits",
         "//base/container:serialized_string_array",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -593,6 +595,7 @@ mozc_cc_test(
         "//base/container:serialized_string_array",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

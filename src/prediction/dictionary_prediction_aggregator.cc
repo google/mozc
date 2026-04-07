@@ -1141,20 +1141,32 @@ void DictionaryPredictionAggregator::GetZeroQueryCandidatesForKey(
     std::vector<Result>* results) const {
   DCHECK(results);
 
-  using ZeroQueryResult = std::pair<std::string, ZeroQueryType>;
-  std::vector<ZeroQueryResult> zero_query_results;
-
-  auto range = dict.equal_range(key);
-  if (range.first == range.second) {
+  absl::Span<const ZeroQueryEntry> entries = dict.equal_range(key);
+  if (entries.empty()) {
     return;
   }
 
   const bool is_key_one_char_and_not_kanji =
       Util::CharsLen(key) == 1 && !Util::ContainsScriptType(key, Util::KANJI);
-  for (; range.first != range.second; ++range.first) {
-    const auto& entry = range.first;
-    if (entry.type() != ZERO_QUERY_EMOJI) {
-      zero_query_results.emplace_back(entry.value(), entry.type());
+
+  int cost = 0;
+  constexpr int kSuffixPenalty = 10;
+
+  auto add_entry = [&](const ZeroQueryEntry& entry) {
+    Result result;
+    result.SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
+    result.key = dict.value(entry);
+    result.value = dict.value(entry);
+    result.wcost = cost;
+    result.lid = lid;
+    result.rid = rid;
+    results->emplace_back(std::move(result));
+    cost += kSuffixPenalty;
+  };
+
+  for (const ZeroQueryEntry& entry : entries) {
+    if (entry.type != ZERO_QUERY_EMOJI) {
+      add_entry(entry);
       continue;
     }
 
@@ -1164,24 +1176,7 @@ void DictionaryPredictionAggregator::GetZeroQueryCandidatesForKey(
       continue;
     }
 
-    zero_query_results.emplace_back(entry.value(), entry.type());
-  }
-
-  int cost = 0;
-  for (const auto& [value, type] : zero_query_results) {
-    // Increment cost to show the candidates in order.
-    constexpr int kSuffixPenalty = 10;
-
-    Result result;
-    result.SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
-    result.key = value;
-    result.value = value;
-    result.wcost = cost;
-    result.lid = lid;
-    result.rid = rid;
-    results->emplace_back(std::move(result));
-
-    cost += kSuffixPenalty;
+    add_entry(entry);
   }
 }
 

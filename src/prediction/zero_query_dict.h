@@ -33,10 +33,12 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
+#include <type_traits>
 #include <utility>
 
+#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 
@@ -79,139 +81,64 @@ enum ZeroQueryType : uint16_t {
 // which can be extracted by using |key_index| and |value_index|.  The string
 // array is also sorted in ascending order of strings.  For the serialization
 // format of string array, see base/serialized_string_array.h".
+struct ZeroQueryEntry {
+  uint32_t key_index = 0;
+  uint32_t value_index = 0;
+  ZeroQueryType type = ZERO_QUERY_NONE;
+  uint8_t unused[6];
+} ABSL_ATTRIBUTE_PACKED;
+
+static_assert(sizeof(ZeroQueryEntry) == 16);
+
 class ZeroQueryDict {
  public:
-  static constexpr size_t kTokenByteSize = 16;
-
-  class iterator {
-   public:
-    using iterator_category = std::random_access_iterator_tag;
-    using value_type = uint32_t;
-    using difference_type = std::ptrdiff_t;
-    using pointer = uint32_t*;
-    using reference = uint32_t&;
-
-    iterator(const char* ptr, const SerializedStringArray* array)
-        : ptr_(ptr), string_array_(array) {}
-    iterator(const iterator& x) = default;
-    iterator& operator=(const iterator& x) = default;
-
-    uint32_t operator*() const { return key_index(); }
-
-    uint32_t operator[](ptrdiff_t n) const {
-      return LoadUnaligned<uint32_t>(ptr_ + n * kTokenByteSize);
-    }
-
-    const iterator* operator->() const { return this; }
-
-    uint32_t key_index() const { return LoadUnaligned<uint32_t>(ptr_); }
-
-    uint32_t value_index() const { return LoadUnaligned<uint32_t>(ptr_ + 4); }
-
-    ZeroQueryType type() const {
-      const uint16_t val = LoadUnaligned<uint16_t>(ptr_ + 8);
-      return static_cast<ZeroQueryType>(val);
-    }
-
-    absl::string_view key() const { return (*string_array_)[key_index()]; }
-    absl::string_view value() const { return (*string_array_)[value_index()]; }
-
-    iterator& operator++() {
-      ptr_ += kTokenByteSize;
-      return *this;
-    }
-
-    iterator operator++(int) {
-      const iterator tmp(ptr_, string_array_);
-      ptr_ += kTokenByteSize;
-      return tmp;
-    }
-
-    iterator& operator+=(ptrdiff_t n) {
-      ptr_ += n * kTokenByteSize;
-      return *this;
-    }
-
-    friend iterator operator+(iterator iter, ptrdiff_t n) {
-      iter += n;
-      return iter;
-    }
-
-    friend iterator operator+(ptrdiff_t n, iterator iter) {
-      iter += n;
-      return iter;
-    }
-
-    iterator& operator--() {
-      ptr_ -= kTokenByteSize;
-      return *this;
-    }
-
-    iterator operator--(int) {
-      const iterator tmp(ptr_, string_array_);
-      ptr_ -= kTokenByteSize;
-      return tmp;
-    }
-
-    iterator& operator-=(ptrdiff_t n) {
-      ptr_ -= n * kTokenByteSize;
-      return *this;
-    }
-
-    friend iterator operator-(iterator iter, ptrdiff_t n) {
-      iter -= n;
-      return iter;
-    }
-
-    friend ptrdiff_t operator-(iterator x, iterator y) {
-      return (x.ptr_ - y.ptr_) / kTokenByteSize;
-    }
-
-    friend bool operator==(iterator x, iterator y) { return x.ptr_ == y.ptr_; }
-
-    friend bool operator!=(iterator x, iterator y) { return x.ptr_ != y.ptr_; }
-
-    friend bool operator<(iterator x, iterator y) { return x.ptr_ < y.ptr_; }
-
-    friend bool operator<=(iterator x, iterator y) { return x.ptr_ <= y.ptr_; }
-
-    friend bool operator>(iterator x, iterator y) { return x.ptr_ > y.ptr_; }
-
-    friend bool operator>=(iterator x, iterator y) { return x.ptr_ >= y.ptr_; }
-
-   private:
-    const char* ptr_;
-    const SerializedStringArray* string_array_;
-  };
-
   void Init(absl::string_view token_array_data,
             absl::string_view string_array_data) {
     token_array_ = token_array_data;
     string_array_.Set(string_array_data);
   }
 
-  iterator begin() const {
-    return iterator(token_array_.data(), &string_array_);
+  absl::string_view key(const ZeroQueryEntry& entry) const {
+    return string_array_[entry.key_index];
   }
 
-  iterator end() const {
-    return iterator(token_array_.data() + token_array_.size(), &string_array_);
+  absl::string_view value(const ZeroQueryEntry& entry) const {
+    return string_array_[entry.value_index];
   }
 
-  std::pair<iterator, iterator> equal_range(absl::string_view key) const {
-    const auto iter =
-        std::lower_bound(string_array_.begin(), string_array_.end(), key);
-    if (iter == string_array_.end() || *iter != key) {
-      return std::pair<iterator, iterator>(end(), end());
-    }
-    return std::equal_range(begin(), end(), iter.index());
+  absl::Span<const ZeroQueryEntry> GetZeroQueryEntreis() const {
+    return absl::MakeConstSpan(
+        reinterpret_cast<const ZeroQueryEntry*>(token_array_.data()),
+        token_array_.size() / sizeof(ZeroQueryEntry));
+  }
+
+  absl::Span<const ZeroQueryEntry> equal_range(absl::string_view key) const {
+    absl::Span<const ZeroQueryEntry> tokens = GetZeroQueryEntreis();
+    const auto [it_begin, it_end] = std::equal_range(
+        tokens.begin(), tokens.end(), key,
+        // The `lhs/rhs` can be either ZeroQueryEntry or absl::string_view.
+        [&](const auto& lhs, const auto& rhs) {
+          auto get_key_string = [&](const auto& arg) {
+            // The `arg` can be either ZeroQueryEntry or absl::string_view,
+            // depending on whether lower_bound or upper_bound is used.
+            // The compiler selects the correct type at compile time using the
+            // following block
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                         ZeroQueryEntry>) {
+              return string_array_[arg.key_index];  // key in tokens.
+            } else {
+              return arg;  // key in query.
+            }
+          };
+          return get_key_string(lhs) < get_key_string(rhs);
+        });
+    return absl::MakeConstSpan(it_begin, it_end);
   }
 
  private:
   absl::string_view token_array_;
   SerializedStringArray string_array_;
 };
-
 }  // namespace mozc
 
 #endif  // MOZC_PREDICTION_ZERO_QUERY_DICT_H_
