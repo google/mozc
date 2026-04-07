@@ -112,6 +112,12 @@ NINJA_WIN = ArchiveInfo(
     sha256='07fc8261b42b20e71d1720b39068c2e14ffcee6396b76fb7a795fb460b78dc65',
 )
 
+NINJA_WIN_ARM64 = ArchiveInfo(
+    url='https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-winarm64.zip',
+    size=270354,
+    sha256='e52f0bdef9dfb1003229dbd6508a508c4073fd017247002adc66e5e806cb0391',
+)
+
 LLVM_WIN = ArchiveInfo(
     url='https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.1/clang+llvm-20.1.1-x86_64-pc-windows-msvc.tar.xz',
     size=939286624,
@@ -447,18 +453,17 @@ def extract_msys2(archive: ArchiveInfo, dryrun: bool = False) -> None:
         f.extractall(path=dest, members=msys2_extract_filter(f))
 
 
-def extract_ninja(dryrun: bool = False) -> None:
+def extract_ninja(archive: ArchiveInfo, dryrun: bool = False) -> None:
   """Extract ninja-win archive.
 
   Args:
+    archive: Ninja archive
     dryrun: True if this is a dry-run.
   """
   dest = ABS_THIRD_PARTY_DIR.joinpath('ninja').absolute()
   if is_mac():
-    archive = NINJA_MAC
     exe = 'ninja'
   elif is_windows():
-    archive = NINJA_WIN
     exe = 'ninja.exe'
   else:
     return
@@ -597,7 +602,10 @@ def main():
     if is_mac():
       archives.append(NINJA_MAC)
     elif is_windows():
-      archives.append(NINJA_WIN)
+      if platform.machine().lower() == 'arm64':
+        archives.append(NINJA_WIN_ARM64)
+      else:
+        archives.append(NINJA_WIN)
   if not args.nondk:
     if is_linux():
       archives.append(NDK_LINUX)
@@ -629,8 +637,10 @@ def main():
   if (not args.nowix) and is_windows():
     restore_dotnet_tools(args.dryrun)
 
-  if (NINJA_WIN in archives) or (NINJA_MAC in archives):
-    extract_ninja(args.dryrun)
+  for ninja in [NINJA_MAC, NINJA_WIN, NINJA_WIN_ARM64]:
+    if ninja in archives:
+      extract_ninja(ninja, args.dryrun)
+      break
 
   for ndk in [NDK_LINUX, NDK_MAC]:
     if ndk in archives:
