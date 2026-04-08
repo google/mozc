@@ -54,6 +54,9 @@ build:compiler_msvc_like --copt "/J" --host_copt "/J"
 build:compiler_msvc_like --copt "/utf-8" --host_copt "/utf-8"
 build:compiler_msvc_like --cxxopt "/J" --host_cxxopt "/J"
 build:compiler_msvc_like --cxxopt "/utf-8" --host_cxxopt "/utf-8"
+# Disable all warnings for external code.
+build:compiler_gcc_like --per_file_copt="external/.*@-w"
+build:compiler_msvc_like --per_file_copt="external/.*@/w"
 
 ## Linux specific options
 build:linux_env --build_tag_filters=-nolinux --copt "-fPIC"
