@@ -39,9 +39,13 @@
 #include <cstring>
 #include <iterator>
 #include <memory>
+#include <new>
 #include <type_traits>
 
 #include "absl/base/config.h"
+#include "absl/log/log.h"
+#include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 #if __has_include(<bits>)
 #include <bits>
@@ -251,6 +255,41 @@ inline MOZC_BITS_BYTESWAP_CONSTEXPR uint64_t ByteSwap64(const uint64_t n) {
 #undef MOZC_BITS_BYTESWAP_CONSTEXPR
 
 }  // namespace bits_internal
+
+// Ensures a struct member is naturally aligned.
+// This is critical for performance and safety when using mmap or packed
+// structs, as misaligned access can cause SIGBUS on some architectures or
+// performance degradation.
+
+// Example:
+// struct __attribute__((packed)) Foo {
+//  char a;
+//  uint32_t b;
+// };
+// ASSERT_ALIGNED(Foo, a); -> OK
+// ASSERT_ALIGNED(Foo, b); -> NG.
+
+#define ASSERT_ALIGNED(Struct, Member)                                   \
+  static_assert(                                                         \
+      offsetof(Struct, Member) % alignof(decltype(Struct::Member)) == 0, \
+      #Member " is misaligned in " #Struct)
+
+// Returns absl::Span<const T> from data.data().
+// Returns empty span when data.data() has an invalid alignment.
+template <typename T>
+absl::Span<const T> MakeAlinedConstSpan(absl::string_view data) {
+  static_assert(std::is_trivially_copyable_v<T> == true);
+  static_assert(std::is_pointer_v<T> == false);
+  static_assert(std::is_member_pointer_v<T> == false);
+  const T* addr = std::launder(reinterpret_cast<const T*>(data.data()));
+  if (reinterpret_cast<uintptr_t>(addr) % alignof(T) != 0 ||
+      data.size() < sizeof(T) || data.size() % sizeof(T) != 0) {
+    LOG(ERROR) << "misaligned data is passed. returns an empty span.";
+    return {};
+  }
+  return absl::MakeConstSpan(addr, data.size() / sizeof(T));
+}
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_BITS_H_

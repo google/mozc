@@ -34,6 +34,7 @@
 #include <utility>
 
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
@@ -100,9 +101,7 @@ class EmojiRewriter : public RewriterInterface {
   absl::Span<const EmojiData> LookUpToken(absl::string_view key) const;
 
   absl::Span<const EmojiData> GetEmojiTokens() const {
-    return absl::MakeConstSpan(
-        reinterpret_cast<const EmojiData*>(token_array_data_.data()),
-        token_array_data_.size() / sizeof(EmojiData));
+    return MakeAlinedConstSpan<EmojiData>(token_array_data_);
   }
 
   absl::string_view token_array_data_;

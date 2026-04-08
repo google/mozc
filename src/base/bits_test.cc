@@ -36,6 +36,7 @@
 
 #include "absl/algorithm/container.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -119,6 +120,59 @@ TEST(BitsTest, ByteSwap) {
   EXPECT_EQ(byteswap(byteswap(u64)), u64);
   const int64_t i64 = 0x1234567890abcdef;
   EXPECT_EQ(byteswap(i64), 0xefcdab9078563412);
+}
+
+TEST(BitsTest, MakeAlinedConstSpan) {
+  struct Data {
+    uint32_t a;
+    uint32_t b;
+    uint16_t c;
+    uint16_t d;
+  };
+  static_assert(sizeof(Data) == 12);
+  ASSERT_ALIGNED(Data, a);
+  ASSERT_ALIGNED(Data, b);
+  ASSERT_ALIGNED(Data, c);
+  ASSERT_ALIGNED(Data, d);
+
+  std::vector<Data> input(4);
+  for (int i = 0; i < input.size(); ++i) {
+    input[i].a = 4 * i;
+    input[i].b = 4 * i + 1;
+    input[i].c = 4 * i + 2;
+    input[i].d = 4 * i + 3;
+  };
+
+  std::string buf;
+  buf.append(reinterpret_cast<const char*>(input.data()),
+             sizeof(input[0]) * input.size());
+
+  absl::string_view s = buf;
+
+  // Unaligned.
+  EXPECT_TRUE(MakeAlinedConstSpan<Data>(s.substr(1, 12)).empty());
+  EXPECT_TRUE(MakeAlinedConstSpan<Data>(s.substr(2, 12)).empty());
+
+  // Invalid size
+  EXPECT_TRUE(MakeAlinedConstSpan<Data>(s.substr(1, 10)).empty());
+
+  // Too short.
+  EXPECT_TRUE(MakeAlinedConstSpan<Data>(s.substr(0, 2)).empty());
+
+  // Aligned
+  EXPECT_FALSE(MakeAlinedConstSpan<Data>(s.substr(12, 12)).empty());
+  EXPECT_FALSE(MakeAlinedConstSpan<Data>(s.substr(12, 24)).empty());
+  EXPECT_FALSE(MakeAlinedConstSpan<Data>(s.substr(24, 24)).empty());
+
+  absl::Span<const Data> output = MakeAlinedConstSpan<Data>(s);
+  EXPECT_FALSE(output.empty());
+  EXPECT_EQ(output.size(), input.size());
+  for (int i = 0; i < output.size(); ++i) {
+    EXPECT_EQ(input[i].a, output[i].a);
+    EXPECT_EQ(input[i].b, output[i].b);
+    EXPECT_EQ(input[i].c, output[i].c);
+    EXPECT_EQ(input[i].d, output[i].d);
+  }
 }
 
 }  // namespace

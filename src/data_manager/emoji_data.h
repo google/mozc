@@ -98,5 +98,10 @@ struct EmojiData {
 } ABSL_ATTRIBUTE_PACKED;
 
 static_assert(sizeof(EmojiData) == 28);
+ASSERT_ALIGNED(EmojiData, key_index);
+ASSERT_ALIGNED(EmojiData, emoji_index);
+ASSERT_ALIGNED(EmojiData, unicode_version_index);
+ASSERT_ALIGNED(EmojiData, description_utf8_index);
+
 }  // namespace mozc
 #endif  // MOZC_DATA_MANAGER_EMOJI_DATA_H_

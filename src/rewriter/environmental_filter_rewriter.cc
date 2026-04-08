@@ -46,6 +46,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
@@ -210,9 +211,8 @@ ExtractTargetEmojis(absl::Span<const EmojiVersion> target_versions,
     results[target_version] = {};
   }
 
-  const absl::Span<const EmojiData> tokens = absl::MakeConstSpan(
-      reinterpret_cast<const EmojiData*>(token_array_data.data()),
-      token_array_data.size() / sizeof(EmojiData));
+  const absl::Span<const EmojiData> tokens =
+      MakeAlinedConstSpan<EmojiData>(token_array_data);
 
   for (const EmojiData& token : tokens) {
     const uint32_t unicode_version_index = token.unicode_version_index;

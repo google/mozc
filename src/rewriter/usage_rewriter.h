@@ -41,6 +41,7 @@
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
@@ -77,6 +78,11 @@ class UsageRewriter : public RewriterInterface {
   } ABSL_ATTRIBUTE_PACKED;
 
   static_assert(sizeof(UsageDictItem) == 20);
+  ASSERT_ALIGNED(UsageDictItem, usage_id);
+  ASSERT_ALIGNED(UsageDictItem, key_index);
+  ASSERT_ALIGNED(UsageDictItem, value_index);
+  ASSERT_ALIGNED(UsageDictItem, conjugation_id);
+  ASSERT_ALIGNED(UsageDictItem, meaning_index);
 
   using StrPair = std::pair<std::string, std::string>;
   static std::string GetKanjiPrefixAndOneHiragana(absl::string_view word);

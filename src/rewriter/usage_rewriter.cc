@@ -40,6 +40,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -80,9 +81,8 @@ UsageRewriter::UsageRewriter(const DataManager& data_manager,
     string_array_.Set({"\0\0\0\0", 4});
   }
 
-  absl::Span<const UsageDictItem> tokens = absl::MakeConstSpan(
-      reinterpret_cast<const UsageDictItem*>(usage_items_data.data()),
-      usage_items_data.size() / sizeof(UsageDictItem));
+  absl::Span<const UsageDictItem> tokens =
+      MakeAlinedConstSpan<UsageDictItem>(usage_items_data);
 
   // TODO(taku): To reduce memory footprint, better to replace it with
   // binary search over the conjugation_suffix_data directly.

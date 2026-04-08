@@ -43,6 +43,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
@@ -109,10 +110,11 @@ std::vector<std::string> SingleKanjiDictionary::LookupKanjiEntries(
   } ABSL_ATTRIBUTE_PACKED;
 
   static_assert(sizeof(Token) == 8);
+  ASSERT_ALIGNED(Token, key_index);
+  ASSERT_ALIGNED(Token, value_index);
 
-  absl::Span<const Token> tokens = absl::MakeConstSpan(
-      reinterpret_cast<const Token*>(single_kanji_token_array_.data()),
-      single_kanji_token_array_.size() / sizeof(Token));
+  absl::Span<const Token> tokens =
+      MakeAlinedConstSpan<Token>(single_kanji_token_array_);
 
   const auto iter = std::lower_bound(
       tokens.begin(), tokens.end(), key,
@@ -125,7 +127,8 @@ std::vector<std::string> SingleKanjiDictionary::LookupKanjiEntries(
     return kanji_list;
   }
 
-  const absl::string_view values = single_kanji_string_array_[iter->value_index];
+  const absl::string_view values =
+      single_kanji_string_array_[iter->value_index];
   if (use_svs) {
     std::string svs_values;
     if (TextNormalizer::NormalizeTextToSvs(values, &svs_values)) {
@@ -171,10 +174,12 @@ bool SingleKanjiDictionary::GenerateDescription(absl::string_view kanji_surface,
   } ABSL_ATTRIBUTE_PACKED;
 
   static_assert(sizeof(Token) == 12);
+  ASSERT_ALIGNED(Token, target_index);
+  ASSERT_ALIGNED(Token, original_index);
+  ASSERT_ALIGNED(Token, variant_type);
 
-  absl::Span<const Token> tokens = absl::MakeConstSpan(
-      reinterpret_cast<const Token*>(variant_token_array_.data()),
-      variant_token_array_.size() / sizeof(Token));
+  absl::Span<const Token> tokens =
+      MakeAlinedConstSpan<Token>(variant_token_array_);
 
   const auto iter = std::lower_bound(
       tokens.begin(), tokens.end(), kanji_surface,
@@ -187,7 +192,8 @@ bool SingleKanjiDictionary::GenerateDescription(absl::string_view kanji_surface,
     return false;
   }
 
-  const absl::string_view original = variant_string_array_[iter->original_index];
+  const absl::string_view original =
+      variant_string_array_[iter->original_index];
   const uint32_t type_id = iter->variant_type;
   DCHECK_LT(type_id, variant_type_array_.size());
   // Format like "XXXのYYY"

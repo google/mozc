@@ -973,6 +973,7 @@ mozc_cc_library(
     deps = [
         ":rewriter_interface",
         ":rewriter_util",
+        "//base:bits",
         "//base:japanese_util",
         "//base:vlog",
         "//base/container:serialized_string_array",
@@ -1260,6 +1261,7 @@ mozc_cc_library(
     hdrs = ["environmental_filter_rewriter.h"],
     deps = [
         ":rewriter_interface",
+        "//base:bits",
         "//base:text_normalizer",
         "//base:util",
         "//base/container:serialized_string_array",
@@ -1355,6 +1357,7 @@ mozc_cc_library(
     ),
     deps = [
         ":rewriter_interface",
+        "//base:bits",
         "//base:util",
         "//base:vlog",
         "//base/container:serialized_string_array",

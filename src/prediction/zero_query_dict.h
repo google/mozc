@@ -90,6 +90,10 @@ struct ZeroQueryEntry {
 
 static_assert(sizeof(ZeroQueryEntry) == 16);
 
+ASSERT_ALIGNED(ZeroQueryEntry, key_index);
+ASSERT_ALIGNED(ZeroQueryEntry, value_index);
+ASSERT_ALIGNED(ZeroQueryEntry, type);
+
 class ZeroQueryDict {
  public:
   void Init(absl::string_view token_array_data,
@@ -107,9 +111,7 @@ class ZeroQueryDict {
   }
 
   absl::Span<const ZeroQueryEntry> GetZeroQueryEntreis() const {
-    return absl::MakeConstSpan(
-        reinterpret_cast<const ZeroQueryEntry*>(token_array_.data()),
-        token_array_.size() / sizeof(ZeroQueryEntry));
+    return MakeAlinedConstSpan<ZeroQueryEntry>(token_array_);
   }
 
   absl::Span<const ZeroQueryEntry> equal_range(absl::string_view key) const {
