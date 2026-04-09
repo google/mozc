@@ -428,6 +428,25 @@ TEST(FileUtilTest, JoinPath) {
   EXPECT_EQ(FileUtil::JoinPath({"", "foo", "bar"}), "foo" SP "bar");
   EXPECT_EQ(FileUtil::JoinPath({"foo", "", "bar"}), "foo" SP "bar");
   EXPECT_EQ(FileUtil::JoinPath({"foo", "bar", ""}), "foo" SP "bar");
+
+  // { "foo/", "bar" } -> "foo/bar"
+  EXPECT_EQ(FileUtil::JoinPath({"foo" SP, "bar"}), "foo" SP "bar");
+  // { "foo", "bar/" } -> "foo/bar/"
+  EXPECT_EQ(FileUtil::JoinPath({"foo", "bar" SP}), "foo" SP "bar" SP);
+  // { "/foo", "bar" } -> "/foo/bar"
+  EXPECT_EQ(FileUtil::JoinPath({SP "foo", "bar"}), SP "foo" SP "bar");
+  // { "/", "foo", "bar" } -> "/foo/bar"
+  EXPECT_EQ(FileUtil::JoinPath({SP, "foo", "bar"}), SP "foo" SP "bar");
+  // { "", "foo", "bar" } -> "foo/bar"
+  EXPECT_EQ(FileUtil::JoinPath({"", "foo", "bar"}), "foo" SP "bar");
+
+  // Separator in the beginning of the component will remain.
+  // Note, this is a clarification of the existing behavior of edge cases,
+  // but not a designed behavior.
+  // { "foo", "/bar" } -> "foo//bar"
+  EXPECT_EQ(FileUtil::JoinPath({"foo", SP "bar"}), "foo" SP SP "bar");
+  // { "foo/", "/bar" } -> "foo//bar"
+  EXPECT_EQ(FileUtil::JoinPath({"foo" SP, SP "bar"}), "foo" SP SP "bar");
 }
 
 TEST(FileUtilTest, Dirname) {
