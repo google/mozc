@@ -83,6 +83,18 @@
 namespace mozc {
 namespace {
 
+#if defined(MOZC_SERVER_DIR)
+constexpr absl::string_view kMozcServerDir = MOZC_SERVER_DIR;
+#else  // MOZC_SERVER_DIR
+constexpr absl::string_view kMozcServerDir = "/usr/lib/mozc";
+#endif  // MOZC_SERVER_DIR
+
+#if defined(MOZC_DOCUMENT_DIR)
+constexpr absl::string_view kMozcDocumentDir = MOZC_DOCUMENT_DIR;
+#else  // MOZC_DOCUMENT_DIR
+constexpr absl::string_view kMozcDocumentDir = "/usr/lib/mozc/documents";
+#endif  // MOZC_DOCUMENT_DIR
+
 class ProgramInvocationNameHolder final {
  public:
   ProgramInvocationNameHolder() = default;
@@ -455,6 +467,10 @@ std::string GetMozcInstallDirFromRegistry() {
 #endif  // _WIN32
 
 std::string SystemUtil::GetServerDirectory() {
+  if constexpr (port::IsLinuxBase() || port::IsWasm()) {
+    return std::string(kMozcServerDir);
+  }
+
 #ifdef _WIN32
   const std::string install_dir_from_registry = GetMozcInstallDirFromRegistry();
   if (!install_dir_from_registry.empty()) {
@@ -470,21 +486,13 @@ std::string SystemUtil::GetServerDirectory() {
   return FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
                             kProductNameInEnglish);
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-#endif  // _WIN32
 
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
   return MacUtil::GetServerDirectory();
-#endif  // __APPLE__
 
-#if defined(__linux__) || defined(__wasm__)
-#ifndef MOZC_SERVER_DIR
-#define MOZC_SERVER_DIR "/usr/lib/mozc"
-#endif  // MOZC_SERVER_DIR
-  return MOZC_SERVER_DIR;
-#endif  // __linux__ || __wasm__
-
-  // If none of the above platforms is specified, the compiler raises an error
-  // because of no return value.
+#else  // !_WIN32 && !__APPLE__
+  return "";
+#endif  // !_WIN32 && !__APPLE__
 }
 
 std::string SystemUtil::GetServerPath() {
@@ -515,18 +523,13 @@ std::string SystemUtil::GetToolPath() {
 }
 
 std::string SystemUtil::GetDocumentDirectory() {
-#if defined(__linux__)
-
-#ifndef MOZC_DOCUMENT_DIR
-#define MOZC_DOCUMENT_DIR "/usr/lib/mozc/documents"
-#endif  // MOZC_DOCUMENT_DIR
-  return MOZC_DOCUMENT_DIR;
-
-#elif defined(__APPLE__)
-  return GetServerDirectory();
-#else   // __linux__, __APPLE__
-  return FileUtil::JoinPath(GetServerDirectory(), "documents");
-#endif  // __linux__, __APPLE__
+  if constexpr (port::IsLinuxBase()) {
+    return std::string(kMozcDocumentDir);
+  } else if constexpr (port::IsAppleBase()) {
+    return GetServerDirectory();
+  } else {
+    return FileUtil::JoinPath(GetServerDirectory(), "documents");
+  }
 }
 
 std::string SystemUtil::GetUserNameAsString() {
