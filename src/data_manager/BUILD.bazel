@@ -62,6 +62,7 @@ mozc_cc_library(
     deps = [
         ":dataset_reader",
         ":serialized_dictionary",
+        "//base:bits",
         "//base:mmap",
         "//base:version",
         "//base:vlog",
