@@ -873,6 +873,9 @@ void SystemUtil::SetProgramInvocationName(absl::string_view name) {
 }
 
 std::string SystemUtil::GetProgramRunfilesDirectory() {
+  if constexpr (port::IsWasm()) {
+    return "/";
+  }
   const std::string name = Singleton<ProgramInvocationNameHolder>::get()->Get();
   if (name.empty()) {
     return "";
