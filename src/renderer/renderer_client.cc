@@ -77,7 +77,10 @@ constexpr char kServiceName[] = "renderer";
 inline void CallCommand(IPCClientInterface* client,
                         const commands::RendererCommand& command) {
   std::string buf;
-  command.SerializeToString(&buf);
+  if (!command.SerializeToString(&buf)) {
+    LOG(ERROR) << "SerializeToString failed";
+    return;
+  }
 
   // basically, we don't need to get the result
   std::string result;

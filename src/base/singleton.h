@@ -67,14 +67,14 @@ class Singleton {
  public:
   static T* get() ABSL_LOCKS_EXCLUDED(mutex_) {
     {
-      absl::ReaderMutexLock lock(&mutex_);  // NOLINT: In the program's steady
-                                            // state there's no write lock.
+      absl::ReaderMutexLock lock(mutex_);  // NOLINT: In the program's steady
+                                           // state there's no write lock.
       if (instance_ != nullptr) {
         return instance_;
       }
     }
 
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     if (instance_ == nullptr) {
       instance_ = new T();
       internal::AddSingletonFinalizer(&Singleton<T>::Delete);
@@ -84,7 +84,7 @@ class Singleton {
 
   // TEST ONLY! Do not call this method in production code.
   static void Delete() ABSL_LOCKS_EXCLUDED(mutex_) {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     delete instance_;
     instance_ = nullptr;
   }

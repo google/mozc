@@ -573,7 +573,6 @@ bool Client::PingServer() const {
   }
 
   commands::Input input;
-  commands::Output output;
 
   InitInput(&input);
   input.set_type(commands::Input::NO_OPERATION);
@@ -595,7 +594,10 @@ bool Client::PingServer() const {
   // Serialize
   std::string request;
   std::string response;
-  input.SerializeToString(&request);
+  if (!input.SerializeToString(&request)) {
+    LOG(ERROR) << "SerializeToString failed";
+    return false;
+  }
 
   if (!client->Call(request, &response, timeout_)) {
     LOG(ERROR) << "IPCClient::Call failed: " << client->GetLastIPCError();
@@ -643,7 +645,10 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
 
   // Serialize
   std::string request;
-  input.SerializeToString(&request);
+  if (!input.SerializeToString(&request)) {
+    LOG(ERROR) << "SerializeToString failed";
+    return false;
+  }
 
   // Call IPC
   std::unique_ptr<IPCClientInterface> client(client_factory_->NewClient(

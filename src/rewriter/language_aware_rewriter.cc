@@ -246,19 +246,4 @@ bool LanguageAwareRewriter::Rewrite(const ConversionRequest& request,
   return FillRawText(request, segments);
 }
 
-namespace {
-bool IsLanguageAwareInputCandidate(absl::string_view raw_string,
-                                   const converter::Candidate& candidate) {
-  // Check candidate.prefix to filter if the candidate is probably generated
-  // from LanguangeAwareInput or not.
-  if (candidate.prefix != "→ ") {
-    return false;
-  }
-
-  if (raw_string != candidate.value) {
-    return false;
-  }
-  return true;
-}
-}  // namespace
 }  // namespace mozc

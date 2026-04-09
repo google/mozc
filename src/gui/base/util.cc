@@ -76,7 +76,7 @@ void InstallDefaultTranslator() {
   // Load "<translation_path>/qt_<lang>.qm" from a qrc file.
   bool loaded = translator->load(
       QLocale::system(), QLatin1String("qt"), QLatin1String("_"),
-      QLibraryInfo::location(QLibraryInfo::TranslationsPath),
+      QLibraryInfo::path(QLibraryInfo::TranslationsPath),
       QLatin1String(".qm"));
   if (loaded) {
     qApp->installTranslator(translator.get());
@@ -93,9 +93,6 @@ void InstallDefaultTranslator() {
 // static
 std::unique_ptr<QApplication> GuiUtil::InitQt(int &argc, char *argv[]) {
   QApplication::setStyle(QStyleFactory::create(QLatin1String("fusion")));
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-#endif  // QT_VERSION
 
   // QApplication takes argc as a reference.
   auto app = std::make_unique<QApplication>(argc, argv);

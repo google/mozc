@@ -83,7 +83,7 @@ class ProcessMutex {
   }
 
   bool locked() const {
-    absl::ReaderMutexLock l(&mutex_);
+    absl::ReaderMutexLock l(mutex_);
     return locked_;
   }
 
