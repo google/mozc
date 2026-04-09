@@ -331,7 +331,8 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
     return FileUtil::JoinPath(home, ".config/mozc");
 
 #else  // Supported platforms
-#error Undefined target platform.
+    LOG(ERROR) << "Undefined target platform.";
+    return "";
 
 #endif  // Platforms
   }
