@@ -33,6 +33,7 @@
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -80,8 +81,6 @@ ABSL_FLAG(std::string, user_profile_dir, "", "path to user profile directory");
 ABSL_FLAG(std::string, engine_name, "default",
           "Shortcut to select engine_data_path from name: (default|oss|mock)");
 ABSL_FLAG(std::string, engine_type, "desktop", "Engine type: (desktop|mobile)");
-ABSL_FLAG(bool, output_debug_string, true,
-          "output debug string for each input");
 ABSL_FLAG(size_t, max_candidates_to_show, 100,
           "Max number of candidates to show per segment");
 ABSL_FLAG(bool, show_meta_candidates, false, "if true, show meta candidates");
@@ -292,6 +291,7 @@ class ConverterMain {
         converter_(engine_->GetConverter()) {}
 
   void RunLoop();
+  std::string ExecCommandToString(absl::string_view line);
 
  private:
   bool ExecCommand(absl::string_view line, Segments* segments);
@@ -487,6 +487,17 @@ bool ConverterMain::ExecCommand(absl::string_view line, Segments* segments) {
   return true;
 }
 
+std::string ConverterMain::ExecCommandToString(absl::string_view line) {
+  std::ostringstream oss;
+  Segments segments;
+  if (ExecCommand(line, &segments)) {
+    PrintSegments(segments, &oss);
+  } else {
+    oss << "ExecCommand() return false";
+  }
+  return oss.str();
+}
+
 std::pair<std::string, std::string> SelectDataFileFromName(
     const std::string& mozc_runfiles_dir, const std::string& engine_name) {
   struct {
@@ -555,13 +566,8 @@ void ConverterMain::RunLoop() {
   Segments segments;
   std::string line;
   while (!std::getline(std::cin, line).fail()) {
-    if (ExecCommand(line, &segments)) {
-      if (absl::GetFlag(FLAGS_output_debug_string)) {
-        PrintSegments(segments, &std::cout);
-      }
-    } else {
-      std::cout << "ExecCommand() return false" << std::endl;
-    }
+    const std::string result = ExecCommandToString(line);
+    std::cout << result << std::endl;
   }
 }
 
@@ -597,7 +603,9 @@ int main(int argc, char** argv) {
 
   std::cout << "Engine type: " << absl::GetFlag(FLAGS_engine_type)
             << "\nData file: " << absl::GetFlag(FLAGS_engine_data_path)
-            << "\nid.def: " << absl::GetFlag(FLAGS_id_def) << std::endl;
+            << "\nid.def: " << absl::GetFlag(FLAGS_id_def)
+            << "\nUser profile dir: " << absl::GetFlag(FLAGS_user_profile_dir)
+            << std::endl;
 
   absl::StatusOr<std::unique_ptr<const mozc::DataManager>> data_manager =
       absl::GetFlag(FLAGS_magic).empty()
