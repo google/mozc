@@ -1392,7 +1392,7 @@ std::vector<Result> UserHistoryPredictor::Predict(
     max_prediction_size = 3;
   }
 
-  EntryPriorityQueue entry_queue = GetEntry_QueueFromHistoryDictionary(
+  EntryPriorityQueue entry_queue = CreateEntryQueueFromHistory(
       request, prev_entry.get(), max_prediction_size * 5);
 
   if (entry_queue.size() == 0) {
@@ -1504,7 +1504,7 @@ UserHistoryPredictor::ConstEntrySnapshot UserHistoryPredictor::LookupPrevEntry(
 }
 
 UserHistoryPredictor::EntryPriorityQueue
-UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
+UserHistoryPredictor::CreateEntryQueueFromHistory(
     const ConversionRequest& request, const Entry* prev_entry,
     size_t max_entry_queue_size) const {
   // Gets romanized input key if the given preedit looks misspelled.

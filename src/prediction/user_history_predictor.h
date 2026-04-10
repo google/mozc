@@ -323,7 +323,8 @@ class UserHistoryPredictor : public PredictorInterface {
       converter::InnerSegmentBoundarySpan inner_segment_boundary, Entry entry,
       EntryPriorityQueue& entry_queue) const;
 
-  EntryPriorityQueue GetEntry_QueueFromHistoryDictionary(
+  // Creates entry queue from request and history storage.
+  EntryPriorityQueue CreateEntryQueueFromHistory(
       const ConversionRequest& request, const Entry* absl_nullable prev_entry,
       size_t max_entry_queue_size) const;
 
