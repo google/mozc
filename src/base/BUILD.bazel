@@ -436,7 +436,6 @@ mozc_cc_library(
         ":file_stream",
         ":mmap",
         ":port",
-        ":singleton",
         "//base/strings:zstring_view",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
