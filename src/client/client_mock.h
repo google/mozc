@@ -84,8 +84,6 @@ class ClientMock : public client::ClientInterface {
   MOCK_METHOD(bool, NoOperation, (), (override));
   MOCK_METHOD(void, EnableCascadingWindow, (bool enable), (override));
   MOCK_METHOD(void, set_timeout, (absl::Duration timeout), (override));
-  MOCK_METHOD(void, set_server_program, (absl::string_view program_path),
-              (override));
   MOCK_METHOD(void, set_suppress_error_dialog, (bool suppress), (override));
   MOCK_METHOD(void, set_client_capability,
               (const commands::Capability &capability), (override));

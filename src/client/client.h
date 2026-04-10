@@ -74,12 +74,6 @@ class ServerLauncher : public ServerLauncherInterface {
 
   void OnFatal(ServerLauncherInterface::ServerErrorType type) override;
 
-  // specify server program. On Mac, we need to specify the server path
-  // using this method.
-  void set_server_program(const absl::string_view server_program) override {
-    strings::Assign(server_program_, server_program);
-  }
-
   // return server program
   zstring_view server_program() const override { return server_program_; }
 
@@ -155,7 +149,6 @@ class Client : public ClientInterface {
   void EnableCascadingWindow(bool enable) override;
 
   void set_timeout(absl::Duration timeout) override;
-  void set_server_program(absl::string_view program_path) override;
   void set_suppress_error_dialog(bool suppress) override;
   void set_client_capability(const commands::Capability &capability) override;
 
