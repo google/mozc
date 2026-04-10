@@ -476,15 +476,15 @@ absl::string_view DataManager::GetSystemDictionaryData() const {
 }
 
 absl::Span<const uint32_t> DataManager::GetCollocationData() const {
-  return MakeAlinedConstSpan<uint32_t>(collocation_data_);
+  return MakeAlignedConstSpan<uint32_t>(collocation_data_);
 }
 
 absl::Span<const uint32_t> DataManager::GetCollocationSuppressionData() const {
-  return MakeAlinedConstSpan<uint32_t>(collocation_suppression_data_);
+  return MakeAlignedConstSpan<uint32_t>(collocation_suppression_data_);
 }
 
 absl::Span<const uint32_t> DataManager::GetSuggestionFilterData() const {
-  return MakeAlinedConstSpan<uint32_t>(suggestion_filter_data_);
+  return MakeAlignedConstSpan<uint32_t>(suggestion_filter_data_);
 }
 
 void DataManager::GetUserPosData(absl::string_view* token_array_data,
@@ -494,11 +494,11 @@ void DataManager::GetUserPosData(absl::string_view* token_array_data,
 }
 
 absl::Span<const uint16_t> DataManager::GetPosMatcherData() const {
-  return MakeAlinedConstSpan<uint16_t>(pos_matcher_data_);
+  return MakeAlignedConstSpan<uint16_t>(pos_matcher_data_);
 }
 
 absl::Span<const uint8_t> DataManager::GetPosGroupData() const {
-  return MakeAlinedConstSpan<uint8_t>(pos_group_data_);
+  return MakeAlignedConstSpan<uint8_t>(pos_group_data_);
 }
 
 void DataManager::GetSegmenterData(
@@ -508,10 +508,10 @@ void DataManager::GetSegmenterData(
     absl::Span<const uint16_t>* boundary_data) const {
   *l_num_elements = segmenter_compressed_lsize_;
   *r_num_elements = segmenter_compressed_rsize_;
-  *l_table = MakeAlinedConstSpan<uint16_t>(segmenter_ltable_);
-  *r_table = MakeAlinedConstSpan<uint16_t>(segmenter_rtable_);
-  *bitarray_data = MakeAlinedConstSpan<char>(segmenter_bitarray_);
-  *boundary_data = MakeAlinedConstSpan<uint16_t>(boundary_data_);
+  *l_table = MakeAlignedConstSpan<uint16_t>(segmenter_ltable_);
+  *r_table = MakeAlignedConstSpan<uint16_t>(segmenter_rtable_);
+  *bitarray_data = MakeAlignedConstSpan<char>(segmenter_bitarray_);
+  *boundary_data = MakeAlignedConstSpan<uint16_t>(boundary_data_);
 }
 
 void DataManager::GetSuffixDictionaryData(
@@ -519,7 +519,7 @@ void DataManager::GetSuffixDictionaryData(
     absl::Span<const uint32_t>* token_array) const {
   *key_array_data = suffix_key_array_data_;
   *value_array_data = suffix_value_array_data_;
-  *token_array = MakeAlinedConstSpan<uint32_t>(suffix_token_array_data_);
+  *token_array = MakeAlignedConstSpan<uint32_t>(suffix_token_array_data_);
 }
 
 void DataManager::GetReadingCorrectionData(

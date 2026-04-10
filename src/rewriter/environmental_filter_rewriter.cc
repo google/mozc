@@ -212,7 +212,7 @@ ExtractTargetEmojis(absl::Span<const EmojiVersion> target_versions,
   }
 
   const absl::Span<const EmojiData> tokens =
-      MakeAlinedConstSpan<EmojiData>(token_array_data);
+      MakeAlignedConstSpan<EmojiData>(token_array_data);
 
   for (const EmojiData& token : tokens) {
     const uint32_t unicode_version_index = token.unicode_version_index;

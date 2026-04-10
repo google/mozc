@@ -111,7 +111,7 @@ class ZeroQueryDict {
   }
 
   absl::Span<const ZeroQueryEntry> GetZeroQueryEntreis() const {
-    return MakeAlinedConstSpan<ZeroQueryEntry>(token_array_);
+    return MakeAlignedConstSpan<ZeroQueryEntry>(token_array_);
   }
 
   absl::Span<const ZeroQueryEntry> equal_range(absl::string_view key) const {

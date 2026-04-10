@@ -277,7 +277,7 @@ inline MOZC_BITS_BYTESWAP_CONSTEXPR uint64_t ByteSwap64(const uint64_t n) {
 // Returns absl::Span<const T> from data.data().
 // Returns empty span when data.data() has an invalid alignment.
 template <typename T>
-absl::Span<const T> MakeAlinedConstSpan(absl::string_view data) {
+absl::Span<const T> MakeAlignedConstSpan(absl::string_view data) {
   static_assert(std::is_trivially_copyable_v<T> == true);
   static_assert(std::is_pointer_v<T> == false);
   static_assert(std::is_member_pointer_v<T> == false);

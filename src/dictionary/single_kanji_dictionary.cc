@@ -114,7 +114,7 @@ std::vector<std::string> SingleKanjiDictionary::LookupKanjiEntries(
   ASSERT_ALIGNED(Token, value_index);
 
   absl::Span<const Token> tokens =
-      MakeAlinedConstSpan<Token>(single_kanji_token_array_);
+      MakeAlignedConstSpan<Token>(single_kanji_token_array_);
 
   const auto iter = std::lower_bound(
       tokens.begin(), tokens.end(), key,
@@ -179,7 +179,7 @@ bool SingleKanjiDictionary::GenerateDescription(absl::string_view kanji_surface,
   ASSERT_ALIGNED(Token, variant_type);
 
   absl::Span<const Token> tokens =
-      MakeAlinedConstSpan<Token>(variant_token_array_);
+      MakeAlignedConstSpan<Token>(variant_token_array_);
 
   const auto iter = std::lower_bound(
       tokens.begin(), tokens.end(), kanji_surface,

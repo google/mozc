@@ -82,7 +82,7 @@ UsageRewriter::UsageRewriter(const DataManager& data_manager,
   }
 
   absl::Span<const UsageDictItem> tokens =
-      MakeAlinedConstSpan<UsageDictItem>(usage_items_data);
+      MakeAlignedConstSpan<UsageDictItem>(usage_items_data);
 
   // TODO(taku): To reduce memory footprint, better to replace it with
   // binary search over the conjugation_suffix_data directly.

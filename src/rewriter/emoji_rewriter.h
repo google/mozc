@@ -101,7 +101,7 @@ class EmojiRewriter : public RewriterInterface {
   absl::Span<const EmojiData> LookUpToken(absl::string_view key) const;
 
   absl::Span<const EmojiData> GetEmojiTokens() const {
-    return MakeAlinedConstSpan<EmojiData>(token_array_data_);
+    return MakeAlignedConstSpan<EmojiData>(token_array_data_);
   }
 
   absl::string_view token_array_data_;

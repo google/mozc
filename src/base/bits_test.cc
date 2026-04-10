@@ -122,7 +122,7 @@ TEST(BitsTest, ByteSwap) {
   EXPECT_EQ(byteswap(i64), 0xefcdab9078563412);
 }
 
-TEST(BitsTest, MakeAlinedConstSpan) {
+TEST(BitsTest, MakeAlignedConstSpan) {
   struct Data {
     uint32_t a;
     uint32_t b;
@@ -150,21 +150,21 @@ TEST(BitsTest, MakeAlinedConstSpan) {
   absl::string_view s = buf;
 
   // Unaligned.
-  EXPECT_TRUE(MakeAlinedConstSpan<Data>(s.substr(1, 12)).empty());
-  EXPECT_TRUE(MakeAlinedConstSpan<Data>(s.substr(2, 12)).empty());
+  EXPECT_TRUE(MakeAlignedConstSpan<Data>(s.substr(1, 12)).empty());
+  EXPECT_TRUE(MakeAlignedConstSpan<Data>(s.substr(2, 12)).empty());
 
   // Invalid size
-  EXPECT_TRUE(MakeAlinedConstSpan<Data>(s.substr(1, 10)).empty());
+  EXPECT_TRUE(MakeAlignedConstSpan<Data>(s.substr(1, 10)).empty());
 
   // Too short.
-  EXPECT_TRUE(MakeAlinedConstSpan<Data>(s.substr(0, 2)).empty());
+  EXPECT_TRUE(MakeAlignedConstSpan<Data>(s.substr(0, 2)).empty());
 
   // Aligned
-  EXPECT_FALSE(MakeAlinedConstSpan<Data>(s.substr(12, 12)).empty());
-  EXPECT_FALSE(MakeAlinedConstSpan<Data>(s.substr(12, 24)).empty());
-  EXPECT_FALSE(MakeAlinedConstSpan<Data>(s.substr(24, 24)).empty());
+  EXPECT_FALSE(MakeAlignedConstSpan<Data>(s.substr(12, 12)).empty());
+  EXPECT_FALSE(MakeAlignedConstSpan<Data>(s.substr(12, 24)).empty());
+  EXPECT_FALSE(MakeAlignedConstSpan<Data>(s.substr(24, 24)).empty());
 
-  absl::Span<const Data> output = MakeAlinedConstSpan<Data>(s);
+  absl::Span<const Data> output = MakeAlignedConstSpan<Data>(s);
   EXPECT_FALSE(output.empty());
   EXPECT_EQ(output.size(), input.size());
   for (int i = 0; i < output.size(); ++i) {
