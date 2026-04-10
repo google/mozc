@@ -2450,7 +2450,6 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 
   commands::Command command;
   Segments segments;
-  config::Config config;
 
   {  // Create segments
     InsertCharacterChars("aiueo", &session, &command);

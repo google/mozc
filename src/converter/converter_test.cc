@@ -1188,7 +1188,6 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   config::Config config;
   composer::Composer composer(table, default_request(), config);
   composer.InsertCharacter("placeholder");
-  commands::Context context;
   Segments segments;
   const ConversionRequest request =
       ConversionRequestBuilder()

@@ -99,20 +99,6 @@ bool HasExpectedCandidate(const Segments& segments,
   return false;
 }
 
-// Replaces an emoji candidate into the 0-th index, as the Mozc converter
-// does with a committed candidate.
-void ChooseEmojiCandidate(Segments* segments) {
-  CHECK_LE(1, segments->segments_size());
-  Segment* segment = segments->mutable_segment(0);
-  for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    if (EmojiRewriter::IsEmojiCandidate(segment->candidate(i))) {
-      segment->move_candidate(i, 0);
-      break;
-    }
-  }
-  segment->set_segment_type(Segment::FIXED_VALUE);
-}
-
 struct EmojiData {
   const char* key;
   const char* unicode;

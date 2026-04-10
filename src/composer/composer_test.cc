@@ -1128,7 +1128,6 @@ TEST_F(ComposerTest, Copy) {
 }
 
 TEST_F(ComposerTest, ShiftKeyOperation) {
-  commands::KeyEvent key;
   table_->AddRule("a", "あ", "");
 
   {  // Basic feature.
@@ -1248,8 +1247,6 @@ TEST_F(ComposerTest, AutoSwitchCompositionModeEnabled) {
   config_->set_auto_switch_composition_mode(true);
 
   table_->InitializeWithRequestAndConfig(*request_, *config_);
-
-  commands::KeyEvent key;
 
   {  // http
     InsertKey("h", composer_.get());

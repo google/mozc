@@ -987,7 +987,6 @@ TEST_F(KeyMapTest, ShiftTabToConvertPrev) {
 }
 
 TEST_F(KeyMapTest, LaunchToolTest) {
-  config::Config config;
   commands::KeyEvent key_event;
   PrecompositionState::Commands conv_command;
 

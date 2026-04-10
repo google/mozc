@@ -3471,7 +3471,6 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
   predictor->Finish(convreq2, segments_proxy.MakeLearningResults(), kRevertId);
   segments_proxy.SetHistoryType(0);
 
-  commands::Request request;
   request_.set_zero_query_suggestion(true);
   const ConversionRequest convreq3 = SetUpInputForSuggestionWithHistory(
       "", "わたしの", "私の", &composer_, &segments_proxy);

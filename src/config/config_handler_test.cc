@@ -312,7 +312,7 @@ TEST_F(ConfigHandlerTest, DefaultConfig) {
 std::string ExtractCharacterFormRules(const Config& config) {
   std::string rules;
   for (size_t i = 0; i < config.character_form_rules_size(); ++i) {
-    config.character_form_rules(i).AppendToString(&rules);
+    EXPECT_TRUE(config.character_form_rules(i).AppendToString(&rules));
   }
   return rules;
 }

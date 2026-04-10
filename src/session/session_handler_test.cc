@@ -565,7 +565,6 @@ TEST_F(SessionHandlerTest, UpdateComposition) {
 }
 
 TEST_F(SessionHandlerTest, KeyMapTest) {
-  config::Config config = config::ConfigHandler::GetCopiedConfig();
   const keymap::KeyMapManager* msime_keymap;
 
   SessionHandler handler(CreateMockDataEngine());

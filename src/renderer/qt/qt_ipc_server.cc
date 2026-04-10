@@ -44,7 +44,7 @@ constexpr int kNumConnections = 10;
 constexpr absl::Duration kIPCServerTimeOut = absl::Milliseconds(1000);
 constexpr char kServiceName[] = "renderer";
 
-std::string GetServiceName() {
+[[maybe_unused]] std::string GetServiceName() {
   std::string name = kServiceName;
   const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
   if (!desktop_name.empty()) {

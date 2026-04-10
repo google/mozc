@@ -91,7 +91,11 @@ bool ParseConfig(const std::string &data, ibus::Config &config) {
       mozc::protobuf::TextFormat::ParseFromString(data, &config);
   if (!success) {
     // Failed to parse the data, fallback to the default setting.
-    mozc::protobuf::TextFormat::ParseFromString(kIbusConfigTextProto, &config);
+    if (!mozc::protobuf::TextFormat::ParseFromString(kIbusConfigTextProto,
+                                                     &config)) {
+      LOG(ERROR) << "Failed to parse the default config.";
+      return false;
+    };
   }
 
   for (ibus::Engine &engine : *config.mutable_engines()) {
