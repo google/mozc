@@ -45,21 +45,6 @@
 
 namespace mozc {
 namespace dictionary {
-namespace {
-
-class ComparePrefix {
- public:
-  explicit ComparePrefix(size_t max_len) : max_len_(max_len) {}
-
-  bool operator()(absl::string_view x, absl::string_view y) const {
-    return x.substr(0, max_len_) < y.substr(0, max_len_);
-  }
-
- private:
-  const size_t max_len_;
-};
-
-}  // namespace
 
 SuffixDictionary::SuffixDictionary(absl::string_view key_array_data,
                                    absl::string_view value_array_data,
@@ -92,13 +77,17 @@ bool SuffixDictionary::HasValue(absl::string_view value) const {
 void SuffixDictionary::LookupPredictive(
     absl::string_view key, const ConversionRequest& conversion_request,
     Callback* callback) const {
-  using Iter = SerializedStringArray::const_iterator;
-  std::pair<Iter, Iter> range = std::equal_range(
-      key_array_.begin(), key_array_.end(), key, ComparePrefix(key.size()));
+  const auto [begin, end] = std::equal_range(
+      key_array_.begin(), key_array_.end(), key,
+      // compare by the prefix.
+      [&](absl::string_view x, absl::string_view y) {
+        return x.substr(0, key.size()) < y.substr(0, key.size());
+      });
+
   Token token;
   token.attributes = Token::SUFFIX_DICTIONARY;
-  for (; range.first != range.second; ++range.first) {
-    token.key.assign((*range.first).data(), (*range.first).size());
+  for (auto it = begin; it != end; ++it) {
+    token.key.assign((*it).data(), (*it).size());
     switch (callback->OnKey(token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
@@ -113,7 +102,7 @@ void SuffixDictionary::LookupPredictive(
         Callback::TRAVERSE_DONE) {
       return;
     }
-    const size_t index = range.first - key_array_.begin();
+    const size_t index = it - key_array_.begin();
     if (value_array_[index].empty()) {
       token.value = token.key;
     } else {
