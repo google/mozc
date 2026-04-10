@@ -96,8 +96,8 @@ class DataManager {
       absl::Span<const uint16_t>* boundary_data) const;
   absl::string_view GetCounterSuffixSortedArray() const;
   virtual void GetSuffixDictionaryData(
-      absl::string_view* key_array, absl::string_view* value_array,
-      absl::Span<const uint32_t>* token_array) const;
+      absl::string_view* key_array_data, absl::string_view* value_array_data,
+      absl::string_view* token_array_data) const;
   virtual void GetReadingCorrectionData(
       absl::string_view* value_array_data, absl::string_view* error_array_data,
       absl::string_view* correction_array_data) const;

@@ -119,6 +119,7 @@ mozc_cc_library(
     deps = [
         ":dictionary_interface",
         ":dictionary_token",
+        "//base:bits",
         "//base/container:serialized_string_array",
         "//request:conversion_request",
         "@com_google_absl//absl/log",

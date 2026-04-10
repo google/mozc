@@ -516,10 +516,10 @@ void DataManager::GetSegmenterData(
 
 void DataManager::GetSuffixDictionaryData(
     absl::string_view* key_array_data, absl::string_view* value_array_data,
-    absl::Span<const uint32_t>* token_array) const {
+    absl::string_view* token_array_data) const {
   *key_array_data = suffix_key_array_data_;
   *value_array_data = suffix_value_array_data_;
-  *token_array = MakeAlignedConstSpan<uint32_t>(suffix_token_array_data_);
+  *token_array_data = suffix_token_array_data_;
 }
 
 void DataManager::GetReadingCorrectionData(

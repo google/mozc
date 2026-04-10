@@ -59,12 +59,11 @@ TEST(SuffixDictionaryTest, Callback) {
   ConversionRequest convreq;
   {
     const testing::MockDataManager manager;
-    absl::string_view key_array_data, value_arra_data;
-    absl::Span<const uint32_t> token_array;
+    absl::string_view key_array_data, value_arra_data, token_array_data;
     manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
-                                    &token_array);
+                                    &token_array_data);
     dic = std::make_unique<SuffixDictionary>(key_array_data, value_arra_data,
-                                             token_array);
+                                             token_array_data);
     ASSERT_NE(nullptr, dic.get());
   }
 
@@ -85,12 +84,11 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
   ConversionRequest convreq;
   {
     const testing::MockDataManager manager;
-    absl::string_view key_array_data, value_arra_data;
-    absl::Span<const uint32_t> token_array;
+    absl::string_view key_array_data, value_arra_data, token_array_data;
     manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
-                                    &token_array);
+                                    &token_array_data);
     dic = std::make_unique<SuffixDictionary>(key_array_data, value_arra_data,
-                                             token_array);
+                                             token_array_data);
     ASSERT_NE(nullptr, dic.get());
   }
 

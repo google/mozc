@@ -39,6 +39,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "dictionary/dictionary_token.h"
 #include "request/conversion_request.h"
@@ -48,12 +49,15 @@ namespace dictionary {
 
 SuffixDictionary::SuffixDictionary(absl::string_view key_array_data,
                                    absl::string_view value_array_data,
-                                   absl::Span<const uint32_t> token_array)
-    : token_array_(token_array) {
+                                   absl::string_view token_array_data)
+    : token_array_(MakeAlignedConstSpan<TokenArrayData>(token_array_data)) {
   DCHECK(SerializedStringArray::VerifyData(key_array_data));
   DCHECK(SerializedStringArray::VerifyData(value_array_data));
   key_array_.Set(key_array_data);
   value_array_.Set(value_array_data);
+
+  DCHECK_EQ(key_array_.size(), token_array_.size());
+  DCHECK_EQ(value_array_.size(), token_array_.size());
 }
 
 bool SuffixDictionary::HasKey(absl::string_view key) const {
@@ -109,9 +113,14 @@ void SuffixDictionary::LookupPredictive(
       token.value.assign(value_array_[index].data(),
                          value_array_[index].size());
     }
-    token.lid = token_array_[3 * index];
-    token.rid = token_array_[3 * index + 1];
-    token.cost = token_array_[3 * index + 2];
+
+    // Invalid index.
+    if (index >= token_array_.size()) break;
+
+    const TokenArrayData& data = token_array_[index];
+    token.lid = data.lid;
+    token.rid = data.rid;
+    token.cost = data.cost;
     if (callback->OnToken(token.key, token.key, token) !=
         Callback::TRAVERSE_CONTINUE) {
       break;

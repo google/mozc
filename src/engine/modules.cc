@@ -123,12 +123,12 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   }
 
   if (!suffix_dictionary_) {
-    absl::string_view suffix_key_array_data, suffix_value_array_data;
-    absl::Span<const uint32_t> token_array;
+    absl::string_view suffix_key_array_data, suffix_value_array_data,
+        token_array_data;
     data_manager_->GetSuffixDictionaryData(
-        &suffix_key_array_data, &suffix_value_array_data, &token_array);
+        &suffix_key_array_data, &suffix_value_array_data, &token_array_data);
     suffix_dictionary_ = std::make_unique<SuffixDictionary>(
-        suffix_key_array_data, suffix_value_array_data, token_array);
+        suffix_key_array_data, suffix_value_array_data, token_array_data);
     RETURN_IF_NULL(suffix_dictionary_);
   }
 

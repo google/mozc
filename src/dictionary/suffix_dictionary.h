@@ -34,6 +34,7 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "dictionary/dictionary_interface.h"
 #include "request/conversion_request.h"
@@ -56,7 +57,7 @@ class SuffixDictionary : public DictionaryInterface {
  public:
   SuffixDictionary(absl::string_view key_array_data,
                    absl::string_view value_array_data,
-                   absl::Span<const uint32_t> token_array);
+                   absl::string_view token_array_data);
   SuffixDictionary(const SuffixDictionary&) = delete;
   SuffixDictionary& operator=(const SuffixDictionary&) = delete;
   ~SuffixDictionary() override = default;
@@ -83,9 +84,20 @@ class SuffixDictionary : public DictionaryInterface {
                      Callback* callback) const override {}
 
  private:
+  struct TokenArrayData {
+    uint32_t lid = 0;
+    uint32_t rid = 0;
+    uint32_t cost = 0;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(TokenArrayData) == 12);
+
+  ASSERT_ALIGNED(TokenArrayData, lid);
+  ASSERT_ALIGNED(TokenArrayData, rid);
+  ASSERT_ALIGNED(TokenArrayData, cost);
+
   SerializedStringArray key_array_;
   SerializedStringArray value_array_;
-  const absl::Span<const uint32_t> token_array_;
+  const absl::Span<const TokenArrayData> token_array_;
 };
 
 }  // namespace dictionary
