@@ -30,7 +30,6 @@
 #include "renderer/renderer_style_handler.h"
 
 #if defined(_WIN32)
-#include <wil/resource.h>
 #include <windows.h>
 #endif  // _WIN32
 
@@ -75,59 +74,57 @@ bool RendererStyleHandlerImpl::SetRendererStyle(const RendererStyle& style) {
   return true;
 }
 void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle* style) {
-  double scale_factor_x = 1.0;
-  double scale_factor_y = 1.0;
-  RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x, &scale_factor_y);
+  const double scale_factor = RendererStyleHandler::GetDPIScalingFactor();
 
   // TODO(horo): Change to read from human-readable ASCII format protobuf.
   style->Clear();
   style->set_window_border(1);  // non-scalable
-  style->set_scrollbar_width(4 * scale_factor_x);
-  style->set_row_rect_padding(0 * scale_factor_x);
+  style->set_scrollbar_width(4 * scale_factor);
+  style->set_row_rect_padding(0 * scale_factor);
   style->mutable_border_color()->set_r(0x96);
   style->mutable_border_color()->set_g(0x96);
   style->mutable_border_color()->set_b(0x96);
 
   RendererStyle::TextStyle* shortcutStyle = style->add_text_styles();
-  shortcutStyle->set_font_size(14 * scale_factor_y);
+  shortcutStyle->set_font_size(14 * scale_factor);
   shortcutStyle->mutable_foreground_color()->set_r(0x77);
   shortcutStyle->mutable_foreground_color()->set_g(0x77);
   shortcutStyle->mutable_foreground_color()->set_b(0x77);
   shortcutStyle->mutable_background_color()->set_r(0xf3);
   shortcutStyle->mutable_background_color()->set_g(0xf4);
   shortcutStyle->mutable_background_color()->set_b(0xff);
-  shortcutStyle->set_left_padding(8 * scale_factor_x);
-  shortcutStyle->set_right_padding(8 * scale_factor_x);
+  shortcutStyle->set_left_padding(8 * scale_factor);
+  shortcutStyle->set_right_padding(8 * scale_factor);
 
   RendererStyle::TextStyle* gap1Style = style->add_text_styles();
-  gap1Style->set_font_size(14 * scale_factor_y);
+  gap1Style->set_font_size(14 * scale_factor);
 
   RendererStyle::TextStyle* candidateStyle = style->add_text_styles();
-  candidateStyle->set_font_size(14 * scale_factor_y);
+  candidateStyle->set_font_size(14 * scale_factor);
 
   RendererStyle::TextStyle* descriptionStyle = style->add_text_styles();
-  descriptionStyle->set_font_size(12 * scale_factor_y);
+  descriptionStyle->set_font_size(12 * scale_factor);
   descriptionStyle->mutable_foreground_color()->set_r(0x88);
   descriptionStyle->mutable_foreground_color()->set_g(0x88);
   descriptionStyle->mutable_foreground_color()->set_b(0x88);
-  descriptionStyle->set_right_padding(8 * scale_factor_x);
+  descriptionStyle->set_right_padding(8 * scale_factor);
 
   // We want to ensure that the candidate window is at least wide
   // enough to render "そのほかの文字種  " as a candidate.
   style->set_column_minimum_width_string("そのほかの文字種  ");
 
-  style->mutable_footer_style()->set_font_size(14 * scale_factor_y);
-  style->mutable_footer_style()->set_left_padding(4 * scale_factor_x);
-  style->mutable_footer_style()->set_right_padding(4 * scale_factor_x);
+  style->mutable_footer_style()->set_font_size(14 * scale_factor);
+  style->mutable_footer_style()->set_left_padding(4 * scale_factor);
+  style->mutable_footer_style()->set_right_padding(4 * scale_factor);
 
   RendererStyle::TextStyle* footer_sub_label_style =
       style->mutable_footer_sub_label_style();
-  footer_sub_label_style->set_font_size(10 * scale_factor_y);
+  footer_sub_label_style->set_font_size(10 * scale_factor);
   footer_sub_label_style->mutable_foreground_color()->set_r(167);
   footer_sub_label_style->mutable_foreground_color()->set_g(167);
   footer_sub_label_style->mutable_foreground_color()->set_b(167);
-  footer_sub_label_style->set_left_padding(4 * scale_factor_x);
-  footer_sub_label_style->set_right_padding(4 * scale_factor_x);
+  footer_sub_label_style->set_left_padding(4 * scale_factor);
+  footer_sub_label_style->set_right_padding(4 * scale_factor);
 
   RendererStyle::RGBAColor* color = style->add_footer_border_colors();
   color->set_r(96);
@@ -162,21 +159,21 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle* style) {
 
   RendererStyle::InfolistStyle* infostyle = style->mutable_infolist_style();
   infostyle->set_caption_string("用例");
-  infostyle->set_caption_height(20 * scale_factor_y);
+  infostyle->set_caption_height(20 * scale_factor);
   infostyle->set_caption_padding(1);
-  infostyle->mutable_caption_style()->set_font_size(12 * scale_factor_y);
-  infostyle->mutable_caption_style()->set_left_padding(2 * scale_factor_x);
+  infostyle->mutable_caption_style()->set_font_size(12 * scale_factor);
+  infostyle->mutable_caption_style()->set_left_padding(2 * scale_factor);
   infostyle->mutable_caption_background_color()->set_r(0xec);
   infostyle->mutable_caption_background_color()->set_g(0xf0);
   infostyle->mutable_caption_background_color()->set_b(0xfa);
 
   infostyle->set_window_border(1);  // non-scalable
-  infostyle->set_row_rect_padding(2 * scale_factor_x);
-  infostyle->set_window_width(300 * scale_factor_x);
-  infostyle->mutable_title_style()->set_font_size(15 * scale_factor_y);
-  infostyle->mutable_title_style()->set_left_padding(5 * scale_factor_x);
-  infostyle->mutable_description_style()->set_font_size(12 * scale_factor_y);
-  infostyle->mutable_description_style()->set_left_padding(15 * scale_factor_x);
+  infostyle->set_row_rect_padding(2 * scale_factor);
+  infostyle->set_window_width(300 * scale_factor);
+  infostyle->mutable_title_style()->set_font_size(15 * scale_factor);
+  infostyle->mutable_title_style()->set_left_padding(5 * scale_factor);
+  infostyle->mutable_description_style()->set_font_size(12 * scale_factor);
+  infostyle->mutable_description_style()->set_left_padding(15 * scale_factor);
   infostyle->mutable_border_color()->set_r(0x96);
   infostyle->mutable_border_color()->set_g(0x96);
   infostyle->mutable_border_color()->set_b(0x96);
@@ -199,24 +196,12 @@ void RendererStyleHandler::GetDefaultRendererStyle(RendererStyle* style) {
   return GetRendererStyleHandlerImpl()->GetDefaultRendererStyle(style);
 }
 
-void RendererStyleHandler::GetDPIScalingFactor(double* x, double* y) {
+double RendererStyleHandler::GetDPIScalingFactor() {
 #ifdef _WIN32
-  wil::unique_hdc_window desktop_dc(::GetDC(nullptr));
-  const int dpi_x = ::GetDeviceCaps(desktop_dc.get(), LOGPIXELSX);
-  const int dpi_y = ::GetDeviceCaps(desktop_dc.get(), LOGPIXELSY);
-  if (x != nullptr) {
-    *x = static_cast<double>(dpi_x) / kDefaultDPI;
-  }
-  if (y != nullptr) {
-    *y = static_cast<double>(dpi_y) / kDefaultDPI;
-  }
+  const UINT dpi = ::GetDpiForSystem();
+  return static_cast<double>(dpi) / kDefaultDPI;
 #else   // _WIN32
-  if (x != nullptr) {
-    *x = 1.0;
-  }
-  if (y != nullptr) {
-    *y = 1.0;
-  }
+  return 1.0;
 #endif  // !_WIN32
 }
 

@@ -49,7 +49,7 @@ class RendererStyleHandler {
 
   // Returns DPI scaling factor on Windows.
   // On other platforms, always returns 1.0.
-  static void GetDPIScalingFactor(double* factor_x, double* factor_y);
+  static double GetDPIScalingFactor();
 };
 
 }  // namespace renderer
