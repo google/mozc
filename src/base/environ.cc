@@ -29,35 +29,31 @@
 
 #include "base/environ.h"
 
+#include <atomic>
 #include <cstdlib>
 #include <string>
 
-#include "base/singleton.h"
 #include "base/strings/zstring_view.h"
 
 namespace mozc {
 
 namespace {
-class EnvironImpl : public EnvironInterface {
- public:
-  EnvironImpl() = default;
-  ~EnvironImpl() override = default;
 
-  std::string GetEnv(zstring_view env_var) override {
-    const char* value = std::getenv(env_var.data());
-    return value == nullptr ? "" : value;
-  }
-};
+constinit static std::atomic<EnvironInterface*> g_mock = nullptr;
 
-using EnvironSingleton = SingletonMockable<EnvironInterface, EnvironImpl>;
 }  // namespace
 
 std::string Environ::GetEnv(zstring_view env_var) {
-  return EnvironSingleton::Get()->GetEnv(env_var.data());
+  if (EnvironInterface* mock = g_mock.load(std::memory_order_acquire);
+      mock != nullptr) {
+    return mock->GetEnv(env_var);
+  }
+  const char* value = std::getenv(env_var.data());
+  return value == nullptr ? "" : value;
 }
 
 void Environ::SetMockForUnitTest(EnvironInterface* mock) {
-  EnvironSingleton::SetMock(mock);
+  g_mock.store(mock, std::memory_order_release);
 }
 
 }  // namespace mozc
