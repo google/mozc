@@ -353,7 +353,7 @@ http_archive(
     url = "https://github.com/hiroyuki-komatsu/japanese-usage-dictionary/archive/refs/tags/%s.zip" % JA_USAGE_DICT_TAG,
 )
 
-# Zip code (2026-03-01, 1150870a506505bbdce5ecef78c6fc1b484e4bc0)
+# Zip code (2026-04-03, 621d059fbcbfae17bfca15b439692bae934268c3)
 # https://github.com/hiroyuki-komatsu/japanpost_zipcode/ contains snapshots of the zip code data
 # with version control.
 # The data files are mirror of the following files.
@@ -362,13 +362,13 @@ http_archive(
 http_archive(
     name = "zip_code_jigyosyo",
     build_file_content = "exports_files([\"JIGYOSYO.CSV\"])",
-    sha256 = "36e2662ae064c2be1febe435a80127d5ac98fbc4cc9425d612a9c28965c14713",
-    url = "https://github.com/hiroyuki-komatsu/japanpost_zipcode/raw/1150870a506505bbdce5ecef78c6fc1b484e4bc0/jigyosyo.zip",
+    sha256 = "14be1030f607c5f819f2f45a485e89511907bdd1d62e7fb1931b6e48a3431c3a",
+    url = "https://github.com/hiroyuki-komatsu/japanpost_zipcode/raw/621d059fbcbfae17bfca15b439692bae934268c3/jigyosyo.zip",
 )
 
 http_archive(
     name = "zip_code_ken_all",
     build_file_content = "exports_files([\"KEN_ALL.CSV\"])",
-    sha256 = "a00fa9474d3f2334eb639ba700bc6976469c944ed0f013fd4689899d540521cb",
-    url = "https://github.com/hiroyuki-komatsu/japanpost_zipcode/raw/1150870a506505bbdce5ecef78c6fc1b484e4bc0/ken_all.zip",
+    sha256 = "3adc97d8e19e1168a6cdcb2fce759d0e9e613a9a3b630cc180aecfd56ae81eaf",
+    url = "https://github.com/hiroyuki-komatsu/japanpost_zipcode/raw/621d059fbcbfae17bfca15b439692bae934268c3/ken_all.zip",
 )
