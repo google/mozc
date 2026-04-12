@@ -30,6 +30,8 @@
 # Test runner for MacOS.
 # https://github.com/google/google-toolbox-for-mac
 
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
+
 package(default_visibility = ["//visibility:public"])
 
 objc_library(
