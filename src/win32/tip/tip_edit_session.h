@@ -47,70 +47,70 @@ namespace tsf {
 class TipEditSession {
  public:
   TipEditSession() = delete;
-  TipEditSession(const TipEditSession &) = delete;
-  TipEditSession &operator=(const TipEditSession &) = delete;
+  TipEditSession(const TipEditSession&) = delete;
+  TipEditSession& operator=(const TipEditSession&) = delete;
 
   // Begins a sync edit session with |new_output| to update the context. Note
   // that sync edit session is guaranteed to be capable only in key event
   // handler and ITfFnReconversion::QueryRange. In other cases, you should use
   // OnOutputReceivedAsync instead.
-  static bool OnOutputReceivedSync(TipTextService *text_service,
-                                   ITfContext *context,
+  static bool OnOutputReceivedSync(TipTextService* text_service,
+                                   ITfContext* context,
                                    commands::Output new_output);
 
   // Begins an async edit session with |new_output| to update the context.
-  static bool OnOutputReceivedAsync(TipTextService *text_service,
-                                    ITfContext *context,
+  static bool OnOutputReceivedAsync(TipTextService* text_service,
+                                    ITfContext* context,
                                     commands::Output new_output);
 
   // Begins a sync edit session to invoke reconversion that is initialized by
   // the application.
-  static bool ReconvertFromApplicationSync(TipTextService *text_service,
-                                           ITfRange *range);
+  static bool ReconvertFromApplicationSync(TipTextService* text_service,
+                                           ITfRange* range);
 
   // Begins an async edit session to handle on-layout-changed event.
-  static bool OnLayoutChangedAsync(TipTextService *text_service,
-                                   ITfContext *context);
+  static bool OnLayoutChangedAsync(TipTextService* text_service,
+                                   ITfContext* context);
 
   // Begins an async edit session to handle on-mode-changed event.
-  static bool OnSetFocusAsync(TipTextService *text_service,
-                              ITfDocumentMgr *document_manager);
+  static bool OnSetFocusAsync(TipTextService* text_service,
+                              ITfDocumentMgr* document_manager);
 
   // Begins an async edit session to handle on-mode-changed event.
-  static bool OnModeChangedAsync(TipTextService *text_service);
+  static bool OnModeChangedAsync(TipTextService* text_service);
   // Begins an async edit session to handle on-open-close-changed event.
-  static bool OnOpenCloseChangedAsync(TipTextService *text_service);
+  static bool OnOpenCloseChangedAsync(TipTextService* text_service);
   // Begins an async edit session to handle a renderer callback event.
-  static bool OnRendererCallbackAsync(TipTextService *text_service,
-                                      ITfContext *context, WPARAM wparam,
+  static bool OnRendererCallbackAsync(TipTextService* text_service,
+                                      ITfContext* context, WPARAM wparam,
                                       LPARAM lparam);
 
   // Begins an async edit session to submit the current candidate.
-  static bool SubmitAsync(TipTextService *text_service, ITfContext *context);
+  static bool SubmitAsync(TipTextService* text_service, ITfContext* context);
   // Begins an async edit session to cancel the current composition.
-  static bool CancelCompositionAsync(TipTextService *text_service,
-                                     ITfContext *context);
+  static bool CancelCompositionAsync(TipTextService* text_service,
+                                     ITfContext* context);
   // Begins an async edit session to highlight the candidate specified by
   // |candidate_id|.
-  static bool HilightCandidateAsync(TipTextService *text_service,
-                                    ITfContext *context, int candidate_id);
+  static bool HilightCandidateAsync(TipTextService* text_service,
+                                    ITfContext* context, int candidate_id);
   // Begins an async edit session to select the candidate specified by
   // |candidate_id|.
-  static bool SelectCandidateAsync(TipTextService *text_service,
-                                   ITfContext *context, int candidate_id);
+  static bool SelectCandidateAsync(TipTextService* text_service,
+                                   ITfContext* context, int candidate_id);
 
   // Begins an async edit session to change input mode specified by
   // |native_mode|.
-  static bool SwitchInputModeAsync(TipTextService *text_service,
+  static bool SwitchInputModeAsync(TipTextService* text_service,
                                    uint32_t mozc_mode);
 
   // Begins a sync edit session to retrieve the text from |range|.
-  static bool GetTextSync(TipTextService *text_service, ITfRange *range,
-                          std::wstring *text, bool *is_composing);
+  static bool GetTextSync(TipTextService* text_service, ITfRange* range,
+                          std::wstring* text, bool* is_composing);
 
   // Begins an async edit session to set |text| to |range|.
-  static bool SetTextAsync(TipTextService *text_service, std::wstring_view text,
-                           ITfRange *range);
+  static bool SetTextAsync(TipTextService* text_service, std::wstring_view text,
+                           ITfRange* range);
 };
 
 }  // namespace tsf

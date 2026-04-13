@@ -47,16 +47,16 @@ namespace tsf {
 class TipDisplayAttribute : public TipComImplements<ITfDisplayAttributeInfo> {
  public:
   // ITfDisplayAttributeInfo interface methods
-  STDMETHODIMP GetGUID(GUID *absl_nullable guid) override;
-  STDMETHODIMP GetDescription(BSTR *absl_nullable description) override;
+  STDMETHODIMP GetGUID(GUID* absl_nullable guid) override;
+  STDMETHODIMP GetDescription(BSTR* absl_nullable description) override;
   STDMETHODIMP
-  GetAttributeInfo(TF_DISPLAYATTRIBUTE *absl_nullable attribute) override;
+  GetAttributeInfo(TF_DISPLAYATTRIBUTE* absl_nullable attribute) override;
   STDMETHODIMP
-  SetAttributeInfo(const TF_DISPLAYATTRIBUTE *absl_nullable attribute) override;
+  SetAttributeInfo(const TF_DISPLAYATTRIBUTE* absl_nullable attribute) override;
   STDMETHODIMP Reset() override;
 
  protected:
-  TipDisplayAttribute(const GUID &guid, const TF_DISPLAYATTRIBUTE &attribute,
+  TipDisplayAttribute(const GUID& guid, const TF_DISPLAYATTRIBUTE& attribute,
                       std::wstring_view description);
 
  private:
@@ -71,7 +71,7 @@ class TipDisplayAttributeInput : public TipDisplayAttribute {
  public:
   TipDisplayAttributeInput();
 
-  static const GUID &guid();
+  static const GUID& guid();
 };
 
 // Represents the display attributes for converted characters.
@@ -79,7 +79,7 @@ class TipDisplayAttributeConverted : public TipDisplayAttribute {
  public:
   TipDisplayAttributeConverted();
 
-  static const GUID &guid();
+  static const GUID& guid();
 };
 
 }  // namespace tsf

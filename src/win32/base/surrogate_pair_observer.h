@@ -32,7 +32,6 @@
 
 #include <windows.h>
 
-
 namespace mozc {
 namespace win32 {
 
@@ -64,11 +63,11 @@ class SurrogatePairObserver {
   };
 
   SurrogatePairObserver();
-  SurrogatePairObserver(const SurrogatePairObserver &) = delete;
-  SurrogatePairObserver &operator=(const SurrogatePairObserver &) = delete;
+  SurrogatePairObserver(const SurrogatePairObserver&) = delete;
+  SurrogatePairObserver& operator=(const SurrogatePairObserver&) = delete;
 
-  ClientAction OnTestKeyEvent(const VirtualKey &virtual_key, bool is_keydown);
-  ClientAction OnKeyEvent(const VirtualKey &virtual_key, bool is_keydown);
+  ClientAction OnTestKeyEvent(const VirtualKey& virtual_key, bool is_keydown);
+  ClientAction OnKeyEvent(const VirtualKey& virtual_key, bool is_keydown);
 
  private:
   enum ObservationState {
@@ -80,7 +79,7 @@ class SurrogatePairObserver {
   };
 
   // Returns the expected action of the IME DLL against the given key event.
-  ClientAction OnKeyEvent(const VirtualKey &virtual_key, bool is_keydown,
+  ClientAction OnKeyEvent(const VirtualKey& virtual_key, bool is_keydown,
                           bool is_test_key);
 
   ObservationState state_;

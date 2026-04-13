@@ -32,7 +32,6 @@
 
 #include <windows.h>
 
-
 namespace mozc {
 namespace client {
 class ClientInterface;
@@ -63,48 +62,48 @@ struct KeyEventHandlerResult {
 class KeyEventHandler {
  public:
   KeyEventHandler() = delete;
-  KeyEventHandler(const KeyEventHandler &) = delete;
-  KeyEventHandler &operator=(const KeyEventHandler &) = delete;
+  KeyEventHandler(const KeyEventHandler&) = delete;
+  KeyEventHandler& operator=(const KeyEventHandler&) = delete;
 
   // Updates |behavior->prefer_kana_input| based on the key and IME open
   // status.  Currently, key down event of VK_DBE_ROMAN or VK_DBE_NOROMAN
   // flips the input style when both |state.open| and
   // |behavior->use_romaji_key_to_toggle_input_style| is true.
-  static void UpdateBehaviorInImeProcessKey(const VirtualKey &virtual_key,
+  static void UpdateBehaviorInImeProcessKey(const VirtualKey& virtual_key,
                                             bool is_key_down,
-                                            const InputState &state,
-                                            InputBehavior *behavior);
+                                            const InputState& state,
+                                            InputBehavior* behavior);
 
   static KeyEventHandlerResult ImeProcessKey(
-      const VirtualKey &virtual_key, BYTE scan_code, bool is_key_down,
-      const KeyboardStatus &keyboard_status, const InputBehavior &behavior,
-      const InputState &initial_state, const commands::Context &context,
-      client::ClientInterface *client, Win32KeyboardInterface *keyboard,
-      InputState *next_state, commands::Output *output);
+      const VirtualKey& virtual_key, BYTE scan_code, bool is_key_down,
+      const KeyboardStatus& keyboard_status, const InputBehavior& behavior,
+      const InputState& initial_state, const commands::Context& context,
+      client::ClientInterface* client, Win32KeyboardInterface* keyboard,
+      InputState* next_state, commands::Output* output);
 
   static KeyEventHandlerResult ImeToAsciiEx(
-      const VirtualKey &virtual_key, BYTE scan_code, bool is_key_down,
-      const KeyboardStatus &keyboard_status, const InputBehavior &behavior,
-      const InputState &initial_state, const commands::Context &context,
-      client::ClientInterface *client, Win32KeyboardInterface *keyboard,
-      InputState *next_state, commands::Output *output);
+      const VirtualKey& virtual_key, BYTE scan_code, bool is_key_down,
+      const KeyboardStatus& keyboard_status, const InputBehavior& behavior,
+      const InputState& initial_state, const commands::Context& context,
+      client::ClientInterface* client, Win32KeyboardInterface* keyboard,
+      InputState* next_state, commands::Output* output);
 
  protected:
-  static KeyEventHandlerResult HandleKey(const VirtualKey &virtual_key,
+  static KeyEventHandlerResult HandleKey(const VirtualKey& virtual_key,
                                          BYTE scan_code, bool is_key_down,
-                                         const KeyboardStatus &keyboard_status,
-                                         const InputBehavior &behavior,
-                                         const InputState &initial_state,
-                                         Win32KeyboardInterface *keyboard,
-                                         commands::KeyEvent *key);
+                                         const KeyboardStatus& keyboard_status,
+                                         const InputBehavior& behavior,
+                                         const InputState& initial_state,
+                                         Win32KeyboardInterface* keyboard,
+                                         commands::KeyEvent* key);
 
-  static bool ConvertToKeyEvent(const VirtualKey &virtual_key, BYTE scan_code,
+  static bool ConvertToKeyEvent(const VirtualKey& virtual_key, BYTE scan_code,
                                 bool is_key_down, bool is_menu_active,
-                                const InputBehavior &behavior,
-                                const InputState &ime_state,
-                                const KeyboardStatus &keyboard_status,
-                                Win32KeyboardInterface *keyboard,
-                                commands::KeyEvent *key);
+                                const InputBehavior& behavior,
+                                const InputState& ime_state,
+                                const KeyboardStatus& keyboard_status,
+                                Win32KeyboardInterface* keyboard,
+                                commands::KeyEvent* key);
 
   // This function updates the current keyboard status so that a user will not
   // be bothered with unexpected Kana-lock.  See b/2601927, b/2521571,
@@ -117,13 +116,13 @@ class KeyEventHandler {
   // cases.  In such a case, you can use the returned |new_keyboard_status|
   // for subsequent key handlers so that they can behave as if the Kana-Lock
   // was unlocked when the key event occurred.
-  static void UnlockKanaLock(const KeyboardStatus &keyboard_status,
-                             Win32KeyboardInterface *keyboard,
-                             KeyboardStatus *new_keyboard_status);
+  static void UnlockKanaLock(const KeyboardStatus& keyboard_status,
+                             Win32KeyboardInterface* keyboard,
+                             KeyboardStatus* new_keyboard_status);
 
   // Span Tool if launch_tool_mode is set in |output|.
-  static void MaybeSpawnTool(client::ClientInterface *client,
-                             commands::Output *output);
+  static void MaybeSpawnTool(client::ClientInterface* client,
+                             commands::Output* output);
 };
 }  // namespace win32
 }  // namespace mozc

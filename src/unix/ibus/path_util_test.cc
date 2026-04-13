@@ -37,7 +37,7 @@ namespace mozc {
 namespace ibus {
 
 TEST(PathUtilTest, ValidateReturns) {
-  const std::string &icon_path = GetIconPath("test.png");
+  const std::string& icon_path = GetIconPath("test.png");
   // Confirm that the returned string is not empty.
   EXPECT_FALSE(icon_path.empty());
   // Confirm that the end of the returned path equals to the icon file.

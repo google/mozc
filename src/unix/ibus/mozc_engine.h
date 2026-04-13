@@ -67,55 +67,55 @@ class LaunchToolTest;
 class MozcEngine : public EngineInterface {
  public:
   MozcEngine();
-  MozcEngine(const MozcEngine &) = delete;
-  MozcEngine &operator=(const MozcEngine &) = delete;
+  MozcEngine(const MozcEngine&) = delete;
+  MozcEngine& operator=(const MozcEngine&) = delete;
   virtual ~MozcEngine();
 
   // EngineInterface functions
-  void CandidateClicked(IbusEngineWrapper *engine, uint index, uint button,
+  void CandidateClicked(IbusEngineWrapper* engine, uint index, uint button,
                         uint state) override;
-  void CursorDown(IbusEngineWrapper *engine) override;
-  void CursorUp(IbusEngineWrapper *engine) override;
-  void Disable(IbusEngineWrapper *engine) override;
-  void Enable(IbusEngineWrapper *engine) override;
-  void FocusIn(IbusEngineWrapper *engine) override;
-  void FocusOut(IbusEngineWrapper *engine) override;
-  void PageDown(IbusEngineWrapper *engine) override;
-  void PageUp(IbusEngineWrapper *engine) override;
-  bool ProcessKeyEvent(IbusEngineWrapper *engine, uint keyval, uint keycode,
+  void CursorDown(IbusEngineWrapper* engine) override;
+  void CursorUp(IbusEngineWrapper* engine) override;
+  void Disable(IbusEngineWrapper* engine) override;
+  void Enable(IbusEngineWrapper* engine) override;
+  void FocusIn(IbusEngineWrapper* engine) override;
+  void FocusOut(IbusEngineWrapper* engine) override;
+  void PageDown(IbusEngineWrapper* engine) override;
+  void PageUp(IbusEngineWrapper* engine) override;
+  bool ProcessKeyEvent(IbusEngineWrapper* engine, uint keyval, uint keycode,
                        uint state) override;
-  void PropertyActivate(IbusEngineWrapper *engine, const char *property_name,
+  void PropertyActivate(IbusEngineWrapper* engine, const char* property_name,
                         uint property_state) override;
-  void PropertyHide(IbusEngineWrapper *engine,
-                    const char *property_name) override;
-  void PropertyShow(IbusEngineWrapper *engine,
-                    const char *property_name) override;
-  void Reset(IbusEngineWrapper *engine) override;
-  void SetCapabilities(IbusEngineWrapper *engine, uint capabilities) override;
-  void SetCursorLocation(IbusEngineWrapper *engine, int x, int y, int w,
+  void PropertyHide(IbusEngineWrapper* engine,
+                    const char* property_name) override;
+  void PropertyShow(IbusEngineWrapper* engine,
+                    const char* property_name) override;
+  void Reset(IbusEngineWrapper* engine) override;
+  void SetCapabilities(IbusEngineWrapper* engine, uint capabilities) override;
+  void SetCursorLocation(IbusEngineWrapper* engine, int x, int y, int w,
                          int h) override;
-  void SetContentType(IbusEngineWrapper *engine, uint purpose,
+  void SetContentType(IbusEngineWrapper* engine, uint purpose,
                       uint hints) override;
 
  private:
   // Updates the preedit text and the candidate window and inserts result
   // based on the content of |output|.
-  bool UpdateAll(IbusEngineWrapper *engine, const commands::Output &output);
+  bool UpdateAll(IbusEngineWrapper* engine, const commands::Output& output);
   // Inserts a result text based on the content of |output|.
-  bool UpdateResult(IbusEngineWrapper *engine,
-                    const commands::Output &output) const;
+  bool UpdateResult(IbusEngineWrapper* engine,
+                    const commands::Output& output) const;
   // Updates |unique_candidate_ids_|.
-  bool UpdateCandidateIDMapping(const commands::Output &output);
+  bool UpdateCandidateIDMapping(const commands::Output& output);
   // Updates the deletion range message based on the content of |output|.
-  bool UpdateDeletionRange(IbusEngineWrapper *engine,
-                           const commands::Output &output);
+  bool UpdateDeletionRange(IbusEngineWrapper* engine,
+                           const commands::Output& output);
 
   // Updates the callback message based on the content of |output|.
-  bool ExecuteCallback(IbusEngineWrapper *engine,
-                       const commands::Output &output);
+  bool ExecuteCallback(IbusEngineWrapper* engine,
+                       const commands::Output& output);
 
   // Launches Mozc tool with appropriate arguments.
-  bool LaunchTool(const commands::Output &output) const;
+  bool LaunchTool(const commands::Output& output) const;
 
   // Updates internal preedit_method (Roman/Kana) state
   void UpdatePreeditMethod();
@@ -127,10 +127,10 @@ class MozcEngine : public EngineInterface {
 
   // Reverts internal state of mozc_server by sending SessionCommand::REVERT IPC
   // message, then hides a preedit string and the candidate window.
-  void RevertSession(IbusEngineWrapper *engine);
+  void RevertSession(IbusEngineWrapper* engine);
 
-  CandidateWindowHandlerInterface *GetCandidateWindowHandler(
-      IbusEngineWrapper *engine);
+  CandidateWindowHandlerInterface* GetCandidateWindowHandler(
+      IbusEngineWrapper* engine);
 
   absl::Time last_sync_time_;
   std::unique_ptr<KeyEventHandler> key_event_handler_;
@@ -154,8 +154,8 @@ class MozcEngine : public EngineInterface {
 };
 
 bool CanUseMozcCandidateWindow(
-    const IbusConfig &ibus_config,
-    const absl::flat_hash_map<std::string, std::string> &env);
+    const IbusConfig& ibus_config,
+    const absl::flat_hash_map<std::string, std::string>& env);
 
 }  // namespace ibus
 }  // namespace mozc

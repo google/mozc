@@ -41,11 +41,11 @@ namespace win32 {
 class TsfRegistrar {
  public:
   TsfRegistrar() = delete;
-  TsfRegistrar(const TsfRegistrar &) = delete;
-  TsfRegistrar &operator=(const TsfRegistrar &) = delete;
+  TsfRegistrar(const TsfRegistrar&) = delete;
+  TsfRegistrar& operator=(const TsfRegistrar&) = delete;
 
   // Registers the DLL specified with |path| as a COM server.
-  static HRESULT RegisterCOMServer(const wchar_t *path, DWORD length);
+  static HRESULT RegisterCOMServer(const wchar_t* path, DWORD length);
 
   // Unregisters the DLL from registry.
   static void UnregisterCOMServer();

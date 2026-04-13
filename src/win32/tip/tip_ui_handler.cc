@@ -48,8 +48,8 @@ namespace {
 
 using ::mozc::commands::CompositionMode;
 
-void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
-                                    ITfDocumentMgr *document_manager) {
+void UpdateLanguageBarOnFocusChange(TipTextService* text_service,
+                                    ITfDocumentMgr* document_manager) {
   if (!text_service) {
     return;
   }
@@ -60,7 +60,7 @@ void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
   }
 
   HRESULT result = S_OK;
-  ITfThreadMgr *thread_manager = text_service->GetThreadManager();
+  ITfThreadMgr* thread_manager = text_service->GetThreadManager();
 
   if (thread_manager == nullptr) {
     return;
@@ -81,7 +81,7 @@ void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
     }
   }
 
-  const TipInputModeManager *input_mode_manager =
+  const TipInputModeManager* input_mode_manager =
       text_service->GetThreadContext()->GetInputModeManager();
   const bool open = input_mode_manager->GetEffectiveOpenClose();
   const CompositionMode mozc_mode =
@@ -91,36 +91,36 @@ void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
   text_service->UpdateLangbar(!disabled, static_cast<uint32_t>(mozc_mode));
 }
 
-bool UpdateInternal(TipTextService *text_service, ITfContext *context,
+bool UpdateInternal(TipTextService* text_service, ITfContext* context,
                     TfEditCookie read_cookie) {
   return TipUiHandlerConventional::Update(text_service, context, read_cookie);
 }
 
 }  // namespace
 
-void TipUiHandler::OnActivate(TipTextService *text_service) {
+void TipUiHandler::OnActivate(TipTextService* text_service) {
   TipUiHandlerConventional::OnActivate(text_service);
 }
 
-void TipUiHandler::OnDeactivate(TipTextService *text_service) {
+void TipUiHandler::OnDeactivate(TipTextService* text_service) {
   TipUiHandlerConventional::OnDeactivate();
 }
 
-void TipUiHandler::OnDocumentMgrChanged(TipTextService *text_service,
-                                        ITfDocumentMgr *document_manager) {
+void TipUiHandler::OnDocumentMgrChanged(TipTextService* text_service,
+                                        ITfDocumentMgr* document_manager) {
   UpdateLanguageBarOnFocusChange(text_service, document_manager);
 }
 
-void TipUiHandler::OnFocusChange(TipTextService *text_service,
-                                 ITfDocumentMgr *focused_document_manager) {
+void TipUiHandler::OnFocusChange(TipTextService* text_service,
+                                 ITfDocumentMgr* focused_document_manager) {
   TipUiHandlerConventional::OnFocusChange(text_service,
                                           focused_document_manager);
   UpdateLanguageBarOnFocusChange(text_service, focused_document_manager);
 }
 
-bool TipUiHandler::Update(TipTextService *text_service, ITfContext *context,
+bool TipUiHandler::Update(TipTextService* text_service, ITfContext* context,
                           TfEditCookie read_cookie) {
-  const TipInputModeManager *input_mode_manager =
+  const TipInputModeManager* input_mode_manager =
       text_service->GetThreadContext()->GetInputModeManager();
   const bool open = input_mode_manager->GetEffectiveOpenClose();
   const CompositionMode mozc_mode = static_cast<CompositionMode>(

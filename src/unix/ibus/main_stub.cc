@@ -44,7 +44,7 @@ void OutputXml() {
 }
 }  // namespace
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   if (absl::GetFlag(FLAGS_xml)) {
     OutputXml();

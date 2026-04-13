@@ -48,12 +48,12 @@ namespace {
 constexpr size_t kPageSize = 9;
 
 // Returns a text for the candidate footer.
-std::string GetFooterText(const commands::CandidateWindow &candidate_window) {
+std::string GetFooterText(const commands::CandidateWindow& candidate_window) {
   if (!candidate_window.has_footer()) {
     return "";
   }
 
-  const commands::Footer &footer = candidate_window.footer();
+  const commands::Footer& footer = candidate_window.footer();
   std::string text;
   if (footer.has_label()) {
     // TODO(yusukes,mozc-team): label() is not localized. Currently, it's always
@@ -75,37 +75,37 @@ std::string GetFooterText(const commands::CandidateWindow &candidate_window) {
 }
 }  // namespace
 
-void IBusCandidateWindowHandler::Update(IbusEngineWrapper *engine,
-                                        const commands::Output &output) {
+void IBusCandidateWindowHandler::Update(IbusEngineWrapper* engine,
+                                        const commands::Output& output) {
   UpdateCandidateWindow(engine, output);
   UpdateAuxiliaryText(engine, output);
 }
 
-void IBusCandidateWindowHandler::UpdateCursorRect(IbusEngineWrapper *engine) {
+void IBusCandidateWindowHandler::UpdateCursorRect(IbusEngineWrapper* engine) {
   // Nothing to do because IBus takes care of where to show its candidate
   // window.
 }
 
-void IBusCandidateWindowHandler::Hide(IbusEngineWrapper *engine) {
+void IBusCandidateWindowHandler::Hide(IbusEngineWrapper* engine) {
   engine->HideLookupTable();
   engine->HideAuxiliaryText();
 }
 
-void IBusCandidateWindowHandler::Show(IbusEngineWrapper *engine) {
+void IBusCandidateWindowHandler::Show(IbusEngineWrapper* engine) {
   engine->ShowLookupTable();
   engine->ShowAuxiliaryText();
 }
 
 // TODO(hsumita): Writes test for this method.
 bool IBusCandidateWindowHandler::UpdateCandidateWindow(
-    IbusEngineWrapper *engine, const commands::Output &output) {
+    IbusEngineWrapper* engine, const commands::Output& output) {
   if (!output.has_candidate_window() ||
       output.candidate_window().candidate_size() == 0) {
     engine->HideLookupTable();
     return true;
   }
 
-  const commands::CandidateWindow &candidate_window = output.candidate_window();
+  const commands::CandidateWindow& candidate_window = output.candidate_window();
   const bool cursor_visible = candidate_window.has_focused_index();
   int cursor_pos = 0;
   if (candidate_window.has_focused_index()) {
@@ -131,7 +131,7 @@ bool IBusCandidateWindowHandler::UpdateCandidateWindow(
   }
 
   for (int i = 0; i < candidate_window.candidate_size(); ++i) {
-    const commands::CandidateWindow::Candidate &candidate =
+    const commands::CandidateWindow::Candidate& candidate =
         candidate_window.candidate(i);
     table.AppendCandidate(candidate.value());
 
@@ -149,7 +149,7 @@ bool IBusCandidateWindowHandler::UpdateCandidateWindow(
 
 // TODO(hsumita): Writes test for this method.
 bool IBusCandidateWindowHandler::UpdateAuxiliaryText(
-    IbusEngineWrapper *engine, const commands::Output &output) {
+    IbusEngineWrapper* engine, const commands::Output& output) {
   if (!output.has_candidate_window()) {
     engine->HideAuxiliaryText();
     return true;
@@ -165,7 +165,7 @@ bool IBusCandidateWindowHandler::UpdateAuxiliaryText(
 }
 
 void IBusCandidateWindowHandler::OnIBusCustomFontDescriptionChanged(
-    const std::string &custom_font_description) {
+    const std::string& custom_font_description) {
   // Do nothing
   // The custom font description is managed by ibus directly.
 }

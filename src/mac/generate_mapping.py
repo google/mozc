@@ -44,7 +44,7 @@ class Mapping(object):
     columns = line.strip().split('\t')
     if len(columns) != 2:
       return
-    (key, value) = columns
+    key, value = columns
     mapname = self._mapname
     if key.startswith('Shift '):
       mapname += 'Shift'
@@ -114,7 +114,7 @@ def ParseOption():
   parser.add_option('--key_type', dest='key_type')
   parser.add_option('--result_type', dest='result_type')
   parser.add_option('--filename', dest='filename')
-  (options, unused_args) = parser.parse_args()
+  options, unused_args = parser.parse_args()
 
   if not options.mapname:
     print('Error: the output map name should be specified.')

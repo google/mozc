@@ -41,7 +41,7 @@ class PreeditHandler {
   PreeditHandler() = default;
   ~PreeditHandler() = default;
 
-  bool Update(IbusEngineWrapper *engine, const commands::Output &output);
+  bool Update(IbusEngineWrapper* engine, const commands::Output& output);
 };
 
 }  // namespace ibus

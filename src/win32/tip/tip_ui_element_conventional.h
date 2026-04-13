@@ -60,9 +60,8 @@ class TipUiElementConventional {
   };
 
   TipUiElementConventional() = delete;
-  TipUiElementConventional(const TipUiElementConventional &) = delete;
-  TipUiElementConventional &operator=(const TipUiElementConventional &) =
-      delete;
+  TipUiElementConventional(const TipUiElementConventional&) = delete;
+  TipUiElementConventional& operator=(const TipUiElementConventional&) = delete;
 
   // Returns a ITfUIElement object based of the given parameters.
   static wil::com_ptr_nothrow<ITfUIElement> New(

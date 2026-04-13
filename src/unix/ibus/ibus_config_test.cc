@@ -85,7 +85,7 @@ active_on_launch: False
 )";
   EXPECT_TRUE(config.LoadConfig(config_data));
 
-  const ibus::Config &config_proto = config.GetConfig();
+  const ibus::Config& config_proto = config.GetConfig();
   EXPECT_EQ(config_proto.engines_size(), 1);
   EXPECT_EQ(config_proto.engines(0).layout(), "nec_vndr/jp");
   EXPECT_EQ(config_proto.engines(0).layout_variant(), "Hello_World_");

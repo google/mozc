@@ -62,8 +62,8 @@ inline constexpr absl::string_view kErrSessionError = "session-error";
 // ARGUMENTs depend on a command.
 // An input line must be surrounded by a pair of parentheses,
 // like a S-expression.
-void ParseInputLine(absl::string_view line, uint32_t *event_id,
-                    uint32_t *session_id, mozc::commands::Input *input);
+void ParseInputLine(absl::string_view line, uint32_t* event_id,
+                    uint32_t* session_id, mozc::commands::Input* input);
 
 // Prints the content of a protocol buffer in S-expression.
 // - 'message' and 'group' are mapped to alist (associative list)
@@ -74,8 +74,8 @@ void ParseInputLine(absl::string_view line, uint32_t *event_id,
 // 'output' is a text buffer to output 'message'.
 //
 // This function never outputs newlines except for ones in strings.
-void PrintMessage(const mozc::protobuf::Message &message,
-                  std::vector<std::string> *output);
+void PrintMessage(const mozc::protobuf::Message& message,
+                  std::vector<std::string>* output);
 
 // Utilities
 
@@ -93,14 +93,14 @@ std::string QuoteString(absl::string_view str);
 
 // Unquotes and unescapes a double-quoted string.
 // The input string must begin and end with double quotes.
-bool UnquoteString(absl::string_view input, std::string *output);
+bool UnquoteString(absl::string_view input, std::string* output);
 
 // Tokenizes the given string as S expression.  Returns true if success.
 //
 // This function implements very simple tokenization and is NOT conforming to
 // the definition of S expression.  For example, this function does not return
 // an error for the input "\'".
-bool TokenizeSExpr(absl::string_view input, std::vector<std::string> *output);
+bool TokenizeSExpr(absl::string_view input, std::vector<std::string>* output);
 
 // Prints an error message in S-expression and terminates with status code 1.
 void ErrorExit(absl::string_view error, absl::string_view message);
@@ -109,7 +109,7 @@ void ErrorExit(absl::string_view error, absl::string_view message);
 // Usage data may contain line breaks, which have not been supported yet for IPC
 // in S-expression. Only single line S-expressions are supported so far.
 // This function returns true if usage data is removed.
-bool RemoveUsageData(mozc::commands::Output *output);
+bool RemoveUsageData(mozc::commands::Output* output);
 
 }  // namespace emacs
 }  // namespace mozc

@@ -55,7 +55,7 @@ constinit static const GUID kTsfEmulatedDocumentMgrGuid = {
     0x4031,
     {0x95, 0x46, 0x70, 0x9c, 0x17, 0x30, 0x0c, 0xb9}};
 
-bool IsTsfEmulatedDocumentMgr(ITfDocumentMgr *absl_nonnull document_mgr) {
+bool IsTsfEmulatedDocumentMgr(ITfDocumentMgr* absl_nonnull document_mgr) {
   HResultOr<wil::unique_variant> var =
       TipCompartmentUtil::Get(document_mgr, kTsfEmulatedDocumentMgrGuid);
   if (!var.has_value()) {
@@ -68,7 +68,7 @@ bool IsTsfEmulatedDocumentMgr(ITfDocumentMgr *absl_nonnull document_mgr) {
 }
 
 wil::com_ptr_nothrow<ITfDocumentMgr> GetTransitoryExtensionDocumentMgrOrSelf(
-    ITfDocumentMgr *absl_nonnull document_manager) {
+    ITfDocumentMgr* absl_nonnull document_manager) {
   auto compartment_mgr = ComQuery<ITfCompartmentMgr>(document_manager);
   if (!compartment_mgr) {
     return document_manager;
@@ -96,8 +96,8 @@ wil::com_ptr_nothrow<ITfDocumentMgr> GetTransitoryExtensionDocumentMgrOrSelf(
 
 }  // namespace
 
-wil::com_ptr_nothrow<ITfContext>
-TipTransitoryExtension::AsFullContext(ITfContext *context) {
+wil::com_ptr_nothrow<ITfContext> TipTransitoryExtension::AsFullContext(
+    ITfContext* context) {
   if (context == nullptr) {
     return nullptr;
   }

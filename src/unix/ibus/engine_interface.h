@@ -46,63 +46,63 @@ class EngineInterface {
   virtual ~EngineInterface() = default;
 
   // The interface function for the "candidate-clicked" signal
-  virtual void CandidateClicked(IbusEngineWrapper *engine, uint index,
+  virtual void CandidateClicked(IbusEngineWrapper* engine, uint index,
                                 uint button, uint state) = 0;
 
   // The interface function for the "cursor-down" signal
-  virtual void CursorDown(IbusEngineWrapper *engine) = 0;
+  virtual void CursorDown(IbusEngineWrapper* engine) = 0;
 
   // The interface function for the "cursor-up" signal
-  virtual void CursorUp(IbusEngineWrapper *engine) = 0;
+  virtual void CursorUp(IbusEngineWrapper* engine) = 0;
 
   // The interface function for the "disable" signal
-  virtual void Disable(IbusEngineWrapper *engine) = 0;
+  virtual void Disable(IbusEngineWrapper* engine) = 0;
 
   // The interface function for the "enable" signal
-  virtual void Enable(IbusEngineWrapper *engine) = 0;
+  virtual void Enable(IbusEngineWrapper* engine) = 0;
 
   // The interface function for the "focus-in" signal
-  virtual void FocusIn(IbusEngineWrapper *engine) = 0;
+  virtual void FocusIn(IbusEngineWrapper* engine) = 0;
 
   // The interface function for the "focus-out" signal
-  virtual void FocusOut(IbusEngineWrapper *engine) = 0;
+  virtual void FocusOut(IbusEngineWrapper* engine) = 0;
 
   // The interface function for the "page-down" signal
-  virtual void PageDown(IbusEngineWrapper *engine) = 0;
+  virtual void PageDown(IbusEngineWrapper* engine) = 0;
 
   // The interface function for the "page-up" signal
-  virtual void PageUp(IbusEngineWrapper *engine) = 0;
+  virtual void PageUp(IbusEngineWrapper* engine) = 0;
 
   // The interface function for the "process-key-event" signal
-  virtual bool ProcessKeyEvent(IbusEngineWrapper *engine, uint keyval,
+  virtual bool ProcessKeyEvent(IbusEngineWrapper* engine, uint keyval,
                                uint keycode, uint state) = 0;
 
   // The interface function for the "property-activate" signal
-  virtual void PropertyActivate(IbusEngineWrapper *engine,
-                                const char *property_name,
+  virtual void PropertyActivate(IbusEngineWrapper* engine,
+                                const char* property_name,
                                 uint property_state) = 0;
 
   // The interface function for the "property-hide" signal
-  virtual void PropertyHide(IbusEngineWrapper *engine,
-                            const char *property_name) = 0;
+  virtual void PropertyHide(IbusEngineWrapper* engine,
+                            const char* property_name) = 0;
 
   // The interface function for the "property-show" signal
-  virtual void PropertyShow(IbusEngineWrapper *engine,
-                            const char *property_name) = 0;
+  virtual void PropertyShow(IbusEngineWrapper* engine,
+                            const char* property_name) = 0;
 
   // The interface function for the "reset" signal
-  virtual void Reset(IbusEngineWrapper *engine) = 0;
+  virtual void Reset(IbusEngineWrapper* engine) = 0;
 
   // The interface function for the "set-capabilities" signal
-  virtual void SetCapabilities(IbusEngineWrapper *engine,
+  virtual void SetCapabilities(IbusEngineWrapper* engine,
                                uint capabilities) = 0;
 
   // The interface function for the "set-cursor-location" signal
-  virtual void SetCursorLocation(IbusEngineWrapper *engine, int x, int y, int w,
+  virtual void SetCursorLocation(IbusEngineWrapper* engine, int x, int y, int w,
                                  int h) = 0;
 
   // The interface function for the "set-content-type" signal
-  virtual void SetContentType(IbusEngineWrapper *engine, uint purpose,
+  virtual void SetContentType(IbusEngineWrapper* engine, uint purpose,
                               uint hints) = 0;
 };
 

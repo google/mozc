@@ -100,32 +100,32 @@ constexpr GUID kDisplayAttributeConverted = {
 
 }  // namespace
 
-TipDisplayAttribute::TipDisplayAttribute(const GUID &guid,
-                                         const TF_DISPLAYATTRIBUTE &attribute,
+TipDisplayAttribute::TipDisplayAttribute(const GUID& guid,
+                                         const TF_DISPLAYATTRIBUTE& attribute,
                                          const std::wstring_view description)
     : guid_(guid),
       description_(description),
       attribute_(attribute),
       original_attribute_(attribute) {}
 
-STDMETHODIMP TipDisplayAttribute::GetGUID(GUID *absl_nullable guid) {
+STDMETHODIMP TipDisplayAttribute::GetGUID(GUID* absl_nullable guid) {
   return SaveToOutParam(guid_, guid);
 }
 
 STDMETHODIMP
-TipDisplayAttribute::GetDescription(BSTR *absl_nullable description) {
+TipDisplayAttribute::GetDescription(BSTR* absl_nullable description) {
   return SaveToOutParam(MakeUniqueBSTR(description_), description);
 }
 
 STDMETHODIMP
 TipDisplayAttribute::GetAttributeInfo(
-    TF_DISPLAYATTRIBUTE *absl_nullable attribute) {
+    TF_DISPLAYATTRIBUTE* absl_nullable attribute) {
   return SaveToOutParam(attribute_, attribute);
 }
 
 STDMETHODIMP
 TipDisplayAttribute::SetAttributeInfo(
-    const TF_DISPLAYATTRIBUTE *absl_nullable attribute) {
+    const TF_DISPLAYATTRIBUTE* absl_nullable attribute) {
   if (attribute == nullptr) {
     return E_INVALIDARG;
   }
@@ -142,13 +142,13 @@ TipDisplayAttributeInput::TipDisplayAttributeInput()
     : TipDisplayAttribute(kDisplayAttributeInput, kInputAttribute,
                           kInputDescription) {}
 
-const GUID &TipDisplayAttributeInput::guid() { return kDisplayAttributeInput; }
+const GUID& TipDisplayAttributeInput::guid() { return kDisplayAttributeInput; }
 
 TipDisplayAttributeConverted::TipDisplayAttributeConverted()
     : TipDisplayAttribute(kDisplayAttributeConverted, kConvertedAttribute,
                           kConvertedDescription) {}
 
-const GUID &TipDisplayAttributeConverted::guid() {
+const GUID& TipDisplayAttributeConverted::guid() {
   return kDisplayAttributeConverted;
 }
 

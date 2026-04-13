@@ -45,29 +45,29 @@ class MessageTranslatorInterface {
 
   // Returns translated string if possible.
   // Returns |message| if fails to translate.
-  virtual std::string MaybeTranslate(const std::string &message) const = 0;
+  virtual std::string MaybeTranslate(const std::string& message) const = 0;
 };
 
 // This class never translates messages actually.
 class NullMessageTranslator : public MessageTranslatorInterface {
  public:
   NullMessageTranslator();
-  NullMessageTranslator(const NullMessageTranslator &) = delete;
-  NullMessageTranslator &operator=(const NullMessageTranslator &) = delete;
+  NullMessageTranslator(const NullMessageTranslator&) = delete;
+  NullMessageTranslator& operator=(const NullMessageTranslator&) = delete;
 
   // Always returns |message|.
-  std::string MaybeTranslate(const std::string &message) const override;
+  std::string MaybeTranslate(const std::string& message) const override;
 };
 
 // Locale based translator. Currently only "ja_JP.UTF-8" is
 // supported.
 class LocaleBasedMessageTranslator : public MessageTranslatorInterface {
  public:
-  LocaleBasedMessageTranslator(const LocaleBasedMessageTranslator &) = delete;
-  LocaleBasedMessageTranslator &operator=(
-      const LocaleBasedMessageTranslator &) = delete;
-  explicit LocaleBasedMessageTranslator(const std::string &locale_name);
-  std::string MaybeTranslate(const std::string &message) const override;
+  LocaleBasedMessageTranslator(const LocaleBasedMessageTranslator&) = delete;
+  LocaleBasedMessageTranslator& operator=(const LocaleBasedMessageTranslator&) =
+      delete;
+  explicit LocaleBasedMessageTranslator(const std::string& locale_name);
+  std::string MaybeTranslate(const std::string& message) const override;
 
  private:
   std::map<std::string, std::string> utf8_japanese_map_;

@@ -30,6 +30,7 @@
 #include "unix/ibus/candidate_window_handler.h"
 
 #include <unistd.h>  // for getpid()
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -76,7 +77,7 @@ class TestableCandidateWindowHandler : public CandidateWindowHandler {
 namespace {
 
 MATCHER(IsIBusMozcRendererRequest, "") {
-  const ApplicationInfo &info = arg.application_info();
+  const ApplicationInfo& info = arg.application_info();
   if (!info.has_process_id()) {
     *result_listener << "ApplicationInfo::process_id does not exist";
     return false;
@@ -125,7 +126,7 @@ MATCHER_P(PreeditRectangleEq, rect, "") {
     *result_listener << "RendererCommand::preedit_rectangle does not exist";
     return false;
   }
-  const auto &actual_rect = arg.preedit_rectangle();
+  const auto& actual_rect = arg.preedit_rectangle();
   if (rect.Left() != actual_rect.left()) {
     *result_listener << "left field does not match\n"
                      << "  expected: " << rect.Left() << "\n"
@@ -190,7 +191,7 @@ TEST(CandidateWindowHandlerTest, SendUpdateCommandTest) {
     SCOPED_TRACE("visibility check. false case");
     Output output;
     auto renderer_mock = std::make_unique<RendererMock>();
-    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    RendererMock* renderer_mock_ptr = renderer_mock.get();
     TestableCandidateWindowHandler candidate_window_handler(
         std::move(renderer_mock));
     EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(false),
@@ -201,7 +202,7 @@ TEST(CandidateWindowHandlerTest, SendUpdateCommandTest) {
     SCOPED_TRACE("visibility check. true case");
     Output output;
     auto renderer_mock = std::make_unique<RendererMock>();
-    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    RendererMock* renderer_mock_ptr = renderer_mock.get();
     TestableCandidateWindowHandler candidate_window_handler(
         std::move(renderer_mock));
     EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),
@@ -212,7 +213,7 @@ TEST(CandidateWindowHandlerTest, SendUpdateCommandTest) {
     SCOPED_TRACE("return value check. false case.");
     Output output;
     auto renderer_mock = std::make_unique<RendererMock>();
-    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    RendererMock* renderer_mock_ptr = renderer_mock.get();
     TestableCandidateWindowHandler candidate_window_handler(
         std::move(renderer_mock));
     EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),
@@ -225,7 +226,7 @@ TEST(CandidateWindowHandlerTest, SendUpdateCommandTest) {
     SCOPED_TRACE("return value check. true case.");
     Output output;
     auto renderer_mock = std::make_unique<RendererMock>();
-    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    RendererMock* renderer_mock_ptr = renderer_mock.get();
     TestableCandidateWindowHandler candidate_window_handler(
         std::move(renderer_mock));
     EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),
@@ -248,13 +249,13 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
 
   const int sample_idx1 = 0;
   const int sample_idx2 = 1;
-  const char *sample_candidate1 = "SAMPLE_CANDIDATE1";
-  const char *sample_candidate2 = "SAMPLE_CANDIDATE2";
+  const char* sample_candidate1 = "SAMPLE_CANDIDATE1";
+  const char* sample_candidate2 = "SAMPLE_CANDIDATE2";
   {
     SCOPED_TRACE("If there are no candidates, visibility expects false");
     Output output;
     auto renderer_mock = std::make_unique<RendererMock>();
-    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    RendererMock* renderer_mock_ptr = renderer_mock.get();
     TestableCandidateWindowHandler candidate_window_handler(
         std::move(renderer_mock));
     EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(false),
@@ -266,12 +267,12 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
         "If there is at least one candidate, "
         "visibility expects true");
     Output output;
-    CandidateWindow *candidate_window = output.mutable_candidate_window();
-    Candidate *candidate = candidate_window->add_candidate();
+    CandidateWindow* candidate_window = output.mutable_candidate_window();
+    Candidate* candidate = candidate_window->add_candidate();
     candidate->set_index(sample_idx1);
     candidate->set_value(sample_candidate1);
     auto renderer_mock = std::make_unique<RendererMock>();
-    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    RendererMock* renderer_mock_ptr = renderer_mock.get();
     TestableCandidateWindowHandler candidate_window_handler(
         std::move(renderer_mock));
     EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),
@@ -282,17 +283,17 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
     SCOPED_TRACE("Update last updated output protobuf object.");
     Output output1;
     Output output2;
-    CandidateWindow *candidate_window1 = output1.mutable_candidate_window();
-    CandidateWindow *candidate_window2 = output2.mutable_candidate_window();
-    Candidate *candidate1 = candidate_window1->add_candidate();
-    Candidate *candidate2 = candidate_window2->add_candidate();
+    CandidateWindow* candidate_window1 = output1.mutable_candidate_window();
+    CandidateWindow* candidate_window2 = output2.mutable_candidate_window();
+    Candidate* candidate1 = candidate_window1->add_candidate();
+    Candidate* candidate2 = candidate_window2->add_candidate();
     candidate1->set_index(sample_idx1);
     candidate1->set_index(sample_idx2);
     candidate2->set_value(sample_candidate1);
     candidate2->set_value(sample_candidate2);
 
     auto renderer_mock = std::make_unique<RendererMock>();
-    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    RendererMock* renderer_mock_ptr = renderer_mock.get();
     TestableCandidateWindowHandler candidate_window_handler(
         std::move(renderer_mock));
     EXPECT_CALL_EXEC_COMMAND(
@@ -323,7 +324,7 @@ TEST(CandidateWindowHandlerTest, HideTest) {
   IbusEngineWrapper engine(&ibus_engine);
 
   auto renderer_mock = std::make_unique<RendererMock>();
-  RendererMock *renderer_mock_ptr = renderer_mock.get();
+  RendererMock* renderer_mock_ptr = renderer_mock.get();
   TestableCandidateWindowHandler candidate_window_handler(
       std::move(renderer_mock));
   EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(false),
@@ -342,7 +343,7 @@ TEST(CandidateWindowHandlerTest, ShowTest) {
   IbusEngineWrapper engine(&ibus_engine);
 
   auto renderer_mock = std::make_unique<RendererMock>();
-  RendererMock *renderer_mock_ptr = renderer_mock.get();
+  RendererMock* renderer_mock_ptr = renderer_mock.get();
   TestableCandidateWindowHandler candidate_window_handler(
       std::move(renderer_mock));
   EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),

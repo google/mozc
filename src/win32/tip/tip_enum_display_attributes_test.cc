@@ -65,7 +65,7 @@ TEST(TipEnumDisplayAttributesTest, BasicTest) {
 TEST(TipEnumDisplayAttributesTest, NextTest) {
   TipEnumDisplayAttributes enum_display_attribute;
 
-  ITfDisplayAttributeInfo *infolist[4] = {};
+  ITfDisplayAttributeInfo* infolist[4] = {};
 
   ULONG fetched = 0;
   const HRESULT result =
@@ -79,7 +79,7 @@ TEST(TipEnumDisplayAttributesTest, NextTest) {
   EXPECT_EQ(infolist[3], nullptr);
 
   // Clean up.
-  for (auto &i : infolist) {
+  for (auto& i : infolist) {
     if (i != nullptr) {
       i->Release();
       i = nullptr;

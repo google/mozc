@@ -47,7 +47,7 @@ namespace tsf {
 // Implements the IEnumTfDisplayAttributeInfo::Clone() function.
 STDMETHODIMP
 TipEnumDisplayAttributes::Clone(
-    IEnumTfDisplayAttributeInfo **absl_nullable enum_attributes) {
+    IEnumTfDisplayAttributeInfo** absl_nullable enum_attributes) {
   // Check the output argument and return if it is invalid.
   if (enum_attributes == nullptr) {
     return E_INVALIDARG;
@@ -64,8 +64,8 @@ TipEnumDisplayAttributes::Clone(
 // This function copies the |count| items from the current position into
 // the |attribute_array|.
 STDMETHODIMP TipEnumDisplayAttributes::Next(
-    ULONG count, ITfDisplayAttributeInfo **absl_nonnull attribute_array,
-    ULONG *absl_nullable fetched) {
+    ULONG count, ITfDisplayAttributeInfo** absl_nonnull attribute_array,
+    ULONG* absl_nullable fetched) {
   ULONG items = 0;
   for (; items < count; ++items) {
     wil::com_ptr_nothrow<ITfDisplayAttributeInfo> attribute;

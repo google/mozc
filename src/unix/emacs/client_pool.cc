@@ -58,7 +58,7 @@ int ClientPool::CreateClient() {
 void ClientPool::DeleteClient(int id) { lru_cache_.Erase(id); }
 
 std::shared_ptr<ClientPool::Client> ClientPool::GetClient(int id) {
-  const std::shared_ptr<Client> *value = lru_cache_.Lookup(id);
+  const std::shared_ptr<Client>* value = lru_cache_.Lookup(id);
   if (value) {
     lru_cache_.Insert(id, *value);  // Put id at the head of LRU.
     return *value;

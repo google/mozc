@@ -75,7 +75,7 @@ const LANGID kTextServiceLanguage = MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT);
 
 }  // namespace
 
-const GUID &TsfProfile::GetTextServiceGuid() {
+const GUID& TsfProfile::GetTextServiceGuid() {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   return kGoogleJapaneseInputTextService;
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
@@ -83,7 +83,7 @@ const GUID &TsfProfile::GetTextServiceGuid() {
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 }
 
-const GUID &TsfProfile::GetProfileGuid() {
+const GUID& TsfProfile::GetProfileGuid() {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   return kGoogleJapaneseInputProfile;
 #else   // GOOGLE_JAPANESE_INPUT_BUILD

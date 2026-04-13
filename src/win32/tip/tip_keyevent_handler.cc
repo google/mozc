@@ -75,7 +75,7 @@ constexpr UINT kTouchKeyboardPreviousPage = 0xf004;
 // of a Unicode character. To retrieve the underlaying Unicode character,
 // use ToUnicode API as documented in the following white paper.
 // http://msdn.microsoft.com/en-us/library/windows/apps/hh967425.aspx
-VirtualKey GetVK(WPARAM wparam, const KeyboardStatus &keyboad_status) {
+VirtualKey GetVK(WPARAM wparam, const KeyboardStatus& keyboad_status) {
   if (LOWORD(wparam) != VK_PACKET) {
     return VirtualKey::FromVirtualKey(wparam);
   }
@@ -104,21 +104,21 @@ VirtualKey GetVK(WPARAM wparam, const KeyboardStatus &keyboad_status) {
   return VirtualKey::FromCombinedVirtualKey(ucs2 << 16 | VK_PACKET);
 }
 
-bool GetOpenAndMode(TipTextService *text_service, ITfContext *context,
-                    bool *open, uint32_t *logical_mode,
-                    uint32_t *visible_mode) {
+bool GetOpenAndMode(TipTextService* text_service, ITfContext* context,
+                    bool* open, uint32_t* logical_mode,
+                    uint32_t* visible_mode) {
   DCHECK(text_service);
   DCHECK(context);
   DCHECK(open);
   DCHECK(logical_mode);
   DCHECK(visible_mode);
-  const TipInputModeManager *input_mode_manager =
+  const TipInputModeManager* input_mode_manager =
       text_service->GetThreadContext()->GetInputModeManager();
   const bool is_open = input_mode_manager->GetEffectiveOpenClose();
   *open = (!TipStatus::IsDisabledContext(context) && is_open);
 
   bool prefer_kana_input = false;
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext* private_context = text_service->GetPrivateContext(context);
   if (private_context) {
     prefer_kana_input = private_context->input_behavior().prefer_kana_input;
   }
@@ -134,8 +134,8 @@ bool GetOpenAndMode(TipTextService *text_service, ITfContext *context,
   return has_valid_logical_mode && has_valid_visible_mode;
 }
 
-void FillMozcContextCommon(TipTextService *text_service, ITfContext *context,
-                           Context *mozc_context) {
+void FillMozcContextCommon(TipTextService* text_service, ITfContext* context,
+                           Context* mozc_context) {
   if (mozc_context == nullptr) {
     return;
   }
@@ -154,11 +154,11 @@ void FillMozcContextCommon(TipTextService *text_service, ITfContext *context,
   }
 }
 
-HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
-                  bool is_key_down, WPARAM wparam, LPARAM lparam, BOOL *eaten) {
+HRESULT OnTestKey(TipTextService* text_service, ITfContext* context,
+                  bool is_key_down, WPARAM wparam, LPARAM lparam, BOOL* eaten) {
   DCHECK(text_service);
   DCHECK(eaten);
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext* private_context = text_service->GetPrivateContext(context);
   if (private_context == nullptr) {
     *eaten = FALSE;
     return S_OK;
@@ -278,8 +278,8 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
   return S_OK;
 }
 
-void FillMozcContextForOnKey(TipTextService *text_service, ITfContext *context,
-                             Context *mozc_context) {
+void FillMozcContextForOnKey(TipTextService* text_service, ITfContext* context,
+                             Context* mozc_context) {
   FillMozcContextCommon(text_service, context, mozc_context);
   TipSurroundingTextInfo info;
   if (!TipSurroundingText::Get(text_service, context, &info)) {
@@ -293,11 +293,11 @@ void FillMozcContextForOnKey(TipTextService *text_service, ITfContext *context,
   }
 }
 
-HRESULT OnKey(TipTextService *text_service, ITfContext *context,
-              bool is_key_down, WPARAM wparam, LPARAM lparam, BOOL *eaten) {
+HRESULT OnKey(TipTextService* text_service, ITfContext* context,
+              bool is_key_down, WPARAM wparam, LPARAM lparam, BOOL* eaten) {
   DCHECK(text_service);
   DCHECK(eaten);
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext* private_context = text_service->GetPrivateContext(context);
   if (private_context == nullptr) {
     *eaten = FALSE;
     return S_OK;
@@ -471,27 +471,27 @@ constexpr bool kKeyUp = false;
 
 }  // namespace
 
-HRESULT TipKeyeventHandler::OnTestKeyDown(TipTextService *text_service,
-                                          ITfContext *context, WPARAM wparam,
-                                          LPARAM lparam, BOOL *eaten) {
+HRESULT TipKeyeventHandler::OnTestKeyDown(TipTextService* text_service,
+                                          ITfContext* context, WPARAM wparam,
+                                          LPARAM lparam, BOOL* eaten) {
   return OnTestKey(text_service, context, kKeyDown, wparam, lparam, eaten);
 }
 
-HRESULT TipKeyeventHandler::OnTestKeyUp(TipTextService *text_service,
-                                        ITfContext *context, WPARAM wparam,
-                                        LPARAM lparam, BOOL *eaten) {
+HRESULT TipKeyeventHandler::OnTestKeyUp(TipTextService* text_service,
+                                        ITfContext* context, WPARAM wparam,
+                                        LPARAM lparam, BOOL* eaten) {
   return OnTestKey(text_service, context, kKeyUp, wparam, lparam, eaten);
 }
 
-HRESULT TipKeyeventHandler::OnKeyDown(TipTextService *text_service,
-                                      ITfContext *context, WPARAM wparam,
-                                      LPARAM lparam, BOOL *eaten) {
+HRESULT TipKeyeventHandler::OnKeyDown(TipTextService* text_service,
+                                      ITfContext* context, WPARAM wparam,
+                                      LPARAM lparam, BOOL* eaten) {
   return OnKey(text_service, context, kKeyDown, wparam, lparam, eaten);
 }
 
-HRESULT TipKeyeventHandler::OnKeyUp(TipTextService *text_service,
-                                    ITfContext *context, WPARAM wparam,
-                                    LPARAM lparam, BOOL *eaten) {
+HRESULT TipKeyeventHandler::OnKeyUp(TipTextService* text_service,
+                                    ITfContext* context, WPARAM wparam,
+                                    LPARAM lparam, BOOL* eaten) {
   return OnKey(text_service, context, kKeyUp, wparam, lparam, eaten);
 }
 

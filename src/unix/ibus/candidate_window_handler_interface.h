@@ -43,33 +43,33 @@ namespace ibus {
 class CandidateWindowHandlerInterface {
  public:
   CandidateWindowHandlerInterface() {}
-  CandidateWindowHandlerInterface(const CandidateWindowHandlerInterface &) =
+  CandidateWindowHandlerInterface(const CandidateWindowHandlerInterface&) =
       delete;
-  CandidateWindowHandlerInterface &operator=(
-      const CandidateWindowHandlerInterface &) = delete;
+  CandidateWindowHandlerInterface& operator=(
+      const CandidateWindowHandlerInterface&) = delete;
   virtual ~CandidateWindowHandlerInterface() {}
 
   // Updates candidate state. This function also shows or hides candidate window
   // based on output argument.
-  virtual void Update(IbusEngineWrapper *engine,
-                      const commands::Output &output) = 0;
+  virtual void Update(IbusEngineWrapper* engine,
+                      const commands::Output& output) = 0;
 
   // Updates candidate state. This function also shows or hides candidate window
   // based on the last |Update| call.
-  virtual void UpdateCursorRect(IbusEngineWrapper *engine) = 0;
+  virtual void UpdateCursorRect(IbusEngineWrapper* engine) = 0;
 
   // Hides candidate window.
-  virtual void Hide(IbusEngineWrapper *engine) = 0;
+  virtual void Hide(IbusEngineWrapper* engine) = 0;
 
   // Shows candidate window.
-  virtual void Show(IbusEngineWrapper *engine) = 0;
+  virtual void Show(IbusEngineWrapper* engine) = 0;
 
   // Following methods handle property-changed events relevant to ibus-panel.
   // |custom_font_description| should be a string representation of
   // PangoFontDescription.
   // http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string
   virtual void OnIBusCustomFontDescriptionChanged(
-      const std::string &custom_font_description) = 0;
+      const std::string& custom_font_description) = 0;
   virtual void OnIBusUseCustomFontDescriptionChanged(
       bool use_custom_font_description) = 0;
 };

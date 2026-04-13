@@ -67,7 +67,7 @@ const HKEY kHKLM64_ClientState_ReadWrite = INT2HKEY(4);
 const HKEY KRegKey_NotFound = INT2HKEY(100);
 #undef INT2HKEY
 
-bool IsEqualInLowercase(const std::wstring &lhs, const std::wstring &rhs) {
+bool IsEqualInLowercase(const std::wstring& lhs, const std::wstring& rhs) {
   return WinUtil::SystemEqualString(lhs, rhs, true);
 }
 
@@ -112,7 +112,7 @@ class RegistryEmulator {
     field_name##_ = type();                                     \
   }                                                             \
   bool has_##field_name() const { return has_##field_name##_; } \
-  type *mutable_##field_name() {                                \
+  type* mutable_##field_name() {                                \
     has_##field_name##_ = true;                                 \
     return &field_name##_;                                      \
   }
@@ -156,7 +156,7 @@ class RegistryEmulator {
     restore_info_ = nullptr;
   }
 
-  static Property *property() { return Singleton<Property>::get(); }
+  static Property* property() { return Singleton<Property>::get(); }
 
   static HKEY GetClientStateKey(REGSAM regsam) {
     const REGSAM kReadWrite = (KEY_WRITE | KEY_READ);
@@ -202,9 +202,9 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS UpdateString(const wchar_t *value_name, const wchar_t *src,
+  static LSTATUS UpdateString(const wchar_t* value_name, const wchar_t* src,
                               DWORD num_data) {
-    std::wstring *target = nullptr;
+    std::wstring* target = nullptr;
     if (IsEqualInLowercase(value_name, kRegEntryNameForChannel)) {
       target = property()->mutable_ap_value();
     } else if (IsEqualInLowercase(value_name,
@@ -230,9 +230,9 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS UpdateDWORD(const wchar_t *value_name, const DWORD *src,
+  static LSTATUS UpdateDWORD(const wchar_t* value_name, const DWORD* src,
                              DWORD num_data) {
-    DWORD *target = nullptr;
+    DWORD* target = nullptr;
     if (IsEqualInLowercase(value_name, kRegEntryNameForInstallerResult)) {
       target = property()->mutable_installer_result();
     }
@@ -246,17 +246,17 @@ class RegistryEmulator {
 
   static LSTATUS WINAPI TestRegSetValueExW(HKEY key, LPCWSTR value_name,
                                            DWORD reserved, DWORD type,
-                                           const BYTE *data, DWORD num_data) {
+                                           const BYTE* data, DWORD num_data) {
     if (key != kHKLM32_ClientState_ReadWrite) {
       ADD_FAILURE() << "Unexpected key is specified.";
       return ERROR_ACCESS_DENIED;
     }
     switch (type) {
       case REG_SZ:
-        return UpdateString(value_name, reinterpret_cast<const wchar_t *>(data),
+        return UpdateString(value_name, reinterpret_cast<const wchar_t*>(data),
                             num_data);
       case REG_DWORD:
-        return UpdateDWORD(value_name, reinterpret_cast<const DWORD *>(data),
+        return UpdateDWORD(value_name, reinterpret_cast<const DWORD*>(data),
                            num_data);
       default:
         return ERROR_FILE_NOT_FOUND;
@@ -294,8 +294,8 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS QueryString(const wchar_t *value_name, DWORD *type,
-                             wchar_t *dest, DWORD *num_data) {
+  static LSTATUS QueryString(const wchar_t* value_name, DWORD* type,
+                             wchar_t* dest, DWORD* num_data) {
     std::wstring value;
     if (IsEqualInLowercase(value_name, kRegEntryNameForChannel)) {
       if (!property()->has_ap_value()) {
@@ -342,8 +342,8 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS QueryDWORD(const wchar_t *value_name, DWORD *type, DWORD *dest,
-                            DWORD *num_data) {
+  static LSTATUS QueryDWORD(const wchar_t* value_name, DWORD* type, DWORD* dest,
+                            DWORD* num_data) {
     DWORD value = 0;
     if (IsEqualInLowercase(value_name, kRegEntryNameForInstallerResult)) {
       if (!property()->has_installer_result()) {
@@ -389,15 +389,15 @@ class RegistryEmulator {
     }
 
     if (IsEqualInLowercase(value_name, kRegEntryNameForChannel)) {
-      return QueryString(value_name, type, reinterpret_cast<wchar_t *>(data),
+      return QueryString(value_name, type, reinterpret_cast<wchar_t*>(data),
                          num_data);
     } else if (IsEqualInLowercase(value_name,
                                   kRegEntryNameForInstallerResultUIString)) {
-      return QueryString(value_name, type, reinterpret_cast<wchar_t *>(data),
+      return QueryString(value_name, type, reinterpret_cast<wchar_t*>(data),
                          num_data);
     } else if (IsEqualInLowercase(value_name,
                                   kRegEntryNameForInstallerResult)) {
-      return QueryDWORD(value_name, type, reinterpret_cast<DWORD *>(data),
+      return QueryDWORD(value_name, type, reinterpret_cast<DWORD*>(data),
                         num_data);
     }
     return ERROR_FILE_NOT_FOUND;

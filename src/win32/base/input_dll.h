@@ -87,12 +87,10 @@ typedef struct tagLAYOUTORTIPPROFILE {
 //   Return Value:
 //     TRUE: The function was successful.
 //     FALSE: An unspecified error occurred.
-extern "C" __declspec(dllimport) UINT WINAPI
-    EnumEnabledLayoutOrTip(__in_opt LPCWSTR pszUserReg,
-                           __in_opt LPCWSTR pszSystemReg,
-                           __in_opt LPCWSTR pszSoftwareReg,
-                           __out LAYOUTORTIPPROFILE *pLayoutOrTipProfile,
-                           __in UINT uBufLength);
+extern "C" __declspec(dllimport) UINT WINAPI EnumEnabledLayoutOrTip(
+    __in_opt LPCWSTR pszUserReg, __in_opt LPCWSTR pszSystemReg,
+    __in_opt LPCWSTR pszSoftwareReg,
+    __out LAYOUTORTIPPROFILE* pLayoutOrTipProfile, __in UINT uBufLength);
 
 // Returns a function pointer to the EnumEnabledLayoutOrTip API, which
 // is available on Vista or later via input.dll to enumerates the installed
@@ -106,10 +104,9 @@ extern "C" __declspec(dllimport) UINT WINAPI
 //        The number of elements to be returned.
 //     |pLayoutOrTip != nullptr|
 //        The number of elements actually copied to |pLayoutOrTip|.
-extern "C" __declspec(dllimport) UINT WINAPI
-    EnumLayoutOrTipForSetup(__in LANGID langid,
-                            __out_ecount(uBufLength) LAYOUTORTIP *pLayoutOrTip,
-                            __in UINT uBufLength, __in DWORD dwFlags);
+extern "C" __declspec(dllimport) UINT WINAPI EnumLayoutOrTipForSetup(
+    __in LANGID langid, __out_ecount(uBufLength) LAYOUTORTIP* pLayoutOrTip,
+    __in UINT uBufLength, __in DWORD dwFlags);
 
 // Returns a function pointer to the InstallLayoutOrTip API, which is
 // available on Vista or later via input.dll to enable the specified
@@ -131,7 +128,7 @@ extern "C" __declspec(dllimport) UINT WINAPI
 //     TRUE: The function was successful.
 //     FALSE: An unspecified error occurred.
 extern "C" __declspec(dllimport) BOOL WINAPI
-    InstallLayoutOrTip(__in LPCWSTR psz, __in DWORD dwFlags);
+InstallLayoutOrTip(__in LPCWSTR psz, __in DWORD dwFlags);
 
 // Returns a function pointer to the InstallLayoutOrTipUserReg API, which
 // is available on Vista or later via input.dll to enable the specified
@@ -156,11 +153,9 @@ extern "C" __declspec(dllimport) BOOL WINAPI
 //     Like ImmInstallIME API, calling InstallLayoutOrTipUserReg from 32-bit
 //     process to install x64 binaries is not recommended.  Otherwise, we
 //     will see some weird issues like b/2931871.
-extern "C" __declspec(dllimport) BOOL WINAPI
-    InstallLayoutOrTipUserReg(__in_opt LPCWSTR pszUserReg,
-                              __in_opt LPCWSTR pszSystemReg,
-                              __in_opt LPCWSTR pszSoftwareReg, __in LPCWSTR psz,
-                              __in DWORD dwFlags);
+extern "C" __declspec(dllimport) BOOL WINAPI InstallLayoutOrTipUserReg(
+    __in_opt LPCWSTR pszUserReg, __in_opt LPCWSTR pszSystemReg,
+    __in_opt LPCWSTR pszSoftwareReg, __in LPCWSTR psz, __in DWORD dwFlags);
 
 // Returns a function pointer to the SetDefaultLayoutOrTip API, which sets
 // the specified keyboard layout or a text service as the default input item
@@ -193,6 +188,6 @@ extern "C" __declspec(dllimport) BOOL WINAPI
 //     is responsible to enable (e.g. calling InstallLayoutOrTipUserReg)
 //     the target IME before call this function to set the IME default.
 extern "C" __declspec(dllimport) BOOL WINAPI
-    SetDefaultLayoutOrTip(__in LPCWSTR psz, DWORD dwFlags);
+SetDefaultLayoutOrTip(__in LPCWSTR psz, DWORD dwFlags);
 
 #endif  // MOZC_WIN32_BASE_INPUT_DLL_H_

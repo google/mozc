@@ -47,8 +47,8 @@ class IndicatorVisibilityTracker {
 
   // Event call back endpoints.
   Action OnDissociateContext();
-  Action OnTestKey(const VirtualKey &key, bool is_down, bool eaten);
-  Action OnKey(const VirtualKey &key, bool is_down, bool eaten);
+  Action OnTestKey(const VirtualKey& key, bool is_down, bool eaten);
+  Action OnKey(const VirtualKey& key, bool is_down, bool eaten);
   Action OnMoveFocusedWindow();
   Action OnChangeInputMode();
 

@@ -29,8 +29,8 @@
 
 #include "win32/base/text_icon.h"
 
-#include <windows.h>
 #include <wil/resource.h>
+#include <windows.h>
 
 #include <cstddef>
 #include <string>
@@ -66,7 +66,7 @@ class TextIconTest : public testing::Test {
   }
 };
 
-::testing::AssertionResult ExpectMonochromeIcon(const wil::unique_hicon &icon,
+::testing::AssertionResult ExpectMonochromeIcon(const wil::unique_hicon& icon,
                                                 size_t size) {
   if (!icon) {
     return AssertionFailure() << "|icon| is nullptr.";

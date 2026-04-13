@@ -51,23 +51,23 @@ class TipUiElementManager;
 class TipPrivateContext {
  public:
   TipPrivateContext();
-  TipPrivateContext(const TipPrivateContext &) = delete;
-  TipPrivateContext &operator=(const TipPrivateContext &) = delete;
+  TipPrivateContext(const TipPrivateContext&) = delete;
+  TipPrivateContext& operator=(const TipPrivateContext&) = delete;
   // TODO(yuryu): InternalState is incomplete. Embed it into TipPrivateContext.
   ~TipPrivateContext();
 
   void EnsureInitialized();
-  client::ClientInterface *GetClient();
-  SurrogatePairObserver *GetSurrogatePairObserver();
-  TipUiElementManager *GetUiElementManager();
-  VKBackBasedDeleter *GetDeleter();
+  client::ClientInterface* GetClient();
+  SurrogatePairObserver* GetSurrogatePairObserver();
+  TipUiElementManager* GetUiElementManager();
+  VKBackBasedDeleter* GetDeleter();
 
-  const commands::Output &last_output() const;
-  commands::Output *mutable_last_output();
-  const VirtualKey &last_down_key() const;
-  VirtualKey *mutable_last_down_key();
-  const InputBehavior &input_behavior() const;
-  InputBehavior *mutable_input_behavior();
+  const commands::Output& last_output() const;
+  commands::Output* mutable_last_output();
+  const VirtualKey& last_down_key() const;
+  VirtualKey* mutable_last_down_key();
+  const InputBehavior& input_behavior() const;
+  InputBehavior* mutable_input_behavior();
 
  private:
   class InternalState;

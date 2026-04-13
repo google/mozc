@@ -54,7 +54,7 @@ HANDLE g_stop_event = nullptr;
 #else  // NDEBUG
 template <size_t num_elements>
 void LogMessageImpl(const wchar_t (&file)[num_elements], int line,
-                    const wchar_t *message, int error_no) {
+                    const wchar_t* message, int error_no) {
   ATL::CString buffer;
   buffer.Format(_T("%s (%d): %s (error: %d)\n"), file, line, message, error_no);
   ::OutputDebugString(buffer);
@@ -80,7 +80,7 @@ std::wstring GetMappedFileNameByAddress(LPVOID address) {
 // |result_info| contains the memory block information of the combined
 // region if succeeds.
 bool MakeReadOnlyForMappedModule(LPVOID address,
-                                 MEMORY_BASIC_INFORMATION *result_info) {
+                                 MEMORY_BASIC_INFORMATION* result_info) {
   // For an IMAGE section, the mapped size may be slightly different from the
   // file size since each PE section should be aligned to the page boundary.
   // To investigate the actual mapped size, we scan each block of memory pages.
@@ -90,15 +90,15 @@ bool MakeReadOnlyForMappedModule(LPVOID address,
   // MEMORY_BASIC_INFORMATION::Type should be MEM_IMAGE.
 
   // Store the source filename.
-  const std::wstring &filename = GetMappedFileNameByAddress(address);
+  const std::wstring& filename = GetMappedFileNameByAddress(address);
   if (filename.empty()) {
     return false;
   }
 
-  void *start_address = nullptr;
+  void* start_address = nullptr;
   DWORD total_region_size = 0;
 
-  void *current = address;
+  void* current = address;
   while (true) {
     MEMORY_BASIC_INFORMATION mem_info;
     if (::VirtualQuery(current, &mem_info, sizeof(mem_info)) == 0) {
@@ -126,7 +126,7 @@ bool MakeReadOnlyForMappedModule(LPVOID address,
     }
     total_region_size += mem_info.RegionSize;
 
-    current = static_cast<char *>(mem_info.BaseAddress) + mem_info.RegionSize;
+    current = static_cast<char*>(mem_info.BaseAddress) + mem_info.RegionSize;
   }
 
   if (result_info != nullptr &&
@@ -170,7 +170,7 @@ void WINAPI ServiceHandlerProc(DWORD control_code) {
     return;                                                     \
   } while (false)
 
-VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
+VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR* lpszArgv) {
   SERVICE_STATUS_HANDLE service_status_handle = ::RegisterServiceCtrlHandler(
       CacheServiceManager::GetServiceName(), ServiceHandlerProc);
 
@@ -368,7 +368,7 @@ WAIT_LOW: {
 }  // namespace
 }  // namespace mozc::win32
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   if (argc <= 1) {
     std::wstring service_name = mozc::CacheServiceManager::GetServiceName();
     SERVICE_TABLE_ENTRY dispatch_table[] = {

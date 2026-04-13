@@ -53,12 +53,12 @@ class TipLangBar {
       : tool_button_menu_(nullptr),
         help_menu_(nullptr),
         help_menu_cookie_(TF_INVALID_COOKIE) {}
-  TipLangBar(const TipLangBar &) = delete;
-  TipLangBar &operator=(const TipLangBar &) = delete;
+  TipLangBar(const TipLangBar&) = delete;
+  TipLangBar& operator=(const TipLangBar&) = delete;
   ~TipLangBar() = default;
 
   // initialize and uninitialize ImeLangBarItemButton object.
-  HRESULT InitLangBar(TipLangBarCallback *text_service);
+  HRESULT InitLangBar(TipLangBarCallback* text_service);
   HRESULT UninitLangBar();
 
   // Updates the selected menu in the language bar.

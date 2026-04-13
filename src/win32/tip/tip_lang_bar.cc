@@ -131,7 +131,7 @@ TipLangBarCallback::ItemId GetItemId(DWORD composition_mode) {
 }  // namespace
 
 // Initializes button menus in the language bar.
-HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
+HRESULT TipLangBar::InitLangBar(TipLangBarCallback* text_service) {
   HRESULT result = S_OK;
 
   // TODO(yukawa): Optimize this method. We do not need to obtain an instance of

@@ -45,27 +45,27 @@ namespace tsf {
 class TipUiElementDelegate {
  public:
   TipUiElementDelegate() = default;
-  TipUiElementDelegate(const TipUiElementDelegate &) = delete;
-  TipUiElementDelegate &operator=(const TipUiElementDelegate &) = delete;
+  TipUiElementDelegate(const TipUiElementDelegate&) = delete;
+  TipUiElementDelegate& operator=(const TipUiElementDelegate&) = delete;
   virtual ~TipUiElementDelegate() = default;
 
   virtual bool IsObservable() const = 0;
 
   // The ITfUIElement interface methods
-  virtual HRESULT GetDescription(BSTR *description) = 0;
-  virtual HRESULT GetGUID(GUID *guid) = 0;
+  virtual HRESULT GetDescription(BSTR* description) = 0;
+  virtual HRESULT GetGUID(GUID* guid) = 0;
   virtual HRESULT Show(BOOL show) = 0;
-  virtual HRESULT IsShown(BOOL *show) = 0;
+  virtual HRESULT IsShown(BOOL* show) = 0;
 
   // The ITfCandidateListUIElement interface methods
-  virtual HRESULT GetUpdatedFlags(DWORD *flags) = 0;
-  virtual HRESULT GetDocumentMgr(ITfDocumentMgr **document_manager) = 0;
-  virtual HRESULT GetCount(UINT *count) = 0;
-  virtual HRESULT GetSelection(UINT *index) = 0;
-  virtual HRESULT GetString(UINT index, BSTR *text) = 0;
-  virtual HRESULT GetPageIndex(UINT *index, UINT size, UINT *page_count) = 0;
-  virtual HRESULT SetPageIndex(UINT *index, UINT page_count) = 0;
-  virtual HRESULT GetCurrentPage(UINT *current_page) = 0;
+  virtual HRESULT GetUpdatedFlags(DWORD* flags) = 0;
+  virtual HRESULT GetDocumentMgr(ITfDocumentMgr** document_manager) = 0;
+  virtual HRESULT GetCount(UINT* count) = 0;
+  virtual HRESULT GetSelection(UINT* index) = 0;
+  virtual HRESULT GetString(UINT index, BSTR* text) = 0;
+  virtual HRESULT GetPageIndex(UINT* index, UINT size, UINT* page_count) = 0;
+  virtual HRESULT SetPageIndex(UINT* index, UINT page_count) = 0;
+  virtual HRESULT GetCurrentPage(UINT* current_page) = 0;
 
   // The ITfCandidateListUIElementBehavior interface methods
   virtual HRESULT SetSelection(UINT index) = 0;
@@ -73,7 +73,7 @@ class TipUiElementDelegate {
   virtual HRESULT Abort() = 0;
 
   // The ITfToolTipUIElement interface methods
-  virtual HRESULT GetString(BSTR *text) = 0;
+  virtual HRESULT GetString(BSTR* text) = 0;
 };
 
 class TipUiElementDelegateFactory {
@@ -90,8 +90,8 @@ class TipUiElementDelegateFactory {
       wil::com_ptr_nothrow<ITfContext> context, ElementType type);
 
   TipUiElementDelegateFactory() = delete;
-  TipUiElementDelegateFactory(const TipUiElementDelegateFactory &) = delete;
-  TipUiElementDelegateFactory &operator=(const TipUiElementDelegateFactory &) =
+  TipUiElementDelegateFactory(const TipUiElementDelegateFactory&) = delete;
+  TipUiElementDelegateFactory& operator=(const TipUiElementDelegateFactory&) =
       delete;
 };
 

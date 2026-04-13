@@ -78,15 +78,15 @@ wil::com_ptr_nothrow<TipLinguisticAlternates> TipLinguisticAlternates::New(
                                              std::move(provider));
 }
 
-STDMETHODIMP TipLinguisticAlternates::GetDisplayName(BSTR *absl_nullable name) {
+STDMETHODIMP TipLinguisticAlternates::GetDisplayName(BSTR* absl_nullable name) {
   return SaveToOutParam(MakeUniqueBSTR(kSearchCandidateProviderName), name);
 }
 
 // The ITfFnGetLinguisticAlternates interface method.
 STDMETHODIMP
 TipLinguisticAlternates::GetAlternates(
-    ITfRange *absl_nullable range,
-    ITfCandidateList **absl_nullable candidate_list) {
+    ITfRange* absl_nullable range,
+    ITfCandidateList** absl_nullable candidate_list) {
   if (range == nullptr) {
     return E_INVALIDARG;
   }

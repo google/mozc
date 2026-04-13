@@ -48,10 +48,10 @@ class ConfigSnapshot {
   };
 
   ConfigSnapshot() = delete;
-  ConfigSnapshot(const ConfigSnapshot &) = delete;
-  ConfigSnapshot &operator=(const ConfigSnapshot &) = delete;
+  ConfigSnapshot(const ConfigSnapshot&) = delete;
+  ConfigSnapshot& operator=(const ConfigSnapshot&) = delete;
 
-  static bool Get(Info *info);
+  static bool Get(Info* info);
 };
 
 }  // namespace win32

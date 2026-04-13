@@ -49,7 +49,7 @@ namespace {
 typedef ::mozc::commands::CompositionMode CompositionMode;
 
 template <typename T>
-void Dedup(std::vector<T> *container) {
+void Dedup(std::vector<T>* container) {
   std::sort(container->begin(), container->end());
   auto new_end = std::unique(container->begin(), container->end());
   container->erase(new_end, container->end());
@@ -58,12 +58,12 @@ void Dedup(std::vector<T> *container) {
 }  // namespace
 
 TipInputModeManagerImpl::StatePair TipInputModeManagerImpl::GetOverriddenState(
-    const StatePair &base_state, absl::Span<const InputScope> input_scopes) {
+    const StatePair& base_state, absl::Span<const InputScope> input_scopes) {
   if (input_scopes.empty()) {
     return base_state;
   }
   std::vector<ConversionMode> states;
-  for (const auto &input_scope : input_scopes) {
+  for (const auto& input_scope : input_scopes) {
     switch (input_scope) {
       // Some InputStope can be mapped to commands::Context::InputFieldType.
       // TODO(yukawa): Pass context information to the converter.
@@ -128,7 +128,7 @@ TipInputModeManager::Action TipInputModeManager::OnDissociateContext() {
 }
 
 TipInputModeManager::Action TipInputModeManager::OnTestKey(
-    const VirtualKey &key, bool is_down, bool eaten) {
+    const VirtualKey& key, bool is_down, bool eaten) {
   const IndicatorVisibilityTracker::Action action =
       indicator_visibility_tracker_.OnTestKey(key, is_down, eaten);
   switch (action) {
@@ -139,7 +139,7 @@ TipInputModeManager::Action TipInputModeManager::OnTestKey(
   }
 }
 
-TipInputModeManager::Action TipInputModeManager::OnKey(const VirtualKey &key,
+TipInputModeManager::Action TipInputModeManager::OnKey(const VirtualKey& key,
                                                        bool is_down,
                                                        bool eaten) {
   const IndicatorVisibilityTracker::Action action =

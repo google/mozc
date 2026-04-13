@@ -43,8 +43,8 @@
 namespace {
 
 struct TranslationMap {
-  const char *message;
-  const char *translated;
+  const char* message;
+  const char* translated;
 };
 
 const TranslationMap kUTF8JapaneseMap[] = {
@@ -76,31 +76,31 @@ MessageTranslatorInterface::~MessageTranslatorInterface() = default;
 NullMessageTranslator::NullMessageTranslator() = default;
 
 std::string NullMessageTranslator::MaybeTranslate(
-    const std::string &message) const {
+    const std::string& message) const {
   return message;
 }
 
 LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
-    const std::string &locale_name) {
+    const std::string& locale_name) {
   // Currently we support ja_JP.UTF-8 and ja_JP.utf8 only.
   std::vector<std::string> tokens =
       absl::StrSplit(locale_name, '.', absl::SkipEmpty());
   if (tokens.size() != 2) {
     return;
   }
-  const std::string &language_code = tokens[0];
+  const std::string& language_code = tokens[0];
   if (language_code != "ja_JP") {
     return;
   }
 
   Util::LowerString(&tokens[1]);
-  const std::string &lowser_char_set_name = tokens[1];
+  const std::string& lowser_char_set_name = tokens[1];
   if (lowser_char_set_name != "utf-8" && lowser_char_set_name != "utf8") {
     return;
   }
 
   for (size_t i = 0; i < std::size(kUTF8JapaneseMap); ++i) {
-    const TranslationMap &mapping = kUTF8JapaneseMap[i];
+    const TranslationMap& mapping = kUTF8JapaneseMap[i];
     DCHECK(mapping.message);
     DCHECK(mapping.translated);
     utf8_japanese_map_.insert(
@@ -109,7 +109,7 @@ LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
 }
 
 std::string LocaleBasedMessageTranslator::MaybeTranslate(
-    const std::string &message) const {
+    const std::string& message) const {
   std::map<std::string, std::string>::const_iterator itr =
       utf8_japanese_map_.find(message);
   if (itr == utf8_japanese_map_.end()) {

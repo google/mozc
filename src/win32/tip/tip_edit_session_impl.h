@@ -46,34 +46,34 @@ namespace tsf {
 class TipEditSessionImpl {
  public:
   TipEditSessionImpl() = delete;
-  TipEditSessionImpl(const TipEditSessionImpl &) = delete;
-  TipEditSessionImpl &operator=(const TipEditSessionImpl &) = delete;
+  TipEditSessionImpl(const TipEditSessionImpl&) = delete;
+  TipEditSessionImpl& operator=(const TipEditSessionImpl&) = delete;
 
   // A high level logic to handle on-composition-terminated event.
-  static HRESULT OnCompositionTerminated(TipTextService *text_service,
-                                         ITfContext *context,
-                                         ITfComposition *composition,
+  static HRESULT OnCompositionTerminated(TipTextService* text_service,
+                                         ITfContext* context,
+                                         ITfComposition* composition,
                                          TfEditCookie write_cookie);
 
   // Does post-edit status checking for composition (if exists). For example,
   // when the composition is canceled by the application, this method sends
   // REVERT message to the server so that the status is kept to be consistent.
-  static HRESULT OnEndEdit(TipTextService *text_service, ITfContext *context,
+  static HRESULT OnEndEdit(TipTextService* text_service, ITfContext* context,
                            TfEditCookie write_cookie,
-                           ITfEditRecord *edit_record);
+                           ITfEditRecord* edit_record);
 
   // A core logic of response handler. This function does
   // - Updates composition string.
   // - Updates candidate strings.
   // - Updates private context including IME On/Off state and input mode.
   // - Invokes UI update. (by calling UpdateUI)
-  static HRESULT UpdateContext(TipTextService *text_service,
-                               ITfContext *context, TfEditCookie write_cookie,
-                               const commands::Output &output);
+  static HRESULT UpdateContext(TipTextService* text_service,
+                               ITfContext* context, TfEditCookie write_cookie,
+                               const commands::Output& output);
 
   // A core logic of UI handler. This function does
   // - Invokes UI update.
-  static void UpdateUI(TipTextService *text_service, ITfContext *context,
+  static void UpdateUI(TipTextService* text_service, ITfContext* context,
                        TfEditCookie read_cookie);
 };
 

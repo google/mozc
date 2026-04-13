@@ -41,7 +41,7 @@ namespace ibus {
 namespace {
 // Returns an IBusText composed from |preedit| to render preedit text.
 // Caller must release the returned IBusText object.
-IbusTextWrapper ComposePreeditText(const commands::Preedit &preedit) {
+IbusTextWrapper ComposePreeditText(const commands::Preedit& preedit) {
   std::string data;
   for (int i = 0; i < preedit.segment_size(); ++i) {
     data.append(preedit.segment(i).value());
@@ -51,7 +51,7 @@ IbusTextWrapper ComposePreeditText(const commands::Preedit &preedit) {
   int start = 0;
   int end = 0;
   for (int i = 0; i < preedit.segment_size(); ++i) {
-    const commands::Preedit::Segment &segment = preedit.segment(i);
+    const commands::Preedit::Segment& segment = preedit.segment(i);
     IBusAttrUnderline attr = IBUS_ATTR_UNDERLINE_ERROR;
     switch (segment.annotation()) {
       case commands::Preedit::Segment::NONE:
@@ -94,7 +94,7 @@ IbusTextWrapper ComposePreeditText(const commands::Preedit &preedit) {
 // NOTE: We do not use a cursor position obtained from Mozc when the candidate
 // window is shown since ibus uses the cursor position to locate the candidate
 // window and the position obtained from Mozc is not what we expect.
-int CursorPos(const commands::Output &output) {
+int CursorPos(const commands::Output& output) {
   if (!output.has_preedit()) {
     return 0;
   }
@@ -106,8 +106,8 @@ int CursorPos(const commands::Output &output) {
 
 }  // namespace
 
-bool PreeditHandler::Update(IbusEngineWrapper *engine,
-                            const commands::Output &output) {
+bool PreeditHandler::Update(IbusEngineWrapper* engine,
+                            const commands::Output& output) {
   if (!output.has_preedit()) {
     engine->ClearPreeditText();
     engine->HidePreeditText();

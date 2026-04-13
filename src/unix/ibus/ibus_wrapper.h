@@ -46,27 +46,27 @@ class GobjectWrapper {
  public:
   explicit GobjectWrapper() = default;
   virtual ~GobjectWrapper() = default;
-  virtual GObject *GetGobject() = 0;
+  virtual GObject* GetGobject() = 0;
 
   void Unref();
   void RefSink();
 
   // https://docs.gtk.org/gobject/method.Object.get_data.html
   template <typename T>
-  const T *GetData(absl::string_view key) {
-    void *data = g_object_get_data(GetGobject(), key.data());
-    return reinterpret_cast<const T *>(data);
+  const T* GetData(absl::string_view key) {
+    void* data = g_object_get_data(GetGobject(), key.data());
+    return reinterpret_cast<const T*>(data);
   }
 
   template <typename T>
-  void SetData(absl::string_view key, const T &data) {
+  void SetData(absl::string_view key, const T& data) {
     g_object_set_data(GetGobject(), key.data(),
-                      reinterpret_cast<void *>(const_cast<T *>(&data)));
+                      reinterpret_cast<void*>(const_cast<T*>(&data)));
   }
 
   template <typename C, typename D>
-  ulong SignalConnect(absl::string_view signal, C callback, D *user_data) {
-    GObject *obj = GetGobject();
+  ulong SignalConnect(absl::string_view signal, C callback, D* user_data) {
+    GObject* obj = GetGobject();
     if (obj == nullptr) {
       return 0;
     }
@@ -80,12 +80,12 @@ class GobjectWrapper {
 
 class GsettingsWrapper : public GobjectWrapper {
  public:
-  explicit GsettingsWrapper(GSettings *settings);
+  explicit GsettingsWrapper(GSettings* settings);
   explicit GsettingsWrapper(absl::string_view schema_name);
   virtual ~GsettingsWrapper() = default;
 
-  GObject *GetGobject() override;
-  GSettings *GetGsettings();
+  GObject* GetGobject() override;
+  GSettings* GetGsettings();
 
   bool IsInitialized();
 
@@ -93,25 +93,25 @@ class GsettingsWrapper : public GobjectWrapper {
   Variant GetVariant(std::string_view key);
 
  private:
-  GSettings *settings_;  // Does not take the ownership.
+  GSettings* settings_;  // Does not take the ownership.
 };
 
 class IbusPropertyWrapper : public GobjectWrapper {
  public:
-  explicit IbusPropertyWrapper(IBusProperty *property);
+  explicit IbusPropertyWrapper(IBusProperty* property);
   virtual ~IbusPropertyWrapper() = default;
 
   IbusPropertyWrapper(absl::string_view key, IBusPropType type,
                       absl::string_view label, absl::string_view icon,
-                      IBusPropState state, IBusPropList *prop_list);
+                      IBusPropState state, IBusPropList* prop_list);
 
-  GObject *GetGobject() override;
+  GObject* GetGobject() override;
 
   void Initialize(absl::string_view key, IBusPropType type,
                   absl::string_view label, absl::string_view icon,
-                  IBusPropState state, IBusPropList *prop_list);
+                  IBusPropState state, IBusPropList* prop_list);
 
-  IBusProperty *GetProperty();
+  IBusProperty* GetProperty();
 
   bool IsInitialized();
 
@@ -124,7 +124,7 @@ class IbusPropertyWrapper : public GobjectWrapper {
   void SetState(IBusPropState state);
 
  private:
-  IBusProperty *property_;  // Does not take the ownership.
+  IBusProperty* property_;  // Does not take the ownership.
 };
 
 class IbusPropListWrapper : public GobjectWrapper {
@@ -132,23 +132,23 @@ class IbusPropListWrapper : public GobjectWrapper {
   IbusPropListWrapper();
   virtual ~IbusPropListWrapper() = default;
 
-  GObject *GetGobject() override;
+  GObject* GetGobject() override;
 
-  IBusPropList *GetPropList();
+  IBusPropList* GetPropList();
 
   void Append(IbusPropertyWrapper* property);
 
  private:
-  IBusPropList *prop_list_;  // Does not take the ownership.
+  IBusPropList* prop_list_;  // Does not take the ownership.
 };
 
 class IbusTextWrapper {
  public:
-  explicit IbusTextWrapper(IBusText *text);
+  explicit IbusTextWrapper(IBusText* text);
   explicit IbusTextWrapper(absl::string_view text);
   ~IbusTextWrapper() = default;
 
-  IBusText *GetText();
+  IBusText* GetText();
   bool IsInitialized();
 
   // `end_index` is `int` by following the base function.
@@ -156,7 +156,7 @@ class IbusTextWrapper {
   void AppendAttribute(uint type, uint value, uint start_index, int end_index);
 
  private:
-  IBusText *text_;  // Does not take the ownership.
+  IBusText* text_;  // Does not take the ownership.
 };
 
 class IbusLookupTableWrapper {
@@ -164,7 +164,7 @@ class IbusLookupTableWrapper {
   IbusLookupTableWrapper(size_t page_size, int cursor_pos, bool cursor_visible);
   ~IbusLookupTableWrapper() = default;
 
-  IBusLookupTable *GetLookupTable();
+  IBusLookupTable* GetLookupTable();
 
   void AppendCandidate(absl::string_view candidate);
   void AppendLabel(absl::string_view label);
@@ -176,32 +176,31 @@ class IbusLookupTableWrapper {
   void SetOrientation(IBusOrientation orientation);
 
  private:
-  IBusLookupTable *table_;  // Does not take the ownership.
+  IBusLookupTable* table_;  // Does not take the ownership.
 };
-
 
 class IbusEngineWrapper {
  public:
-  explicit IbusEngineWrapper(IBusEngine *engine);
+  explicit IbusEngineWrapper(IBusEngine* engine);
   ~IbusEngineWrapper() = default;
 
-  IBusEngine *GetEngine();
+  IBusEngine* GetEngine();
 
   absl::string_view GetName();
 
-  void GetContentType(uint *purpose, uint *hints);
+  void GetContentType(uint* purpose, uint* hints);
 
   void CommitText(absl::string_view text);
 
-  void UpdatePreeditTextWithMode(IbusTextWrapper *text, int cursor);
+  void UpdatePreeditTextWithMode(IbusTextWrapper* text, int cursor);
   void ClearPreeditText();
   void HidePreeditText();
 
-  void RegisterProperties(IbusPropListWrapper *properties);
-  void UpdateProperty(IbusPropertyWrapper *property);
+  void RegisterProperties(IbusPropListWrapper* properties);
+  void UpdateProperty(IbusPropertyWrapper* property);
 
   void EnableSurroundingText();
-  absl::string_view GetSurroundingText(uint *cursor_pos, uint *anchor_pos);
+  absl::string_view GetSurroundingText(uint* cursor_pos, uint* anchor_pos);
   void DeleteSurroundingText(int offset, uint size);
 
   uint GetCapabilities();
@@ -217,14 +216,14 @@ class IbusEngineWrapper {
 
   void ShowLookupTable();
   void HideLookupTable();
-  void UpdateLookupTable(IbusLookupTableWrapper *table);
+  void UpdateLookupTable(IbusLookupTableWrapper* table);
 
   void ShowAuxiliaryText();
   void HideAuxiliaryText();
   void UpdateAuxiliaryText(absl::string_view auxiliary_text);
 
  private:
-  IBusEngine *engine_;  // Does not take the ownership.
+  IBusEngine* engine_;  // Does not take the ownership.
 };
 
 class IbusComponentWrapper : public GobjectWrapper {
@@ -236,9 +235,9 @@ class IbusComponentWrapper : public GobjectWrapper {
                        absl::string_view textdomain);
   ~IbusComponentWrapper() = default;
 
-  GObject *GetGobject() override;
+  GObject* GetGobject() override;
 
-  IBusComponent *GetComponent();
+  IBusComponent* GetComponent();
 
   void AddEngine(absl::string_view name, absl::string_view longname,
                  absl::string_view description, absl::string_view language,
@@ -248,7 +247,7 @@ class IbusComponentWrapper : public GobjectWrapper {
   std::vector<absl::string_view> GetEngineNames();
 
  private:
-  IBusComponent *component_;  // Does not take the ownership.
+  IBusComponent* component_;  // Does not take the ownership.
 };
 
 class IbusBusWrapper : public GobjectWrapper {
@@ -256,16 +255,16 @@ class IbusBusWrapper : public GobjectWrapper {
   IbusBusWrapper();
   ~IbusBusWrapper() = default;
 
-  GObject *GetGobject() override;
-  IBusBus *GetBus();
+  GObject* GetGobject() override;
+  IBusBus* GetBus();
 
   void AddEngines(const std::vector<absl::string_view> engine_names,
                   GType type);
   void RequestName(absl::string_view name);
-  void RegisterComponent(IbusComponentWrapper *component);
+  void RegisterComponent(IbusComponentWrapper* component);
 
  private:
-  IBusBus *bus_;  // Does not take the ownership.
+  IBusBus* bus_;  // Does not take the ownership.
 };
 
 class IbusWrapper {

@@ -327,8 +327,8 @@ const KeyEvent::SpecialKey kSpecialKeyMap[] = {
     KeyEvent::NO_SPECIALKEY,  // 0xFF:
 };
 
-void ClearModifyerKeyIfNeeded(const KeyEvent *key,
-                              std::set<KeyEvent::ModifierKey> *modifiers) {
+void ClearModifyerKeyIfNeeded(const KeyEvent* key,
+                              std::set<KeyEvent::ModifierKey>* modifiers) {
   if (key == nullptr) {
     return;
   }
@@ -353,7 +353,7 @@ void ClearModifyerKeyIfNeeded(const KeyEvent *key,
 }
 
 // See b/2576120 for details.
-bool IsNotimplementedKey(const VirtualKey &virtual_key) {
+bool IsNotimplementedKey(const VirtualKey& virtual_key) {
   switch (virtual_key.virtual_key()) {
     case VK_DBE_ROMAN:    // Changes the mode to Roman characters.
     case VK_DBE_NOROMAN:  // Changes the mode to non-Roman characters.
@@ -387,14 +387,14 @@ bool IsNotimplementedKey(const VirtualKey &virtual_key) {
   }
 }
 
-bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
+bool ConvertToKeyEventMain(const VirtualKey& virtual_key, BYTE scan_code,
                            bool is_key_down, bool is_menu_active,
-                           const InputBehavior &behavior,
-                           const InputState &ime_state,
-                           const KeyboardStatus &keyboard_status,
-                           Win32KeyboardInterface *keyboard,
-                           commands::KeyEvent *key,
-                           std::set<KeyEvent::ModifierKey> *modifer_keys) {
+                           const InputBehavior& behavior,
+                           const InputState& ime_state,
+                           const KeyboardStatus& keyboard_status,
+                           Win32KeyboardInterface* keyboard,
+                           commands::KeyEvent* key,
+                           std::set<KeyEvent::ModifierKey>* modifer_keys) {
   if (key == nullptr) {
     return false;
   }
@@ -637,10 +637,10 @@ KeyEventHandlerResult::KeyEventHandlerResult()
       succeeded(false) {}
 
 KeyEventHandlerResult KeyEventHandler::HandleKey(
-    const VirtualKey &virtual_key, BYTE scan_code, bool is_key_down,
-    const KeyboardStatus &initial_status, const InputBehavior &behavior,
-    const InputState &ime_state, Win32KeyboardInterface *keyboard,
-    mozc::commands::KeyEvent *key) {
+    const VirtualKey& virtual_key, BYTE scan_code, bool is_key_down,
+    const KeyboardStatus& initial_status, const InputBehavior& behavior,
+    const InputState& ime_state, Win32KeyboardInterface* keyboard,
+    mozc::commands::KeyEvent* key) {
   KeyEventHandlerResult result;
 
   if (key == nullptr) {
@@ -768,11 +768,11 @@ KeyEventHandlerResult KeyEventHandler::HandleKey(
 }
 
 KeyEventHandlerResult KeyEventHandler::ImeProcessKey(
-    const VirtualKey &virtual_key, BYTE scan_code, bool is_key_down,
-    const KeyboardStatus &keyboard_status, const InputBehavior &behavior,
-    const InputState &initial_state, const commands::Context &context,
-    client::ClientInterface *client, Win32KeyboardInterface *keyboard,
-    InputState *next_state, commands::Output *output) {
+    const VirtualKey& virtual_key, BYTE scan_code, bool is_key_down,
+    const KeyboardStatus& keyboard_status, const InputBehavior& behavior,
+    const InputState& initial_state, const commands::Context& context,
+    client::ClientInterface* client, Win32KeyboardInterface* keyboard,
+    InputState* next_state, commands::Output* output) {
   // We will update kana-lock state even if the IME is disabled, including
   // safe-mode.
   KeyboardStatus new_keyboard_status;
@@ -860,11 +860,11 @@ KeyEventHandlerResult KeyEventHandler::ImeProcessKey(
 }
 
 KeyEventHandlerResult KeyEventHandler::ImeToAsciiEx(
-    const VirtualKey &virtual_key, BYTE scan_code, bool is_key_down,
-    const KeyboardStatus &keyboard_status, const InputBehavior &behavior,
-    const InputState &initial_state, const commands::Context &context,
-    client::ClientInterface *client, Win32KeyboardInterface *keyboard,
-    InputState *next_state, commands::Output *output) {
+    const VirtualKey& virtual_key, BYTE scan_code, bool is_key_down,
+    const KeyboardStatus& keyboard_status, const InputBehavior& behavior,
+    const InputState& initial_state, const commands::Context& context,
+    client::ClientInterface* client, Win32KeyboardInterface* keyboard,
+    InputState* next_state, commands::Output* output) {
   KeyboardStatus new_keyboard_status;
   UnlockKanaLock(keyboard_status, keyboard, &new_keyboard_status);
 
@@ -953,10 +953,10 @@ KeyEventHandlerResult KeyEventHandler::ImeToAsciiEx(
 }
 
 bool KeyEventHandler::ConvertToKeyEvent(
-    const VirtualKey &virtual_key, BYTE scan_code, bool is_key_down,
-    bool is_menu_active, const InputBehavior &behavior,
-    const InputState &ime_state, const KeyboardStatus &keyboard_status,
-    Win32KeyboardInterface *keyboard, mozc::commands::KeyEvent *key) {
+    const VirtualKey& virtual_key, BYTE scan_code, bool is_key_down,
+    bool is_menu_active, const InputBehavior& behavior,
+    const InputState& ime_state, const KeyboardStatus& keyboard_status,
+    Win32KeyboardInterface* keyboard, mozc::commands::KeyEvent* key) {
   // Since Mozc protocol requires tricky conditions for modifiers, using set
   // container makes the main part of key event conversion simple rather
   // than using vector-like container.
@@ -976,9 +976,9 @@ bool KeyEventHandler::ConvertToKeyEvent(
   return true;
 }
 
-void KeyEventHandler::UnlockKanaLock(const KeyboardStatus &keyboard_status,
-                                     Win32KeyboardInterface *keyboard,
-                                     KeyboardStatus *new_keyboard_status) {
+void KeyEventHandler::UnlockKanaLock(const KeyboardStatus& keyboard_status,
+                                     Win32KeyboardInterface* keyboard,
+                                     KeyboardStatus* new_keyboard_status) {
   KeyboardStatus dummy_status;
   if (new_keyboard_status == nullptr) {
     new_keyboard_status = &dummy_status;
@@ -992,8 +992,8 @@ void KeyEventHandler::UnlockKanaLock(const KeyboardStatus &keyboard_status,
   }
 }
 
-void KeyEventHandler::MaybeSpawnTool(mozc::client::ClientInterface *client,
-                                     commands::Output *output) {
+void KeyEventHandler::MaybeSpawnTool(mozc::client::ClientInterface* client,
+                                     commands::Output* output) {
   // URL handling:
   // When Output::url is set, MozcTool is supposed to be launched by client.
   // At this moment, we disable this feature as it may cause security hole.
@@ -1031,8 +1031,8 @@ void KeyEventHandler::MaybeSpawnTool(mozc::client::ClientInterface *client,
 }
 
 void KeyEventHandler::UpdateBehaviorInImeProcessKey(
-    const VirtualKey &virtual_key, bool is_key_down,
-    const InputState &initial_state, InputBehavior *behavior) {
+    const VirtualKey& virtual_key, bool is_key_down,
+    const InputState& initial_state, InputBehavior* behavior) {
   if (behavior == nullptr) {
     return;
   }

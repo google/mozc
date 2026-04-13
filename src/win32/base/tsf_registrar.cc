@@ -78,7 +78,7 @@ const GUID kCategories[] = {
 //   * The description of this module;
 //   * The path to this module, and;
 //   * The type of this module (threading moddel).
-HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t *path, DWORD length) {
+HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t* path, DWORD length) {
   if (length == 0) {
     return E_OUTOFMEMORY;
   }
@@ -278,7 +278,7 @@ void TsfRegistrar::UnregisterCategories() {
   // http://msdn.microsoft.com/en-us/library/aa383439.aspx
   auto category_mgr = ComCreateInstance<ITfCategoryMgr>(CLSID_TF_CategoryMgr);
   if (category_mgr) {
-    for (const auto &category : kCategories) {
+    for (const auto& category : kCategories) {
       category_mgr->UnregisterCategory(TsfProfile::GetTextServiceGuid(),
                                        category,
                                        TsfProfile::GetTextServiceGuid());

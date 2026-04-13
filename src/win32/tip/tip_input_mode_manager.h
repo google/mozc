@@ -66,7 +66,7 @@ class TipInputModeManagerImpl {
 
  protected:
   static StatePair GetOverriddenState(
-      const StatePair &base_state, absl::Span<const InputScope> input_scopes);
+      const StatePair& base_state, absl::Span<const InputScope> input_scopes);
 };
 
 // In TSF, IME open/close mode and conversion mode are managed per thread not
@@ -97,16 +97,16 @@ class TipInputModeManager : public TipInputModeManagerImpl {
   };
   typedef uint32_t NotifyActionSet;
 
-  explicit TipInputModeManager(const Config &config)
+  explicit TipInputModeManager(const Config& config)
       : use_global_mode_(config.use_global_mode) {}
   // Movable
-  TipInputModeManager(TipInputModeManager &&) = default;
-  TipInputModeManager &operator=(TipInputModeManager &&) = default;
+  TipInputModeManager(TipInputModeManager&&) = default;
+  TipInputModeManager& operator=(TipInputModeManager&&) = default;
 
   // Functions to access embedded IndicatorVisibilityTracker.
   Action OnDissociateContext();
-  Action OnTestKey(const VirtualKey &key, bool is_down, bool eaten);
-  Action OnKey(const VirtualKey &key, bool is_down, bool eaten);
+  Action OnTestKey(const VirtualKey& key, bool is_down, bool eaten);
+  Action OnKey(const VirtualKey& key, bool is_down, bool eaten);
   Action OnMoveFocusedWindow();
   bool IsIndicatorVisible() const;
 

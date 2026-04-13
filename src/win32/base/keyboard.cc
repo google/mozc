@@ -86,11 +86,11 @@ BYTE VirtualKey::virtual_key() const { return virtual_key_; }
 
 class DefaultKeyboardInterface : public Win32KeyboardInterface {
  public:
-  bool IsKanaLocked(const KeyboardStatus &keyboard_state) override {
+  bool IsKanaLocked(const KeyboardStatus& keyboard_state) override {
     return keyboard_state.IsToggled(VK_KANA);
   }
 
-  bool SetKeyboardState(const KeyboardStatus &keyboard_state) override {
+  bool SetKeyboardState(const KeyboardStatus& keyboard_state) override {
     KeyboardStatus copy = keyboard_state;
     const bool result = (::SetKeyboardState(copy.mutable_status()) != FALSE);
     if (!result) {
@@ -100,7 +100,7 @@ class DefaultKeyboardInterface : public Win32KeyboardInterface {
     return result;
   }
 
-  bool GetKeyboardState(KeyboardStatus *keyboard_state) override {
+  bool GetKeyboardState(KeyboardStatus* keyboard_state) override {
     if (keyboard_state == nullptr) {
       return false;
     }
@@ -119,7 +119,7 @@ class DefaultKeyboardInterface : public Win32KeyboardInterface {
   }
 
   int ToUnicode(__in UINT wVirtKey, __in UINT wScanCode,
-                __in_bcount_opt(256) CONST BYTE *lpKeyState,
+                __in_bcount_opt(256) CONST BYTE* lpKeyState,
                 __out_ecount(cchBuff) LPWSTR pwszBuff, __in int cchBuff,
                 __in UINT wFlags) override {
     return ::ToUnicode(wVirtKey, wScanCode, lpKeyState, pwszBuff, cchBuff,
@@ -169,9 +169,9 @@ bool KeyboardStatus::IsPressed(int virtual_key) const {
   return (GetState(virtual_key) & 0x80) == 0x80;
 }
 
-const BYTE *KeyboardStatus::status() const { return status_.data(); }
+const BYTE* KeyboardStatus::status() const { return status_.data(); }
 
-BYTE *KeyboardStatus::mutable_status() { return status_.data(); }
+BYTE* KeyboardStatus::mutable_status() { return status_.data(); }
 
 size_t KeyboardStatus::status_size() const { return std::size(status_); }
 
@@ -824,7 +824,7 @@ constexpr wchar_t kCharForVK_E2[] = {
     0xff9b, 0xff9b, 0x001c, 0x0000, 0xff9b, 0xff9b, 0x0000, 0x0000,
 };
 
-constexpr const wchar_t *kCharTable[] = {
+constexpr const wchar_t* kCharTable[] = {
     kNoCharGenKey,
     kNoCharGenKey,  // VK_LBUTTON
     kNoCharGenKey,  // VK_RBUTTON
@@ -1037,7 +1037,7 @@ constexpr const wchar_t *kCharTable[] = {
 
 static_assert(std::size(kCharTable) == std::numeric_limits<BYTE>::max() + 1);
 
-constexpr const wchar_t *kCharTableMenuActive[] = {
+constexpr const wchar_t* kCharTableMenuActive[] = {
     kNoCharGenKey,
     kNoCharGenKey,  // VK_LBUTTON
     kNoCharGenKey,  // VK_RBUTTON
@@ -1349,7 +1349,7 @@ wchar_t JapaneseKeyboardLayoutEmulator::GetCharacterForKeyDown(
 }
 
 int JapaneseKeyboardLayoutEmulator::ToUnicode(UINT virtual_key, UINT scan_code,
-                                              CONST BYTE *key_state,
+                                              CONST BYTE* key_state,
                                               LPWSTR character_buffer,
                                               int character_buffer_size,
                                               UINT flags) {

@@ -59,7 +59,7 @@ constexpr char kIBusPanelCustomFont[] = "custom-font";
 
 class GsettingsObserver {
  public:
-  explicit GsettingsObserver(CandidateWindowHandler *handler)
+  explicit GsettingsObserver(CandidateWindowHandler* handler)
       : settings_(GsettingsWrapper(kIBusPanelSchema)),
         settings_observer_id_(0) {
     if (!settings_.IsInitialized()) {
@@ -87,9 +87,9 @@ class GsettingsObserver {
 
  private:
   // The callback function to the "changed" signal to GSettings object.
-  static void OnChanged(GSettings *settings, const char *key, void *user_data) {
-    CandidateWindowHandler *handler =
-        reinterpret_cast<CandidateWindowHandler *>(user_data);
+  static void OnChanged(GSettings* settings, const char* key, void* user_data) {
+    CandidateWindowHandler* handler =
+        reinterpret_cast<CandidateWindowHandler*>(user_data);
     handler->OnSettingsUpdated(key, GsettingsWrapper(settings).GetVariant(key));
   }
 
@@ -105,8 +105,8 @@ CandidateWindowHandler::CandidateWindowHandler(
 
 CandidateWindowHandler::~CandidateWindowHandler() {}
 
-bool CandidateWindowHandler::SendUpdateCommand(IbusEngineWrapper *engine,
-                                               const commands::Output &output,
+bool CandidateWindowHandler::SendUpdateCommand(IbusEngineWrapper* engine,
+                                               const commands::Output& output,
                                                bool visibility) {
   using commands::RendererCommand;
   RendererCommand command;
@@ -114,11 +114,11 @@ bool CandidateWindowHandler::SendUpdateCommand(IbusEngineWrapper *engine,
   *command.mutable_output() = output;
   command.set_type(RendererCommand::UPDATE);
   command.set_visible(visibility);
-  RendererCommand::ApplicationInfo *appinfo =
+  RendererCommand::ApplicationInfo* appinfo =
       command.mutable_application_info();
 
-  auto *preedit_rectangle = command.mutable_preedit_rectangle();
-  const IbusEngineWrapper::Rectangle &cursor_area = engine->GetCursorArea();
+  auto* preedit_rectangle = command.mutable_preedit_rectangle();
+  const IbusEngineWrapper::Rectangle& cursor_area = engine->GetCursorArea();
   preedit_rectangle->set_left(cursor_area.x);
   preedit_rectangle->set_top(cursor_area.y);
   preedit_rectangle->set_right(cursor_area.x + cursor_area.width);
@@ -156,30 +156,30 @@ bool CandidateWindowHandler::SendUpdateCommand(IbusEngineWrapper *engine,
   return renderer_->ExecCommand(command);
 }
 
-void CandidateWindowHandler::Update(IbusEngineWrapper *engine,
-                                    const commands::Output &output) {
+void CandidateWindowHandler::Update(IbusEngineWrapper* engine,
+                                    const commands::Output& output) {
   *last_update_output_ = output;
 
   UpdateCursorRect(engine);
 }
 
-void CandidateWindowHandler::UpdateCursorRect(IbusEngineWrapper *engine) {
+void CandidateWindowHandler::UpdateCursorRect(IbusEngineWrapper* engine) {
   const bool has_candidates =
       last_update_output_->has_candidate_window() &&
       last_update_output_->candidate_window().candidate_size() > 0;
   SendUpdateCommand(engine, *last_update_output_, has_candidates);
 }
 
-void CandidateWindowHandler::Hide(IbusEngineWrapper *engine) {
+void CandidateWindowHandler::Hide(IbusEngineWrapper* engine) {
   SendUpdateCommand(engine, *last_update_output_, false);
 }
 
-void CandidateWindowHandler::Show(IbusEngineWrapper *engine) {
+void CandidateWindowHandler::Show(IbusEngineWrapper* engine) {
   SendUpdateCommand(engine, *last_update_output_, true);
 }
 
 void CandidateWindowHandler::OnIBusCustomFontDescriptionChanged(
-    const std::string &custom_font_description) {
+    const std::string& custom_font_description) {
   custom_font_description_.assign(custom_font_description);
 }
 
@@ -202,7 +202,7 @@ std::string CandidateWindowHandler::GetFontDescription() const {
 }
 
 void CandidateWindowHandler::OnSettingsUpdated(
-    absl::string_view key, const GsettingsWrapper::Variant &value) {
+    absl::string_view key, const GsettingsWrapper::Variant& value) {
   if (key == kIBusPanelUseCustomFont) {
     if (std::holds_alternative<bool>(value)) {
       bool use_custom_font = std::get<bool>(value);

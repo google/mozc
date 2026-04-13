@@ -41,15 +41,15 @@ namespace ibus {
 class SurroundingTextUtil {
  public:
   SurroundingTextUtil() = delete;
-  SurroundingTextUtil(const SurroundingTextUtil &) = delete;
-  SurroundingTextUtil &operator=(const SurroundingTextUtil &) = delete;
+  SurroundingTextUtil(const SurroundingTextUtil&) = delete;
+  SurroundingTextUtil& operator=(const SurroundingTextUtil&) = delete;
 
   // Calculates |from| - |to| and stores the result into |delta| with
   // checking integer overflow.
   // Returns true when neither |abs(delta)| nor |-delta| does not cause
   // integer overflow, that is, |delta| is in a safe range.
   // Returns false otherwise.
-  static bool GetSafeDelta(uint from, uint to, int32_t *delta);
+  static bool GetSafeDelta(uint from, uint to, int32_t* delta);
 
   // Returns true if
   // 1. |surrounding_text| contains |selected_text|
@@ -64,7 +64,7 @@ class SurroundingTextUtil {
   // Otherwise returns false.
   static bool GetAnchorPosFromSelection(absl::string_view surrounding_text,
                                         absl::string_view selected_text,
-                                        uint cursor_pos, uint *anchor_pos);
+                                        uint cursor_pos, uint* anchor_pos);
 };
 
 }  // namespace ibus

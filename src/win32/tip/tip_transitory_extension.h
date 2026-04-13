@@ -57,11 +57,11 @@ namespace tsf {
 class TipTransitoryExtension {
  public:
   TipTransitoryExtension() = delete;
-  TipTransitoryExtension(const TipTransitoryExtension &) = delete;
-  TipTransitoryExtension &operator=(const TipTransitoryExtension &) = delete;
+  TipTransitoryExtension(const TipTransitoryExtension&) = delete;
+  TipTransitoryExtension& operator=(const TipTransitoryExtension&) = delete;
 
   // Returns full-text-store context if available, otherwise returns |nullptr|.
-  static wil::com_ptr_nothrow<ITfContext> AsFullContext(ITfContext *context);
+  static wil::com_ptr_nothrow<ITfContext> AsFullContext(ITfContext* context);
 };
 
 }  // namespace tsf

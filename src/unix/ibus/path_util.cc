@@ -38,7 +38,7 @@
 namespace mozc {
 namespace ibus {
 
-std::string GetIconPath(const std::string &icon_file) {
+std::string GetIconPath(const std::string& icon_file) {
   return std::string(MOZC_IBUS_INSTALL_DIR) + "/" + icon_file;
 }
 

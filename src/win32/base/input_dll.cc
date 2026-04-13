@@ -40,7 +40,7 @@ struct LAYOUTORTIP;
 extern "C" UINT WINAPI EnumEnabledLayoutOrTip(
     __in_opt LPCWSTR pszUserReg, __in_opt LPCWSTR pszSystemReg,
     __in_opt LPCWSTR pszSoftwareReg,
-    __out LAYOUTORTIPPROFILE *pLayoutOrTipProfile, __in UINT uBufLength) {
+    __out LAYOUTORTIPPROFILE* pLayoutOrTipProfile, __in UINT uBufLength) {
   CHECK(false) << "This is a stub function to create an import library. "
                << "Shouldn't be called from anywhere.";
   return 0;
@@ -48,7 +48,7 @@ extern "C" UINT WINAPI EnumEnabledLayoutOrTip(
 
 extern "C" UINT WINAPI EnumLayoutOrTipForSetup(__in LANGID langid,
                                                __out_ecount(uBufLength)
-                                                   LAYOUTORTIP *pLayoutOrTip,
+                                                   LAYOUTORTIP* pLayoutOrTip,
                                                __in UINT uBufLength,
                                                __in DWORD dwFlags) {
   CHECK(false) << "This is a stub function to create an import library. "

@@ -56,9 +56,9 @@ namespace {
 using ::mozc::commands::Output;
 using IndicatorInfo = ::mozc::commands::RendererCommand_IndicatorInfo;
 
-HRESULT BeginUI(const wil::com_ptr_nothrow<ITfUIElementMgr> &ui_element_manager,
-                const wil::com_ptr_nothrow<ITfUIElement> &ui_element,
-                DWORD *new_element_id) {
+HRESULT BeginUI(const wil::com_ptr_nothrow<ITfUIElementMgr>& ui_element_manager,
+                const wil::com_ptr_nothrow<ITfUIElement>& ui_element,
+                DWORD* new_element_id) {
   BOOL show = FALSE;
   *new_element_id = TF_INVALID_UIELEMENTID;
   const HRESULT result = ui_element_manager->BeginUIElement(
@@ -70,7 +70,7 @@ HRESULT BeginUI(const wil::com_ptr_nothrow<ITfUIElementMgr> &ui_element_manager,
   return S_OK;
 }
 
-HRESULT EndUI(const wil::com_ptr_nothrow<ITfUIElementMgr> &ui_element_manager,
+HRESULT EndUI(const wil::com_ptr_nothrow<ITfUIElementMgr>& ui_element_manager,
               DWORD element_id) {
   wil::com_ptr_nothrow<ITfUIElement> element;
   ui_element_manager->GetUIElement(element_id, &element);
@@ -83,7 +83,7 @@ HRESULT EndUI(const wil::com_ptr_nothrow<ITfUIElementMgr> &ui_element_manager,
 
 }  // namespace
 
-ITfUIElement *TipUiElementManager::GetElement(UIElementFlags element) const {
+ITfUIElement* TipUiElementManager::GetElement(UIElementFlags element) const {
   const UiElementMap::const_iterator it = ui_element_map_.find(element);
   if (it == ui_element_map_.end()) {
     return nullptr;
@@ -99,19 +99,19 @@ DWORD TipUiElementManager::GetElementId(UIElementFlags element) const {
   return it->second.id;
 }
 
-HRESULT TipUiElementManager::OnUpdate(TipTextService *text_service,
-                                      ITfContext *context) {
+HRESULT TipUiElementManager::OnUpdate(TipTextService* text_service,
+                                      ITfContext* context) {
   auto ui_element_manager =
       ComQuery<ITfUIElementMgr>(text_service->GetThreadManager());
   if (!ui_element_manager) {
     return E_FAIL;
   }
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext* private_context = text_service->GetPrivateContext(context);
   if (private_context == nullptr) {
     return E_FAIL;
   }
 
-  const Output &output = private_context->last_output();
+  const Output& output = private_context->last_output();
 
   uint32_t existence_bits = kNoneWindow;
   if (output.has_candidate_window() &&
@@ -284,7 +284,7 @@ HRESULT TipUiElementManager::OnUpdate(TipTextService *text_service,
   return S_OK;
 }
 
-bool TipUiElementManager::IsVisible(ITfUIElementMgr *ui_element_manager,
+bool TipUiElementManager::IsVisible(ITfUIElementMgr* ui_element_manager,
                                     UIElementFlags element) const {
   if (ui_element_manager == nullptr) {
     return false;

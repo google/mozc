@@ -55,8 +55,8 @@ struct TipSurroundingTextInfo {
 class TipSurroundingText {
  public:
   TipSurroundingText() = delete;
-  TipSurroundingText(const TipSurroundingText &) = delete;
-  TipSurroundingText &operator=(const TipSurroundingText &) = delete;
+  TipSurroundingText(const TipSurroundingText&) = delete;
+  TipSurroundingText& operator=(const TipSurroundingText&) = delete;
 
   // Returns true when succeeds to retrieve surrounding text information
   // from the context specified by |context|.
@@ -65,8 +65,8 @@ class TipSurroundingText {
   //     session is guaranteed to be safe. A keyevent hander is one of
   //     examples. See the following document for details.
   //     http://blogs.msdn.com/b/tsfaware/archive/2007/05/17/rules-of-text-services.aspx
-  static bool Get(TipTextService *text_service, ITfContext *context,
-                  TipSurroundingTextInfo *info);
+  static bool Get(TipTextService* text_service, ITfContext* context,
+                  TipSurroundingTextInfo* info);
 
   // A variant of TipSurroundingText::Get. One difference is that this method
   // moves the anchor position of the selection at the end of the range.
@@ -76,10 +76,10 @@ class TipSurroundingText {
   // session if |need_async_reconversion| is set to be true. See
   // IMN_PRIVATE/kNotifyReconvertFromIME in IMM32-Mozc about IMM32 reconversion.
   // TODO(yukawa): Consider to unify this method with TipSurroundingText::Get.
-  static bool PrepareForReconversionFromIme(TipTextService *text_service,
-                                            ITfContext *context,
-                                            TipSurroundingTextInfo *info,
-                                            bool *need_async_reconversion);
+  static bool PrepareForReconversionFromIme(TipTextService* text_service,
+                                            ITfContext* context,
+                                            TipSurroundingTextInfo* info,
+                                            bool* need_async_reconversion);
 
   // Returns true when succeeds to delete preceding text from the beginning of
   // the selected range.
@@ -91,7 +91,7 @@ class TipSurroundingText {
   //     examples. See the following document for details.
   //     http://blogs.msdn.com/b/tsfaware/archive/2007/05/17/rules-of-text-services.aspx
   static bool DeletePrecedingText(
-      TipTextService *text_service, ITfContext *context,
+      TipTextService* text_service, ITfContext* context,
       size_t num_characters_to_be_deleted_in_codepoint);
 };
 
@@ -102,7 +102,7 @@ class TipSurroundingTextUtil {
   // can be measured as |characters_in_codepoint| in the unit of UCS4.
   static bool MeasureCharactersBackward(std::wstring_view text,
                                         size_t characters_in_codepoint,
-                                        size_t *characters_in_utf16);
+                                        size_t* characters_in_utf16);
 };
 
 }  // namespace tsf

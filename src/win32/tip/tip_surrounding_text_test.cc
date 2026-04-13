@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "win32/tip/tip_surrounding_text.h"
+
 #include <string>
 
 #include "base/win32/wide_char.h"

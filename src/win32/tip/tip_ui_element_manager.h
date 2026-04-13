@@ -50,14 +50,14 @@ class TipUiElementManager {
     kIndicatorWindow = 1 << 2,
   };
   TipUiElementManager() = default;
-  TipUiElementManager(const TipUiElementManager &) = delete;
-  TipUiElementManager &operator=(const TipUiElementManager &) = delete;
+  TipUiElementManager(const TipUiElementManager&) = delete;
+  TipUiElementManager& operator=(const TipUiElementManager&) = delete;
   ~TipUiElementManager() = default;
 
-  ITfUIElement *GetElement(UIElementFlags element) const;
+  ITfUIElement* GetElement(UIElementFlags element) const;
   DWORD GetElementId(UIElementFlags element) const;
-  HRESULT OnUpdate(TipTextService *text_service, ITfContext *context);
-  bool IsVisible(ITfUIElementMgr *ui_element_manager,
+  HRESULT OnUpdate(TipTextService* text_service, ITfContext* context);
+  bool IsVisible(ITfUIElementMgr* ui_element_manager,
                  UIElementFlags element) const;
 
  private:

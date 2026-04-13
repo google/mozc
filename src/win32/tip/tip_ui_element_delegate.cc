@@ -141,9 +141,8 @@ wil::unique_bstr GetResourceString(UINT resource_id) {
 
 class TipUiElementDelegateImpl final : public TipUiElementDelegate {
  public:
-  TipUiElementDelegateImpl(const TipUiElementDelegateImpl &) = delete;
-  TipUiElementDelegateImpl &operator=(const TipUiElementDelegateImpl &) =
-      delete;
+  TipUiElementDelegateImpl(const TipUiElementDelegateImpl&) = delete;
+  TipUiElementDelegateImpl& operator=(const TipUiElementDelegateImpl&) = delete;
   TipUiElementDelegateImpl(wil::com_ptr_nothrow<TipTextService> text_service,
                            wil::com_ptr_nothrow<ITfContext> context,
                            TipUiElementDelegateFactory::ElementType type)
@@ -163,7 +162,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   }
 
   // The ITfUIElement interface methods
-  HRESULT GetDescription(BSTR *description) override {
+  HRESULT GetDescription(BSTR* description) override {
     if (description == nullptr) {
       return E_INVALIDARG;
     }
@@ -188,7 +187,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     }
   }
 
-  HRESULT GetGUID(GUID *guid) override {
+  HRESULT GetGUID(GUID* guid) override {
     if (guid == nullptr) {
       return E_INVALIDARG;
     }
@@ -234,7 +233,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  HRESULT IsShown(BOOL *show) override {
+  HRESULT IsShown(BOOL* show) override {
     if (show == nullptr) {
       return E_INVALIDARG;
     }
@@ -243,7 +242,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   }
 
   // The ITfCandidateListUIElement interface methods
-  HRESULT GetUpdatedFlags(DWORD *flags) override {
+  HRESULT GetUpdatedFlags(DWORD* flags) override {
     DCHECK(IsCandidateWindowLike());
 
     if (flags == nullptr) {
@@ -261,7 +260,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  HRESULT GetDocumentMgr(ITfDocumentMgr **document_manager) override {
+  HRESULT GetDocumentMgr(ITfDocumentMgr** document_manager) override {
     DCHECK(IsCandidateWindowLike());
 
     if (document_manager == nullptr) {
@@ -270,19 +269,19 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return context_->GetDocumentMgr(document_manager);
   }
 
-  HRESULT GetCount(UINT *count) override {
+  HRESULT GetCount(UINT* count) override {
     DCHECK(IsCandidateWindowLike());
 
     if (count == nullptr) {
       return E_INVALIDARG;
     }
     *count = 0;
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
-    const Output &output = private_context->last_output();
+    const Output& output = private_context->last_output();
     if (!output.has_all_candidate_words()) {
       return S_OK;
     }
@@ -290,19 +289,19 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  HRESULT GetSelection(UINT *index) override {
+  HRESULT GetSelection(UINT* index) override {
     DCHECK(IsCandidateWindowLike());
 
     if (index == nullptr) {
       return E_INVALIDARG;
     }
     *index = 0;
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
-    const Output &output = private_context->last_output();
+    const Output& output = private_context->last_output();
     if (!output.has_all_candidate_words()) {
       return S_OK;
     }
@@ -310,23 +309,23 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  HRESULT GetString(UINT index, BSTR *text) override {
+  HRESULT GetString(UINT index, BSTR* text) override {
     DCHECK(IsCandidateWindowLike());
 
     if (text == nullptr) {
       return E_INVALIDARG;
     }
     *text = nullptr;
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
-    const Output &output = private_context->last_output();
+    const Output& output = private_context->last_output();
     if (!output.has_all_candidate_words()) {
       return E_FAIL;
     }
-    const CandidateList &list = output.all_candidate_words();
+    const CandidateList& list = output.all_candidate_words();
     // Convert |index| to the index within output_->candidates().
     const int visible_index = index;
     if (visible_index >= list.candidates_size()) {
@@ -337,22 +336,22 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  HRESULT GetPageIndex(UINT *index, UINT size, UINT *page_count) override {
+  HRESULT GetPageIndex(UINT* index, UINT size, UINT* page_count) override {
     DCHECK(IsCandidateWindowLike());
 
     if (page_count == nullptr) {
       return E_INVALIDARG;
     }
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
-    const Output &output = private_context->last_output();
+    const Output& output = private_context->last_output();
     if (!output.has_all_candidate_words()) {
       return E_FAIL;
     }
-    const CandidateList &list = output.all_candidate_words();
+    const CandidateList& list = output.all_candidate_words();
     const size_t max_page = (list.candidates_size() / kPageSize);
     *page_count = max_page + 1;
 
@@ -370,25 +369,25 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  HRESULT SetPageIndex(UINT *index, UINT page_count) override {
+  HRESULT SetPageIndex(UINT* index, UINT page_count) override {
     DCHECK(IsCandidateWindowLike());
 
     return E_NOTIMPL;
   }
 
-  HRESULT GetCurrentPage(UINT *current_page) override {
+  HRESULT GetCurrentPage(UINT* current_page) override {
     DCHECK(IsCandidateWindowLike());
 
     if (current_page == nullptr) {
       return E_INVALIDARG;
     }
     *current_page = 0;
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
-    const Output &output = private_context->last_output();
+    const Output& output = private_context->last_output();
     if (!output.has_all_candidate_words()) {
       return S_OK;
     }
@@ -400,16 +399,16 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   HRESULT SetSelection(UINT index) override {
     DCHECK(IsCandidateWindowLike());
 
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
-    const Output &output = private_context->last_output();
+    const Output& output = private_context->last_output();
     if (!output.has_all_candidate_words()) {
       return E_FAIL;
     }
-    const CandidateList &list = output.all_candidate_words();
+    const CandidateList& list = output.all_candidate_words();
     if (list.candidates_size() <= index) {
       return E_INVALIDARG;
     }
@@ -440,14 +439,14 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  HRESULT GetString(BSTR *text) override {
+  HRESULT GetString(BSTR* text) override {
     DCHECK(IsIndicator());
 
     if (text == nullptr) {
       return E_INVALIDARG;
     }
 
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       *text = MakeUniqueBSTR(L"").release();
@@ -457,7 +456,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
       *text = MakeUniqueBSTR(L"").release();
       return S_OK;
     }
-    const Status &status = private_context->last_output().status();
+    const Status& status = private_context->last_output().status();
     if (status.has_activated() && !status.activated()) {
       *text = MakeUniqueBSTR(L"A").release();
       return S_OK;
@@ -499,16 +498,16 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   // false, you need not update the list of candidate strings at this time.
   // Note that this function updates |last_candidate_list_| internally.
   bool TestModifiedAndUpdateLastCandidate() {
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return true;
     }
-    const Output &output = private_context->last_output();
+    const Output& output = private_context->last_output();
     if (!output.has_all_candidate_words()) {
       return true;
     }
-    const CandidateList &list = output.all_candidate_words();
+    const CandidateList& list = output.all_candidate_words();
     if (last_candidate_list_.candidates_size() != list.candidates_size()) {
       last_candidate_list_ = list;
       return true;

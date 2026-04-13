@@ -44,20 +44,20 @@ namespace tsf {
 class TipCompartmentUtil {
  public:
   TipCompartmentUtil() = delete;
-  TipCompartmentUtil(const TipCompartmentUtil &) = delete;
-  TipCompartmentUtil &operator=(const TipCompartmentUtil &) = delete;
+  TipCompartmentUtil(const TipCompartmentUtil&) = delete;
+  TipCompartmentUtil& operator=(const TipCompartmentUtil&) = delete;
 
   // Stores |data| into the compartment specified by |compartment_guid| and
   // owned by |compartment_manager|.
-  static HResult Set(ITfCompartmentMgr *compartment_manager,
-                     const GUID &compartment_guid, TfClientId client_id,
+  static HResult Set(ITfCompartmentMgr* compartment_manager,
+                     const GUID& compartment_guid, TfClientId client_id,
                      wil::unique_variant data);
-  static HResult Set(ITfThreadMgr *thread_manager, const GUID &compartment_guid,
+  static HResult Set(ITfThreadMgr* thread_manager, const GUID& compartment_guid,
                      TfClientId client_id, wil::unique_variant data);
-  static HResult Set(ITfDocumentMgr *document_manager,
-                     const GUID &compartment_guid, TfClientId client_id,
+  static HResult Set(ITfDocumentMgr* document_manager,
+                     const GUID& compartment_guid, TfClientId client_id,
                      wil::unique_variant data);
-  static HResult Set(ITfContext *context, const GUID &compartment_guid,
+  static HResult Set(ITfContext* context, const GUID& compartment_guid,
                      TfClientId client_id, wil::unique_variant data);
 
   // Returns the associated data from the compartment specified by
@@ -65,13 +65,13 @@ class TipCompartmentUtil {
   // Caveats: Returned variant is VT_EMPTY when the compartment has not store
   // any data yet.
   static HResultOr<wil::unique_variant> Get(
-      ITfCompartmentMgr *compartment_manager, const GUID &compartment_guid);
-  static HResultOr<wil::unique_variant> Get(ITfThreadMgr *thread_manager,
-                                            const GUID &compartment_guid);
-  static HResultOr<wil::unique_variant> Get(ITfDocumentMgr *document_manager,
-                                            const GUID &compartment_guid);
-  static HResultOr<wil::unique_variant> Get(ITfContext *context,
-                                            const GUID &compartment_guid);
+      ITfCompartmentMgr* compartment_manager, const GUID& compartment_guid);
+  static HResultOr<wil::unique_variant> Get(ITfThreadMgr* thread_manager,
+                                            const GUID& compartment_guid);
+  static HResultOr<wil::unique_variant> Get(ITfDocumentMgr* document_manager,
+                                            const GUID& compartment_guid);
+  static HResultOr<wil::unique_variant> Get(ITfContext* context,
+                                            const GUID& compartment_guid);
 
   // Returns true when |data| is retrieved from the compartment specified by
   // |compartment_guid| and owned by |compartment_manager| successfully.
@@ -79,16 +79,16 @@ class TipCompartmentUtil {
   // When the compartment has not store any data yet, this function sets
   // |default_data| as default data and copies it into |data|.
   static HResultOr<wil::unique_variant> GetAndEnsureDataExists(
-      ITfCompartmentMgr *compartment_manager, const GUID &compartment_guid,
+      ITfCompartmentMgr* compartment_manager, const GUID& compartment_guid,
       TfClientId client_id, wil::unique_variant default_data);
   static HResultOr<wil::unique_variant> GetAndEnsureDataExists(
-      ITfThreadMgr *thread_manager, const GUID &compartment_guid,
+      ITfThreadMgr* thread_manager, const GUID& compartment_guid,
       TfClientId client_id, wil::unique_variant default_data);
   static HResultOr<wil::unique_variant> GetAndEnsureDataExists(
-      ITfDocumentMgr *document_manager, const GUID &compartment_guid,
+      ITfDocumentMgr* document_manager, const GUID& compartment_guid,
       TfClientId client_id, wil::unique_variant default_data);
   static HResultOr<wil::unique_variant> GetAndEnsureDataExists(
-      ITfContext *context, const GUID &compartment_guid, TfClientId client_id,
+      ITfContext* context, const GUID& compartment_guid, TfClientId client_id,
       wil::unique_variant default_data);
 };
 

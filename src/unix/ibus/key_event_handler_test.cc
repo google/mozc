@@ -56,7 +56,7 @@ class KeyEventHandlerTest : public testing::Test {
   }
 
   // Currently this function does not supports special keys.
-  void AppendToKeyEvent(uint keyval, commands::KeyEvent *key) const {
+  void AppendToKeyEvent(uint keyval, commands::KeyEvent* key) const {
     const std::map<uint, commands::KeyEvent::ModifierKey>::const_iterator it =
         keyval_to_modifier_.find(keyval);
     if (it != keyval_to_modifier_.end()) {
@@ -75,19 +75,19 @@ class KeyEventHandlerTest : public testing::Test {
     }
   }
 
-  bool ProcessKey(bool is_key_up, uint keyval, commands::KeyEvent *key) {
+  bool ProcessKey(bool is_key_up, uint keyval, commands::KeyEvent* key) {
     AppendToKeyEvent(keyval, key);
     return handler_->ProcessModifiers(is_key_up, keyval, key);
   }
 
   bool ProcessKeyWithCapsLock(bool is_key_up, uint keyval,
-                              commands::KeyEvent *key) {
+                              commands::KeyEvent* key) {
     key->add_modifier_keys(commands::KeyEvent::CAPS);
     return ProcessKey(is_key_up, keyval, key);
   }
 
   bool IsPressed(uint keyval) const {
-    const std::set<uint> &pressed_set = handler_->currently_pressed_modifiers_;
+    const std::set<uint>& pressed_set = handler_->currently_pressed_modifiers_;
     return pressed_set.find(keyval) != pressed_set.end();
   }
 
@@ -95,11 +95,11 @@ class KeyEventHandlerTest : public testing::Test {
     return handler_->is_non_modifier_key_pressed_;
   }
 
-  const std::set<uint> &currently_pressed_modifiers() {
+  const std::set<uint>& currently_pressed_modifiers() {
     return handler_->currently_pressed_modifiers_;
   }
 
-  const std::set<commands::KeyEvent::ModifierKey> &modifiers_to_be_sent() {
+  const std::set<commands::KeyEvent::ModifierKey>& modifiers_to_be_sent() {
     return handler_->modifiers_to_be_sent_;
   }
 
@@ -177,7 +177,7 @@ TEST_F(KeyEventHandlerTest, GetKeyEvent) {
     EXPECT_NO_MODIFIERS_PRESSED();
   }
 
-  { // Ignore Super (Mod4)
+  {  // Ignore Super (Mod4)
     key.Clear();
     EXPECT_FALSE(handler_->GetKeyEvent(IBUS_space, kDummyKeycode,
                                        IBUS_MOD4_MASK, config::Config::ROMAN,

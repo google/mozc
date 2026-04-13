@@ -61,16 +61,16 @@ class TipReconvertFunction : public TipComImplements<ITfFnReconversion> {
       : text_service_(std::move(text_service)) {}
 
   // The ITfFunction interface method.
-  STDMETHODIMP GetDisplayName(BSTR *absl_nullable name) override;
+  STDMETHODIMP GetDisplayName(BSTR* absl_nullable name) override;
 
   // The ITfFnReconversion interface methods.
-  STDMETHODIMP QueryRange(ITfRange *absl_nullable range,
-                          ITfRange **absl_nullable new_range,
-                          BOOL *absl_nullable opt_convertible) override;
+  STDMETHODIMP QueryRange(ITfRange* absl_nullable range,
+                          ITfRange** absl_nullable new_range,
+                          BOOL* absl_nullable opt_convertible) override;
   STDMETHODIMP
-  GetReconversion(ITfRange *absl_nullable range,
-                  ITfCandidateList **absl_nullable candidate_list) override;
-  STDMETHODIMP Reconvert(ITfRange *absl_nullable range) override;
+  GetReconversion(ITfRange* absl_nullable range,
+                  ITfCandidateList** absl_nullable candidate_list) override;
+  STDMETHODIMP Reconvert(ITfRange* absl_nullable range) override;
 
  private:
   TipCandidateOnFinalize OnCandidateFinalize(

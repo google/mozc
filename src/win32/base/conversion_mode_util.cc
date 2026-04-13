@@ -111,7 +111,7 @@ static_assert(kFixed == TF_CONVERSIONMODE_FIXED, "Renaming Check");
 
 // Returns true if the specified bits are set in the |flag| with
 // unsetting the bits in the |flag|.
-bool TestAndClearBits(uint32_t *flag, uint32_t bits) {
+bool TestAndClearBits(uint32_t* flag, uint32_t bits) {
   const bool result = ((*flag & bits) != 0);
   *flag &= ~bits;
   return result;
@@ -122,7 +122,7 @@ namespace mozc {
 namespace win32 {
 bool ConversionModeUtil::ToNativeMode(mozc::commands::CompositionMode mode,
                                       bool kana_lock_enabled_in_hiragana_mode,
-                                      uint32_t *flag) {
+                                      uint32_t* flag) {
   // b/2189944.
   // Built-in MS-IME and ATOK (as of 22.0.1.0) seem to specify IME_CMODE_ROMAN
   // flag even if the input mode is Half-width Alphanumeric.
@@ -185,7 +185,7 @@ bool ConversionModeUtil::ToNativeMode(mozc::commands::CompositionMode mode,
 }
 
 bool ConversionModeUtil::ToMozcMode(uint32_t flag,
-                                    mozc::commands::CompositionMode *mode) {
+                                    mozc::commands::CompositionMode* mode) {
   if (mode == nullptr) {
     LOG(ERROR) << "|mode| is nullptr";
     return false;
@@ -290,9 +290,9 @@ bool ConversionModeUtil::ToMozcMode(uint32_t flag,
 }
 
 bool ConversionModeUtil::ConvertStatusFromMozcToNative(
-    const mozc::commands::Status &status,
-    bool kana_lock_enabled_in_hiragana_mode, bool *is_open,
-    DWORD *logical_imm32_mode, DWORD *visible_imm32_mode) {
+    const mozc::commands::Status& status,
+    bool kana_lock_enabled_in_hiragana_mode, bool* is_open,
+    DWORD* logical_imm32_mode, DWORD* visible_imm32_mode) {
   if (!status.has_activated() || !status.has_mode() ||
       !status.has_comeback_mode()) {
     return false;
@@ -330,7 +330,7 @@ bool ConversionModeUtil::ConvertStatusFromMozcToNative(
 }
 
 bool ConversionModeUtil::GetMozcModeFromNativeMode(
-    DWORD imm32_mode, mozc::commands::CompositionMode *mozc_mode) {
+    DWORD imm32_mode, mozc::commands::CompositionMode* mozc_mode) {
   const uint32_t native_mode = static_cast<uint32_t>(imm32_mode);
   *mozc_mode = mozc::commands::HIRAGANA;
   if (!ConversionModeUtil::ToMozcMode(native_mode, mozc_mode)) {

@@ -47,20 +47,20 @@ class GsettingsObserver;
 
 class CandidateWindowHandler : public CandidateWindowHandlerInterface {
  public:
-  CandidateWindowHandler(const CandidateWindowHandler &) = delete;
-  CandidateWindowHandler &operator=(const CandidateWindowHandler &) = delete;
+  CandidateWindowHandler(const CandidateWindowHandler&) = delete;
+  CandidateWindowHandler& operator=(const CandidateWindowHandler&) = delete;
   explicit CandidateWindowHandler(
       std::unique_ptr<renderer::RendererInterface> renderer);
   virtual ~CandidateWindowHandler();
 
-  virtual void Update(IbusEngineWrapper *engine,
-                      const commands::Output &output);
-  virtual void UpdateCursorRect(IbusEngineWrapper *engine);
-  virtual void Hide(IbusEngineWrapper *engine);
-  virtual void Show(IbusEngineWrapper *engine);
+  virtual void Update(IbusEngineWrapper* engine,
+                      const commands::Output& output);
+  virtual void UpdateCursorRect(IbusEngineWrapper* engine);
+  virtual void Hide(IbusEngineWrapper* engine);
+  virtual void Show(IbusEngineWrapper* engine);
 
   virtual void OnIBusCustomFontDescriptionChanged(
-      const std::string &custom_font_description);
+      const std::string& custom_font_description);
 
   virtual void OnIBusUseCustomFontDescriptionChanged(
       bool use_custom_font_description);
@@ -68,11 +68,11 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
   void RegisterGSettingsObserver();
 
   void OnSettingsUpdated(absl::string_view key,
-                         const GsettingsWrapper::Variant &value);
+                         const GsettingsWrapper::Variant& value);
 
  protected:
-  bool SendUpdateCommand(IbusEngineWrapper *engine,
-                         const commands::Output &output, bool visibility);
+  bool SendUpdateCommand(IbusEngineWrapper* engine,
+                         const commands::Output& output, bool visibility);
 
   std::unique_ptr<renderer::RendererInterface> renderer_;
   std::unique_ptr<commands::Output> last_update_output_;

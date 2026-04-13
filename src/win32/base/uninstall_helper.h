@@ -37,8 +37,8 @@ namespace win32 {
 // current user after Google Japanese Input is uninstalled.
 class UninstallHelper {
  public:
-  UninstallHelper(const UninstallHelper &) = delete;
-  UninstallHelper &operator=(const UninstallHelper &) = delete;
+  UninstallHelper(const UninstallHelper&) = delete;
+  UninstallHelper& operator=(const UninstallHelper&) = delete;
 
   // Returns true if IME environment for the current user is successfully
   // cleaned up and restored.  This function ensures following things.

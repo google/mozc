@@ -50,13 +50,13 @@ class TipTextService : public IUnknown {
   virtual TfClientId GetClientID() const = 0;
 
   // Retrieves the thread manager instance.
-  virtual ITfThreadMgr *GetThreadManager() const = 0;
+  virtual ITfThreadMgr* GetThreadManager() const = 0;
 
   // Returns the associated private context. Returns nullptr if not found.
-  virtual TipPrivateContext *GetPrivateContext(ITfContext *context) = 0;
+  virtual TipPrivateContext* GetPrivateContext(ITfContext* context) = 0;
 
   // Returns the associated thread context.
-  virtual TipThreadContext *GetThreadContext() = 0;
+  virtual TipThreadContext* GetThreadContext() = 0;
 
   // Sends UI update message to the renderer.
   virtual void PostUIUpdateMessage() = 0;
@@ -71,7 +71,7 @@ class TipTextService : public IUnknown {
 
   // Returns an instance of ITfCompositionSink object.
   virtual wil::com_ptr_nothrow<ITfCompositionSink> CreateCompositionSink(
-      ITfContext *context) = 0;
+      ITfContext* context) = 0;
 
   // Updates the language bar as needed.  Does nothing if the language bar is
   // not available.
@@ -86,8 +86,8 @@ class TipTextService : public IUnknown {
 class TipTextServiceFactory {
  public:
   TipTextServiceFactory() = delete;
-  TipTextServiceFactory(const TipTextServiceFactory &) = delete;
-  TipTextServiceFactory &operator=(const TipTextServiceFactory &) = delete;
+  TipTextServiceFactory(const TipTextServiceFactory&) = delete;
+  TipTextServiceFactory& operator=(const TipTextServiceFactory&) = delete;
 
   static wil::com_ptr_nothrow<TipTextService> Create();
 

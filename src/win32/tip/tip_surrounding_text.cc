@@ -63,7 +63,7 @@ class SurroudingTextUpdater final : public TipComImplements<ITfEditSession> {
                         bool move_anchor)
       : context_(std::move(context)), move_anchor_(move_anchor) {}
 
-  const TipSurroundingTextInfo &result() const { return result_; }
+  const TipSurroundingTextInfo& result() const { return result_; }
 
  private:
   STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) override {
@@ -210,9 +210,9 @@ class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
   size_t num_characters_in_codepoint_;
 };
 
-bool GetSurroundingTextImm32(ITfContext *context,
+bool GetSurroundingTextImm32(ITfContext* context,
                              ReconvertString::RequestType request_type,
-                             TipSurroundingTextInfo *info) {
+                             TipSurroundingTextInfo* info) {
   wil::com_ptr_nothrow<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view))) {
     return false;
@@ -251,8 +251,8 @@ bool GetSurroundingTextImm32(ITfContext *context,
 
 }  // namespace
 
-bool TipSurroundingText::Get(TipTextService *text_service, ITfContext *context,
-                             TipSurroundingTextInfo *info) {
+bool TipSurroundingText::Get(TipTextService* text_service, ITfContext* context,
+                             TipSurroundingTextInfo* info) {
   if (info == nullptr) {
     return false;
   }
@@ -290,9 +290,9 @@ bool TipSurroundingText::Get(TipTextService *text_service, ITfContext *context,
   return true;
 }
 
-bool PrepareForReconversionTSF(TipTextService *text_service,
-                               ITfContext *context,
-                               TipSurroundingTextInfo *info) {
+bool PrepareForReconversionTSF(TipTextService* text_service,
+                               ITfContext* context,
+                               TipSurroundingTextInfo* info) {
   // Reconversion through TSF APIs should be performed only with the full
   // context.
   wil::com_ptr_nothrow<ITfContext> full_context(
@@ -322,8 +322,8 @@ bool PrepareForReconversionTSF(TipTextService *text_service,
 }
 
 bool TipSurroundingText::PrepareForReconversionFromIme(
-    TipTextService *text_service, ITfContext *context,
-    TipSurroundingTextInfo *info, bool *need_async_reconversion) {
+    TipTextService* text_service, ITfContext* context,
+    TipSurroundingTextInfo* info, bool* need_async_reconversion) {
   if (info == nullptr) {
     return false;
   }
@@ -335,9 +335,8 @@ bool TipSurroundingText::PrepareForReconversionFromIme(
   if (PrepareForReconversionTSF(text_service, context, info)) {
     return true;
   }
-  if (!GetSurroundingTextImm32(context,
-                               ReconvertString::RequestType::kReconvertString,
-                               info)) {
+  if (!GetSurroundingTextImm32(
+          context, ReconvertString::RequestType::kReconvertString, info)) {
     // Certain apps such as Excel do start reconversions by using
     // ITfFnReconversion protocol upon receiving IMR_RECONVERTSTRING message,
     // even though they return 0 (== failure) to the message.
@@ -353,7 +352,7 @@ bool TipSurroundingText::PrepareForReconversionFromIme(
 }
 
 bool TipSurroundingText::DeletePrecedingText(
-    TipTextService *text_service, ITfContext *context,
+    TipTextService* text_service, ITfContext* context,
     size_t num_characters_to_be_deleted_in_codepoint) {
   // Surrounding text deletion through TSF APIs should be performed only with
   // the full context.
@@ -384,7 +383,7 @@ bool TipSurroundingText::DeletePrecedingText(
 
 bool TipSurroundingTextUtil::MeasureCharactersBackward(
     const std::wstring_view text, const size_t characters_in_codepoint,
-    size_t *characters_in_utf16) {
+    size_t* characters_in_utf16) {
   if (characters_in_utf16 == nullptr) {
     return false;
   }

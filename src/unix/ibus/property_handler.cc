@@ -56,10 +56,10 @@ constexpr char kMozcToolIconPath[] = "tool.png";
 
 struct MozcEngineProperty {
   commands::CompositionMode composition_mode;
-  const char *key;    // IBus property key for the mode.
-  const char *label;  // text for the radio menu (ibus-anthy compatible).
-  const char *label_for_panel;  // text for the language panel.
-  const char *icon;
+  const char* key;    // IBus property key for the mode.
+  const char* label;  // text for the radio menu (ibus-anthy compatible).
+  const char* label_for_panel;  // text for the language panel.
+  const char* icon;
 };
 
 // The list of properties used in ibus-mozc.
@@ -109,10 +109,10 @@ constexpr MozcEngineProperty kMozcEngineProperties[] = {
 };
 
 struct MozcEngineToolProperty {
-  const char *key;    // IBus property key for the MozcTool.
-  const char *mode;   // command line passed as --mode=
-  const char *label;  // text for the menu.
-  const char *icon;   // icon
+  const char* key;    // IBus property key for the MozcTool.
+  const char* mode;   // command line passed as --mode=
+  const char* label;  // text for the menu.
+  const char* icon;   // icon
 };
 
 constexpr MozcEngineToolProperty kMozcEngineToolProperties[] = {
@@ -154,7 +154,7 @@ bool IsMozcToolAvailable() {
   return true;
 }
 
-bool GetDisabled(IbusEngineWrapper *engine) {
+bool GetDisabled(IbusEngineWrapper* engine) {
   bool disabled = false;
   uint purpose = IBUS_INPUT_PURPOSE_FREE_FORM;
   uint hints = IBUS_INPUT_HINT_NONE;
@@ -168,7 +168,7 @@ bool GetDisabled(IbusEngineWrapper *engine) {
 
 PropertyHandler::PropertyHandler(
     std::unique_ptr<MessageTranslatorInterface> translator,
-    bool is_active_on_launch, client::ClientInterface *client)
+    bool is_active_on_launch, client::ClientInterface* client)
     : prop_root_(),
       prop_composition_mode_(nullptr),
       prop_mozc_tool_(nullptr),
@@ -208,7 +208,7 @@ PropertyHandler::~PropertyHandler() {
   prop_root_.Unref();
 }
 
-void PropertyHandler::Register(IbusEngineWrapper *engine) {
+void PropertyHandler::Register(IbusEngineWrapper* engine) {
   engine->RegisterProperties(&prop_root_);
   UpdateContentType(engine);
 }
@@ -224,8 +224,8 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
       is_activated_ ? original_composition_mode_ : kImeOffCompositionMode;
 
   std::string icon_path_for_panel;
-  const char *mode_symbol = nullptr;
-  for (const MozcEngineProperty &entry : kMozcEngineProperties) {
+  const char* mode_symbol = nullptr;
+  for (const MozcEngineProperty& entry : kMozcEngineProperties) {
     const std::string label = translator_->MaybeTranslate(entry.label);
     IBusPropState state = PROP_STATE_UNCHECKED;
     if (entry.composition_mode == initial_mode) {
@@ -266,7 +266,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   prop_root_.Append(&prop_composition_mode_);
 }
 
-void PropertyHandler::UpdateContentTypeImpl(IbusEngineWrapper *engine,
+void PropertyHandler::UpdateContentTypeImpl(IbusEngineWrapper* engine,
                                             bool disabled) {
   const bool prev_is_disabled = is_disabled_;
   is_disabled_ = disabled;
@@ -279,11 +279,11 @@ void PropertyHandler::UpdateContentTypeImpl(IbusEngineWrapper *engine,
   UpdateCompositionModeIcon(engine, visible_mode);
 }
 
-void PropertyHandler::ResetContentType(IbusEngineWrapper *engine) {
+void PropertyHandler::ResetContentType(IbusEngineWrapper* engine) {
   UpdateContentTypeImpl(engine, false);
 }
 
-void PropertyHandler::UpdateContentType(IbusEngineWrapper *engine) {
+void PropertyHandler::UpdateContentType(IbusEngineWrapper* engine) {
   UpdateContentTypeImpl(engine, GetDisabled(engine));
 }
 
@@ -297,7 +297,7 @@ void PropertyHandler::AppendToolPropertyToPanel() {
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
   IbusPropListWrapper sub_prop_list;
 
-  for (const MozcEngineToolProperty &entry : kMozcEngineToolProperties) {
+  for (const MozcEngineToolProperty& entry : kMozcEngineToolProperties) {
     const std::string label = translator_->MaybeTranslate(entry.label);
     // TODO(yusukes): It would be better to use entry.icon here?
     IbusPropertyWrapper item(entry.mode, PROP_TYPE_NORMAL, label, "" /* icon */,
@@ -319,8 +319,8 @@ void PropertyHandler::AppendToolPropertyToPanel() {
   prop_root_.Append(&prop_mozc_tool_);
 }
 
-void PropertyHandler::Update(IbusEngineWrapper *engine,
-                             const commands::Output &output) {
+void PropertyHandler::Update(IbusEngineWrapper* engine,
+                             const commands::Output& output) {
   if (IsDisabled()) {
     return;
   }
@@ -339,13 +339,13 @@ void PropertyHandler::Update(IbusEngineWrapper *engine,
 }
 
 void PropertyHandler::UpdateCompositionModeIcon(
-    IbusEngineWrapper *engine, commands::CompositionMode new_composition_mode) {
+    IbusEngineWrapper* engine, commands::CompositionMode new_composition_mode) {
   if (!prop_composition_mode_.IsInitialized()) {
     return;
   }
 
-  const MozcEngineProperty *entry = nullptr;
-  for (const MozcEngineProperty &property : kMozcEngineProperties) {
+  const MozcEngineProperty* entry = nullptr;
+  for (const MozcEngineProperty& property : kMozcEngineProperties) {
     if (property.composition_mode == new_composition_mode) {
       entry = &property;
       break;
@@ -371,7 +371,7 @@ void PropertyHandler::UpdateCompositionModeIcon(
     // ref.
   }
 
-  const char *mode_symbol = entry->label_for_panel;
+  const char* mode_symbol = entry->label_for_panel;
   // Update the text icon for Gnome shell.
   prop_composition_mode_.SetSymbol(mode_symbol);
 
@@ -407,8 +407,8 @@ void PropertyHandler::SetCompositionMode(
   is_activated_ = output.status().activated();
 }
 
-void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper *engine,
-                                              const char *property_name,
+void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper* engine,
+                                              const char* property_name,
                                               uint property_state) {
   if (IsDisabled()) {
     return;
@@ -424,7 +424,7 @@ void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper *engine,
         continue;
       }
 
-      const MozcEngineToolProperty *entry =
+      const MozcEngineToolProperty* entry =
           prop.GetData<MozcEngineToolProperty>(kMozcEnginePropertyKey);
       if (!entry || !entry->mode) {
         continue;
@@ -450,7 +450,7 @@ void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper *engine,
         continue;
       }
 
-      const MozcEngineProperty *entry =
+      const MozcEngineProperty* entry =
           prop.GetData<MozcEngineProperty>(kMozcEnginePropertyKey);
       if (!entry) {
         continue;

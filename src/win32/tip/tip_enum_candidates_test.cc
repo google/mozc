@@ -54,7 +54,7 @@ TEST(TipEnumCandidatesTest, BasicScenario) {
 
   // Run this block twice to test Reset().
   for (int i = 0; i < 2; ++i) {
-    std::array<ITfCandidateString *, 2> strings;
+    std::array<ITfCandidateString*, 2> strings;
     EXPECT_EQ(candidates.Next(0, strings.data(), nullptr), S_OK);
     EXPECT_EQ(candidates.Reset(), S_OK);
     ULONG fetched = 0;
@@ -78,7 +78,7 @@ TEST(TipEnumCandidatesTest, BasicScenario) {
   EXPECT_EQ(candidates.Clone(cloned.put()), S_OK);
   ASSERT_THAT(cloned, NotNull());
   EXPECT_EQ(cloned->Skip(1), S_OK);
-  std::array<ITfCandidateString *, 2> strings;
+  std::array<ITfCandidateString*, 2> strings;
   ULONG fetched = 0;
   ASSERT_EQ(cloned->Next(2, strings.data(), &fetched), S_FALSE);
   ASSERT_EQ(fetched, 1);

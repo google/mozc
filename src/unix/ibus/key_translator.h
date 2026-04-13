@@ -45,20 +45,20 @@ namespace ibus {
 class KeyTranslator {
  public:
   KeyTranslator() = default;
-  KeyTranslator(const KeyTranslator &) = delete;
-  KeyTranslator &operator=(const KeyTranslator &) = delete;
+  KeyTranslator(const KeyTranslator&) = delete;
+  KeyTranslator& operator=(const KeyTranslator&) = delete;
   virtual ~KeyTranslator() = default;
 
   // Converts ibus keycode to Mozc key code and stores them on |out_event|.
   // Returns true if ibus keycode is successfully converted to Mozc key code.
   bool Translate(uint keyval, uint keycode, uint modifiers,
                  config::Config::PreeditMethod method, bool layout_is_jp,
-                 commands::KeyEvent *out_event) const;
+                 commands::KeyEvent* out_event) const;
 
  private:
   // Returns true iff |keyval| is a key with a kana assigned.
   bool IsKanaAvailable(uint keyval, uint keycode, uint modifiers,
-                       bool layout_is_jp, std::string *out) const;
+                       bool layout_is_jp, std::string* out) const;
 
   // Returns true iff key is ASCII such as '0', 'A', or '!'.
   static bool IsAscii(uint keyval, uint keycode, uint modifiers);

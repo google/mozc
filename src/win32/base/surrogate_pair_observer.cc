@@ -47,17 +47,17 @@ SurrogatePairObserver::SurrogatePairObserver()
     : state_(INITIAL_STATE), surrogate_high_(L'\0'), surrogate_low_(L'\0') {}
 
 SurrogatePairObserver::ClientAction SurrogatePairObserver::OnTestKeyEvent(
-    const VirtualKey &virtual_key, bool is_keydown) {
+    const VirtualKey& virtual_key, bool is_keydown) {
   return OnKeyEvent(virtual_key, is_keydown, true);
 }
 
 SurrogatePairObserver::ClientAction SurrogatePairObserver::OnKeyEvent(
-    const VirtualKey &virtual_key, bool is_keydown) {
+    const VirtualKey& virtual_key, bool is_keydown) {
   return OnKeyEvent(virtual_key, is_keydown, false);
 }
 
 SurrogatePairObserver::ClientAction SurrogatePairObserver::OnKeyEvent(
-    const VirtualKey &virtual_key, bool is_keydown, bool is_test_key) {
+    const VirtualKey& virtual_key, bool is_keydown, bool is_test_key) {
   switch (state_) {
     case INITIAL_STATE: {
       if ((virtual_key.virtual_key() != VK_PACKET)) {

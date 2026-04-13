@@ -106,8 +106,8 @@ class AsyncLayoutChangeEditSessionImpl final
   wil::com_ptr_nothrow<ITfContext> context_;
 };
 
-bool OnLayoutChangedAsyncImpl(TipTextService *text_service,
-                              ITfContext *context) {
+bool OnLayoutChangedAsyncImpl(TipTextService* text_service,
+                              ITfContext* context) {
   if (!text_service || !context) {
     return false;
   }
@@ -145,8 +145,8 @@ class AsyncSetFocusEditSessionImpl final
       TipRangeUtil::GetInputScopes(selection_range.get(), read_cookie,
                                    &input_scopes);
     }
-    ITfThreadMgr *thread_manager = text_service_->GetThreadManager();
-    TipThreadContext *thread_context = text_service_->GetThreadContext();
+    ITfThreadMgr* thread_manager = text_service_->GetThreadManager();
+    TipThreadContext* thread_context = text_service_->GetThreadContext();
     DWORD system_input_mode = 0;
     if (!TipStatus::GetInputModeConversion(
             thread_manager, text_service_->GetClientID(), &system_input_mode)) {
@@ -166,7 +166,7 @@ class AsyncSetFocusEditSessionImpl final
   wil::com_ptr_nothrow<ITfContext> context_;
 };
 
-bool OnUpdateOnOffModeAsync(TipTextService *text_service, ITfContext *context,
+bool OnUpdateOnOffModeAsync(TipTextService* text_service, ITfContext* context,
                             bool open) {
   const auto action = text_service->GetThreadContext()
                           ->GetInputModeManager()
@@ -195,14 +195,14 @@ class AsyncSwitchInputModeEditSessionImpl final
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (!private_context) {
       // This is an unmanaged context. It's OK. Nothing to do.
       return S_OK;
     }
 
-    const TipInputModeManager *input_mode_manager =
+    const TipInputModeManager* input_mode_manager =
         text_service_->GetThreadContext()->GetInputModeManager();
 
     CompositionMode mozc_mode = commands::HIRAGANA;
@@ -249,7 +249,7 @@ class AsyncSwitchInputModeEditSessionImpl final
   uint32_t native_mode_;
 };
 
-bool OnSwitchInputModeAsync(TipTextService *text_service, ITfContext *context,
+bool OnSwitchInputModeAsync(TipTextService* text_service, ITfContext* context,
                             bool open, uint32_t native_mode) {
   auto edit_session = MakeComPtr<AsyncSwitchInputModeEditSessionImpl>(
       text_service, context, open, native_mode);
@@ -270,7 +270,7 @@ class AsyncSessionCommandEditSessionImpl final
   AsyncSessionCommandEditSessionImpl(
       wil::com_ptr_nothrow<TipTextService> text_service,
       wil::com_ptr_nothrow<ITfContext> context,
-      const SessionCommand &session_command)
+      const SessionCommand& session_command)
       : text_service_(std::move(text_service)),
         context_(std::move(context)),
         session_command_(session_command) {}
@@ -280,7 +280,7 @@ class AsyncSessionCommandEditSessionImpl final
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
     Output output;
-    TipPrivateContext *private_context =
+    TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
@@ -298,8 +298,8 @@ class AsyncSessionCommandEditSessionImpl final
   SessionCommand session_command_;
 };
 
-bool OnSessionCommandAsync(TipTextService *text_service, ITfContext *context,
-                           const SessionCommand &session_command) {
+bool OnSessionCommandAsync(TipTextService* text_service, ITfContext* context,
+                           const SessionCommand& session_command) {
   auto edit_session = MakeComPtr<AsyncSessionCommandEditSessionImpl>(
       text_service, context, session_command);
 
@@ -310,8 +310,8 @@ bool OnSessionCommandAsync(TipTextService *text_service, ITfContext *context,
   return SUCCEEDED(hr) && SUCCEEDED(edit_session_result);
 }
 
-bool TurnOnImeAndTryToReconvertFromIme(TipTextService *text_service,
-                                       ITfContext *context) {
+bool TurnOnImeAndTryToReconvertFromIme(TipTextService* text_service,
+                                       ITfContext* context) {
   if (context == nullptr) {
     return false;
   }
@@ -342,7 +342,7 @@ bool TurnOnImeAndTryToReconvertFromIme(TipTextService *text_service,
     return OnUpdateOnOffModeAsync(text_service, context, true);
   }
 
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext* private_context = text_service->GetPrivateContext(context);
   if (!private_context) {
     // This is an unmanaged context. It's OK. Nothing to do.
     return true;
@@ -373,12 +373,12 @@ bool TurnOnImeAndTryToReconvertFromIme(TipTextService *text_service,
   }
 }
 
-bool UndoCommint(TipTextService *text_service, ITfContext *context) {
+bool UndoCommint(TipTextService* text_service, ITfContext* context) {
   if (context == nullptr) {
     return false;
   }
 
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext* private_context = text_service->GetPrivateContext(context);
   if (!private_context) {
     // This is an unmanaged context. It's OK. Nothing to do.
     return true;
@@ -397,7 +397,7 @@ bool UndoCommint(TipTextService *text_service, ITfContext *context) {
     return false;
   }
 
-  const DeletionRange &deletion_range = output.deletion_range();
+  const DeletionRange& deletion_range = output.deletion_range();
   if (deletion_range.offset() > 0 ||
       -deletion_range.offset() != deletion_range.length()) {
     return false;
@@ -433,18 +433,18 @@ bool UndoCommint(TipTextService *text_service, ITfContext *context) {
                                               std::move(output));
 }
 
-bool IsCandidateFocused(const Output &output, uint32_t candidate_id) {
+bool IsCandidateFocused(const Output& output, uint32_t candidate_id) {
   if (!output.has_candidate_window()) {
     return false;
   }
-  const CandidateWindow &candidate_window = output.candidate_window();
+  const CandidateWindow& candidate_window = output.candidate_window();
 
   if (!candidate_window.has_focused_index()) {
     return false;
   }
   const uint32_t focused_index = candidate_window.focused_index();
   for (size_t i = 0; i < candidate_window.candidate_size(); ++i) {
-    const Candidate &candidate = candidate_window.candidate(i);
+    const Candidate& candidate = candidate_window.candidate(i);
     if (candidate.index() != focused_index) {
       continue;
     }
@@ -486,13 +486,13 @@ enum EditSessionMode {
   kSync,
 };
 
-bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
+bool OnOutputReceivedImpl(TipTextService* text_service, ITfContext* context,
                           Output new_output, EditSessionMode mode) {
   if (new_output.has_callback() &&
       new_output.callback().has_session_command() &&
       new_output.callback().session_command().has_type()) {
     // Callback exists.
-    const SessionCommand::CommandType &type =
+    const SessionCommand::CommandType& type =
         new_output.callback().session_command().type();
     switch (type) {
       case SessionCommand::CONVERT_REVERSE:
@@ -507,7 +507,7 @@ bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
   auto edit_session = MakeComPtr<SyncEditSessionImpl>(text_service, context,
                                                       std::move(new_output));
 
-  TipThreadContext *thread_context = text_service->GetThreadContext();
+  TipThreadContext* thread_context = text_service->GetThreadContext();
 
   if (mode == kSync && thread_context->use_async_lock_in_key_handler()) {
     // A workaround for MS Word's failure mode.
@@ -577,7 +577,7 @@ class SyncGetTextEditSessionImpl final
     return S_OK;
   }
 
-  const std::wstring &text() const { return text_; }
+  const std::wstring& text() const { return text_; }
   bool is_composing() const { return is_composing_; }
 
  private:
@@ -617,27 +617,27 @@ class AsyncSetTextEditSessionImpl final
 
 }  // namespace
 
-bool TipEditSession::OnOutputReceivedSync(TipTextService *text_service,
-                                          ITfContext *context,
+bool TipEditSession::OnOutputReceivedSync(TipTextService* text_service,
+                                          ITfContext* context,
                                           Output new_output) {
   return OnOutputReceivedImpl(text_service, context, std::move(new_output),
                               kSync);
 }
 
-bool TipEditSession::OnOutputReceivedAsync(TipTextService *text_service,
-                                           ITfContext *context,
+bool TipEditSession::OnOutputReceivedAsync(TipTextService* text_service,
+                                           ITfContext* context,
                                            Output new_output) {
   return OnOutputReceivedImpl(text_service, context, std::move(new_output),
                               kAsync);
 }
 
-bool TipEditSession::OnLayoutChangedAsync(TipTextService *text_service,
-                                          ITfContext *context) {
+bool TipEditSession::OnLayoutChangedAsync(TipTextService* text_service,
+                                          ITfContext* context) {
   return OnLayoutChangedAsyncImpl(text_service, context);
 }
 
-bool TipEditSession::OnSetFocusAsync(TipTextService *text_service,
-                                     ITfDocumentMgr *document_manager) {
+bool TipEditSession::OnSetFocusAsync(TipTextService* text_service,
+                                     ITfDocumentMgr* document_manager) {
   if (document_manager == nullptr) {
     TipUiHandler::OnFocusChange(text_service, nullptr);
     return true;
@@ -661,8 +661,8 @@ bool TipEditSession::OnSetFocusAsync(TipTextService *text_service,
   return SUCCEEDED(hr) && SUCCEEDED(edit_session_result);
 }
 
-bool TipEditSession::OnModeChangedAsync(TipTextService *text_service) {
-  ITfThreadMgr *thread_mgr = text_service->GetThreadManager();
+bool TipEditSession::OnModeChangedAsync(TipTextService* text_service) {
+  ITfThreadMgr* thread_mgr = text_service->GetThreadManager();
   if (thread_mgr == nullptr) {
     return false;
   }
@@ -695,7 +695,7 @@ bool TipEditSession::OnModeChangedAsync(TipTextService *text_service) {
   return true;
 }
 
-bool TipEditSession::OnOpenCloseChangedAsync(TipTextService *text_service) {
+bool TipEditSession::OnOpenCloseChangedAsync(TipTextService* text_service) {
   wil::com_ptr_nothrow<ITfDocumentMgr> document_manager;
   if (FAILED(text_service->GetThreadManager()->GetFocus(&document_manager))) {
     return false;
@@ -714,15 +714,15 @@ bool TipEditSession::OnOpenCloseChangedAsync(TipTextService *text_service) {
       TipStatus::IsOpen(text_service->GetThreadManager()));
 }
 
-bool TipEditSession::OnRendererCallbackAsync(TipTextService *text_service,
-                                             ITfContext *context, WPARAM wparam,
+bool TipEditSession::OnRendererCallbackAsync(TipTextService* text_service,
+                                             ITfContext* context, WPARAM wparam,
                                              LPARAM lparam) {
   const CommandType type = static_cast<CommandType>(wparam);
   switch (type) {
     case SessionCommand::HIGHLIGHT_CANDIDATE:
     case SessionCommand::SELECT_CANDIDATE: {
       const int32_t candidate_id = static_cast<int32_t>(lparam);
-      TipPrivateContext *private_context =
+      TipPrivateContext* private_context =
           text_service->GetPrivateContext(context);
       if (private_context == nullptr) {
         return false;
@@ -743,9 +743,9 @@ bool TipEditSession::OnRendererCallbackAsync(TipTextService *text_service,
   }
 }
 
-bool TipEditSession::SubmitAsync(TipTextService *text_service,
-                                 ITfContext *context) {
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+bool TipEditSession::SubmitAsync(TipTextService* text_service,
+                                 ITfContext* context) {
+  TipPrivateContext* private_context = text_service->GetPrivateContext(context);
   if (!private_context) {
     // This is an unmanaged context.
     return false;
@@ -756,17 +756,17 @@ bool TipEditSession::SubmitAsync(TipTextService *text_service,
   return OnSessionCommandAsync(text_service, context, session_command);
 }
 
-bool TipEditSession::CancelCompositionAsync(TipTextService *text_service,
-                                            ITfContext *context) {
+bool TipEditSession::CancelCompositionAsync(TipTextService* text_service,
+                                            ITfContext* context) {
   SessionCommand command;
   command.set_type(SessionCommand::REVERT);
   return OnSessionCommandAsync(text_service, context, command);
 }
 
-bool TipEditSession::HilightCandidateAsync(TipTextService *text_service,
-                                           ITfContext *context,
+bool TipEditSession::HilightCandidateAsync(TipTextService* text_service,
+                                           ITfContext* context,
                                            int candidate_id) {
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext* private_context = text_service->GetPrivateContext(context);
   if (!private_context) {
     // This is an unmanaged context.
     return false;
@@ -778,10 +778,10 @@ bool TipEditSession::HilightCandidateAsync(TipTextService *text_service,
   return OnSessionCommandAsync(text_service, context, session_command);
 }
 
-bool TipEditSession::SelectCandidateAsync(TipTextService *text_service,
-                                          ITfContext *context,
+bool TipEditSession::SelectCandidateAsync(TipTextService* text_service,
+                                          ITfContext* context,
                                           int candidate_id) {
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext* private_context = text_service->GetPrivateContext(context);
   if (!private_context) {
     // This is an unmanaged context.
     return false;
@@ -793,8 +793,8 @@ bool TipEditSession::SelectCandidateAsync(TipTextService *text_service,
   return OnSessionCommandAsync(text_service, context, session_command);
 }
 
-bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
-                                                  ITfRange *range) {
+bool TipEditSession::ReconvertFromApplicationSync(TipTextService* text_service,
+                                                  ITfRange* range) {
   if (range == nullptr) {
     return false;
   }
@@ -802,7 +802,7 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
   if (FAILED(range->GetContext(&context))) {
     return false;
   }
-  TipPrivateContext *private_context =
+  TipPrivateContext* private_context =
       text_service->GetPrivateContext(context.get());
   if (!private_context) {
     // This is an unmanaged context.
@@ -843,7 +843,7 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
   return OnOutputReceivedSync(text_service, context.get(), std::move(output));
 }
 
-bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
+bool TipEditSession::SwitchInputModeAsync(TipTextService* text_service,
                                           uint32_t mozc_mode) {
   commands::CompositionMode mode =
       static_cast<commands::CompositionMode>(mozc_mode);
@@ -851,7 +851,7 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
   if (text_service == nullptr) {
     return false;
   }
-  ITfThreadMgr *thread_mgr = text_service->GetThreadManager();
+  ITfThreadMgr* thread_mgr = text_service->GetThreadManager();
   if (thread_mgr == nullptr) {
     return false;
   }
@@ -881,7 +881,7 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
     return OnSwitchInputModeAsync(text_service, context.get(), false,
                                   native_mode);
   }
-  TipPrivateContext *private_context =
+  TipPrivateContext* private_context =
       text_service->GetPrivateContext(context.get());
   if (!private_context) {
     // This is an unmanaged context.
@@ -898,8 +898,8 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
   return OnSwitchInputModeAsync(text_service, context.get(), true, native_mode);
 }
 
-bool TipEditSession::GetTextSync(TipTextService *text_service, ITfRange *range,
-                                 std::wstring *text, bool *is_composing) {
+bool TipEditSession::GetTextSync(TipTextService* text_service, ITfRange* range,
+                                 std::wstring* text, bool* is_composing) {
   wil::com_ptr_nothrow<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {
     return false;
@@ -923,9 +923,9 @@ bool TipEditSession::GetTextSync(TipTextService *text_service, ITfRange *range,
 }
 
 // static
-bool TipEditSession::SetTextAsync(TipTextService *text_service,
+bool TipEditSession::SetTextAsync(TipTextService* text_service,
                                   const std::wstring_view text,
-                                  ITfRange *range) {
+                                  ITfRange* range) {
   wil::com_ptr_nothrow<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {
     return false;

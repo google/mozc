@@ -62,8 +62,8 @@ constexpr GUID kGuidAttrIdTextVerticalWriting = {
     0x4ea9,
     {0xb3, 0x11, 0x97, 0xfd, 0x66, 0xc4, 0x27, 0x4b}};
 
-HRESULT GetReadOnlyAppProperty(ITfRange *range, TfEditCookie read_cookie,
-                               const GUID &guid, VARIANT *variant_addr) {
+HRESULT GetReadOnlyAppProperty(ITfRange* range, TfEditCookie read_cookie,
+                               const GUID& guid, VARIANT* variant_addr) {
   HRESULT result = S_OK;
   wil::com_ptr_nothrow<ITfContext> context;
   result = range->GetContext(&context);
@@ -89,8 +89,8 @@ HRESULT GetReadOnlyAppProperty(ITfRange *range, TfEditCookie read_cookie,
 
 }  // namespace
 
-HRESULT TipRangeUtil::SetSelection(ITfContext *context,
-                                   TfEditCookie edit_cookie, ITfRange *range,
+HRESULT TipRangeUtil::SetSelection(ITfContext* context,
+                                   TfEditCookie edit_cookie, ITfRange* range,
                                    TfActiveSelEnd active_sel_end) {
   if (context == nullptr) {
     return E_INVALIDARG;
@@ -102,10 +102,10 @@ HRESULT TipRangeUtil::SetSelection(ITfContext *context,
   return context->SetSelection(edit_cookie, std::size(selections), selections);
 }
 
-HRESULT TipRangeUtil::GetDefaultSelection(ITfContext *context,
+HRESULT TipRangeUtil::GetDefaultSelection(ITfContext* context,
                                           TfEditCookie edit_cookie,
-                                          ITfRange **range,
-                                          TfActiveSelEnd *active_sel_end) {
+                                          ITfRange** range,
+                                          TfActiveSelEnd* active_sel_end) {
   if (context == nullptr) {
     return E_INVALIDARG;
   }
@@ -131,8 +131,8 @@ HRESULT TipRangeUtil::GetDefaultSelection(ITfContext *context,
   return S_OK;
 }
 
-HRESULT TipRangeUtil::GetText(ITfRange *range, TfEditCookie edit_cookie,
-                              std::wstring *text) {
+HRESULT TipRangeUtil::GetText(ITfRange* range, TfEditCookie edit_cookie,
+                              std::wstring* text) {
   if (range == nullptr) {
     return E_INVALIDARG;
   }
@@ -189,18 +189,16 @@ HRESULT TipRangeUtil::GetText(ITfRange *range, TfEditCookie edit_cookie,
   return S_OK;
 }
 
-HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
-                                     std::vector<InputScope> *input_scopes) {
+HRESULT TipRangeUtil::GetInputScopes(ITfRange* range, TfEditCookie read_cookie,
+                                     std::vector<InputScope>* input_scopes) {
   if (input_scopes == nullptr) {
     return E_FAIL;
   }
   input_scopes->clear();
 
   wil::unique_variant variant;
-  HRESULT result = GetReadOnlyAppProperty(range,
-                                          read_cookie,
-                                          kGuidPropInputscope,
-                                          variant.reset_and_addressof());
+  HRESULT result = GetReadOnlyAppProperty(
+      range, read_cookie, kGuidPropInputscope, variant.reset_and_addressof());
   if (FAILED(result)) {
     return result;
   }
@@ -209,7 +207,7 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
   }
 
   auto input_scope = ComQuery<ITfInputScope>(variant.punkVal);
-  InputScope *input_scopes_buffer = nullptr;
+  InputScope* input_scopes_buffer = nullptr;
   UINT num_input_scopes = 0;
   result = input_scope->GetInputScopes(&input_scopes_buffer, &num_input_scopes);
   if (FAILED(result)) {
@@ -221,19 +219,18 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
   return S_OK;
 }
 
-HRESULT TipRangeUtil::IsVerticalWriting(ITfRange *range,
+HRESULT TipRangeUtil::IsVerticalWriting(ITfRange* range,
                                         TfEditCookie read_cookie,
-                                        bool *vertical_writing) {
+                                        bool* vertical_writing) {
   if (vertical_writing == nullptr) {
     return E_FAIL;
   }
   *vertical_writing = false;
 
   wil::unique_variant variant;
-  HRESULT result = GetReadOnlyAppProperty(range,
-                                          read_cookie,
-                                          kGuidAttrIdTextVerticalWriting,
-                                          variant.reset_and_addressof());
+  HRESULT result =
+      GetReadOnlyAppProperty(range, read_cookie, kGuidAttrIdTextVerticalWriting,
+                             variant.reset_and_addressof());
   if (FAILED(result)) {
     return result;
   }
@@ -242,7 +239,7 @@ HRESULT TipRangeUtil::IsVerticalWriting(ITfRange *range,
 }
 
 bool TipRangeUtil::IsRangeCovered(TfEditCookie edit_cookie,
-                                  ITfRange *range_test, ITfRange *range_cover) {
+                                  ITfRange* range_test, ITfRange* range_cover) {
   HRESULT result = S_OK;
 
   // Check if {the start position of |range_cover|) <= {the start position
@@ -265,9 +262,9 @@ bool TipRangeUtil::IsRangeCovered(TfEditCookie edit_cookie,
   return true;
 }
 
-HRESULT TipRangeUtil::GetTextExt(ITfContextView *context_view,
-                                 TfEditCookie read_cookie, ITfRange *range,
-                                 RECT *rect, bool *clipped) {
+HRESULT TipRangeUtil::GetTextExt(ITfContextView* context_view,
+                                 TfEditCookie read_cookie, ITfRange* range,
+                                 RECT* rect, bool* clipped) {
   BOOL clipped_result = FALSE;
   HRESULT hr =
       context_view->GetTextExt(read_cookie, range, rect, &clipped_result);

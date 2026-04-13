@@ -47,7 +47,7 @@ const wchar_t kClientStateKey[] =
     L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
 const wchar_t kChannelKeyName[] = L"ap";
 
-LONG OpenClientStateKey(CRegKey *key, REGSAM base_sam) {
+LONG OpenClientStateKey(CRegKey* key, REGSAM base_sam) {
   const REGSAM sam_desired = base_sam | KEY_WOW64_32KEY;
   return key->Create(HKEY_LOCAL_MACHINE, kClientStateKey, REG_NONE,
                      REG_OPTION_NON_VOLATILE, sam_desired);
@@ -55,7 +55,7 @@ LONG OpenClientStateKey(CRegKey *key, REGSAM base_sam) {
 }  // namespace
 
 // Writes a REG_SZ channel name into "ap" in Mozc's client state key.
-bool OmahaUtil::WriteChannel(const std::wstring &value) {
+bool OmahaUtil::WriteChannel(const std::wstring& value) {
   CRegKey key;
   LONG result = OpenClientStateKey(&key, KEY_READ | KEY_WRITE);
   if (ERROR_SUCCESS != result) {
@@ -101,8 +101,8 @@ bool OmahaUtil::ClearOmahaError() {
   return true;
 }
 
-bool OmahaUtil::WriteOmahaError(const std::wstring &ui_message,
-                                const std::wstring &header) {
+bool OmahaUtil::WriteOmahaError(const std::wstring& ui_message,
+                                const std::wstring& header) {
   CRegKey key;
   LONG result = OpenClientStateKey(&key, KEY_READ | KEY_WRITE);
   if (ERROR_SUCCESS != result) {
@@ -114,7 +114,7 @@ bool OmahaUtil::WriteOmahaError(const std::wstring &ui_message,
   }
 
   // Leaves Mozc version in addition to UI message for customer support.
-  const std::wstring &message =
+  const std::wstring& message =
       header.length() > 0 ? header + L"\r\n" + ui_message : ui_message;
 
   // This message will be displayed by Omaha meta installer in the error
@@ -144,29 +144,21 @@ bool OmahaUtil::ClearChannel() {
   return true;
 }
 
-#else   // !GOOGLE_JAPANESE_INPUT_BUILD
+#else  // !GOOGLE_JAPANESE_INPUT_BUILD
 
-bool OmahaUtil::WriteChannel(const std::wstring &value) {
-  return true;
-}
+bool OmahaUtil::WriteChannel(const std::wstring& value) { return true; }
 
 // Reads a REG_SZ channel name from "ap" in Mozc's client state key.
-std::wstring OmahaUtil::ReadChannel() {
-  return L"";
-}
+std::wstring OmahaUtil::ReadChannel() { return L""; }
 
-bool OmahaUtil::ClearOmahaError() {
+bool OmahaUtil::ClearOmahaError() { return true; }
+
+bool OmahaUtil::WriteOmahaError(const std::wstring& ui_message,
+                                const std::wstring& header) {
   return true;
 }
 
-bool OmahaUtil::WriteOmahaError(const std::wstring &ui_message,
-                                const std::wstring &header) {
-  return true;
-}
-
-bool OmahaUtil::ClearChannel() {
-  return true;
-}
+bool OmahaUtil::ClearChannel() { return true; }
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 

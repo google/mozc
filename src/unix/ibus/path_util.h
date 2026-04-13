@@ -36,7 +36,7 @@ namespace mozc {
 namespace ibus {
 
 // Returns the icon file path used by ibus_mozc.
-std::string GetIconPath(const std::string &icon_file);
+std::string GetIconPath(const std::string& icon_file);
 
 }  // namespace ibus
 }  // namespace mozc

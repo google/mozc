@@ -40,9 +40,9 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-HRESULT STDMETHODCALLTYPE TipClassFactory::CreateInstance(IUnknown *unknown,
+HRESULT STDMETHODCALLTYPE TipClassFactory::CreateInstance(IUnknown* unknown,
                                                           REFIID interface_id,
-                                                          void **object) {
+                                                          void** object) {
   if (object == nullptr) {
     return E_INVALIDARG;
   }

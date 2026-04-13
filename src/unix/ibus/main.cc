@@ -61,7 +61,7 @@ void IgnoreSigChild() {
 }
 
 // Callback function to the "disconnected" signal to the bus object.
-void OnDisconnected(IBusBus *bus, void *null_data) { IbusWrapper::Quit(); }
+void OnDisconnected(IBusBus* bus, void* null_data) { IbusWrapper::Quit(); }
 
 // Creates a IBusComponent object and add engine(s) to the object.
 IbusComponentWrapper GetIbusComponent() {
@@ -73,7 +73,7 @@ IbusComponentWrapper GetIbusComponent() {
 
   mozc::IbusConfig ibus_config;
   ibus_config.Initialize();
-  for (const Engine &engine : ibus_config.GetConfig().engines()) {
+  for (const Engine& engine : ibus_config.GetConfig().engines()) {
     component.AddEngine(engine.name(), engine.longname(), kEngineDescription,
                         kEngineLanguage, kComponentLicense, kComponentAuthor,
                         icon_path, engine.layout());
@@ -82,10 +82,10 @@ IbusComponentWrapper GetIbusComponent() {
 }
 
 // Initializes ibus components and adds Mozc engine.
-void InitIbusComponent(IbusBusWrapper *bus, MozcEngine *engine,
+void InitIbusComponent(IbusBusWrapper* bus, MozcEngine* engine,
                        bool executed_by_ibus_daemon) {
   // Set callback on disconnected from Ibus.
-  constexpr void *null_data = nullptr;
+  constexpr void* null_data = nullptr;
   bus->SignalConnect("disconnected", OnDisconnected, null_data);
 
   // Bind engine specifications in the user configuration to Ibus engine object.
@@ -120,7 +120,7 @@ void RunIbus() {
 }  // namespace ibus
 }  // namespace mozc
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   if (absl::GetFlag(FLAGS_xml)) {
     mozc::ibus::OutputXml();

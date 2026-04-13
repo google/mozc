@@ -62,7 +62,7 @@ class StringUtil {
 
   // Joins all segment strings in |preedit| and returns it.
   static std::wstring ComposePreeditText(
-      const mozc::commands::Preedit &preedit);
+      const mozc::commands::Preedit& preedit);
 };
 
 }  // namespace win32

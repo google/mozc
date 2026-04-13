@@ -42,7 +42,7 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-bool TipStatus::IsOpen(ITfThreadMgr *thread_mgr) {
+bool TipStatus::IsOpen(ITfThreadMgr* thread_mgr) {
   // Retrieve the compartment manager from the thread manager, which contains
   // the configuration of the owner thread.
   HResultOr<wil::unique_variant> var =
@@ -55,7 +55,7 @@ bool TipStatus::IsOpen(ITfThreadMgr *thread_mgr) {
   return var->vt == VT_I4 && var->lVal != FALSE;
 }
 
-bool TipStatus::IsDisabledContext(ITfContext *context) {
+bool TipStatus::IsDisabledContext(ITfContext* context) {
   // Retrieve the compartment manager from the |context|, which contains the
   // configuration of this context.
   HResultOr<wil::unique_variant> var =
@@ -67,7 +67,7 @@ bool TipStatus::IsDisabledContext(ITfContext *context) {
   return var->vt == VT_I4 && var->lVal != FALSE;
 }
 
-bool TipStatus::IsEmptyContext(ITfContext *context) {
+bool TipStatus::IsEmptyContext(ITfContext* context) {
   // Retrieve the compartment manager from the |context|, which contains the
   // configuration of this context.
   HResultOr<wil::unique_variant> var =
@@ -79,8 +79,8 @@ bool TipStatus::IsEmptyContext(ITfContext *context) {
   return var->vt == VT_I4 && var->lVal != FALSE;
 }
 
-bool TipStatus::GetInputModeConversion(ITfThreadMgr *thread_mgr,
-                                       TfClientId client_id, DWORD *mode) {
+bool TipStatus::GetInputModeConversion(ITfThreadMgr* thread_mgr,
+                                       TfClientId client_id, DWORD* mode) {
   if (mode == nullptr) {
     return false;
   }
@@ -108,7 +108,7 @@ bool TipStatus::GetInputModeConversion(ITfThreadMgr *thread_mgr,
   return true;
 }
 
-bool TipStatus::SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
+bool TipStatus::SetIMEOpen(ITfThreadMgr* thread_mgr, TfClientId client_id,
                            bool open) {
   wil::unique_variant var;
   var.vt = VT_I4;
@@ -119,7 +119,7 @@ bool TipStatus::SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
       .Succeeded();
 }
 
-bool TipStatus::SetInputModeConversion(ITfThreadMgr *thread_mgr,
+bool TipStatus::SetInputModeConversion(ITfThreadMgr* thread_mgr,
                                        DWORD client_id, DWORD native_mode) {
   wil::unique_variant var;
   var.vt = VT_I4;

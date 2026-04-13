@@ -43,7 +43,7 @@ namespace tsf {
 namespace {
 
 wil::com_ptr_nothrow<ITfCompositionView> GetCompositionViewInternal(
-    ITfContextComposition *context_composition, ITfRange *range,
+    ITfContextComposition* context_composition, ITfRange* range,
     TfEditCookie edit_cookie) {
   wil::com_ptr_nothrow<IEnumITfCompositionView> enum_composition;
   if (FAILED(context_composition->FindComposition(edit_cookie, range,
@@ -76,14 +76,14 @@ wil::com_ptr_nothrow<ITfCompositionView> GetCompositionViewInternal(
 }  // namespace
 
 wil::com_ptr_nothrow<ITfComposition> TipCompositionUtil::GetComposition(
-    ITfContext *context, TfEditCookie edit_cookie) {
+    ITfContext* context, TfEditCookie edit_cookie) {
   wil::com_ptr_nothrow<ITfCompositionView> composition_view =
       GetCompositionView(context, edit_cookie);
   return ComCopy<ITfComposition>(composition_view);
 }
 
 wil::com_ptr_nothrow<ITfCompositionView> TipCompositionUtil::GetCompositionView(
-    ITfContext *context, TfEditCookie edit_cookie) {
+    ITfContext* context, TfEditCookie edit_cookie) {
   auto context_composition = ComQuery<ITfContextComposition>(context);
   if (!context_composition) {
     return nullptr;
@@ -93,7 +93,7 @@ wil::com_ptr_nothrow<ITfCompositionView> TipCompositionUtil::GetCompositionView(
 }
 
 wil::com_ptr_nothrow<ITfCompositionView>
-TipCompositionUtil::GetCompositionViewFromRange(ITfRange *range,
+TipCompositionUtil::GetCompositionViewFromRange(ITfRange* range,
                                                 TfEditCookie edit_cookie) {
   HRESULT result = S_OK;
 
@@ -110,8 +110,8 @@ TipCompositionUtil::GetCompositionViewFromRange(ITfRange *range,
                                     edit_cookie);
 }
 
-HRESULT TipCompositionUtil::ClearDisplayAttributes(ITfContext *context,
-                                                   ITfComposition *composition,
+HRESULT TipCompositionUtil::ClearDisplayAttributes(ITfContext* context,
+                                                   ITfComposition* composition,
                                                    TfEditCookie write_cookie) {
   HRESULT result = S_OK;
 

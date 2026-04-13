@@ -97,7 +97,7 @@ LPARAM CreateLParam(uint16_t repeat_count, uint8_t scan_code,
 
 class TestServerLauncher : public client::ServerLauncherInterface {
  public:
-  explicit TestServerLauncher(IPCClientFactoryMock *factory)
+  explicit TestServerLauncher(IPCClientFactoryMock* factory)
       : factory_(factory),
         start_server_result_(false),
         start_server_called_(false),
@@ -107,7 +107,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
   virtual void Wait() {}
   virtual void Error() {}
 
-  bool StartServer(client::ClientInterface *client) override {
+  bool StartServer(client::ClientInterface* client) override {
     if (!response_.empty()) {
       factory_->SetMockResponse(response_);
     }
@@ -155,12 +155,12 @@ class TestServerLauncher : public client::ServerLauncherInterface {
     return server_protocol_version_;
   }
 
-  void set_mock_after_start_server(const Output &mock_output) {
+  void set_mock_after_start_server(const Output& mock_output) {
     mock_output.SerializeToString(&response_);
   }
 
  private:
-  IPCClientFactoryMock *factory_;
+  IPCClientFactoryMock* factory_;
   bool start_server_result_;
   bool start_server_called_;
   uint32_t server_protocol_version_;
@@ -179,21 +179,21 @@ class KeyboardMock : public Win32KeyboardInterface {
   bool kana_locked() const {
     return ((key_state_.GetState(VK_KANA) & kPressed) == kPressed);
   }
-  bool IsKanaLocked(const KeyboardStatus & /*keyboard_state*/) override {
+  bool IsKanaLocked(const KeyboardStatus& /*keyboard_state*/) override {
     return kana_locked();
   }
-  bool SetKeyboardState(const KeyboardStatus &keyboard_state) override {
+  bool SetKeyboardState(const KeyboardStatus& keyboard_state) override {
     key_state_ = keyboard_state;
     return true;
   }
-  bool GetKeyboardState(KeyboardStatus *keyboard_state) override {
+  bool GetKeyboardState(KeyboardStatus* keyboard_state) override {
     *keyboard_state = key_state_;
     return true;
   }
   bool AsyncIsKeyPressed(int virtual_key) override {
     return key_state_.IsPressed(virtual_key);
   }
-  int ToUnicode(UINT wVirtKey, UINT wScanCode, const BYTE *lpKeyState,
+  int ToUnicode(UINT wVirtKey, UINT wScanCode, const BYTE* lpKeyState,
                 LPWSTR pwszBuff, int cchBuff, UINT wFlags) override {
     // We use a mock class in case the Japanese keyboard layout is not
     // available on this system.  This emulator class should work well in most
@@ -214,7 +214,7 @@ class KeyboardMock : public Win32KeyboardInterface {
 class MockState {
  public:
   MockState() : client_(nullptr), launcher_(nullptr) {}
-  explicit MockState(const Output &mock_response)
+  explicit MockState(const Output& mock_response)
       : client_(client::ClientFactory::NewClient()), launcher_(nullptr) {
     client_factory_.SetConnection(true);
     client_factory_.SetResult(true);
@@ -227,12 +227,12 @@ class MockState {
     client_->SetServerLauncher(std::move(launcher));
     launcher_->set_start_server_result(true);
   }
-  MockState(const MockState &) = delete;
-  MockState &operator=(const MockState &) = delete;
+  MockState(const MockState&) = delete;
+  MockState& operator=(const MockState&) = delete;
 
-  client::ClientInterface *mutable_client() { return client_.get(); }
+  client::ClientInterface* mutable_client() { return client_.get(); }
 
-  bool GetGeneratedRequest(mozc::commands::Input *input) {
+  bool GetGeneratedRequest(mozc::commands::Input* input) {
     return input->ParseFromString(client_factory_.GetGeneratedRequest());
   }
 
@@ -241,7 +241,7 @@ class MockState {
  private:
   IPCClientFactoryMock client_factory_;
   std::unique_ptr<client::ClientInterface> client_;
-  TestServerLauncher *launcher_;
+  TestServerLauncher* launcher_;
 };
 
 class KeyEventHandlerTest : public testing::TestWithTempUserProfile {

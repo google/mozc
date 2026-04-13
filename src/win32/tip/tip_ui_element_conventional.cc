@@ -72,7 +72,7 @@ class TipCandidateListImpl final
 
  private:
   // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) override {
+  STDMETHODIMP QueryInterface(REFIID interface_id, void** object) override {
     if (!object) {
       return E_POINTER;
     }
@@ -92,36 +92,36 @@ class TipCandidateListImpl final
   }
 
   // The ITfUIElement interface methods
-  STDMETHODIMP GetDescription(BSTR *description) override {
+  STDMETHODIMP GetDescription(BSTR* description) override {
     return delegate_->GetDescription(description);
   }
-  STDMETHODIMP GetGUID(GUID *guid) override { return delegate_->GetGUID(guid); }
+  STDMETHODIMP GetGUID(GUID* guid) override { return delegate_->GetGUID(guid); }
   STDMETHODIMP Show(BOOL show) override { return delegate_->Show(show); }
-  STDMETHODIMP IsShown(BOOL *show) override { return delegate_->IsShown(show); }
+  STDMETHODIMP IsShown(BOOL* show) override { return delegate_->IsShown(show); }
 
   // The ITfCandidateListUIElement interface methods
-  STDMETHODIMP GetUpdatedFlags(DWORD *flags) override {
+  STDMETHODIMP GetUpdatedFlags(DWORD* flags) override {
     return delegate_->GetUpdatedFlags(flags);
   }
-  STDMETHODIMP GetDocumentMgr(ITfDocumentMgr **document_manager) override {
+  STDMETHODIMP GetDocumentMgr(ITfDocumentMgr** document_manager) override {
     return delegate_->GetDocumentMgr(document_manager);
   }
-  STDMETHODIMP GetCount(UINT *count) override {
+  STDMETHODIMP GetCount(UINT* count) override {
     return delegate_->GetCount(count);
   }
-  STDMETHODIMP GetSelection(UINT *index) override {
+  STDMETHODIMP GetSelection(UINT* index) override {
     return delegate_->GetSelection(index);
   }
-  STDMETHODIMP GetString(UINT index, BSTR *text) override {
+  STDMETHODIMP GetString(UINT index, BSTR* text) override {
     return delegate_->GetString(index, text);
   }
-  STDMETHODIMP GetPageIndex(UINT *index, UINT size, UINT *page_count) override {
+  STDMETHODIMP GetPageIndex(UINT* index, UINT size, UINT* page_count) override {
     return delegate_->GetPageIndex(index, size, page_count);
   }
-  STDMETHODIMP SetPageIndex(UINT *index, UINT page_count) override {
+  STDMETHODIMP SetPageIndex(UINT* index, UINT page_count) override {
     return delegate_->SetPageIndex(index, page_count);
   }
-  STDMETHODIMP GetCurrentPage(UINT *current_page) override {
+  STDMETHODIMP GetCurrentPage(UINT* current_page) override {
     return delegate_->GetCurrentPage(current_page);
   }
 
@@ -161,15 +161,15 @@ class TipIndicatorImpl final : public TipComImplements<ITfToolTipUIElement> {
             TipUiElementDelegateFactory::kConventionalIndicatorWindow)) {}
 
   // The ITfUIElement interface methods
-  STDMETHODIMP GetDescription(BSTR *description) override {
+  STDMETHODIMP GetDescription(BSTR* description) override {
     return delegate_->GetDescription(description);
   }
-  STDMETHODIMP GetGUID(GUID *guid) override { return delegate_->GetGUID(guid); }
+  STDMETHODIMP GetGUID(GUID* guid) override { return delegate_->GetGUID(guid); }
   STDMETHODIMP Show(BOOL show) override { return delegate_->Show(show); }
-  STDMETHODIMP IsShown(BOOL *show) override { return delegate_->IsShown(show); }
+  STDMETHODIMP IsShown(BOOL* show) override { return delegate_->IsShown(show); }
 
   // The ITfToolTipUIElement interface methods
-  STDMETHODIMP GetString(BSTR *str) override {
+  STDMETHODIMP GetString(BSTR* str) override {
     return delegate_->GetString(str);
   }
 

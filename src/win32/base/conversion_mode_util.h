@@ -54,13 +54,13 @@ class ConversionModeUtil {
   // flag.
   static bool ToNativeMode(mozc::commands::CompositionMode mode,
                            bool kana_lock_enabled_in_hiragana_mode,
-                           uint32_t *flag);
+                           uint32_t* flag);
 
   // Converts combination of TF_CONVERSIONMODE_* to corresponding |mode|.
   // This function ignores TF_CONVERSIONMODE_ROMAN flag.
   // This his behavior is the same to that of MS-IME 98 or later.
   // http://support.microsoft.com/kb/419357
-  static bool ToMozcMode(uint32_t flag, mozc::commands::CompositionMode *mode);
+  static bool ToMozcMode(uint32_t flag, mozc::commands::CompositionMode* mode);
 
   // A variant of ToNativeMode but takes mozc::commands::Status.
   // |logical_imm32_mode| is the conversion mode that should be reported to
@@ -68,13 +68,13 @@ class ConversionModeUtil {
   // |visible_imm32_mode| is the conversion mode that should be visible from
   // the user.
   static bool ConvertStatusFromMozcToNative(
-      const mozc::commands::Status &status,
-      bool kana_lock_enabled_in_hiragana_mode, bool *is_open,
-      DWORD *logical_imm32_mode, DWORD *visible_imm32_mode);
+      const mozc::commands::Status& status,
+      bool kana_lock_enabled_in_hiragana_mode, bool* is_open,
+      DWORD* logical_imm32_mode, DWORD* visible_imm32_mode);
 
   // A variant of ToMozcMode but returns mozc::commands::CompositionMode.
   static bool GetMozcModeFromNativeMode(
-      DWORD imm32_mode, mozc::commands::CompositionMode *mozc_mode);
+      DWORD imm32_mode, mozc::commands::CompositionMode* mozc_mode);
 };
 }  // namespace win32
 }  // namespace mozc

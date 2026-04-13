@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "unix/ibus/key_event_handler.h"
+
 #include <cstddef>
 
 #include "absl/log/check.h"
@@ -37,7 +38,7 @@ namespace mozc {
 namespace ibus {
 
 namespace {
-bool IsModifierToBeSentOnKeyUp(const commands::KeyEvent &key_event) {
+bool IsModifierToBeSentOnKeyUp(const commands::KeyEvent& key_event) {
   if (key_event.modifier_keys_size() == 0) {
     return false;
   }
@@ -57,7 +58,7 @@ KeyEventHandler::KeyEventHandler() : key_translator_(new KeyTranslator) {
 
 bool KeyEventHandler::GetKeyEvent(uint keyval, uint keycode, uint modifiers,
                                   config::Config::PreeditMethod preedit_method,
-                                  bool layout_is_jp, commands::KeyEvent *key) {
+                                  bool layout_is_jp, commands::KeyEvent* key) {
   DCHECK(key);
   key->Clear();
 
@@ -90,7 +91,7 @@ void KeyEventHandler::Clear() {
 }
 
 bool KeyEventHandler::ProcessModifiers(bool is_key_up, uint keyval,
-                                       commands::KeyEvent *key_event) {
+                                       commands::KeyEvent* key_event) {
   // Manage modifier key event.
   // Modifier key event is sent on key up if non-modifier key has not been
   // pressed since key down of modifier keys and no modifier keys are pressed

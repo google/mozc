@@ -97,7 +97,7 @@ BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
 // This module exports only the IClassFactory object, which is a COM interface
 // that creates an instance of the COM objects implemented by this module.
 STDAPI DllGetClassObject(REFCLSID class_id, REFIID interface_id,
-                         void **object) {
+                         void** object) {
   absl::call_once(initialize_once, &TipBuildGlobalObjects);
   if (object == nullptr) {
     return E_INVALIDARG;
@@ -105,7 +105,7 @@ STDAPI DllGetClassObject(REFCLSID class_id, REFIID interface_id,
   if ((::IsEqualIID(interface_id, IID_IClassFactory) ||
        ::IsEqualIID(interface_id, IID_IUnknown)) &&
       ::IsEqualGUID(class_id, TsfProfile::GetTextServiceGuid())) {
-    IClassFactory *factory = new mozc::win32::tsf::TipClassFactory();
+    IClassFactory* factory = new mozc::win32::tsf::TipClassFactory();
     factory->AddRef();
     *object = factory;
     return NOERROR;

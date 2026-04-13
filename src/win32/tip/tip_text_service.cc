@@ -182,7 +182,7 @@ constexpr GUID kTipFunctionProvider = {
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-HRESULT SpawnTool(const std::string &command) {
+HRESULT SpawnTool(const std::string& command) {
   if (!Process::SpawnMozcProcess(kMozcTool, "--mode=" + command)) {
     return E_FAIL;
   }
@@ -247,12 +247,12 @@ wil::com_ptr_nothrow<ITfCategoryMgr> GetCategoryMgr() {
 // Custom hash function for wil::com_ptr_nothrow.
 template <typename T>
 struct ComPtrHash {
-  size_t operator()(const wil::com_ptr_nothrow<T> &value) const {
+  size_t operator()(const wil::com_ptr_nothrow<T>& value) const {
     // The minimum size of COM objects is the pointer to vtable.
     // For instance the last 3 bits are guaranteed to be zero on 64-bit
     // processes.
     constexpr size_t kUnusedBits =
-        std::max(std::bit_width(sizeof(void *)), 1) - 1;
+        std::max(std::bit_width(sizeof(void*)), 1) - 1;
     // Compress the data by shifting unused bits.
     return reinterpret_cast<size_t>(value.get()) >> kUnusedBits;
   }
@@ -260,7 +260,7 @@ struct ComPtrHash {
 
 // Custom hash function for GUID.
 struct GuidHash {
-  size_t operator()(const GUID &value) const {
+  size_t operator()(const GUID& value) const {
     // Compress the data by shifting unused bits.
     return value.Data1;
   }
@@ -270,15 +270,15 @@ struct GuidHash {
 class PrivateContextWrapper final {
  public:
   PrivateContextWrapper() = delete;
-  PrivateContextWrapper(const PrivateContextWrapper &) = delete;
-  PrivateContextWrapper &operator=(const PrivateContextWrapper &) = delete;
+  PrivateContextWrapper(const PrivateContextWrapper&) = delete;
+  PrivateContextWrapper& operator=(const PrivateContextWrapper&) = delete;
 
   explicit PrivateContextWrapper(absl::AnyInvocable<void() &&> sink_cleaner)
       : sink_cleaner_(std::move(sink_cleaner)) {}
 
   ~PrivateContextWrapper() { std::move(sink_cleaner_)(); }
 
-  TipPrivateContext *get() { return &private_context_; }
+  TipPrivateContext* get() { return &private_context_; }
 
  private:
   absl::AnyInvocable<void() &&> sink_cleaner_;
@@ -297,7 +297,7 @@ class CompositionSinkImpl final : public TipComImplements<ITfCompositionSink> {
   // This function is called by Windows when an ongoing composition is
   // terminated by applications.
   STDMETHODIMP OnCompositionTerminated(TfEditCookie write_cookie,
-                                       ITfComposition *composition) override {
+                                       ITfComposition* composition) override {
     return TipEditSessionImpl::OnCompositionTerminated(
         text_service_.get(), context_.get(), composition, write_cookie);
   }
@@ -315,10 +315,10 @@ constexpr wchar_t kTipKeyRoman[] = L"Roman";
 constexpr wchar_t kTipKeyNoRoman[] = L"NoRoman";
 
 struct PreserveKeyItem {
-  const GUID &guid;
+  const GUID& guid;
   TF_PRESERVEDKEY key;
   DWORD mapped_vkey;
-  const wchar_t *description;
+  const wchar_t* description;
   size_t length;
 };
 
@@ -364,7 +364,7 @@ class UpdateUiEditSessionImpl final : public TipComImplements<ITfEditSession> {
     return S_OK;
   }
 
-  static bool BeginRequest(TipTextService *text_service, ITfContext *context) {
+  static bool BeginRequest(TipTextService* text_service, ITfContext* context) {
     // When RequestEditSession fails, it does not maintain the reference count.
     // So we need to ensure that AddRef/Release should be called at least once
     // per object.
@@ -387,7 +387,7 @@ class UpdateUiEditSessionImpl final : public TipComImplements<ITfEditSession> {
   wil::com_ptr_nothrow<ITfContext> context_;
 };
 
-bool RegisterWindowClass(HINSTANCE module_handle, const wchar_t *class_name,
+bool RegisterWindowClass(HINSTANCE module_handle, const wchar_t* class_name,
                          WNDPROC window_procedure) {
   WNDCLASSEXW wc = {};
   wc.cbSize = sizeof(WNDCLASSEX);
@@ -440,7 +440,7 @@ class TipTextServiceImpl
   }
 
   // ITfTextInputProcessorEx
-  STDMETHODIMP Activate(ITfThreadMgr *thread_mgr,
+  STDMETHODIMP Activate(ITfThreadMgr* thread_mgr,
                         TfClientId client_id) override {
     return ActivateEx(thread_mgr, client_id, 0);
   }
@@ -494,7 +494,7 @@ class TipTextServiceImpl
 
     return S_OK;
   }
-  STDMETHODIMP ActivateEx(ITfThreadMgr *thread_mgr, TfClientId client_id,
+  STDMETHODIMP ActivateEx(ITfThreadMgr* thread_mgr, TfClientId client_id,
                           DWORD flags) override {
     if (TipDllModule::IsUnloaded()) {
       // Crash report indicates that this method is called after the DLL is
@@ -649,7 +649,7 @@ class TipTextServiceImpl
 
   // ITfDisplayAttributeProvider
   STDMETHODIMP
-  EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo **attributes) override {
+  EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo** attributes) override {
     if (attributes == nullptr) {
       return E_INVALIDARG;
     }
@@ -658,7 +658,7 @@ class TipTextServiceImpl
     return S_OK;
   }
   STDMETHODIMP GetDisplayAttributeInfo(
-      REFGUID guid, ITfDisplayAttributeInfo **attribute) override {
+      REFGUID guid, ITfDisplayAttributeInfo** attribute) override {
     if (attribute == nullptr) {
       return E_INVALIDARG;
     }
@@ -679,13 +679,13 @@ class TipTextServiceImpl
 
   // ITfThreadMgrEventSink
   STDMETHODIMP
-  OnInitDocumentMgr(ITfDocumentMgr *document) override {
+  OnInitDocumentMgr(ITfDocumentMgr* document) override {
     // In order to defer the initialization timing of TipPrivateContext,
     // we won't call OnDocumentMgrChanged against |document| here.
     return S_OK;
   }
   STDMETHODIMP
-  OnUninitDocumentMgr(ITfDocumentMgr *document) override {
+  OnUninitDocumentMgr(ITfDocumentMgr* document) override {
     // Usually |document| no longer has any context here: all the contexts are
     // likely to be destroyed through ITfThreadMgrEventSink::OnPushContext.
     // We enumerate remaining contexts just in case.
@@ -711,17 +711,17 @@ class TipTextServiceImpl
 
     return S_OK;
   }
-  STDMETHODIMP OnSetFocus(ITfDocumentMgr *focused,
-                          ITfDocumentMgr *previous) override {
+  STDMETHODIMP OnSetFocus(ITfDocumentMgr* focused,
+                          ITfDocumentMgr* previous) override {
     GetThreadContext()->IncrementFocusRevision();
     OnDocumentMgrChanged(focused);
     return S_OK;
   }
-  STDMETHODIMP OnPushContext(ITfContext *context) override {
+  STDMETHODIMP OnPushContext(ITfContext* context) override {
     EnsurePrivateContextExists(context);
     return S_OK;
   }
-  STDMETHODIMP OnPopContext(ITfContext *context) override {
+  STDMETHODIMP OnPopContext(ITfContext* context) override {
     RemovePrivateContextIfExists(context);
     return S_OK;
   }
@@ -734,7 +734,7 @@ class TipTextServiceImpl
     // establish conection failed, retry again as if this was the first attempt.
     // TODO(yukawa): We should give up if this fails a number of times.
     if (WinUtil::IsProcessSandboxed()) {
-      auto *private_context = GetFocusedPrivateContext();
+      auto* private_context = GetFocusedPrivateContext();
       if (private_context != nullptr) {
         private_context->EnsureInitialized();
       }
@@ -760,23 +760,23 @@ class TipTextServiceImpl
   }
 
   // ITfTextEditSink
-  STDMETHODIMP OnEndEdit(ITfContext *context, TfEditCookie edit_cookie,
-                         ITfEditRecord *edit_record) override {
+  STDMETHODIMP OnEndEdit(ITfContext* context, TfEditCookie edit_cookie,
+                         ITfEditRecord* edit_record) override {
     return TipEditSessionImpl::OnEndEdit(this, context, edit_cookie,
                                          edit_record);
   }
 
   STDMETHODIMP
-  OnLayoutChange(ITfContext *context, TfLayoutCode layout_code,
-                 ITfContextView *context_view) override {
+  OnLayoutChange(ITfContext* context, TfLayoutCode layout_code,
+                 ITfContextView* context_view) override {
     TipEditSession::OnLayoutChangedAsync(this, context);
     return S_OK;
   }
 
   // ITfKeyEventSink
   STDMETHODIMP OnSetFocus(BOOL foreground) override { return S_OK; }
-  STDMETHODIMP OnTestKeyDown(ITfContext *context, WPARAM wparam, LPARAM lparam,
-                             BOOL *eaten) override {
+  STDMETHODIMP OnTestKeyDown(ITfContext* context, WPARAM wparam, LPARAM lparam,
+                             BOOL* eaten) override {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
@@ -787,8 +787,8 @@ class TipTextServiceImpl
   }
 
   // ITfKeyEventSink
-  STDMETHODIMP OnTestKeyUp(ITfContext *context, WPARAM wparam, LPARAM lparam,
-                           BOOL *eaten) override {
+  STDMETHODIMP OnTestKeyUp(ITfContext* context, WPARAM wparam, LPARAM lparam,
+                           BOOL* eaten) override {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
@@ -797,8 +797,8 @@ class TipTextServiceImpl
     return TipKeyeventHandler::OnTestKeyUp(this, context, wparam, lparam,
                                            eaten);
   }
-  STDMETHODIMP OnKeyDown(ITfContext *context, WPARAM wparam, LPARAM lparam,
-                         BOOL *eaten) override {
+  STDMETHODIMP OnKeyDown(ITfContext* context, WPARAM wparam, LPARAM lparam,
+                         BOOL* eaten) override {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
@@ -806,8 +806,8 @@ class TipTextServiceImpl
     *eaten = FALSE;
     return TipKeyeventHandler::OnKeyDown(this, context, wparam, lparam, eaten);
   }
-  STDMETHODIMP OnKeyUp(ITfContext *context, WPARAM wparam, LPARAM lparam,
-                       BOOL *eaten) override {
+  STDMETHODIMP OnKeyUp(ITfContext* context, WPARAM wparam, LPARAM lparam,
+                       BOOL* eaten) override {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
@@ -815,8 +815,8 @@ class TipTextServiceImpl
     *eaten = FALSE;
     return TipKeyeventHandler::OnKeyUp(this, context, wparam, lparam, eaten);
   }
-  STDMETHODIMP OnPreservedKey(ITfContext *context, REFGUID guid,
-                              BOOL *eaten) override {
+  STDMETHODIMP OnPreservedKey(ITfContext* context, REFGUID guid,
+                              BOOL* eaten) override {
     HRESULT result = S_OK;
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
@@ -844,7 +844,7 @@ class TipTextServiceImpl
   }
 
   // ITfFnConfigure
-  STDMETHODIMP GetDisplayName(BSTR *name) override {
+  STDMETHODIMP GetDisplayName(BSTR* name) override {
     if (name == nullptr) {
       return E_INVALIDARG;
     }
@@ -856,22 +856,22 @@ class TipTextServiceImpl
   }
 
   // ITfFunctionProvider
-  STDMETHODIMP GetType(GUID *guid) override {
+  STDMETHODIMP GetType(GUID* guid) override {
     if (guid == nullptr) {
       return E_INVALIDARG;
     }
     *guid = kTipFunctionProvider;
     return S_OK;
   }
-  STDMETHODIMP GetDescription(BSTR *description) override {
+  STDMETHODIMP GetDescription(BSTR* description) override {
     if (description == nullptr) {
       return E_INVALIDARG;
     }
     *description = SysAllocString(L"");
     return *description ? S_OK : E_FAIL;
   }
-  STDMETHODIMP GetFunction(const GUID &guid, const IID &iid,
-                           IUnknown **unknown) override {
+  STDMETHODIMP GetFunction(const GUID& guid, const IID& iid,
+                           IUnknown** unknown) override {
     if (unknown == nullptr) {
       return E_INVALIDARG;
     }
@@ -886,7 +886,7 @@ class TipTextServiceImpl
   }
 
   // ITfCompartmentEventSink
-  STDMETHODIMP OnChange(const GUID &guid) override {
+  STDMETHODIMP OnChange(const GUID& guid) override {
     if (!thread_mgr_) {
       return E_FAIL;
     }
@@ -923,7 +923,7 @@ class TipTextServiceImpl
         return S_OK;
     }
   }
-  STDMETHODIMP OnItemClick(const wchar_t *description) override {
+  STDMETHODIMP OnItemClick(const wchar_t* description) override {
     // Change input mode to be consistent with MSIME 2012 on Windows 8.
     const bool open =
         thread_context_->GetInputModeManager()->GetEffectiveOpenClose();
@@ -940,7 +940,7 @@ class TipTextServiceImpl
 
   // TipTextService
   TfClientId GetClientID() const override { return client_id_; }
-  ITfThreadMgr *GetThreadManager() const override { return thread_mgr_.get(); }
+  ITfThreadMgr* GetThreadManager() const override { return thread_mgr_.get(); }
   TfGuidAtom input_attribute() const override { return input_attribute_; }
   TfGuidAtom converted_attribute() const override {
     return converted_attribute_;
@@ -950,10 +950,10 @@ class TipTextServiceImpl
   }
 
   wil::com_ptr_nothrow<ITfCompositionSink> CreateCompositionSink(
-      ITfContext *context) override {
+      ITfContext* context) override {
     return MakeComPtr<CompositionSinkImpl>(this, context);
   }
-  TipPrivateContext *GetPrivateContext(ITfContext *context) override {
+  TipPrivateContext* GetPrivateContext(ITfContext* context) override {
     if (context == nullptr) {
       return nullptr;
     }
@@ -963,7 +963,7 @@ class TipTextServiceImpl
     }
     return it->second->get();
   }
-  TipThreadContext *GetThreadContext() override {
+  TipThreadContext* GetThreadContext() override {
     return thread_context_.get();
   }
   void PostUIUpdateMessage() override {
@@ -983,7 +983,7 @@ class TipTextServiceImpl
 
  private:
   // Following functions are private utilities.
-  static void StorePointerForCurrentThread(TipTextServiceImpl *impl) {
+  static void StorePointerForCurrentThread(TipTextServiceImpl* impl) {
     if (g_module_unloaded) {
       return;
     }
@@ -992,17 +992,17 @@ class TipTextServiceImpl
     }
     ::TlsSetValue(g_tls_index, impl);
   }
-  static TipTextServiceImpl *Self() {
+  static TipTextServiceImpl* Self() {
     if (g_module_unloaded) {
       return nullptr;
     }
     if (g_tls_index == TLS_OUT_OF_INDEXES) {
       return nullptr;
     }
-    return static_cast<TipTextServiceImpl *>(::TlsGetValue(g_tls_index));
+    return static_cast<TipTextServiceImpl*>(::TlsGetValue(g_tls_index));
   }
 
-  HRESULT OnDocumentMgrChanged(ITfDocumentMgr *document_mgr) {
+  HRESULT OnDocumentMgrChanged(ITfDocumentMgr* document_mgr) {
     // nullptr document is not an error.
     if (document_mgr != nullptr) {
       wil::com_ptr_nothrow<ITfContext> context;
@@ -1014,7 +1014,7 @@ class TipTextServiceImpl
     return S_OK;
   }
 
-  void EnsurePrivateContextExists(ITfContext *context) {
+  void EnsurePrivateContextExists(ITfContext* context) {
     if (context == nullptr) {
       // Do not care about nullptr context.
       return;
@@ -1037,15 +1037,14 @@ class TipTextServiceImpl
     DWORD text_edit_sink_cookie = TF_INVALID_COOKIE;
     DWORD text_layout_sink_cookie = TF_INVALID_COOKIE;
     if (FAILED(source->AdviseSink(IID_ITfTextEditSink,
-                                  absl::implicit_cast<ITfTextEditSink *>(this),
+                                  absl::implicit_cast<ITfTextEditSink*>(this),
                                   &text_edit_sink_cookie))) {
       // In general this should not happen.
       text_edit_sink_cookie = TF_INVALID_COOKIE;
     }
-    if (FAILED(
-            source->AdviseSink(IID_ITfTextLayoutSink,
-                               absl::implicit_cast<ITfTextLayoutSink *>(this),
-                               &text_layout_sink_cookie))) {
+    if (FAILED(source->AdviseSink(IID_ITfTextLayoutSink,
+                                  absl::implicit_cast<ITfTextLayoutSink*>(this),
+                                  &text_layout_sink_cookie))) {
       // In general this should not happen.
       text_layout_sink_cookie = TF_INVALID_COOKIE;
     }
@@ -1063,13 +1062,13 @@ class TipTextServiceImpl
                      }));
   }
 
-  void RemovePrivateContextIfExists(ITfContext *context) {
+  void RemovePrivateContextIfExists(ITfContext* context) {
     private_context_map_.erase(context);
   }
 
   void UninitPrivateContexts() { private_context_map_.clear(); }
 
-  TipPrivateContext *GetFocusedPrivateContext() {
+  TipPrivateContext* GetFocusedPrivateContext() {
     wil::com_ptr_nothrow<ITfDocumentMgr> focused_document;
     if (FAILED(thread_mgr_->GetFocus(&focused_document))) {
       return nullptr;
@@ -1091,7 +1090,7 @@ class TipTextServiceImpl
     ASSIGN_OR_RETURN_HRESULT(auto source, ComQueryHR<ITfSource>(thread_mgr_));
 
     const HRESULT result = source->AdviseSink(
-        IID_ITfThreadMgrEventSink, static_cast<ITfThreadMgrEventSink *>(this),
+        IID_ITfThreadMgrEventSink, static_cast<ITfThreadMgrEventSink*>(this),
         &thread_mgr_cookie_);
 
     if (FAILED(result)) {
@@ -1130,7 +1129,7 @@ class TipTextServiceImpl
     ASSIGN_OR_RETURN_HRESULT(auto keystroke,
                              ComQueryHR<ITfKeystrokeMgr>(thread_mgr_));
     return keystroke->AdviseKeyEventSink(
-        client_id_, static_cast<ITfKeyEventSink *>(this), TRUE);
+        client_id_, static_cast<ITfKeyEventSink*>(this), TRUE);
   }
 
   HRESULT UninitKeyEventSink() {
@@ -1174,8 +1173,8 @@ class TipTextServiceImpl
     return S_OK;
   }
 
-  HRESULT AdviseCompartmentEventSink(ITfCompartmentMgr *manager, REFGUID guid,
-                                     DWORD *cookie) {
+  HRESULT AdviseCompartmentEventSink(ITfCompartmentMgr* manager, REFGUID guid,
+                                     DWORD* cookie) {
     if (manager == nullptr || cookie == nullptr) {
       return E_INVALIDARG;
     }
@@ -1184,12 +1183,12 @@ class TipTextServiceImpl
     RETURN_IF_FAILED_HRESULT(manager->GetCompartment(guid, &compartment));
     ASSIGN_OR_RETURN_HRESULT(auto source, ComQueryHR<ITfSource>(compartment));
     return source->AdviseSink(IID_ITfCompartmentEventSink,
-                              static_cast<ITfCompartmentEventSink *>(this),
+                              static_cast<ITfCompartmentEventSink*>(this),
                               cookie);
   }
 
-  HRESULT UnadviseCompartmentEventSink(ITfCompartmentMgr *manager, REFGUID guid,
-                                       DWORD *cookie) {
+  HRESULT UnadviseCompartmentEventSink(ITfCompartmentMgr* manager, REFGUID guid,
+                                       DWORD* cookie) {
     if (manager == nullptr || cookie == nullptr) {
       return E_INVALIDARG;
     }
@@ -1218,7 +1217,7 @@ class TipTextServiceImpl
     }
     ASSIGN_OR_RETURN_HRESULT(auto keystroke,
                              ComQueryHR<ITfKeystrokeMgr>(thread_mgr_));
-    for (const PreserveKeyItem &item : kPreservedKeyItems) {
+    for (const PreserveKeyItem& item : kPreservedKeyItems) {
       // Register a hot key to the keystroke manager.
       result = keystroke->PreserveKey(client_id_, item.guid, &item.key,
                                       item.description, item.length);
@@ -1238,7 +1237,7 @@ class TipTextServiceImpl
     ASSIGN_OR_RETURN_HRESULT(auto keystroke,
                              ComQueryHR<ITfKeystrokeMgr>(thread_mgr_));
 
-    for (const PreserveKeyItem &item : kPreservedKeyItems) {
+    for (const PreserveKeyItem& item : kPreservedKeyItems) {
       result = keystroke->UnpreserveKey(item.guid, &item.key);
     }
     preserved_key_map_.clear();
@@ -1256,7 +1255,7 @@ class TipTextServiceImpl
 
     ASSIGN_OR_RETURN_HRESULT(auto source, ComQueryHR<ITfSource>(thread_mgr_));
     const HRESULT result = source->AdviseSink(
-        IID_ITfThreadFocusSink, static_cast<ITfThreadFocusSink *>(this),
+        IID_ITfThreadFocusSink, static_cast<ITfThreadFocusSink*>(this),
         &thread_focus_cookie_);
     if (FAILED(result)) {
       thread_focus_cookie_ = TF_INVALID_COOKIE;
@@ -1289,7 +1288,7 @@ class TipTextServiceImpl
                              ComQueryHR<ITfSourceSingle>(thread_mgr_));
 
     return source->AdviseSingleSink(client_id_, IID_ITfFunctionProvider,
-                                    static_cast<ITfFunctionProvider *>(this));
+                                    static_cast<ITfFunctionProvider*>(this));
   }
 
   HRESULT UninitFunctionProvider() {
@@ -1340,7 +1339,7 @@ class TipTextServiceImpl
 
   static LRESULT WINAPI TaskWindowProc(HWND window_handle, UINT message,
                                        WPARAM wparam, LPARAM lparam) {
-    TipTextServiceImpl *self = Self();
+    TipTextServiceImpl* self = Self();
     if (self == nullptr) {
       return ::DefWindowProcW(window_handle, message, wparam, lparam);
     }
@@ -1408,7 +1407,7 @@ class TipTextServiceImpl
   static LRESULT WINAPI RendererCallbackWidnowProc(HWND window_handle,
                                                    UINT message, WPARAM wparam,
                                                    LPARAM lparam) {
-    TipTextServiceImpl *self = Self();
+    TipTextServiceImpl* self = Self();
     if (self == nullptr) {
       return ::DefWindowProcW(window_handle, message, wparam, lparam);
     }

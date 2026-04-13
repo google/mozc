@@ -64,7 +64,7 @@ class TipLangBarCallback : public IUnknown {
   virtual ~TipLangBarCallback() = default;
 
   virtual STDMETHODIMP OnMenuSelect(ItemId menu_id) = 0;
-  virtual STDMETHODIMP OnItemClick(const wchar_t *description) = 0;
+  virtual STDMETHODIMP OnItemClick(const wchar_t* description) = 0;
 };
 
 }  // namespace mozc::win32::tsf

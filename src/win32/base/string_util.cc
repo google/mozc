@@ -44,7 +44,7 @@ namespace {
 
 constexpr size_t kMaxReadingChars = 512;
 
-void Utf8ToSjis(absl::string_view input, std::string *output) {
+void Utf8ToSjis(absl::string_view input, std::string* output) {
   const std::wstring utf16 = Utf8ToWide(input);
   if (utf16.empty()) {
     output->clear();
@@ -126,7 +126,7 @@ std::string StringUtil::KeyToReadingA(absl::string_view key) {
   return WideToUtf8(KeyToReading(key));
 }
 
-std::wstring StringUtil::ComposePreeditText(const commands::Preedit &preedit) {
+std::wstring StringUtil::ComposePreeditText(const commands::Preedit& preedit) {
   std::wstring value;
   for (int i = 0; i < preedit.segment_size(); ++i) {
     const std::wstring segment_value = Utf8ToWide(preedit.segment(i).value());

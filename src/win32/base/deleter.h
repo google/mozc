@@ -58,7 +58,7 @@ enum class DeletionWaitState : uint32_t {
 };
 
 // Return code to represent the expected action of the IME DLL.
-enum class ClientAction : uint32_t{
+enum class ClientAction : uint32_t {
   // IME DLL must behave as if there is no VKBackBasedDeleter.
   // This action can be used for both ImeProcessKey (test-key-[down/up]) and
   // ImeToAsciiEx (key-[down/up]).
@@ -116,18 +116,18 @@ using VKBackBasedDeleterQueue =
 class VKBackBasedDeleter {
  public:
   VKBackBasedDeleter();
-  VKBackBasedDeleter(const VKBackBasedDeleter &) = delete;
-  VKBackBasedDeleter &operator=(const VKBackBasedDeleter &) = delete;
+  VKBackBasedDeleter(const VKBackBasedDeleter&) = delete;
+  VKBackBasedDeleter& operator=(const VKBackBasedDeleter&) = delete;
 
   // For unit test only.
   // You can hook relevant Win32 API calls in this class for unit tests.
   // This class takes the ownership of |keyboard_mock| so the caller
   // must not free it.
-  explicit VKBackBasedDeleter(Win32KeyboardInterface *keyboard_mock);
+  explicit VKBackBasedDeleter(Win32KeyboardInterface* keyboard_mock);
 
   // Initializes the deleter.
-  void BeginDeletion(int deletion_count, const mozc::commands::Output &output,
-                     const InputState &ime_state);
+  void BeginDeletion(int deletion_count, const mozc::commands::Output& output,
+                     const InputState& ime_state);
 
   // Uninitializes the deleter.  You must call this method whenever OnKeyEvent
   // returns CALL_END_DELETION_THEN_DO_DEFAULT_ACTION or
@@ -140,8 +140,8 @@ class VKBackBasedDeleter {
   // Returns true is the deleter is waiting for any specific key event.
   bool IsDeletionOngoing() const;
 
-  const mozc::commands::Output &pending_output() const;
-  const InputState &pending_ime_state() const;
+  const mozc::commands::Output& pending_output() const;
+  const InputState& pending_ime_state() const;
 
  private:
   void UnsetModifiers();

@@ -62,7 +62,6 @@ See the following document for more details:
 https://learn.microsoft.com/en-us/windows/arm/arm64x-build#building-an-arm64x-pure-forwarder-dll
 """
 
-
 import argparse
 import dataclasses
 import os
@@ -81,17 +80,16 @@ def _get_def_file_content(filename: str) -> str:
 
   Args:
     filename: The name of the DLL to be forwarded.
+
   Returns:
     A string containing the content of the DEF file.
   """
   stem = str(pathlib.Path(filename).stem)
-  return '\n'.join(
-      [
-          'EXPORTS',
-          f'    DllGetClassObject = {stem}.DllGetClassObject',
-          f'    DllCanUnloadNow   = {stem}.DllCanUnloadNow',
-      ]
-  )
+  return '\n'.join([
+      'EXPORTS',
+      f'    DllGetClassObject = {stem}.DllGetClassObject',
+      f'    DllCanUnloadNow   = {stem}.DllCanUnloadNow',
+  ])
 
 
 @dataclasses.dataclass
@@ -156,46 +154,44 @@ class ForwarderInfo:
     product_name = self.product_name
     product_copyright = 'Google LLC'
 
-    return '\n'.join(
-        [
-            '#include "winres.h"',
-            'LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT',
-            '',
-            'VS_VERSION_INFO VERSIONINFO',
-            f'FILEVERSION {comma_separated_versoin}',
-            f'PRODUCTVERSION {comma_separated_versoin}',
-            (
-                'FILEFLAGSMASK'
-                ' VS_FF_DEBUG | VS_FF_PRERELEASE | VS_FF_PATCHED'
-                ' | VS_FF_INFOINFERRED'
-            ),
-            'FILEFLAGS 0x0L',
-            'FILEOS VOS__WINDOWS32',
-            'FILETYPE VFT_DLL',
-            'FILESUBTYPE VFT2_UNKNOWN',
-            'BEGIN',
-            '    BLOCK "StringFileInfo"',
-            '    BEGIN',
-            '        BLOCK "041104b0"',
-            '        BEGIN',
-            f'            VALUE "CompanyName", "{product_copyright}"',
-            f'            VALUE "FileDescription", "{file_description}"',
-            f'            VALUE "FileVersion", "{dot_separated_versoin}"',
-            f'            VALUE "InternalName", "{internal_name}"',
-            f'            VALUE "LegalCopyright", "{product_copyright}"',
-            f'            VALUE "OriginalFilename", "{original_file_name}"',
-            f'            VALUE "ProductName", "{product_name}"',
-            f'            VALUE "ProductVersion", "{dot_separated_versoin}"',
-            '        END',
-            '    END',
-            '    BLOCK "VarFileInfo"',
-            '    BEGIN',
-            '        VALUE "Translation", 0x411, 1200',
-            '    END',
-            'END',
-            '',
-        ]
-    )
+    return '\n'.join([
+        '#include "winres.h"',
+        'LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT',
+        '',
+        'VS_VERSION_INFO VERSIONINFO',
+        f'FILEVERSION {comma_separated_versoin}',
+        f'PRODUCTVERSION {comma_separated_versoin}',
+        (
+            'FILEFLAGSMASK'
+            ' VS_FF_DEBUG | VS_FF_PRERELEASE | VS_FF_PATCHED'
+            ' | VS_FF_INFOINFERRED'
+        ),
+        'FILEFLAGS 0x0L',
+        'FILEOS VOS__WINDOWS32',
+        'FILETYPE VFT_DLL',
+        'FILESUBTYPE VFT2_UNKNOWN',
+        'BEGIN',
+        '    BLOCK "StringFileInfo"',
+        '    BEGIN',
+        '        BLOCK "041104b0"',
+        '        BEGIN',
+        f'            VALUE "CompanyName", "{product_copyright}"',
+        f'            VALUE "FileDescription", "{file_description}"',
+        f'            VALUE "FileVersion", "{dot_separated_versoin}"',
+        f'            VALUE "InternalName", "{internal_name}"',
+        f'            VALUE "LegalCopyright", "{product_copyright}"',
+        f'            VALUE "OriginalFilename", "{original_file_name}"',
+        f'            VALUE "ProductName", "{product_name}"',
+        f'            VALUE "ProductVersion", "{dot_separated_versoin}"',
+        '        END',
+        '    END',
+        '    BLOCK "VarFileInfo"',
+        '    BEGIN',
+        '        VALUE "Translation", 0x411, 1200',
+        '    END',
+        'END',
+        '',
+    ])
 
 
 def exec_command(

@@ -50,7 +50,7 @@ struct FixedReconvertString : public ReconvertString {
     dwVersion = 0;
 
     dwStrOffset = FIELD_OFFSET(FixedReconvertString, buffer) + padding_bytes;
-    wchar_t *dest = buffer + padding_bytes / sizeof(wchar_t);
+    wchar_t* dest = buffer + padding_bytes / sizeof(wchar_t);
     for (size_t i = 0; i < entire_string.size(); ++i) {
       dest[i] = entire_string[i];
     }
@@ -357,8 +357,8 @@ INSTANTIATE_TEST_SUITE_P(
     EnsureCompositionIsNotEmptyTest,
     testing::Values(
         std::pair<Strings, Strings>{
-            {L"", L"", L"", L"", L"今𠮟る"},
-            {L"", L"", L"今𠮟", L"", L"る"}  // (surrogate-pairs-aware)
+            {L"", L"", L"", L"", L"今𠮟る"}, {L"", L"", L"今𠮟", L"", L"る"}
+            // (surrogate-pairs-aware)
         },
         std::pair<Strings, Strings>{
             // L"今𠮟[High]", L"", L"", L"", L"𠮟[Low]る"
@@ -367,8 +367,8 @@ INSTANTIATE_TEST_SUITE_P(
             {L"", L"", L"今𠮟", L"", L"る"}  // (surrogate-pairs-aware)
         },
         std::pair<Strings, Strings>{
-            {L"今𠮟", L"", L"", L"", L""},
-            {L"", L"", L"今𠮟", L"", L""}  // (surrogate-pairs-aware)
+            {L"今𠮟", L"", L"", L"", L""}, {L"", L"", L"今𠮟", L"", L""}
+            // (surrogate-pairs-aware)
         }));
 
 constexpr std::wstring_view kStrWithControlCode(L"\0つづく", 4);

@@ -65,7 +65,7 @@ HICON CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     RGBQUAD color_palette[2];
   };
 
-  uint8_t *src_dib_buffer = nullptr;
+  uint8_t* src_dib_buffer = nullptr;
   wil::unique_hbitmap src_dib;
 
   // Step 1. Create a src black-and-white DIB as follows.
@@ -92,8 +92,8 @@ HICON CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     info.color_palette[1] = ToRGBQuad(kBackgroundColor);
 
     src_dib.reset(::CreateDIBSection(
-        nullptr, reinterpret_cast<const BITMAPINFO *>(&info), DIB_RGB_COLORS,
-        reinterpret_cast<void **>(&src_dib_buffer), nullptr, 0));
+        nullptr, reinterpret_cast<const BITMAPINFO*>(&info), DIB_RGB_COLORS,
+        reinterpret_cast<void**>(&src_dib_buffer), nullptr, 0));
     if (!src_dib.is_valid()) {
       return nullptr;
     }
@@ -163,10 +163,10 @@ HICON CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     // Background pixel: should be 0, which has null effect in XOR operation.
     info.color_palette[1] = ToRGBQuad(0);
 
-    uint8_t *xor_dib_buffer = nullptr;
+    uint8_t* xor_dib_buffer = nullptr;
     xor_dib.reset(::CreateDIBSection(
-        nullptr, reinterpret_cast<const BITMAPINFO *>(&info), DIB_RGB_COLORS,
-        reinterpret_cast<void **>(&xor_dib_buffer), nullptr, 0));
+        nullptr, reinterpret_cast<const BITMAPINFO*>(&info), DIB_RGB_COLORS,
+        reinterpret_cast<void**>(&xor_dib_buffer), nullptr, 0));
     if (!xor_dib.is_valid()) {
       return nullptr;
     }
@@ -198,9 +198,9 @@ HICON CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     auto mask_buffer = std::make_unique<uint8_t[]>(mask_buffer_size);
     for (size_t y = 0; y < bitmap_height; ++y) {
       for (size_t x = 0; x < bitmap_width; ++x) {
-        const uint8_t *src_line_start =
+        const uint8_t* src_line_start =
             src_dib_buffer + src_bmp_info.bmWidthBytes * y;
-        uint8_t *dest_line_start = mask_buffer.get() + mask_buffer_stride * y;
+        uint8_t* dest_line_start = mask_buffer.get() + mask_buffer_stride * y;
         ::memcpy(dest_line_start, src_line_start, mask_buffer_stride);
       }
     }

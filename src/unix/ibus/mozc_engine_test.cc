@@ -46,7 +46,7 @@ namespace ibus {
 
 class MozcEngineTestPeer : public ::mozc::testing::TestPeer<MozcEngine> {
  public:
-  explicit MozcEngineTestPeer(MozcEngine &engine)
+  explicit MozcEngineTestPeer(MozcEngine& engine)
       : testing::TestPeer<MozcEngine>(engine) {}
 
   PEER_METHOD(LaunchTool);
@@ -56,8 +56,8 @@ class MozcEngineTestPeer : public ::mozc::testing::TestPeer<MozcEngine> {
 namespace {
 
 bool CallCanUseMozcCandidateWindow(
-    const std::string &text_proto,
-    const absl::flat_hash_map<std::string, std::string> &env) {
+    const std::string& text_proto,
+    const absl::flat_hash_map<std::string, std::string>& env) {
   IbusConfig ibus_config;
   EXPECT_TRUE(ibus_config.LoadConfig(text_proto));
   return CanUseMozcCandidateWindow(ibus_config, env);
@@ -71,8 +71,8 @@ using ::testing::Return;
 class LaunchToolTest : public ::testing::Test {
  public:
   LaunchToolTest() = default;
-  LaunchToolTest(const LaunchToolTest &) = delete;
-  LaunchToolTest &operator=(const LaunchToolTest &) = delete;
+  LaunchToolTest(const LaunchToolTest&) = delete;
+  LaunchToolTest& operator=(const LaunchToolTest&) = delete;
 
  protected:
   void SetUp() override {
@@ -92,7 +92,7 @@ class LaunchToolTest : public ::testing::Test {
     return MozcEngineTestPeer(*mozc_engine_);
   }
 
-  client::ClientMock *mock_;
+  client::ClientMock* mock_;
   std::unique_ptr<MozcEngine> mozc_engine_;
 };
 

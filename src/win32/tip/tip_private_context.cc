@@ -55,8 +55,7 @@ using ::mozc::commands::Output;
 
 class TipPrivateContext::InternalState {
  public:
-  InternalState()
-      : client_(ClientFactory::NewClient()) {}
+  InternalState() : client_(ClientFactory::NewClient()) {}
   std::unique_ptr<client::ClientInterface> client_;
   SurrogatePairObserver surrogate_pair_observer_;
   commands::Output last_output_;
@@ -73,7 +72,7 @@ TipPrivateContext::TipPrivateContext()
 
 TipPrivateContext::~TipPrivateContext() = default;
 
-ClientInterface *TipPrivateContext::GetClient() {
+ClientInterface* TipPrivateContext::GetClient() {
   return state_->client_.get();
 }
 
@@ -89,7 +88,7 @@ void TipPrivateContext::EnsureInitialized() {
   // Try to reflect the current config to the IME behavior.
   ConfigSnapshot::Info snapshot;
   if (ConfigSnapshot::Get(&snapshot)) {
-    auto *behavior = &state_->input_behavior_;
+    auto* behavior = &state_->input_behavior_;
     behavior->prefer_kana_input = snapshot.use_kana_input;
     behavior->use_romaji_key_to_toggle_input_style =
         snapshot.use_keyboard_to_change_preedit_method;
@@ -99,39 +98,39 @@ void TipPrivateContext::EnsureInitialized() {
   }
 }
 
-SurrogatePairObserver *TipPrivateContext::GetSurrogatePairObserver() {
+SurrogatePairObserver* TipPrivateContext::GetSurrogatePairObserver() {
   return &state_->surrogate_pair_observer_;
 }
 
-TipUiElementManager *TipPrivateContext::GetUiElementManager() {
+TipUiElementManager* TipPrivateContext::GetUiElementManager() {
   return &state_->ui_element_manager_;
 }
 
-VKBackBasedDeleter *TipPrivateContext::GetDeleter() {
+VKBackBasedDeleter* TipPrivateContext::GetDeleter() {
   return &state_->deleter_;
 }
 
-const Output &TipPrivateContext::last_output() const {
+const Output& TipPrivateContext::last_output() const {
   return state_->last_output_;
 }
 
-Output *TipPrivateContext::mutable_last_output() {
+Output* TipPrivateContext::mutable_last_output() {
   return &state_->last_output_;
 }
 
-const VirtualKey &TipPrivateContext::last_down_key() const {
+const VirtualKey& TipPrivateContext::last_down_key() const {
   return state_->last_down_key_;
 }
 
-VirtualKey *TipPrivateContext::mutable_last_down_key() {
+VirtualKey* TipPrivateContext::mutable_last_down_key() {
   return &state_->last_down_key_;
 }
 
-const InputBehavior &TipPrivateContext::input_behavior() const {
+const InputBehavior& TipPrivateContext::input_behavior() const {
   return state_->input_behavior_;
 }
 
-InputBehavior *TipPrivateContext::mutable_input_behavior() {
+InputBehavior* TipPrivateContext::mutable_input_behavior() {
   return &state_->input_behavior_;
 }
 

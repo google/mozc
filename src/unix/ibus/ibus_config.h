@@ -33,8 +33,8 @@
 #include <string>
 #include <vector>
 
-#include "unix/ibus/ibus_config.pb.h"
 #include "absl/strings/string_view.h"
+#include "unix/ibus/ibus_config.pb.h"
 
 namespace mozc {
 
@@ -51,11 +51,11 @@ class IbusConfig {
 
   // Loads textproto and updates instance variables.
   // Returns false if failed to parse config_data.
-  bool LoadConfig(const std::string &config_data);
+  bool LoadConfig(const std::string& config_data);
 
-  const std::string &GetEnginesXml() const;
-  const std::string &GetLayout(absl::string_view name) const;
-  const ibus::Config &GetConfig() const;
+  const std::string& GetEnginesXml() const;
+  const std::string& GetLayout(absl::string_view name) const;
+  const ibus::Config& GetConfig() const;
   bool IsActiveOnLaunch() const;
   bool IsMozcRendererEnabled() const;
   std::vector<std::string> GetMozcRendererCompatibleWaylandDesktopNames() const;

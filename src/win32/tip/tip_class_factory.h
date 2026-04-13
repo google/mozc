@@ -43,9 +43,9 @@ namespace tsf {
 class TipClassFactory final : public TipComImplements<IClassFactory> {
  public:
   // IClassFactory methods
-  virtual HRESULT STDMETHODCALLTYPE CreateInstance(IUnknown *unknown,
+  virtual HRESULT STDMETHODCALLTYPE CreateInstance(IUnknown* unknown,
                                                    REFIID interface_id,
-                                                   void **object);
+                                                   void** object);
   virtual HRESULT STDMETHODCALLTYPE LockServer(BOOL lock);
 };
 

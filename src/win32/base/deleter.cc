@@ -44,12 +44,12 @@ namespace win32 {
 VKBackBasedDeleter::VKBackBasedDeleter()
     : keyboard_(Win32KeyboardInterface::CreateDefault()) {}
 
-VKBackBasedDeleter::VKBackBasedDeleter(Win32KeyboardInterface *keyboard_mock)
+VKBackBasedDeleter::VKBackBasedDeleter(Win32KeyboardInterface* keyboard_mock)
     : keyboard_(keyboard_mock) {}
 
 void VKBackBasedDeleter::BeginDeletion(int deletion_count,
-                                       const mozc::commands::Output &output,
-                                       const InputState &ime_state) {
+                                       const mozc::commands::Output& output,
+                                       const InputState& ime_state) {
   std::vector<INPUT> inputs;
 
   wait_queue_.clear();
@@ -214,11 +214,11 @@ bool VKBackBasedDeleter::IsDeletionOngoing() const {
   return !wait_queue_.empty();
 }
 
-const mozc::commands::Output &VKBackBasedDeleter::pending_output() const {
+const mozc::commands::Output& VKBackBasedDeleter::pending_output() const {
   return pending_output_;
 }
 
-const InputState &VKBackBasedDeleter::pending_ime_state() const {
+const InputState& VKBackBasedDeleter::pending_ime_state() const {
   return pending_ime_state_;
 }
 

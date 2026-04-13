@@ -45,18 +45,18 @@ namespace tsf {
 class TipKeyeventHandler {
  public:
   TipKeyeventHandler() = delete;
-  TipKeyeventHandler(const TipKeyeventHandler &) = delete;
-  TipKeyeventHandler &operator=(const TipKeyeventHandler &) = delete;
+  TipKeyeventHandler(const TipKeyeventHandler&) = delete;
+  TipKeyeventHandler& operator=(const TipKeyeventHandler&) = delete;
 
-  static HRESULT OnTestKeyDown(TipTextService *text_service,
-                               ITfContext *context, WPARAM wparam,
-                               LPARAM lparam, BOOL *eaten);
-  static HRESULT OnKeyDown(TipTextService *text_service, ITfContext *context,
-                           WPARAM wparam, LPARAM lparam, BOOL *eaten);
-  static HRESULT OnTestKeyUp(TipTextService *text_service, ITfContext *context,
-                             WPARAM wparam, LPARAM lparam, BOOL *eaten);
-  static HRESULT OnKeyUp(TipTextService *text_service, ITfContext *context,
-                         WPARAM wparam, LPARAM lparam, BOOL *eaten);
+  static HRESULT OnTestKeyDown(TipTextService* text_service,
+                               ITfContext* context, WPARAM wparam,
+                               LPARAM lparam, BOOL* eaten);
+  static HRESULT OnKeyDown(TipTextService* text_service, ITfContext* context,
+                           WPARAM wparam, LPARAM lparam, BOOL* eaten);
+  static HRESULT OnTestKeyUp(TipTextService* text_service, ITfContext* context,
+                             WPARAM wparam, LPARAM lparam, BOOL* eaten);
+  static HRESULT OnKeyUp(TipTextService* text_service, ITfContext* context,
+                         WPARAM wparam, LPARAM lparam, BOOL* eaten);
 };
 
 }  // namespace tsf

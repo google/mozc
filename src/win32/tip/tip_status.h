@@ -42,28 +42,28 @@ namespace tsf {
 class TipStatus {
  public:
   TipStatus() = delete;
-  TipStatus(const TipStatus &) = delete;
-  TipStatus &operator=(const TipStatus &) = delete;
+  TipStatus(const TipStatus&) = delete;
+  TipStatus& operator=(const TipStatus&) = delete;
 
   // Returns true if the keyboard state specified by |thread_mgr| is open.
-  static bool IsOpen(ITfThreadMgr *thread_mgr);
+  static bool IsOpen(ITfThreadMgr* thread_mgr);
 
   // Returns true if the context state specified by |context| is disabled.
-  static bool IsDisabledContext(ITfContext *context);
+  static bool IsDisabledContext(ITfContext* context);
 
   // Returns true if the context state specified by |context| is empty.
-  static bool IsEmptyContext(ITfContext *context);
+  static bool IsEmptyContext(ITfContext* context);
 
   // Returns true if TSF conversion mode is successfully retrieved into |mode|.
-  static bool GetInputModeConversion(ITfThreadMgr *thread_mgr,
-                                     TfClientId client_id, DWORD *mode);
+  static bool GetInputModeConversion(ITfThreadMgr* thread_mgr,
+                                     TfClientId client_id, DWORD* mode);
 
   // Returns true if TSF keyboard open/closed mode is updated.
-  static bool SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
+  static bool SetIMEOpen(ITfThreadMgr* thread_mgr, TfClientId client_id,
                          bool open);
 
   // Returns true if TSF conversion mode is updated.
-  static bool SetInputModeConversion(ITfThreadMgr *thread_mgr, DWORD client_id,
+  static bool SetInputModeConversion(ITfThreadMgr* thread_mgr, DWORD client_id,
                                      DWORD native_mode);
 };
 

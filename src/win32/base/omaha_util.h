@@ -31,20 +31,20 @@
 #define MOZC_WIN32_BASE_OMAHA_UTIL_H_
 
 #include <windows.h>
-#include <string>
 
+#include <string>
 
 namespace mozc {
 namespace win32 {
 
 class OmahaUtil {
  public:
-  OmahaUtil(const OmahaUtil &) = delete;
-  OmahaUtil &operator=(const OmahaUtil &) = delete;
+  OmahaUtil(const OmahaUtil&) = delete;
+  OmahaUtil& operator=(const OmahaUtil&) = delete;
 
   // Writes the channel name specified by |value| for Omaha.
   // Returns true if the operation completed successfully.
-  static bool WriteChannel(const std::wstring &value);
+  static bool WriteChannel(const std::wstring& value);
 
   // Reads the channel name for Omaha.
   // Returns an empty string if there is no entry or fails to retrieve the
@@ -57,8 +57,8 @@ class OmahaUtil {
 
   // Writes the registry entry for Omaha to show some error messages.
   // Returns true if the operation completed successfully.
-  static bool WriteOmahaError(const std::wstring &ui_message,
-                              const std::wstring &header);
+  static bool WriteOmahaError(const std::wstring& ui_message,
+                              const std::wstring& header);
 
   // Clears the registry entry for the channel name.
   // Returns true if the operation completed successfully.

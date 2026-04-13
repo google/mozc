@@ -51,16 +51,16 @@ class KeyboardMock : public Win32KeyboardInterface {
  public:
   KeyboardMock() = default;
 
-  bool IsKanaLocked(const KeyboardStatus &keyboard_state) override {
+  bool IsKanaLocked(const KeyboardStatus& keyboard_state) override {
     return keyboard_state.IsPressed(VK_KANA);
   }
 
-  bool SetKeyboardState(const KeyboardStatus &keyboard_state) override {
+  bool SetKeyboardState(const KeyboardStatus& keyboard_state) override {
     key_state_ = keyboard_state;
     return true;
   }
 
-  bool GetKeyboardState(KeyboardStatus *keyboard_state) override {
+  bool GetKeyboardState(KeyboardStatus* keyboard_state) override {
     *keyboard_state = key_state_;
     return true;
   }
@@ -69,7 +69,7 @@ class KeyboardMock : public Win32KeyboardInterface {
     return async_key_state_.IsPressed(virtual_key);
   }
 
-  int ToUnicode(UINT virtual_key, UINT scan_code, const BYTE *key_state,
+  int ToUnicode(UINT virtual_key, UINT scan_code, const BYTE* key_state,
                 LPWSTR unicode_buffer, int unicode_buffer_num_elements,
                 UINT flags) override {
     // We use a mock class in case the Japanese keyboard layout is not
@@ -86,15 +86,15 @@ class KeyboardMock : public Win32KeyboardInterface {
     return last_send_input_data_.size();
   }
 
-  const KeyboardStatus &key_state() const { return key_state_; }
+  const KeyboardStatus& key_state() const { return key_state_; }
 
-  void set_key_state(const KeyboardStatus &key_state) {
+  void set_key_state(const KeyboardStatus& key_state) {
     key_state_ = key_state;
   }
 
-  const KeyboardStatus &async_key_state() const { return async_key_state_; }
+  const KeyboardStatus& async_key_state() const { return async_key_state_; }
 
-  void set_async_key_state(const KeyboardStatus &async_key_state) {
+  void set_async_key_state(const KeyboardStatus& async_key_state) {
     async_key_state_ = async_key_state;
   }
 
@@ -113,7 +113,7 @@ class KeyboardMock : public Win32KeyboardInterface {
 }  // namespace
 
 TEST(VKBackBasedDeleterTest, OnKeyEventTestWhenNoDeletionIsOngoing) {
-  KeyboardMock *keyboard_mock = new KeyboardMock();
+  KeyboardMock* keyboard_mock = new KeyboardMock();
   VKBackBasedDeleter deleter(keyboard_mock);
   commands::Output output;
   output.set_id(kOutputId);
@@ -127,7 +127,7 @@ TEST(VKBackBasedDeleterTest, OnKeyEventTestWhenNoDeletionIsOngoing) {
 }
 
 TEST(VKBackBasedDeleterTest, BeginDeletionTest_DeletionCountZero) {
-  KeyboardMock *keyboard_mock = new KeyboardMock();
+  KeyboardMock* keyboard_mock = new KeyboardMock();
   VKBackBasedDeleter deleter(keyboard_mock);
   commands::Output output;
   output.set_id(kOutputId);
@@ -143,7 +143,7 @@ TEST(VKBackBasedDeleterTest, BeginDeletionTest_DeletionCountZero) {
 TEST(VKBackBasedDeleterTest, NormalSequence) {
   constexpr UINT kLastKey = 'A';
 
-  KeyboardMock *keyboard_mock = new KeyboardMock();
+  KeyboardMock* keyboard_mock = new KeyboardMock();
 
   // VKBackBasedDeleter must clear any modifier before calling SendInput.
   // To check this functionality, set VK_CONTROL bit into the mock.
@@ -258,7 +258,7 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
 TEST(VKBackBasedDeleterTest, BeginDeletion_InsuccessfulCase) {
   constexpr UINT kLastKey = 'A';
 
-  KeyboardMock *keyboard_mock = new KeyboardMock();
+  KeyboardMock* keyboard_mock = new KeyboardMock();
 
   // VKBackBasedDeleter must clear any modifier before calling SendInput.
   // To check this functionality, set VK_CONTROL bit into the mock.

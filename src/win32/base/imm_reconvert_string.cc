@@ -56,7 +56,7 @@ using ::msl::utilities::SafeAdd;
 using ::msl::utilities::SafeCast;
 using ::msl::utilities::SafeMultiply;
 
-bool CheckAddressSpace(const void *ptr, size_t size) {
+bool CheckAddressSpace(const void* ptr, size_t size) {
   const uintptr_t addr = std::bit_cast<uintptr_t>(ptr);
   uintptr_t addr_last = 0;
   // buffer exceeds process address space if overflows.
@@ -77,7 +77,7 @@ char32_t SurrogatePairToCodepoint(wchar_t high, wchar_t low) {
 }
 
 template <typename T, typename U>
-bool SafeAdds(const T init, std::initializer_list<U> args, T &result) {
+bool SafeAdds(const T init, std::initializer_list<U> args, T& result) {
   result = init;
   for (T arg : args) {
     if (!SafeAdd(result, arg, result)) {
@@ -88,21 +88,21 @@ bool SafeAdds(const T init, std::initializer_list<U> args, T &result) {
 }
 
 UniqueReconvertString Allocate(size_t size) {
-  auto *ptr =
-      reinterpret_cast<ReconvertString *>(::operator new(size, kAlignment));
+  auto* ptr =
+      reinterpret_cast<ReconvertString*>(::operator new(size, kAlignment));
   new (ptr) ReconvertString;
   return UniqueReconvertString(ptr, &Deleter);
 }
 
 // C++20 constructor for std::wstring_view.
-std::wstring_view WStringView(const wchar_t *begin, const wchar_t *end) {
+std::wstring_view WStringView(const wchar_t* begin, const wchar_t* end) {
   return std::wstring_view(begin, end - begin);
 }
 
 }  // namespace
 
-UniqueReconvertString
-ReconvertString::Request(HWND hwnd, RequestType request_type) {
+UniqueReconvertString ReconvertString::Request(HWND hwnd,
+                                               RequestType request_type) {
   UniqueReconvertString result(nullptr, &Deleter);
   WPARAM wparam;
   switch (request_type) {
@@ -176,7 +176,7 @@ UniqueReconvertString ReconvertString::Compose(const Strings ss) {
   // concatenate |preceding_text|, |preceding_composition|, |target|,
   // |following_composition|, and |following_text| into |string_buffer|.
 
-  wchar_t *buf_ptr = result->StringBuffer();
+  wchar_t* buf_ptr = result->StringBuffer();
   buf_ptr = absl::c_copy(ss.preceding_text, buf_ptr);
   buf_ptr = absl::c_copy(ss.preceding_composition, buf_ptr);
   buf_ptr = absl::c_copy(ss.target, buf_ptr);
@@ -230,14 +230,14 @@ std::optional<ReconvertString::Strings> ReconvertString::Decompose() const {
     return std::nullopt;
   }
 
-  const wchar_t *string_begin = StringBuffer();
-  const wchar_t *composition_begin =
+  const wchar_t* string_begin = StringBuffer();
+  const wchar_t* composition_begin =
       string_begin + dwCompStrOffset / sizeof(wchar_t);
-  const wchar_t *target_begin =
+  const wchar_t* target_begin =
       string_begin + dwTargetStrOffset / sizeof(wchar_t);
-  const wchar_t *target_end = target_begin + dwTargetStrLen;
-  const wchar_t *composition_end = composition_begin + dwCompStrLen;
-  const wchar_t *string_end = string_begin + dwStrLen;
+  const wchar_t* target_end = target_begin + dwTargetStrLen;
+  const wchar_t* composition_end = composition_begin + dwCompStrLen;
+  const wchar_t* string_end = string_begin + dwStrLen;
 
   Strings ss;
   ss.preceding_text = WStringView(string_begin, composition_begin);

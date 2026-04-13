@@ -125,7 +125,7 @@ void ProcessLoop() {
 }  // namespace
 }  // namespace mozc::emacs
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   if (absl::GetFlag(FLAGS_suppress_stderr)) {
 #ifdef _WIN32

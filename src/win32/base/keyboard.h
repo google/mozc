@@ -51,8 +51,8 @@ class KeyboardStatus {
   void SetState(int virtual_key, BYTE value);
   bool IsToggled(int virtual_key) const;
   bool IsPressed(int virtual_key) const;
-  const BYTE *status() const;
-  BYTE *mutable_status();
+  const BYTE* status() const;
+  BYTE* mutable_status();
   size_t status_size() const;
 
  private:
@@ -125,20 +125,20 @@ class Win32KeyboardInterface {
   virtual ~Win32KeyboardInterface() = default;
 
   // Injection point for keyboard_state.IsPressed(VK_KANA).
-  virtual bool IsKanaLocked(const KeyboardStatus &keyboard_state) = 0;
+  virtual bool IsKanaLocked(const KeyboardStatus& keyboard_state) = 0;
 
   // Injection point for SetKeyboardState API.
-  virtual bool SetKeyboardState(const KeyboardStatus &keyboard_state) = 0;
+  virtual bool SetKeyboardState(const KeyboardStatus& keyboard_state) = 0;
 
   // Injection point for GetKeyboardState API.
-  virtual bool GetKeyboardState(KeyboardStatus *keyboard_state) = 0;
+  virtual bool GetKeyboardState(KeyboardStatus* keyboard_state) = 0;
 
   // Injection point for GetAsyncKeyState API.
   virtual bool AsyncIsKeyPressed(int virtual_key) = 0;
 
   // Injection point for ToUnicode API.
   virtual int ToUnicode(__in UINT wVirtKey, __in UINT wScanCode,
-                        __in_bcount_opt(256) CONST BYTE *lpKeyState,
+                        __in_bcount_opt(256) CONST BYTE* lpKeyState,
                         __out_ecount(cchBuff) LPWSTR pwszBuff, __in int cchBuff,
                         __in UINT wFlags) = 0;
 
@@ -152,15 +152,15 @@ class Win32KeyboardInterface {
 
 class JapaneseKeyboardLayoutEmulator {
  public:
-  JapaneseKeyboardLayoutEmulator(const JapaneseKeyboardLayoutEmulator &) =
+  JapaneseKeyboardLayoutEmulator(const JapaneseKeyboardLayoutEmulator&) =
       delete;
-  JapaneseKeyboardLayoutEmulator &operator=(
-      const JapaneseKeyboardLayoutEmulator &) = delete;
+  JapaneseKeyboardLayoutEmulator& operator=(
+      const JapaneseKeyboardLayoutEmulator&) = delete;
 
   // This methods emulates ToUnicode API as if the current keyboard layout was
   // Japanese keyboard.  Currently this emulation ignores |scan_code|.
   static int ToUnicode(__in UINT virtual_key, __in UINT scan_code,
-                       __in_bcount_opt(256) CONST BYTE *key_state,
+                       __in_bcount_opt(256) CONST BYTE* key_state,
                        __out_ecount(character_buffer_size)
                            LPWSTR character_buffer,
                        __in int character_buffer_size, __in UINT flags);

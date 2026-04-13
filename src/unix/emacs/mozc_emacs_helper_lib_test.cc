@@ -62,7 +62,7 @@ class MozcEmacsHelperLibTest : public ::testing::Test {
     EXPECT_PROTO_EQ(protobuf, input);
   }
 
-  void PrintAndTestSexpr(const protobuf::Message &message,
+  void PrintAndTestSexpr(const protobuf::Message& message,
                          absl::string_view sexpr) {
     std::vector<std::string> buffer;
     PrintMessage(message, &buffer);
@@ -180,7 +180,7 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
   // Preedit
   commands::Preedit preedit;
   preedit.set_cursor(1);
-  commands::Preedit::Segment *segment;
+  commands::Preedit::Segment* segment;
   segment = preedit.add_segment();
   segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
   segment->set_value("UNDER_LINE");
@@ -287,7 +287,7 @@ TEST_F(MozcEmacsHelperLibTest, RemoveUsageDataTest) {
   {
     SCOPED_TRACE("Removes usage data from output");
     commands::Output output;
-    commands::CandidateWindow *candidate_window =
+    commands::CandidateWindow* candidate_window =
         output.mutable_candidate_window();
     candidate_window->mutable_usages();
     EXPECT_TRUE(RemoveUsageData(&output));

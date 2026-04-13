@@ -55,14 +55,14 @@ namespace emacs {
 
 namespace {
 // forward declaration
-void PrintField(const protobuf::Message &message,
-                const protobuf::Reflection &reflection,
-                const protobuf::FieldDescriptor &field,
-                std::vector<std::string> *output);
-void PrintFieldValue(const protobuf::Message &message,
-                     const protobuf::Reflection &reflection,
-                     const protobuf::FieldDescriptor &field, int index,
-                     std::vector<std::string> *output);
+void PrintField(const protobuf::Message& message,
+                const protobuf::Reflection& reflection,
+                const protobuf::FieldDescriptor& field,
+                std::vector<std::string>* output);
+void PrintFieldValue(const protobuf::Message& message,
+                     const protobuf::Reflection& reflection,
+                     const protobuf::FieldDescriptor& field, int index,
+                     std::vector<std::string>* output);
 }  // namespace
 
 // Parses a line, which must be a single complete command in form of:
@@ -74,8 +74,8 @@ void PrintFieldValue(const protobuf::Message &message,
 // ARGUMENTs depend on a command.
 // An input line must be surrounded by a pair of parentheses,
 // like a S-expression.
-void ParseInputLine(absl::string_view line, uint32_t *event_id,
-                    uint32_t *session_id, commands::Input *input) {
+void ParseInputLine(absl::string_view line, uint32_t* event_id,
+                    uint32_t* session_id, commands::Input* input) {
   CHECK(event_id);
   CHECK(session_id);
   CHECK(input);
@@ -93,7 +93,7 @@ void ParseInputLine(absl::string_view line, uint32_t *event_id,
   }
 
   // Read a command.
-  const std::string &func = tokens[2];
+  const std::string& func = tokens[2];
   if (func == "SendKey") {  // SendKey is a most-frequently-used command.
     input->set_type(commands::Input::SEND_KEY);
   } else if (func == "CreateSession") {
@@ -180,12 +180,12 @@ void ParseInputLine(absl::string_view line, uint32_t *event_id,
 // 'output' is a text buffer to output 'message'.
 //
 // This function never outputs newlines except for ones in strings.
-void PrintMessage(const protobuf::Message &message,
-                  std::vector<std::string> *output) {
+void PrintMessage(const protobuf::Message& message,
+                  std::vector<std::string>* output) {
   DCHECK(output);
 
-  const protobuf::Reflection *reflection = message.GetReflection();
-  std::vector<const protobuf::FieldDescriptor *> fields;
+  const protobuf::Reflection* reflection = message.GetReflection();
+  std::vector<const protobuf::FieldDescriptor*> fields;
   reflection->ListFields(message, &fields);
 
   output->push_back("(");
@@ -219,7 +219,7 @@ std::string QuoteString(absl::string_view str) {
 
 // Unquotes and unescapes a double-quoted string.
 // The input string must begin and end with double quotes.
-bool UnquoteString(absl::string_view input, std::string *output) {
+bool UnquoteString(absl::string_view input, std::string* output) {
   DCHECK(output);
   output->clear();
 
@@ -290,7 +290,7 @@ bool UnquoteString(absl::string_view input, std::string *output) {
 // This function implements very simple tokenization and is NOT conforming to
 // the definition of S expression.  For example, this function does not return
 // an error for the input "\'".
-bool TokenizeSExpr(absl::string_view input, std::vector<std::string> *output) {
+bool TokenizeSExpr(absl::string_view input, std::vector<std::string>* output) {
   DCHECK(output);
 
   std::vector<std::string> results;
@@ -378,7 +378,7 @@ void ErrorExit(absl::string_view error, absl::string_view message) {
   exit(1);
 }
 
-bool RemoveUsageData(commands::Output *output) {
+bool RemoveUsageData(commands::Output* output) {
   if (!output->has_candidate_window()) {
     return false;
   }
@@ -399,10 +399,10 @@ namespace {
 // a field descriptor in 'message' to be output.  'field' can have both of
 // a single value and repeated values.
 // 'output' is a pseudo output stream to output field's key and value(s).
-void PrintField(const protobuf::Message &message,
-                const protobuf::Reflection &reflection,
-                const protobuf::FieldDescriptor &field,
-                std::vector<std::string> *output) {
+void PrintField(const protobuf::Message& message,
+                const protobuf::Reflection& reflection,
+                const protobuf::FieldDescriptor& field,
+                std::vector<std::string>* output) {
   output->push_back("(");
   output->push_back(NormalizeSymbol(field.name()));
 
@@ -438,10 +438,10 @@ void PrintField(const protobuf::Message &message,
 // a single value and repeated values.  If 'field' has repeated values,
 // 'index' specifies its index to be output.  Otherwise, 'index' is ignored.
 // 'output' is a pseudo output stream to output the value.
-void PrintFieldValue(const protobuf::Message &message,
-                     const protobuf::Reflection &reflection,
-                     const protobuf::FieldDescriptor &field, int index,
-                     std::vector<std::string> *output) {
+void PrintFieldValue(const protobuf::Message& message,
+                     const protobuf::Reflection& reflection,
+                     const protobuf::FieldDescriptor& field, int index,
+                     std::vector<std::string>* output) {
 #define GET_FIELD_VALUE(METHOD_TYPE)                                 \
   (field.is_repeated()                                               \
        ? reflection.GetRepeated##METHOD_TYPE(message, &field, index) \

@@ -52,7 +52,7 @@ class TipQueryProvider {
     kReconversion,
   };
   virtual bool Query(std::wstring_view query, QueryType type,
-                     std::vector<std::wstring> *result) = 0;
+                     std::vector<std::wstring>* result) = 0;
 };
 
 }  // namespace tsf

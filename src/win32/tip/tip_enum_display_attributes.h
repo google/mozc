@@ -49,10 +49,10 @@ class TipEnumDisplayAttributes
 
   // IEnumTfDisplayAttributeInfo
   STDMETHODIMP
-  Clone(IEnumTfDisplayAttributeInfo **absl_nullable enum_attributes) override;
+  Clone(IEnumTfDisplayAttributeInfo** absl_nullable enum_attributes) override;
   STDMETHODIMP
-  Next(ULONG count, ITfDisplayAttributeInfo **absl_nonnull attribute_array,
-       ULONG *absl_nullable fetched) override;
+  Next(ULONG count, ITfDisplayAttributeInfo** absl_nonnull attribute_array,
+       ULONG* absl_nullable fetched) override;
   STDMETHODIMP Reset() override;
   STDMETHODIMP Skip(ULONG count) override;
 

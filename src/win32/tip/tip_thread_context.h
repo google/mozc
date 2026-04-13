@@ -42,7 +42,7 @@ class TipThreadContext {
  public:
   TipThreadContext();
 
-  TipInputModeManager *GetInputModeManager() { return &input_mode_manager_; }
+  TipInputModeManager* GetInputModeManager() { return &input_mode_manager_; }
 
   int32_t GetFocusRevision() const { return focus_revision_; }
   void IncrementFocusRevision();

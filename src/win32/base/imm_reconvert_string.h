@@ -49,7 +49,7 @@ namespace win32 {
 class ReconvertString;
 
 namespace reconvert_string_internal {
-void Deleter(ReconvertString *ptr);
+void Deleter(ReconvertString* ptr);
 }  // namespace reconvert_string_internal
 
 // std::unique_ptr of ReconvertString with a custom deleter.
@@ -112,12 +112,12 @@ class ReconvertString : public RECONVERTSTRING {
 
  private:
   bool ValidateOffsetSize(DWORD buf_size, DWORD offset, DWORD size) const;
-  wchar_t *StringBuffer() {
-    return std::launder(reinterpret_cast<wchar_t *>(this)) +
+  wchar_t* StringBuffer() {
+    return std::launder(reinterpret_cast<wchar_t*>(this)) +
            dwStrOffset / sizeof(wchar_t);
   }
-  const wchar_t *StringBuffer() const {
-    return std::launder(reinterpret_cast<const wchar_t *>(this)) +
+  const wchar_t* StringBuffer() const {
+    return std::launder(reinterpret_cast<const wchar_t*>(this)) +
            dwStrOffset / sizeof(wchar_t);
   }
 };
@@ -130,7 +130,7 @@ namespace reconvert_string_internal {
 inline constexpr std::align_val_t kAlignment =
     std::align_val_t(std::alignment_of_v<ReconvertString>);
 
-inline void Deleter(ReconvertString *ptr) {
+inline void Deleter(ReconvertString* ptr) {
   ptr->~ReconvertString();
   ::operator delete(ptr, kAlignment);
 }

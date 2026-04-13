@@ -42,16 +42,16 @@ namespace tsf {
 class TipUiHandler {
  public:
   TipUiHandler() = delete;
-  TipUiHandler(const TipUiHandler &) = delete;
-  TipUiHandler &operator=(const TipUiHandler &) = delete;
+  TipUiHandler(const TipUiHandler&) = delete;
+  TipUiHandler& operator=(const TipUiHandler&) = delete;
 
-  static void OnActivate(TipTextService *text_service);
-  static void OnDeactivate(TipTextService *text_service);
-  static void OnDocumentMgrChanged(TipTextService *text_service,
-                                   ITfDocumentMgr *document_manager);
-  static void OnFocusChange(TipTextService *text_service,
-                            ITfDocumentMgr *focused_document_manager);
-  static bool Update(TipTextService *text_service, ITfContext *context,
+  static void OnActivate(TipTextService* text_service);
+  static void OnDeactivate(TipTextService* text_service);
+  static void OnDocumentMgrChanged(TipTextService* text_service,
+                                   ITfDocumentMgr* document_manager);
+  static void OnFocusChange(TipTextService* text_service,
+                            ITfDocumentMgr* focused_document_manager);
+  static bool Update(TipTextService* text_service, ITfContext* context,
                      TfEditCookie read_cookie);
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,

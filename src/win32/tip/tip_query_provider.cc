@@ -57,13 +57,13 @@ class TipQueryProviderImpl : public TipQueryProvider {
  public:
   explicit TipQueryProviderImpl(std::unique_ptr<ClientInterface> client)
       : client_(std::move(client)) {}
-  TipQueryProviderImpl(const TipQueryProviderImpl &) = delete;
-  TipQueryProviderImpl &operator=(const TipQueryProviderImpl &) = delete;
+  TipQueryProviderImpl(const TipQueryProviderImpl&) = delete;
+  TipQueryProviderImpl& operator=(const TipQueryProviderImpl&) = delete;
 
  private:
   // The TipQueryProvider interface methods.
   bool Query(const std::wstring_view query, QueryType type,
-             std::vector<std::wstring> *result) override {
+             std::vector<std::wstring>* result) override {
     if (type == kReconversion) {
       return ReconvertQuery(query, result);
     }
@@ -71,7 +71,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
   }
 
   bool SimpleQuery(const std::wstring_view query,
-                   std::vector<std::wstring> *result) {
+                   std::vector<std::wstring>* result) {
     {
       KeyEvent key_event;
       key_event.set_key_string(WideToUtf8(query));
@@ -86,7 +86,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
       if (output.error_code() != Output::SESSION_SUCCESS) {
         return false;
       }
-      const auto &candidates = output.all_candidate_words();
+      const auto& candidates = output.all_candidate_words();
       for (size_t i = 0; i < candidates.candidates_size(); ++i) {
         result->push_back(Utf8ToWide(candidates.candidates(i).value()));
       }
@@ -101,7 +101,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
   }
 
   bool ReconvertQuery(const std::wstring_view query,
-                      std::vector<std::wstring> *result) {
+                      std::vector<std::wstring>* result) {
     {
       SessionCommand command;
       command.set_type(SessionCommand::CONVERT_REVERSE);
@@ -110,7 +110,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
       if (!client_->SendCommand(command, &output)) {
         return false;
       }
-      const auto &candidates = output.all_candidate_words();
+      const auto& candidates = output.all_candidate_words();
       for (size_t i = 0; i < candidates.candidates_size(); ++i) {
         result->push_back(Utf8ToWide(candidates.candidates(i).value()));
       }
