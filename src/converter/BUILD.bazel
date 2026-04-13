@@ -925,7 +925,10 @@ mozc_cc_binary(
     name = "quality_regression_main",
     testonly = 1,
     srcs = ["quality_regression_main.cc"],
-    visibility = ["//data:__subpackages__"],
+    visibility = [
+        "//data:__subpackages__",
+        "//tools/periodical_update:__pkg__",
+    ],
     deps = [
         ":quality_regression_util",
         "//base:init_mozc",
@@ -948,7 +951,10 @@ mozc_cc_binary(
 mozc_py_binary(
     name = "quality_regression",
     srcs = ["quality_regression.py"],
-    visibility = ["//data:__subpackages__"],
+    visibility = [
+        "//data:__subpackages__",
+        "//tools/periodical_update:__pkg__",
+    ],
     deps = ["//build_tools:mozc_version_lib"],
 )
 
