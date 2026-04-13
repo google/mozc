@@ -103,22 +103,22 @@ void DictionaryFileCodec::WriteHeader(std::ostream* ofs) const {
 void DictionaryFileCodec::WriteSection(const DictionaryFileSection& section,
                                        std::ostream* ofs) const {
   DCHECK(ofs);
-  const std::string& name = section.name;
+  absl::string_view name = section.name;
+  absl::string_view image = section.image;
   // name should be encoded
   // uint64_t needs just 8 bytes.
   DCHECK_EQ(8, name.size());
   if (MOZC_VLOG_IS_ON(1)) {
     LOG(INFO) << "section=" << absl::CHexEscape(name)
-              << " length=" << section.len;
+              << " length=" << image.size();
   }
-  filecodec_util::WriteInt32(section.len, ofs);
+  filecodec_util::WriteInt32(image.size(), ofs);
   ofs->write(name.data(), name.size());
-  ofs->write(section.ptr, section.len);
-  filecodec_util::Pad4(section.len, ofs);
+  ofs->write(image.data(), image.size());
+  filecodec_util::Pad4(image.size(), ofs);
 }
 
-std::string DictionaryFileCodec::GetSectionName(
-    const absl::string_view name) const {
+std::string DictionaryFileCodec::GetSectionName(absl::string_view name) const {
   MOZC_VLOG(1) << "seed\t" << seed_;
   const uint64_t name_fp = LegacyFingerprintWithSeed(name, seed_);
   const std::string fp_string(reinterpret_cast<const char*>(&name_fp),
@@ -131,25 +131,23 @@ std::string DictionaryFileCodec::GetSectionName(
 }
 
 absl::Status DictionaryFileCodec::ReadSections(
-    const char* image, int length,
+    absl::string_view image,
     std::vector<DictionaryFileSection>* sections) const {
   DCHECK(sections);
-  if (image == nullptr) {
-    return absl::InvalidArgumentError("codec.cc: Image is nullptr");
-  }
   // At least 12 bytes (3 * int32_t) are required.
-  if (length < 12) {
-    return absl::FailedPreconditionError(
-        absl::StrCat("codec.cc: Insufficient data size: ", length, " bytes"));
+  if (image.size() < 12) {
+    return absl::FailedPreconditionError(absl::StrCat(
+        "codec.cc: Insufficient data size: ", image.size(), " bytes"));
   }
   // The image must be aligned at 32-bit boundary.
-  if (reinterpret_cast<std::uintptr_t>(image) % 4 != 0) {
+  if (reinterpret_cast<std::uintptr_t>(image.data()) % 4 != 0) {
     return absl::FailedPreconditionError(
-        absl::StrCat("codec.cc: memory block of size ", length,
+        absl::StrCat("codec.cc: memory block of size ", image.size(),
                      " is not aligned at 32-bit boundary"));
   }
-  const char* ptr = image;  // The current position at which data is read.
-  const char* const image_end = image + length;
+  // The current position at which data is read.
+  const char* ptr = image.data();
+  const char* const image_end = image.data() + image.size();
 
   const int32_t filemagic = LoadUnalignedAdvance<int32_t>(ptr);
   if (filemagic != filemagic_) {
@@ -184,10 +182,10 @@ absl::Status DictionaryFileCodec::ReadSections(
     if (section_end > image_end) {
       return absl::OutOfRangeError(absl::StrCat(
           "codec.cc: Section ", section_index,
-          ": Read pointer will pass the end: offset=", section_end - image,
-          ", image_size=", length));
+          ": Read pointer will pass the end: offset=",
+          section_end - image.data(), ", image_size=", image.size()));
     }
-    const absl::string_view fingerprint(ptr, kFingerprintByteLength);
+    const std::string fingerprint(ptr, kFingerprintByteLength);
     ptr += kFingerprintByteLength;
     if (MOZC_VLOG_IS_ON(1)) {
       LOG(INFO) << "section=" << absl::CHexEscape(fingerprint)
@@ -196,12 +194,13 @@ absl::Status DictionaryFileCodec::ReadSections(
     // Add a section with data and fingerprint.  Note that the data size is
     // |data_size| but |ptr| is advanced by |padded_data_size| to skip padding
     // bytes at the end.
-    sections->emplace_back(ptr, data_size, fingerprint);
+    sections->emplace_back(absl::string_view(ptr, data_size), fingerprint);
     ptr += padded_data_size;
   }
   if (ptr != image_end) {
-    return absl::FailedPreconditionError(absl::StrCat(
-        "codec.cc: ", image_end - ptr, " bytes remaining out of ", length));
+    return absl::FailedPreconditionError(
+        absl::StrCat("codec.cc: ", image_end - ptr, " bytes remaining out of ",
+                     image.size()));
   }
   return absl::Status();
 }

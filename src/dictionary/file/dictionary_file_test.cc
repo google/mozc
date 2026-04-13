@@ -76,17 +76,15 @@ TEST(DictionaryFileTest, Basic) {
   {
     DictionaryFile df(codec);
     ASSERT_OK(df.OpenFromFile(dfn));
-    int len;
-    const char* ptr = df.GetSection("sec1", &len);
-    EXPECT_EQ(len, 10);
-    std::string content(ptr, len);
-    EXPECT_EQ(content, "0123456789");
-    ptr = df.GetSection("sec2", &len);
-    EXPECT_EQ(len, 10);
-    content.assign(ptr, len);
-    EXPECT_EQ(content, "9876543210");
-    ptr = df.GetSection("sec3", &len);
-    EXPECT_EQ(ptr, nullptr);
+    auto data1 = df.GetSection("sec1");
+    EXPECT_EQ(data1->size(), 10);
+    EXPECT_EQ(data1.value(), "0123456789");
+    auto data2 = df.GetSection("sec2");
+    EXPECT_TRUE(data2.has_value());
+    EXPECT_EQ(data2->size(), 10);
+    EXPECT_EQ(data2.value(), "9876543210");
+    auto data3 = df.GetSection("sec3");
+    EXPECT_FALSE(data3.has_value());
   }
 
   EXPECT_OK(FileUtil::Unlink(dfn));

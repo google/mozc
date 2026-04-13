@@ -33,6 +33,7 @@
 #ifndef MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
 #define MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -57,14 +58,15 @@ class DictionaryFile final {
   ~DictionaryFile() = default;
 
   // Opens from a file.
-  absl::Status OpenFromFile(const std::string& file);
+  absl::Status OpenFromFile(absl::string_view file);
 
   // Opens from a memory block.
-  absl::Status OpenFromImage(const char* image, int len);
+  absl::Status OpenFromImage(absl::string_view image);
 
-  // Gets a pointer to the section having |section_name|. Image size is set to
-  // |len|. Returns nullptr when not found.
-  const char* GetSection(absl::string_view section_name, int* len) const;
+  // Gets a data image of the section having |section_name|.
+  // Returns std::nullopt when not found.
+  std::optional<absl::string_view> GetSection(
+      absl::string_view section_name) const;
 
  private:
   const DictionaryFileCodec& file_codec_;

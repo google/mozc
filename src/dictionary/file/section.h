@@ -39,11 +39,7 @@ namespace mozc {
 namespace dictionary {
 
 struct DictionaryFileSection {
-  DictionaryFileSection(const char *ptr, size_t len, absl::string_view name)
-      : ptr(ptr), len(len), name(name) {}
-
-  const char *ptr;
-  size_t len;
+  absl::string_view image;
   std::string name;
 };
 

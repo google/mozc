@@ -52,6 +52,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <string>
 #include <utility>
@@ -65,6 +66,8 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
+#include "base/bits.h"
 #include "base/japanese_util.h"
 #include "base/mmap.h"
 #include "base/strings/unicode.h"
@@ -115,7 +118,7 @@ constexpr size_t kValueTrieTermvecCacheSize = 4 * 1024;
 // Note that this implementation has potential issue that the key/values may
 // be mixed.
 // TODO(hidehiko): Clean up this hacky implementation.
-const char* kHiraganaExpansionTable[] = {
+constexpr absl::string_view kHiraganaExpansionTable[] = {
     "ああぁ",   "いいぃ",   "ううぅゔ", "ええぇ",   "おおぉ",   "かかが",
     "ききぎ",   "くくぐ",   "けけげ",   "ここご",   "ささざ",   "ししじ",
     "すすず",   "せせぜ",   "そそぞ",   "たただ",   "ちちぢ",   "つつっづ",
@@ -374,11 +377,11 @@ struct SystemDictionary::PredictiveLookupSearchState {
 
 SystemDictionary::Builder::Builder(absl::string_view filename)
     : spec_(std::make_unique<Specification>(Specification::FILENAME, filename,
-                                              nullptr, -1, NONE)) {}
+                                            "", NONE)) {}
 
 SystemDictionary::Builder::Builder(const char* ptr, int len)
-    : spec_(std::make_unique<Specification>(Specification::IMAGE, "", ptr, len,
-                                              NONE)) {}
+    : spec_(std::make_unique<Specification>(
+          Specification::IMAGE, "", absl::string_view(ptr, len), NONE)) {}
 
 SystemDictionary::Builder& SystemDictionary::Builder::SetOptions(
     Options options) {
@@ -408,9 +411,8 @@ SystemDictionary::Builder::Build() {
       // has the privilege to mlock.
       // Note that we don't munlock the space because it's always better to keep
       // the singleton system dictionary paged in as long as the process runs.
-      Mmap::MaybeMLock(spec_->ptr, spec_->len);
-      auto status =
-          instance->dictionary_file_->OpenFromImage(spec_->ptr, spec_->len);
+      Mmap::MaybeMLock(spec_->image.data(), spec_->image.size());
+      auto status = instance->dictionary_file_->OpenFromImage(spec_->image);
       if (!status.ok()) {
         return status;
       }
@@ -431,19 +433,29 @@ SystemDictionary::Builder::Build() {
 SystemDictionary::SystemDictionary(
     std::unique_ptr<const SystemDictionaryCodec> codec,
     std::unique_ptr<const DictionaryFileCodec> file_codec)
-    : frequent_pos_(nullptr),
-      codec_(std::move(codec)),
+    : codec_(std::move(codec)),
       file_codec_(std::move(file_codec)),
       dictionary_file_(std::make_unique<DictionaryFile>(*file_codec_)) {}
 
 SystemDictionary::~SystemDictionary() = default;
 
 bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
-  int len;
+  std::optional<absl::string_view> key_image =
+      dictionary_file_->GetSection(codec_->GetSectionNameForKey());
+  std::optional<absl::string_view> value_image =
+      dictionary_file_->GetSection(codec_->GetSectionNameForValue());
+  std::optional<absl::string_view> token_image =
+      dictionary_file_->GetSection(codec_->GetSectionNameForTokens());
+  std::optional<absl::string_view> frequent_pos_image =
+      dictionary_file_->GetSection(codec_->GetSectionNameForPos());
 
-  const uint8_t* key_image = reinterpret_cast<const uint8_t*>(
-      dictionary_file_->GetSection(codec_->GetSectionNameForKey(), &len));
-  if (!key_trie_.Open(key_image, kKeyTrieLb0CacheSize, kKeyTrieLb1CacheSize,
+  if (!key_image.has_value() || !value_image.has_value() ||
+      !token_image.has_value() || !frequent_pos_image.has_value()) {
+    return false;
+  }
+
+  if (!key_trie_.Open(reinterpret_cast<const uint8_t*>(key_image->data()),
+                      kKeyTrieLb0CacheSize, kKeyTrieLb1CacheSize,
                       kKeyTrieSelect0CacheSize, kKeyTrieSelect1CacheSize,
                       kKeyTrieTermvecCacheSize)) {
     LOG(ERROR) << "cannot open key trie";
@@ -452,26 +464,16 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   BuildHiraganaExpansionTable(*codec_, &hiragana_expansion_table_);
 
-  const uint8_t* value_image = reinterpret_cast<const uint8_t*>(
-      dictionary_file_->GetSection(codec_->GetSectionNameForValue(), &len));
-  if (!value_trie_.Open(value_image, kValueTrieLb0CacheSize,
-                        kValueTrieLb1CacheSize, kValueTrieSelect0CacheSize,
-                        kValueTrieSelect1CacheSize,
+  if (!value_trie_.Open(reinterpret_cast<const uint8_t*>(value_image->data()),
+                        kValueTrieLb0CacheSize, kValueTrieLb1CacheSize,
+                        kValueTrieSelect0CacheSize, kValueTrieSelect1CacheSize,
                         kValueTrieTermvecCacheSize)) {
     LOG(ERROR) << "can not open value trie";
     return false;
   }
 
-  const unsigned char* token_image = reinterpret_cast<const unsigned char*>(
-      dictionary_file_->GetSection(codec_->GetSectionNameForTokens(), &len));
-  token_array_.Open(token_image);
-
-  frequent_pos_ = reinterpret_cast<const uint32_t*>(
-      dictionary_file_->GetSection(codec_->GetSectionNameForPos(), &len));
-  if (frequent_pos_ == nullptr) {
-    LOG(ERROR) << "can not find frequent pos section";
-    return false;
-  }
+  token_array_.Open(reinterpret_cast<const uint8_t*>(token_image->data()));
+  frequent_pos_ = MakeAlignedConstSpan<uint32_t>(frequent_pos_image.value());
 
   if (enable_reverse_lookup_index) {
     InitReverseLookupIndex();
@@ -727,14 +729,12 @@ namespace {
 //     A functor of signature bool(const TokenInfo &).  Only tokens for which
 //     this functor returns true are passed to callback function.
 template <typename Func>
-void RunCallbackOnEachPrefix(const LoudsTrie& key_trie,
-                             const LoudsTrie& value_trie,
-                             const BitVectorBasedArray& token_array,
-                             const SystemDictionaryCodec& codec,
-                             const uint32_t* frequent_pos, const char* key,
-                             absl::string_view encoded_key,
-                             DictionaryInterface::Callback* callback,
-                             Func token_filter) {
+void RunCallbackOnEachPrefix(
+    const LoudsTrie& key_trie, const LoudsTrie& value_trie,
+    const BitVectorBasedArray& token_array, const SystemDictionaryCodec& codec,
+    absl::Span<const uint32_t> frequent_pos, absl::string_view key,
+    absl::string_view encoded_key, DictionaryInterface::Callback* callback,
+    Func token_filter) {
   typedef DictionaryInterface::Callback Callback;
   LoudsTrie::Node node;
   for (absl::string_view::size_type i = 0; i < encoded_key.size();) {
@@ -746,8 +746,8 @@ void RunCallbackOnEachPrefix(const LoudsTrie& key_trie,
       continue;
     }
     const absl::string_view encoded_prefix = encoded_key.substr(0, i);
-    const absl::string_view prefix(key,
-                                   codec.GetDecodedKeyLength(encoded_prefix));
+    const absl::string_view prefix =
+        key.substr(0, codec.GetDecodedKeyLength(encoded_prefix));
 
     switch (callback->OnKey(prefix)) {
       case Callback::TRAVERSE_DONE:
@@ -838,7 +838,7 @@ class ReverseLookupCallbackWrapper : public DictionaryInterface::Callback {
 //     purpose.
 DictionaryInterface::Callback::ResultType
 SystemDictionary::LookupPrefixWithKeyExpansionImpl(
-    const char* key, absl::string_view encoded_key,
+    absl::string_view key, absl::string_view encoded_key,
     const KeyExpansionTable& table, Callback* callback, LoudsTrie::Node node,
     absl::string_view::size_type key_pos, int num_expanded,
     char* actual_key_buffer, std::string* actual_prefix) const {
@@ -850,8 +850,8 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
     }
 
     const absl::string_view encoded_prefix = encoded_key.substr(0, key_pos);
-    const absl::string_view prefix(key,
-                                   codec_->GetDecodedKeyLength(encoded_prefix));
+    const absl::string_view prefix =
+        key.substr(0, codec_->GetDecodedKeyLength(encoded_prefix));
     Callback::ResultType result = callback->OnKey(prefix);
     if (result == Callback::TRAVERSE_DONE ||
         result == Callback::TRAVERSE_CULL) {

@@ -57,7 +57,7 @@ class DictionaryFileCodec {
   virtual void WriteSections(absl::Span<const DictionaryFileSection> sections,
                              std::ostream* ofs) const;
   virtual absl::Status ReadSections(
-      const char* image, int length,
+      absl::string_view image,
       std::vector<DictionaryFileSection>* sections) const;
   virtual std::string GetSectionName(absl::string_view name) const;
 

@@ -45,24 +45,17 @@ namespace dictionary {
 
 DictionaryFileBuilder::DictionaryFileBuilder(
     const DictionaryFileCodec& file_codec)
-    : file_codec_(file_codec) {}
+    : file_codec_(file_codec), image_arena_(64) {}
 
-DictionaryFileBuilder::~DictionaryFileBuilder() {
-  for (std::vector<DictionaryFileSection>::iterator itr = sections_.begin();
-       itr != sections_.end(); itr++) {
-    delete[] itr->ptr;
-  }
-}
-
-bool DictionaryFileBuilder::AddSectionFromFile(
-    const absl::string_view section_name, const std::string& file_name) {
-  if (added_.find(section_name) != added_.end()) {
+bool DictionaryFileBuilder::AddSectionFromFile(absl::string_view section_name,
+                                               absl::string_view file_name) {
+  if (added_.contains(section_name)) {
     DLOG(INFO) << "Already added: " << section_name;
     return false;
   }
   added_.emplace(section_name);
 
-  InputFileStream ifs(file_name, std::ios::binary);
+  InputFileStream ifs(std::string(file_name), std::ios::binary);
   CHECK(ifs) << "Failed to read" << file_name;
 
   ifs.seekg(0, std::ios::end);
@@ -70,18 +63,18 @@ bool DictionaryFileBuilder::AddSectionFromFile(
 
   // Reads the file
   ifs.seekg(0, std::ios::beg);
-  char* ptr = new char[len];
-  ifs.read(ptr, len);
+  std::string* image = image_arena_.Alloc();
+  image->resize(len);
+  ifs.read(image->data(), len);
 
-  sections_.push_back(DictionaryFileSection(ptr, len, ""));
-  sections_.back().name = file_codec_.GetSectionName(section_name);
+  sections_.emplace_back(*image, file_codec_.GetSectionName(section_name));
   return true;
 }
 
 void DictionaryFileBuilder::WriteImageToFile(
-    const std::string& file_name) const {
+    absl::string_view file_name) const {
   LOG(INFO) << "Start writing dictionary file to " << file_name;
-  OutputFileStream ofs(file_name, std::ios::binary);
+  OutputFileStream ofs(std::string(file_name), std::ios::binary);
   file_codec_.WriteSections(sections_, &ofs);
   LOG(INFO) << "Generated";
 }

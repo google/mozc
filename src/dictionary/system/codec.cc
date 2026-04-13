@@ -49,10 +49,10 @@ namespace dictionary {
 namespace {
 
 //// Constants for section name ////
-constexpr char kKeySectionName[] = "k";
-constexpr char kValueSectionName[] = "v";
-constexpr char kTokensSectionName[] = "t";
-constexpr char kPosSectionName[] = "p";
+constexpr absl::string_view kKeySectionName = "k";
+constexpr absl::string_view kValueSectionName = "v";
+constexpr absl::string_view kTokensSectionName = "t";
+constexpr absl::string_view kPosSectionName = "p";
 
 //// Constants for validation ////
 // 12 bits
@@ -177,7 +177,7 @@ constexpr uint8_t kLastTokenFlag = 0x80;
 // U+30FB - U+30FC ("・" - "ー") <=> U+0076 - U+0077
 //
 // U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
-void EncodeDecodeKeyImpl(const absl::string_view src, std::string* dst) {
+void EncodeDecodeKeyImpl(absl::string_view src, std::string* dst) {
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     static_assert(sizeof(uint32_t) == sizeof(char32_t),
                   "char32 must be 32-bit integer size.");
@@ -203,7 +203,7 @@ void EncodeDecodeKeyImpl(const absl::string_view src, std::string* dst) {
   }
 }
 
-size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src) {
+size_t GetEncodedDecodedKeyLengthImpl(absl::string_view src) {
   size_t size = src.size();
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     static_assert(sizeof(uint32_t) == sizeof(char32_t),
@@ -508,39 +508,37 @@ void ReadValueInfo(const uint8_t* ptr, uint8_t flags, int* value_id,
 
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
 
-std::string SystemDictionaryCodec::GetSectionNameForKey() const {
+absl::string_view SystemDictionaryCodec::GetSectionNameForKey() const {
   return kKeySectionName;
 }
 
-std::string SystemDictionaryCodec::GetSectionNameForValue() const {
+absl::string_view SystemDictionaryCodec::GetSectionNameForValue() const {
   return kValueSectionName;
 }
 
-std::string SystemDictionaryCodec::GetSectionNameForTokens() const {
+absl::string_view SystemDictionaryCodec::GetSectionNameForTokens() const {
   return kTokensSectionName;
 }
 
-std::string SystemDictionaryCodec::GetSectionNameForPos() const {
+absl::string_view SystemDictionaryCodec::GetSectionNameForPos() const {
   return kPosSectionName;
 }
 
-void SystemDictionaryCodec::EncodeKey(const absl::string_view src,
+void SystemDictionaryCodec::EncodeKey(absl::string_view src,
                                       std::string* dst) const {
   EncodeDecodeKeyImpl(src, dst);
 }
 
-void SystemDictionaryCodec::DecodeKey(const absl::string_view src,
+void SystemDictionaryCodec::DecodeKey(absl::string_view src,
                                       std::string* dst) const {
   EncodeDecodeKeyImpl(src, dst);
 }
 
-size_t SystemDictionaryCodec::GetEncodedKeyLength(
-    const absl::string_view src) const {
+size_t SystemDictionaryCodec::GetEncodedKeyLength(absl::string_view src) const {
   return GetEncodedDecodedKeyLengthImpl(src);
 }
 
-size_t SystemDictionaryCodec::GetDecodedKeyLength(
-    const absl::string_view src) const {
+size_t SystemDictionaryCodec::GetDecodedKeyLength(absl::string_view src) const {
   return GetEncodedDecodedKeyLengthImpl(src);
 }
 
@@ -556,7 +554,7 @@ size_t SystemDictionaryCodec::GetDecodedKeyLength(
 //  Other 0x?? ?? -> VALUE_CHAR_MARK_OTHER ?? ??
 //  0x?????? -> VALUE_CHAR_MARK_BIG ?? ?? ??
 
-void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
+void SystemDictionaryCodec::EncodeValue(absl::string_view src,
                                         std::string* dst) const {
   DCHECK(dst);
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
@@ -613,7 +611,7 @@ void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
   }
 }
 
-void SystemDictionaryCodec::DecodeValue(const absl::string_view src,
+void SystemDictionaryCodec::DecodeValue(absl::string_view src,
                                         std::string* dst) const {
   DCHECK(dst);
   const uint8_t* p = reinterpret_cast<const uint8_t*>(src.data());

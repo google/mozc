@@ -62,6 +62,7 @@ mozc_cc_library(
         ":codec",
         ":section",
         "//base:file_stream",
+        "//base/container:arena",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",

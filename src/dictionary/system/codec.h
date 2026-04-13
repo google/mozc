@@ -48,16 +48,16 @@ class SystemDictionaryCodec {
   virtual ~SystemDictionaryCodec() {}
 
   // Return section name for key trie
-  virtual std::string GetSectionNameForKey() const;
+  virtual absl::string_view GetSectionNameForKey() const;
 
   // Return section name for value trie
-  virtual std::string GetSectionNameForValue() const;
+  virtual absl::string_view GetSectionNameForValue() const;
 
   // Return section name for tokens array
-  virtual std::string GetSectionNameForTokens() const;
+  virtual absl::string_view GetSectionNameForTokens() const;
 
   // Return section name for frequent pos map
-  virtual std::string GetSectionNameForPos() const;
+  virtual absl::string_view GetSectionNameForPos() const;
 
   // Compresses key string into small bytes.
   virtual void EncodeKey(absl::string_view src, std::string* dst) const;

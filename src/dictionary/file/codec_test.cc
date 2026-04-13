@@ -57,17 +57,17 @@ class CodecTest : public ::testing::Test {
   CodecTest() : test_file_(testing::MakeTempFileOrDie()) {}
 
  protected:
-  void AddSection(const DictionaryFileCodec& codec,
-                  const absl::string_view name, const char* ptr, int len,
+  void AddSection(const DictionaryFileCodec& codec, absl::string_view name,
+                  absl::string_view data,
                   std::vector<DictionaryFileSection>* sections) const {
     CHECK(sections);
     sections->push_back(
-        DictionaryFileSection(ptr, len, codec.GetSectionName(name)));
+        DictionaryFileSection(data, codec.GetSectionName(name)));
   }
 
   bool FindSection(const DictionaryFileCodec& codec,
                    absl::Span<const DictionaryFileSection> sections,
-                   const absl::string_view name, int* index) const {
+                   absl::string_view name, int* index) const {
     CHECK(index);
     const std::string name_find = codec.GetSectionName(name);
     for (size_t i = 0; i < sections.size(); ++i) {
@@ -80,9 +80,8 @@ class CodecTest : public ::testing::Test {
   }
 
   bool CheckValue(const DictionaryFileSection& section,
-                  const absl::string_view expected) const {
-    const std::string value(section.ptr, section.len);
-    return (expected == value);
+                  absl::string_view expected) const {
+    return expected == section.image;
   }
 
   TempFile test_file_;
@@ -93,11 +92,9 @@ TEST_F(CodecTest, DefaultTest) {
   {
     std::vector<DictionaryFileSection> write_sections;
     const std::string value0 = "Value 0 test";
-    AddSection(codec, "Section 0", value0.data(), value0.size(),
-               &write_sections);
+    AddSection(codec, "Section 0", value0, &write_sections);
     const std::string value1 = "Value 1 test test";
-    AddSection(codec, "Section 1", value1.data(), value1.size(),
-               &write_sections);
+    AddSection(codec, "Section 1", value1, &write_sections);
     OutputFileStream ofs;
     ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
     codec.WriteSections(write_sections, &ofs);
@@ -106,7 +103,7 @@ TEST_F(CodecTest, DefaultTest) {
   absl::StatusOr<std::string> buf = FileUtil::GetContents(test_file_.path());
   std::vector<DictionaryFileSection> sections;
   ASSERT_OK(buf);
-  ASSERT_OK(codec.ReadSections(buf->data(), buf->size(), &sections));
+  ASSERT_OK(codec.ReadSections(*buf, &sections));
   ASSERT_EQ(2, sections.size());
   int index = -1;
   ASSERT_TRUE(FindSection(codec, sections, "Section 0", &index));
@@ -123,11 +120,9 @@ TEST_F(CodecTest, RandomizedCodecTest) {
   {
     std::vector<DictionaryFileSection> write_sections;
     const std::string value0 = "Value 0 test";
-    AddSection(codec, "Section 0", value0.data(), value0.size(),
-               &write_sections);
+    AddSection(codec, "Section 0", value0, &write_sections);
     const std::string value1 = "Value 1 test test";
-    AddSection(codec, "Section 1", value1.data(), value1.size(),
-               &write_sections);
+    AddSection(codec, "Section 1", value1, &write_sections);
     OutputFileStream ofs;
     ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
     codec.WriteSections(write_sections, &ofs);
@@ -136,7 +131,7 @@ TEST_F(CodecTest, RandomizedCodecTest) {
   absl::StatusOr<std::string> buf = FileUtil::GetContents(test_file_.path());
   std::vector<DictionaryFileSection> sections;
   ASSERT_OK(buf);
-  ASSERT_OK(codec.ReadSections(buf->data(), buf->size(), &sections));
+  ASSERT_OK(codec.ReadSections(*buf, &sections));
   ASSERT_EQ(2, sections.size());
   int index = -1;
   ASSERT_TRUE(FindSection(codec, sections, "Section 0", &index));

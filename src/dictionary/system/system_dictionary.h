@@ -39,6 +39,7 @@
 #include "absl/container/btree_set.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/thread.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/file/codec.h"
@@ -93,9 +94,9 @@ class SystemDictionary : public DictionaryInterface {
         IMAGE,
       };
 
-      Specification(InputType t, absl::string_view fn, const char* p, int l,
+      Specification(InputType t, absl::string_view fn, absl::string_view image,
                     Options o)
-          : type(t), filename(fn), ptr(p), len(l), options(o) {}
+          : type(t), filename(fn), image(image), options(o) {}
 
       InputType type;
 
@@ -103,8 +104,7 @@ class SystemDictionary : public DictionaryInterface {
       const std::string filename;
 
       // For InputType::IMAGE
-      const char* ptr;
-      const int len;
+      absl::string_view image;
 
       Options options;
     };
@@ -164,7 +164,7 @@ class SystemDictionary : public DictionaryInterface {
   void InitReverseLookupIndex();
 
   Callback::ResultType LookupPrefixWithKeyExpansionImpl(
-      const char* key, absl::string_view encoded_key,
+      absl::string_view key, absl::string_view encoded_key,
       const KeyExpansionTable& table, Callback* callback,
       storage::louds::LoudsTrie::Node node,
       absl::string_view::size_type key_pos, int num_expanded,
@@ -177,7 +177,7 @@ class SystemDictionary : public DictionaryInterface {
   storage::louds::LoudsTrie key_trie_;
   storage::louds::LoudsTrie value_trie_;
   storage::louds::BitVectorBasedArray token_array_;
-  const uint32_t* frequent_pos_;
+  absl::Span<const uint32_t> frequent_pos_;
   std::unique_ptr<const SystemDictionaryCodec> codec_;
   std::unique_ptr<const DictionaryFileCodec> file_codec_;
   KeyExpansionTable hiragana_expansion_table_;

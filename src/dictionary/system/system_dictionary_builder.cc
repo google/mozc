@@ -90,8 +90,7 @@ struct TokenGreaterThan {
 
 void WriteSectionToFile(const DictionaryFileSection& section,
                         const std::string& filename) {
-  if (absl::Status s = FileUtil::SetContents(
-          filename, absl::string_view(section.ptr, section.len));
+  if (absl::Status s = FileUtil::SetContents(filename, section.image);
       !s.ok()) {
     LOG(ERROR) << "Cannot write a section to " << filename;
   }
@@ -139,28 +138,27 @@ void SystemDictionaryBuilder::WriteToStream(
   // Memory images of each section
   std::vector<DictionaryFileSection> sections;
   DictionaryFileSection value_trie_section(
-      value_trie_builder_.image().data(), value_trie_builder_.image().size(),
+      value_trie_builder_.image(),
       file_codec_->GetSectionName(codec_->GetSectionNameForValue()));
   sections.push_back(value_trie_section);
 
   DictionaryFileSection key_trie_section(
-      key_trie_builder_.image().data(), key_trie_builder_.image().size(),
+      key_trie_builder_.image(),
       file_codec_->GetSectionName(codec_->GetSectionNameForKey()));
   sections.push_back(key_trie_section);
 
   DictionaryFileSection token_array_section(
-      token_array_builder_.image().data(), token_array_builder_.image().size(),
+      token_array_builder_.image(),
       file_codec_->GetSectionName(codec_->GetSectionNameForTokens()));
 
   sections.push_back(token_array_section);
   uint32_t frequent_pos_array[256] = {0};
-  for (std::map<uint32_t, int>::const_iterator i = frequent_pos_.begin();
-       i != frequent_pos_.end(); ++i) {
-    frequent_pos_array[i->second] = i->first;
+  for (auto [pos, index] : frequent_pos_) {
+    frequent_pos_array[index] = pos;
   }
   DictionaryFileSection frequent_pos_section(
-      reinterpret_cast<const char*>(frequent_pos_array),
-      sizeof frequent_pos_array,
+      absl::string_view(reinterpret_cast<const char*>(frequent_pos_array),
+                        sizeof frequent_pos_array),
       file_codec_->GetSectionName(codec_->GetSectionNameForPos()));
   sections.push_back(frequent_pos_section);
 

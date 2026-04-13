@@ -37,6 +37,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/japanese_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec.h"
@@ -52,8 +53,8 @@ class TokenDecodeIterator {
   TokenDecodeIterator& operator=(const TokenDecodeIterator&) = delete;
   TokenDecodeIterator(const SystemDictionaryCodec& codec,
                       const storage::louds::LoudsTrie& value_trie,
-                      const uint32_t* frequent_pos, absl::string_view key,
-                      const uint8_t* ptr);
+                      absl::Span<const uint32_t> frequent_pos,
+                      absl::string_view key, const uint8_t* ptr);
   ~TokenDecodeIterator() = default;
 
   const TokenInfo& Get() const { return token_info_; }
@@ -78,7 +79,7 @@ class TokenDecodeIterator {
 
   const SystemDictionaryCodec& codec_;
   const storage::louds::LoudsTrie& value_trie_;
-  const uint32_t* frequent_pos_;
+  absl::Span<const uint32_t> frequent_pos_;
 
   const absl::string_view key_;
   // Katakana key will be lazily initialized.
@@ -95,8 +96,9 @@ class TokenDecodeIterator {
 
 inline TokenDecodeIterator::TokenDecodeIterator(
     const SystemDictionaryCodec& codec,
-    const storage::louds::LoudsTrie& value_trie, const uint32_t* frequent_pos,
-    absl::string_view key, const uint8_t* ptr)
+    const storage::louds::LoudsTrie& value_trie,
+    absl::Span<const uint32_t> frequent_pos, absl::string_view key,
+    const uint8_t* ptr)
     : codec_(codec),
       value_trie_(value_trie),
       frequent_pos_(frequent_pos),
