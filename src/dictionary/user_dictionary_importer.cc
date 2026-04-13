@@ -76,7 +76,7 @@ size_t HashOf(const UserDictionary::Entry& entry) {
 }
 
 // Normalizes POS (removes full width ascii and half width katakana).
-std::string NormalizePos(const absl::string_view input) {
+std::string NormalizePos(absl::string_view input) {
   std::string tmp = japanese_util::FullWidthAsciiToHalfWidthAscii(input);
   return japanese_util::HalfWidthKatakanaToFullWidthKatakana(tmp);
 }
@@ -96,9 +96,12 @@ using PosMap = absl::flat_hash_map<absl::string_view, UserDictionary::PosType>;
 // Include actual POS mapping rules defined outside the file.
 #include "dictionary/pos_map.inc"
 
+}  // namespace
+
 // Convert POS of a third party IME to that of Mozc using the given mapping.
-bool ConvertEntryInternal(const PosMap& pos_map, const RawEntry& from,
-                          UserDictionary::Entry* to) {
+bool ConvertEntry(const RawEntry& from, UserDictionary::Entry* to) {
+  const PosMap& pos_map = *kPosMap;
+
   if (to == nullptr) {
     LOG(ERROR) << "Null pointer is passed.";
     return false;
@@ -127,18 +130,12 @@ bool ConvertEntryInternal(const PosMap& pos_map, const RawEntry& from,
 
   const UserDictionary::PosType pos_type = it->second;
   if (!UserDictionary::PosType_IsValid(pos_type)) {
-    to->clear_key();
-    to->clear_value();
-    to->clear_pos();
     return false;
   }
 
-  to->set_key(from.key);
+  to->set_key(user_dictionary::NormalizeReading(from.key));
   to->set_value(from.value);
   to->set_pos(pos_type);
-
-  // Normalize reading.
-  to->set_key(user_dictionary::NormalizeReading(to->key()));
 
   // Copy comment.
   if (!from.comment.empty()) {
@@ -153,8 +150,6 @@ bool ConvertEntryInternal(const PosMap& pos_map, const RawEntry& from,
   // Validation.
   return user_dictionary::ValidateEntry(*to).ok();
 }
-
-}  // namespace
 
 absl::Status ImportFromIterator(InputIteratorInterface* iter,
                                 UserDictionary* user_dic) {
@@ -345,10 +340,6 @@ bool TextInputIterator::Next(RawEntry* entry) {
   }
 
   return false;
-}
-
-bool ConvertEntry(const RawEntry& from, UserDictionary::Entry* to) {
-  return ConvertEntryInternal(*kPosMap, from, to);
 }
 
 IMEType GuessIMEType(absl::string_view line) {
