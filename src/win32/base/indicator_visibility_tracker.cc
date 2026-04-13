@@ -31,6 +31,7 @@
 
 #include "absl/time/time.h"
 #include "base/stopwatch.h"
+#include "win32/base/keyboard.h"
 
 namespace mozc {
 namespace win32 {

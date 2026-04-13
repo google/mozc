@@ -41,6 +41,7 @@
 #include <windows.h>
 #include <winuser.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <string>
 #include <utility>

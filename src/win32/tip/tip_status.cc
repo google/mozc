@@ -36,6 +36,7 @@
 
 #include <utility>
 
+#include "base/win32/hresultor.h"
 #include "win32/tip/tip_compartment_util.h"
 
 namespace mozc {

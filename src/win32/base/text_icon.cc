@@ -195,6 +195,9 @@ HICON CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     // 4-byte alignment. Here we need to do alignment conversion.
     const size_t mask_buffer_stride = (bitmap_width + 0x0f) / 16 * 2;
     const size_t mask_buffer_size = mask_buffer_stride * bitmap_width;
+    if (src_dib_buffer == nullptr) {
+      return nullptr;
+    }
     auto mask_buffer = std::make_unique<uint8_t[]>(mask_buffer_size);
     for (size_t y = 0; y < bitmap_height; ++y) {
       for (size_t x = 0; x < bitmap_width; ++x) {

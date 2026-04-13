@@ -34,8 +34,6 @@
 
 #include <string>
 
-#include "base/system_util.h"
-
 namespace mozc {
 namespace win32 {
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
@@ -115,7 +113,7 @@ bool OmahaUtil::WriteOmahaError(const std::wstring& ui_message,
 
   // Leaves Mozc version in addition to UI message for customer support.
   const std::wstring& message =
-      header.length() > 0 ? header + L"\r\n" + ui_message : ui_message;
+      !header.empty() ? header + L"\r\n" + ui_message : ui_message;
 
   // This message will be displayed by Omaha meta installer in the error
   // dialog.

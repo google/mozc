@@ -35,6 +35,7 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include <cstddef>
 #include <iterator>
 #include <limits>
 #include <memory>

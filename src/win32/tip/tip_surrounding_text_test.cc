@@ -29,6 +29,7 @@
 
 #include "win32/tip/tip_surrounding_text.h"
 
+#include <cstddef>
 #include <string>
 
 #include "base/win32/wide_char.h"

@@ -51,9 +51,7 @@ namespace win32 {
 namespace tsf {
 namespace {
 
-using ::testing::AssertionFailure;
 using ::testing::AssertionResult;
-using ::testing::AssertionSuccess;
 using ::testing::IsNull;
 using ::testing::NotNull;
 

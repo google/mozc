@@ -32,7 +32,6 @@
 #include <ctffunc.h>
 #include <objbase.h>
 #include <oleauto.h>
-#include <wil/com.h>
 
 #include <utility>
 #include <vector>

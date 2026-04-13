@@ -62,7 +62,7 @@ class GetPreferredTouchKeyboardLayoutImpl final
  public:
  private:
   // The ITfFunction interface method.
-  virtual HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR* name) {
+  HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR* name) override {
     if (name == nullptr) {
       return E_INVALIDARG;
     }
@@ -71,8 +71,8 @@ class GetPreferredTouchKeyboardLayoutImpl final
   }
 
   // ITfFnGetPreferredTouchKeyboardLayout
-  virtual HRESULT STDMETHODCALLTYPE GetLayout(TKBLayoutType* layout_type,
-                                              WORD* preferred_layout_id) {
+  HRESULT STDMETHODCALLTYPE GetLayout(TKBLayoutType* layout_type,
+                                      WORD* preferred_layout_id) override {
     if (layout_type != nullptr) {
       *layout_type = TKBLT_OPTIMIZED;
     }

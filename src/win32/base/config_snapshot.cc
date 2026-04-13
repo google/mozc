@@ -30,9 +30,11 @@
 #include "win32/base/config_snapshot.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 
 #include "config/config_handler.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/key_info_util.h"
 

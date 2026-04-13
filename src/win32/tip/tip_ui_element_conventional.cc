@@ -39,6 +39,7 @@
 
 #include "absl/base/optimization.h"
 #include "base/win32/com.h"
+#include "base/win32/com_implements.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_element_delegate.h"

@@ -29,6 +29,7 @@
 
 #include "win32/base/string_util.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 

@@ -89,7 +89,7 @@ class AsyncLayoutChangeEditSessionImpl final
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
-  virtual STDMETHODIMP DoEditSession(TfEditCookie read_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie read_cookie) override {
     // Ignore the returned code as TipUiHandler::UpdateUI will be called
     // anyway.
     text_service_->GetThreadContext()
@@ -136,7 +136,7 @@ class AsyncSetFocusEditSessionImpl final
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
-  virtual STDMETHODIMP DoEditSession(TfEditCookie read_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie read_cookie) override {
     std::vector<InputScope> input_scopes;
     wil::com_ptr_nothrow<ITfRange> selection_range;
     TfActiveSelEnd active_sel_end = TF_AE_NONE;
@@ -194,7 +194,7 @@ class AsyncSwitchInputModeEditSessionImpl final
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
-  virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie write_cookie) override {
     TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
     if (!private_context) {
@@ -278,7 +278,7 @@ class AsyncSessionCommandEditSessionImpl final
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
-  virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie write_cookie) override {
     Output output;
     TipPrivateContext* private_context =
         text_service_->GetPrivateContext(context_.get());
@@ -469,7 +469,7 @@ class SyncEditSessionImpl final : public TipComImplements<ITfEditSession> {
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
-  virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie write_cookie) override {
     return TipEditSessionImpl::UpdateContext(
         text_service_.get(), context_.get(), write_cookie, output_);
   }
@@ -563,7 +563,7 @@ class SyncGetTextEditSessionImpl final
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
-  virtual STDMETHODIMP DoEditSession(TfEditCookie read_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie read_cookie) override {
     HRESULT result = TipRangeUtil::GetText(range_.get(), read_cookie, &text_);
     if (FAILED(result)) {
       return result;
@@ -604,7 +604,7 @@ class AsyncSetTextEditSessionImpl final
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
-  virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie write_cookie) override {
     range_->SetText(write_cookie, 0, text_.data(), text_.size());
     return S_OK;
   }

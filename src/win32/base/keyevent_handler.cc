@@ -509,9 +509,9 @@ bool ConvertToKeyEventMain(const VirtualKey& virtual_key, BYTE scan_code,
     const std::string half_katakana = WideToUtf8(whalf_katakana);
     std::string full_katakana =
         mozc::japanese_util::HalfWidthKatakanaToFullWidthKatakana(
-            half_katakana.c_str());
+            half_katakana);
     std::string full_hiragana =
-        mozc::japanese_util::KatakanaToHiragana(full_katakana.c_str());
+        mozc::japanese_util::KatakanaToHiragana(full_katakana);
     key->set_key_string(full_hiragana);
     has_valid_key_string = true;
   }

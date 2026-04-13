@@ -46,7 +46,6 @@
 #include "win32/tip/tip_candidate_list.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_query_provider.h"
-#include "win32/tip/tip_surrounding_text.h"
 
 namespace mozc {
 namespace win32 {

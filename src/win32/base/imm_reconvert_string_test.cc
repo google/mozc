@@ -29,6 +29,7 @@
 
 #include "win32/base/imm_reconvert_string.h"
 
+#include <cstddef>
 #include <optional>
 #include <string_view>
 #include <utility>

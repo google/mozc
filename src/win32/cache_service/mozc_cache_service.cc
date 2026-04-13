@@ -37,6 +37,7 @@
 #include <wil/resource.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <string_view>
 
