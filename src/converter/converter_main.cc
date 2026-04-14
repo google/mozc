@@ -75,6 +75,7 @@
 #define MOZC_DEBUG
 #endif  // NDEBUG
 
+
 ABSL_FLAG(int32_t, max_conversion_candidates_size, 200,
           "maximum candidates size");
 ABSL_FLAG(std::string, user_profile_dir, "", "path to user profile directory");
@@ -97,6 +98,8 @@ ABSL_FLAG(std::string, id_def, "",
 ABSL_FLAG(std::string, decoder_experiment_params, "",
           "If nonempty, a DecoderExperimentParams is parsed from this text "
           "format and it is merged to the default value.");
+ABSL_FLAG(std::string, supplemental_model, "",
+          "Supplemental model file. Default model is used when this is empty.");
 
 namespace mozc {
 namespace {
@@ -290,6 +293,7 @@ class ConverterMain {
         config_(std::move(config)),
         converter_(engine_->GetConverter()) {}
 
+  void LoadSupplementalModel(std::string path);
   void RunLoop();
   std::string ExecCommandToString(absl::string_view line);
 
@@ -301,6 +305,29 @@ class ConverterMain {
   config::Config config_;
   std::shared_ptr<const ConverterInterface> converter_;
 };
+
+constexpr absl::string_view kSupplementalModelDefaultPath =
+    "";
+
+// When supplemental model is not enabled, the Load function is a no-op and
+// returns ACCEPTED that is 0 as the default value of the enum.
+constexpr EngineReloadResponse::Status kSupplementalModelExpectedStatus =
+    EngineReloadResponse::ACCEPTED;
+
+
+void ConverterMain::LoadSupplementalModel(std::string path) {
+  if (path.empty()) {
+    // Default spelling model
+    path = FileUtil::JoinPath(SystemUtil::GetProgramRunfilesDirectory(),
+                              kSupplementalModelDefaultPath);
+  }
+  EngineReloadRequest req;
+  req.set_file_path(path);
+  const EngineReloadResponse response =
+      engine_->GetModulesForTesting().GetSupplementalModel().Load(req);
+  CHECK_EQ(response.status(), kSupplementalModelExpectedStatus);
+  LOG(INFO) << "Set the supplemental model: path = " << path;
+}
 
 bool ConverterMain::ExecCommand(absl::string_view line, Segments* segments) {
   std::vector<std::string> fields =
@@ -649,6 +676,10 @@ int main(int argc, char** argv) {
 
   mozc::ConverterMain converter_main(std::move(engine), std::move(request),
                                      std::move(config));
+
+  std::string supplemental_model_path = absl::GetFlag(FLAGS_supplemental_model);
+  converter_main.LoadSupplementalModel(std::move(supplemental_model_path));
+
   converter_main.RunLoop();
   return 0;
 }

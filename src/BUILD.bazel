@@ -228,8 +228,9 @@ cc_library(
         ],
     ) + mozc_select_enable_session_watchdog(
         off = ["MOZC_DISABLE_SESSION_WATCHDOG"],
-    ) + mozc_select_enable_supplemental_model([
-    ]) + mozc_select_enable_usage_rewriter(
+    ) + mozc_select_enable_supplemental_model(
+        on = ["MOZC_ENABLE_SUPPLEMENTAL_MODEL"],
+    ) + mozc_select_enable_usage_rewriter(
         off = ["NO_USAGE_REWRITER"],
     ) + select({
         ":dev_channel": ["CHANNEL_DEV=1"],
