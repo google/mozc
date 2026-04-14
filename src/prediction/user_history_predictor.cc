@@ -77,7 +77,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "storage/lru_cache.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc::prediction {
@@ -1984,9 +1983,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest& request,
 
   if (!revert_entries.entries.empty()) {
     revert_entries.result = results.front();
-    if (auto* element = revert_cache_.Insert(revert_id); element) {
-      element->value = std::move(revert_entries);
-    }
+    revert_cache_.Insert(revert_id, std::move(revert_entries));
   }
 }
 
@@ -2252,22 +2249,21 @@ void UserHistoryPredictor::Revert(uint32_t revert_id) {
     return;
   }
 
-  const RevertEntries* revert_entries =
-      revert_cache_.LookupWithoutInsert(revert_id);
-  if (!revert_entries) {
+  RevertEntries revert_entries;
+  if (!revert_cache_.Lookup(revert_id, &revert_entries)) {
     return;
   }
 
   // `last_committed_entries` keeps the original entries before Revert.
   auto last_committed_entries = std::make_shared<RevertEntries>();
 
-  // `revert_entries->entries` store the entries before the commit,
+  // `revert_entries.entries` store the entries before the commit,
   // while `last_committed_entries->entries` will store the entries after the
   // commit.
-  last_committed_entries->result = revert_entries->result;
+  last_committed_entries->result = revert_entries.result;
 
   for (const auto& [key_begin, value_begin, revert_entry] :
-       revert_entries->entries) {
+       revert_entries.entries) {
     // We do not explicitly remove the entry from the `dic_`, but simply
     // rollback to the previous entry. This behavior is consistent with the
     // partial-revert operation. Entry with zero frequency is not suggested in
@@ -2288,8 +2284,8 @@ void UserHistoryPredictor::Revert(uint32_t revert_id) {
 
   // History entry may have the next_entry link.
   // We have to revert these links.
-  if (revert_entries->history_entry.has_value()) {
-    const Entry& revert_history_entry = revert_entries->history_entry.value();
+  if (revert_entries.history_entry.has_value()) {
+    const Entry& revert_history_entry = revert_entries.history_entry.value();
     if (EntrySnapshot committed_history_entry =
             storage_.MutableLookup(revert_history_entry);
         committed_history_entry) {

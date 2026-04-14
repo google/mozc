@@ -45,6 +45,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/container/arena.h"
+#include "base/container/flat_concurrent_cache.h"
 #include "base/container/trie.h"
 #include "base/thread.h"
 #include "composer/query.h"
@@ -57,7 +58,6 @@
 #include "prediction/user_history_predictor.pb.h"
 #include "prediction/user_history_storage.h"
 #include "request/conversion_request.h"
-#include "storage/lru_cache.h"
 
 namespace mozc::prediction {
 
@@ -489,7 +489,7 @@ class UserHistoryPredictor : public PredictorInterface {
   UserHistoryStorage& storage_;
 
   // Internal LRU cache to store dic_key/Entry to be reverted.
-  storage::LruCache<uint64_t, RevertEntries> revert_cache_;
+  FlatConcurrentCache<uint64_t, RevertEntries> revert_cache_;
 
   // `last_committed_entries_` stores the entries to be re-committed
   // after Revert().  Note that `last_committed_entries_` is not associated with
