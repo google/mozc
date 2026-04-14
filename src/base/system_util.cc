@@ -273,8 +273,8 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
     // in NaCL platform is correct.
     return "/mutable";
   } else if constexpr (port::IsWasm()) {
-    // Do nothing for WebAssembly.
-    return "";
+    // Use a temporary directory as the data is not persisted.
+    return "/tmp";
   } else if constexpr (port::IsAndroid()) {
     // For android, we do nothing here because user profile directory,
     // of which the path depends on active user,

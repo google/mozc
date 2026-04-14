@@ -43,10 +43,10 @@ class SystemUtilTest : public testing::Test {};
 
 TEST_F(SystemUtilTest, GetUserProfileDirectory) {
 #if defined(OS_CHROMEOS)
-  EXPECT_EQ("/mutable", SystemUtil::GetUserProfileDirectory());
+  EXPECT_EQ(SystemUtil::GetUserProfileDirectory(), "/mutable");
 
 #elif defined(__wasm__)
-  EXPECT_TRUE(SystemUtil::GetUserProfileDirectory().empty());
+  EXPECT_EQ(SystemUtil::GetUserProfileDirectory(), "/tmp");
 
 #elif defined(__ANDROID__)
   EXPECT_TRUE(SystemUtil::GetUserProfileDirectory().empty());
