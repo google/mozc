@@ -43,6 +43,10 @@
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
 
+#if defined(__wasm__) && !defined(__EMSCRIPTEN_PTHREADS__)
+#error "Please build with -pthreads for thread."
+#endif  // defined(__wasm__) && !defined(__EMSCRIPTEN_PTHREADS__)
+
 #include <thread>  // NOLINT(build/c++11): this is external environment only.
 
 namespace mozc {
