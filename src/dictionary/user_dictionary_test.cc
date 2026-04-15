@@ -285,18 +285,14 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
     return std::move(collector).entries();
   }
 
-  static void LoadFromString(const std::string& contents,
+  static void LoadFromString(absl::string_view contents,
                              UserDictionaryStorage* storage) {
-    std::istringstream is(contents);
-    CHECK(is.good());
-
     storage->GetProto().Clear();
     UserDictionaryStorage::UserDictionary* dic =
         storage->GetProto().add_dictionaries();
     CHECK(dic);
 
-    std::string line;
-    while (!std::getline(is, line).fail()) {
+    for (absl::string_view line : absl::StrSplit(contents, '\n')) {
       if (line.empty() || line[0] == '#') {
         continue;
       }

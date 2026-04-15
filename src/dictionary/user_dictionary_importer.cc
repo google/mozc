@@ -451,8 +451,8 @@ EncodingType GuessEncodingType(absl::string_view str) {
   return SHIFT_JIS;
 }
 
-EncodingType GuessFileEncodingType(const std::string& filename) {
-  absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_ONLY);
+EncodingType GuessFileEncodingType(absl::string_view filename) {
+  absl::StatusOr<Mmap> mmap = Mmap::Map(std::string(filename), Mmap::READ_ONLY);
   if (!mmap.ok()) {
     LOG(ERROR) << "cannot open: " << filename << ": " << mmap.status();
     return NUM_ENCODINGS;

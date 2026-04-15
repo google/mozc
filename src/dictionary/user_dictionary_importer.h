@@ -143,7 +143,7 @@ enum EncodingType {
 EncodingType GuessEncodingType(absl::string_view str);
 
 // Guess encoding type of a file.
-EncodingType GuessFileEncodingType(const std::string& filename);
+EncodingType GuessFileEncodingType(absl::string_view filename);
 
 // A special input iterator to read entries from TextLineIteratorInterface.
 class TextInputIterator : public InputIteratorInterface {
