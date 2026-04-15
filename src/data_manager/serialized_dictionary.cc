@@ -56,13 +56,6 @@ namespace {
 using CompilerToken = SerializedDictionary::CompilerToken;
 using TokenList = SerializedDictionary::TokenList;
 
-struct CompareByCost {
-  bool operator()(const std::unique_ptr<CompilerToken>& t1,
-                  const std::unique_ptr<CompilerToken>& t2) const {
-    return t1->cost < t2->cost;
-  }
-};
-
 void LoadTokens(std::istream* ifs, std::map<std::string, TokenList>* dic) {
   dic->clear();
   std::string line;
@@ -82,7 +75,12 @@ void LoadTokens(std::istream* ifs, std::map<std::string, TokenList>* dic) {
   }
 
   for (auto& kv : *dic) {
-    std::sort(kv.second.begin(), kv.second.end(), CompareByCost());
+    std::sort(kv.second.begin(), kv.second.end(),
+              // Compare by cost.
+              [](const std::unique_ptr<CompilerToken>& t1,
+                 const std::unique_ptr<CompilerToken>& t2) {
+                return t1->cost < t2->cost;
+              });
   }
 }
 

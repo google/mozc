@@ -55,22 +55,6 @@
 namespace mozc {
 namespace {
 
-class ValueCostCompare {
- public:
-  bool operator()(SerializedDictionary::const_iterator a,
-                  SerializedDictionary::const_iterator b) const {
-    return a.cost() < b.cost();
-  }
-};
-
-class IsEqualValue {
- public:
-  bool operator()(const SerializedDictionary::const_iterator a,
-                  const SerializedDictionary::const_iterator b) const {
-    return a.value() == b.value();
-  }
-};
-
 // Insert Emoticon into the |segment|
 // Top |initial_insert_size| candidates are inserted from |initial_insert_pos|.
 // Remained candidates are added to the buttom.
@@ -92,13 +76,21 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
     sorted_value.push_back(iter);
   }
 
-  std::sort(sorted_value.begin(), sorted_value.end(), ValueCostCompare());
+  std::sort(sorted_value.begin(), sorted_value.end(),
+            [](SerializedDictionary::const_iterator lhs,
+               SerializedDictionary::const_iterator rhs) {
+              return lhs.cost() < rhs.cost();
+            });
 
   // after sorting the values by |cost|, adjacent candidates
   // will have the same value. It is almost OK to use std::unique to
   // remove dup entries, it is not a perfect way though.
   sorted_value.erase(
-      std::unique(sorted_value.begin(), sorted_value.end(), IsEqualValue()),
+      std::unique(sorted_value.begin(), sorted_value.end(),
+                  [](const SerializedDictionary::const_iterator lhs,
+                     const SerializedDictionary::const_iterator rhs) {
+                    return lhs.value() == rhs.value();
+                  }),
       sorted_value.end());
 
   for (size_t i = 0; i < sorted_value.size(); ++i) {

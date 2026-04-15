@@ -34,6 +34,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 namespace storage {
 namespace louds {
@@ -50,7 +52,7 @@ class BitVectorBasedArrayBuilder {
   // Adds the element to the builder.
   // The length of the element would be ceiling by padding '\x00' bytes to the
   // end. Please see also comments for SetSize below.
-  void Add(const std::string& element);
+  void Add(std::string element);
 
   // Sets size related parameters. The size of each element will be ceiling
   // (when the image is built) as follows:
@@ -68,7 +70,7 @@ class BitVectorBasedArrayBuilder {
 
   void Build();
 
-  const std::string& image() const;
+  absl::string_view image() const;
 
  private:
   bool built_;

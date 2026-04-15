@@ -789,10 +789,6 @@ void RunCallbackOnEachPrefix(
   }
 }
 
-struct SelectAllTokens {
-  bool operator()(const TokenInfo& token_info) const { return true; }
-};
-
 class ReverseLookupCallbackWrapper : public DictionaryInterface::Callback {
  public:
   explicit ReverseLookupCallbackWrapper(DictionaryInterface::Callback* callback)
@@ -924,7 +920,8 @@ void SystemDictionary::LookupPrefix(absl::string_view key,
   if (!conversion_request.IsKanaModifierInsensitiveConversion()) {
     RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, *codec_,
                             frequent_pos_, key.data(), encoded_key, callback,
-                            SelectAllTokens());
+                            // Select all tokens.
+                            [](const TokenInfo& token_info) { return true; });
     return;
   }
 
@@ -976,22 +973,12 @@ void SystemDictionary::LookupReverse(
 
 namespace {
 
-class AddKeyIdsToSet {
- public:
-  explicit AddKeyIdsToSet(absl::btree_set<int>* output) : output_(output) {}
-
-  void operator()(absl::string_view key, size_t prefix_len,
-                  const LoudsTrie& trie, LoudsTrie::Node node) {
-    output_->insert(trie.GetKeyIdOfTerminalNode(node));
-  }
-
- private:
-  absl::btree_set<int>* output_;
-};
-
 inline void AddKeyIdsOfAllPrefixes(const LoudsTrie& trie, absl::string_view key,
                                    absl::btree_set<int>* key_ids) {
-  trie.PrefixSearch(key, AddKeyIdsToSet(key_ids));
+  trie.PrefixSearch(key, [&](absl::string_view key, size_t prefix_len,
+                             const LoudsTrie& trie, LoudsTrie::Node node) {
+    key_ids->insert(trie.GetKeyIdOfTerminalNode(node));
+  });
 }
 
 }  // namespace
@@ -1027,45 +1014,32 @@ void SystemDictionary::ClearReverseLookupCache() const {
   reverse_lookup_cache_.store(nullptr);
 }
 
-namespace {
-
-class FilterTokenForRegisterReverseLookupTokensForT13N {
- public:
-  FilterTokenForRegisterReverseLookupTokensForT13N() {
-    tmp_str_.reserve(LoudsTrie::kMaxDepth * 3);
-  }
-
-  bool operator()(const TokenInfo& token_info) {
-    // Skip spelling corrections.
-    if (token_info.token->attributes & Token::SPELLING_CORRECTION) {
-      return false;
-    }
-    if (token_info.value_type != TokenInfo::AS_IS_HIRAGANA &&
-        token_info.value_type != TokenInfo::AS_IS_KATAKANA) {
-      // SAME_AS_PREV_VALUE may be t13n token.
-      tmp_str_ = japanese_util::KatakanaToHiragana(token_info.token->value);
-      if (token_info.token->key != tmp_str_) {
-        return false;
-      }
-    }
-    return true;
-  }
-
- private:
-  std::string tmp_str_;
-};
-
-}  // namespace
-
 void SystemDictionary::RegisterReverseLookupTokensForT13N(
     absl::string_view value, Callback* callback) const {
   std::string hiragana_value = japanese_util::KatakanaToHiragana(value);
   std::string encoded_key;
   codec_->EncodeKey(hiragana_value, &encoded_key);
-  RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, *codec_,
-                          frequent_pos_, hiragana_value.data(), encoded_key,
-                          callback,
-                          FilterTokenForRegisterReverseLookupTokensForT13N());
+  std::string prev_value;
+  prev_value.reserve(LoudsTrie::kMaxDepth * 3);
+  RunCallbackOnEachPrefix(
+      key_trie_, value_trie_, token_array_, *codec_, frequent_pos_,
+      hiragana_value, encoded_key, callback,
+      [&](const TokenInfo& token_info) {
+        // Skip spelling corrections.
+        if (token_info.token->attributes & Token::SPELLING_CORRECTION) {
+          return false;
+        }
+        if (token_info.value_type != TokenInfo::AS_IS_HIRAGANA &&
+            token_info.value_type != TokenInfo::AS_IS_KATAKANA) {
+          // SAME_AS_PREV_VALUE may be t13n token.
+          prev_value =
+              japanese_util::KatakanaToHiragana(token_info.token->value);
+          if (token_info.token->key != prev_value) {
+            return false;
+          }
+        }
+        return true;
+      });
 }
 
 void SystemDictionary::RegisterReverseLookupTokensForValue(

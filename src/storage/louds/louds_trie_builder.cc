@@ -33,9 +33,11 @@
 #include <cstddef>
 #include <iterator>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 #include "storage/louds/bit_stream.h"
 
 namespace mozc {
@@ -48,35 +50,23 @@ using ::mozc::storage::louds::internal::PushInt32;
 // A pair of word and its original index in the (sorted) word_list_.
 class Entry {
  public:
-  Entry(const std::string &word, size_t original_index)
-      : word_(&word), original_index_(original_index) {}
+  Entry(absl::string_view word, size_t original_index)
+      : word_(word), original_index_(original_index) {}
 
-  const std::string &word() const { return *word_; }
+  absl::string_view word() const { return word_; }
   size_t original_index() const { return original_index_; }
 
  private:
-  const std::string *word_;
+  absl::string_view word_;
   size_t original_index_;
-};
-
-class EntryLengthLessThan {
- public:
-  explicit EntryLengthLessThan(size_t length) : length_(length) {}
-
-  bool operator()(const Entry &entry) {
-    return entry.word().length() < length_;
-  }
-
- private:
-  size_t length_;
 };
 
 }  // namespace
 
-void LoudsTrieBuilder::Add(const std::string &word) {
+void LoudsTrieBuilder::Add(std::string word) {
   CHECK(!built_);
   CHECK(!word.empty());
-  word_list_.push_back(word);
+  word_list_.emplace_back(std::move(word));
 }
 
 void LoudsTrieBuilder::Build() {
@@ -146,13 +136,13 @@ void LoudsTrieBuilder::Build() {
   int id = 0;
   for (size_t depth = 0; !entry_list.empty(); ++depth) {
     for (size_t i = 0; i < entry_list.size(); ++i) {
-      const std::string &word = entry_list[i].word();
+      absl::string_view word = entry_list[i].word();
       if (word.length() > depth &&
           (i == 0 ||
            // To ensure the entry_list[i - 1].word().length >= depth + 1,
            // we call c_str() (which adds '\0' if necessary) as a hack.
-           word.compare(0, depth + 1, entry_list[i - 1].word().c_str(), 0,
-                        depth + 1) != 0)) {
+           word.compare(0, depth + 1, entry_list[i - 1].word(), 0, depth + 1) !=
+               0)) {
         // This is the first string of this node. Output an edge.
         trie_stream.PushBit(1);
         edge_character.push_back(entry_list[i].word()[depth]);
@@ -179,7 +169,9 @@ void LoudsTrieBuilder::Build() {
 
     // Remove all terminal strings.
     entry_list.erase(std::remove_if(entry_list.begin(), entry_list.end(),
-                                    EntryLengthLessThan(depth + 1)),
+                                    [&](const Entry& entry) {
+                                      return entry.word().length() < depth + 1;
+                                    }),
                      entry_list.end());
   }
 
@@ -201,16 +193,16 @@ void LoudsTrieBuilder::Build() {
   built_ = true;
 }
 
-const std::string &LoudsTrieBuilder::image() const {
+absl::string_view LoudsTrieBuilder::image() const {
   CHECK(built_);
   return image_;
 }
 
-int LoudsTrieBuilder::GetId(const std::string &word) const {
+int LoudsTrieBuilder::GetId(absl::string_view word) const {
   CHECK(built_);
 
   // Binary search the word.
-  std::vector<std::string>::const_iterator iter =
+  const auto iter =
       std::lower_bound(word_list_.begin(), word_list_.end(), word);
   if (iter == word_list_.end() || *iter != word) {
     // Not found.

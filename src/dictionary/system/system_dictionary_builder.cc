@@ -38,6 +38,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -72,21 +73,6 @@ ABSL_FLAG(int32_t, min_key_length_to_use_small_cost_encoding, 6,
 namespace mozc {
 namespace dictionary {
 namespace {
-
-struct TokenGreaterThan {
-  bool operator()(const TokenInfo& lhs, const TokenInfo& rhs) const {
-    if (lhs.token->lid != rhs.token->lid) {
-      return lhs.token->lid > rhs.token->lid;
-    }
-    if (lhs.token->rid != rhs.token->rid) {
-      return lhs.token->rid > rhs.token->rid;
-    }
-    if (lhs.id_in_value_trie != rhs.id_in_value_trie) {
-      return lhs.id_in_value_trie < rhs.id_in_value_trie;
-    }
-    return lhs.token->attributes < rhs.token->attributes;
-  }
-};
 
 void WriteSectionToFile(const DictionaryFileSection& section,
                         const std::string& filename) {
@@ -324,7 +310,7 @@ void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList& key_info_list) {
       }
       std::string value_str;
       codec_->EncodeValue(token_info.token->value, &value_str);
-      value_trie_builder_.Add(value_str);
+      value_trie_builder_.Add(std::move(value_str));
     }
   }
   value_trie_builder_.Build();
@@ -342,8 +328,15 @@ void SystemDictionaryBuilder::SetIdForValue(KeyInfoList* key_info_list) const {
 
 void SystemDictionaryBuilder::SortTokenInfo(KeyInfoList* key_info_list) const {
   for (KeyInfo& key_info : *key_info_list) {
-    std::stable_sort(key_info.tokens.begin(), key_info.tokens.end(),
-                     TokenGreaterThan());
+    std::stable_sort(
+        key_info.tokens.begin(), key_info.tokens.end(),
+        [](const TokenInfo& lhs, const TokenInfo& rhs) {
+          // Note lid/rid: the order is swapped.
+          return std::tie(rhs.token->lid, rhs.token->rid, lhs.id_in_value_trie,
+                          lhs.token->attributes) <
+                 std::tie(lhs.token->lid, lhs.token->rid, rhs.id_in_value_trie,
+                          rhs.token->attributes);
+        });
   }
 }
 
@@ -438,7 +431,7 @@ void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoList& key_info_list) {
   for (const KeyInfo& key_info : key_info_list) {
     std::string key_str;
     codec_->EncodeKey(key_info.key, &key_str);
-    key_trie_builder_.Add(key_str);
+    key_trie_builder_.Add(std::move(key_str));
   }
   key_trie_builder_.Build();
 }
@@ -466,7 +459,7 @@ void SystemDictionaryBuilder::BuildTokenArray(
     for (const KeyInfo* key_info : id_to_keyinfo_table) {
       std::string tokens_str;
       codec_->EncodeTokens(key_info->tokens, &tokens_str);
-      token_array_builder_.Add(tokens_str);
+      token_array_builder_.Add(std::move(tokens_str));
     }
   }
 

@@ -283,17 +283,6 @@ void SetNumberInfoToExistingCandidates(
   }
 }
 
-class CheckValueOperator {
- public:
-  explicit CheckValueOperator(const absl::string_view v) : find_value_(v) {}
-  bool operator()(const converter::Candidate& cand) const {
-    return (cand.value == find_value_);
-  }
-
- private:
-  const absl::string_view find_value_;
-};
-
 // If we have the candidates to be inserted before the base candidate,
 // delete them.
 void FindEraseCandidates(absl::Span<const converter::Candidate> results,
@@ -397,7 +386,9 @@ void InsertConvertedCandidates(absl::Span<const converter::Candidate> results,
     const absl::string_view base_value =
         seg->candidate(base_candidate_pos).value;
     const auto itr = std::find_if(results.begin(), results.end(),
-                                  CheckValueOperator(base_value));
+                                  [&](const converter::Candidate& cand) {
+                                    return cand.value == base_value;
+                                  });
     if (itr != results.end() &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI_ARABIC) {

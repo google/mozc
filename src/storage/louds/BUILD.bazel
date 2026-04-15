@@ -75,6 +75,7 @@ mozc_cc_library(
     deps = [
         ":bit_stream",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -114,6 +115,7 @@ mozc_cc_library(
     deps = [
         ":bit_stream",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -157,6 +159,7 @@ mozc_cc_library(
     deps = [
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

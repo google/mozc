@@ -31,9 +31,11 @@
 
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 #include "storage/louds/bit_stream.h"
 
 namespace mozc {
@@ -42,9 +44,9 @@ namespace louds {
 
 using ::mozc::storage::louds::internal::PushInt32;
 
-void BitVectorBasedArrayBuilder::Add(const std::string &element) {
+void BitVectorBasedArrayBuilder::Add(std::string element) {
   CHECK(!built_);
-  elements_.push_back(element);
+  elements_.emplace_back(std::move(element));
 }
 
 void BitVectorBasedArrayBuilder::SetSize(size_t base_length,
@@ -62,7 +64,7 @@ void BitVectorBasedArrayBuilder::Build() {
 
   // Output to the bit_stream and the data.
   for (size_t i = 0; i < elements_.size(); ++i) {
-    const std::string &element = elements_[i];
+    absl::string_view element = elements_[i];
 
     // Counts how many steps is needed.
     int num_steps = 0;
@@ -101,7 +103,7 @@ void BitVectorBasedArrayBuilder::Build() {
   built_ = true;
 }
 
-const std::string &BitVectorBasedArrayBuilder::image() const {
+absl::string_view BitVectorBasedArrayBuilder::image() const {
   CHECK(built_);
   return image_;
 }

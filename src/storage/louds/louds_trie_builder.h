@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 namespace storage {
 namespace louds {
@@ -41,28 +43,28 @@ class LoudsTrieBuilder {
  public:
   LoudsTrieBuilder() = default;
 
-  LoudsTrieBuilder(const LoudsTrieBuilder &) = delete;
-  LoudsTrieBuilder &operator=(const LoudsTrieBuilder &) = delete;
+  LoudsTrieBuilder(const LoudsTrieBuilder&) = delete;
+  LoudsTrieBuilder& operator=(const LoudsTrieBuilder&) = delete;
 
-  LoudsTrieBuilder(LoudsTrieBuilder &&) = default;
-  LoudsTrieBuilder &operator=(LoudsTrieBuilder &&) = default;
+  LoudsTrieBuilder(LoudsTrieBuilder&&) = default;
+  LoudsTrieBuilder& operator=(LoudsTrieBuilder&&) = default;
 
   ~LoudsTrieBuilder() = default;
 
   // Adds the word to the builder. It is necessary to call this method,
   // before Build invocation.
-  void Add(const std::string &word);
+  void Add(std::string word);
 
   // Builds the trie image.
   void Build();
 
   // Returns the binary image of the trie.
-  const std::string &image() const;
+  absl::string_view image() const;
 
   // Returns the key_id for the word (-1 if not found).
   // Note: in Mozc, the key_id will be used to build additional data
   // related to the built LoudsTrie.
-  int GetId(const std::string &word) const;
+  int GetId(absl::string_view word) const;
 
  private:
   bool built_ = false;

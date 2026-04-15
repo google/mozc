@@ -34,6 +34,8 @@
 #include <cstring>
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 namespace storage {
 namespace louds {
@@ -42,10 +44,10 @@ namespace louds {
 class BitStream {
  public:
   BitStream() = default;
-  BitStream(const BitStream &) = delete;
-  BitStream &operator=(const BitStream &) = delete;
+  BitStream(const BitStream&) = delete;
+  BitStream& operator=(const BitStream&) = delete;
 
-  const std::string &image() const { return image_; }
+  absl::string_view image() const { return image_; }
   size_t num_bits() const { return num_bits_; }
   size_t ByteSize() const { return image_.length(); }
 
@@ -61,7 +63,7 @@ class BitStream {
 
 namespace internal {
 
-void PushInt32(size_t value, std::string &image);
+void PushInt32(size_t value, std::string& image);
 
 }  // namespace internal
 
