@@ -74,10 +74,8 @@ class ValueDictionaryTest : public ::testing::Test {
     louds_trie_builder_.reset();
   }
 
-  void AddValue(const absl::string_view value) {
-    std::string encoded;
-    codec_.EncodeValue(value, &encoded);
-    louds_trie_builder_->Add(encoded);
+  void AddValue(absl::string_view value) {
+    louds_trie_builder_->Add(codec_.EncodeValue(value));
   }
 
   ValueDictionary* BuildValueDictionary() {
@@ -87,7 +85,7 @@ class ValueDictionaryTest : public ::testing::Test {
     return new ValueDictionary(pos_matcher_, *louds_trie_);
   }
 
-  void InitToken(const absl::string_view value, Token* token) const {
+  void InitToken(absl::string_view value, Token* token) const {
     token->key = token->value = std::string(value);
     token->cost = 10000;
     token->lid = token->rid = pos_matcher_.GetSuggestOnlyWordId();

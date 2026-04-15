@@ -99,8 +99,7 @@ inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
   const absl::string_view encoded_value =
       value_trie.RestoreKeyString(node, encoded_value_buffer);
 
-  value->clear();
-  codec.DecodeValue(encoded_value, value);
+  *value = codec.DecodeValue(encoded_value);
   DictionaryInterface::Callback::ResultType result = callback->OnKey(*value);
   if (result != DictionaryInterface::Callback::TRAVERSE_CONTINUE) {
     return result;
@@ -122,11 +121,8 @@ void ValueDictionary::LookupPredictive(
     return;
   }
 
-  std::string encoded_key;
-  codec_.EncodeValue(key, &encoded_key);
-
   LoudsTrie::Node node;
-  if (!value_trie_.Traverse(encoded_key, &node)) {
+  if (!value_trie_.Traverse(codec_.EncodeValue(key), &node)) {
     return;
   }
 
@@ -173,9 +169,7 @@ void ValueDictionary::LookupExact(absl::string_view key,
     return;
   }
 
-  std::string lookup_key_str;
-  codec_.EncodeValue(key, &lookup_key_str);
-  if (value_trie_.ExactSearch(lookup_key_str) == -1) {
+  if (value_trie_.ExactSearch(codec_.EncodeValue(key)) == -1) {
     return;
   }
   if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {

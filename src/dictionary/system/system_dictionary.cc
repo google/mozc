@@ -65,6 +65,7 @@
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/bits.h"
@@ -134,8 +135,7 @@ void SetKeyExpansion(const char key, const absl::string_view expansion,
 void BuildHiraganaExpansionTable(const SystemDictionaryCodec& codec,
                                  KeyExpansionTable* encoded_table) {
   for (size_t index = 0; index < std::size(kHiraganaExpansionTable); ++index) {
-    std::string encoded;
-    codec.EncodeKey(kHiraganaExpansionTable[index], &encoded);
+    const std::string encoded = codec.EncodeKey(kHiraganaExpansionTable[index]);
     DCHECK(Util::IsAscii(encoded))
         << "Encoded expansion data are supposed to fit within ASCII";
 
@@ -491,15 +491,11 @@ void SystemDictionary::InitReverseLookupIndex() {
 }
 
 bool SystemDictionary::HasKey(absl::string_view key) const {
-  std::string encoded_key;
-  codec_->EncodeKey(key, &encoded_key);
-  return key_trie_.HasKey(encoded_key);
+  return key_trie_.HasKey(codec_->EncodeKey(key));
 }
 
 bool SystemDictionary::HasValue(absl::string_view value) const {
-  std::string encoded_value;
-  codec_->EncodeValue(value, &encoded_value);
-  if (value_trie_.HasKey(encoded_value)) {
+  if (value_trie_.HasKey(codec_->EncodeValue(value))) {
     return true;
   }
 
@@ -510,11 +506,9 @@ bool SystemDictionary::HasValue(absl::string_view value) const {
 
   // Normalize the value as the key.  This process depends on the
   // implementation of SystemDictionaryBuilder::BuildValueTrie.
-  std::string key = japanese_util::KatakanaToHiragana(value);
+  const std::string key = japanese_util::KatakanaToHiragana(value);
 
-  std::string encoded_key;
-  codec_->EncodeKey(key, &encoded_key);
-  const int key_id = key_trie_.ExactSearch(encoded_key);
+  const int key_id = key_trie_.ExactSearch(codec_->EncodeKey(key));
   if (key_id == -1) {
     return false;
   }
@@ -620,8 +614,7 @@ void SystemDictionary::LookupPredictive(
     return;
   }
 
-  std::string encoded_key;
-  codec_->EncodeKey(key, &encoded_key);
+  const std::string encoded_key = codec_->EncodeKey(key);
   if (encoded_key.size() > LoudsTrie::kMaxDepth) {
     return;
   }
@@ -661,7 +654,8 @@ void SystemDictionary::LookupPredictive(
     // decoded_key = "くーぐる" (= key + prediction suffix)
     decoded_key.clear();
     decoded_key.assign(key.data(), key.size());
-    codec_->DecodeKey(encoded_actual_key_prediction_suffix, &decoded_key);
+    absl::StrAppend(&decoded_key,
+                    codec_->DecodeKey(encoded_actual_key_prediction_suffix));
     switch (callback->OnKey(decoded_key)) {
       case Callback::TRAVERSE_DONE:
         return;
@@ -675,8 +669,7 @@ void SystemDictionary::LookupPredictive(
 
     absl::string_view actual_key;
     if (state.num_expanded > 0) {
-      actual_key_str.clear();
-      codec_->DecodeKey(encoded_actual_key, &actual_key_str);
+      actual_key_str = codec_->DecodeKey(encoded_actual_key);
       actual_key = actual_key_str;
     } else {
       actual_key = decoded_key;
@@ -858,8 +851,7 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
     }
 
     const absl::string_view encoded_actual_prefix(actual_key_buffer, key_pos);
-    actual_prefix->clear();
-    codec_->DecodeKey(encoded_actual_prefix, actual_prefix);
+    *actual_prefix = codec_->DecodeKey(encoded_actual_prefix);
     result = callback->OnActualKey(prefix, *actual_prefix, num_expanded);
     if (result == Callback::TRAVERSE_DONE ||
         result == Callback::TRAVERSE_CULL) {
@@ -914,8 +906,7 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
 void SystemDictionary::LookupPrefix(absl::string_view key,
                                     const ConversionRequest& conversion_request,
                                     Callback* callback) const {
-  std::string encoded_key;
-  codec_->EncodeKey(key, &encoded_key);
+  const std::string encoded_key = codec_->EncodeKey(key);
 
   if (!conversion_request.IsKanaModifierInsensitiveConversion()) {
     RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, *codec_,
@@ -937,9 +928,7 @@ void SystemDictionary::LookupExact(absl::string_view key,
                                    const ConversionRequest& conversion_request,
                                    Callback* callback) const {
   // Find the key in the key trie.
-  std::string encoded_key;
-  codec_->EncodeKey(key, &encoded_key);
-  const int key_id = key_trie_.ExactSearch(encoded_key);
+  const int key_id = key_trie_.ExactSearch(codec_->EncodeKey(key));
   if (key_id == -1) {
     return;
   }
@@ -999,8 +988,7 @@ void SystemDictionary::PopulateReverseLookupCache(absl::string_view str) const {
   lookup_key.reserve(str.size());
   while (pos < str.size()) {
     const absl::string_view suffix = absl::ClippedSubstr(str, pos);
-    lookup_key.clear();
-    codec_->EncodeValue(suffix, &lookup_key);
+    lookup_key = codec_->EncodeValue(suffix);
     AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
     pos += strings::OneCharLen(suffix.data());
   }
@@ -1016,9 +1004,8 @@ void SystemDictionary::ClearReverseLookupCache() const {
 
 void SystemDictionary::RegisterReverseLookupTokensForT13N(
     absl::string_view value, Callback* callback) const {
-  std::string hiragana_value = japanese_util::KatakanaToHiragana(value);
-  std::string encoded_key;
-  codec_->EncodeKey(hiragana_value, &encoded_key);
+  const std::string hiragana_value = japanese_util::KatakanaToHiragana(value);
+  const std::string encoded_key = codec_->EncodeKey(hiragana_value);
   std::string prev_value;
   prev_value.reserve(LoudsTrie::kMaxDepth * 3);
   RunCallbackOnEachPrefix(
@@ -1044,8 +1031,7 @@ void SystemDictionary::RegisterReverseLookupTokensForT13N(
 
 void SystemDictionary::RegisterReverseLookupTokensForValue(
     absl::string_view value, Callback* callback) const {
-  std::string lookup_key;
-  codec_->EncodeValue(value, &lookup_key);
+  const std::string lookup_key = codec_->EncodeValue(value);
 
   absl::btree_set<int> id_set;
   AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
@@ -1096,8 +1082,7 @@ void SystemDictionary::RegisterReverseLookupResults(
 
       const absl::string_view encoded_key =
           key_trie_.RestoreKeyString(reverse_result.id_in_key_trie, buffer);
-      std::string tokens_key;
-      codec_->DecodeKey(encoded_key, &tokens_key);
+      const std::string tokens_key = codec_->DecodeKey(encoded_key);
       if (callback->OnKey(tokens_key) != Callback::TRAVERSE_CONTINUE) {
         continue;
       }

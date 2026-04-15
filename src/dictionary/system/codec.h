@@ -60,10 +60,10 @@ class SystemDictionaryCodec {
   virtual absl::string_view GetSectionNameForPos() const;
 
   // Compresses key string into small bytes.
-  virtual void EncodeKey(absl::string_view src, std::string* dst) const;
+  virtual std::string EncodeKey(absl::string_view src) const;
 
   // Decompress key string
-  virtual void DecodeKey(absl::string_view src, std::string* dst) const;
+  virtual std::string DecodeKey(absl::string_view src) const;
 
   // Returns the length of encoded key string.
   virtual size_t GetEncodedKeyLength(absl::string_view src) const;
@@ -72,18 +72,13 @@ class SystemDictionaryCodec {
   virtual size_t GetDecodedKeyLength(absl::string_view src) const;
 
   // Compresses value string into small bytes.
-  virtual void EncodeValue(absl::string_view src, std::string* dst) const;
+  virtual std::string EncodeValue(absl::string_view src) const;
 
   // Decompress value string
-  virtual void DecodeValue(absl::string_view src, std::string* dst) const;
+  virtual std::string DecodeValue(absl::string_view src) const;
 
   // Compress tokens
-  virtual void EncodeTokens(absl::Span<const TokenInfo> tokens,
-                            std::string* output) const;
-
-  // Decompress tokens
-  virtual void DecodeTokens(const uint8_t* ptr,
-                            std::vector<TokenInfo>* tokens) const;
+  virtual std::string EncodeTokens(absl::Span<const TokenInfo> tokens) const;
 
   // Decompress a token.
   virtual bool DecodeToken(const uint8_t* ptr, TokenInfo* token_info,
@@ -99,8 +94,7 @@ class SystemDictionaryCodec {
   virtual uint8_t GetTokensTerminationFlag() const;
 
  private:
-  void EncodeToken(absl::Span<const TokenInfo> tokens, int index,
-                   std::string* output) const;
+  std::string EncodeToken(absl::Span<const TokenInfo> tokens, int index) const;
 };
 
 }  // namespace dictionary

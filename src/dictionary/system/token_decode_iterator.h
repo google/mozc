@@ -70,11 +70,11 @@ class TokenDecodeIterator {
 
   void NextInternal();
 
-  void LookupValue(int id, std::string* value) const {
+  std::string LookupValue(int id) const {
     char buffer[storage::louds::LoudsTrie::kMaxDepth + 1];
     const absl::string_view encoded_value =
         value_trie_.RestoreKeyString(id, buffer);
-    codec_.DecodeValue(encoded_value, value);
+    return codec_.DecodeValue(encoded_value);
   }
 
   const SystemDictionaryCodec& codec_;
@@ -152,8 +152,7 @@ inline void TokenDecodeIterator::NextInternal() {
   // Fill remaining values.
   switch (token_info_.value_type) {
     case TokenInfo::DEFAULT_VALUE: {
-      token_.value.clear();
-      LookupValue(token_info_.id_in_value_trie, &token_.value);
+      token_.value = LookupValue(token_info_.id_in_value_trie);
       break;
     }
     case TokenInfo::SAME_AS_PREV_VALUE: {

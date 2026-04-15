@@ -36,6 +36,7 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/singleton.h"
@@ -177,7 +178,8 @@ constexpr uint8_t kLastTokenFlag = 0x80;
 // U+30FB - U+30FC ("・" - "ー") <=> U+0076 - U+0077
 //
 // U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
-void EncodeDecodeKeyImpl(absl::string_view src, std::string* dst) {
+std::string EncodeDecodeKeyImpl(absl::string_view src) {
+  std::string dst;
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     static_assert(sizeof(uint32_t) == sizeof(char32_t),
                   "char32 must be 32-bit integer size.");
@@ -199,8 +201,9 @@ void EncodeDecodeKeyImpl(absl::string_view src, std::string* dst) {
       code -= offset;
     }
     DCHECK_GT(code, 0);
-    Util::CodepointToUtf8Append(code, dst);
+    Util::CodepointToUtf8Append(code, &dst);
   }
+  return dst;
 }
 
 size_t GetEncodedDecodedKeyLengthImpl(absl::string_view src) {
@@ -524,14 +527,12 @@ absl::string_view SystemDictionaryCodec::GetSectionNameForPos() const {
   return kPosSectionName;
 }
 
-void SystemDictionaryCodec::EncodeKey(absl::string_view src,
-                                      std::string* dst) const {
-  EncodeDecodeKeyImpl(src, dst);
+std::string SystemDictionaryCodec::EncodeKey(absl::string_view src) const {
+  return EncodeDecodeKeyImpl(src);
 }
 
-void SystemDictionaryCodec::DecodeKey(absl::string_view src,
-                                      std::string* dst) const {
-  EncodeDecodeKeyImpl(src, dst);
+std::string SystemDictionaryCodec::DecodeKey(absl::string_view src) const {
+  return EncodeDecodeKeyImpl(src);
 }
 
 size_t SystemDictionaryCodec::GetEncodedKeyLength(absl::string_view src) const {
@@ -554,34 +555,33 @@ size_t SystemDictionaryCodec::GetDecodedKeyLength(absl::string_view src) const {
 //  Other 0x?? ?? -> VALUE_CHAR_MARK_OTHER ?? ??
 //  0x?????? -> VALUE_CHAR_MARK_BIG ?? ?? ??
 
-void SystemDictionaryCodec::EncodeValue(absl::string_view src,
-                                        std::string* dst) const {
-  DCHECK(dst);
+std::string SystemDictionaryCodec::EncodeValue(absl::string_view src) const {
+  std::string dst;
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     static_assert(sizeof(uint32_t) == sizeof(char32_t),
                   "char32 must be 32-bit integer size.");
     const uint32_t c = iter.Get();
     if (c >= 0x3041 && c < 0x3095) {
       // Hiragana(85 characters) are encoded into 1 byte.
-      dst->push_back(c - 0x3041 + kValueHiraganaOffset);
+      dst.push_back(c - 0x3041 + kValueHiraganaOffset);
     } else if (c >= 0x30a1 && c < 0x30fd) {
       // Katakana (92 characters) are encoded into 1 byte.
-      dst->push_back(c - 0x30a1 + kValueKatakanaOffset);
+      dst.push_back(c - 0x30a1 + kValueKatakanaOffset);
     } else if (c < 0x10000 && ((c >> 8) & 255) == 0) {
       // 0x00?? (ASCII) are encoded into 2 bytes.
-      dst->push_back(kValueCharMarkAscii);
-      dst->push_back(c & 255);
+      dst.push_back(kValueCharMarkAscii);
+      dst.push_back(c & 255);
     } else if (c < 0x10000 && (c & 255) == 0) {
       // 0x??00 are encoded into 2 bytes.
-      dst->push_back(kValueCharMarkXX00);
-      dst->push_back((c >> 8) & 255);
+      dst.push_back(kValueCharMarkXX00);
+      dst.push_back((c >> 8) & 255);
     } else if (c >= 0x4e00 && c < 0x9800) {
       // Frequent Kanji and others (74*256 characters) are encoded
       // into 2 bytes.
       // (Kanji in 0x9800 to 0x9fff are encoded in 3 bytes)
       const int h = ((c - 0x4e00) >> 8) + kValueKanjiOffset;
-      dst->push_back(h);
-      dst->push_back(c & 255);
+      dst.push_back(h);
+      dst.push_back(c & 255);
     } else if (0x10000 <= c && c <= 0x10ffff) {
       // characters encoded into 2-4bytes.
       int left = ((c >> 16) & 255);
@@ -593,27 +593,28 @@ void SystemDictionaryCodec::EncodeValue(absl::string_view src,
       if (right == 0) {
         left |= kValueCharMarkCodepointRight0;
       }
-      dst->push_back(kValueCharMarkCodepoint);
-      dst->push_back(left);
+      dst.push_back(kValueCharMarkCodepoint);
+      dst.push_back(left);
       if (middle != 0) {
-        dst->push_back(middle);
+        dst.push_back(middle);
       }
       if (right != 0) {
-        dst->push_back(right);
+        dst.push_back(right);
       }
     } else {
       DCHECK_LE(c, 0x10ffff);
       // Other charaters encoded into 3bytes.
-      dst->push_back(kValueCharMarkOtherUcs2);
-      dst->push_back((c >> 8) & 255);
-      dst->push_back(c & 255);
+      dst.push_back(kValueCharMarkOtherUcs2);
+      dst.push_back((c >> 8) & 255);
+      dst.push_back(c & 255);
     }
   }
+
+  return dst;
 }
 
-void SystemDictionaryCodec::DecodeValue(absl::string_view src,
-                                        std::string* dst) const {
-  DCHECK(dst);
+std::string SystemDictionaryCodec::DecodeValue(absl::string_view src) const {
+  std::string dst;
   const uint8_t* p = reinterpret_cast<const uint8_t*>(src.data());
   const uint8_t* const end = p + src.size();
   while (p < end) {
@@ -659,23 +660,23 @@ void SystemDictionaryCodec::DecodeValue(absl::string_view src,
     } else {
       MOZC_VLOG(1) << "should never come here";
     }
-    Util::CodepointToUtf8Append(c, dst);
+    Util::CodepointToUtf8Append(c, &dst);
   }
+  return dst;
 }
 
 uint8_t SystemDictionaryCodec::GetTokensTerminationFlag() const {
   return kTokenTerminationFlag;
 }
 
-void SystemDictionaryCodec::EncodeTokens(absl::Span<const TokenInfo> tokens,
-                                         std::string* output) const {
-  DCHECK(output);
-  output->clear();
-
+std::string SystemDictionaryCodec::EncodeTokens(
+    absl::Span<const TokenInfo> tokens) const {
+  std::string output;
   for (size_t i = 0; i < tokens.size(); ++i) {
-    EncodeToken(tokens, i, output);
+    absl::StrAppend(&output, EncodeToken(tokens, i));
   }
-  CHECK((*output)[0] != GetTokensTerminationFlag());
+  CHECK(output[0] != GetTokensTerminationFlag());
+  return output;
 }
 
 // Each token is encoded as following.
@@ -692,9 +693,10 @@ void SystemDictionaryCodec::EncodeTokens(absl::Span<const TokenInfo> tokens,
 // Index: (less than 2^22)
 //  When kCrammedIDFlag is set, 2 bytes
 //  Othewise, 3 bytes
-void SystemDictionaryCodec::EncodeToken(absl::Span<const TokenInfo> tokens,
-                                        int index, std::string* output) const {
+std::string SystemDictionaryCodec::EncodeToken(
+    absl::Span<const TokenInfo> tokens, int index) const {
   CHECK_LT(index, tokens.size());
+  std::string output;
 
   // Determines the flags for this token.
   const uint8_t flags = GetFlagsForToken(tokens, index);
@@ -710,23 +712,8 @@ void SystemDictionaryCodec::EncodeToken(absl::Span<const TokenInfo> tokens,
   EncodeValueInfo(token_info, flags, buff, &offset);  // <= 3 bytes
 
   CHECK_LE(offset, 9);
-  output->append(reinterpret_cast<char*>(buff), offset);
-}
-
-void SystemDictionaryCodec::DecodeTokens(const uint8_t* ptr,
-                                         std::vector<TokenInfo>* tokens) const {
-  DCHECK(tokens);
-  int offset = 0;
-  while (true) {
-    int read_bytes = 0;
-    Token* token = new Token();
-    tokens->push_back(TokenInfo(token));
-    if (!DecodeToken(ptr + offset, &(tokens->back()), &read_bytes)) {
-      break;
-    }
-    DCHECK_GT(read_bytes, 0);
-    offset += read_bytes;
-  }
+  output.append(reinterpret_cast<char*>(buff), offset);
+  return output;
 }
 
 bool SystemDictionaryCodec::DecodeToken(const uint8_t* ptr,

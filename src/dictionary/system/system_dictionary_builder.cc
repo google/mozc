@@ -308,8 +308,7 @@ void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList& key_info_list) {
         // These values will be stored in token array as flags
         continue;
       }
-      std::string value_str;
-      codec_->EncodeValue(token_info.token->value, &value_str);
+      std::string value_str = codec_->EncodeValue(token_info.token->value);
       value_trie_builder_.Add(std::move(value_str));
     }
   }
@@ -319,8 +318,8 @@ void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList& key_info_list) {
 void SystemDictionaryBuilder::SetIdForValue(KeyInfoList* key_info_list) const {
   for (KeyInfo& key_info : *key_info_list) {
     for (TokenInfo& token_info : key_info.tokens) {
-      std::string value_str;
-      codec_->EncodeValue(token_info.token->value, &value_str);
+      const std::string value_str =
+          codec_->EncodeValue(token_info.token->value);
       token_info.id_in_value_trie = value_trie_builder_.GetId(value_str);
     }
   }
@@ -429,18 +428,15 @@ void SystemDictionaryBuilder::SetValueType(KeyInfoList* key_info_list) const {
 
 void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoList& key_info_list) {
   for (const KeyInfo& key_info : key_info_list) {
-    std::string key_str;
-    codec_->EncodeKey(key_info.key, &key_str);
-    key_trie_builder_.Add(std::move(key_str));
+    key_trie_builder_.Add(codec_->EncodeKey(key_info.key));
   }
   key_trie_builder_.Build();
 }
 
 void SystemDictionaryBuilder::SetIdForKey(KeyInfoList* key_info_list) const {
   for (KeyInfo& key_info : *key_info_list) {
-    std::string key_str;
-    codec_->EncodeKey(key_info.key, &key_str);
-    key_info.id_in_key_trie = key_trie_builder_.GetId(key_str);
+    key_info.id_in_key_trie =
+        key_trie_builder_.GetId(codec_->EncodeKey(key_info.key));
   }
 }
 
@@ -457,9 +453,7 @@ void SystemDictionaryBuilder::BuildTokenArray(
     }
 
     for (const KeyInfo* key_info : id_to_keyinfo_table) {
-      std::string tokens_str;
-      codec_->EncodeTokens(key_info->tokens, &tokens_str);
-      token_array_builder_.Add(std::move(tokens_str));
+      token_array_builder_.Add(codec_->EncodeTokens(key_info->tokens));
     }
   }
 

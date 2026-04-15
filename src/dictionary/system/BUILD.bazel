@@ -66,6 +66,7 @@ mozc_cc_test(
         ":words_info",
         "//base:random",
         "//base:util",
+        "//base/container:arena",
         "//dictionary:dictionary_token",
         "//testing:gunit_main",
         "@com_google_absl//absl/log:check",
