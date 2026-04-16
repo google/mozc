@@ -100,13 +100,22 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def mozc_cc_binary(deps = [], copts = [], **kwargs):
+def mozc_cc_binary(deps = [], copts = [], linkopts = [], **kwargs):
     """
     cc_binary wrapper adding //:macro dependecny.
     """
     cc_binary(
         deps = deps + ["//:macro"],
         copts = copts + _copts_unsigned_char(),
+        linkopts = linkopts + mozc_select(
+            wasm = [
+                "-s EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap', 'FS']",
+                "-s MODULARIZE=1",
+                "-s EXPORT_NAME='MozcConverter'",
+                "-s ALLOW_MEMORY_GROWTH=1",
+            ],
+            default = [],
+        ),
         **kwargs
     )
 
@@ -830,7 +839,7 @@ def mozc_select(
         "//bazel/cc_target_os:apple": _get_value([ios, client, default]),
         "//bazel/cc_target_os:chromiumos": _get_value([chromiumos, client, default]),
         "//bazel/cc_target_os:darwin": _get_value([macos, ios, client, default]),
-        "//bazel/cc_target_os:wasm": _get_value([wasm, client, default]),
+        "//bazel/cc_target_os:wasm": _get_value([wasm, linux, client, default]),
         "//bazel/cc_target_os:windows": _get_value([windows, client, default]),
         "//bazel/cc_target_os:linux": _get_value([linux, client, default]),
         "//bazel/cc_target_os:oss_android": _get_value([oss_android, oss, android, client, default]),
