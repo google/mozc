@@ -75,8 +75,9 @@ namespace dictionary {
 namespace {
 
 void WriteSectionToFile(const DictionaryFileSection& section,
-                        const std::string& filename) {
-  if (absl::Status s = FileUtil::SetContents(filename, section.image);
+                        absl::string_view filename) {
+  if (absl::Status s =
+          FileUtil::SetContents(std::string(filename), section.image);
       !s.ok()) {
     LOG(ERROR) << "Cannot write a section to " << filename;
   }
@@ -112,14 +113,14 @@ void SystemDictionaryBuilder::BuildFromTokensInternal(
   BuildTokenArray(key_info_list);
 }
 
-void SystemDictionaryBuilder::WriteToFile(
-    const std::string& output_file) const {
-  OutputFileStream ofs(output_file, std::ios::binary | std::ios::out);
+void SystemDictionaryBuilder::WriteToFile(absl::string_view output_file) const {
+  OutputFileStream ofs(std::string(output_file),
+                       std::ios::binary | std::ios::out);
   WriteToStream(output_file, &ofs);
 }
 
 void SystemDictionaryBuilder::WriteToStream(
-    const absl::string_view intermediate_output_file_base_path,
+    absl::string_view intermediate_output_file_base_path,
     std::ostream* output_stream) const {
   // Memory images of each section
   std::vector<DictionaryFileSection> sections;

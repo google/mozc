@@ -78,7 +78,7 @@ class SystemDictionaryBuilder final {
   }
   void BuildFromTokens(absl::Span<const std::unique_ptr<Token>> token);
 
-  void WriteToFile(const std::string& output_file) const;
+  void WriteToFile(absl::string_view output_file) const;
   void WriteToStream(absl::string_view intermediate_output_file_base_path,
                      std::ostream* output_stream) const;
 
