@@ -1,25 +1,29 @@
 ## Startup options
 startup  --windows_enable_symlinks  # ignored on non-Windows platforms
 
+## If target platform is not specified, linux, macos, or windows will be used
+## considering the host platform.
+common --enable_platform_specific_config
+
 ## Target platforms
 common:linux          --config=linux_env --define TARGET=oss_linux
-common:oss_linux      --config=linux_env --define TARGET=oss_linux
-common:prod_linux     --config=linux_env --define TARGET=prod_linux
-common:prod_linux_dev --config=linux_env --define TARGET=prod_linux --config=dev_channel
+common:oss_linux      --noenable_platform_specific_config --config=linux_env --define TARGET=oss_linux
+common:prod_linux     --noenable_platform_specific_config --config=linux_env --define TARGET=prod_linux
+common:prod_linux_dev --noenable_platform_specific_config --config=linux_env --define TARGET=prod_linux --config=dev_channel
 
 common:macos          --config=macos_env --define TARGET=oss_macos
-common:oss_macos      --config=macos_env --define TARGET=oss_macos
-common:prod_macos     --config=macos_env --define TARGET=prod_macos
-common:prod_macos_dev --config=macos_env --define TARGET=prod_macos --config=dev_channel
+common:oss_macos      --noenable_platform_specific_config --config=macos_env --define TARGET=oss_macos
+common:prod_macos     --noenable_platform_specific_config --config=macos_env --define TARGET=prod_macos
+common:prod_macos_dev --noenable_platform_specific_config --config=macos_env --define TARGET=prod_macos --config=dev_channel
 
 common:windows          --config=windows_env --define TARGET=oss_windows
-common:oss_windows      --config=windows_env --define TARGET=oss_windows
-common:prod_windows     --config=windows_env --define TARGET=prod_windows
-common:prod_windows_dev --config=windows_env --define TARGET=prod_windows --config=dev_channel
+common:oss_windows      --noenable_platform_specific_config --config=windows_env --define TARGET=oss_windows
+common:prod_windows     --noenable_platform_specific_config --config=windows_env --define TARGET=prod_windows
+common:prod_windows_dev --noenable_platform_specific_config --config=windows_env --define TARGET=prod_windows --config=dev_channel
 
-common:android      --config=android_env --define TARGET=oss_android
-common:oss_android  --config=android_env --define TARGET=oss_android
-common:prod_android --config=android_env --define TARGET=prod_android
+common:android      --noenable_platform_specific_config --config=android_env --define TARGET=oss_android
+common:oss_android  --noenable_platform_specific_config --config=android_env --define TARGET=oss_android
+common:prod_android --noenable_platform_specific_config --config=android_env --define TARGET=prod_android
 
 ## Build channels
 build:dev_channel    --define CHANNEL=dev
