@@ -35,7 +35,13 @@ def _qt_mac_repository_impl(repo_ctx):
         repo_ctx.file("BUILD.bazel", "")
         return
 
-    qt_path = repo_ctx.path(repo_ctx.os.environ.get("MOZC_QT_PATH", repo_ctx.attr.default_path))
+    qt_path_str = repo_ctx.os.environ.get("MOZC_QT_PATH", repo_ctx.attr.default_path)
+    if qt_path_str.startswith("/"):
+        qt_path = repo_ctx.path(qt_path_str)
+    else:
+        # Resolve relative path against the workspace root.
+        workspace_root = repo_ctx.path(Label("@//:MODULE.bazel")).dirname
+        qt_path = workspace_root.get_child(qt_path_str)
     repo_ctx.symlink(qt_path.get_child("lib"), "lib")
     repo_ctx.symlink(qt_path.get_child("libexec"), "libexec")
     repo_ctx.symlink(qt_path.get_child("plugins"), "plugins")
