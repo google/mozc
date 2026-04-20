@@ -151,7 +151,7 @@ def _pkg_config_repository_impl(repo_ctx):
     # the --keep-system-cflags option added. Typically, -I/usr/include is
     # returned, enabling bazel to recognize packages as valid even when
     # pkg-config does not output cflags with standard options.
-    if includes[0] == "":
+    if not includes or includes[0] == "":
         includes = _exec_pkg_config(repo_ctx, ["--cflags-only-I", "--keep-system-cflags"])
     includes = [item[len("-I/"):] for item in includes]
     _symlinks(repo_ctx, includes)
