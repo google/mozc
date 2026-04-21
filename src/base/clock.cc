@@ -69,24 +69,30 @@ absl::TimeZone GetLocalTimeZone() {
 
 }  // namespace
 
-absl::Time Clock::GetAbslTime() {
-  if (ClockInterface* mock = g_mock.load(std::memory_order_acquire);
-      mock != nullptr) {
-    return mock->GetAbslTime();
+// Macro to reduce boilerplate for mock delegation.
+// Each mockable method checks g_mock and delegates if non-null.
+#define MAYBE_INVOKE_MOCK_AND_RETURN(method, ...)                    \
+  if (ClockInterface* mock = g_mock.load(std::memory_order_acquire); \
+      mock != nullptr) {                                             \
+    return mock->method(__VA_ARGS__);                                \
   }
+
+absl::Time Clock::GetAbslTime() {
+  MAYBE_INVOKE_MOCK_AND_RETURN(GetAbslTime);
+
   return absl::Now();
 }
 
 absl::TimeZone Clock::GetTimeZone() {
-  if (ClockInterface* mock = g_mock.load(std::memory_order_acquire);
-      mock != nullptr) {
-    return mock->GetTimeZone();
-  }
+  MAYBE_INVOKE_MOCK_AND_RETURN(GetTimeZone);
+
   return GetLocalTimeZone();
 }
 
 void Clock::SetClockForUnitTest(ClockInterface* clock) {
   g_mock.store(clock, std::memory_order_release);
 }
+
+#undef MAYBE_INVOKE_MOCK_AND_RETURN
 
 }  // namespace mozc
