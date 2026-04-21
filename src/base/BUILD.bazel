@@ -208,7 +208,6 @@ mozc_cc_library(
     srcs = ["clock.cc"],
     hdrs = ["clock.h"],
     deps = [
-        ":singleton",
         "@com_google_absl//absl/time",
     ],
 )
