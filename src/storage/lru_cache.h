@@ -52,8 +52,8 @@ class LruCache {
   // free list is singly-linked and only uses the next pointer, while
   // the LRU list is doubly-linked and uses both next and prev.
   struct Element {
-    Element* next;
-    Element* prev;
+    Element* absl_nullable next;
+    Element* absl_nullable prev;
     Key key;
     Value value;
   };
@@ -113,7 +113,7 @@ class LruCache {
 
   // Adds the specified key and return the Element added to the cache.
   // Caller needs to set the value
-  Element* Insert(const Key& key);
+  Element* absl_nonnull Insert(const Key& key);
 
   // Returns the cached value associated with the key, or NULL if the cache
   // does not contain an entry for that key.  The caller does not assume
@@ -149,15 +149,15 @@ class LruCache {
   bool HasKey(const Key& key) const { return table_.find(key) != table_.end(); }
 
   // Returns the head of LRU list
-  const Element* Head() const { return lru_head_; }
-  Element* MutableHead() { return lru_head_; }
+  const Element* absl_nullable Head() const { return lru_head_; }
+  Element* absl_nullable MutableHead() { return lru_head_; }
 
   // Returns the tail of LRU list
-  const Element* Tail() const { return lru_tail_; }
-  Element* MutableTail() { return lru_tail_; }
+  const Element* absl_nullable Tail() const { return lru_tail_; }
+  Element* absl_nullable MutableTail() { return lru_tail_; }
 
   // Expose the free list only for testing purposes.
-  const Element* FreeListForTesting() const { return free_list_; }
+  const Element* absl_nullable FreeListForTesting() const { return free_list_; }
 
  private:
   // Allocates a new block containing next_block_size_ elements, updates
@@ -166,10 +166,10 @@ class LruCache {
   void AddBlock();
 
   // Pushes an element onto the head of the free list.
-  void PushFreeList(Element* element);
+  void PushFreeList(Element* absl_nonnull element);
 
   // Pops an element from the head of the free list.
-  Element* PopFreeList();
+  Element* absl_nullable PopFreeList();
 
   // Returns a free element, popping from the free list if possible, or
   // allocating a new element if the free list is empty.  If there are already
@@ -181,15 +181,15 @@ class LruCache {
   Element* absl_nullable LookupInternal(const Key& key) const;
 
   // Removes the specified element from the LRU list.
-  void RemoveFromLRU(Element* element);
+  void RemoveFromLRU(Element* absl_nonnull element);
 
   // Adds the specified element to the head of the LRU list.
-  void PushLRUHead(Element* element);
+  void PushLRUHead(Element* absl_nonnull element);
 
   // Evict is similar to Erase, except that it adds the eviction callback and
   // element to a list of eviction calls, and takes an element so that another
   // lookup is not necessary.
-  bool Evict(Element* element);
+  bool Evict(Element* absl_nullable element);
 
   absl::flat_hash_map<Key, Element*> table_;
   Element* free_list_ = nullptr;  // singly linked list of Element
@@ -236,14 +236,15 @@ void LruCache<Key, Value>::AddBlock() {
 }
 
 template <typename Key, typename Value>
-void LruCache<Key, Value>::PushFreeList(Element* element) {
+void LruCache<Key, Value>::PushFreeList(Element* absl_nonnull element) {
   element->prev = nullptr;
   element->next = free_list_;
   free_list_ = element;
 }
 
 template <typename Key, typename Value>
-typename LruCache<Key, Value>::Element* LruCache<Key, Value>::PopFreeList() {
+typename LruCache<Key, Value>::Element* absl_nullable
+LruCache<Key, Value>::PopFreeList() {
   Element* r = free_list_;
   if (r != nullptr) {
     CHECK(r->prev == nullptr);
@@ -277,7 +278,7 @@ LruCache<Key, Value>::LookupInternal(const Key& key) const {
 }
 
 template <typename Key, typename Value>
-void LruCache<Key, Value>::RemoveFromLRU(Element* element) {
+void LruCache<Key, Value>::RemoveFromLRU(Element* absl_nonnull element) {
   if (lru_head_ == element) {
     lru_head_ = element->next;
   }
@@ -295,7 +296,7 @@ void LruCache<Key, Value>::RemoveFromLRU(Element* element) {
 }
 
 template <typename Key, typename Value>
-void LruCache<Key, Value>::PushLRUHead(Element* element) {
+void LruCache<Key, Value>::PushLRUHead(Element* absl_nonnull element) {
   if (lru_head_ == element) {
     // element is already at head, so do nothing.
     return;
@@ -312,7 +313,7 @@ void LruCache<Key, Value>::PushLRUHead(Element* element) {
 }
 
 template <typename Key, typename Value>
-bool LruCache<Key, Value>::Evict(Element* e) {
+bool LruCache<Key, Value>::Evict(Element* absl_nullable e) {
   if (e != nullptr) {
     const int erased = table_.erase(e->key);
     CHECK_EQ(erased, 1);
@@ -351,8 +352,8 @@ void LruCache<Key, Value>::Insert(const Key& key, Value value) {
 }
 
 template <typename Key, typename Value>
-typename LruCache<Key, Value>::Element* LruCache<Key, Value>::Insert(
-    const Key& key) {
+typename LruCache<Key, Value>::Element* absl_nonnull
+LruCache<Key, Value>::Insert(const Key& key) {
   bool erased = false;
   Element* e = LookupInternal(key);
   if (e != nullptr) {
