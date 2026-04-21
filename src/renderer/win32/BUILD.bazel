@@ -101,6 +101,19 @@ mozc_cc_binary(
 )
 
 mozc_cc_library(
+    name = "win32_dpi_util",
+    srcs = ["win32_dpi_util.cc"],
+    hdrs = ["win32_dpi_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//bazel/win32:user32",
+        "//protocol:renderer_cc_proto",
+        "//renderer:renderer_style_handler",
+    ],
+)
+
+mozc_cc_library(
     name = "candidate_window",
     srcs = ["candidate_window.cc"],
     hdrs = ["candidate_window.h"],
@@ -109,6 +122,7 @@ mozc_cc_library(
     deps = [
         ":resource_h",
         ":text_renderer",
+        ":win32_dpi_util",
         "//base:const",
         "//base:coordinates",
         "//base/win32:wide_char",
@@ -119,7 +133,6 @@ mozc_cc_library(
         "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
-        "//renderer:renderer_style_handler",
         "//renderer:table_layout",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
@@ -175,12 +188,12 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     visibility = ["//visibility:private"],
     deps = [
+        ":win32_dpi_util",
         ":win32_font_util",
         "//base:coordinates",
         "//bazel/win32:d2d1",
         "//bazel/win32:dwrite",
         "//protocol:renderer_cc_proto",
-        "//renderer:renderer_style_handler",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/types:span",
         "@com_microsoft_wil//:wil",
@@ -214,6 +227,7 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":text_renderer",
+        ":win32_dpi_util",
         "//base:const",
         "//base:coordinates",
         "//base:vlog",
@@ -224,7 +238,6 @@ mozc_cc_library(
         "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
-        "//renderer:renderer_style_handler",
         "@com_microsoft_wil//:wil",
     ],
 )

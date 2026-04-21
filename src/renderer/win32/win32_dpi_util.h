@@ -27,28 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_RENDERER_STYLE_HANDLER_H_
-#define MOZC_RENDERER_RENDERER_STYLE_HANDLER_H_
+#ifndef MOZC_RENDERER_WIN32_WIN32_DPI_UTIL_H_
+#define MOZC_RENDERER_WIN32_WIN32_DPI_UTIL_H_
 
 #include "protocol/renderer_style.pb.h"
 
 namespace mozc {
 namespace renderer {
+namespace win32 {
 
-// this is pure static class
-class RendererStyleHandler {
- public:
-  RendererStyleHandler() = delete;
+// Returns DPI scaling factor on Windows.
+double GetDPIScalingFactor();
 
-  // return current Style
-  static bool GetRendererStyle(RendererStyle* style);
-  // set Style
-  static bool SetRendererStyle(const RendererStyle& style);
-  // get default Style
-  static void GetDefaultRendererStyle(RendererStyle* style);
-};
+// Get RendererStyle adjusted with the DPI scaling factor on Windows.
+void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style);
 
+}  // namespace win32
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // MOZC_RENDERER_RENDERER_STYLE_HANDLER_H_
+#endif  // MOZC_RENDERER_WIN32_WIN32_DPI_UTIL_H_

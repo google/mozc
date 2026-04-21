@@ -50,6 +50,7 @@
 #include "renderer/table_layout.h"
 #include "renderer/win32/resource.h"
 #include "renderer/win32/text_renderer.h"
+#include "renderer/win32/win32_dpi_util.h"
 
 namespace mozc {
 namespace renderer {
@@ -243,7 +244,7 @@ CandidateWindow::CandidateWindow()
       metrics_changed_(false),
       mouse_moving_(true) {
   double image_scale_factor = 1.0;
-  const double scale_factor = RendererStyleHandler::GetDPIScalingFactor();
+  const double scale_factor = GetDPIScalingFactor();
   if (scale_factor < 1.125) {
     footer_logo_.reset(LoadBitmapFromResource(::GetModuleHandle(nullptr),
                                               IDB_FOOTER_LOGO_COLOR_100));
@@ -838,7 +839,7 @@ void CandidateWindow::DrawSelectedRect(HDC dc) {
 
 void CandidateWindow::DrawInformationIcon(HDC dc) {
   DCHECK(table_layout_->IsLayoutFrozen()) << "Table layout is not frozen.";
-  const double scale_factor = RendererStyleHandler::GetDPIScalingFactor();
+  const double scale_factor = GetDPIScalingFactor();
   for (size_t i = 0; i < candidate_window_->candidate_size(); ++i) {
     if (candidate_window_->candidate(i).has_information_id()) {
       CRect rect = ToCRect(table_layout_->GetRowRect(i));

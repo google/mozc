@@ -51,7 +51,7 @@
 #include "absl/types/span.h"
 #include "base/coordinates.h"
 #include "protocol/renderer_style.pb.h"
-#include "renderer/renderer_style_handler.h"
+#include "renderer/win32/win32_dpi_util.h"
 #include "renderer/win32/win32_font_util.h"
 
 namespace mozc {
@@ -59,7 +59,6 @@ namespace renderer {
 namespace win32 {
 
 using ::mozc::renderer::RendererStyle;
-using ::mozc::renderer::RendererStyleHandler;
 
 namespace {
 
@@ -88,7 +87,7 @@ COLORREF GetTextColor(TextRenderer::FONT_TYPE type) {
   // TODO(horo): Not only infolist fonts but also candidate fonts
   //             should be created from RendererStyle
   RendererStyle style;
-  RendererStyleHandler::GetRendererStyle(&style);
+  GetScaledRendererStyle(&style);
   const auto& infostyle = style.infolist_style();
   switch (type) {
     case TextRenderer::FONTSET_INFOLIST_CAPTION:
@@ -139,7 +138,7 @@ LOGFONT GetLogFont(TextRenderer::FONT_TYPE type) {
   // TODO(horo): Not only infolist fonts but also candidate fonts
   //             should be created from RendererStyle
   RendererStyle style;
-  RendererStyleHandler::GetRendererStyle(&style);
+  GetScaledRendererStyle(&style);
   const auto& infostyle = style.infolist_style();
   switch (type) {
     case TextRenderer::FONTSET_INFOLIST_CAPTION: {
