@@ -72,9 +72,6 @@ class ServerLauncherInterface {
   // called when fatal error occurred.
   virtual void OnFatal(ServerErrorType type) = 0;
 
-  // set the full path of server program.
-  virtual void set_server_program(absl::string_view server_program) = 0;
-
   // return the full path of server program
   // This is used for making IPC connection.
   virtual zstring_view server_program() const = 0;
@@ -192,10 +189,6 @@ class ClientInterface {
 
   // Sets the time out in milli second used for the IPC connection.
   virtual void set_timeout(absl::Duration timeout) = 0;
-
-  // Sets server program path.
-  // mainly for unittesting.
-  virtual void set_server_program(absl::string_view program_path) = 0;
 
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;

@@ -139,8 +139,6 @@ class TestServerLauncher : public client::ServerLauncherInterface {
 
   void set_suppress_error_dialog(bool suppress) override {}
 
-  void set_server_program(const absl::string_view server_path) override {}
-
   zstring_view server_program() const override { return ""; }
 
   void set_start_server_result(const bool result) {

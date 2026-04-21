@@ -138,8 +138,6 @@ class TestServerLauncher : public ServerLauncherInterface {
     force_terminate_server_called_ = force_terminate_server_called;
   }
 
-  void set_server_program(const absl::string_view server_path) override {}
-
   zstring_view server_program() const override {
     return placeholder_server_program_path_;
   }
@@ -933,8 +931,6 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
   bool WaitServer(uint32_t pid) override { return true; }
 
   void OnFatal(ServerLauncherInterface::ServerErrorType type) override {}
-
-  void set_server_program(const absl::string_view server_path) override {}
 
   void set_suppress_error_dialog(bool suppress) override {}
 
