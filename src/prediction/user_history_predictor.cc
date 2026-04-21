@@ -113,12 +113,6 @@ constexpr size_t kRevertCacheSize = 16;
 constexpr absl::string_view kPunctuations[] = {"。", ".",  "、", ",",  "？",
                                                "?",  "！", "!",  "，", "．"};
 
-bool CacheInnerSegmentBoundaryEnabled(const ConversionRequest& request) {
-  return request.request()
-      .decoder_experiment_params()
-      .user_history_cache_inner_segment_boundary();
-}
-
 // Mixed conversion is enabled mainly on mobile device.
 bool IsMixedConversionEnabled(const ConversionRequest& request) {
   return request.request().mixed_conversion();
@@ -146,8 +140,7 @@ bool IsEmojiEntry(const UserHistoryPredictor::Entry& entry) {
 // Full sentence entry with low frequency should not be suggested.
 bool IsLowFreqFullSentenceEntry(const ConversionRequest& request,
                                 const UserHistoryPredictor::Entry& entry) {
-  return (CacheInnerSegmentBoundaryEnabled(request) &&
-          IsMixedConversionEnabled(request) &&
+  return (IsMixedConversionEnabled(request) &&
           entry.inner_segment_boundary_size() >= 2 &&
           entry.suggestion_freq() <= 1);
 }
@@ -212,8 +205,6 @@ void MaybePopulateInnerSegmentBoundary(
     const ConversionRequest& request,
     const converter::InnerSegmentBoundarySpan inner_segment_boundary,
     UserHistoryPredictor::Entry& entry) {
-  if (!CacheInnerSegmentBoundaryEnabled(request)) return;
-
   // We only populate inner_segment_boundary when
   // non-empty inner_segment_boundary is passed.
   if (inner_segment_boundary.empty()) return;
@@ -230,8 +221,6 @@ void MaybePopulateInnerSegmentBoundary(
 void AppendInnerBoundary(const ConversionRequest& request,
                          converter::InnerSegmentBoundaryBuilder& builder,
                          const UserHistoryPredictor::Entry& entry) {
-  if (!CacheInnerSegmentBoundaryEnabled(request)) return;
-
   if (entry.inner_segment_boundary_size() > 0) {
     // Directly copies the raw encoded value.
     for (const uint32_t encoded : entry.inner_segment_boundary()) {
@@ -1054,8 +1043,6 @@ bool UserHistoryPredictor::GetKeyValueForPartialMatch(
   result_value = absl::StrCat(entry.value(), suffix_result.value);
   result_attribute |= Attribute::POPULATE_INNER_SEGMENT_BOUNDARY;
 
-  // Always populates inner segment regardless the config of
-  // CacheInnerSegmentBoundaryEnabled.
   // For candidates that have never been input before, e.g. partial match
   // candidates, they are treated as standard conversions and their boundary
   // information is populated to the Result.
@@ -1101,7 +1088,6 @@ bool UserHistoryPredictor::AllowLowFreqFullSentenceEntryMatch(
   // full-sentence entries with a low frequency are utilized. This is an
   // experimental flag and is removed in the future.
   if (!IsMixedConversionEnabled(request) ||
-      !CacheInnerSegmentBoundaryEnabled(request) ||
       !request.request()
            .decoder_experiment_params()
            .user_history_allow_exact_match()) {
@@ -2178,9 +2164,7 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     UserHistoryPredictor::RevertEntries& revert_entries) {
   // Inserts all_key/all_value.
   // We don't insert it for mobile.
-  if ((CacheInnerSegmentBoundaryEnabled(request) ||
-       !IsMixedConversionEnabled(request)) &&
-      learning_segments.conversion_segments.size() > 1) {
+  if (learning_segments.conversion_segments.size() > 1) {
     Insert(request, 0, 0, learning_segments.conversion_segments_key,
            learning_segments.conversion_segments_value, "",
            learning_segments.inner_segment_boundary, {},
