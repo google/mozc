@@ -242,19 +242,17 @@ CandidateWindow::CandidateWindow()
       indicator_width_(0),
       metrics_changed_(false),
       mouse_moving_(true) {
-  double scale_factor_x = 1.0;
-  double scale_factor_y = 1.0;
-  RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x, &scale_factor_y);
   double image_scale_factor = 1.0;
-  if (scale_factor_x < 1.125 || scale_factor_y < 1.125) {
+  const double scale_factor = RendererStyleHandler::GetDPIScalingFactor();
+  if (scale_factor < 1.125) {
     footer_logo_.reset(LoadBitmapFromResource(::GetModuleHandle(nullptr),
                                               IDB_FOOTER_LOGO_COLOR_100));
     image_scale_factor = 1.0;
-  } else if (scale_factor_x < 1.375 || scale_factor_y < 1.375) {
+  } else if (scale_factor < 1.375) {
     footer_logo_.reset(LoadBitmapFromResource(::GetModuleHandle(nullptr),
                                               IDB_FOOTER_LOGO_COLOR_125));
     image_scale_factor = 1.25;
-  } else if (scale_factor_x < 1.75 || scale_factor_y < 1.75) {
+  } else if (scale_factor < 1.75) {
     footer_logo_.reset(LoadBitmapFromResource(::GetModuleHandle(nullptr),
                                               IDB_FOOTER_LOGO_COLOR_150));
     image_scale_factor = 1.5;
@@ -269,12 +267,12 @@ CandidateWindow::CandidateWindow()
     BITMAP bm = {};
     if (::GetObject(footer_logo_.get(), sizeof(bm), &bm)) {
       footer_logo_display_size_ =
-          Size(bm.bmWidth * (scale_factor_x / image_scale_factor),
-               bm.bmHeight * (scale_factor_y / image_scale_factor));
+          Size(bm.bmWidth * (scale_factor / image_scale_factor),
+               bm.bmHeight * (scale_factor / image_scale_factor));
     }
   }
 
-  indicator_width_ = kIndicatorWidthInDefaultDPI * scale_factor_x;
+  indicator_width_ = kIndicatorWidthInDefaultDPI * scale_factor;
 }
 
 CandidateWindow::~CandidateWindow() {}
@@ -840,16 +838,14 @@ void CandidateWindow::DrawSelectedRect(HDC dc) {
 
 void CandidateWindow::DrawInformationIcon(HDC dc) {
   DCHECK(table_layout_->IsLayoutFrozen()) << "Table layout is not frozen.";
-  double scale_factor_x = 1.0;
-  double scale_factor_y = 1.0;
-  RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x, &scale_factor_y);
+  const double scale_factor = RendererStyleHandler::GetDPIScalingFactor();
   for (size_t i = 0; i < candidate_window_->candidate_size(); ++i) {
     if (candidate_window_->candidate(i).has_information_id()) {
       CRect rect = ToCRect(table_layout_->GetRowRect(i));
-      rect.left = rect.right - (6.0 * scale_factor_x);
-      rect.right = rect.right - (2.0 * scale_factor_x);
-      rect.top += (2.0 * scale_factor_y);
-      rect.bottom -= (2.0 * scale_factor_y);
+      rect.left = rect.right - (6.0 * scale_factor);
+      rect.right = rect.right - (2.0 * scale_factor);
+      rect.top += (2.0 * scale_factor);
+      rect.bottom -= (2.0 * scale_factor);
       FillSolidRect(dc, &rect, kIndicatorColor);
       ::SetDCBrushColor(dc, kIndicatorColor);
       ::FrameRect(dc, &rect, static_cast<HBRUSH>(::GetStockObject(DC_BRUSH)));
