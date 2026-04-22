@@ -44,7 +44,6 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
-#include "base/strings/zstring_view.h"
 #include "base/version.h"
 #include "client/client.h"
 #include "client/client_interface.h"
@@ -139,7 +138,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
 
   void set_suppress_error_dialog(bool suppress) override {}
 
-  zstring_view server_program() const override { return ""; }
+  std::string server_program() const override { return ""; }
 
   void set_start_server_result(const bool result) {
     start_server_result_ = result;

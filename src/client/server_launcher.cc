@@ -95,8 +95,7 @@ const std::string LoadServerFlags() {
 
 // initialize default path
 ServerLauncher::ServerLauncher()
-    : server_program_(SystemUtil::GetServerPath()),
-      suppress_error_dialog_(false) {}
+    : suppress_error_dialog_(false) {}
 
 ServerLauncher::~ServerLauncher() = default;
 
@@ -248,5 +247,15 @@ void ServerLauncher::OnFatal(ServerLauncherInterface::ServerErrorType type) {
     Process::LaunchErrorMessageDialog(error_type);
   }
 }
+
+std::string ServerLauncher::server_program() const {
+  // Until the migration from  from "Program Files (x86)" to "Program Files" on
+  // Windows is fully completed, we cannot treat the server program path as a
+  // constant value that does not change during the execution of the client
+  // process.
+  // https://github.com/google/mozc/issues/1086
+  return SystemUtil::GetServerPath();
+}
+
 }  // namespace client
 }  // namespace mozc
