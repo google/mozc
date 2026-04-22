@@ -41,11 +41,7 @@ class RendererStyleHandler {
   RendererStyleHandler() = delete;
 
   // return current Style
-  static bool GetRendererStyle(RendererStyle* style);
-  // set Style
-  static bool SetRendererStyle(const RendererStyle& style);
-  // get default Style
-  static void GetDefaultRendererStyle(RendererStyle* style);
+  static void GetRendererStyle(RendererStyle* style);
 };
 
 }  // namespace renderer

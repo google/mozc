@@ -58,7 +58,7 @@ double GetDPIScalingFactor() {
 void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style) {
   const double scale_factor = GetDPIScalingFactor();
 
-  RendererStyleHandler::GetDefaultRendererStyle(style);
+  RendererStyleHandler::GetRendererStyle(style);
 
   // style->window_border is non-scalable.
   style->set_scrollbar_width(style->scrollbar_width() * scale_factor);
