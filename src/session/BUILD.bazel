@@ -673,7 +673,6 @@ mozc_cc_test(
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":key_event_transformer",
-        "//base:singleton",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",

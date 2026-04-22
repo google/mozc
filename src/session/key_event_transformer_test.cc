@@ -33,7 +33,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "base/singleton.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
@@ -69,12 +68,11 @@ namespace {
   return ::testing::AssertionSuccess();
 }
 
-void TestNumpadTransformation(commands::KeyEvent::SpecialKey input,
+void TestNumpadTransformation(KeyEventTransformer* table,
+                              commands::KeyEvent::SpecialKey input,
                               uint32_t expected_key_code,
                               const std::string& expected_key_string,
                               commands::KeyEvent::InputStyle expected_style) {
-  KeyEventTransformer* table = Singleton<KeyEventTransformer>::get();
-
   commands::KeyEvent key_event;
   key_event.set_special_key(input);
   EXPECT_TRUE(table->TransformKeyEvent(&key_event));
@@ -87,11 +85,10 @@ void TestNumpadTransformation(commands::KeyEvent::SpecialKey input,
   EXPECT_EQ(key_event.input_style(), expected_style);
 }
 
-void TestKanaTransformation(const std::string& key_string,
+void TestKanaTransformation(KeyEventTransformer* table,
+                            const std::string& key_string,
                             uint32_t expected_key_code,
                             const std::string& expected_key_string) {
-  KeyEventTransformer* table = Singleton<KeyEventTransformer>::get();
-
   commands::KeyEvent key_event;
   key_event.set_key_string(key_string);
 
@@ -112,12 +109,12 @@ void TestKanaTransformation(const std::string& key_string,
 }  // namespace
 
 TEST(KeyEventTransformerTest, Numpad) {
-  KeyEventTransformer* table = Singleton<KeyEventTransformer>::get();
+  KeyEventTransformer table;
 
   {  // "Separator to Enter"
     commands::KeyEvent key_event;
     key_event.set_special_key(commands::KeyEvent::SEPARATOR);
-    EXPECT_TRUE(table->TransformKeyEvent(&key_event));
+    EXPECT_TRUE(table.TransformKeyEvent(&key_event));
 
     ASSERT_TRUE(key_event.has_special_key());
     ASSERT_FALSE(key_event.has_key_code());
@@ -127,15 +124,15 @@ TEST(KeyEventTransformerTest, Numpad) {
   {  // NUMPAD_INPUT_MODE
     config::Config config;
     config.set_numpad_character_form(config::Config::NUMPAD_INPUT_MODE);
-    table->ReloadConfig(config);
+    table.ReloadConfig(config);
     {
       SCOPED_TRACE("NUMPAD_INPUT_MODE: input: 0");
-      TestNumpadTransformation(commands::KeyEvent::NUMPAD0, '0', "０",
+      TestNumpadTransformation(&table, commands::KeyEvent::NUMPAD0, '0', "０",
                                commands::KeyEvent::FOLLOW_MODE);
     }
     {
       SCOPED_TRACE("NUMPAD_INPUT_MODE: input: =");
-      TestNumpadTransformation(commands::KeyEvent::EQUALS, '=', "＝",
+      TestNumpadTransformation(&table, commands::KeyEvent::EQUALS, '=', "＝",
                                commands::KeyEvent::FOLLOW_MODE);
     }
   }
@@ -143,15 +140,15 @@ TEST(KeyEventTransformerTest, Numpad) {
   {  // NUMPAD_FULL_WIDTH
     config::Config config;
     config.set_numpad_character_form(config::Config::NUMPAD_FULL_WIDTH);
-    table->ReloadConfig(config);
+    table.ReloadConfig(config);
     {
       SCOPED_TRACE("NUMPAD_FULL_WIDTH: input: 0");
-      TestNumpadTransformation(commands::KeyEvent::NUMPAD0, '0', "０",
+      TestNumpadTransformation(&table, commands::KeyEvent::NUMPAD0, '0', "０",
                                commands::KeyEvent::AS_IS);
     }
     {
       SCOPED_TRACE("NUMPAD_FULL_WIDTH: input: =");
-      TestNumpadTransformation(commands::KeyEvent::EQUALS, '=', "＝",
+      TestNumpadTransformation(&table, commands::KeyEvent::EQUALS, '=', "＝",
                                commands::KeyEvent::AS_IS);
     }
   }
@@ -159,15 +156,15 @@ TEST(KeyEventTransformerTest, Numpad) {
   {  // NUMPAD_HALF_WIDTH
     config::Config config;
     config.set_numpad_character_form(config::Config::NUMPAD_HALF_WIDTH);
-    table->ReloadConfig(config);
+    table.ReloadConfig(config);
     {
       SCOPED_TRACE("NUMPAD_HALF_WIDTH: input: 0");
-      TestNumpadTransformation(commands::KeyEvent::NUMPAD0, '0', "0",
+      TestNumpadTransformation(&table, commands::KeyEvent::NUMPAD0, '0', "0",
                                commands::KeyEvent::AS_IS);
     }
     {
       SCOPED_TRACE("NUMPAD_HALF_WIDTH: input: =");
-      TestNumpadTransformation(commands::KeyEvent::EQUALS, '=', "=",
+      TestNumpadTransformation(&table, commands::KeyEvent::EQUALS, '=', "=",
                                commands::KeyEvent::AS_IS);
     }
   }
@@ -175,22 +172,22 @@ TEST(KeyEventTransformerTest, Numpad) {
   {  // NUMPAD_DIRECT_INPUT
     config::Config config;
     config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
-    table->ReloadConfig(config);
+    table.ReloadConfig(config);
     {
       SCOPED_TRACE("NUMPAD_DIRECT_INPUT: input: 0");
-      TestNumpadTransformation(commands::KeyEvent::NUMPAD0, '0', "0",
+      TestNumpadTransformation(&table, commands::KeyEvent::NUMPAD0, '0', "0",
                                commands::KeyEvent::DIRECT_INPUT);
     }
     {
       SCOPED_TRACE("NUMPAD_DIRECT_INPUT: input: =");
-      TestNumpadTransformation(commands::KeyEvent::EQUALS, '=', "=",
+      TestNumpadTransformation(&table, commands::KeyEvent::EQUALS, '=', "=",
                                commands::KeyEvent::DIRECT_INPUT);
     }
   }
 }
 
 TEST(KeyEventTransformerTest, Kana) {
-  KeyEventTransformer* table = Singleton<KeyEventTransformer>::get();
+  KeyEventTransformer table;
 
   {  // Punctuation
     const char* kFullKuten = "、";
@@ -202,37 +199,37 @@ TEST(KeyEventTransformerTest, Kana) {
       SCOPED_TRACE("TOUTEN_KUTEN");
       config::Config config;
       config.set_punctuation_method(config::Config::TOUTEN_KUTEN);
-      table->ReloadConfig(config);
+      table.ReloadConfig(config);
 
-      TestKanaTransformation(kFullKuten, ',', kFullKuten);
-      TestKanaTransformation(kFullTouten, '.', kFullTouten);
+      TestKanaTransformation(&table, kFullKuten, ',', kFullKuten);
+      TestKanaTransformation(&table, kFullTouten, '.', kFullTouten);
     }
     {
       SCOPED_TRACE("COMMA_PERIOD");
       config::Config config;
       config.set_punctuation_method(config::Config::COMMA_PERIOD);
-      table->ReloadConfig(config);
+      table.ReloadConfig(config);
 
-      TestKanaTransformation(kFullKuten, ',', kFullComma);
-      TestKanaTransformation(kFullTouten, '.', kFullPeriod);
+      TestKanaTransformation(&table, kFullKuten, ',', kFullComma);
+      TestKanaTransformation(&table, kFullTouten, '.', kFullPeriod);
     }
     {
       SCOPED_TRACE("TOUTEN_PERIOD");
       config::Config config;
       config.set_punctuation_method(config::Config::TOUTEN_PERIOD);
-      table->ReloadConfig(config);
+      table.ReloadConfig(config);
 
-      TestKanaTransformation(kFullKuten, ',', kFullKuten);
-      TestKanaTransformation(kFullTouten, '.', kFullPeriod);
+      TestKanaTransformation(&table, kFullKuten, ',', kFullKuten);
+      TestKanaTransformation(&table, kFullTouten, '.', kFullPeriod);
     }
     {
       SCOPED_TRACE("COMMA_KUTEN");
       config::Config config;
       config.set_punctuation_method(config::Config::COMMA_KUTEN);
-      table->ReloadConfig(config);
+      table.ReloadConfig(config);
 
-      TestKanaTransformation(kFullKuten, ',', kFullComma);
-      TestKanaTransformation(kFullTouten, '.', kFullTouten);
+      TestKanaTransformation(&table, kFullKuten, ',', kFullComma);
+      TestKanaTransformation(&table, kFullTouten, '.', kFullTouten);
     }
   }
 
@@ -248,49 +245,49 @@ TEST(KeyEventTransformerTest, Kana) {
       SCOPED_TRACE("CORNER_BRACKET_MIDDLE_DOT");
       config::Config config;
       config.set_symbol_method(config::Config::CORNER_BRACKET_MIDDLE_DOT);
-      table->ReloadConfig(config);
+      table.ReloadConfig(config);
 
-      TestKanaTransformation(kFullLeftCornerBracket, '[',
+      TestKanaTransformation(&table, kFullLeftCornerBracket, '[',
                              kFullLeftCornerBracket);
-      TestKanaTransformation(kFullRightCornerBracket, ']',
+      TestKanaTransformation(&table, kFullRightCornerBracket, ']',
                              kFullRightCornerBracket);
-      TestKanaTransformation(kFullMiddleDot, '/', kFullMiddleDot);
+      TestKanaTransformation(&table, kFullMiddleDot, '/', kFullMiddleDot);
     }
     {
       SCOPED_TRACE("SQUARE_BRACKET_SLASH");
       config::Config config;
       config.set_symbol_method(config::Config::SQUARE_BRACKET_SLASH);
-      table->ReloadConfig(config);
+      table.ReloadConfig(config);
 
-      TestKanaTransformation(kFullLeftCornerBracket, '[',
+      TestKanaTransformation(&table, kFullLeftCornerBracket, '[',
                              kFullLeftSquareBracket);
-      TestKanaTransformation(kFullRightCornerBracket, ']',
+      TestKanaTransformation(&table, kFullRightCornerBracket, ']',
                              kFullRightSquareBracket);
-      TestKanaTransformation(kFullMiddleDot, '/', kFullSlash);
+      TestKanaTransformation(&table, kFullMiddleDot, '/', kFullSlash);
     }
     {
       SCOPED_TRACE("CORNER_BRACKET_SLASH");
       config::Config config;
       config.set_symbol_method(config::Config::CORNER_BRACKET_SLASH);
-      table->ReloadConfig(config);
+      table.ReloadConfig(config);
 
-      TestKanaTransformation(kFullLeftCornerBracket, '[',
+      TestKanaTransformation(&table, kFullLeftCornerBracket, '[',
                              kFullLeftCornerBracket);
-      TestKanaTransformation(kFullRightCornerBracket, ']',
+      TestKanaTransformation(&table, kFullRightCornerBracket, ']',
                              kFullRightCornerBracket);
-      TestKanaTransformation(kFullMiddleDot, '/', kFullSlash);
+      TestKanaTransformation(&table, kFullMiddleDot, '/', kFullSlash);
     }
     {
       SCOPED_TRACE("SQUARE_BRACKET_MIDDLE_DOT");
       config::Config config;
       config.set_symbol_method(config::Config::SQUARE_BRACKET_MIDDLE_DOT);
-      table->ReloadConfig(config);
+      table.ReloadConfig(config);
 
-      TestKanaTransformation(kFullLeftCornerBracket, '[',
+      TestKanaTransformation(&table, kFullLeftCornerBracket, '[',
                              kFullLeftSquareBracket);
-      TestKanaTransformation(kFullRightCornerBracket, ']',
+      TestKanaTransformation(&table, kFullRightCornerBracket, ']',
                              kFullRightSquareBracket);
-      TestKanaTransformation(kFullMiddleDot, '/', kFullMiddleDot);
+      TestKanaTransformation(&table, kFullMiddleDot, '/', kFullMiddleDot);
     }
   }
 }
