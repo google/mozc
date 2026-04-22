@@ -183,7 +183,7 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t* pid) {
   // Check if the "path" is an application or not.  If it's an
   // application, do a special process using mac_process.mm.
   if (S_ISDIR(statbuf.st_mode) && path.size() > 4 &&
-      path.view().starts_with(".app")) {
+      path.view().ends_with(".app")) {
     // In mac launchApplication cannot accept any arguments.
     return MacProcess::OpenApplication(path);
   }
