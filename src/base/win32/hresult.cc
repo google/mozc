@@ -92,7 +92,7 @@ std::string HResult::ToStringSlow() const {
   DWORD result = FormatMessageW(
       FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
           FORMAT_MESSAGE_IGNORE_INSERTS,
-      nullptr, hr_, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+      nullptr, hr_, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
       reinterpret_cast<wchar_t*>(message.put()), 0, nullptr);
   if (result == 0) {
     return absl::StrFormat(
