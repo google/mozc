@@ -38,7 +38,6 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-#include "base/strings/zstring_view.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -74,7 +73,7 @@ class ServerLauncherInterface {
 
   // return the full path of server program
   // This is used for making IPC connection.
-  virtual zstring_view server_program() const = 0;
+  virtual std::string server_program() const = 0;
 
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;

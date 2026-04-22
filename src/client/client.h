@@ -42,7 +42,6 @@
 #include "absl/time/time.h"
 #include "base/run_level.h"
 #include "base/strings/assign.h"
-#include "base/strings/zstring_view.h"
 #include "client/client_interface.h"
 #include "composer/key_event_util.h"
 #include "ipc/ipc.h"
@@ -75,7 +74,7 @@ class ServerLauncher : public ServerLauncherInterface {
   void OnFatal(ServerLauncherInterface::ServerErrorType type) override;
 
   // return server program
-  zstring_view server_program() const override { return server_program_; }
+  std::string server_program() const override;
 
   // Sets the flag of error dialog suppression.
   void set_suppress_error_dialog(bool suppress) override {
@@ -83,7 +82,6 @@ class ServerLauncher : public ServerLauncherInterface {
   }
 
  private:
-  std::string server_program_;
   bool suppress_error_dialog_;
 };
 
