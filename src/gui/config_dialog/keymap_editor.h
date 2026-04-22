@@ -50,7 +50,10 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
   Q_OBJECT;
 
  public:
+  class KeyMapValidator;
+
   explicit KeyMapEditorDialog(QWidget *parent);
+  ~KeyMapEditorDialog() override;
 
   // show a modal dialog
   static bool Show(QWidget *parent, const std::string &current_keymap,
@@ -77,6 +80,7 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
   std::unique_ptr<ComboBoxDelegate> status_delegate_;
   std::unique_ptr<ComboBoxDelegate> commands_delegate_;
   std::unique_ptr<KeyBindingEditorDelegate> keybinding_delegate_;
+  std::unique_ptr<KeyMapValidator> validator_;
 
   absl::flat_hash_map<std::string, std::string> normalized_command_map_;
   absl::flat_hash_map<std::string, std::string> normalized_status_map_;

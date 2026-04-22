@@ -51,7 +51,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/config_file_stream.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/key_parser.h"
@@ -102,8 +101,10 @@ enum {
   MENU_SIZE = 4
 };
 
+}  // namespace
+
 // Keymap validator for deciding that input is configurable
-class KeyMapValidator {
+class KeyMapEditorDialog::KeyMapValidator {
  public:
   KeyMapValidator() {
     invisible_commands_.insert(kInsertCharacterCommand);
@@ -202,11 +203,12 @@ class KeyMapValidator {
   absl::flat_hash_set<std::string> invisible_commands_;
 };
 
+namespace {
+
 class KeyMapTableLoader {
  public:
-  KeyMapTableLoader() {
+  explicit KeyMapTableLoader(KeyMapEditorDialog::KeyMapValidator &validator) {
     absl::flat_hash_set<std::string> commands;
-    KeyMapValidator *validator = mozc::Singleton<KeyMapValidator>::get();
 
     // get all command names
     absl::flat_hash_set<std::string> command_names;
@@ -220,7 +222,7 @@ class KeyMapTableLoader {
     manager.AppendAvailableCommandNamePrediction(command_names);
     for (auto it = std::make_move_iterator(command_names.begin());
          it != std::make_move_iterator(command_names.end()); ++it) {
-      if (validator->IsVisibleCommand(*it)) {
+      if (validator.IsVisibleCommand(*it)) {
         commands.insert(*it);  // implied move
       }
     }
@@ -240,6 +242,7 @@ class KeyMapTableLoader {
   QStringList status_;
   QStringList commands_;
 };
+
 }  // namespace
 
 KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
@@ -248,7 +251,8 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
       import_actions_(std::size(kKeyMaps)),
       status_delegate_(std::make_unique<ComboBoxDelegate>()),
       commands_delegate_(std::make_unique<ComboBoxDelegate>()),
-      keybinding_delegate_(std::make_unique<KeyBindingEditorDelegate>()) {
+      keybinding_delegate_(std::make_unique<KeyBindingEditorDelegate>()),
+      validator_(std::make_unique<KeyMapValidator>()) {
   actions_[NEW_INDEX] = mutable_edit_menu()->addAction(tr("New entry"));
   actions_[REMOVE_INDEX] =
       mutable_edit_menu()->addAction(tr("Remove selected entries"));
@@ -276,10 +280,10 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
       1, static_cast<int>(mutable_table_widget()->columnWidth(1) * 1.1));
   mutable_table_widget()->horizontalHeader()->setStretchLastSection(true);
 
-  KeyMapTableLoader *loader = Singleton<KeyMapTableLoader>::get();
+  KeyMapTableLoader loader(*validator_);
 
   // Generate i18n status list
-  const QStringList &statuses = loader->status();
+  const QStringList &statuses = loader.status();
   QStringList i18n_statuses;
   for (size_t i = 0; i < statuses.size(); ++i) {
     const QString i18n_status = tr(statuses[i].toStdString().data());
@@ -290,7 +294,7 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
   status_delegate_->SetItemList(i18n_statuses);
 
   // Generate i18n command list.
-  const QStringList &commands = loader->commands();
+  const QStringList &commands = loader.commands();
   QStringList i18n_commands;
   for (size_t i = 0; i < commands.size(); ++i) {
     const QString i18n_command = tr(commands[i].toStdString().data());
@@ -319,6 +323,8 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
 
   UpdateMenuStatus();
 }
+
+KeyMapEditorDialog::~KeyMapEditorDialog() = default;
 
 bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
   if (is == nullptr) {
@@ -354,13 +360,13 @@ bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
     const std::string &command = fields[2];
 
     // don't accept invalid keymap entries.
-    if (!Singleton<KeyMapValidator>::get()->IsValidEntry(fields)) {
+    if (!validator_->IsValidEntry(fields)) {
       MOZC_VLOG(3) << "invalid entry.";
       continue;
     }
 
     // don't show invisible (not configurable) keymap entries.
-    if (!Singleton<KeyMapValidator>::get()->IsVisibleEntry(fields)) {
+    if (!validator_->IsVisibleEntry(fields)) {
       MOZC_VLOG(3) << "invalid entry to show. add to invisible_keymap_table_";
       absl::StrAppend(&invisible_keymap_table_, status, "\t", key, "\t",
                       command, "\n");
@@ -399,7 +405,6 @@ bool KeyMapEditorDialog::Update() {
 
   absl::flat_hash_set<std::string> new_direct_mode_commands;
 
-  KeyMapValidator *validator = Singleton<KeyMapValidator>::get();
   std::string *keymap_table = mutable_table();
 
   *keymap_table = "status\tkey\tcommand\n";
@@ -426,7 +431,7 @@ bool KeyMapEditorDialog::Update() {
     }
     const std::string &command = command_it->second;
 
-    if (!validator->IsVisibleKey(key)) {
+    if (!validator_->IsVisibleKey(key)) {
       QMessageBox::warning(
           this, windowTitle(),
           (tr("Invalid key:\n%1")
