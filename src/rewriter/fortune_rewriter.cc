@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <ctime>
 #include <iterator>
+#include <memory>
 #include <string>
 
 #include "absl/log/check.h"
@@ -41,7 +42,6 @@
 #include "absl/time/civil_time.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
-#include "base/singleton.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
@@ -69,54 +69,6 @@ constexpr int kFriday13Levels[] = {10, 25, 40, 55, 70};
 bool IsValidFortuneType(FortuneType fortune_type) {
   return (fortune_type < NUM_FORTUNE_TYPES);
 }
-
-class FortuneData {
- public:
-  FortuneData() : fortune_type_(FORTUNE_TYPE_EXCELLENT_LUCK) {
-    ChangeFortune();
-  }
-
-  void ChangeFortune() {
-    const int* levels = kNormalLevels;
-
-    const absl::Time at = Clock::GetAbslTime();
-    const absl::TimeZone& tz = Clock::GetTimeZone();
-    const absl::CivilDay today = absl::ToCivilDay(at, tz);
-
-    // Modify once per one day
-    if (today == last_updated_day_) {
-      return;
-    }
-    last_updated_day_ = today;
-
-    // More happy at New Year's Day
-    if (today.month() == 1 && today.day() == 1) {
-      levels = kNewYearLevels;
-    } else if (today.month() == 3 && today.day() == 3) {
-      // It's my birthday :)
-      levels = kMyBirthdayLevels;
-    } else if (today.day() == 13 &&
-               absl::GetWeekday(today) == absl::Weekday::friday) {
-      // Friday the 13th
-      levels = kFriday13Levels;
-    }
-    const int level = absl::Uniform(gen_, 0, kMaxLevel);
-    for (int i = 0; i < std::size(kNormalLevels); ++i) {
-      if (level <= levels[i]) {
-        fortune_type_ = static_cast<FortuneType>(i);
-        break;
-      }
-    }
-    DCHECK(IsValidFortuneType(fortune_type_));
-  }
-
-  FortuneType fortune_type() const { return fortune_type_; }
-
- private:
-  FortuneType fortune_type_;
-  absl::CivilDay last_updated_day_;
-  absl::BitGen gen_;
-};
 
 // Insert Fortune message into the |segment|
 // Only one fortune indicated by fortune_type is inserted at
@@ -177,7 +129,56 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
 
 }  // namespace
 
-FortuneRewriter::FortuneRewriter() = default;
+class FortuneRewriter::FortuneData {
+ public:
+  FortuneData() : fortune_type_(FORTUNE_TYPE_EXCELLENT_LUCK) {
+    ChangeFortune();
+  }
+
+  void ChangeFortune() {
+    const int* levels = kNormalLevels;
+
+    const absl::Time at = Clock::GetAbslTime();
+    const absl::TimeZone& tz = Clock::GetTimeZone();
+    const absl::CivilDay today = absl::ToCivilDay(at, tz);
+
+    // Modify once per one day
+    if (today == last_updated_day_) {
+      return;
+    }
+    last_updated_day_ = today;
+
+    // More happy at New Year's Day
+    if (today.month() == 1 && today.day() == 1) {
+      levels = kNewYearLevels;
+    } else if (today.month() == 3 && today.day() == 3) {
+      // It's my birthday :)
+      levels = kMyBirthdayLevels;
+    } else if (today.day() == 13 &&
+               absl::GetWeekday(today) == absl::Weekday::friday) {
+      // Friday the 13th
+      levels = kFriday13Levels;
+    }
+    const int level = absl::Uniform(gen_, 0, kMaxLevel);
+    for (int i = 0; i < std::size(kNormalLevels); ++i) {
+      if (level <= levels[i]) {
+        fortune_type_ = static_cast<FortuneType>(i);
+        break;
+      }
+    }
+    DCHECK(IsValidFortuneType(fortune_type_));
+  }
+
+  FortuneType fortune_type() const { return fortune_type_; }
+
+ private:
+  FortuneType fortune_type_;
+  absl::CivilDay last_updated_day_;
+  absl::BitGen gen_;
+};
+
+FortuneRewriter::FortuneRewriter()
+    : fortune_data_(std::make_unique<FortuneData>()) {}
 
 FortuneRewriter::~FortuneRewriter() = default;
 
@@ -197,10 +198,9 @@ bool FortuneRewriter::Rewrite(const ConversionRequest& request,
   if (key != "おみくじ") {
     return false;
   }
-  FortuneData* fortune_data = Singleton<FortuneData>::get();
-  fortune_data->ChangeFortune();
+  fortune_data_->ChangeFortune();
   // Insert a fortune candidate into the last of all candidates.
-  return InsertCandidate(fortune_data->fortune_type(),
+  return InsertCandidate(fortune_data_->fortune_type(),
                          segment.candidates_size(),
                          segments->mutable_conversion_segment(0));
 }

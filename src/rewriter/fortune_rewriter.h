@@ -30,6 +30,8 @@
 #ifndef MOZC_REWRITER_FORTUNE_REWRITER_H_
 #define MOZC_REWRITER_FORTUNE_REWRITER_H_
 
+#include <memory>
+
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -44,6 +46,10 @@ class FortuneRewriter : public RewriterInterface {
 
   bool Rewrite(const ConversionRequest& request,
                converter::Segments* segments) const override;
+
+ private:
+  class FortuneData;
+  std::unique_ptr<FortuneData> fortune_data_;
 };
 
 }  // namespace mozc
