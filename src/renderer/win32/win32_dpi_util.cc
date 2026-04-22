@@ -41,6 +41,13 @@ namespace {
 
 constexpr int kDefaultDPI = 96;
 
+void ScaleTextStyle(RendererStyle::TextStyle* text_style,
+                    double scale_factor) {
+  text_style->set_font_size(text_style->font_size() * scale_factor);
+  text_style->set_left_padding(text_style->left_padding() * scale_factor);
+  text_style->set_right_padding(text_style->right_padding() * scale_factor);
+}
+
 }  // namespace
 
 double GetDPIScalingFactor() {
@@ -58,54 +65,22 @@ void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style) {
   style->set_row_rect_padding(style->row_rect_padding() * scale_factor);
 
   for (RendererStyle::TextStyle& text_style : *style->mutable_text_styles()) {
-    text_style.set_font_size(text_style.font_size() * scale_factor);
-    text_style.set_left_padding(text_style.left_padding() * scale_factor);
-    text_style.set_right_padding(text_style.right_padding() * scale_factor);
+    ScaleTextStyle(&text_style, scale_factor);
   }
 
-  {
-    RendererStyle::TextStyle* footer_style = style->mutable_footer_style();
-    footer_style->set_font_size(footer_style->font_size() * scale_factor);
-    footer_style->set_left_padding(footer_style->left_padding() * scale_factor);
-    footer_style->set_right_padding(footer_style->right_padding() *
-                                    scale_factor);
-  }
+  ScaleTextStyle(style->mutable_footer_style(), scale_factor);
+  ScaleTextStyle(style->mutable_footer_sub_label_style(), scale_factor);
 
-  {
-    RendererStyle::TextStyle* footer_sub_label_style =
-        style->mutable_footer_sub_label_style();
-    footer_sub_label_style->set_font_size(footer_sub_label_style->font_size() *
-                                          scale_factor);
-    footer_sub_label_style->set_left_padding(
-        footer_sub_label_style->left_padding() * scale_factor);
-    footer_sub_label_style->set_right_padding(
-        footer_sub_label_style->right_padding() * scale_factor);
-  }
+  RendererStyle::InfolistStyle* info_style = style->mutable_infolist_style();
+  // info_style->window_border and info_style->caption_padding are non-scalable.
+  info_style->set_caption_height(info_style->caption_height() * scale_factor);
+  info_style->set_row_rect_padding(info_style->row_rect_padding() *
+                                   scale_factor);
+  info_style->set_window_width(info_style->window_width() * scale_factor);
 
-  {
-    RendererStyle::InfolistStyle* infostyle = style->mutable_infolist_style();
-    // infostyle->window_border and infostyle->caption_padding are non-scalable.
-    infostyle->set_caption_height(infostyle->caption_height() * scale_factor);
-    infostyle->set_row_rect_padding(infostyle->row_rect_padding() *
-                                    scale_factor);
-    infostyle->set_window_width(infostyle->window_width() * scale_factor);
-
-    RendererStyle::TextStyle* caption_style = infostyle->mutable_caption_style();
-    caption_style->set_font_size(caption_style->font_size() * scale_factor);
-    caption_style->set_left_padding(caption_style->left_padding() *
-                                    scale_factor);
-
-    RendererStyle::TextStyle* title_style = infostyle->mutable_title_style();
-    title_style->set_font_size(title_style->font_size() * scale_factor);
-    title_style->set_left_padding(title_style->left_padding() * scale_factor);
-
-    RendererStyle::TextStyle* description_style =
-        infostyle->mutable_description_style();
-    description_style->set_font_size(description_style->font_size() *
-                                     scale_factor);
-    description_style->set_left_padding(description_style->left_padding() *
-                                        scale_factor);
-  }
+  ScaleTextStyle(info_style->mutable_caption_style(), scale_factor);
+  ScaleTextStyle(info_style->mutable_title_style(), scale_factor);
+  ScaleTextStyle(info_style->mutable_description_style(), scale_factor);
 }
 
 }  // namespace win32
