@@ -239,11 +239,7 @@ mozc_cc_library(
     deps = [
         "//base:singleton",
         "//protocol:renderer_cc_proto",
-    ] + mozc_select(
-        windows = [
-            "//bazel/win32:user32",
-        ],
-    ),
+    ],
 )
 
 mozc_cc_test(

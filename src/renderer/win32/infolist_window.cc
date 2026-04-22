@@ -45,8 +45,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"
-#include "renderer/renderer_style_handler.h"
 #include "renderer/win32/text_renderer.h"
+#include "renderer/win32/win32_dpi_util.h"
 
 namespace mozc {
 namespace renderer {
@@ -83,7 +83,7 @@ InfolistWindow::InfolistWindow()
       style_(new RendererStyle),
       metrics_changed_(false),
       visible_(false) {
-  mozc::renderer::RendererStyleHandler::GetRendererStyle(style_.get());
+  GetScaledRendererStyle(style_.get());
 }
 
 InfolistWindow::~InfolistWindow() {}
