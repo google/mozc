@@ -32,7 +32,7 @@
 
 #include <string>
 
-#include "base/strings/zstring_view.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -41,7 +41,7 @@ class EnvironInterface {
  public:
   virtual ~EnvironInterface() = default;
 
-  virtual std::string GetEnv(zstring_view env_var) = 0;
+  virtual std::string GetEnv(absl::string_view env_var) = 0;
 
  protected:
   EnvironInterface() = default;
@@ -57,7 +57,7 @@ class Environ {
   virtual ~Environ() = default;
 
   // returns the value of the specified environment variable.
-  static std::string GetEnv(zstring_view env_var);
+  static std::string GetEnv(absl::string_view env_var);
 
   // sets a mock for unit test.
   static void SetMockForUnitTest(EnvironInterface* mock);

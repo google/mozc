@@ -34,8 +34,8 @@
 #include "absl/cleanup/cleanup.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "base/strings/pfchar.h"
-#include "base/strings/zstring_view.h"
 
 #ifdef _WIN32
 #include <wil/filesystem.h>
@@ -69,7 +69,7 @@ namespace mozc::file {
 
 #ifdef _WIN32
 
-absl::Status DeleteRecursively(const zstring_view path) {
+absl::Status DeleteRecursively(const absl::string_view path) {
   const win32::HResult hr(wil::RemoveDirectoryRecursiveNoThrow(
       win32::Utf8ToWide(path).c_str(),
       wil::RemoveDirectoryOptions::RemoveReadOnly));
@@ -90,14 +90,14 @@ absl::Status DeleteRecursively(const zstring_view path) {
 #else  // _WIN32
 
 namespace {
-void RemoveDirectoryOrLog(const char *path) {
+void RemoveDirectoryOrLog(const char* path) {
   const absl::Status s = FileUtil::RemoveDirectory(path);
   if (!s.ok() && !absl::IsNotFound(s)) {
     LOG(ERROR) << "Cannot remove directory " << path << ":" << s;
   }
 }
 
-void UnlinkFileOrLog(const char *path) {
+void UnlinkFileOrLog(const char* path) {
   const absl::Status s = FileUtil::Unlink(path);
   if (!s.ok() && !absl::IsNotFound(s)) {
     LOG(ERROR) << "Cannot unlink " << path << ":" << s;
@@ -108,16 +108,16 @@ void UnlinkFileOrLog(const char *path) {
 #if (defined(__linux__) && !defined(__ANDROID__)) || \
     (defined(TARGET_OS_OSX) && TARGET_OS_OSX)
 
-absl::Status DeleteRecursively(const zstring_view path) {
+absl::Status DeleteRecursively(const absl::string_view path) {
   // fts is not POSIX, but it's available on both Linux and MacOS.
   std::string path_str =
       to_string(path);  // fts_open takes a non-const pointer.
-  char *const files[] = {path_str.data(), nullptr};
+  char* const files[] = {path_str.data(), nullptr};
   // - FTS_NOCHDIR: don't change current directory.
   // - FTS_NOSTAT: don't stat(2).
   // - FTS_PHYSICAL: don't follow symlinks.
   // - FTS_XDEV: don't descend into a different device.
-  FTS *ftsp = fts_open(
+  FTS* ftsp = fts_open(
       files, FTS_NOCHDIR | FTS_NOSTAT | FTS_PHYSICAL | FTS_XDEV, nullptr);
   if (ftsp == nullptr) {
     return absl::ErrnoToStatus(errno, "fts_open failed");
@@ -128,7 +128,7 @@ absl::Status DeleteRecursively(const zstring_view path) {
     }
   };
 
-  while (FTSENT *ent = fts_read(ftsp)) {
+  while (FTSENT* ent = fts_read(ftsp)) {
     // TODO(b/271087668): msan false positive in fts functions.
     ABSL_ANNOTATE_MEMORY_IS_INITIALIZED(ent, sizeof(*ent));
     ABSL_ANNOTATE_MEMORY_IS_INITIALIZED(ent->fts_path, ent->fts_pathlen + 1);
@@ -160,8 +160,8 @@ absl::Status DeleteRecursively(const zstring_view path) {
 #else  // (__linux__ && !__ANDROID__) || TARGET_OS_OSX
 
 namespace {
-int FtwDelete(const char *path, const struct stat *sb, int typeflag,
-              struct FTW *ftwbuf) {
+int FtwDelete(const char* path, const struct stat* sb, int typeflag,
+              struct FTW* ftwbuf) {
   switch (typeflag) {
     case FTW_DP:  // directory postorder
       [[fallthrough]];
@@ -184,11 +184,11 @@ int FtwDelete(const char *path, const struct stat *sb, int typeflag,
 }
 }  // namespace
 
-absl::Status DeleteRecursively(const zstring_view path) {
+absl::Status DeleteRecursively(const absl::string_view path) {
   // ntfw() is a POSIX interface but it's not recommended on (at least) macOS.
   // This is a fallback implementation.
   constexpr int kOpenFdLimit = 100;
-  if (nftw(path.c_str(), FtwDelete, kOpenFdLimit,
+  if (nftw(to_pfstring(path).c_str(), FtwDelete, kOpenFdLimit,
            FTW_DEPTH | FTW_PHYS | FTW_MOUNT) < 0) {
     return absl::ErrnoToStatus(errno, "nftw failed");
   }

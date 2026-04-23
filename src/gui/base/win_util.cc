@@ -51,7 +51,6 @@
 #include <string_view>
 
 #include "absl/log/log.h"
-#include "base/strings/zstring_view.h"
 #include "base/system_util.h"
 #include "base/win32/com.h"
 #include "base/win32/hresult.h"
@@ -70,7 +69,7 @@ using ::mozc::win32::HResult;
 using ::mozc::win32::Utf8ToWide;
 
 wil::com_ptr_nothrow<IShellLink> InitializeShellLinkItem(
-    const zwstring_view argument, const zwstring_view item_title) {
+    const std::wstring_view argument, const std::wstring_view item_title) {
   auto link = ComCreateInstance<IShellLink>(CLSID_ShellLink);
   if (!link) {
     DLOG(INFO) << "Failed to instantiate CLSID_ShellLink.";
@@ -83,7 +82,7 @@ wil::com_ptr_nothrow<IShellLink> InitializeShellLinkItem(
     return nullptr;
   }
 
-  hr = link->SetArguments(argument.c_str());
+  hr = link->SetArguments(std::wstring(argument).c_str());
   if (hr.Failed()) {
     DLOG(ERROR) << "SetArguments failed. hr = " << hr;
     return nullptr;
@@ -96,7 +95,7 @@ wil::com_ptr_nothrow<IShellLink> InitializeShellLinkItem(
   }
 
   unique_prop_variant_default_init prop_variant;
-  hr = ::InitPropVariantFromString(item_title.c_str(),
+  hr = ::InitPropVariantFromString(std::wstring(item_title).c_str(),
                                    prop_variant.reset_and_addressof());
   if (hr.Failed()) {
     DLOG(ERROR) << "InitPropVariantFromString failed. hr = " << hr;
@@ -119,12 +118,12 @@ wil::com_ptr_nothrow<IShellLink> InitializeShellLinkItem(
 }
 
 struct LinkInfo {
-  zwstring_view argument;
-  zwstring_view title_english;
-  zwstring_view title_japanese;
+  std::wstring_view argument;
+  std::wstring_view title_english;
+  std::wstring_view title_japanese;
 };
 
-bool AddTasksToList(ICustomDestinationList *destination_list) {
+bool AddTasksToList(ICustomDestinationList* destination_list) {
   auto object_collection =
       ComCreateInstance<IObjectCollection>(CLSID_EnumerableObjectCollection);
   if (!object_collection) {
@@ -207,7 +206,7 @@ struct FindVisibleWindowInfo {
 BOOL CALLBACK FindVisibleWindowProc(HWND hwnd, LPARAM lp) {
   DWORD process_id = 0;
   ::GetWindowThreadProcessId(hwnd, &process_id);
-  FindVisibleWindowInfo *info = reinterpret_cast<FindVisibleWindowInfo *>(lp);
+  FindVisibleWindowInfo* info = reinterpret_cast<FindVisibleWindowInfo*>(lp);
   if (process_id != info->target_process_id) {
     // continue enum
     return TRUE;

@@ -41,6 +41,7 @@
 #include "base/file_util.h"
 #include "base/port.h"
 #include "base/singleton.h"
+#include "base/strings/pfchar.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 
@@ -57,7 +58,6 @@
 #include <unistd.h>
 
 #include "absl/container/flat_hash_map.h"
-#include "base/strings/zstring_view.h"
 #endif  // !_WIN32
 
 namespace mozc {
@@ -102,13 +102,13 @@ bool ProcessMutex::UnLock() {
 #ifdef _WIN32
 
 bool ProcessMutex::LockAndWriteInternal(const absl::string_view message) {
-  const std::wstring wfilename = win32::Utf8ToWide(filename_);
+  const pfstring pf_filename = to_pfstring(filename_);
   constexpr DWORD kAttribute =
       FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY |
       FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_FLAG_DELETE_ON_CLOSE;
 
   wil::unique_hlocal_security_descriptor security_descriptor =
-       WinSandbox::MakeSecurityDescriptor(WinSandbox::kSharableFileForRead);
+      WinSandbox::MakeSecurityDescriptor(WinSandbox::kSharableFileForRead);
   if (!security_descriptor) {
     return false;
   }
@@ -117,9 +117,9 @@ bool ProcessMutex::LockAndWriteInternal(const absl::string_view message) {
       .lpSecurityDescriptor = security_descriptor.get(),
       .bInheritHandle = FALSE,
   };
-  handle_.reset(::CreateFileW(wfilename.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
-                              &security_attributes, CREATE_ALWAYS, kAttribute,
-                              nullptr));
+  handle_.reset(::CreateFileW(pf_filename.c_str(), GENERIC_WRITE,
+                              FILE_SHARE_READ, &security_attributes,
+                              CREATE_ALWAYS, kAttribute, nullptr));
 
   if (!handle_.is_valid()) {
     MOZC_VLOG(1) << "already locked";
@@ -173,7 +173,7 @@ namespace {
 // use it because flock() doesn't work on NFS.
 class FileLockManager {
  public:
-  absl::StatusOr<int> Lock(const zstring_view filename) {
+  absl::StatusOr<int> Lock(const absl::string_view filename) {
     absl::MutexLock l(mutex_);
 
     if (filename.empty()) {
@@ -185,8 +185,10 @@ class FileLockManager {
       return absl::FailedPreconditionError("already locked");
     }
 
-    chmod(filename.c_str(), 0600);  // write temporary
-    const int fd = ::open(filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
+    const pfstring pf_filename = to_pfstring(filename);
+    chmod(pf_filename.c_str(), 0600);  // write temporary
+    const int fd =
+        ::open(pf_filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
     if (fd < 0) {
       return absl::ErrnoToStatus(errno, "open() failed");
     }
@@ -204,7 +206,7 @@ class FileLockManager {
           "Already locked. Another server is already running?");
     }
 
-    fdmap_.emplace(filename.view(), fd);
+    fdmap_.emplace(filename, fd);
     return fd;
   }
 

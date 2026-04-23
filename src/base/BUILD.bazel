@@ -282,7 +282,7 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//base/strings:pfchar",
-        "//base/strings:zstring_view",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -373,7 +373,7 @@ mozc_cc_library(
     ],
     deps = [
         ":util",
-        "//base/strings:zstring_view",
+        "//base/strings:pfchar",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/log",
@@ -411,9 +411,7 @@ mozc_cc_library(
     srcs = ["environ.cc"],
     hdrs = ["environ.h"],
     visibility = ["//:__subpackages__"],
-    deps = [
-        "//base/strings:zstring_view",
-    ],
+    deps = ["@com_google_absl//absl/strings:string_view"],
 )
 
 mozc_cc_library(
@@ -421,7 +419,7 @@ mozc_cc_library(
     hdrs = ["environ_mock.h"],
     deps = [
         ":environ",
-        "//base/strings:zstring_view",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -434,7 +432,7 @@ mozc_cc_library(
         ":file_stream",
         ":mmap",
         ":port",
-        "//base/strings:zstring_view",
+        "//base/strings:pfchar",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -454,11 +452,11 @@ mozc_cc_library(
     hdrs = ["file_util_mock.h"],
     deps = [
         ":file_util",
-        "//base/strings:zstring_view",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -521,7 +519,6 @@ mozc_cc_library(
         ":port",
         ":singleton",
         ":util",
-        "//base/strings:zstring_view",
         "//bazel/win32:aux_ulib",  # win_util
         "//bazel/win32:imm32",
         "@com_google_absl//absl/base",
@@ -568,7 +565,7 @@ mozc_cc_library(
         ":file_util",
         ":system_util",
         ":vlog",
-        "//base/strings:zstring_view",
+        "//base/strings:pfchar",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
@@ -594,13 +591,13 @@ mozc_cc_library(
         ":system_util",
         ":util",
         ":vlog",
+        "//base/strings:pfchar",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
         default = [
-            "//base/strings:zstring_view",
             "@com_google_absl//absl/container:flat_hash_map",
             "@com_google_absl//absl/status",
             "@com_google_absl//absl/status:statusor",
@@ -679,14 +676,16 @@ mozc_cc_library(
         ":file_util",
         ":singleton",
         ":system_util",
-        "//base/strings:zstring_view",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
-        windows = ["//base/win32:win_sandbox"],
+        windows = [
+            "//base/win32:win_sandbox",
+            "//base/win32:wide_char",
+        ],
     ),
 )
 

@@ -50,7 +50,6 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/strings/zstring_view.h"
 #include "base/system_util.h"
 #include "base/win32/wide_char.h"
 
@@ -1292,14 +1291,16 @@ wil::unique_process_handle WinSandbox::GetRestrictedTokenHandleForImpersonation(
 }
 
 bool WinSandbox::EnsureAllApplicationPackagesPermisssion(
-    zwstring_view file_name, AppContainerVisibilityType type) {
+    std::wstring_view file_name, AppContainerVisibilityType type) {
   // Get "All Application Packages" group SID.
   const ATL::CSid all_application_packages(
       Sid(WinBuiltinAnyPackageSid).GetPSID());
 
+  const std::wstring w_file_name(file_name);
+
   // Get current DACL (Discretionary Access Control List) of |file_name|.
   ATL::CDacl dacl;
-  if (!ATL::AtlGetDacl(file_name.c_str(), SE_FILE_OBJECT, &dacl)) {
+  if (!ATL::AtlGetDacl(w_file_name.c_str(), SE_FILE_OBJECT, &dacl)) {
     return false;
   }
 
@@ -1324,7 +1325,7 @@ bool WinSandbox::EnsureAllApplicationPackagesPermisssion(
                           ACCESS_ALLOWED_ACE_TYPE)) {
     return false;
   }
-  return ATL::AtlSetDacl(file_name.c_str(), SE_FILE_OBJECT, dacl);
+  return ATL::AtlSetDacl(w_file_name.c_str(), SE_FILE_OBJECT, dacl);
 }
 
 }  // namespace mozc

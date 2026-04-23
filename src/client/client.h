@@ -65,7 +65,7 @@ class ServerLauncher : public ServerLauncherInterface {
   ServerLauncher();
   ~ServerLauncher() override;
 
-  bool StartServer(ClientInterface *client) override;
+  bool StartServer(ClientInterface* client) override;
 
   bool ForceTerminateServer(absl::string_view name) override;
 
@@ -94,7 +94,7 @@ class Client : public ClientInterface {
   // This function should be called before EnsureSession.
   void InitRequestForSvsJapanese(bool use_svs);
 
-  void SetIPCClientFactory(IPCClientFactoryInterface *client_factory) override {
+  void SetIPCClientFactory(IPCClientFactoryInterface* client_factory) override {
     client_factory_ = client_factory;
   }
 
@@ -116,20 +116,20 @@ class Client : public ClientInterface {
 
   bool CheckVersionOrRestartServer() override;
 
-  bool SendKeyWithContext(const commands::KeyEvent &key,
-                          const commands::Context &context,
-                          commands::Output *output) override;
-  bool TestSendKeyWithContext(const commands::KeyEvent &key,
-                              const commands::Context &context,
-                              commands::Output *output) override;
-  bool SendCommandWithContext(const commands::SessionCommand &command,
-                              const commands::Context &context,
-                              commands::Output *output) override;
+  bool SendKeyWithContext(const commands::KeyEvent& key,
+                          const commands::Context& context,
+                          commands::Output* output) override;
+  bool TestSendKeyWithContext(const commands::KeyEvent& key,
+                              const commands::Context& context,
+                              commands::Output* output) override;
+  bool SendCommandWithContext(const commands::SessionCommand& command,
+                              const commands::Context& context,
+                              commands::Output* output) override;
 
-  bool IsDirectModeCommand(const commands::KeyEvent &key) const override;
+  bool IsDirectModeCommand(const commands::KeyEvent& key) const override;
 
-  bool GetConfig(config::Config *config) override;
-  bool SetConfig(const config::Config &config) override;
+  bool GetConfig(config::Config* config) override;
+  bool SetConfig(const config::Config& config) override;
 
   bool ClearUserHistory() override;
   bool ClearUserPrediction() override;
@@ -148,17 +148,17 @@ class Client : public ClientInterface {
 
   void set_timeout(absl::Duration timeout) override;
   void set_suppress_error_dialog(bool suppress) override;
-  void set_client_capability(const commands::Capability &capability) override;
+  void set_client_capability(const commands::Capability& capability) override;
 
-  bool LaunchTool(const std::string &mode, absl::string_view arg) override;
-  bool LaunchToolWithProtoBuf(const commands::Output &output) override;
+  bool LaunchTool(const std::string& mode, absl::string_view arg) override;
+  bool LaunchToolWithProtoBuf(const commands::Output& output) override;
   // Converts Output message from server to corresponding mozc_tool arguments
   // If launch_tool_mode is not set or NO_TOOL is set or an invalid value is
   // set, this function will return false and do nothing.
-  static bool TranslateProtoBufToMozcToolArg(const commands::Output &output,
-                                             std::string *mode);
+  static bool TranslateProtoBufToMozcToolArg(const commands::Output& output,
+                                             std::string* mode);
 
-  bool OpenBrowser(const std::string &url) override;
+  bool OpenBrowser(const std::string& url) override;
 
  private:
   friend class ClientTestPeer;
@@ -193,7 +193,7 @@ class Client : public ClientInterface {
   void OnFatal(ServerLauncherInterface::ServerErrorType type);
 
   // Initialize input filling id and preferences.
-  void InitInput(commands::Input *input) const;
+  void InitInput(commands::Input* input) const;
 
   bool CreateSession();
   bool DeleteSession();
@@ -201,25 +201,25 @@ class Client : public ClientInterface {
 
   // This method automatically re-launch mozc_server and
   // re-issue session id if it is not available.
-  bool EnsureCallCommand(commands::Input *input, commands::Output *output);
+  bool EnsureCallCommand(commands::Input* input, commands::Output* output);
 
   // The most primitive Call method
   // This method won't change the server_status_ even
   // when version mismatch happens. In this case,
   // just return false.
-  bool Call(const commands::Input &input, commands::Output *output);
+  bool Call(const commands::Input& input, commands::Output* output);
 
   // first invoke Call() command and check the
   // protocol_version. When protocol version mismatch,
   // client goes to FATAL state
-  bool CallAndCheckVersion(const commands::Input &input,
-                           commands::Output *output);
+  bool CallAndCheckVersion(const commands::Input& input,
+                           commands::Output* output);
 
   // Making a journal inputs to restore
   // the current state even when mozc_server crashes
   void PlaybackHistory();
-  void PushHistory(const commands::Input &input,
-                   const commands::Output &output);
+  void PushHistory(const commands::Input& input,
+                   const commands::Output& output);
   void ResetHistory();
 
   // The alias of
@@ -232,15 +232,15 @@ class Client : public ClientInterface {
   // restart the server and execute the same input command again.
   // If any errors happen inside the version up, shows an error dialog
   // and returns false.
-  bool CheckVersionOrRestartServerInternal(const commands::Input &input,
-                                           commands::Output *output);
+  bool CheckVersionOrRestartServerInternal(const commands::Input& input,
+                                           commands::Output* output);
 
   // for unittest
   // copy the history inputs to |result|.
-  void GetHistoryInputs(std::vector<commands::Input> *result) const;
+  void GetHistoryInputs(std::vector<commands::Input>* result) const;
 
   uint64_t id_;
-  IPCClientFactoryInterface *client_factory_;
+  IPCClientFactoryInterface* client_factory_;
   std::unique_ptr<ServerLauncherInterface> server_launcher_;
   std::unique_ptr<config::Config> preferences_;
   std::unique_ptr<commands::Request> request_;
@@ -267,7 +267,7 @@ class ClientFactory {
   static std::unique_ptr<ClientInterface> NewClient();
 
   // Set a ClientFactoryInterface for unit testing.
-  static void SetClientFactory(ClientFactoryInterface *client_factory);
+  static void SetClientFactory(ClientFactoryInterface* client_factory);
 };
 
 }  // namespace client

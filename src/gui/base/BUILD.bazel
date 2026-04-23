@@ -132,7 +132,6 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         "//base:system_util",
-        "//base/strings:zstring_view",
         "//base/win32:com",
         "//base/win32:hresult",
         "//base/win32:wide_char",

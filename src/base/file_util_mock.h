@@ -36,8 +36,8 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "base/file_util.h"
-#include "base/strings/zstring_view.h"
 
 namespace mozc {
 class FileUtilMock : public FileUtilInterface {
@@ -46,75 +46,76 @@ class FileUtilMock : public FileUtilInterface {
   ~FileUtilMock() override { FileUtil::SetMockForUnitTest(nullptr); }
 
   // This is not an override function.
-  void CreateFile(zstring_view path) {
-    files_[path.view()] = base_id_;
+  void CreateFile(absl::string_view path) {
+    files_[path] = base_id_;
     base_id_ += 100'000;
   }
 
-  absl::Status CreateDirectory(zstring_view path) const override {
+  absl::Status CreateDirectory(absl::string_view path) const override {
     if (FileExists(path).ok()) {
       return absl::AlreadyExistsError(path);
     }
-    dirs_[path.view()] = true;
+    dirs_[path] = true;
     return absl::OkStatus();
   }
 
-  absl::Status RemoveDirectory(zstring_view dirname) const override {
+  absl::Status RemoveDirectory(absl::string_view dirname) const override {
     if (FileExists(dirname).ok()) {
       return absl::NotFoundError(dirname);
     }
-    dirs_[dirname.view()] = false;
+    dirs_[dirname] = false;
     return absl::OkStatus();
   }
 
-  absl::Status Unlink(zstring_view filename) const override {
+  absl::Status Unlink(absl::string_view filename) const override {
     if (DirectoryExists(filename).ok()) {
       return absl::FailedPreconditionError(
-          absl::StrFormat("%s is a directory", filename.view()));
+          absl::StrFormat("%s is a directory", filename));
     }
-    files_[filename.view()] = 0;
+    files_[filename] = 0;
     return absl::OkStatus();
   }
 
-  absl::Status FileExists(zstring_view filename) const override {
+  absl::Status FileExists(absl::string_view filename) const override {
     const auto it = files_.find(filename);
     return it != files_.end() && it->second > 0 ? absl::OkStatus()
                                                 : absl::NotFoundError(filename);
   }
 
-  absl::Status DirectoryExists(zstring_view dirname) const override {
+  absl::Status DirectoryExists(absl::string_view dirname) const override {
     auto it = dirs_.find(dirname);
     return it != dirs_.end() && it->second ? absl::OkStatus()
                                            : absl::NotFoundError(dirname);
   }
 
-  absl::Status FileOrDirectoryExists(zstring_view path) const {
+  absl::Status FileOrDirectoryExists(absl::string_view path) const {
     return FileExists(path).ok() || DirectoryExists(path).ok()
                ? absl::OkStatus()
                : absl::NotFoundError(path);
   }
 
-  absl::Status CopyFile(zstring_view from, zstring_view to) const override {
+  absl::Status CopyFile(absl::string_view from,
+                        absl::string_view to) const override {
     if (!FileExists(from).ok()) {
       return absl::NotFoundError(from);
     }
-    files_[to.view()] = files_[from.view()];
+    files_[to] = files_[from];
     return absl::OkStatus();
   }
 
-  absl::StatusOr<bool> IsEqualFile(zstring_view filename1,
-                                   zstring_view filename2) const override {
+  absl::StatusOr<bool> IsEqualFile(absl::string_view filename1,
+                                   absl::string_view filename2) const override {
     if (absl::Status s = FileExists(filename1); !s.ok()) {
       return s;
     }
     if (absl::Status s = FileExists(filename2); !s.ok()) {
       return s;
     }
-    return files_[filename1.view()] == files_[filename2.view()];
+    return files_[filename1] == files_[filename2];
   }
 
-  absl::StatusOr<bool> IsEquivalent(zstring_view filename1,
-                                    zstring_view filename2) const override {
+  absl::StatusOr<bool> IsEquivalent(
+      absl::string_view filename1, absl::string_view filename2) const override {
     const std::string canonical1 = At(canonical_paths_, filename1, filename1);
     const std::string canonical2 = At(canonical_paths_, filename2, filename2);
     // If either of files does not exist, an error is returned.
@@ -124,22 +125,23 @@ class FileUtilMock : public FileUtilInterface {
     return canonical1 == canonical2;
   }
 
-  absl::Status AtomicRename(zstring_view from, zstring_view to) const override {
+  absl::Status AtomicRename(absl::string_view from,
+                            absl::string_view to) const override {
     if (FileExists(from).ok()) {
-      files_[to.view()] = files_[from.view()];
-      files_[from.view()] = 0;
+      files_[to] = files_[from];
+      files_[from] = 0;
       return absl::OkStatus();
     }
     if (DirectoryExists(from).ok()) {
-      dirs_[to.view()] = dirs_[from.view()];
-      dirs_[from.view()] = false;
+      dirs_[to] = dirs_[from];
+      dirs_[from] = false;
       return absl::OkStatus();
     }
-    return absl::NotFoundError(
-        absl::StrFormat("%s doesn't exist", from.view()));
+    return absl::NotFoundError(absl::StrFormat("%s doesn't exist", from));
   }
 
-  absl::Status CreateHardLink(zstring_view from, zstring_view to) override {
+  absl::Status CreateHardLink(absl::string_view from,
+                              absl::string_view to) override {
     // Error if `from` doesn't exist.
     if (absl::Status s = FileOrDirectoryExists(from); !s.ok()) {
       return s;
@@ -148,7 +150,7 @@ class FileUtilMock : public FileUtilInterface {
     if (absl::Status s = FileOrDirectoryExists(to); s.ok()) {
       return absl::AlreadyExistsError(to);
     }
-    canonical_paths_[to.view()] = std::string(from.view());
+    canonical_paths_[to] = std::string(from);
     if (FileExists(from).ok()) {
       CreateFile(to);
       return absl::OkStatus();
@@ -157,17 +159,17 @@ class FileUtilMock : public FileUtilInterface {
   }
 
   absl::StatusOr<FileTimeStamp> GetModificationTime(
-      zstring_view filename) const override {
+      absl::string_view filename) const override {
     if (absl::Status s = FileExists(filename); !s.ok()) {
       return s;
     }
-    return files_[filename.view()];
+    return files_[filename];
   }
 
   absl::StatusOr<std::string> ReadSymlink(
-      zstring_view filename) const override {
+      absl::string_view filename) const override {
     // The mock does not support symbolic links. It returns the same filename.
-    return std::string(filename.view());
+    return std::string(filename);
   }
 
   // Use FileTimeStamp as time stamp and also file id.
@@ -179,10 +181,10 @@ class FileUtilMock : public FileUtilInterface {
 
  private:
   template <typename T>
-  T At(const absl::btree_map<std::string, T>& map, zstring_view key,
-       zstring_view fallback_value) const {
+  T At(const absl::btree_map<std::string, T>& map, absl::string_view key,
+       absl::string_view fallback_value) const {
     auto it = map.find(key);
-    return it == map.end() ? std::string(fallback_value.view()) : it->second;
+    return it == map.end() ? std::string(fallback_value) : it->second;
   }
 };
 }  // namespace mozc

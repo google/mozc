@@ -83,7 +83,6 @@ mozc_cc_library(
         "//base:file_util",
         "//base:util",
         "//base/strings:pfchar",
-        "//base/strings:zstring_view",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/base:dynamic_annotations",
         "@com_google_absl//absl/cleanup",

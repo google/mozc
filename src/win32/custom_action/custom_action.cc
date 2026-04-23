@@ -51,7 +51,6 @@
 #include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/process.h"
-#include "base/strings/zstring_view.h"
 #include "base/system_util.h"
 #include "base/url.h"
 #include "base/version.h"
@@ -100,12 +99,13 @@ std::wstring GetMozcComponentPath(const absl::string_view filename) {
 // Retrieves the value for an installer property.
 // Returns an empty string if a property corresponding to |name| is not found or
 // error occurs.
-std::wstring GetProperty(MSIHANDLE msi, const mozc::zwstring_view name) {
+std::wstring GetProperty(MSIHANDLE msi, std::wstring_view name) {
   DWORD num_buf = 0;
   // Obtains the size of the property's string, without null termination.
   // Note: |MsiGetProperty()| requires non-null writable buffer.
   std::wstring buf;
-  UINT result = MsiGetProperty(msi, name.c_str(), buf.data(), &num_buf);
+  UINT result =
+      MsiGetProperty(msi, std::wstring(name).c_str(), buf.data(), &num_buf);
   if (result != ERROR_MORE_DATA) {
     return L"";
   }
@@ -113,7 +113,8 @@ std::wstring GetProperty(MSIHANDLE msi, const mozc::zwstring_view name) {
   buf.resize(num_buf);
   // add 1 for null termination
   num_buf += 1;
-  result = MsiGetProperty(msi, name.c_str(), buf.data(), &num_buf);
+  result =
+      MsiGetProperty(msi, std::wstring(name).c_str(), buf.data(), &num_buf);
   if (result != ERROR_SUCCESS) {
     return L"";
   }
@@ -121,9 +122,10 @@ std::wstring GetProperty(MSIHANDLE msi, const mozc::zwstring_view name) {
   return buf;
 }
 
-bool SetProperty(MSIHANDLE msi, const mozc::zwstring_view name,
-                 const mozc::zwstring_view value) {
-  if (MsiSetProperty(msi, name.c_str(), value.c_str()) != ERROR_SUCCESS) {
+bool SetProperty(MSIHANDLE msi, const std::wstring_view name,
+                 const std::wstring_view value) {
+  if (MsiSetProperty(msi, std::wstring(name).c_str(),
+                     std::wstring(value).c_str()) != ERROR_SUCCESS) {
     return false;
   }
   return true;
@@ -181,7 +183,7 @@ bool WriteOmahaError(const wchar_t (&function)[num_elements], int line) {
              mozc::Version::GetMozcVersionW().c_str(), function, line);
   ::OutputDebugStringW(log);
 #endif  // !defined(NDEBUG)
-  const std::wstring &message =
+  const std::wstring& message =
       FormatMessageByResourceId(IDS_FORMAT_FUNCTION_AND_LINE, function, line);
   return OmahaUtil::WriteOmahaError(message, GetVersionHeader());
 }
@@ -396,7 +398,7 @@ UINT __stdcall SaveCustomActionData(MSIHANDLE msi_handle) {
 // "RestoreServiceState" and "RestoreServiceStateRollback"
 UINT __stdcall RestoreServiceState(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
-  const std::wstring &backup = GetProperty(msi_handle, L"CustomActionData");
+  const std::wstring& backup = GetProperty(msi_handle, L"CustomActionData");
   if (!mozc::CacheServiceManager::RestoreStateFromString(backup)) {
     return ERROR_INSTALL_FAILURE;
   }

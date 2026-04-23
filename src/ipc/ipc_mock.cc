@@ -35,8 +35,8 @@
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-#include "base/strings/zstring_view.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 
@@ -80,12 +80,12 @@ IPCClientFactoryMock::IPCClientFactoryMock()
       server_protocol_version_(IPC_PROTOCOL_VERSION) {}
 
 std::unique_ptr<IPCClientInterface> IPCClientFactoryMock::NewClient(
-    zstring_view unused_name, zstring_view path_name) {
+    absl::string_view unused_name, absl::string_view path_name) {
   return NewClientMock();
 }
 
 std::unique_ptr<IPCClientInterface> IPCClientFactoryMock::NewClient(
-    zstring_view unused_name) {
+    absl::string_view unused_name) {
   return NewClientMock();
 }
 

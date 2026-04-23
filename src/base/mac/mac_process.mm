@@ -37,7 +37,6 @@
 #include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/mac/mac_util.h"
-#include "base/strings/zstring_view.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -78,9 +77,9 @@ bool MacProcess::OpenApplication(const absl::string_view path) {
 }
 
 namespace {
-bool LaunchMozcToolInternal(zstring_view tool_name, zstring_view error_type) {
+bool LaunchMozcToolInternal(absl::string_view tool_name, absl::string_view error_type) {
   // FLAGS_error_type is used where FLAGS_mode is "error_message_dialog".
-  setenv("FLAGS_error_type", error_type.c_str(), 1);
+  setenv("FLAGS_error_type", std::string(error_type).c_str(), 1);
 
   // If normal expected tool_name is specified, we invoke specific application.
   NSString *appName = nil;
@@ -108,7 +107,7 @@ bool LaunchMozcToolInternal(zstring_view tool_name, zstring_view error_type) {
   } else {
     // Otherwise, we tries to invoke the application by settings FLAGS_mode.
     // use --fromenv option to specify tool name
-    setenv("FLAGS_mode", tool_name.c_str(), 1);
+    setenv("FLAGS_mode", std::string(tool_name).c_str(), 1);
     toolAppPath = [toolAppPath stringByAppendingPathComponent:@kProductPrefix "Tool.app"];
   }
 
@@ -117,11 +116,11 @@ bool LaunchMozcToolInternal(zstring_view tool_name, zstring_view error_type) {
 }
 }  // namespace
 
-bool MacProcess::LaunchMozcTool(zstring_view tool_name) {
+bool MacProcess::LaunchMozcTool(absl::string_view tool_name) {
   return LaunchMozcToolInternal(tool_name, "");
 }
 
-bool MacProcess::LaunchErrorMessageDialog(zstring_view error_type) {
+bool MacProcess::LaunchErrorMessageDialog(absl::string_view error_type) {
   return LaunchMozcToolInternal("error_message_dialog", error_type);
 }
 

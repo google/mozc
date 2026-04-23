@@ -307,11 +307,12 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
   return true;
 }
 
-bool WinUtil::GetFileSystemInfoFromPath(zwstring_view path,
+bool WinUtil::GetFileSystemInfoFromPath(std::wstring_view path,
                                         BY_HANDLE_FILE_INFORMATION* info) {
+  const std::wstring w_path(path);
   // no read access is required.
   wil::unique_hfile handle(::CreateFileW(
-      path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      w_path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
       nullptr, OPEN_EXISTING,
       FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, nullptr));
 
@@ -321,8 +322,8 @@ bool WinUtil::GetFileSystemInfoFromPath(zwstring_view path,
   return !!::GetFileInformationByHandle(handle.get(), info);
 }
 
-bool WinUtil::AreEqualFileSystemObject(zwstring_view left_path,
-                                       zwstring_view right_path) {
+bool WinUtil::AreEqualFileSystemObject(std::wstring_view left_path,
+                                       std::wstring_view right_path) {
   BY_HANDLE_FILE_INFORMATION left_info = {};
   if (!GetFileSystemInfoFromPath(left_path, &left_info)) {
     return false;
@@ -335,15 +336,17 @@ bool WinUtil::AreEqualFileSystemObject(zwstring_view left_path,
          (left_info.nFileIndexHigh == right_info.nFileIndexHigh);
 }
 
-bool WinUtil::GetNtPath(zwstring_view dos_path, std::wstring* nt_path) {
+bool WinUtil::GetNtPath(std::wstring_view dos_path, std::wstring* nt_path) {
   if (nt_path == nullptr) {
     return false;
   }
 
   nt_path->clear();
 
+  const std::wstring w_dos_path(dos_path);
+
   wil::unique_hfile file_handle(::CreateFileW(
-      dos_path.c_str(), 0,
+      w_dos_path.c_str(), 0,
       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
       OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL,
       nullptr));

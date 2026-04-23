@@ -34,7 +34,6 @@
 
 #include <memory>
 
-#include "base/strings/zstring_view.h"
 #include "ipc/ipc.h"
 
 namespace mozc {
@@ -46,8 +45,8 @@ class TestMachPortManager : public mozc::MachPortManagerInterface {
   TestMachPortManager();
   ~TestMachPortManager();
 
-  virtual bool GetMachPort(const std::string &name, mach_port_t *port);
-  virtual bool IsServerRunning(const std::string &name) const;
+  virtual bool GetMachPort(const std::string& name, mach_port_t* port);
+  virtual bool IsServerRunning(const std::string& name) const;
 
  private:
   mach_port_t port_;
@@ -60,18 +59,18 @@ class TestMachPortManager : public mozc::MachPortManagerInterface {
 class IPCClientFactoryOnMemory : public IPCClientFactoryInterface {
  public:
   IPCClientFactoryOnMemory() = default;
-  IPCClientFactoryOnMemory(const IPCClientFactoryOnMemory &) = delete;
-  IPCClientFactoryOnMemory &operator=(const IPCClientFactoryOnMemory &) =
-      delete;
+  IPCClientFactoryOnMemory(const IPCClientFactoryOnMemory&) = delete;
+  IPCClientFactoryOnMemory& operator=(const IPCClientFactoryOnMemory&) = delete;
 
   std::unique_ptr<IPCClientInterface> NewClient(
-      zstring_view name, zstring_view path_name) override;
+      absl::string_view name, absl::string_view path_name) override;
 
-  std::unique_ptr<IPCClientInterface> NewClient(zstring_view name) override;
+  std::unique_ptr<IPCClientInterface> NewClient(
+      absl::string_view name) override;
 
 #ifdef __APPLE__
   // Returns MachPortManager to share the mach port between client and server.
-  MachPortManagerInterface *OnMemoryPortManager() { return &mach_manager_; }
+  MachPortManagerInterface* OnMemoryPortManager() { return &mach_manager_; }
 #endif  // __APPLE__
  private:
 #ifdef __APPLE__

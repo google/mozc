@@ -40,7 +40,6 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "base/strings/zstring_view.h"
 
 namespace mozc {
 class Sid {
@@ -197,7 +196,7 @@ class WinSandbox {
   // Returns true |file_name| already has or is updated to have an ACE
   // (Access Control Entry) for "All Application Packages" group.
   static bool EnsureAllApplicationPackagesPermisssion(
-      zwstring_view file_name, AppContainerVisibilityType type);
+      std::wstring_view file_name, AppContainerVisibilityType type);
 
  protected:
   // Returns SDDL for given |shareble_object_type|.

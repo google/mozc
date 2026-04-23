@@ -42,7 +42,7 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/file_util.h"
-#include "base/strings/zstring_view.h"
+#include "base/strings/pfchar.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 
@@ -88,11 +88,10 @@ extern char** environ;
 
 namespace mozc {
 
-bool Process::OpenBrowser(zstring_view url) {
+bool Process::OpenBrowser(absl::string_view url) {
   // url must start with http:// or https:// or file://
-  if (!url.view().starts_with("http://") &&
-      !url.view().starts_with("https://") &&
-      !url.view().starts_with("file://")) {
+  if (!url.starts_with("http://") && !url.starts_with("https://") &&
+      !url.starts_with("file://")) {
     return false;
   }
 
@@ -118,20 +117,22 @@ bool Process::OpenBrowser(zstring_view url) {
   return false;
 }
 
-bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t* pid) {
+bool Process::SpawnProcess(absl::string_view path, absl::string_view arg,
+                           size_t* pid) {
+  pfstring pf_path = to_pfstring(path);
+
 #ifdef _WIN32
-  std::wstring wpath = win32::Utf8ToWide(path);
-  wpath = L"\"" + wpath + L"\"";
+  pf_path = L"\"" + pf_path + L"\"";
   if (!arg.empty()) {
     std::wstring warg = win32::Utf8ToWide(arg);
-    wpath += L" ";
-    wpath += warg;
+    pf_path += L" ";
+    pf_path += warg;
   }
 
   // The |lpCommandLine| parameter of CreateProcessW should be writable
   // so that we create a std::unique_ptr<wchar_t[]> here.
-  auto wpath2 = std::make_unique<wchar_t[]>(wpath.size() + 1);
-  if (0 != wcscpy_s(wpath2.get(), wpath.size() + 1, wpath.c_str())) {
+  auto pf_path2 = std::make_unique<wchar_t[]>(pf_path.size() + 1);
+  if (0 != wcscpy_s(pf_path2.get(), pf_path.size() + 1, pf_path.c_str())) {
     return false;
   }
 
@@ -145,7 +146,7 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t* pid) {
   // http://support.microsoft.com/kb/175986
   const bool create_process_succeeded =
       ::CreateProcessW(
-          nullptr, wpath2.get(), nullptr, nullptr, FALSE,
+          nullptr, pf_path2.get(), nullptr, nullptr, FALSE,
           CREATE_DEFAULT_ERROR_MODE, nullptr,
           // NOTE: Working directory will be locked by the system.
           // We use system directory to spawn process so that users will not
@@ -166,24 +167,23 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t* pid) {
 #else  // __wasm__ || __ANDROID__
 
   const std::vector<std::string> arg_tmp =
-      absl::StrSplit(arg.view(), ' ', absl::SkipEmpty());
+      absl::StrSplit(arg, ' ', absl::SkipEmpty());
   auto argv = std::make_unique<const char*[]>(arg_tmp.size() + 2);
-  argv[0] = path.c_str();
+  argv[0] = pf_path.c_str();
   for (size_t i = 0; i < arg_tmp.size(); ++i) {
     argv[i + 1] = arg_tmp[i].c_str();
   }
   argv[arg_tmp.size() + 1] = nullptr;
 
   struct stat statbuf;
-  if (::stat(path.c_str(), &statbuf) != 0) {
+  if (::stat(pf_path.c_str(), &statbuf) != 0) {
     LOG(ERROR) << "Can't stat " << path << ": " << strerror(errno);
     return false;
   }
 #ifdef __APPLE__
   // Check if the "path" is an application or not.  If it's an
   // application, do a special process using mac_process.mm.
-  if (S_ISDIR(statbuf.st_mode) && path.size() > 4 &&
-      path.view().ends_with(".app")) {
+  if (S_ISDIR(statbuf.st_mode) && path.size() > 4 && path.ends_with(".app")) {
     // In mac launchApplication cannot accept any arguments.
     return MacProcess::OpenApplication(path);
   }
@@ -221,7 +221,7 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t* pid) {
   // the return value of posix_spawn is basically determined
   // by the return value of fork().
   const int result =
-      ::posix_spawn(&tmp_pid, path.c_str(), nullptr, nullptr,
+      ::posix_spawn(&tmp_pid, pf_path.c_str(), nullptr, nullptr,
                     const_cast<char* const*>(argv.get()), environ);
   if (result == 0) {
     MOZC_VLOG(1) << "posix_spawn: child pid is " << tmp_pid;
@@ -236,8 +236,8 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t* pid) {
 #endif  // !_WIN32
 }
 
-bool Process::SpawnMozcProcess(zstring_view filename, zstring_view arg,
-                               size_t* pid) {
+bool Process::SpawnMozcProcess(absl::string_view filename,
+                               absl::string_view arg, size_t* pid) {
   return Process::SpawnProcess(
       FileUtil::JoinPath(SystemUtil::GetServerDirectory(), filename), arg, pid);
 }
@@ -371,7 +371,7 @@ bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
 #endif  // _WIN32
 }
 
-bool Process::LaunchErrorMessageDialog(zstring_view error_type) {
+bool Process::LaunchErrorMessageDialog(absl::string_view error_type) {
 #ifdef __APPLE__
   if (!MacProcess::LaunchErrorMessageDialog(error_type)) {
     LOG(ERROR) << "cannot error message dialog";

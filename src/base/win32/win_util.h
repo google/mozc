@@ -39,7 +39,6 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "base/strings/zstring_view.h"
 
 namespace mozc {
 class WinUtil {
@@ -100,20 +99,20 @@ class WinUtil {
 
   // Returns true if |info| is filled with a valid file information that
   // describes |path|. |path| can be a directory or a file.
-  static bool GetFileSystemInfoFromPath(zwstring_view path,
+  static bool GetFileSystemInfoFromPath(std::wstring_view path,
                                         BY_HANDLE_FILE_INFORMATION* info);
 
   // Returns true if |left_path| and |right_path| are the same file system
   // object. This method takes hard-link into consideration.
   // Returns false if either |left_path| or |right_path| does not exist even
   // when |left_path| == |right_path|.
-  static bool AreEqualFileSystemObject(zwstring_view left_path,
-                                       zwstring_view right_path);
+  static bool AreEqualFileSystemObject(std::wstring_view left_path,
+                                       std::wstring_view right_path);
 
   // Returns true if the file or directory specified by |dos_path| exists and
   // its NT path is retrieved as |nt_path|. This function can work only on
   // Vista and later.
-  static bool GetNtPath(zwstring_view dos_path, std::wstring* nt_path);
+  static bool GetNtPath(std::wstring_view dos_path, std::wstring* nt_path);
 
   // Returns true if the process specified by |pid| exists and its *initial*
   // NT path is retrieved as |nt_path|. Note that even when the process path is

@@ -31,14 +31,14 @@
 #define MOZC_BASE_FILE_RECURSIVE_H_
 
 #include "absl/status/status.h"
-#include "base/strings/zstring_view.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc::file {
 
 // Recursively delete all files under path including itself. If successful, it
 // returns an empty vector. On Linux and MacOS, this function uses fts(3). On
 // Windows, it uses IFileOperation.
-absl::Status DeleteRecursively(zstring_view path);
+absl::Status DeleteRecursively(absl::string_view path);
 
 }  // namespace mozc::file
 

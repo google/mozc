@@ -33,7 +33,7 @@
 
 #include <memory>
 
-#include "base/strings/zstring_view.h"
+#include "absl/strings/string_view.h"
 #include "ipc/ipc.h"
 
 #ifdef __APPLE__
@@ -70,7 +70,7 @@ bool TestMachPortManager::IsServerRunning(const std::string &name) const {
 #endif  // __APPLE__
 
 std::unique_ptr<IPCClientInterface> IPCClientFactoryOnMemory::NewClient(
-    zstring_view name, zstring_view path_name) {
+    absl::string_view name, absl::string_view path_name) {
   auto new_client = std::make_unique<IPCClient>(name, path_name);
 #ifdef __APPLE__
   new_client->SetMachPortManager(&mach_manager_);
@@ -79,7 +79,7 @@ std::unique_ptr<IPCClientInterface> IPCClientFactoryOnMemory::NewClient(
 }
 
 std::unique_ptr<IPCClientInterface> IPCClientFactoryOnMemory::NewClient(
-    zstring_view name) {
+    absl::string_view name) {
   auto new_client = std::make_unique<IPCClient>(name);
 #ifdef __APPLE__
   new_client->SetMachPortManager(&mach_manager_);

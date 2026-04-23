@@ -33,8 +33,8 @@
 #include <map>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "base/environ.h"
-#include "base/strings/zstring_view.h"
 
 namespace mozc {
 class EnvironMock : public EnvironInterface {
@@ -45,7 +45,7 @@ class EnvironMock : public EnvironInterface {
   }
   ~EnvironMock() override { Environ::SetMockForUnitTest(nullptr); }
 
-  std::string GetEnv(zstring_view env_var) override {
+  std::string GetEnv(absl::string_view env_var) override {
     auto it = env_vars_.find({env_var.data(), env_var.size()});
     return it != env_vars_.end() ? it->second.c_str() : "";
   }

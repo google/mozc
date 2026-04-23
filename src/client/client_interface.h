@@ -59,7 +59,7 @@ class ServerLauncherInterface {
 
   virtual ~ServerLauncherInterface() = default;
 
-  virtual bool StartServer(ClientInterface *client) = 0;
+  virtual bool StartServer(ClientInterface* client) = 0;
 
   // terminate the server.
   // You should not call this method unless protocol version mismatch happens.
@@ -85,7 +85,7 @@ class ClientInterface {
 
   // NOTE: Client class does NOT take the ownership of client_factory
   virtual void SetIPCClientFactory(
-      IPCClientFactoryInterface *client_factory) = 0;
+      IPCClientFactoryInterface* client_factory) = 0;
 
   // set ServerLauncher.
   // ServerLauncher is used as default.
@@ -115,31 +115,31 @@ class ClientInterface {
   // SendKey/TestSendKey/SendCommand automatically
   // make a connection and issue an session id
   // if valid session id is not found.
-  bool SendKey(const commands::KeyEvent &key, commands::Output *output) {
+  bool SendKey(const commands::KeyEvent& key, commands::Output* output) {
     return SendKeyWithContext(key, commands::Context::default_instance(),
                               output);
   }
 
-  bool TestSendKey(const commands::KeyEvent &key, commands::Output *output) {
+  bool TestSendKey(const commands::KeyEvent& key, commands::Output* output) {
     return TestSendKeyWithContext(key, commands::Context::default_instance(),
                                   output);
   }
 
-  bool SendCommand(const commands::SessionCommand &command,
-                   commands::Output *output) {
+  bool SendCommand(const commands::SessionCommand& command,
+                   commands::Output* output) {
     return SendCommandWithContext(
         command, commands::Context::default_instance(), output);
   }
 
-  virtual bool SendKeyWithContext(const commands::KeyEvent &key,
-                                  const commands::Context &context,
-                                  commands::Output *output) = 0;
-  virtual bool TestSendKeyWithContext(const commands::KeyEvent &key,
-                                      const commands::Context &context,
-                                      commands::Output *output) = 0;
-  virtual bool SendCommandWithContext(const commands::SessionCommand &command,
-                                      const commands::Context &context,
-                                      commands::Output *output) = 0;
+  virtual bool SendKeyWithContext(const commands::KeyEvent& key,
+                                  const commands::Context& context,
+                                  commands::Output* output) = 0;
+  virtual bool TestSendKeyWithContext(const commands::KeyEvent& key,
+                                      const commands::Context& context,
+                                      commands::Output* output) = 0;
+  virtual bool SendCommandWithContext(const commands::SessionCommand& command,
+                                      const commands::Context& context,
+                                      commands::Output* output) = 0;
 
   // The methods below don't call
   // StartServer even if server is not available. This treatment
@@ -148,11 +148,11 @@ class ClientInterface {
   // call EnsureConnection() in advance.
 
   // Return true if the key is consumed in the direct mode.
-  virtual bool IsDirectModeCommand(const commands::KeyEvent &key) const = 0;
+  virtual bool IsDirectModeCommand(const commands::KeyEvent& key) const = 0;
 
   // Get/Set config data
-  virtual bool GetConfig(config::Config *config) = 0;
-  virtual bool SetConfig(const config::Config &config) = 0;
+  virtual bool GetConfig(config::Config* config) = 0;
+  virtual bool SetConfig(const config::Config& config) = 0;
 
   // Clear history data
   virtual bool ClearUserHistory() = 0;
@@ -194,19 +194,19 @@ class ClientInterface {
 
   // Sets client capability.
   virtual void set_client_capability(
-      const commands::Capability &capability) = 0;
+      const commands::Capability& capability) = 0;
 
   // Launches mozc tool. |mode| is the mode of MozcTool,
   // e,g,. "config_dialog", "dictionary_tool".
-  virtual bool LaunchTool(const std::string &mode,
+  virtual bool LaunchTool(const std::string& mode,
                           absl::string_view extra_arg) = 0;
   // Launches mozc_tool with output message.
   // If launch_tool_mode has no value or is set as NO_TOOL, this function will
   // do nothing and return false.
-  virtual bool LaunchToolWithProtoBuf(const commands::Output &output) = 0;
+  virtual bool LaunchToolWithProtoBuf(const commands::Output& output) = 0;
 
   // Launches browser and pass |url|
-  virtual bool OpenBrowser(const std::string &url) = 0;
+  virtual bool OpenBrowser(const std::string& url) = 0;
 };
 
 class ClientFactoryInterface {
@@ -218,8 +218,8 @@ class ClientFactoryInterface {
 class SendCommandInterface {
  public:
   virtual ~SendCommandInterface() = default;
-  virtual bool SendCommand(const commands::SessionCommand &command,
-                           commands::Output *output) = 0;
+  virtual bool SendCommand(const commands::SessionCommand& command,
+                           commands::Output* output) = 0;
 };
 }  // namespace client
 }  // namespace mozc

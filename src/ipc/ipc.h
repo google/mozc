@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
-#include "base/strings/zstring_view.h"
 #include "base/thread.h"
 
 #ifdef __APPLE__
@@ -79,11 +78,11 @@ class IPCClientInterface {
   virtual ~IPCClientInterface() = default;
 
   virtual bool Connected() const = 0;
-  virtual bool Call(const std::string &request, std::string *response,
+  virtual bool Call(const std::string& request, std::string* response,
                     absl::Duration timeout) = 0;
 
   virtual uint32_t GetServerProtocolVersion() const = 0;
-  virtual const std::string &GetServerProductVersion() const = 0;
+  virtual const std::string& GetServerProductVersion() const = 0;
   virtual uint32_t GetServerProcessId() const = 0;
 
   // return last error
@@ -98,11 +97,11 @@ class MachPortManagerInterface {
   // If the mach port can be obtained successfully, set the specified
   // "port" and returns true.  Otherwise port doesn't change and
   // returns false.
-  virtual bool GetMachPort(const std::string &name, mach_port_t *port) = 0;
+  virtual bool GetMachPort(const std::string& name, mach_port_t* port) = 0;
 
   // Returns true if the connecting server is running, checked via
   // OS-depended way.  This method can be defined differently for testing.
-  virtual bool IsServerRunning(const std::string &name) const = 0;
+  virtual bool IsServerRunning(const std::string& name) const = 0;
 };
 #endif  // __APPLE__
 
@@ -135,7 +134,7 @@ class IPCClient : public IPCClientInterface {
   // Return server protocol version
   uint32_t GetServerProtocolVersion() const override;
 
-  const std::string &GetServerProductVersion() const override;
+  const std::string& GetServerProductVersion() const override;
 
   uint32_t GetServerProcessId() const override;
 
@@ -147,7 +146,7 @@ class IPCClient : public IPCClientInterface {
   // When timeout (in msec) is set -1, 'Call' waits forever.
   // Note that on Linux and Windows, Call() closes the socket_. This means you
   // cannot call the Call() function more than once.
-  bool Call(const std::string &request, std::string *response,
+  bool Call(const std::string& request, std::string* response,
             absl::Duration timeout) override;
 
   IPCErrorType GetLastIPCError() const override { return last_ipc_error_; }
@@ -157,7 +156,7 @@ class IPCClient : public IPCClientInterface {
   static bool TerminateServer(absl::string_view name);
 
 #ifdef __APPLE__
-  void SetMachPortManager(MachPortManagerInterface *manager) {
+  void SetMachPortManager(MachPortManagerInterface* manager) {
     mach_port_manager_ = manager;
   }
 #endif  // __APPLE__
@@ -171,12 +170,12 @@ class IPCClient : public IPCClientInterface {
   wil::unique_event_nothrow pipe_event_;
 #elif defined(__APPLE__)
   std::string name_;
-  MachPortManagerInterface *mach_port_manager_;
+  MachPortManagerInterface* mach_port_manager_;
 #else   // _WIN32
   int socket_;
 #endif  // _WIN32
   bool connected_;
-  IPCPathManager *ipc_path_manager_;
+  IPCPathManager* ipc_path_manager_;
   IPCErrorType last_ipc_error_;
 };
 
@@ -184,11 +183,12 @@ class IPCClientFactoryInterface {
  public:
   virtual ~IPCClientFactoryInterface() = default;
   virtual std::unique_ptr<IPCClientInterface> NewClient(
-      zstring_view name, zstring_view path_name) = 0;
+      absl::string_view name, absl::string_view path_name) = 0;
 
   // old interface for backward compatibility.
   // same as NewClient(name, "");
-  virtual std::unique_ptr<IPCClientInterface> NewClient(zstring_view name) = 0;
+  virtual std::unique_ptr<IPCClientInterface> NewClient(
+      absl::string_view name) = 0;
 };
 
 // Creates IPCClient object.
@@ -196,14 +196,15 @@ class IPCClientFactory : public IPCClientFactoryInterface {
  public:
   // new interface
   std::unique_ptr<IPCClientInterface> NewClient(
-      zstring_view name, zstring_view path_name) override;
+      absl::string_view name, absl::string_view path_name) override;
 
   // old interface for backward compatibility.
   // same as NewClient(name, "");
-  std::unique_ptr<IPCClientInterface> NewClient(zstring_view name) override;
+  std::unique_ptr<IPCClientInterface> NewClient(
+      absl::string_view name) override;
 
   // Return a singleton instance.
-  static IPCClientFactory *GetIPCClientFactory();
+  static IPCClientFactory* GetIPCClientFactory();
 };
 
 // Synchronous, Single-thread IPC Server
@@ -228,7 +229,7 @@ class IPCServer {
   //          send a request within 'timeout'. If timeout is -1,
   //          IPCServer waits forever. Default setting is -1.
   // TODO(taku): timeout is not implemented properly
-  IPCServer(const std::string &name, int32_t num_connections,
+  IPCServer(const std::string& name, int32_t num_connections,
             absl::Duration timeout);
   virtual ~IPCServer();
 
@@ -237,7 +238,7 @@ class IPCServer {
 
   // Implement a server algorithm in subclass.
   // If 'Process' return false, server finishes select loop
-  virtual bool Process(absl::string_view request, std::string *response) = 0;
+  virtual bool Process(absl::string_view request, std::string* response) = 0;
 
   // Start select loop. It goes into infinite loop.
   void Loop();
@@ -256,7 +257,7 @@ class IPCServer {
   void Terminate();
 
 #ifdef __APPLE__
-  void SetMachPortManager(MachPortManagerInterface *manager) {
+  void SetMachPortManager(MachPortManagerInterface* manager) {
     mach_port_manager_ = manager;
   }
 #endif  // __APPLE__
@@ -277,7 +278,7 @@ class IPCServer {
   wil::unique_hfile pipe_handle_;
   wil::unique_event_nothrow pipe_event_;
 #elif defined(__APPLE__)
-  MachPortManagerInterface *mach_port_manager_;
+  MachPortManagerInterface* mach_port_manager_;
 #else   // _WIN32
   int socket_;
   std::string server_address_;

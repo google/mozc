@@ -32,8 +32,7 @@
 #include <atomic>
 #include <cstdlib>
 #include <string>
-
-#include "base/strings/zstring_view.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -43,12 +42,12 @@ constinit static std::atomic<EnvironInterface*> g_mock = nullptr;
 
 }  // namespace
 
-std::string Environ::GetEnv(zstring_view env_var) {
+std::string Environ::GetEnv(absl::string_view env_var) {
   if (EnvironInterface* mock = g_mock.load(std::memory_order_acquire);
       mock != nullptr) {
     return mock->GetEnv(env_var);
   }
-  const char* value = std::getenv(env_var.data());
+  const char* value = std::getenv(std::string(env_var).c_str());
   return value == nullptr ? "" : value;
 }
 

@@ -62,7 +62,6 @@ mozc_win32_cc_prod_binary(
         "//base:system_util",
         "//base:url",
         "//base:version",
-        "//base/strings:zstring_view",
         "//base/win32:scoped_com",
         "//base/win32:wide_char",
         "//base/win32:win_sandbox",
