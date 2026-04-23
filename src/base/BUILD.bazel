@@ -644,6 +644,7 @@ mozc_cc_library(
         windows = [
             "//base/win32:wide_char",
             "//base/win32:win_sandbox",
+            "@com_google_absl//absl/log:check",
             "@com_microsoft_wil//:wil",
         ],
     ),
@@ -713,15 +714,16 @@ mozc_run_build_tool(
     outs = {
         "--output": "mozc_version.txt",
     },
-    args = ["--use_mozc_version_env"] + mozc_select(
-        android = ["--target_platform=Android"],
-        chromiumos = ["--target_platform=ChromeOS"],
-        default = ["--target_platform="],
-        linux = ["--target_platform=Linux"],
-        macos = ["--target_platform=Mac"],
-        wasm = ["--target_platform=Wasm"],
-        windows = ["--target_platform=Windows"],
-    ) + mozc_select_release_channel(
+    args = ["--use_mozc_version_env"] +
+           mozc_select(
+               android = ["--target_platform=Android"],
+               chromiumos = ["--target_platform=ChromeOS"],
+               default = ["--target_platform="],
+               linux = ["--target_platform=Linux"],
+               macos = ["--target_platform=Mac"],
+               wasm = ["--target_platform=Wasm"],
+               windows = ["--target_platform=Windows"],
+           ) + mozc_select_release_channel(
         dev = ["--channel=dev"],
         stable = ["--channel=stable"],
     ),

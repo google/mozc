@@ -38,6 +38,7 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/system_util.h"
