@@ -44,8 +44,22 @@
 namespace mozc {
 namespace dictionary {
 
+class TokenCallbackBase : public DictionaryInterface::Callback {
+ public:
+  bool IsKanaModifierInsensitiveConversion() const override {
+    return kana_modifier_insensitive_conversion_;
+  }
+
+  void SetKanaModifierInsensitiveConversion(bool flag) {
+    kana_modifier_insensitive_conversion_ = flag;
+  }
+
+ private:
+  bool kana_modifier_insensitive_conversion_ = false;
+};
+
 // Used to collect all the tokens looked up.
-class CollectTokenCallback : public DictionaryInterface::Callback {
+class CollectTokenCallback : public TokenCallbackBase {
  public:
   absl::Span<const Token> tokens() const { return tokens_; }
   void Clear() { tokens_.clear(); }
@@ -58,7 +72,7 @@ class CollectTokenCallback : public DictionaryInterface::Callback {
 };
 
 // Used to test if a given token is looked up.
-class CheckTokenExistenceCallback : public DictionaryInterface::Callback {
+class CheckTokenExistenceCallback : public TokenCallbackBase {
  public:
   explicit CheckTokenExistenceCallback(const Token* target_token);
   bool found() const { return found_; }
@@ -71,7 +85,7 @@ class CheckTokenExistenceCallback : public DictionaryInterface::Callback {
   bool found_;
 };
 
-class CheckMultiTokensExistenceCallback : public DictionaryInterface::Callback {
+class CheckMultiTokensExistenceCallback : public TokenCallbackBase {
  public:
   explicit CheckMultiTokensExistenceCallback(absl::Span<Token* const> tokens);
   bool IsFound(const Token* token) const;

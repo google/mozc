@@ -41,7 +41,6 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
-#include "request/conversion_request.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -56,7 +55,6 @@ using ::testing::Return;
 TEST(SuffixDictionaryTest, Callback) {
   // Test SuffixDictionary with mock data.
   std::unique_ptr<const SuffixDictionary> dic;
-  ConversionRequest convreq;
   {
     const testing::MockDataManager manager;
     absl::string_view key_array_data, value_arra_data, token_array_data;
@@ -75,13 +73,12 @@ TEST(SuffixDictionaryTest, Callback) {
       .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
   EXPECT_CALL(mock_callback, OnToken(_, _, _))
       .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
-  dic->LookupPredictive("た", convreq, &mock_callback);
+  dic->LookupPredictive("た", &mock_callback);
 }
 
 TEST(SuffixDictionaryTest, LookupPredictive) {
   // Test SuffixDictionary with mock data.
   std::unique_ptr<const SuffixDictionary> dic;
-  ConversionRequest convreq;
   {
     const testing::MockDataManager manager;
     absl::string_view key_array_data, value_arra_data, token_array_data;
@@ -96,7 +93,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
     // Lookup with empty key.  All tokens are looked up.  Here, just verify the
     // result is nonempty and each token has valid data.
     CollectTokenCallback callback;
-    dic->LookupPredictive("", convreq, &callback);
+    dic->LookupPredictive("", &callback);
     EXPECT_FALSE(callback.tokens().empty());
     for (size_t i = 0; i < callback.tokens().size(); ++i) {
       const Token& token = callback.tokens()[i];
@@ -111,7 +108,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
     // Non-empty prefix.
     const std::string kPrefix = "た";
     CollectTokenCallback callback;
-    dic->LookupPredictive(kPrefix, convreq, &callback);
+    dic->LookupPredictive(kPrefix, &callback);
     EXPECT_FALSE(callback.tokens().empty());
     for (size_t i = 0; i < callback.tokens().size(); ++i) {
       const Token& token = callback.tokens()[i];

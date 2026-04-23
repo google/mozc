@@ -89,25 +89,18 @@ class MockUserDictionary : public UserDictionaryInterface {
 
   MOCK_METHOD(bool, HasKey, (absl::string_view key), (const, override));
   MOCK_METHOD(bool, HasValue, (absl::string_view value), (const, override));
+
+  // MockUserDictionary only uses the interface w/o ConversionRequest.
   MOCK_METHOD(void, LookupPredictive,
-              (absl::string_view key,
-               const ConversionRequest& conversion_request, Callback* callback),
+              (absl::string_view key, Callback* callback), (const, override));
+  MOCK_METHOD(void, LookupPrefix, (absl::string_view key, Callback* callback),
               (const, override));
-  MOCK_METHOD(void, LookupPrefix,
-              (absl::string_view key,
-               const ConversionRequest& conversion_request, Callback* callback),
+  MOCK_METHOD(void, LookupExact, (absl::string_view key, Callback* callback),
               (const, override));
-  MOCK_METHOD(void, LookupExact,
-              (absl::string_view key,
-               const ConversionRequest& conversion_request, Callback* callback),
-              (const, override));
-  MOCK_METHOD(void, LookupReverse,
-              (absl::string_view str,
-               const ConversionRequest& conversion_request, Callback* callback),
+  MOCK_METHOD(void, LookupReverse, (absl::string_view str, Callback* callback),
               (const, override));
   MOCK_METHOD(bool, LookupComment,
               (absl::string_view key, absl::string_view value,
-               const ConversionRequest& conversion_request,
                std::string* comment),
               (const, override));
   MOCK_METHOD(void, PopulateReverseLookupCache, (absl::string_view str),

@@ -67,7 +67,6 @@
 #include "dictionary/user_pos.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {
@@ -333,9 +332,8 @@ bool UserDictionary::HasValue(absl::string_view value) const {
   return false;
 }
 
-void UserDictionary::LookupPredictive(
-    absl::string_view key, const ConversionRequest& conversion_request,
-    Callback* callback) const {
+void UserDictionary::LookupPredictive(absl::string_view key,
+                                      Callback* callback) const {
   if (key.empty()) {
     MOZC_VLOG(2) << "string of length zero is passed.";
     return;
@@ -344,9 +342,6 @@ void UserDictionary::LookupPredictive(
   std::shared_ptr<const TokensIndex> tokens = GetTokens();
 
   if (tokens->empty()) {
-    return;
-  }
-  if (conversion_request.incognito_mode()) {
     return;
   }
 
@@ -381,14 +376,9 @@ void UserDictionary::LookupPredictive(
 
 // UserDictionary doesn't support kana modifier insensitive lookup.
 void UserDictionary::LookupPrefix(absl::string_view key,
-                                  const ConversionRequest& conversion_request,
                                   Callback* callback) const {
   if (key.empty()) {
     LOG(WARNING) << "string of length zero is passed.";
-    return;
-  }
-
-  if (conversion_request.incognito_mode()) {
     return;
   }
 
@@ -445,11 +435,10 @@ void UserDictionary::LookupPrefix(absl::string_view key,
 }
 
 void UserDictionary::LookupExact(absl::string_view key,
-                                 const ConversionRequest& conversion_request,
                                  Callback* callback) const {
   std::shared_ptr<const TokensIndex> tokens = GetTokens();
 
-  if (key.empty() || tokens->empty() || conversion_request.incognito_mode()) {
+  if (key.empty() || tokens->empty()) {
     return;
   }
   auto [begin, end] =
@@ -480,14 +469,12 @@ void UserDictionary::LookupExact(absl::string_view key,
 }
 
 void UserDictionary::LookupReverse(absl::string_view key,
-                                   const ConversionRequest& conversion_request,
                                    Callback* callback) const {}
 
 bool UserDictionary::LookupComment(absl::string_view key,
                                    absl::string_view value,
-                                   const ConversionRequest& conversion_request,
                                    std::string* comment) const {
-  if (key.empty() || conversion_request.incognito_mode()) {
+  if (key.empty()) {
     return false;
   }
 

@@ -81,7 +81,6 @@
 #include "dictionary/system/key_expansion_table.h"
 #include "dictionary/system/token_decode_iterator.h"
 #include "dictionary/system/words_info.h"
-#include "request/conversion_request.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
 
@@ -605,9 +604,8 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
   } while (!queue.empty());
 }
 
-void SystemDictionary::LookupPredictive(
-    absl::string_view key, const ConversionRequest& conversion_request,
-    Callback* callback) const {
+void SystemDictionary::LookupPredictive(absl::string_view key,
+                                        Callback* callback) const {
   // Do nothing for empty key, although looking up all the entries with empty
   // string seems natural.
   if (key.empty()) {
@@ -620,7 +618,7 @@ void SystemDictionary::LookupPredictive(
   }
 
   const KeyExpansionTable& table =
-      conversion_request.IsKanaModifierInsensitiveConversion()
+      callback->IsKanaModifierInsensitiveConversion()
           ? hiragana_expansion_table_
           : KeyExpansionTable::GetDefaultInstance();
 
@@ -904,11 +902,10 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
 }
 
 void SystemDictionary::LookupPrefix(absl::string_view key,
-                                    const ConversionRequest& conversion_request,
                                     Callback* callback) const {
   const std::string encoded_key = codec_->EncodeKey(key);
 
-  if (!conversion_request.IsKanaModifierInsensitiveConversion()) {
+  if (!callback->IsKanaModifierInsensitiveConversion()) {
     RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, *codec_,
                             frequent_pos_, key.data(), encoded_key, callback,
                             // Select all tokens.
@@ -925,7 +922,6 @@ void SystemDictionary::LookupPrefix(absl::string_view key,
 }
 
 void SystemDictionary::LookupExact(absl::string_view key,
-                                   const ConversionRequest& conversion_request,
                                    Callback* callback) const {
   // Find the key in the key trie.
   const int key_id = key_trie_.ExactSearch(codec_->EncodeKey(key));
@@ -950,9 +946,8 @@ void SystemDictionary::LookupExact(absl::string_view key,
   }
 }
 
-void SystemDictionary::LookupReverse(
-    absl::string_view str, const ConversionRequest& conversion_request,
-    Callback* callback) const {
+void SystemDictionary::LookupReverse(absl::string_view str,
+                                     Callback* callback) const {
   // 1st step: Hiragana/Katakana are not in the value trie
   // 2nd step: Reverse lookup in value trie
   ReverseLookupCallbackWrapper callback_wrapper(callback);
@@ -1010,8 +1005,7 @@ void SystemDictionary::RegisterReverseLookupTokensForT13N(
   prev_value.reserve(LoudsTrie::kMaxDepth * 3);
   RunCallbackOnEachPrefix(
       key_trie_, value_trie_, token_array_, *codec_, frequent_pos_,
-      hiragana_value, encoded_key, callback,
-      [&](const TokenInfo& token_info) {
+      hiragana_value, encoded_key, callback, [&](const TokenInfo& token_info) {
         // Skip spelling corrections.
         if (token_info.token->attributes & Token::SPELLING_CORRECTION) {
           return false;

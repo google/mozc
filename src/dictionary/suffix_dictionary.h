@@ -37,7 +37,6 @@
 #include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "dictionary/dictionary_interface.h"
-#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {
@@ -67,21 +66,7 @@ class SuffixDictionary : public DictionaryInterface {
 
   // Kana modifier insensitive lookup is not supported.
   void LookupPredictive(absl::string_view key,
-                        const ConversionRequest& conversion_request,
                         Callback* callback) const override;
-
-  // SuffixDictionary doesn't support Prefix/Revese/Exact Lookup.
-  void LookupPrefix(absl::string_view key,
-                    const ConversionRequest& conversion_request,
-                    Callback* callback) const override {}
-
-  void LookupExact(absl::string_view key,
-                   const ConversionRequest& conversion_request,
-                   Callback* callback) const override {}
-
-  void LookupReverse(absl::string_view key,
-                     const ConversionRequest& conversion_request,
-                     Callback* callback) const override {}
 
  private:
   struct TokenArrayData {

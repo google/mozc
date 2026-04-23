@@ -42,7 +42,6 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec.h"
-#include "request/conversion_request.h"
 #include "storage/louds/louds_trie.h"
 #include "storage/louds/louds_trie_builder.h"
 #include "testing/gmock.h"
@@ -97,7 +96,6 @@ class ValueDictionaryTest : public ::testing::Test {
 
  protected:
   const PosMatcher pos_matcher_;
-  ConversionRequest convreq_;
   const SystemDictionaryCodec codec_;
   std::unique_ptr<LoudsTrieBuilder> louds_trie_builder_;
   std::unique_ptr<LoudsTrie> louds_trie_;
@@ -135,7 +133,7 @@ TEST_F(ValueDictionaryTest, Callback) {
         .WillRepeatedly(
             Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
 
-    dictionary->LookupPredictive("start", convreq_, &mock_callback);
+    dictionary->LookupPredictive("start", &mock_callback);
   }
   {
     MockCallback mock_callback;
@@ -152,7 +150,7 @@ TEST_F(ValueDictionaryTest, Callback) {
         .WillRepeatedly(
             Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
 
-    dictionary->LookupExact("start", convreq_, &mock_callback);
+    dictionary->LookupExact("start", &mock_callback);
   }
 }
 
@@ -199,12 +197,12 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
 
   {
     CollectTokenCallback callback;
-    dictionary->LookupPredictive("", convreq_, &callback);
+    dictionary->LookupPredictive("", &callback);
     EXPECT_TRUE(callback.tokens().empty());
   }
   {
     CollectTokenCallback callback;
-    dictionary->LookupPredictive("w", convreq_, &callback);
+    dictionary->LookupPredictive("w", &callback);
     std::vector<Token*> expected;
     expected.push_back(&token_we);
     expected.push_back(&token_war);
@@ -214,7 +212,7 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   }
   {
     CollectTokenCallback callback;
-    dictionary->LookupPredictive("wo", convreq_, &callback);
+    dictionary->LookupPredictive("wo", &callback);
     std::vector<Token*> expected;
     expected.push_back(&token_word);
     expected.push_back(&token_world);
@@ -222,18 +220,18 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   }
   {
     CollectTokenCallback callback;
-    dictionary->LookupPredictive("ho", convreq_, &callback);
+    dictionary->LookupPredictive("ho", &callback);
     EXPECT_TRUE(callback.tokens().empty());
   }
   {
     CollectTokenCallback callback;
-    dictionary->LookupPredictive("あ", convreq_, &callback);
+    dictionary->LookupPredictive("あ", &callback);
     EXPECT_TRUE(callback.tokens().empty());
 
-    dictionary->LookupPredictive("東", convreq_, &callback);
+    dictionary->LookupPredictive("東", &callback);
     EXPECT_TRUE(callback.tokens().empty());
 
-    dictionary->LookupPredictive("ア", convreq_, &callback);
+    dictionary->LookupPredictive("ア", &callback);
     EXPECT_TRUE(callback.tokens().empty());
   }
 }
@@ -245,7 +243,7 @@ TEST_F(ValueDictionaryTest, LookupExact) {
   std::unique_ptr<ValueDictionary> dictionary(BuildValueDictionary());
 
   CollectTokenCallback callback;
-  dictionary->LookupExact("war", convreq_, &callback);
+  dictionary->LookupExact("war", &callback);
   ASSERT_EQ(callback.tokens().size(), 1);
   EXPECT_EQ(callback.tokens()[0].value, "war");
 }

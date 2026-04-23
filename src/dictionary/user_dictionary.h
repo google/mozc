@@ -46,7 +46,6 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {
@@ -71,23 +70,15 @@ class UserDictionary : public UserDictionaryInterface {
   // Lookup methods don't support kana modifier insensitive lookup, i.e.,
   // Callback::OnActualKey() is never called.
   void LookupPredictive(absl::string_view key,
-                        const ConversionRequest& conversion_request,
                         Callback* callback) const override;
-  void LookupPrefix(absl::string_view key,
-                    const ConversionRequest& conversion_request,
-                    Callback* callback) const override;
-  void LookupExact(absl::string_view key,
-                   const ConversionRequest& conversion_request,
-                   Callback* callback) const override;
-  void LookupReverse(absl::string_view key,
-                     const ConversionRequest& conversion_request,
-                     Callback* callback) const override;
+  void LookupPrefix(absl::string_view key, Callback* callback) const override;
+  void LookupExact(absl::string_view key, Callback* callback) const override;
+  void LookupReverse(absl::string_view key, Callback* callback) const override;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
   // returned and string is kept as-is.
   bool LookupComment(absl::string_view key, absl::string_view value,
-                     const ConversionRequest& conversion_request,
                      std::string* comment) const override;
 
   // Returns true if the word is registered as a suppression word.

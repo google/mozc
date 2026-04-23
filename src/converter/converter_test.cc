@@ -1058,8 +1058,8 @@ TEST_F(ConverterTest, PredictSetKey) {
 // An action that invokes a DictionaryInterface::Callback with the token whose
 // key and value is set to the given ones.
 struct InvokeCallbackWithUserDictionaryToken {
-  template <class T, class U>
-  void operator()(T, U, DictionaryInterface::Callback* callback) {
+  template <class T>
+  void operator()(T, DictionaryInterface::Callback* callback) {
     const Token token(key, value, MockDictionary::kDefaultCost,
                       MockDictionary::kDefaultPosId,
                       MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
@@ -1073,13 +1073,12 @@ struct InvokeCallbackWithUserDictionaryToken {
 TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   // Create Converter with mock user dictionary
   auto mock_user_dictionary = std::make_unique<MockUserDictionary>();
-  EXPECT_CALL(*mock_user_dictionary, LookupPredictive(_, _, _))
-      .Times(AnyNumber());
-  EXPECT_CALL(*mock_user_dictionary, LookupPredictive(StrEq("てすと"), _, _))
+  EXPECT_CALL(*mock_user_dictionary, LookupPredictive(_, _)).Times(AnyNumber());
+  EXPECT_CALL(*mock_user_dictionary, LookupPredictive(StrEq("てすと"), _))
       .WillRepeatedly(InvokeCallbackWithUserDictionaryToken{"てすと", "<>!?"});
 
-  EXPECT_CALL(*mock_user_dictionary, LookupPrefix(_, _, _)).Times(AnyNumber());
-  EXPECT_CALL(*mock_user_dictionary, LookupPrefix(StrEq("てすとの"), _, _))
+  EXPECT_CALL(*mock_user_dictionary, LookupPrefix(_, _)).Times(AnyNumber());
+  EXPECT_CALL(*mock_user_dictionary, LookupPrefix(StrEq("てすとの"), _))
       .WillRepeatedly(InvokeCallbackWithUserDictionaryToken{"てすと", "<>!?"});
 
   std::unique_ptr<engine::Modules> modules =

@@ -36,34 +36,13 @@
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {
 
 class UserDictionaryStub : public UserDictionaryInterface {
  public:
-  bool HasKey(absl::string_view key) const override { return false; }
-  bool HasValue(absl::string_view value) const override { return false; }
-
-  void LookupPredictive(absl::string_view key,
-                        const ConversionRequest& conversion_request,
-                        Callback* callback) const override {}
-
-  void LookupPrefix(absl::string_view key,
-                    const ConversionRequest& conversion_request,
-                    Callback* callback) const override {}
-
-  void LookupExact(absl::string_view key,
-                   const ConversionRequest& conversion_request,
-                   Callback* callback) const override {}
-
-  void LookupReverse(absl::string_view str,
-                     const ConversionRequest& conversion_request,
-                     Callback* callback) const override {}
-
   bool LookupComment(absl::string_view key, absl::string_view value,
-                     const ConversionRequest& conversion_request,
                      std::string* comment) const override {
     if (key == "comment" || value == "comment") {
       comment->assign("UserDictionaryStub");

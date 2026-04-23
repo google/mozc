@@ -46,7 +46,6 @@
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/system/codec.h"
 #include "dictionary/system/key_expansion_table.h"
-#include "request/conversion_request.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
 
@@ -124,20 +123,13 @@ class SystemDictionary : public DictionaryInterface {
   bool HasValue(absl::string_view value) const override;
 
   void LookupPredictive(absl::string_view key,
-                        const ConversionRequest& conversion_request,
                         Callback* callback) const override;
 
-  void LookupPrefix(absl::string_view key,
-                    const ConversionRequest& conversion_request,
-                    Callback* callback) const override;
+  void LookupPrefix(absl::string_view key, Callback* callback) const override;
 
-  void LookupExact(absl::string_view key,
-                   const ConversionRequest& conversion_request,
-                   Callback* callback) const override;
+  void LookupExact(absl::string_view key, Callback* callback) const override;
 
-  void LookupReverse(absl::string_view str,
-                     const ConversionRequest& conversion_request,
-                     Callback* callback) const override;
+  void LookupReverse(absl::string_view str, Callback* callback) const override;
 
   void PopulateReverseLookupCache(absl::string_view str) const override;
   void ClearReverseLookupCache() const override;

@@ -42,7 +42,6 @@
 #include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "dictionary/dictionary_token.h"
-#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {
@@ -78,9 +77,8 @@ bool SuffixDictionary::HasValue(absl::string_view value) const {
   return false;
 }
 
-void SuffixDictionary::LookupPredictive(
-    absl::string_view key, const ConversionRequest& conversion_request,
-    Callback* callback) const {
+void SuffixDictionary::LookupPredictive(absl::string_view key,
+                                        Callback* callback) const {
   const auto [begin, end] = std::equal_range(
       key_array_.begin(), key_array_.end(), key,
       // compare by the prefix.

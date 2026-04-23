@@ -39,7 +39,6 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec.h"
-#include "request/conversion_request.h"
 #include "storage/louds/louds_trie.h"
 
 namespace mozc {
@@ -51,18 +50,6 @@ ValueDictionary::ValueDictionary(const PosMatcher& pos_matcher,
                                  const LoudsTrie& value_trie)
     : value_trie_(value_trie),
       suggestion_only_word_id_(pos_matcher.GetSuggestOnlyWordId()) {}
-
-// ValueDictionary is supposed to use the same data with SystemDictionary
-// and SystemDictionary::HasKey should return the same result with
-// ValueDictionary::HasKey.  So we can skip the actual logic of HasKey
-// and return just false.
-bool ValueDictionary::HasKey(absl::string_view key) const { return false; }
-
-// ValueDictionary is supposed to use the same data with SystemDictionary
-// and SystemDictionary::HasValue should return the same result with
-// ValueDictionary::HasValue.  So we can skip the actual logic of HasValue
-// and return just false.
-bool ValueDictionary::HasValue(absl::string_view value) const { return false; }
 
 namespace {
 
@@ -114,9 +101,8 @@ inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
 
 }  // namespace
 
-void ValueDictionary::LookupPredictive(
-    absl::string_view key, const ConversionRequest& conversion_request,
-    Callback* callback) const {
+void ValueDictionary::LookupPredictive(absl::string_view key,
+                                       Callback* callback) const {
   if (!IsValidKey(key)) {
     return;
   }
@@ -158,12 +144,7 @@ void ValueDictionary::LookupPredictive(
   } while (!queue.empty());
 }
 
-void ValueDictionary::LookupPrefix(absl::string_view key,
-                                   const ConversionRequest& conversion_request,
-                                   Callback* callback) const {}
-
 void ValueDictionary::LookupExact(absl::string_view key,
-                                  const ConversionRequest& conversion_request,
                                   Callback* callback) const {
   if (!IsValidKey(key)) {
     return;
@@ -183,10 +164,6 @@ void ValueDictionary::LookupExact(absl::string_view key,
   FillToken(suggestion_only_word_id_, key, &token);
   callback->OnToken(key, key, token);
 }
-
-void ValueDictionary::LookupReverse(absl::string_view str,
-                                    const ConversionRequest& conversion_request,
-                                    Callback* callback) const {}
 
 }  // namespace dictionary
 }  // namespace mozc
