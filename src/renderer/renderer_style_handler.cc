@@ -29,44 +29,12 @@
 
 #include "renderer/renderer_style_handler.h"
 
-#include "base/singleton.h"
 #include "protocol/renderer_style.pb.h"
 
 namespace mozc {
 namespace renderer {
-namespace {
 
-class RendererStyleHandlerImpl {
- public:
-  RendererStyleHandlerImpl();
-  ~RendererStyleHandlerImpl() = default;
-  bool GetRendererStyle(RendererStyle* style);
-  bool SetRendererStyle(const RendererStyle& style);
-  void GetDefaultRendererStyle(RendererStyle* style);
-
- private:
-  RendererStyle style_;
-};
-
-RendererStyleHandlerImpl* GetRendererStyleHandlerImpl() {
-  return Singleton<RendererStyleHandlerImpl>::get();
-}
-
-RendererStyleHandlerImpl::RendererStyleHandlerImpl() {
-  RendererStyle style;
-  GetDefaultRendererStyle(&style);
-  SetRendererStyle(style);
-}
-
-bool RendererStyleHandlerImpl::GetRendererStyle(RendererStyle* style) {
-  *style = this->style_;
-  return true;
-}
-bool RendererStyleHandlerImpl::SetRendererStyle(const RendererStyle& style) {
-  style_ = style;
-  return true;
-}
-void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle* style) {
+void RendererStyleHandler::GetRendererStyle(RendererStyle* style) {
   // TODO(horo): Change to read from human-readable ASCII format protobuf.
   style->Clear();
   style->set_window_border(1);
@@ -174,18 +142,6 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(RendererStyle* style) {
   infostyle->mutable_focused_border_color()->set_r(0x7f);
   infostyle->mutable_focused_border_color()->set_g(0xac);
   infostyle->mutable_focused_border_color()->set_b(0xdd);
-}
-
-}  // namespace
-
-bool RendererStyleHandler::GetRendererStyle(RendererStyle* style) {
-  return GetRendererStyleHandlerImpl()->GetRendererStyle(style);
-}
-bool RendererStyleHandler::SetRendererStyle(const RendererStyle& style) {
-  return GetRendererStyleHandlerImpl()->SetRendererStyle(style);
-}
-void RendererStyleHandler::GetDefaultRendererStyle(RendererStyle* style) {
-  return GetRendererStyleHandlerImpl()->GetDefaultRendererStyle(style);
 }
 
 }  // namespace renderer

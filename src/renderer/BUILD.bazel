@@ -236,7 +236,6 @@ mozc_cc_library(
     hdrs = ["renderer_style_handler.h"],
     visibility = ["//renderer:__subpackages__"],
     deps = [
-        "//base:singleton",
         "//protocol:renderer_cc_proto",
     ],
 )
