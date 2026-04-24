@@ -36,12 +36,13 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "base/const.h"
 #include "base/environ.h"
-#include "base/port.h"
 #include "base/file_util.h"
+#include "base/port.h"
 #include "base/singleton.h"
 
 #ifdef __ANDROID__
@@ -69,7 +70,6 @@
 
 #include <memory>  // for unique_ptr
 
-#include "absl/strings/str_cat.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32
