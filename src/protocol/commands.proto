@@ -675,10 +675,6 @@ message DecoderExperimentParams {
   optional float candidate_mixing_min_post_correction_prob = 141
       [default = 0.0];
 
-  // Uses new RealtimeDecoder::DecodeSuffix to compute the penalty of
-  // partial suggestion. New method can compute more precise penalty.
-  optional bool use_suffix_decoder_for_prefix_penalty = 142 [default = false];
-
   // Cost penalty added to the partial candidate. Partial candidate should not
   // be ranked lower than normal full candidates.
   optional int32 partial_candidate_cost_penalty = 143 [default = 5000];

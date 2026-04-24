@@ -315,8 +315,7 @@ void DictionaryPredictor::MaybeApplyPostCorrection(
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(
     const ConversionRequest& request, uint16_t rid,
-    absl::Span<const Result> results,
-    absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const {
+    absl::Span<const Result> results) const {
   // Make a map from reference value to min-cost result.
   // Reference entry:
   //  - single-char REALTIME or UNIGRAM entry
@@ -349,7 +348,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
     int lm_cost = GetLMCost(result, rid);
     if (result.candidate_attributes &
         converter::Attribute::PARTIALLY_KEY_CONSUMED) {
-      lm_cost += CalculatePrefixPenalty(request, result, cache);
+      lm_cost += CalculatePrefixPenalty(request, result);
     }
     const auto it = min_cost_map.find(result.value);
     if (it == min_cost_map.end()) {
@@ -494,9 +493,8 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     prev_cost = 5000;
   }
 
-  absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
-  const int single_kanji_offset = CalculateSingleKanjiCostOffset(
-      request, history_rid, results, &prefix_penalty_cache);
+  const int single_kanji_offset =
+      CalculateSingleKanjiCostOffset(request, history_rid, results);
 
   for (Result& result : results) {
     int cost = GetLMCost(result, history_rid);
@@ -593,8 +591,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Penalty for prefix results.
     if (result.candidate_attributes &
         converter::Attribute::PARTIALLY_KEY_CONSUMED) {
-      const int prefix_penalty =
-          CalculatePrefixPenalty(request, result, &prefix_penalty_cache);
+      const int prefix_penalty = CalculatePrefixPenalty(request, result);
       result.penalty += prefix_penalty;
       cost += prefix_penalty;
       MOZC_WORD_LOG(result, "Prefix: ", cost,
@@ -696,7 +693,7 @@ bool DictionaryPredictor::IsAggressiveSuggestion(size_t query_len,
   return false;
 }
 
-int DictionaryPredictor::CalculatePrefixPenaltyNew(
+int DictionaryPredictor::CalculatePrefixPenalty(
     const ConversionRequest& request, const Result& result) const {
   if (request.key() == result.key ||
       request.key().size() <= result.key.size()) {
@@ -728,76 +725,6 @@ int DictionaryPredictor::CalculatePrefixPenaltyNew(
                  .partial_candidate_cost_penalty();
 
   return penalty;
-}
-
-int DictionaryPredictor::CalculatePrefixPenaltyLegacy(
-    const ConversionRequest& request, const Result& result,
-    absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const {
-  if (request.key() == result.key) {
-    LOG(WARNING) << "Invalid prefix key: " << result.key;
-    return 0;
-  }
-
-  const uint16_t result_rid = result.rid;
-  const size_t key_len = Util::CharsLen(result.key);
-  const PrefixPenaltyKey cache_key = std::make_pair(result_rid, key_len);
-  if (const auto it = cache->find(cache_key); it != cache->end()) {
-    return it->second;
-  }
-
-  // Use the conversion result's cost for the remaining request.key
-  // as the penalty of the prefix candidate.
-  // For example, if the input key is "きょうの" and the target prefix candidate
-  // is "木:き", the penalty will be the cost of the conversion result for
-  // "ょうの".
-  int penalty = 0;
-
-  absl::string_view remain_key = Util::Utf8SubString(request.key(), key_len);
-
-  ConversionRequest::Options options = request.options();
-  options.max_conversion_candidates_size = 1;
-  // Explicitly request conversion result for the entire key.
-  options.create_partial_candidates = false;
-  options.kana_modifier_insensitive_conversion = false;
-  // for efficiency, disable converter.
-  options.use_actual_converter_for_realtime_conversion = false;
-
-  // Do not use the current segments but use empty segments as
-  // we want to calculate the suffix penalty only.
-  const ConversionRequest req = ConversionRequestBuilder()
-                                    .SetConversionRequestView(request)
-                                    .SetOptions(std::move(options))
-                                    .SetEmptyHistoryResult()
-                                    .SetKey(remain_key)
-                                    .Build();
-
-  if (const std::vector<Result> results = decoder_.Decode(req);
-      !results.empty()) {
-    const Result& top_result = results.front();
-    penalty = connector_.GetTransitionCost(result_rid, top_result.lid) +
-              top_result.cost;
-  }
-
-  // Convert() can return placeholder candidate with cost 0 when it
-  // failed to generate candidates.
-  if (penalty <= 0) {
-    penalty = Result::kInvalidCost;
-  }
-  constexpr int kPrefixCandidateCostOffset = 1151;  // 500 * log(10)
-  // TODO(toshiyuki): Optimize the cost offset.
-  penalty += kPrefixCandidateCostOffset;
-  (*cache)[cache_key] = penalty;
-  return penalty;
-}
-
-int DictionaryPredictor::CalculatePrefixPenalty(
-    const ConversionRequest& request, const Result& result,
-    absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const {
-  return request.request()
-                 .decoder_experiment_params()
-                 .use_suffix_decoder_for_prefix_penalty()
-             ? CalculatePrefixPenaltyNew(request, result)
-             : CalculatePrefixPenaltyLegacy(request, result, cache);
 }
 
 void DictionaryPredictor::MaybeRescoreResults(

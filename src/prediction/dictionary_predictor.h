@@ -155,10 +155,9 @@ class DictionaryPredictor : public PredictorInterface {
   // Returns the cost offset for SINGLE_KANJI results.
   // Aggregated SINGLE_KANJI results does not have LM based wcost(word cost),
   // so we want to add the offset based on the other entries.
-  int CalculateSingleKanjiCostOffset(
-      const ConversionRequest& request, uint16_t rid,
-      absl::Span<const Result> results,
-      absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const;
+  int CalculateSingleKanjiCostOffset(const ConversionRequest& request,
+                                     uint16_t rid,
+                                     absl::Span<const Result> results) const;
 
   // Returns true if the suggestion is classified
   // as "aggressive".
@@ -166,18 +165,8 @@ class DictionaryPredictor : public PredictorInterface {
                                      bool is_suggestion,
                                      size_t total_candidates_size);
 
-  // New prefix penalty scorer based on RealtimeDecoder::SuffixDecode.
-  int CalculatePrefixPenaltyNew(const ConversionRequest& request,
-                                const Result& result) const;
-
-  // Old prefix penalty scorer.
-  int CalculatePrefixPenaltyLegacy(
-      const ConversionRequest& request, const Result& result,
-      absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const;
-
-  int CalculatePrefixPenalty(
-      const ConversionRequest& request, const Result& result,
-      absl::flat_hash_map<PrefixPenaltyKey, int>* cache) const;
+  int CalculatePrefixPenalty(const ConversionRequest& request,
+                             const Result& result) const;
 
   std::vector<Result> AggregateTypingCorrectedResultsForMixedConversion(
       const ConversionRequest& request) const;
