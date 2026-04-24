@@ -251,7 +251,7 @@ class IndicatorWindow::WindowImpl
 
   void LoadSprite(int mode) {
     BalloonImage::BalloonImageInfo info;
-    LOGFONT logfont = GetMessageBoxLogFont();
+    LOGFONT logfont = GetMessageBoxLogFont(::GetDpiForSystem());
     info.label_font = mozc::win32::WideToUtf8(logfont.lfFaceName);
 
     info.frame_color = RGBColor(1, 122, 204);

@@ -30,17 +30,23 @@
 #ifndef MOZC_RENDERER_WIN32_WIN32_DPI_UTIL_H_
 #define MOZC_RENDERER_WIN32_WIN32_DPI_UTIL_H_
 
+#include <windows.h>
+
 #include "protocol/renderer_style.pb.h"
 
 namespace mozc {
 namespace renderer {
 namespace win32 {
 
-// Returns DPI scaling factor on Windows.
-double GetDPIScalingFactor();
+// Returns the DPI scaling factor for |dpi| (i.e. |dpi| / 96.0).
+double GetDPIScalingFactor(UINT dpi);
 
-// Get RendererStyle adjusted with the DPI scaling factor on Windows.
-void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style);
+// Returns the effective DPI of the monitor containing the given screen
+// coordinates. Falls back to USER_DEFAULT_SCREEN_DPI on failure.
+UINT GetDpiForPoint(int x, int y);
+
+// Populates |style| with the default RendererStyle, scaled for |dpi|.
+void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style, UINT dpi);
 
 }  // namespace win32
 }  // namespace renderer

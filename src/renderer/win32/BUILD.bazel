@@ -107,6 +107,7 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        "//bazel/win32:shcore",
         "//bazel/win32:user32",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_style_handler",
@@ -122,6 +123,7 @@ mozc_cc_library(
     deps = [
         ":resource_h",
         ":text_renderer",
+        ":win32_dpi_util",
         "//base:const",
         "//base:coordinates",
         "//base/win32:wide_char",
@@ -251,6 +253,7 @@ mozc_cc_library(
         ":candidate_window",
         ":indicator_window",
         ":infolist_window",
+        ":win32_dpi_util",
         ":win32_renderer_util",
         "//base:coordinates",
         "//client:client_interface",

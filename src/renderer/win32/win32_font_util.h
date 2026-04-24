@@ -37,10 +37,11 @@ namespace mozc {
 namespace renderer {
 namespace win32 {
 
-inline LOGFONT GetMessageBoxLogFont() {
+inline LOGFONT GetMessageBoxLogFont(UINT dpi) {
   NONCLIENTMETRICS info = {};
   info.cbSize = CCSIZEOF_STRUCT(NONCLIENTMETRICS, iPaddedBorderWidth);
-  if (::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(info), &info, 0)) {
+  if (::SystemParametersInfoForDpi(SPI_GETNONCLIENTMETRICS, sizeof(info), &info,
+                                   0, dpi)) {
     return info.lfMessageFont;
   } else {
     // Fallback font.
