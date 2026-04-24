@@ -38,10 +38,10 @@
 namespace mozc {
 namespace composer {
 namespace internal {
-class TransliteratorInterface {
- public:
-  virtual ~TransliteratorInterface() = default;
-
+// Stateless transliteration rule exposed as a pair of function pointers so
+// call sites can keep using `ptr->Transliterate(...)` / `ptr->Split(...)`
+// syntax without a virtual dispatch.
+struct TransliteratorInterface {
   // Return the transliterated string of either raw or converted.
   // Determination of which argument is used depends on the
   // implementation.
@@ -49,8 +49,8 @@ class TransliteratorInterface {
   // Expected usage examples:
   // - HalfKatakanaTransliterator("a", "あ") => "ｱ"
   // - FullAsciiTransliterator("a", "あ") => "ａ"
-  virtual std::string Transliterate(absl::string_view raw,
-                                    absl::string_view converted) const = 0;
+  std::string (*Transliterate)(absl::string_view raw,
+                               absl::string_view converted);
 
   // Split raw and converted strings based on the transliteration
   // rule.  If raw or converted could not be deterministically split,
@@ -64,10 +64,10 @@ class TransliteratorInterface {
   // - HalfKatakanaTransliterator(1, "zu", "ず") => false
   //   (raw_lhs, raw_rhs) => ("す", "゛")  fall back strings.
   //   (conv_lhs, conv_rhs) => ("す", "゛")
-  virtual bool Split(size_t position, absl::string_view raw,
-                     absl::string_view converted, std::string* raw_lhs,
-                     std::string* raw_rhs, std::string* converted_lhs,
-                     std::string* converted_rhs) const = 0;
+  bool (*Split)(size_t position, absl::string_view raw,
+                absl::string_view converted, std::string* raw_lhs,
+                std::string* raw_rhs, std::string* converted_lhs,
+                std::string* converted_rhs);
 };
 }  // namespace internal
 
