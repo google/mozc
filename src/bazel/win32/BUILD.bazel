@@ -98,5 +98,9 @@ mozc_win32_lib(
 )
 
 mozc_win32_lib(
+    name = "shcore",
+)
+
+mozc_win32_lib(
     name = "user32",
 )

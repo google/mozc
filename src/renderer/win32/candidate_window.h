@@ -36,6 +36,7 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include <cstdint>
 #include <memory>
 
 #include "base/const.h"
@@ -72,7 +73,6 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   BEGIN_MSG_MAP(CandidateWindow)
   MESSAGE_HANDLER(WM_CREATE, OnCreate)
   MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
-  MESSAGE_HANDLER(WM_DPICHANGED, OnDpiChanged)
   MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
   MESSAGE_HANDLER(WM_GETMINMAXINFO, OnGetMinMaxInfo)
   MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
@@ -89,7 +89,6 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   ~CandidateWindow();
   LRESULT OnCreate(LPCREATESTRUCT create_struct);
   void OnDestroy();
-  void OnDpiChanged(UINT dpiX, UINT dpiY, RECT* rect);
   BOOL OnEraseBkgnd(HDC dc);
   void OnGetMinMaxInfo(MINMAXINFO* min_max_info);
   void OnLButtonDown(UINT nFlags, CPoint point);
@@ -100,6 +99,12 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
 
   void set_mouse_moving(bool moving);
+
+  // If |dpi| differs from the cached DPI, updates the cached DPI, refreshes
+  // DPI-dependent resources, and flags the text renderer for refresh on the
+  // next UpdateLayout. Idempotent — safe to call unconditionally before
+  // UpdateLayout.
+  void UpdateDpi(uint32_t dpi);
 
   void UpdateLayout(const commands::CandidateWindow& candidate_window);
   void SetSendCommandInterface(
@@ -123,6 +128,10 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   void DrawBackground(HDC dc);
   void DrawFrame(HDC dc);
 
+  // Recomputes DPI-dependent cached resources (footer logo and indicator
+  // width) for the current |dpi_|.
+  void UpdateDpiDependentResources();
+
   // Handles candidate selection by mouse.
   void HandleMouseEvent(UINT nFlags, const CPoint& point,
                         bool close_candidatewindow);
@@ -140,13 +149,6 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   inline LRESULT OnDestroy(UINT msg_id, WPARAM wparam, LPARAM lparam,
                            BOOL& handled) {
     OnDestroy();
-    return 0;
-  }
-  inline LRESULT OnDpiChanged(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                              BOOL& handled) {
-    OnDpiChanged(static_cast<UINT>(LOWORD(wparam)),
-                 static_cast<UINT>(HIWORD(wparam)),
-                 reinterpret_cast<RECT*>(lparam));
     return 0;
   }
   inline LRESULT OnEraseBkgnd(UINT msg_id, WPARAM wparam, LPARAM lparam,
@@ -198,6 +200,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   Size footer_logo_display_size_;
   client::SendCommandInterface* send_command_interface_;
   std::unique_ptr<TableLayout> table_layout_;
+  uint32_t dpi_;
   std::unique_ptr<TextRenderer> text_renderer_;
   int indicator_width_;
   bool metrics_changed_;

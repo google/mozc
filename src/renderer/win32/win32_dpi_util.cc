@@ -29,7 +29,10 @@
 
 #include "renderer/win32/win32_dpi_util.h"
 
+#include <shellscalingapi.h>
 #include <windows.h>
+
+#include <cstdint>
 
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
@@ -39,10 +42,7 @@ namespace renderer {
 namespace win32 {
 namespace {
 
-constexpr int kDefaultDPI = 96;
-
-void ScaleTextStyle(RendererStyle::TextStyle* text_style,
-                    double scale_factor) {
+void ScaleTextStyle(RendererStyle::TextStyle* text_style, double scale_factor) {
   text_style->set_font_size(text_style->font_size() * scale_factor);
   text_style->set_left_padding(text_style->left_padding() * scale_factor);
   text_style->set_right_padding(text_style->right_padding() * scale_factor);
@@ -50,13 +50,24 @@ void ScaleTextStyle(RendererStyle::TextStyle* text_style,
 
 }  // namespace
 
-double GetDPIScalingFactor() {
-  const UINT dpi = ::GetDpiForSystem();
-  return static_cast<double>(dpi) / kDefaultDPI;
+double GetDPIScalingFactor(uint32_t dpi) {
+  return static_cast<double>(dpi) / USER_DEFAULT_SCREEN_DPI;
 }
 
-void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style) {
-  const double scale_factor = GetDPIScalingFactor();
+uint32_t GetDpiForPoint(int x, int y) {
+  const POINT point = {x, y};
+  const HMONITOR monitor = ::MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+  UINT dpi_x = USER_DEFAULT_SCREEN_DPI;
+  UINT dpi_y = USER_DEFAULT_SCREEN_DPI;
+  if (FAILED(::GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y))) {
+    return USER_DEFAULT_SCREEN_DPI;
+  }
+  return dpi_x;
+}
+
+void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style,
+                            uint32_t dpi) {
+  const double scale_factor = GetDPIScalingFactor(dpi);
 
   RendererStyleHandler::GetRendererStyle(style);
 

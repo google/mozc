@@ -44,6 +44,7 @@
 #include "renderer/win32/candidate_window.h"
 #include "renderer/win32/indicator_window.h"
 #include "renderer/win32/infolist_window.h"
+#include "renderer/win32/win32_dpi_util.h"
 #include "renderer/win32/win32_renderer_util.h"
 #include "renderer/window_util.h"
 
@@ -228,14 +229,24 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
   // Currently, we do not use finger print.
   bool candidate_changed = true;
 
+  const Point target_point(candidate_layout.position().x,
+                           candidate_layout.position().y);
+
+  // Sync both windows to the DPI of the monitor where the candidate window
+  // is about to be placed. This makes their first-frame layout correct when
+  // the target app is on a different-DPI monitor than where the windows were
+  // last shown — WM_DPICHANGED would otherwise fire only during the
+  // subsequent SetWindowPos, after the size has already been computed at
+  // the stale DPI.
+  const uint32_t target_dpi = GetDpiForPoint(target_point.x, target_point.y);
+  main_window_->UpdateDpi(target_dpi);
+  infolist_window_->UpdateDpi(target_dpi);
+
   if (candidate_changed &&
       (candidate_window.display_type() == commands::MAIN)) {
     main_window_->UpdateLayout(candidate_window);
   }
   const Size main_window_size = main_window_->GetLayoutSize();
-
-  const Point target_point(candidate_layout.position().x,
-                           candidate_layout.position().y);
 
   // Obtain the monitor's working area
   Rect working_area;
