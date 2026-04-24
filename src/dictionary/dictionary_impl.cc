@@ -74,7 +74,7 @@ bool DictionaryImpl::HasKey(absl::string_view key) const {
 
 bool DictionaryImpl::HasValue(absl::string_view value) const {
   return absl::c_any_of(dics_, [&value](const DictionaryInterface* dic) {
-    return dic->HasKey(value);
+    return dic->HasValue(value);
   });
 }
 

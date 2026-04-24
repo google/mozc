@@ -371,5 +371,15 @@ TEST_F(DictionaryImplTest, LookupComment) {
   EXPECT_EQ(comment, "UserDictionaryStub");
 }
 
+TEST_F(DictionaryImplTest, HasKeyValue) {
+  std::unique_ptr<DictionaryData> data = CreateDictionaryData();
+  DictionaryInterface* d = data->dictionary.get();
+  EXPECT_TRUE(d->HasKey("きょうと"));
+  EXPECT_TRUE(d->HasValue("京都"));
+
+  EXPECT_FALSE(d->HasKey("__きょうと__"));
+  EXPECT_FALSE(d->HasValue("__京都__"));
+}
+
 }  // namespace dictionary
 }  // namespace mozc
