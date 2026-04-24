@@ -704,7 +704,6 @@ mozc_cc_library(
     deps = [
         ":rewriter_interface",
         "//base:clock",
-        "//base:singleton",
         "//converter:attribute",
         "//converter:segments",
         "//request:conversion_request",
