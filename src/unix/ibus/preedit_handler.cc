@@ -55,34 +55,19 @@ IbusTextWrapper ComposePreeditText(const commands::Preedit& preedit) {
     IBusAttrUnderline attr = IBUS_ATTR_UNDERLINE_ERROR;
     switch (segment.annotation()) {
       case commands::Preedit::Segment::NONE:
-        attr = IBUS_ATTR_UNDERLINE_NONE;
+        // No decoration
         break;
       case commands::Preedit::Segment::UNDERLINE:
-        attr = IBUS_ATTR_UNDERLINE_SINGLE;
+        text.AppendAttribute(IBUS_ATTR_TYPE_HINT, IBUS_ATTR_PREEDIT_WHOLE,
+                             start, end);
         break;
       case commands::Preedit::Segment::HIGHLIGHT:
-        attr = IBUS_ATTR_UNDERLINE_DOUBLE;
+        text.AppendAttribute(IBUS_ATTR_TYPE_HINT, IBUS_ATTR_PREEDIT_SELECTION,
+                             start, end);
         break;
       default:
         LOG(ERROR) << "unknown annotation:" << segment.annotation();
         break;
-    }
-    end += segment.value_length();
-    text.AppendAttribute(IBUS_ATTR_TYPE_UNDERLINE, attr, start, end);
-
-    // Many applications show a single underline regardless of using
-    // IBUS_ATTR_UNDERLINE_SINGLE or IBUS_ATTR_UNDERLINE_DOUBLE for some
-    // reasons. Here we add a background color for the highlighted candidate
-    // to make it easiliy distinguishable.
-    if (segment.annotation() == commands::Preedit::Segment::HIGHLIGHT) {
-      constexpr uint kBackgroundColor = 0xD1EAFF;
-      text.AppendAttribute(IBUS_ATTR_TYPE_BACKGROUND, kBackgroundColor, start,
-                           end);
-      // IBUS_ATTR_TYPE_FOREGROUND is necessary to highlight the segment on
-      // Firefox.
-      constexpr uint kForegroundColor = 0x000000;
-      text.AppendAttribute(IBUS_ATTR_TYPE_FOREGROUND, kForegroundColor, start,
-                           end);
     }
     start = end;
   }
