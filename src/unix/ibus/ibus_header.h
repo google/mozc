@@ -40,8 +40,8 @@ static_assert(std::is_same<guint, uint>::value, "guint must be uint.");
 static_assert(std::is_same<gchar, char>::value, "gchar must be char.");
 static_assert(std::is_same<gboolean, int>::value, "gboolean must be int.");
 
-#if !IBUS_CHECK_VERSION(1, 5, 4)
-#error "ibus-mozc requires IBus>=1.5.4"
-#endif  // libibus (<1.5.4)
+#if !IBUS_CHECK_VERSION(1, 5, 33)
+#error "ibus-mozc requires IBus>=1.5.33"
+#endif  // libibus (<1.5.33)
 
 #endif  // MOZC_UNIX_IBUS_IBUS_HEADER_H_
