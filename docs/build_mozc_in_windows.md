@@ -15,7 +15,7 @@ cd mozc\src
 
 python build_tools/update_deps.py
 python build_tools/build_qt.py --release --confirm_license
-bazelisk build --config oss_windows --config release_build package
+bazelisk build --config release_build package
 
 python build_tools/open.py bazel-bin/win32/installer/Mozc64.msi
 ```

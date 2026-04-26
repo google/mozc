@@ -18,7 +18,7 @@ python3 build_tools/update_deps.py
 # CMake is also required to build Qt.
 python3 build_tools/build_qt.py --release --confirm_license
 
-MOZC_QT_PATH=${PWD}/third_party/qt bazelisk build package --config oss_macos --config release_build
+bazelisk build package --config release_build
 open bazel-bin/mac/Mozc.pkg
 ```
 
@@ -120,7 +120,7 @@ brew install cmake
 ### Build installer
 
 ```
-MOZC_QT_PATH=${PWD}/third_party/qt bazelisk build package --config oss_macos --config release_build
+bazelisk build package --config release_build
 open bazel-bin/mac/Mozc.pkg
 ```
 
@@ -130,7 +130,7 @@ To build an Intel64 macOS binary regardless of the host CPU architecture.
 
 ```
 python3 build_tools/build_qt.py --release --debug --confirm_license --macos_cpus=x64_64
-MOZC_QT_PATH=${PWD}/third_party/qt bazelisk build package --config oss_macos --config release_build --macos_cpus=x64_64
+bazelisk build package --config release_build --macos_cpus=x64_64
 open bazel-bin/mac/Mozc.pkg
 ```
 
@@ -138,14 +138,14 @@ To build a Universal macOS Binary both x86_64 and arm64.
 
 ```
 python3 build_tools/build_qt.py --release --debug --confirm_license --macos_cpus=x86_64,arm64
-MOZC_QT_PATH=${PWD}/third_party/qt bazelisk build package --config oss_macos --config release_build --macos_cpus=x86_64,arm64
+bazelisk build package --config release_build --macos_cpus=x86_64,arm64
 open bazel-bin/mac/Mozc.pkg
 ```
 
 ### Unit tests
 
 ```
-MOZC_QT_PATH=${PWD}/third_party/qt bazelisk test ... --config oss_macos --build_tests_only -c dbg
+bazelisk test ... --build_tests_only -c dbg
 ```
 
 See [build Mozc in Docker](build_mozc_in_docker.md#unittests) for details.

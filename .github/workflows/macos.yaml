@@ -41,12 +41,11 @@ jobs:
         working-directory: ./src
         run: |
           python3 build_tools/build_qt.py --release --confirm_license --macos_cpus=arm64
-          echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
 
       - name: bazel build
         working-directory: ./src
         run: |
-          bazelisk build --config oss_macos package --macos_cpus=arm64 --config release_build
+          bazelisk build package --macos_cpus=arm64 --config release_build
 
       - name: upload artifacts
         uses: actions/upload-artifact@v6
@@ -83,12 +82,11 @@ jobs:
         working-directory: ./src
         run: |
           python3 build_tools/build_qt.py --release --confirm_license --macos_cpus=x86_64
-          echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
 
       - name: bazel build
         working-directory: ./src
         run: |
-          bazelisk build --config oss_macos package --macos_cpus=x86_64 --config release_build
+          bazelisk build package --macos_cpus=x86_64 --config release_build
 
       - name: upload artifacts
         uses: actions/upload-artifact@v6
@@ -125,12 +123,11 @@ jobs:
         working-directory: ./src
         run: |
           python3 build_tools/build_qt.py --release --confirm_license --macos_cpus=x86_64,arm64
-          echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
 
       - name: bazel build
         working-directory: ./src
         run: |
-          bazelisk build --config oss_macos package --macos_cpus=x86_64,arm64 --config release_build
+          bazelisk build package --macos_cpus=x86_64,arm64 --config release_build
 
       - name: upload artifacts
         uses: actions/upload-artifact@v6
@@ -166,7 +163,7 @@ jobs:
       - name: bazel test
         working-directory: ./src
         run: |
-          bazelisk test ... --config oss_macos --build_tests_only -c dbg
+          bazelisk test ... --build_tests_only -c dbg
 
   # actions/cache works without this job, but having this would increase the likelihood of cache hit
   # in other jobs. Another approach would be to use "needs:".
