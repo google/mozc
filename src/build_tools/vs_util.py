@@ -30,6 +30,7 @@
 
 """A helper script to use Visual Studio."""
 
+import argparse
 import json
 import os
 import pathlib
@@ -188,3 +189,37 @@ def get_vs_env_vars(
   if exitcode != 0:
     raise ChildProcessError(f'Failed to execute {vcvarsall}')
   return json.loads(stdout.decode('ascii'))
+
+
+def get_vc_dir(
+    arch: str, vcvarsall_path_hint: Union[str, None] = None
+) -> pathlib.Path:
+  """Returns the VC directory path for use as 'BAZEL_VC'.
+
+  Args:
+    arch: host/target architecture
+    vcvarsall_path_hint: optional path to vcvarsall.bat
+
+  Returns:
+    The VC directory path, e.g. 'C:\\...\\Community\\VC'.
+
+  Raises:
+    FileNotFoundError: When 'vcvarsall.bat' cannot be found.
+  """
+  # vcvarsall.bat lives at <VC>\Auxiliary\Build\vcvarsall.bat
+  return get_vcvarsall(arch, vcvarsall_path_hint).parent.parent.parent
+
+
+def main() -> int:
+  parser = argparse.ArgumentParser(
+      description='Print the VC directory (value suitable for BAZEL_VC).'
+  )
+  parser.add_argument('--arch', default='x64')
+  parser.add_argument('--vcvarsall_path', default=None)
+  args = parser.parse_args()
+  print(get_vc_dir(args.arch, args.vcvarsall_path))
+  return 0
+
+
+if __name__ == '__main__':
+  sys.exit(main())
