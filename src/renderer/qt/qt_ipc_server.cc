@@ -44,7 +44,7 @@ constexpr int kNumConnections = 10;
 constexpr absl::Duration kIPCServerTimeOut = absl::Milliseconds(1000);
 constexpr char kServiceName[] = "renderer";
 
-[[maybe_unused]] std::string GetServiceName() {
+std::string MakeServiceName() {
   std::string name = kServiceName;
   const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
   if (!desktop_name.empty()) {
@@ -56,7 +56,7 @@ constexpr char kServiceName[] = "renderer";
 }  // namespace
 
 QtIpcServer::QtIpcServer()
-    : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut) {}
+    : IPCServer(MakeServiceName(), kNumConnections, kIPCServerTimeOut) {}
 QtIpcServer::~QtIpcServer() = default;
 
 bool QtIpcServer::Process(absl::string_view request, std::string *response) {
