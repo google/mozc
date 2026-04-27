@@ -185,4 +185,17 @@ TEST(CalculatorTest, StressTest) {
   LOG(INFO) << "done " << lineno << " tests from " << filename << std::endl;
 }
 
+TEST(CalculatorTest, LimitAndValidationTest) {
+  Calculator calculator;
+  std::string unused_result;
+
+  // Large but valid operations under limit (e.g. 100 unary operations).
+  std::string valid_case = std::string(100, '+') + "1=";
+  EXPECT_TRUE(calculator.CalculateString(valid_case, &unused_result));
+
+  // Directly violating input length limit (e.g. 2100 bytes).
+  std::string over_length_case = std::string(2100, '+') + "1=";
+  EXPECT_FALSE(calculator.CalculateString(over_length_case, &unused_result));
+}
+
 }  // namespace mozc

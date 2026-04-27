@@ -42,7 +42,6 @@ mozc_cc_library(
     name = "calculator",
     srcs = ["calculator.cc"],
     hdrs = ["calculator.h"],
-    textual_hdrs = ["parser.c.inc"],
     visibility = ["//rewriter:__pkg__"],
     deps = [
         "//base:japanese_util",

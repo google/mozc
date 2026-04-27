@@ -32,7 +32,6 @@
 
 #include <cstddef>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
@@ -42,12 +41,31 @@ namespace mozc {
 
 class Calculator {
  public:
+  // Represents the type of calculation token.
+  enum class TokenType {
+    PLUS = 1,  // "+"
+    MINUS,     // "-"
+    TIMES,     // "*"
+    DIVIDE,    // "/"
+    MOD,       // "%"
+    POW,       // "^"
+    LP,        // "("
+    RP,        // ")"
+    INTEGER,   // Numbers (e.g. "123", "45.6")
+  };
+
+  // Represents a token in the expression.
+  struct Token {
+    TokenType type;
+    double value;
+  };
+
   Calculator();
 
   bool CalculateString(absl::string_view key, std::string* result) const;
 
  private:
-  using TokenSequence = std::vector<std::pair<int, double>>;
+  using TokenSequence = std::vector<Token>;
 
   // Max byte length of operator character
   static constexpr size_t kMaxLengthOfOperator = 3;
@@ -62,8 +80,8 @@ class Calculator {
   bool CalculateTokens(const TokenSequence& tokens, double* result_value) const;
 
   // Mapping from operator character such as '+' to the corresponding
-  // token type such as PLUS.
-  absl::flat_hash_map<absl::string_view, int> operator_map_;
+  // token type.
+  absl::flat_hash_map<absl::string_view, TokenType> operator_map_;
 };
 
 }  // namespace mozc
