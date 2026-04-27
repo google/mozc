@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "absl/log/check.h"
-#include "base/singleton.h"
 #include "base/win32/win_api_test_helper.h"
 #include "base/win32/win_util.h"
 #include "testing/gunit.h"
@@ -71,12 +70,11 @@ bool IsEqualInLowercase(const std::wstring& lhs, const std::wstring& rhs) {
   return WinUtil::SystemEqualString(lhs, rhs, true);
 }
 
-// Win32 registry emulator for unit testing.  To separate internal state,
-// set unique id at the template parameter.
-template <int Id>
-class RegistryEmulator {
+// Win32 registry emulator for unit testing. Can be safely used only in a
+// single thread test scenario. At most one instance can be created at the same
+// time in the same process.
+class SingleThreadedRegistryEmulator {
  public:
-  template <int Id>
   class PropertySelector {
    public:
     PropertySelector()
@@ -131,9 +129,10 @@ class RegistryEmulator {
     std::wstring installer_result_ui_string_;
   };
 
-  typedef PropertySelector<Id> Property;
+  typedef PropertySelector Property;
 
-  RegistryEmulator() {
+  SingleThreadedRegistryEmulator() {
+    current_ = &property_;
     std::vector<WinAPITestHelper::HookRequest> requests;
     requests.push_back(
         DEFINE_HOOK("advapi32.dll", RegCreateKeyExW, TestRegCreateKeyExW));
@@ -151,12 +150,13 @@ class RegistryEmulator {
         WinAPITestHelper::DoHook(::GetModuleHandle(nullptr), requests);
   }
 
-  ~RegistryEmulator() {
+  ~SingleThreadedRegistryEmulator() {
     WinAPITestHelper::RestoreHook(restore_info_);
     restore_info_ = nullptr;
+    current_ = nullptr;
   }
 
-  static Property* property() { return Singleton<Property>::get(); }
+  static Property* property() { return current_; }
 
   static HKEY GetClientStateKey(REGSAM regsam) {
     const REGSAM kReadWrite = (KEY_WRITE | KEY_READ);
@@ -434,7 +434,9 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
+  Property property_;
   WinAPITestHelper::RestoreInfoHandle restore_info_;
+  inline static Property* current_ = nullptr;
 };
 
 }  // namespace
@@ -442,7 +444,7 @@ class RegistryEmulator {
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
 
 TEST(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
-  RegistryEmulator<__COUNTER__> test;
+  SingleThreadedRegistryEmulator test;
 
   // ClientStateKey does not exist.
   test.property()->Clear();
@@ -484,7 +486,7 @@ TEST(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
 }
 
 TEST(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
-  RegistryEmulator<__COUNTER__> test;
+  SingleThreadedRegistryEmulator test;
 
   // ClientStateKey does not exist.
   test.property()->Clear();
@@ -509,7 +511,7 @@ TEST(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
 #else  // !GOOGLE_JAPANESE_INPUT_BUILD
 
 TEST(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
-  RegistryEmulator<__COUNTER__> test;
+  SingleThreadedRegistryEmulator test;
 
   // ClientStateKey does not exist.
   test.property()->Clear();
@@ -524,7 +526,7 @@ TEST(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
 }
 
 TEST(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
-  RegistryEmulator<__COUNTER__> test;
+  SingleThreadedRegistryEmulator test;
 
   // ClientStateKey does not exist.
   test.property()->Clear();

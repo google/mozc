@@ -355,7 +355,6 @@ mozc_cc_test(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":omaha_util",
-        "//base:singleton",
         "//base:system_util",
         "//base/win32:win_api_test_helper",
         "//testing:gunit_main",
