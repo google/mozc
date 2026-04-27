@@ -131,6 +131,17 @@ TEST(CalculatorTest, BasicTest) {
 
   // Issue 3082576: 7472.4 - 7465.6 = 6.7999999999993 is not expected.
   VerifyCalculationInString(calculator, "7472.4-7465.6=", "6.8");
+
+  // Additional coverage for syntax errors and invalid token sequences.
+  VerifyRejection(calculator, "++=");
+  VerifyRejection(calculator, "(1+)=");
+  VerifyRejection(calculator, "+=");
+
+  // Full-width and half-width space mix cases.
+  VerifyCalculation(calculator, "1 ＋　1=", "2");
+
+  // Overflow and extreme values.
+  VerifyRejection(calculator, "1e1000=");
 }
 
 // Test large number of queries.  Test data is located at
