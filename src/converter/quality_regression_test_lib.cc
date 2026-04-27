@@ -70,7 +70,7 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
     if (i % 1000 == 0) {
       LOG(INFO) << "Testing: " << i << " " << kTestData[i].line;
     }
-    const std::string& tsv_line = kTestData[i].line;
+    absl::string_view tsv_line = kTestData[i].line;
     QualityRegressionUtil::TestItem item;
     if (!item.ParseFromTSV(tsv_line).ok()) {
       return absl::FailedPreconditionError(
@@ -98,7 +98,7 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
       table = &disabled_results;
     }
 
-    const std::string& label = item.label;
+    absl::string_view label = item.label;
     std::string line = absl::StrCat(tsv_line, "\tActual: ", actual_value);
     if (*test_result) {
       // use "-1.0" as a dummy expected ratio

@@ -69,7 +69,7 @@ class QualityRegressionUtil {
     int expected_rank;
     uint32_t platform;
     std::string OutputAsTSV() const;
-    absl::Status ParseFromTSV(const std::string& tsv_line);
+    absl::Status ParseFromTSV(absl::string_view tsv_line);
   };
 
   explicit QualityRegressionUtil(
@@ -79,7 +79,7 @@ class QualityRegressionUtil {
   virtual ~QualityRegressionUtil() = default;
 
   // Pase |filename| and save the all test items into |outputs|.
-  static absl::Status ParseFile(const std::string& filename,
+  static absl::Status ParseFile(absl::string_view filename,
                                 std::vector<TestItem>* outputs);
   static absl::Status ParseFiles(absl::Span<const std::string> filenames,
                                  std::vector<TestItem>* outputs);

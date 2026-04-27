@@ -197,7 +197,7 @@ std::string DumpNodes(const Lattice& lattice) {
 }
 
 bool ExecCommand(const ImmutableConverter& immutable_converter,
-                 absl::string_view query, const std::string& output) {
+                 absl::string_view query, absl::string_view output) {
   ConversionRequest::Options options = {
       .request_type = ConversionRequest::CONVERSION,
       .use_actual_converter_for_realtime_conversion = true,
@@ -222,7 +222,7 @@ bool ExecCommand(const ImmutableConverter& immutable_converter,
 }
 
 std::unique_ptr<const DataManager> CreateDataManager(
-    const std::string& dictionary) {
+    absl::string_view dictionary) {
   if (dictionary == "oss") {
     return std::make_unique<const oss::OssDataManager>();
   }

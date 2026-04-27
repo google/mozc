@@ -115,7 +115,7 @@ Matcher<const converter::Candidate*> ValueAndDescAre(absl::string_view value,
 struct InvokeCallbackWithUserDictionaryToken {
   void operator()(absl::string_view key, const ConversionRequest& convreq,
                   DictionaryInterface::Callback* callback) {
-    for (const std::string& value : values) {
+    for (absl::string_view value : values) {
       const Token token(key, value, MockDictionary::kDefaultCost,
                         MockDictionary::kDefaultPosId,
                         MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);

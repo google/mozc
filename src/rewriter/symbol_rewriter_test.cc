@@ -266,7 +266,7 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
     EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
     EXPECT_GT(segments.segment(0).candidates_size(), 16);
     for (int i = 0; i < 16; ++i) {
-      const std::string& value = segments.segment(0).candidate(i).value;
+      absl::string_view value = segments.segment(0).candidate(i).value;
       EXPECT_FALSE(Util::IsScriptType(value, Util::UNKNOWN_SCRIPT))
           << i << ": " << value;
     }

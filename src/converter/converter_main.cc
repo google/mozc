@@ -75,7 +75,6 @@
 #define MOZC_DEBUG
 #endif  // NDEBUG
 
-
 ABSL_FLAG(int32_t, max_conversion_candidates_size, 200,
           "maximum candidates size");
 ABSL_FLAG(std::string, user_profile_dir, "", "path to user profile directory");
@@ -235,7 +234,7 @@ void PrintCandidate(const Segment& parent, size_t candidates_size, int num,
   lines.push_back("rid: " + PosIdPrintUtil::IdToString(cand.rid));
   lines.push_back("attr: " + CandidateAttributesToString(cand.attributes));
   lines.push_back("num_style: " + NumberStyleToString(cand.style));
-  const std::string& segbdd_str = InnerSegmentBoundaryToString(cand);
+  const std::string segbdd_str = InnerSegmentBoundaryToString(cand);
   if (!segbdd_str.empty()) {
     lines.push_back("segbdd: " + segbdd_str);
   }
@@ -348,7 +347,7 @@ bool ConverterMain::ExecCommand(absl::string_view line, Segments* segments) {
       .create_partial_candidates = request_.auto_partial_suggestion(),
   };
 
-  const std::string& func = fields[0];
+  absl::string_view func = fields[0];
   if (func == "startconversion" || func == "start" || func == "s") {
     options.request_type = ConversionRequest::CONVERSION;
     options.create_partial_candidates = false;
@@ -411,8 +410,8 @@ bool ConverterMain::ExecCommand(absl::string_view line, Segments* segments) {
   } else if (func == "commitsegmentvalue" || func == "commit" || func == "c") {
     CHECK_FIELDS_LENGTH(3);
     return converter_->CommitSegmentValue(segments,
-                                        NumberUtil::SimpleAtoi(fields[1]),
-                                        NumberUtil::SimpleAtoi(fields[2]));
+                                          NumberUtil::SimpleAtoi(fields[1]),
+                                          NumberUtil::SimpleAtoi(fields[2]));
   } else if (func == "commitallandfinish") {
     for (int i = 0; i < segments->conversion_segments_size(); ++i) {
       if (segments->conversion_segment(i).segment_type() !=
@@ -433,8 +432,8 @@ bool ConverterMain::ExecCommand(absl::string_view line, Segments* segments) {
   } else if (func == "focussegmentvalue" || func == "focus") {
     CHECK_FIELDS_LENGTH(3);
     return converter_->FocusSegmentValue(segments,
-                                       NumberUtil::SimpleAtoi(fields[1]),
-                                       NumberUtil::SimpleAtoi(fields[2]));
+                                         NumberUtil::SimpleAtoi(fields[1]),
+                                         NumberUtil::SimpleAtoi(fields[2]));
   } else if (func == "commitfirstsegment") {
     CHECK_FIELDS_LENGTH(2);
     std::vector<size_t> singleton_vector;
@@ -451,8 +450,8 @@ bool ConverterMain::ExecCommand(absl::string_view line, Segments* segments) {
             .Build();
     if (fields.size() == 3) {
       return converter_->ResizeSegment(segments, conversion_request,
-                                     NumberUtil::SimpleAtoi(fields[1]),
-                                     NumberUtil::SimpleAtoi(fields[2]));
+                                       NumberUtil::SimpleAtoi(fields[1]),
+                                       NumberUtil::SimpleAtoi(fields[2]));
     }
   } else if (func == "resizesegments" || func == "resizes") {
     options.request_type = ConversionRequest::CONVERSION;
@@ -470,8 +469,8 @@ bool ConverterMain::ExecCommand(absl::string_view line, Segments* segments) {
             static_cast<uint8_t>(NumberUtil::SimpleAtoi(fields[i])));
       }
       return converter_->ResizeSegments(segments, conversion_request,
-                                      NumberUtil::SimpleAtoi(fields[1]),
-                                      new_arrays);
+                                        NumberUtil::SimpleAtoi(fields[1]),
+                                        new_arrays);
     }
   } else if (func == "disableuserhistory") {
     config_.set_history_learning_level(config::Config::NO_HISTORY);
@@ -526,7 +525,7 @@ std::string ConverterMain::ExecCommandToString(absl::string_view line) {
 }
 
 std::pair<std::string, std::string> SelectDataFileFromName(
-    const std::string& mozc_runfiles_dir, const std::string& engine_name) {
+    absl::string_view mozc_runfiles_dir, absl::string_view engine_name) {
   struct {
     absl::string_view engine_name;
     absl::string_view path;
@@ -545,8 +544,8 @@ std::pair<std::string, std::string> SelectDataFileFromName(
   return std::pair<std::string, std::string>("", "");
 }
 
-std::string SelectIdDefFromName(const std::string& mozc_runfiles_dir,
-                                const std::string& engine_name) {
+std::string SelectIdDefFromName(absl::string_view mozc_runfiles_dir,
+                                absl::string_view engine_name) {
   struct {
     absl::string_view engine_name;
     absl::string_view path;
@@ -658,7 +657,7 @@ int main(int argc, char** argv) {
                << absl::GetFlag(FLAGS_engine_type);
   }
 
-  if (const std::string& textproto =
+  if (const std::string textproto =
           absl::GetFlag(FLAGS_decoder_experiment_params);
       !textproto.empty()) {
     mozc::commands::DecoderExperimentParams params;

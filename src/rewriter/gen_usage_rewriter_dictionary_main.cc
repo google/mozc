@@ -150,7 +150,7 @@ bool UsageItemKeynameCmp(const UsageItem& l, const UsageItem& r) {
 
 // Load cforms_file
 void LoadConjugation(
-    const std::string& filename,
+    absl::string_view filename,
     absl::btree_map<std::string, std::vector<ConjugationType>>* output,
     std::map<std::string, ConjugationType>* baseform_map) {
   InputFileStream ifs(filename);
@@ -178,7 +178,7 @@ void LoadConjugation(
 }
 
 // Load usage_data_file
-void LoadUsage(const std::string& filename,
+void LoadUsage(absl::string_view filename,
                std::vector<UsageItem>* usage_entries,
                std::vector<std::string>* conjugation_list) {
   InputFileStream ifs(filename);

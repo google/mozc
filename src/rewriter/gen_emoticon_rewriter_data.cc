@@ -84,7 +84,7 @@ std::string GetDescription(
                          sorted_key_list.front());
 }
 
-std::map<std::string, TokenList> ReadEmoticonTsv(const std::string& path) {
+std::map<std::string, TokenList> ReadEmoticonTsv(absl::string_view path) {
   InputFileStream ifs(path);
 
   std::string line;
@@ -110,10 +110,8 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string& path) {
 
   std::map<std::string, TokenList> input_data;
   int16_t cost = 10;
-  for (const auto& kv : data) {
-    const std::string& value = kv.first;
-    const KeyList& key_list = kv.second;
-    const std::string& description = GetDescription(key_list, key_count);
+  for (const auto& [value, key_list] : data) {
+    const std::string description = GetDescription(key_list, key_count);
     for (const std::string& key : key_list) {
       std::unique_ptr<CompilerToken> token = std::make_unique<CompilerToken>();
       token->value = value;

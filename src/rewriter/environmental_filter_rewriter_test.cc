@@ -71,7 +71,7 @@ void AddSegment(const absl::string_view key,
                 absl::Span<const std::string> values, Segments* segments) {
   Segment* seg = segments->add_segment();
   seg->set_key(key);
-  for (const std::string& value : values) {
+  for (absl::string_view value : values) {
     converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = std::string(key);
     candidate->value = value;

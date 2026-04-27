@@ -935,8 +935,8 @@ bool IsJisX0208OrAllowListed(absl::string_view str) {
 
 using SortingKeyMap = absl::flat_hash_map<std::string, uint16_t>;
 
-SortingKeyMap CreateSortingKeyMap(const std::string& auto_file,
-                                  const std::string& rule_file) {
+SortingKeyMap CreateSortingKeyMap(absl::string_view auto_file,
+                                  absl::string_view rule_file) {
   SortingKeyMap sorting_keys;
   std::string line;
   int sorting_key = 0;
@@ -999,7 +999,7 @@ void AddSymbolToDictionary(const absl::string_view pos,
   }
 
   for (const std::string& key : keys) {
-    const rewriter::Token& token = dictionary.AddToken(
+    const rewriter::Token &token = dictionary.AddToken(
         {sorting_key, key, std::string(value), std::string(pos),
          std::string(description), std::string(additional_description)});
 
@@ -1013,9 +1013,9 @@ void AddSymbolToDictionary(const absl::string_view pos,
 }
 
 // Read dic:
-void MakeDictionary(const std::string& symbol_dictionary_file,
-                    const std::string& sorting_map_file,
-                    const std::string& ordering_rule_file,
+void MakeDictionary(absl::string_view symbol_dictionary_file,
+                    absl::string_view sorting_map_file,
+                    absl::string_view ordering_rule_file,
                     rewriter::DictionaryGenerator& dictionary) {
   absl::flat_hash_set<std::string> seen;
   SortingKeyMap sorting_keys =

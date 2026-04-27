@@ -302,7 +302,7 @@ TEST_F(EmojiRewriterTest, CheckDescription) {
   const Segment& segment = segments.segment(0);
   for (int i = 0; i < segment.candidates_size(); ++i) {
     const converter::Candidate& candidate = segment.candidate(i);
-    const std::string& description = candidate.description;
+    absl::string_view description = candidate.description;
     // Skip non emoji candidates.
     if (!EmojiRewriter::IsEmojiCandidate(candidate)) {
       continue;

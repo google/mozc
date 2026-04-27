@@ -45,6 +45,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 #include "base/container/bitarray.h"
 #include "base/file_stream.h"
 #include "protocol/segmenter_data.pb.h"
@@ -115,8 +116,8 @@ class StateTable {
 
 void SegmenterBitarrayGenerator::GenerateBitarray(
     int lsize, int rsize, IsBoundaryFunc is_boundary,
-    const std::string& output_size_info, const std::string& output_ltable,
-    const std::string& output_rtable, const std::string& output_bitarray) {
+    absl::string_view output_size_info, absl::string_view output_ltable,
+    absl::string_view output_rtable, absl::string_view output_bitarray) {
   // Load the original matrix into an array
   std::vector<uint8_t> array((lsize + 1) * (rsize + 1));
 

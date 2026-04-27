@@ -91,7 +91,7 @@ int32_t GetRank(absl::string_view value, const Segments& segments,
   int rank = 0;
   absl::flat_hash_set<absl::string_view> dedup;
   for (const Candidate* cand : seg.candidates()) {
-    const std::string& cand_value = cand->value;
+    absl::string_view cand_value = cand->value;
     const bool new_value = dedup.insert(cand_value).second;
     if (!new_value) {
       // The value is duplicated and already checked.
@@ -141,7 +141,7 @@ std::string QualityRegressionUtil::TestItem::OutputAsTSV() const {
 }
 
 absl::Status QualityRegressionUtil::TestItem::ParseFromTSV(
-    const std::string& line) {
+    absl::string_view line) {
   std::vector<absl::string_view> tokens =
       absl::StrSplit(line, '\t', absl::SkipEmpty());
   if (tokens.size() < 4) {
@@ -195,7 +195,7 @@ QualityRegressionUtil::QualityRegressionUtil(
 
 namespace {
 absl::Status ParseFileInternal(
-    const std::string& filename,
+    absl::string_view filename,
     std::vector<QualityRegressionUtil::TestItem>* outputs) {
   // TODO(taku): support an XML file of Mozcsu.
   InputFileStream ifs(filename);
@@ -219,7 +219,7 @@ absl::Status ParseFileInternal(
 }  // namespace
 
 // static
-absl::Status QualityRegressionUtil::ParseFile(const std::string& filename,
+absl::Status QualityRegressionUtil::ParseFile(absl::string_view filename,
                                               std::vector<TestItem>* outputs) {
   outputs->clear();
   return ParseFileInternal(filename, outputs);
@@ -229,7 +229,7 @@ absl::Status QualityRegressionUtil::ParseFile(const std::string& filename,
 absl::Status QualityRegressionUtil::ParseFiles(
     absl::Span<const std::string> filenames, std::vector<TestItem>* outputs) {
   outputs->clear();
-  for (const std::string& filename : filenames) {
+  for (absl::string_view filename : filenames) {
     const absl::Status result = ParseFileInternal(filename, outputs);
     if (!result.ok()) {
       return result;
@@ -240,9 +240,9 @@ absl::Status QualityRegressionUtil::ParseFiles(
 
 absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     const TestItem& item, std::string* actual_value) {
-  const std::string& key = item.key;
-  const std::string& expected_value = item.expected_value;
-  const std::string& command = item.command;
+  absl::string_view key = item.key;
+  absl::string_view expected_value = item.expected_value;
+  absl::string_view command = item.command;
   const int expected_rank = item.expected_rank;
 
   CHECK(actual_value);

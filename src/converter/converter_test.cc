@@ -425,9 +425,9 @@ TEST_F(ConverterTest, ConvertTest) {
 }
 
 namespace {
-std::string ContextAwareConvert(const std::string& first_key,
-                                const std::string& first_value,
-                                const std::string& second_key) {
+std::string ContextAwareConvert(absl::string_view first_key,
+                                absl::string_view first_value,
+                                absl::string_view second_key) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
@@ -442,7 +442,7 @@ std::string ContextAwareConvert(const std::string& first_key,
     int position = -1;
     for (size_t i = 0; i < segments.segment(segment_num).candidates_size();
          ++i) {
-      const std::string& value =
+      absl::string_view value =
           segments.segment(segment_num).candidate(i).value;
       if (first_value.substr(converted.size(), value.size()) == value) {
         position = static_cast<int>(i);
@@ -1218,14 +1218,14 @@ TEST_F(ConverterTest, StartReverseConversion) {
   const std::shared_ptr<const ConverterInterface> converter =
       engine->GetConverter();
 
-  const std::string kHonKanji = "本";
-  const std::string kHonHiragana = "ほん";
-  const std::string kMuryouKanji = "無料";
-  const std::string kMuryouHiragana = "むりょう";
-  const std::string kFullWidthSpace = "　";  // full-width space
+  constexpr absl::string_view kHonKanji = "本";
+  constexpr absl::string_view kHonHiragana = "ほん";
+  constexpr absl::string_view kMuryouKanji = "無料";
+  constexpr absl::string_view kMuryouHiragana = "むりょう";
+  constexpr absl::string_view kFullWidthSpace = "　";  // full-width space
   {
     // Test for single Kanji character.
-    const std::string& kInput = kHonKanji;
+    absl::string_view kInput = kHonKanji;
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 1);
@@ -1234,7 +1234,7 @@ TEST_F(ConverterTest, StartReverseConversion) {
   }
   {
     // Test for multi-Kanji character.
-    const std::string& kInput = kMuryouKanji;
+    absl::string_view kInput = kMuryouKanji;
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 1);
@@ -1258,7 +1258,7 @@ TEST_F(ConverterTest, StartReverseConversion) {
   }
   {
     // Test for multi terms separated by multiple spaces.
-    const std::string kInput = kHonKanji + "   " + kMuryouKanji;
+    const std::string kInput = absl::StrCat(kHonKanji, "   ", kMuryouKanji);
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 3);
@@ -1272,7 +1272,7 @@ TEST_F(ConverterTest, StartReverseConversion) {
   }
   {
     // Test for leading white spaces.
-    const std::string kInput = "  " + kHonKanji;
+    const std::string kInput = absl::StrCat("  ", kHonKanji);
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 2);
@@ -1283,7 +1283,7 @@ TEST_F(ConverterTest, StartReverseConversion) {
   }
   {
     // Test for trailing white spaces.
-    const std::string kInput = kMuryouKanji + "  ";
+    const std::string kInput = absl::StrCat(kMuryouKanji, "  ");
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 2);
@@ -1295,7 +1295,8 @@ TEST_F(ConverterTest, StartReverseConversion) {
   }
   {
     // Test for multi terms separated by a full-width space.
-    const std::string kInput = kHonKanji + kFullWidthSpace + kMuryouKanji;
+    const std::string kInput =
+        absl::StrCat(kHonKanji, kFullWidthSpace, kMuryouKanji);
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 3);
@@ -1310,8 +1311,10 @@ TEST_F(ConverterTest, StartReverseConversion) {
   }
   {
     // Test for multi terms separated by two full-width spaces.
-    const std::string kFullWidthSpace2 = kFullWidthSpace + kFullWidthSpace;
-    const std::string kInput = kHonKanji + kFullWidthSpace2 + kMuryouKanji;
+    const std::string kFullWidthSpace2 =
+        absl::StrCat(kFullWidthSpace, kFullWidthSpace);
+    const std::string kInput =
+        absl::StrCat(kHonKanji, kFullWidthSpace2, kMuryouKanji);
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 3);
@@ -1326,8 +1329,9 @@ TEST_F(ConverterTest, StartReverseConversion) {
   }
   {
     // Test for multi terms separated by the mix of full- and half-width spaces.
-    const std::string kFullWidthSpace2 = kFullWidthSpace + " ";
-    const std::string kInput = kHonKanji + kFullWidthSpace2 + kMuryouKanji;
+    const std::string kFullWidthSpace2 = absl::StrCat(kFullWidthSpace, " ");
+    const std::string kInput =
+        absl::StrCat(kHonKanji, kFullWidthSpace2, kMuryouKanji);
     Segments segments;
     EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
     ASSERT_EQ(segments.segments_size(), 3);

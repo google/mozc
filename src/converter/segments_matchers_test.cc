@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
@@ -47,18 +48,18 @@ using ::testing::Not;
 using ::testing::Pointee;
 using ::testing::StrEq;
 
-Candidate MakeCandidate(const std::string& key, const std::string& value) {
+Candidate MakeCandidate(absl::string_view key, absl::string_view value) {
   Candidate cand;
   cand.key = key;
   cand.value = value;
   return cand;
 }
 
-Segment MakeSegment(const std::string& key,
+Segment MakeSegment(absl::string_view key,
                     absl::Span<const std::string> values) {
   Segment seg;
   seg.set_key(key);
-  for (const std::string& val : values) {
+  for (absl::string_view val : values) {
     Candidate* cand = seg.add_candidate();
     cand->key = key;
     cand->value = val;

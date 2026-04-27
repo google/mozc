@@ -813,7 +813,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
       EXPECT_TRUE(keycode_to_t13n_map[i] == nullptr ||
                   keycode_to_t13n_map[i] == std::string(""));
     } else {
-      const std::string& half_ascii =
+      absl::string_view half_ascii =
           seg.meta_candidate(transliteration::HALF_ASCII).value;
       if (keycode_to_t13n_map[i] && keycode_to_t13n_map[i] != std::string("")) {
         EXPECT_EQ(half_ascii, keycode_to_t13n_map[i]);

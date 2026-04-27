@@ -34,6 +34,7 @@
 #include <string>
 
 #include "absl/functional/any_invocable.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -45,10 +46,10 @@ class SegmenterBitarrayGenerator {
   SegmenterBitarrayGenerator& operator=(const SegmenterBitarrayGenerator&) =
       delete;
   static void GenerateBitarray(int lsize, int rsize, IsBoundaryFunc is_boundary,
-                               const std::string& output_size_info,
-                               const std::string& output_ltable,
-                               const std::string& output_rtable,
-                               const std::string& output_bitarray);
+                               absl::string_view output_size_info,
+                               absl::string_view output_ltable,
+                               absl::string_view output_rtable,
+                               absl::string_view output_bitarray);
 };
 
 }  // namespace mozc
