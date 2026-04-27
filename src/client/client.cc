@@ -852,7 +852,7 @@ bool Client::LaunchToolWithProtoBuf(const commands::Output &output) {
   return LaunchTool(mode, "");
 }
 
-bool Client::LaunchTool(absl::string_view mode,
+bool Client::LaunchTool(const std::string &mode,
                         const absl::string_view extra_arg) {
   // Don't execute any child process if the parent process is not
   // in proper runlevel.
@@ -912,7 +912,7 @@ bool Client::LaunchTool(absl::string_view mode,
   return true;
 }
 
-bool Client::OpenBrowser(absl::string_view url) {
+bool Client::OpenBrowser(const std::string &url) {
   if (!IsValidRunLevel()) {
     return false;
   }
