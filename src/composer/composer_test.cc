@@ -2543,7 +2543,7 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
   }
   composer_->Reset();
   {
-    for (const std::string& c : Util::SplitStringToUtf8Chars(kTestStr)) {
+    for (absl::string_view c : Util::SplitStringToUtf8Chars(kTestStr)) {
       composer_->InsertCharacterPreedit(c);
     }
     const std::string preedit = composer_->GetStringForPreedit();

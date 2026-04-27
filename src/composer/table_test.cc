@@ -65,7 +65,7 @@ static void InitTable(Table* table) {
   table->AddRule("nn", "ん", "");
 }
 
-std::string GetResult(const Table& table, const absl::string_view key) {
+absl::string_view GetResult(const Table& table, const absl::string_view key) {
   const Entry* entry = table.LookUp(key);
   if (entry == nullptr) {
     return "<nullptr>";
@@ -73,7 +73,7 @@ std::string GetResult(const Table& table, const absl::string_view key) {
   return entry->result();
 }
 
-std::string GetInput(const Table& table, const absl::string_view key) {
+absl::string_view GetInput(const Table& table, const absl::string_view key) {
   const Entry* entry = table.LookUp(key);
   if (entry == nullptr) {
     return "<nullptr>";

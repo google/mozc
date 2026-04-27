@@ -150,7 +150,7 @@ class Client : public ClientInterface {
   void set_suppress_error_dialog(bool suppress) override;
   void set_client_capability(const commands::Capability& capability) override;
 
-  bool LaunchTool(const std::string& mode, absl::string_view arg) override;
+  bool LaunchTool(absl::string_view mode, absl::string_view arg) override;
   bool LaunchToolWithProtoBuf(const commands::Output& output) override;
   // Converts Output message from server to corresponding mozc_tool arguments
   // If launch_tool_mode is not set or NO_TOOL is set or an invalid value is
@@ -158,7 +158,7 @@ class Client : public ClientInterface {
   static bool TranslateProtoBufToMozcToolArg(const commands::Output& output,
                                              std::string* mode);
 
-  bool OpenBrowser(const std::string& url) override;
+  bool OpenBrowser(absl::string_view url) override;
 
  private:
   friend class ClientTestPeer;

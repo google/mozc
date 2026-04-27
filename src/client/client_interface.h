@@ -198,7 +198,7 @@ class ClientInterface {
 
   // Launches mozc tool. |mode| is the mode of MozcTool,
   // e,g,. "config_dialog", "dictionary_tool".
-  virtual bool LaunchTool(const std::string& mode,
+  virtual bool LaunchTool(absl::string_view mode,
                           absl::string_view extra_arg) = 0;
   // Launches mozc_tool with output message.
   // If launch_tool_mode has no value or is set as NO_TOOL, this function will
@@ -206,7 +206,7 @@ class ClientInterface {
   virtual bool LaunchToolWithProtoBuf(const commands::Output& output) = 0;
 
   // Launches browser and pass |url|
-  virtual bool OpenBrowser(const std::string& url) = 0;
+  virtual bool OpenBrowser(absl::string_view url) = 0;
 };
 
 class ClientFactoryInterface {

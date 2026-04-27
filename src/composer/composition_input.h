@@ -66,7 +66,7 @@ class CompositionInput final {
   void Clear();
   bool Empty() const;
 
-  const std::string& raw() const { return raw_; }
+  absl::string_view raw() const { return raw_; }
   void clear_raw() { raw_.clear(); }
   std::string* mutable_raw() { return &raw_; }
   template <typename String>
@@ -74,7 +74,7 @@ class CompositionInput final {
     strings::Assign(raw_, std::forward<String>(raw));
   }
 
-  const std::string& conversion() const { return conversion_; }
+  absl::string_view conversion() const { return conversion_; }
   void clear_conversion() { conversion_.clear(); }
   template <typename String>
   void set_conversion(String&& conversion) {

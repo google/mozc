@@ -250,7 +250,7 @@ absl::btree_set<std::string> CharChunk::GetExpandedResults() const {
                         &loop_result)) {
       continue;
     }
-    for (const std::string& result : loop_result) {
+    for (absl::string_view result : loop_result) {
       results.insert(DeleteSpecialKeys(result));
     }
   }
@@ -458,7 +458,7 @@ void CharChunk::AddInputAndConvertedChar(CompositionInput* input) {
     return;
   }
 
-  const std::string key_input = pending_ + input->conversion();
+  const std::string key_input = absl::StrCat(pending_, input->conversion());
   size_t key_length = 0;
   bool fixed = false;
   const Entry* entry = table_->LookUpPrefix(key_input, &key_length, &fixed);

@@ -1695,7 +1695,7 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
 
 namespace {
 bool HasResult(const absl::btree_set<std::string>& results,
-               const std::string& value) {
+               absl::string_view value) {
   return (results.find(value) != results.end());
 }
 }  // namespace

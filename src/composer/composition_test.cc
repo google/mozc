@@ -52,10 +52,10 @@ std::string GetRawString(const Composition& composition) {
   return composition.GetStringWithTransliterator(Transliterators::RAW_STRING);
 }
 
-size_t InsertCharacters(const std::string& input, size_t pos,
+size_t InsertCharacters(absl::string_view input, size_t pos,
                         Composition& composition) {
   for (size_t i = 0; i < input.size(); ++i) {
-    pos = composition.InsertAt(pos, input.substr(i, 1));
+    pos = composition.InsertAt(pos, std::string(input.substr(i, 1)));
   }
   return pos;
 }

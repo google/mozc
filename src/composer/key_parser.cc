@@ -195,7 +195,7 @@ bool KeyParser::ParseKeyVector(const absl::Span<const std::string> keys,
   key_event->Clear();
   absl::btree_set<commands::KeyEvent::ModifierKey> modifiers_set;
 
-  for (const std::string& key : keys) {
+  for (absl::string_view key : keys) {
     if (Util::CharsLen(key) == 1) {
       if (key_event->has_key_code()) {
         // Multiple keys are not supported.

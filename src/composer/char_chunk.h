@@ -147,28 +147,28 @@ class CharChunk final {
   }
   std::shared_ptr<const Table> table_for_testing() const { return table_; }
 
-  const std::string& raw() const { return raw_; }
+  absl::string_view raw() const { return raw_; }
   template <typename String>
   void set_raw(String&& raw) {
     strings::Assign(raw_, std::forward<String>(raw));
     local_length_cache_ = std::string::npos;
   }
 
-  const std::string& conversion() const { return conversion_; }
+  absl::string_view conversion() const { return conversion_; }
   template <typename String>
   void set_conversion(String&& conversion) {
     strings::Assign(conversion_, std::forward<String>(conversion));
     local_length_cache_ = std::string::npos;
   }
 
-  const std::string& pending() const { return pending_; }
+  absl::string_view pending() const { return pending_; }
   template <typename String>
   void set_pending(String&& pending) {
     strings::Assign(pending_, std::forward<String>(pending));
     local_length_cache_ = std::string::npos;
   }
 
-  const std::string& ambiguous() const { return ambiguous_; }
+  absl::string_view ambiguous() const { return ambiguous_; }
   template <typename String>
   void set_ambiguous(String&& ambiguous) {
     strings::Assign(ambiguous_, std::forward<String>(ambiguous));
