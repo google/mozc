@@ -311,7 +311,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     return segments;
   }
 
-  static void InsertASCIISequence(const std::string& text,
+  static void InsertASCIISequence(absl::string_view text,
                                   composer::Composer* composer) {
     for (size_t i = 0; i < text.size(); ++i) {
       commands::KeyEvent key;

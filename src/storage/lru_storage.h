@@ -124,7 +124,7 @@ class LruStorage {
   // Returns the seed used for fingerprinting.
   uint32_t seed() const { return seed_; }
 
-  const std::string& filename() const { return filename_; }
+  absl::string_view filename() const { return filename_; }
 
   // Writes one entry at |i| th index.
   // i must be 0 <= i < size.

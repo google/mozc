@@ -42,7 +42,7 @@ class StringStorageInterface {
   virtual ~StringStorageInterface() = default;
 
   virtual bool Load(std::string* output) const = 0;
-  virtual bool Save(const std::string& input) const = 0;
+  virtual bool Save(absl::string_view input) const = 0;
 };
 
 class EncryptedStringStorage : public StringStorageInterface {
@@ -53,13 +53,13 @@ class EncryptedStringStorage : public StringStorageInterface {
   EncryptedStringStorage& operator=(const EncryptedStringStorage&) = delete;
 
   bool Load(std::string* output) const override;
-  bool Save(const std::string& input) const override;
+  bool Save(absl::string_view input) const override;
 
-  const std::string& filename() const { return filename_; }
+  absl::string_view filename() const { return filename_; }
 
  protected:
-  virtual bool Encrypt(const std::string& salt, std::string* data) const;
-  virtual bool Decrypt(const std::string& salt, std::string* data) const;
+  virtual bool Encrypt(absl::string_view salt, std::string* data) const;
+  virtual bool Decrypt(absl::string_view salt, std::string* data) const;
 
  private:
   std::string filename_;

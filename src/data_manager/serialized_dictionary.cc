@@ -188,8 +188,8 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
 }
 
 void SerializedDictionary::CompileToFiles(
-    const std::string& input, const std::string& output_token_array,
-    const std::string& output_string_array) {
+    absl::string_view input, absl::string_view output_token_array,
+    absl::string_view output_string_array) {
   InputFileStream ifs(input);
   CHECK(ifs.good());
   std::map<std::string, TokenList> dic;
@@ -199,8 +199,8 @@ void SerializedDictionary::CompileToFiles(
 
 void SerializedDictionary::CompileToFiles(
     const std::map<std::string, TokenList>& dic,
-    const std::string& output_token_array,
-    const std::string& output_string_array) {
+    absl::string_view output_token_array,
+    absl::string_view output_string_array) {
   std::unique_ptr<uint32_t[]> buf1, buf2;
   const std::pair<absl::string_view, absl::string_view> data =
       Compile(dic, &buf1, &buf2);

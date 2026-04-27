@@ -101,13 +101,13 @@ absl::string_view DataManager::GetDataSetMagicNumber(absl::string_view type) {
 
 // static
 absl::StatusOr<std::unique_ptr<const DataManager>> DataManager::CreateFromFile(
-    const std::string& path) {
+    absl::string_view path) {
   return CreateFromFile(path, kDataSetMagicNumber);
 }
 
 // static
 absl::StatusOr<std::unique_ptr<const DataManager>> DataManager::CreateFromFile(
-    const std::string& path, absl::string_view magic) {
+    absl::string_view path, absl::string_view magic) {
   auto data_manager = std::make_unique<DataManager>();
   absl::Status status = data_manager->InitFromFile(path, magic);
   if (!status.ok()) {
@@ -163,7 +163,7 @@ DataManager::CreateUserPosManagerDataFromArray(absl::string_view array,
 
 // static
 absl::StatusOr<std::unique_ptr<const DataManager>>
-DataManager::CreateUserPosManagerDataFromFile(const std::string& path,
+DataManager::CreateUserPosManagerDataFromFile(absl::string_view path,
                                               absl::string_view magic) {
   auto data_manager = std::make_unique<DataManager>();
   absl::Status status =
@@ -426,11 +426,11 @@ absl::Status DataManager::InitFromReader(const DataSetReader& reader) {
   return absl::OkStatus();
 }
 
-absl::Status DataManager::InitFromFile(const std::string& path) {
+absl::Status DataManager::InitFromFile(absl::string_view path) {
   return InitFromFile(path, kDataSetMagicNumber);
 }
 
-absl::Status DataManager::InitFromFile(const std::string& path,
+absl::Status DataManager::InitFromFile(absl::string_view path,
                                        absl::string_view magic) {
   absl::StatusOr<Mmap> mmap = Mmap::Map(path, Mmap::READ_ONLY);
   if (!mmap.ok()) {
@@ -456,7 +456,7 @@ absl::Status DataManager::InitUserPosManagerDataFromArray(
 }
 
 absl::Status DataManager::InitUserPosManagerDataFromFile(
-    const std::string& path, absl::string_view magic) {
+    absl::string_view path, absl::string_view magic) {
   absl::StatusOr<Mmap> mmap = Mmap::Map(path, Mmap::READ_ONLY);
   if (!mmap.ok()) {
     return absl::PermissionDeniedError(

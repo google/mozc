@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
       << absl::GetFlag(FLAGS_magic);
 
   struct Input {
-    Input(const std::string& n, int a, const std::string& f)
+    Input(absl::string_view n, int a, absl::string_view f)
         : name(n), alignment(a), filename(f) {}
 
     std::string name;

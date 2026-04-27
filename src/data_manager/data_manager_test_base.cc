@@ -61,7 +61,7 @@ using ::mozc::dictionary::PosMatcher;
 
 DataManagerTestBase::DataManagerTestBase(
     DataManager* data_manager, const size_t lsize, const size_t rsize,
-    IsBoundaryFunc is_boundary, const std::string& connection_txt_file,
+    IsBoundaryFunc is_boundary, absl::string_view connection_txt_file,
     const int expected_resolution, std::vector<std::string> dictionary_files,
     std::vector<std::string> suggestion_filter_files)
     : data_manager_(data_manager),

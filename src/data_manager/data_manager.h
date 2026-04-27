@@ -60,8 +60,8 @@ class DataManager {
   // error status on failure.
   using DMStatusOr = absl::StatusOr<std::unique_ptr<const DataManager>>;
 
-  static DMStatusOr CreateFromFile(const std::string& path);
-  static DMStatusOr CreateFromFile(const std::string& path,
+  static DMStatusOr CreateFromFile(absl::string_view path);
+  static DMStatusOr CreateFromFile(absl::string_view path,
                                    absl::string_view magic);
 
   static DMStatusOr CreateFromArray(absl::string_view array);
@@ -72,7 +72,7 @@ class DataManager {
 
   static DMStatusOr CreateUserPosManagerDataFromArray(absl::string_view array,
                                                       absl::string_view magic);
-  static DMStatusOr CreateUserPosManagerDataFromFile(const std::string& path,
+  static DMStatusOr CreateUserPosManagerDataFromFile(absl::string_view path,
                                                      absl::string_view magic);
 
   DataManager(const DataManager&) = delete;
@@ -154,8 +154,8 @@ class DataManager {
 
   // The same as above InitFromArray() but the data is loaded using mmap, which
   // is owned in this instance.
-  absl::Status InitFromFile(const std::string& path);
-  absl::Status InitFromFile(const std::string& path, absl::string_view magic);
+  absl::Status InitFromFile(absl::string_view path);
+  absl::Status InitFromFile(absl::string_view path, absl::string_view magic);
 
   // The same as above InitFromArray() but only parses data set for user pos
   // manager.  For mozc runtime modules, use InitFromArray() because this method
@@ -164,7 +164,7 @@ class DataManager {
   // partial data set).
   absl::Status InitUserPosManagerDataFromArray(absl::string_view array,
                                                absl::string_view magic);
-  absl::Status InitUserPosManagerDataFromFile(const std::string& path,
+  absl::Status InitUserPosManagerDataFromFile(absl::string_view path,
                                               absl::string_view magic);
 
  private:

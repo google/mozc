@@ -37,6 +37,7 @@
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "base/encryptor.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
@@ -93,7 +94,7 @@ bool EncryptedStringStorage::Load(std::string* output) const {
   return Decrypt(salt, output);
 }
 
-bool EncryptedStringStorage::Decrypt(const std::string& salt,
+bool EncryptedStringStorage::Decrypt(absl::string_view salt,
                                      std::string* data) const {
   DCHECK(data);
 
@@ -123,7 +124,7 @@ bool EncryptedStringStorage::Decrypt(const std::string& salt,
   return true;
 }
 
-bool EncryptedStringStorage::Save(const std::string& input) const {
+bool EncryptedStringStorage::Save(absl::string_view input) const {
   // Generate salt.
   const std::string salt = mozc::Random().ByteString(kSaltSize);
 
@@ -164,7 +165,7 @@ bool EncryptedStringStorage::Save(const std::string& input) const {
   return true;
 }
 
-bool EncryptedStringStorage::Encrypt(const std::string& salt,
+bool EncryptedStringStorage::Encrypt(absl::string_view salt,
                                      std::string* data) const {
   DCHECK(data);
 

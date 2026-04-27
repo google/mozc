@@ -131,7 +131,7 @@ class CandidateList final {
   CandidateList* AddSubCandidateList();
 
   void set_name(std::string name) { name_ = std::move(name); }
-  const std::string& name() const { return name_; }
+  absl::string_view name() const { return name_; }
 
   void set_page_size(size_t page_size) { page_size_ = page_size; }
   size_t page_size() const { return page_size_; }

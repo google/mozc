@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "base/file_stream.h"
 
 namespace mozc {
@@ -46,7 +47,7 @@ namespace mozc {
 // }
 class ConnectionFileReader {
  public:
-  explicit ConnectionFileReader(const std::string& filename);
+  explicit ConnectionFileReader(absl::string_view filename);
   ConnectionFileReader(const ConnectionFileReader&) = delete;
   ConnectionFileReader& operator=(const ConnectionFileReader&) = delete;
   ~ConnectionFileReader();

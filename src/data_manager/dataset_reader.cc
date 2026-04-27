@@ -169,7 +169,7 @@ bool DataSetReader::VerifyChecksum(absl::string_view memblock) {
     return false;
   }
   // Checksum is computed for all but last 28 bytes.
-  const std::string& actual_checksum = internal::UnverifiedSHA1::MakeDigest(
+  const std::string actual_checksum = internal::UnverifiedSHA1::MakeDigest(
       memblock.substr(0, memblock.size() - 28));
 
   // Extract the stored SHA1; see dataset.proto for file format.

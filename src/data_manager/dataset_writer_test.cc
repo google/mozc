@@ -121,8 +121,8 @@ TEST(DatasetWriterTest, Write) {
   SetEntry("file64", 128, 5, metadata.add_entries());
   SetEntry("file128", 144, 5, metadata.add_entries());
   SetEntry("file256", 160, 5, metadata.add_entries());
-  const std::string& metadata_chunk = metadata.SerializeAsString();
-  const std::string& metadata_size =
+  const std::string metadata_chunk = metadata.SerializeAsString();
+  const std::string metadata_size =
       Util::SerializeUint64(metadata_chunk.size());
   // Append data_chunk except for the last '\0'.
   std::string expected(data_chunk, sizeof(data_chunk) - 1);

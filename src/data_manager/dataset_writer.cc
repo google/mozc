@@ -54,9 +54,9 @@ bool IsValidAlignment(int a) {
 
 }  // namespace
 
-void DataSetWriter::Add(const std::string& name, int alignment,
+void DataSetWriter::Add(absl::string_view name, int alignment,
                         absl::string_view data) {
-  CHECK(seen_names_.insert(name).second) << name << " was already added";
+  CHECK(seen_names_.emplace(name).second) << name << " was already added";
   AppendPadding(alignment);
   DataSetMetadata::Entry* entry = metadata_.add_entries();
   entry->set_name(name);
@@ -65,8 +65,8 @@ void DataSetWriter::Add(const std::string& name, int alignment,
   image_.append(data.data(), data.size());
 }
 
-void DataSetWriter::AddFile(const std::string& name, int alignment,
-                            const std::string& filepath) {
+void DataSetWriter::AddFile(absl::string_view name, int alignment,
+                            absl::string_view filepath) {
   absl::StatusOr<std::string> content = FileUtil::GetContents(filepath);
   CHECK_OK(content);
   Add(name, alignment, *content);

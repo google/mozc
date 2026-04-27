@@ -48,11 +48,11 @@ class DataSetWriter {
 
   // Adds a binary image to the packed file so that data is aligned at the
   // specified bit boundary (8, 16, 32, 64, ...).
-  void Add(const std::string& name, int alignment, absl::string_view data);
+  void Add(absl::string_view name, int alignment, absl::string_view data);
 
   // Similar to Add() for absl::string_view but data is read from file.
-  void AddFile(const std::string& name, int alignment,
-               const std::string& filepath);
+  void AddFile(absl::string_view name, int alignment,
+               absl::string_view filepath);
 
   // Writes the image to output.  If |output| is a file, it should be opened in
   // binary mode.

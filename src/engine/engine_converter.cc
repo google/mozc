@@ -1496,7 +1496,7 @@ void EngineConverter::AppendCandidateList() {
   const Segment& segment = segments_.conversion_segment(segment_index_);
 
   auto get_candidate_dedup_key =
-      [](const converter::Candidate& c) -> const std::string& {
+      [](const converter::Candidate& c) -> absl::string_view {
     return c.value;
   };
 
@@ -1769,7 +1769,7 @@ void EngineConverter::OnStartComposition(const commands::Context& context) {
     return;
   }
 
-  const std::string& preceding_text = context.preceding_text();
+  absl::string_view preceding_text = context.preceding_text();
   // If preceding text is empty, it is OK to reset the history segments by
   // calling ResetConversion.
   if (preceding_text.empty()) {

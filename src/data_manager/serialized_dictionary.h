@@ -281,12 +281,12 @@ class SerializedDictionary {
       std::unique_ptr<uint32_t[]>* output_string_array_buf);
 
   // Creates serialized data and writes them to files.
-  static void CompileToFiles(const std::string& input,
-                             const std::string& output_token_array,
-                             const std::string& output_string_array);
+  static void CompileToFiles(absl::string_view input,
+                             absl::string_view output_token_array,
+                             absl::string_view output_string_array);
   static void CompileToFiles(const std::map<std::string, TokenList>& dic,
-                             const std::string& output_token_array,
-                             const std::string& output_string_array);
+                             absl::string_view output_token_array,
+                             absl::string_view output_string_array);
 
   // Validates the serialized data.
   static bool VerifyData(absl::string_view token_array_data,
