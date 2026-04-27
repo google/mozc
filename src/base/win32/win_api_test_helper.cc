@@ -114,7 +114,8 @@ class HookTargetInfo {
         continue;
       }
       const FunctionPointer original_proc_address =
-          ::GetProcAddress(module_handle, request.proc_name.c_str());
+          reinterpret_cast<FunctionPointer>(
+              ::GetProcAddress(module_handle, request.proc_name.c_str()));
       if (original_proc_address == nullptr) {
         LOG(FATAL) << "GetProcAddress returned nullptr.";
         continue;
