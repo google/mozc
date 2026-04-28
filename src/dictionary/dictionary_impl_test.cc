@@ -36,6 +36,7 @@
 #include <utility>
 
 #include "absl/strings/string_view.h"
+#include "base/container/tuple.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -75,8 +76,9 @@ std::unique_ptr<DictionaryData> CreateDictionaryData() {
   auto val_dict = std::make_unique<ValueDictionary>(*ret->pos_matcher,
                                                     sys_dict->value_trie());
 
-  std::unique_ptr<UserPos> user_pos =
-      UserPos::CreateFromDataManager(data_manager);
+  auto user_pos =
+      make_unique_from_tuples<UserPos>(data_manager.GetUserPosData());
+
   ret->user_dictionary = std::make_unique<dictionary::UserDictionary>(
       std::move(user_pos), *ret->pos_matcher);
   ret->dictionary = std::make_unique<DictionaryImpl>(

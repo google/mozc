@@ -45,12 +45,12 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/bits.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "rewriter/collocation_util.h"
@@ -63,8 +63,9 @@ namespace collocation_rewriter_internal {
 using ::mozc::storage::ExistenceFilter;
 
 absl::StatusOr<CollocationFilter> CollocationFilter::Create(
-    const absl::Span<const uint32_t> data) {
-  absl::StatusOr<ExistenceFilter> filter = ExistenceFilter::Read(data);
+    absl::string_view data) {
+  absl::StatusOr<ExistenceFilter> filter =
+      ExistenceFilter::Read(MakeAlignedConstSpan<uint32_t>(data));
   if (!filter.ok()) {
     return filter.status();
   }
@@ -80,8 +81,9 @@ bool CollocationFilter::Exists(const absl::string_view left,
 }
 
 absl::StatusOr<SuppressionFilter> SuppressionFilter::Create(
-    const absl::Span<const uint32_t> data) {
-  absl::StatusOr<ExistenceFilter> filter = ExistenceFilter::Read(data);
+    absl::string_view data) {
+  absl::StatusOr<ExistenceFilter> filter =
+      ExistenceFilter::Read(MakeAlignedConstSpan<uint32_t>(data));
   if (!filter.ok()) {
     return filter.status();
   }
@@ -521,24 +523,25 @@ bool CollocationRewriter::RewriteCollocation(Segments* segments) const {
 }
 
 std::unique_ptr<CollocationRewriter> CollocationRewriter::Create(
-    const DataManager& data_manager) {
+    dictionary::PosMatcher pos_matcher, absl::string_view collocation_data,
+    absl::string_view collocation_suppression_data) {
   absl::StatusOr<CollocationFilter> collocation_filter =
-      CollocationFilter::Create(data_manager.GetCollocationData());
+      CollocationFilter::Create(collocation_data);
   if (!collocation_filter.ok()) {
     LOG(ERROR) << collocation_filter.status();
     return nullptr;
   }
 
   absl::StatusOr<SuppressionFilter> suppression_filter =
-      SuppressionFilter::Create(data_manager.GetCollocationSuppressionData());
+      SuppressionFilter::Create(collocation_suppression_data);
   if (!suppression_filter.ok()) {
     LOG(ERROR) << suppression_filter.status();
     return nullptr;
   }
 
-  return std::make_unique<CollocationRewriter>(
-      dictionary::PosMatcher(data_manager.GetPosMatcherData()),
-      *std::move(collocation_filter), *std::move(suppression_filter));
+  return std::make_unique<CollocationRewriter>(std::move(pos_matcher),
+                                               *std::move(collocation_filter),
+                                               *std::move(suppression_filter));
 }
 
 bool CollocationRewriter::Rewrite(const ConversionRequest& request,

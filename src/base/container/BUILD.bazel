@@ -210,3 +210,17 @@ mozc_cc_test(
         "@com_google_absl//absl/strings",
     ],
 )
+
+mozc_cc_library(
+    name = "tuple",
+    hdrs = ["tuple.h"],
+)
+
+mozc_cc_test(
+    name = "tuple_test",
+    srcs = ["tuple_test.cc"],
+    deps = [
+        ":tuple",
+        "//testing:gunit_main",
+    ],
+)

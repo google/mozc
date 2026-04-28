@@ -38,7 +38,6 @@
 #include "base/container/serialized_string_array.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "data_manager/emoji_data.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
@@ -70,7 +69,8 @@ namespace mozc {
 //   }
 class EmojiRewriter : public RewriterInterface {
  public:
-  explicit EmojiRewriter(const DataManager& data_manager);
+  EmojiRewriter(absl::string_view token_array_data,
+                absl::string_view string_array_data);
   EmojiRewriter(const EmojiRewriter&) = delete;
   EmojiRewriter& operator=(const EmojiRewriter&) = delete;
 

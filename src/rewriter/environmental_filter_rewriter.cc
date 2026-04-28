@@ -53,7 +53,6 @@
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "data_manager/emoji_data.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -364,16 +363,12 @@ int EnvironmentalFilterRewriter::capability(
 }
 
 EnvironmentalFilterRewriter::EnvironmentalFilterRewriter(
-    const DataManager& data_manager) {
-  absl::string_view token_array_data;
-  absl::string_view string_array_data;
-
+    absl::string_view token_array_data, absl::string_view string_array_data) {
   // TODO(mozc-team):
   // Currently, this rewriter uses data from emoji_data.tsv, which is for Emoji
   // conversion, as a source of Emoji version information. However,
   // emoji_data.tsv lacks some Emoji, including Emoji with skin-tones and
   // family/couple Emojis. As a future work, the data source should be refined.
-  data_manager.GetEmojiRewriterData(&token_array_data, &string_array_data);
   const absl::flat_hash_map<EmojiVersion, std::vector<std::u32string>>
       version_to_targets = ExtractTargetEmojis(
           {EmojiVersion::E12_1, EmojiVersion::E13_0, EmojiVersion::E13_1,

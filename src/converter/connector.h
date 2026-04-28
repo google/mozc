@@ -40,7 +40,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "data_manager/data_manager.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 namespace mozc {
@@ -48,9 +47,6 @@ namespace mozc {
 class Connector final {
  public:
   static constexpr int16_t kInvalidCost = 30000;
-
-  static absl::StatusOr<Connector> CreateFromDataManager(
-      const DataManager& data_manager);
 
   static absl::StatusOr<Connector> Create(absl::string_view connection_data);
 

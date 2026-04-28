@@ -41,6 +41,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -64,6 +65,8 @@
 #include "base/vlog.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/user_pos.h"
 #include "rewriter/dictionary_generator.h"
 
 ABSL_FLAG(std::string, sorting_table, "", "sorting table file");
@@ -1089,7 +1092,13 @@ int main(int argc, char** argv) {
           absl::GetFlag(FLAGS_user_pos_manager_data), kMagicNumber);
   CHECK_OK(data_manager);
 
-  mozc::rewriter::DictionaryGenerator dictionary(*data_manager.value());
+  const auto user_pos = std::make_from_tuple<mozc::dictionary::UserPos>(
+      data_manager.value()->GetUserPosData());
+  const mozc::dictionary::PosMatcher pos_matcher(
+      data_manager.value()->GetPosMatcherData());
+
+  mozc::rewriter::DictionaryGenerator dictionary(std::move(user_pos),
+                                                 std::move(pos_matcher));
   mozc::MakeDictionary(absl::GetFlag(FLAGS_input),
                        absl::GetFlag(FLAGS_sorting_table),
                        absl::GetFlag(FLAGS_ordering_rule), dictionary);

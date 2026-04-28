@@ -37,6 +37,7 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/container/tuple.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -77,7 +78,9 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
 
   CollocationRewriterTest()
       : pos_matcher_(data_manager_.GetPosMatcherData()),
-        collocation_rewriter_(CollocationRewriter::Create(data_manager_)) {}
+        collocation_rewriter_(
+            apply_from_tuples(CollocationRewriter::Create, pos_matcher_,
+                              data_manager_.GetCollocationData())) {}
 
   // Makes a segment from SegmentData.
   static void MakeSegment(const SegmentData& data, Segment* segment) {

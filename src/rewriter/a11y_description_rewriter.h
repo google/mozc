@@ -37,7 +37,6 @@
 #include "absl/container/flat_hash_set.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
@@ -46,7 +45,8 @@ namespace mozc {
 
 class A11yDescriptionRewriter : public RewriterInterface {
  public:
-  explicit A11yDescriptionRewriter(const DataManager& data_manager);
+  explicit A11yDescriptionRewriter(absl::string_view token_array_data,
+                                   absl::string_view string_array_data);
 
   A11yDescriptionRewriter(const A11yDescriptionRewriter&) = delete;
   A11yDescriptionRewriter& operator=(const A11yDescriptionRewriter&) = delete;

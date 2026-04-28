@@ -33,6 +33,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -43,7 +44,6 @@
 #include "base/vlog.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "rewriter/number_compound_util.h"
 
 namespace mozc {
@@ -129,13 +129,13 @@ bool RewriteNumber(Segment* segment, const converter::Candidate& candidate) {
 
 }  // namespace
 
-FocusCandidateRewriter::FocusCandidateRewriter(const DataManager& data_manager)
-    : pos_matcher_(data_manager.GetPosMatcherData()) {
-  absl::string_view data = data_manager.GetCounterSuffixSortedArray();
+FocusCandidateRewriter::FocusCandidateRewriter(
+    absl::string_view counter_suffix_data, dictionary::PosMatcher pos_matcher)
+    : pos_matcher_(std::move(pos_matcher)) {
   // Data manager is responsible for providing a valid data.  Just verify data
   // in debug build.
-  DCHECK(SerializedStringArray::VerifyData(data));
-  suffix_array_.Set(data);
+  DCHECK(SerializedStringArray::VerifyData(counter_suffix_data));
+  suffix_array_.Set(counter_suffix_data);
 }
 
 FocusCandidateRewriter::~FocusCandidateRewriter() = default;

@@ -29,12 +29,14 @@
 
 #include "data_manager/data_manager.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <new>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -475,22 +477,16 @@ absl::string_view DataManager::GetSystemDictionaryData() const {
   return dictionary_data_;
 }
 
-absl::Span<const uint32_t> DataManager::GetCollocationData() const {
-  return MakeAlignedConstSpan<uint32_t>(collocation_data_);
-}
-
-absl::Span<const uint32_t> DataManager::GetCollocationSuppressionData() const {
-  return MakeAlignedConstSpan<uint32_t>(collocation_suppression_data_);
+std::array<absl::string_view, 2> DataManager::GetCollocationData() const {
+  return {collocation_data_, collocation_suppression_data_};
 }
 
 absl::Span<const uint32_t> DataManager::GetSuggestionFilterData() const {
   return MakeAlignedConstSpan<uint32_t>(suggestion_filter_data_);
 }
 
-void DataManager::GetUserPosData(absl::string_view* token_array_data,
-                                 absl::string_view* string_array_data) const {
-  *token_array_data = user_pos_token_array_data_;
-  *string_array_data = user_pos_string_array_data_;
+std::array<absl::string_view, 2> DataManager::GetUserPosData() const {
+  return {user_pos_token_array_data_, user_pos_string_array_data_};
 }
 
 absl::Span<const uint16_t> DataManager::GetPosMatcherData() const {
@@ -501,106 +497,73 @@ absl::Span<const uint8_t> DataManager::GetPosGroupData() const {
   return MakeAlignedConstSpan<uint8_t>(pos_group_data_);
 }
 
-void DataManager::GetSegmenterData(
-    size_t* l_num_elements, size_t* r_num_elements,
-    absl::Span<const uint16_t>* l_table, absl::Span<const uint16_t>* r_table,
-    absl::Span<const char>* bitarray_data,
-    absl::Span<const uint16_t>* boundary_data) const {
-  *l_num_elements = segmenter_compressed_lsize_;
-  *r_num_elements = segmenter_compressed_rsize_;
-  *l_table = MakeAlignedConstSpan<uint16_t>(segmenter_ltable_);
-  *r_table = MakeAlignedConstSpan<uint16_t>(segmenter_rtable_);
-  *bitarray_data = MakeAlignedConstSpan<char>(segmenter_bitarray_);
-  *boundary_data = MakeAlignedConstSpan<uint16_t>(boundary_data_);
+std::tuple<size_t, size_t, absl::Span<const uint16_t>,
+           absl::Span<const uint16_t>, absl::Span<const char>,
+           absl::Span<const uint16_t>>
+DataManager::GetSegmenterData() const {
+  return {segmenter_compressed_lsize_,
+          segmenter_compressed_rsize_,
+          MakeAlignedConstSpan<uint16_t>(segmenter_ltable_),
+          MakeAlignedConstSpan<uint16_t>(segmenter_rtable_),
+          MakeAlignedConstSpan<char>(segmenter_bitarray_),
+          MakeAlignedConstSpan<uint16_t>(boundary_data_)};
 }
 
-void DataManager::GetSuffixDictionaryData(
-    absl::string_view* key_array_data, absl::string_view* value_array_data,
-    absl::string_view* token_array_data) const {
-  *key_array_data = suffix_key_array_data_;
-  *value_array_data = suffix_value_array_data_;
-  *token_array_data = suffix_token_array_data_;
+std::array<absl::string_view, 3> DataManager::GetSuffixDictionaryData() const {
+  return {suffix_key_array_data_, suffix_value_array_data_,
+          suffix_token_array_data_};
 }
 
-void DataManager::GetReadingCorrectionData(
-    absl::string_view* value_array_data, absl::string_view* error_array_data,
-    absl::string_view* correction_array_data) const {
-  *value_array_data = reading_correction_value_array_data_;
-  *error_array_data = reading_correction_error_array_data_;
-  *correction_array_data = reading_correction_correction_array_data_;
+std::array<absl::string_view, 3> DataManager::GetReadingCorrectionData() const {
+  return {reading_correction_value_array_data_,
+          reading_correction_error_array_data_,
+          reading_correction_correction_array_data_};
 }
 
-void DataManager::GetSymbolRewriterData(
-    absl::string_view* token_array_data,
-    absl::string_view* string_array_data) const {
-  *token_array_data = symbol_token_array_data_;
-  *string_array_data = symbol_string_array_data_;
+std::array<absl::string_view, 2> DataManager::GetSymbolRewriterData() const {
+  return {symbol_token_array_data_, symbol_string_array_data_};
 }
 
-void DataManager::GetEmoticonRewriterData(
-    absl::string_view* token_array_data,
-    absl::string_view* string_array_data) const {
-  *token_array_data = emoticon_token_array_data_;
-  *string_array_data = emoticon_string_array_data_;
+std::array<absl::string_view, 2> DataManager::GetEmoticonRewriterData() const {
+  return {emoticon_token_array_data_, emoticon_string_array_data_};
 }
 
-void DataManager::GetEmojiRewriterData(
-    absl::string_view* token_array_data,
-    absl::string_view* string_array_data) const {
-  *token_array_data = emoji_token_array_data_;
-  *string_array_data = emoji_string_array_data_;
+std::array<absl::string_view, 2> DataManager::GetEmojiRewriterData() const {
+  return {emoji_token_array_data_, emoji_string_array_data_};
 }
 
-void DataManager::GetSingleKanjiRewriterData(
-    absl::string_view* token_array_data, absl::string_view* string_array_data,
-    absl::string_view* variant_type_array_data,
-    absl::string_view* variant_token_array_data,
-    absl::string_view* variant_string_array_data,
-    absl::string_view* noun_prefix_token_array_data,
-    absl::string_view* noun_prefix_string_array_data) const {
-  *token_array_data = single_kanji_token_array_data_;
-  *string_array_data = single_kanji_string_array_data_;
-  *variant_type_array_data = single_kanji_variant_type_data_;
-  *variant_token_array_data = single_kanji_variant_token_array_data_;
-  *variant_string_array_data = single_kanji_variant_string_array_data_;
-  *noun_prefix_token_array_data = single_kanji_noun_prefix_token_array_data_;
-  *noun_prefix_string_array_data = single_kanji_noun_prefix_string_array_data_;
+std::array<absl::string_view, 7> DataManager::GetSingleKanjiRewriterData()
+    const {
+  return {single_kanji_token_array_data_,
+          single_kanji_string_array_data_,
+          single_kanji_variant_type_data_,
+          single_kanji_variant_token_array_data_,
+          single_kanji_variant_string_array_data_,
+          single_kanji_noun_prefix_token_array_data_,
+          single_kanji_noun_prefix_string_array_data_};
 }
 
-void DataManager::GetA11yDescriptionRewriterData(
-    absl::string_view* token_array_data,
-    absl::string_view* string_array_data) const {
-  *token_array_data = a11y_description_token_array_data_;
-  *string_array_data = a11y_description_string_array_data_;
+std::array<absl::string_view, 2> DataManager::GetA11yDescriptionRewriterData()
+    const {
+  return {a11y_description_token_array_data_,
+          a11y_description_string_array_data_};
 }
 
 absl::string_view DataManager::GetCounterSuffixSortedArray() const {
   return counter_suffix_data_;
 }
 
-void DataManager::GetZeroQueryData(
-    absl::string_view* zero_query_token_array_data,
-    absl::string_view* zero_query_string_array_data,
-    absl::string_view* zero_query_number_token_array_data,
-    absl::string_view* zero_query_number_string_array_data) const {
-  *zero_query_token_array_data = zero_query_token_array_data_;
-  *zero_query_string_array_data = zero_query_string_array_data_;
-  *zero_query_number_token_array_data = zero_query_number_token_array_data_;
-  *zero_query_number_string_array_data = zero_query_number_string_array_data_;
+std::array<absl::string_view, 4> DataManager::GetZeroQueryData() const {
+  return {zero_query_token_array_data_, zero_query_string_array_data_,
+          zero_query_number_token_array_data_,
+          zero_query_number_string_array_data_};
 }
 
 #ifndef NO_USAGE_REWRITER
-void DataManager::GetUsageRewriterData(
-    absl::string_view* base_conjugation_suffix_data,
-    absl::string_view* conjugation_suffix_data,
-    absl::string_view* conjugation_index_data,
-    absl::string_view* usage_items_data,
-    absl::string_view* string_array_data) const {
-  *base_conjugation_suffix_data = usage_base_conjugation_suffix_data_;
-  *conjugation_suffix_data = usage_conjugation_suffix_data_;
-  *conjugation_index_data = usage_conjugation_index_data_;
-  *usage_items_data = usage_items_data_;
-  *string_array_data = usage_string_array_data_;
+std::array<absl::string_view, 5> DataManager::GetUsageRewriterData() const {
+  return {usage_base_conjugation_suffix_data_, usage_conjugation_suffix_data_,
+          usage_conjugation_index_data_, usage_items_data_,
+          usage_string_array_data_};
 }
 #endif  // NO_USAGE_REWRITER
 

@@ -43,6 +43,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
+#include "base/container/tuple.h"
 #include "base/file_stream.h"
 #include "base/util.h"
 #include "converter/connector.h"
@@ -76,8 +77,8 @@ DataManagerTestBase::DataManagerTestBase(
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides
   // the expected boundary rule.
-  std::unique_ptr<Segmenter> segmenter(
-      Segmenter::CreateFromDataManager(*data_manager_));
+  auto segmenter =
+      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
   for (size_t rid = 0; rid < lsize_; ++rid) {
     for (size_t lid = 0; lid < rsize_; ++lid) {
       EXPECT_EQ(is_boundary_(rid, lid), segmenter->IsBoundary(rid, lid))
@@ -87,8 +88,8 @@ void DataManagerTestBase::SegmenterTest_SameAsInternal() {
 }
 
 void DataManagerTestBase::SegmenterTest_LNodeTest() {
-  std::unique_ptr<Segmenter> segmenter(
-      Segmenter::CreateFromDataManager(*data_manager_));
+  auto segmenter =
+      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
 
   // lnode is BOS
   Node lnode, rnode;
@@ -105,8 +106,8 @@ void DataManagerTestBase::SegmenterTest_LNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_RNodeTest() {
-  std::unique_ptr<Segmenter> segmenter(
-      Segmenter::CreateFromDataManager(*data_manager_));
+  auto segmenter =
+      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
 
   // rnode is EOS
   Node lnode, rnode;
@@ -123,8 +124,8 @@ void DataManagerTestBase::SegmenterTest_RNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_NodeTest() {
-  std::unique_ptr<Segmenter> segmenter(
-      Segmenter::CreateFromDataManager(*data_manager_));
+  auto segmenter =
+      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
 
   Node lnode, rnode;
   lnode.node_type = Node::NOR_NODE;
@@ -141,8 +142,8 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
-  std::unique_ptr<Segmenter> segmenter(
-      Segmenter::CreateFromDataManager(*data_manager_));
+  auto segmenter =
+      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
   const PosMatcher pos_matcher(data_manager_->GetPosMatcherData());
 
   Node lnode, rnode;
@@ -161,7 +162,8 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
 }
 
 void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
-  auto status_or_connector = Connector::CreateFromDataManager(*data_manager_);
+  auto status_or_connector =
+      Connector::Create(data_manager_->GetConnectorData());
   ASSERT_TRUE(status_or_connector.ok()) << status_or_connector.status();
   auto connector = std::move(status_or_connector).value();
 

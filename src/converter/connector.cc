@@ -46,7 +46,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/bits.h"
-#include "data_manager/data_manager.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 namespace mozc {
@@ -160,11 +159,6 @@ std::optional<uint16_t> Connector::Row::GetValue(uint16_t index) const {
         reinterpret_cast<const uint16_t*>(values_))[value_position];
   }
   return value;
-}
-
-absl::StatusOr<Connector> Connector::CreateFromDataManager(
-    const DataManager& data_manager) {
-  return Create(data_manager.GetConnectorData());
 }
 
 absl::StatusOr<Connector> Connector::Create(absl::string_view connection_data) {

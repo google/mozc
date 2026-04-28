@@ -46,7 +46,6 @@
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 
@@ -197,16 +196,6 @@ CorrectionRewriter::CorrectionRewriter(const engine::Modules& modules,
   correction_array_.Set(correction_array_data);
   DCHECK_EQ(value_array_.size(), error_array_.size());
   DCHECK_EQ(value_array_.size(), correction_array_.size());
-}
-
-// static
-std::unique_ptr<CorrectionRewriter>
-CorrectionRewriter::CreateCorrectionRewriter(const engine::Modules& modules) {
-  absl::string_view value_array_data, error_array_data, correction_array_data;
-  modules.GetDataManager().GetReadingCorrectionData(
-      &value_array_data, &error_array_data, &correction_array_data);
-  return std::make_unique<CorrectionRewriter>(
-      modules, value_array_data, error_array_data, correction_array_data);
 }
 
 bool CorrectionRewriter::Rewrite(const ConversionRequest& request,

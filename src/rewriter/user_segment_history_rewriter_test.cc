@@ -41,6 +41,7 @@
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
+#include "base/container/tuple.h"
 #include "base/file_util.h"
 #include "base/number_util.h"
 #include "base/system_util.h"
@@ -160,12 +161,15 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
   const PosMatcher& pos_matcher() const { return pos_matcher_; }
   const PosGroup& pos_group() const { return pos_group_; }
 
-  NumberRewriter* CreateNumberRewriter() const {
-    return new NumberRewriter(mock_data_manager_);
+  std::unique_ptr<NumberRewriter> CreateNumberRewriter() const {
+    return make_unique_from_tuples<NumberRewriter>(
+        mock_data_manager_.GetCounterSuffixSortedArray(), pos_matcher_);
   }
 
-  UserSegmentHistoryRewriter* CreateUserSegmentHistoryRewriter() const {
-    return new UserSegmentHistoryRewriter(pos_matcher_, pos_group_);
+  std::unique_ptr<UserSegmentHistoryRewriter> CreateUserSegmentHistoryRewriter()
+      const {
+    return std::make_unique<UserSegmentHistoryRewriter>(pos_matcher_,
+                                                        pos_group_);
   }
 
   void SetNumberForm(Config::CharacterForm form) {

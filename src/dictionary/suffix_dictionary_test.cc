@@ -36,6 +36,7 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/container/tuple.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
@@ -54,16 +55,9 @@ using ::testing::Return;
 
 TEST(SuffixDictionaryTest, Callback) {
   // Test SuffixDictionary with mock data.
-  std::unique_ptr<const SuffixDictionary> dic;
-  {
-    const testing::MockDataManager manager;
-    absl::string_view key_array_data, value_arra_data, token_array_data;
-    manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
-                                    &token_array_data);
-    dic = std::make_unique<SuffixDictionary>(key_array_data, value_arra_data,
-                                             token_array_data);
-    ASSERT_NE(nullptr, dic.get());
-  }
+  const testing::MockDataManager manager;
+  auto dic = make_unique_from_tuples<SuffixDictionary>(
+      manager.GetSuffixDictionaryData());
 
   MockCallback mock_callback;
   EXPECT_CALL(mock_callback, OnKey(_))
@@ -78,16 +72,9 @@ TEST(SuffixDictionaryTest, Callback) {
 
 TEST(SuffixDictionaryTest, LookupPredictive) {
   // Test SuffixDictionary with mock data.
-  std::unique_ptr<const SuffixDictionary> dic;
-  {
-    const testing::MockDataManager manager;
-    absl::string_view key_array_data, value_arra_data, token_array_data;
-    manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
-                                    &token_array_data);
-    dic = std::make_unique<SuffixDictionary>(key_array_data, value_arra_data,
-                                             token_array_data);
-    ASSERT_NE(nullptr, dic.get());
-  }
+  const testing::MockDataManager manager;
+  auto dic = make_unique_from_tuples<SuffixDictionary>(
+      manager.GetSuffixDictionaryData());
 
   {
     // Lookup with empty key.  All tokens are looked up.  Here, just verify the

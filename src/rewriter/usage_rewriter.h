@@ -45,7 +45,6 @@
 #include "base/container/serialized_string_array.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
@@ -55,8 +54,13 @@ namespace mozc {
 
 class UsageRewriter : public RewriterInterface {
  public:
-  UsageRewriter(const DataManager& data_manager,
-                const dictionary::DictionaryInterface& dictionary);
+  UsageRewriter(absl::string_view base_conjugation_suffix_data,
+                absl::string_view conjugation_suffix_data,
+                absl::string_view conjugation_index_data,
+                absl::string_view usage_items_data,
+                absl::string_view string_array_data,
+                const dictionary::DictionaryInterface& dictionary,
+                dictionary::PosMatcher pos_matcher);
   ~UsageRewriter() override = default;
   bool Rewrite(const ConversionRequest& request,
                Segments* segments) const override;
@@ -92,8 +96,8 @@ class UsageRewriter : public RewriterInterface {
   const UsageDictItem* LookupUsage(const converter::Candidate& candidate) const;
 
   absl::flat_hash_map<StrPair, const UsageDictItem*> key_value_usageitem_map_;
+  const dictionary::DictionaryInterface& dictionary_;
   const dictionary::PosMatcher pos_matcher_;
-  const dictionary::DictionaryInterface* dictionary_;
   const uint32_t* base_conjugation_suffix_ = nullptr;
   SerializedStringArray string_array_;
 

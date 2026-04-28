@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
+#include "base/container/tuple.h"
 #include "config/config_handler.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
@@ -82,22 +83,12 @@ class UsageRewriterTestPeer : public testing::TestPeer<UsageRewriter> {
   PEER_VARIABLE(string_array_);
 };
 
-class TestDataManager : public testing::MockDataManager {
- public:
-  MOCK_METHOD(void, GetUsageRewriterData,
-              (absl::string_view * base_conjugation_suffix_data,
-               absl::string_view* conjugation_suffix_data,
-               absl::string_view* conjugation_index_data,
-               absl::string_view* usage_items_data,
-               absl::string_view* string_array_data),
-              (const, override));
-};
-
 class UsageRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   UsageRewriterTest()
       : pos_matcher_(data_manager_.GetPosMatcherData()),
-        user_dictionary_(UserPos::CreateFromDataManager(data_manager_),
+        user_dictionary_(make_unique_from_tuples<dictionary::UserPos>(
+                             data_manager_.GetUserPosData()),
                          pos_matcher_) {}
 
   void SetUp() override { config::ConfigHandler::GetDefaultConfig(&config_); }
@@ -107,12 +98,9 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
-  UsageRewriter* CreateUsageRewriter() const {
-    return new UsageRewriter(data_manager_, user_dictionary_);
-  }
-
-  UsageRewriter* CreateUsageRewriterWithTestDataManager() const {
-    return new UsageRewriter(test_data_manager_, user_dictionary_);
+  std::unique_ptr<UsageRewriter> CreateUsageRewriter() const {
+    return make_unique_from_tuples<UsageRewriter>(
+        data_manager_.GetUsageRewriterData(), user_dictionary_, pos_matcher_);
   }
 
   static ConversionRequest ConvReq(const config::Config& config,
@@ -130,23 +118,9 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
   commands::Request request_;
   config::Config config_;
 
-  TestDataManager test_data_manager_;
   dictionary::PosMatcher pos_matcher_;
   UserDictionary user_dictionary_;
 };
-
-TEST_F(UsageRewriterTest, ConstructorTest) {
-  EXPECT_CALL(test_data_manager_, GetUsageRewriterData(_, _, _, _, _))
-      .WillOnce(SetArgPointee<4>(""));
-
-  std::unique_ptr<UsageRewriter> rewriter(
-      CreateUsageRewriterWithTestDataManager());
-
-  UsageRewriterTestPeer rewriter_peer(*rewriter);
-  EXPECT_TRUE(rewriter_peer.string_array_().empty());
-  EXPECT_TRUE(
-      SerializedStringArray::VerifyData(rewriter_peer.string_array_().data()));
-}
 
 TEST_F(UsageRewriterTest, CapabilityTest) {
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());

@@ -30,11 +30,13 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_H_
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
@@ -80,58 +82,64 @@ class DataManager {
   virtual ~DataManager() = default;
 
   virtual std::optional<std::string> GetFilename() const { return filename_; }
+
   virtual absl::Span<const uint16_t> GetPosMatcherData() const;
-  virtual void GetUserPosData(absl::string_view* token_array_data,
-                              absl::string_view* string_array_data) const;
+
+  // [token_array_data, string_array_data]
+  virtual std::array<absl::string_view, 2> GetUserPosData() const;
+
   virtual absl::string_view GetConnectorData() const;
+
   virtual absl::string_view GetSystemDictionaryData() const;
-  virtual absl::Span<const uint32_t> GetCollocationData() const;
-  virtual absl::Span<const uint32_t> GetCollocationSuppressionData() const;
+
   virtual absl::Span<const uint32_t> GetSuggestionFilterData() const;
+
+  // [collocation_data, collocation_suppression_data]
+  virtual std::array<absl::string_view, 2> GetCollocationData() const;
+
   virtual absl::Span<const uint8_t> GetPosGroupData() const;
-  virtual void GetSegmenterData(
-      size_t* l_num_elements, size_t* r_num_elements,
-      absl::Span<const uint16_t>* l_table, absl::Span<const uint16_t>* r_table,
-      absl::Span<const char>* bitarray_data,
-      absl::Span<const uint16_t>* boundary_data) const;
-  absl::string_view GetCounterSuffixSortedArray() const;
-  virtual void GetSuffixDictionaryData(
-      absl::string_view* key_array_data, absl::string_view* value_array_data,
-      absl::string_view* token_array_data) const;
-  virtual void GetReadingCorrectionData(
-      absl::string_view* value_array_data, absl::string_view* error_array_data,
-      absl::string_view* correction_array_data) const;
-  virtual void GetSymbolRewriterData(
-      absl::string_view* token_array_data,
-      absl::string_view* string_array_data) const;
-  virtual void GetEmoticonRewriterData(
-      absl::string_view* token_array_data,
-      absl::string_view* string_array_data) const;
-  virtual void GetEmojiRewriterData(absl::string_view* token_array_data,
-                                    absl::string_view* string_array_data) const;
-  virtual void GetSingleKanjiRewriterData(
-      absl::string_view* token_array_data, absl::string_view* string_array_data,
-      absl::string_view* variant_type_array_data,
-      absl::string_view* variant_token_array_data,
-      absl::string_view* variant_string_array_data,
-      absl::string_view* noun_prefix_token_array_data,
-      absl::string_view* noun_prefix_string_array_data) const;
-  virtual void GetA11yDescriptionRewriterData(
-      absl::string_view* token_array_data,
-      absl::string_view* string_array_data) const;
-  virtual void GetZeroQueryData(
-      absl::string_view* zero_query_token_array_data,
-      absl::string_view* zero_query_string_array_data,
-      absl::string_view* zero_query_number_token_array_data,
-      absl::string_view* zero_query_number_string_array_data) const;
+
+  // [l_num_elements,  r_num_elements, l_table, r_table, bitarray_data,
+  // boundary_data]
+  virtual std::tuple<size_t, size_t, absl::Span<const uint16_t>,
+                     absl::Span<const uint16_t>, absl::Span<const char>,
+                     absl::Span<const uint16_t>>
+  GetSegmenterData() const;
+
+  virtual absl::string_view GetCounterSuffixSortedArray() const;
+
+  // [key_array_data, value_array_data, token_array_data]
+  virtual std::array<absl::string_view, 3> GetSuffixDictionaryData() const;
+
+  // [value_array_data, error_array_data, correction_array_data]
+  virtual std::array<absl::string_view, 3> GetReadingCorrectionData() const;
+
+  // [token_array_data, string_array_data]
+  virtual std::array<absl::string_view, 2> GetSymbolRewriterData() const;
+
+  // [token_array_data, string_array_data]
+  virtual std::array<absl::string_view, 2> GetEmoticonRewriterData() const;
+
+  // [token_array_data, string_array_data]
+  virtual std::array<absl::string_view, 2> GetEmojiRewriterData() const;
+
+  // [token_array_data, string_array_data, variant_type_array_data,
+  //  variant_token_array_data, variant_string_array_data,
+  //  noun_prefix_token_array_data, noun_prefix_string_array_data]
+  virtual std::array<absl::string_view, 7> GetSingleKanjiRewriterData() const;
+
+  // [token_array_data, string_array_data]
+  virtual std::array<absl::string_view, 2> GetA11yDescriptionRewriterData()
+      const;
+
+  // [zero_query_token_array_data,zero_query_string_array_data,
+  //  zero_query_number_token_array_data, zero_query_number_string_array_data]
+  virtual std::array<absl::string_view, 4> GetZeroQueryData() const;
 
 #ifndef NO_USAGE_REWRITER
-  virtual void GetUsageRewriterData(
-      absl::string_view* base_conjugation_suffix_data,
-      absl::string_view* conjugation_suffix_data,
-      absl::string_view* conjugation_index_data,
-      absl::string_view* usage_items_data,
-      absl::string_view* string_array_data) const;
+  // [base_conjugation_suffix_data, conjugation_suffix_data,
+  //  conjugation_index_data, usage_items_data, string_array_data]
+  virtual std::array<absl::string_view, 5> GetUsageRewriterData() const;
 #endif  // NO_USAGE_REWRITER
 
   virtual absl::string_view GetDataVersion() const;

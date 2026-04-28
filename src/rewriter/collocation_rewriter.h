@@ -39,7 +39,6 @@
 #include "absl/types/span.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
@@ -53,8 +52,7 @@ class CollocationFilter {
   explicit CollocationFilter(storage::ExistenceFilter filter)
       : filter_(std::move(filter)) {}
 
-  static absl::StatusOr<CollocationFilter> Create(
-      absl::Span<const uint32_t> data);
+  static absl::StatusOr<CollocationFilter> Create(absl::string_view data);
 
   bool Exists(absl::string_view left, absl::string_view right) const;
 
@@ -67,8 +65,7 @@ class SuppressionFilter {
   explicit SuppressionFilter(storage::ExistenceFilter filter)
       : filter_(std::move(filter)) {}
 
-  static absl::StatusOr<SuppressionFilter> Create(
-      absl::Span<const uint32_t> data);
+  static absl::StatusOr<SuppressionFilter> Create(absl::string_view data);
 
   bool Exists(const converter::Candidate& cand) const;
 
@@ -91,7 +88,8 @@ class CollocationRewriter : public RewriterInterface {
         suppression_filter_(std::move(suppression_filter)) {}
 
   static std::unique_ptr<CollocationRewriter> Create(
-      const DataManager& data_manager);
+      dictionary::PosMatcher pos_matcher, absl::string_view collocation_data,
+      absl::string_view collocation_suppression_data);
 
   bool Rewrite(const ConversionRequest& request,
                Segments* segments) const override;

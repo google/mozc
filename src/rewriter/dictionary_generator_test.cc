@@ -33,6 +33,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <tuple>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -98,7 +99,11 @@ std::string MakeExpectedRaw(absl::string_view key, absl::string_view value,
 
 TEST(DictionaryGeneratorTest, SmokeTest) {
   testing::MockDataManager data_manager;
-  DictionaryGenerator generator(data_manager);
+  auto user_pos =
+      std::make_from_tuple<dictionary::UserPos>(data_manager.GetUserPosData());
+  dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
+
+  DictionaryGenerator generator(user_pos, pos_matcher);
   generator.AddToken({0, "とうてん", "、", "句読点", "てん", "読点"});
   generator.AddToken({1, ",", "、", "句読点", "てん", "読点"});
   generator.AddToken({2, "、", "、", "句読点", "てん", "読点"});
@@ -108,10 +113,7 @@ TEST(DictionaryGeneratorTest, SmokeTest) {
   generator.AddToken({4, "]", "）", "括弧閉", "終わり丸括弧"});
   std::ostringstream os;
   generator.Output(os);
-  dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
-  std::unique_ptr<dictionary::UserPos> user_pos =
-      dictionary::UserPos::CreateFromDataManager(data_manager);
-  const uint16_t pos = user_pos->GetPosIds("句読点").value();
+  const uint16_t pos = user_pos.GetPosIds("句読点").value();
   const std::string expected = absl::StrCat(
       MakeExpectedRaw(",", "，", pos, 0, "てん", "カンマ"), "\n",
       MakeExpectedRaw(",", "、", pos, 10, "てん", "読点"), "\n",

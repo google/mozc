@@ -39,6 +39,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "base/container/tuple.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
 #include "config/character_form_manager.h"
@@ -135,7 +136,8 @@ class NumberRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   std::unique_ptr<NumberRewriter> CreateNumberRewriter() {
-    return std::make_unique<NumberRewriter>(mock_data_manager_);
+    return make_unique_from_tuples<NumberRewriter>(
+        mock_data_manager_.GetCounterSuffixSortedArray(), pos_matcher_);
   }
 
  private:

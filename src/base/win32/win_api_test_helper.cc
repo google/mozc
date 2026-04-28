@@ -113,9 +113,8 @@ class HookTargetInfo {
         LOG(FATAL) << "GetModuleHandleExA failed. error = " << error;
         continue;
       }
-      const FunctionPointer original_proc_address =
-          reinterpret_cast<FunctionPointer>(
-              ::GetProcAddress(module_handle, request.proc_name.c_str()));
+      const FunctionPointer original_proc_address = reinterpret_cast<FunctionPointer>(
+          ::GetProcAddress(module_handle, request.proc_name.c_str()));
       if (original_proc_address == nullptr) {
         LOG(FATAL) << "GetProcAddress returned nullptr.";
         continue;

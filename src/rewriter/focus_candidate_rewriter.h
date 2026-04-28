@@ -43,12 +43,12 @@
 
 namespace mozc {
 
-class DataManager;
 struct CounterSuffixEntry;
 
 class FocusCandidateRewriter : public RewriterInterface {
  public:
-  explicit FocusCandidateRewriter(const DataManager& data_manager);
+  FocusCandidateRewriter(absl::string_view counter_suffix_data,
+                         dictionary::PosMatcher pos_matcher);
   FocusCandidateRewriter(const FocusCandidateRewriter&) = delete;
   FocusCandidateRewriter& operator=(const FocusCandidateRewriter&) = delete;
   ~FocusCandidateRewriter() override;

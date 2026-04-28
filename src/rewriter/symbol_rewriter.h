@@ -43,11 +43,11 @@ namespace mozc {
 
 class ConversionRequest;
 class ConverterInterface;
-class DataManager;
 
 class SymbolRewriter : public RewriterInterface {
  public:
-  explicit SymbolRewriter(const DataManager& data_manager);
+  SymbolRewriter(absl::string_view token_array_data,
+                 absl::string_view string_array_data);
   ~SymbolRewriter() override = default;
 
   int capability(const ConversionRequest& request) const override;

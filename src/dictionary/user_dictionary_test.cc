@@ -45,6 +45,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/container/tuple.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/random.h"
@@ -193,14 +194,14 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
   // Creates a user dictionary with actual pos data.
   std::unique_ptr<UserDictionary> CreateDictionary() {
     return std::make_unique<UserDictionary>(
-        UserPos::CreateFromDataManager(mock_data_manager_),
+        make_unique_from_tuples<UserPos>(mock_data_manager_.GetUserPosData()),
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
   }
 
   std::unique_ptr<UserDictionary> CreateDictionaryWithFilename(
       std::string filename) {
     return std::make_unique<UserDictionary>(
-        UserPos::CreateFromDataManager(mock_data_manager_),
+        make_unique_from_tuples<UserPos>(mock_data_manager_.GetUserPosData()),
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()),
         std::move(filename));
   }
@@ -999,9 +1000,9 @@ TEST_F(UserDictionaryTest, AsyncImportTest) {
   const testing::MockDataManager mock_data_manager;
 
   auto make_dic = [&]() {
-    return UserDictionary(UserPos::CreateFromDataManager(mock_data_manager),
-                          PosMatcher(mock_data_manager.GetPosMatcherData()),
-                          filename);
+    return UserDictionary(
+        make_unique_from_tuples<UserPos>(mock_data_manager.GetUserPosData()),
+        PosMatcher(mock_data_manager.GetPosMatcherData()), filename);
   };
 
   auto dic = make_dic();

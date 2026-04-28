@@ -32,6 +32,7 @@
 #include <memory>
 
 #include "absl/flags/flag.h"
+#include "base/container/tuple.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
@@ -139,19 +140,25 @@ Rewriter::Rewriter(const engine::Modules& modules) {
   AddRewriter(std::make_unique<UserDictionaryRewriter>());
 #endif  // MOZC_USER_DICTIONARY_REWRITER
 
-  AddRewriter(std::make_unique<FocusCandidateRewriter>(data_manager));
+  AddRewriter(make_unique_from_tuples<FocusCandidateRewriter>(
+      data_manager.GetCounterSuffixSortedArray(), pos_matcher));
   AddRewriter(std::make_unique<LanguageAwareRewriter>(pos_matcher, dictionary));
   AddRewriter(std::make_unique<TransliterationRewriter>(pos_matcher));
   AddRewriter(std::make_unique<EnglishVariantsRewriter>(pos_matcher));
-  AddRewriter(std::make_unique<NumberRewriter>(data_manager));
-  AddRewriter(CollocationRewriter::Create(data_manager));
+  AddRewriter(make_unique_from_tuples<NumberRewriter>(
+      data_manager.GetCounterSuffixSortedArray(), pos_matcher));
+  AddRewriter(apply_from_tuples(CollocationRewriter::Create, pos_matcher,
+                                data_manager.GetCollocationData()));
   AddRewriter(std::make_unique<SingleKanjiRewriter>(pos_matcher,
                                                     single_kanji_dictionary));
   AddRewriter(std::make_unique<IvsVariantsRewriter>());
-  AddRewriter(EmoticonRewriter::CreateFromDataManager(data_manager));
-  AddRewriter(std::make_unique<EmojiRewriter>(data_manager));
+  AddRewriter(make_unique_from_tuples<EmoticonRewriter>(
+      data_manager.GetEmoticonRewriterData()));
+  AddRewriter(make_unique_from_tuples<EmojiRewriter>(
+      data_manager.GetEmojiRewriterData()));
   AddRewriter(std::make_unique<CalculatorRewriter>());
-  AddRewriter(std::make_unique<SymbolRewriter>(data_manager));
+  AddRewriter(make_unique_from_tuples<SymbolRewriter>(
+      data_manager.GetSymbolRewriterData()));
   AddRewriter(std::make_unique<UnicodeRewriter>());
   AddRewriter(std::make_unique<VariantsRewriter>(pos_matcher));
   AddRewriter(std::make_unique<ZipcodeRewriter>(pos_matcher));
@@ -177,15 +184,19 @@ Rewriter::Rewriter(const engine::Modules& modules) {
 #endif  // MOZC_COMMAND_REWRITER
 
 #ifdef MOZC_USAGE_REWRITER
-  AddRewriter(std::make_unique<UsageRewriter>(data_manager, dictionary));
+  AddRewriter(make_unique_from_tuples<UsageRewriter>(
+      data_manager.GetUsageRewriterData(), dictionary, pos_matcher));
 #endif  // MOZC_USAGE_REWRITER
 
   AddRewriter(std::make_unique<VersionRewriter>(data_manager.GetDataVersion()));
-  AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(modules));
+  AddRewriter(make_unique_from_tuples<CorrectionRewriter>(
+      modules, data_manager.GetReadingCorrectionData()));
   AddRewriter(std::make_unique<T13nPromotionRewriter>());
-  AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(data_manager));
+  AddRewriter(make_unique_from_tuples<EnvironmentalFilterRewriter>(
+      data_manager.GetEmojiRewriterData()));
   AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());
-  AddRewriter(std::make_unique<A11yDescriptionRewriter>(data_manager));
+  AddRewriter(make_unique_from_tuples<A11yDescriptionRewriter>(
+      data_manager.GetA11yDescriptionRewriterData()));
 }
 
 }  // namespace mozc

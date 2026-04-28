@@ -53,7 +53,9 @@ class SingleKanjiDictionaryTest : public testing::TestWithTempUserProfile {
 };
 
 TEST_F(SingleKanjiDictionaryTest, GenerateDescription) {
-  SingleKanjiDictionary dictionary(*data_manager_);
+  auto dictionary = std::make_from_tuple<SingleKanjiDictionary>(
+      data_manager_->GetSingleKanjiRewriterData());
+
   std::string description;
   // variant of "亜".
   EXPECT_TRUE(dictionary.GenerateDescription("亞", &description));
@@ -66,7 +68,9 @@ TEST_F(SingleKanjiDictionaryTest, GenerateDescription) {
 }
 
 TEST_F(SingleKanjiDictionaryTest, LookupNounPrefixEntries) {
-  SingleKanjiDictionary dictionary(*data_manager_);
+  auto dictionary = std::make_from_tuple<SingleKanjiDictionary>(
+      data_manager_->GetSingleKanjiRewriterData());
+
   {
     auto [begin, end] = dictionary.LookupNounPrefixEntries("ご");
     EXPECT_NE(begin, end);
@@ -85,7 +89,8 @@ TEST_F(SingleKanjiDictionaryTest, LookupNounPrefixEntries) {
 }
 
 TEST_F(SingleKanjiDictionaryTest, LookupKanjiEntries) {
-  SingleKanjiDictionary dictionary(*data_manager_);
+  auto dictionary = std::make_from_tuple<SingleKanjiDictionary>(
+      data_manager_->GetSingleKanjiRewriterData());
 
   auto contains = [](std::vector<std::string> entries,
                      absl::string_view value) {

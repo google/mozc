@@ -46,6 +46,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/container/tuple.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -318,9 +319,10 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 
     auto pos_matcher = std::make_unique<dictionary::PosMatcher>(
         data_manager->GetPosMatcherData());
-    auto user_dictionary = std::make_unique<dictionary::UserDictionary>(
-        dictionary::UserPos::CreateFromDataManager(*data_manager),
-        *pos_matcher);
+    auto user_pos = make_unique_from_tuples<dictionary::UserPos>(
+        data_manager->GetUserPosData());
+    auto user_dictionary = make_unique_from_tuples<dictionary::UserDictionary>(
+        std::move(user_pos), *pos_matcher);
     {
       user_dictionary::UserDictionaryStorage storage;
       user_dictionary::UserDictionary* dictionary = storage.add_dictionaries();

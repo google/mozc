@@ -40,7 +40,6 @@
 #include "base/util.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -158,7 +157,7 @@ std::string A11yDescriptionRewriter::GetKanaCharacterLabel(
 }
 
 A11yDescriptionRewriter::A11yDescriptionRewriter(
-    const DataManager& data_manager)
+    absl::string_view token_array_data, absl::string_view string_array_data)
     : small_letter_set_(
           {// Small hiragana
            U'ぁ', U'ぃ', U'ぅ', U'ぇ', U'ぉ', U'ゃ', U'ゅ', U'ょ', U'っ', U'ゎ',
@@ -177,13 +176,10 @@ A11yDescriptionRewriter::A11yDescriptionRewriter(
           {U'ｮ', U'ﾖ'},
           {U'ｯ', U'ﾂ'},
       }) {
-  absl::string_view token_array_data, string_array_data;
-  data_manager.GetA11yDescriptionRewriterData(&token_array_data,
-                                              &string_array_data);
-  description_map_ = (token_array_data.empty() || string_array_data.empty())
-                         ? nullptr
-                         : std::make_unique<SerializedDictionary>(
-                               token_array_data, string_array_data);
+  if (!token_array_data.empty() && !string_array_data.empty()) {
+    description_map_ = std::make_unique<SerializedDictionary>(
+        token_array_data, string_array_data);
+  }
 }
 
 void A11yDescriptionRewriter::AddA11yDescription(

@@ -93,6 +93,7 @@ mozc_cc_library(
         "//base:file_stream",
         "//base:util",
         "//base/container:serialized_string_array",
+        "//base/container:tuple",
         "//converter:connector",
         "//converter:node",
         "//converter:segmenter",

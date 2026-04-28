@@ -48,7 +48,6 @@
 #include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/strings/assign.h"
-#include "data_manager/data_manager.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -183,13 +182,6 @@ std::vector<UserPos::Token> UserPos::GetTokens(
   }
 
   return tokens;
-}
-
-std::unique_ptr<UserPos> UserPos::CreateFromDataManager(
-    const DataManager& manager) {
-  absl::string_view token_array_data, string_array_data;
-  manager.GetUserPosData(&token_array_data, &string_array_data);
-  return std::make_unique<UserPos>(token_array_data, string_array_data);
 }
 
 // static

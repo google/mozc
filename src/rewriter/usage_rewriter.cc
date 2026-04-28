@@ -46,7 +46,6 @@
 #include "base/vlog.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
@@ -56,23 +55,20 @@ namespace mozc {
 
 using ::mozc::dictionary::DictionaryInterface;
 
-UsageRewriter::UsageRewriter(const DataManager& data_manager,
-                             const DictionaryInterface& dictionary)
-    : pos_matcher_(data_manager.GetPosMatcherData()), dictionary_(&dictionary) {
-  absl::string_view base_conjugation_suffix_data;
-  absl::string_view conjugation_suffix_data;
-  absl::string_view conjugation_suffix_index_data;
-  absl::string_view usage_items_data;
-  absl::string_view string_array_data;
-  data_manager.GetUsageRewriterData(
-      &base_conjugation_suffix_data, &conjugation_suffix_data,
-      &conjugation_suffix_index_data, &usage_items_data, &string_array_data);
+UsageRewriter::UsageRewriter(absl::string_view base_conjugation_suffix_data,
+                             absl::string_view conjugation_suffix_data,
+                             absl::string_view conjugation_index_data,
+                             absl::string_view usage_items_data,
+                             absl::string_view string_array_data,
+                             const dictionary::DictionaryInterface& dictionary,
+                             dictionary::PosMatcher pos_matcher)
+    : dictionary_(dictionary), pos_matcher_(std::move(pos_matcher)) {
   base_conjugation_suffix_ =
       reinterpret_cast<const uint32_t*>(base_conjugation_suffix_data.data());
   const uint32_t* conjugation_suffix =
       reinterpret_cast<const uint32_t*>(conjugation_suffix_data.data());
   const uint32_t* conjugation_suffix_data_index =
-      reinterpret_cast<const uint32_t*>(conjugation_suffix_index_data.data());
+      reinterpret_cast<const uint32_t*>(conjugation_index_data.data());
 
   if (SerializedStringArray::VerifyData(string_array_data)) {
     string_array_.Set(string_array_data);
@@ -214,10 +210,9 @@ bool UsageRewriter::Rewrite(const ConversionRequest& request,
       ++usage_id_for_user_comment;
 
       // First, search the user dictionary for comment.
-      if (dictionary_ &&
-          dictionary_->LookupComment(segment->candidate(j).content_key,
-                                     segment->candidate(j).content_value,
-                                     request, &comment)) {
+      if (dictionary_.LookupComment(segment->candidate(j).content_key,
+                                    segment->candidate(j).content_value,
+                                    request, &comment)) {
         converter::Candidate* candidate = segment->mutable_candidate(j);
         candidate->usage_id = usage_id_for_user_comment;
         candidate->usage_title = segment->candidate(j).content_value;

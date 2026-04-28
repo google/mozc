@@ -47,22 +47,19 @@
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 
 namespace mozc {
 namespace dictionary {
-SingleKanjiDictionary::SingleKanjiDictionary(const DataManager& data_manager) {
-  absl::string_view string_array_data;
-  absl::string_view variant_type_array_data;
-  absl::string_view variant_string_array_data;
-  absl::string_view noun_prefix_token_array_data;
-  absl::string_view noun_prefix_string_array_data;
-  data_manager.GetSingleKanjiRewriterData(
-      &single_kanji_token_array_, &string_array_data, &variant_type_array_data,
-      &variant_token_array_, &variant_string_array_data,
-      &noun_prefix_token_array_data, &noun_prefix_string_array_data);
-
+SingleKanjiDictionary::SingleKanjiDictionary(
+    absl::string_view token_array_data, absl::string_view string_array_data,
+    absl::string_view variant_type_array_data,
+    absl::string_view variant_token_array_data,
+    absl::string_view variant_string_array_data,
+    absl::string_view noun_prefix_token_array_data,
+    absl::string_view noun_prefix_string_array_data)
+    : single_kanji_token_array_(token_array_data),
+      variant_token_array_(variant_token_array_data) {
   // Single Kanji token array is an array of uint32_t.  Its size must be
   // multiple of 2; see the comment above LookupKanjiEntries.
   DCHECK_EQ(0, single_kanji_token_array_.size() % (2 * sizeof(uint32_t)));

@@ -33,13 +33,16 @@
 #include <iterator>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "base/container/tuple.h"
 #include "base/number_util.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -65,7 +68,10 @@ void AddCandidateWithContentValue(Segment* segment,
 class FocusCandidateRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    rewriter_ = std::make_unique<FocusCandidateRewriter>(mock_data_manager_);
+    dictionary::PosMatcher pos_matcher(mock_data_manager_.GetPosMatcherData());
+    rewriter_ = make_unique_from_tuples<FocusCandidateRewriter>(
+        mock_data_manager_.GetCounterSuffixSortedArray(),
+        std::move(pos_matcher));
   }
 
   const RewriterInterface* GetRewriter() { return rewriter_.get(); }

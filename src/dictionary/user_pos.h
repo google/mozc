@@ -43,7 +43,6 @@
 #include "absl/strings/string_view.h"
 #include "base/bits.h"
 #include "base/container/serialized_string_array.h"
-#include "data_manager/data_manager.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -117,15 +116,12 @@ class UserPos {
     }
   };
 
-  static std::unique_ptr<UserPos> CreateFromDataManager(
-      const DataManager& manager);
-
   // Initializes the user pos from the given binary data.  The provided byte
   // data must outlive this instance.
   UserPos(absl::string_view token_array_data,
           absl::string_view string_array_data);
-  UserPos(const UserPos&) = delete;
-  UserPos& operator=(const UserPos&) = delete;
+  UserPos(const UserPos&) = default;
+  UserPos& operator=(const UserPos&) = default;
   virtual ~UserPos() = default;
 
   // Virutal for testing/mocking.

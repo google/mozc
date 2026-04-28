@@ -51,7 +51,6 @@
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -397,9 +396,8 @@ SymbolRewriter::CheckResizeSegmentsRequest(const ConversionRequest& request,
   return resize_request;
 }
 
-SymbolRewriter::SymbolRewriter(const DataManager& data_manager) {
-  absl::string_view token_array_data, string_array_data;
-  data_manager.GetSymbolRewriterData(&token_array_data, &string_array_data);
+SymbolRewriter::SymbolRewriter(absl::string_view token_array_data,
+                               absl::string_view string_array_data) {
   DCHECK(SerializedDictionary::VerifyData(token_array_data, string_array_data));
   dictionary_ = std::make_unique<SerializedDictionary>(token_array_data,
                                                        string_array_data);

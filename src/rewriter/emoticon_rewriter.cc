@@ -44,7 +44,6 @@
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -200,14 +199,6 @@ bool EmoticonRewriter::RewriteCandidate(Segments* segments) const {
   }
 
   return modified;
-}
-
-std::unique_ptr<EmoticonRewriter> EmoticonRewriter::CreateFromDataManager(
-    const DataManager& data_manager) {
-  absl::string_view token_array_data, string_array_data;
-  data_manager.GetEmoticonRewriterData(&token_array_data, &string_array_data);
-  return std::make_unique<EmoticonRewriter>(token_array_data,
-                                            string_array_data);
 }
 
 EmoticonRewriter::EmoticonRewriter(absl::string_view token_array_data,

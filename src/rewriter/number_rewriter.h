@@ -37,7 +37,6 @@
 #include "base/number_util.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
@@ -47,7 +46,8 @@ namespace mozc {
 // A rewriter to expand number styles (NumberUtil::NumberString::Style)
 class NumberRewriter : public RewriterInterface {
  public:
-  explicit NumberRewriter(const DataManager& data_manager);
+  NumberRewriter(absl::string_view counter_suffix_data,
+                 dictionary::PosMatcher pos_matcher);
   NumberRewriter(const NumberRewriter&) = delete;
   NumberRewriter& operator=(const NumberRewriter&) = delete;
   ~NumberRewriter() override;

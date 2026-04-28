@@ -59,7 +59,6 @@
 #include "absl/types/span.h"
 #include "base/text_normalizer.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -99,7 +98,8 @@ class EnvironmentalFilterRewriter : public RewriterInterface {
   // This class does not take an ownership of |emoji_data_list|, |token_list|
   // and |value_list|.  If NULL pointer is passed to it, Mozc process
   // terminates with an error.
-  explicit EnvironmentalFilterRewriter(const DataManager& data_manager);
+  EnvironmentalFilterRewriter(absl::string_view token_array_data,
+                              absl::string_view string_array_data);
 
   int capability(const ConversionRequest& request) const override;
 

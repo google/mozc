@@ -36,15 +36,11 @@
 
 #include "absl/types/span.h"
 #include "converter/node.h"
-#include "data_manager/data_manager.h"
 
 namespace mozc {
 
 class Segmenter {
  public:
-  static std::unique_ptr<Segmenter> CreateFromDataManager(
-      const DataManager& data_manager);
-
   // This class does not take the ownership of pointer parameters.
   Segmenter(size_t l_num_elements, size_t r_num_elements,
             absl::Span<const uint16_t> l_table,

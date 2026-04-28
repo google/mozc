@@ -146,6 +146,7 @@ mozc_cc_library(
     ],
     deps = [
         ":supplemental_model_interface",
+        "//base/container:tuple",
         "//converter:connector",
         "//converter:segmenter",
         "//data_manager",

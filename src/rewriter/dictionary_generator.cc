@@ -39,7 +39,6 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 
@@ -75,12 +74,11 @@ bool operator<(const Token& lhs, const Token& rhs) {
          std::tie(rhs.key, rhs.sorting_key, rhs.value);
 }
 
-DictionaryGenerator::DictionaryGenerator(const DataManager& data_manager) {
-  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
-  open_bracket_id_ = pos_matcher.GetOpenBracketId();
-  close_bracket_id_ = pos_matcher.GetCloseBracketId();
-  user_pos_ = dictionary::UserPos::CreateFromDataManager(data_manager);
-}
+DictionaryGenerator::DictionaryGenerator(dictionary::UserPos user_pos,
+                                         dictionary::PosMatcher pos_matcher)
+    : user_pos_(std::move(user_pos)),
+      open_bracket_id_(pos_matcher.GetOpenBracketId()),
+      close_bracket_id_(pos_matcher.GetCloseBracketId()) {}
 
 const Token& DictionaryGenerator::AddToken(Token token) {
   // Take the token as node_type of tokens_.
@@ -114,7 +112,7 @@ bool DictionaryGenerator::Output(std::ostream& os) const {
     } else if (pos == "括弧閉") {
       id = close_bracket_id_;
     } else {
-      id = user_pos_->GetPosIds(pos).value();
+      id = user_pos_.GetPosIds(pos).value();
     }
 
     // Output in mozc dictionary format

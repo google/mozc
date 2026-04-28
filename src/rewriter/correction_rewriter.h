@@ -48,12 +48,6 @@ namespace mozc {
 
 class CorrectionRewriter : public RewriterInterface {
  public:
-  // Returns an instance of ReadingCorrectionRewriter initialized with the
-  // default provided by data_manager.  The caller takes the ownership of the
-  // instance.
-  static std::unique_ptr<CorrectionRewriter> CreateCorrectionRewriter(
-      const engine::Modules& modules);
-
   CorrectionRewriter(const engine::Modules& modules,
                      absl::string_view value_array_data,
                      absl::string_view error_array_data,

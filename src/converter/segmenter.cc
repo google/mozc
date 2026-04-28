@@ -37,21 +37,8 @@
 #include "absl/types/span.h"
 #include "base/container/bitarray.h"
 #include "converter/node.h"
-#include "data_manager/data_manager.h"
 
 namespace mozc {
-
-std::unique_ptr<Segmenter> Segmenter::CreateFromDataManager(
-    const DataManager& data_manager) {
-  size_t l_num_elements = 0;
-  size_t r_num_elements = 0;
-  absl::Span<const uint16_t> l_table, r_table, boundary_data;
-  absl::Span<const char> bitarray_data;
-  data_manager.GetSegmenterData(&l_num_elements, &r_num_elements, &l_table,
-                                &r_table, &bitarray_data, &boundary_data);
-  return std::make_unique<Segmenter>(l_num_elements, r_num_elements, l_table,
-                                     r_table, bitarray_data, boundary_data);
-}
 
 Segmenter::Segmenter(size_t l_num_elements, size_t r_num_elements,
                      absl::Span<const uint16_t> l_table,
