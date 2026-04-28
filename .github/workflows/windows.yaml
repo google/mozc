@@ -57,7 +57,7 @@ jobs:
         env:
           ANDROID_NDK_HOME: ""
         run: |
-          bazelisk build --config oss_windows --config release_build package
+          bazelisk build --config release_build package
 
       - name: upload Mozc64_x64.msi
         uses: actions/upload-artifact@v6
@@ -110,7 +110,7 @@ jobs:
         env:
           ANDROID_NDK_HOME: ""
         run: |
-          bazelisk build --config oss_windows --config release_build --config win_universal_installer package
+          bazelisk build --config release_build --config win_universal_installer package
 
       - name: upload Mozc64_universal.msi
         uses: actions/upload-artifact@v6
@@ -163,7 +163,7 @@ jobs:
         env:
           ANDROID_NDK_HOME: ""
         run: |
-          bazelisk build package --config oss_windows --config release_build --platforms=//:windows-arm64
+          bazelisk build package --config release_build --platforms=//:windows-arm64
 
       - name: upload Mozc64_arm64.msi
         uses: actions/upload-artifact@v6
@@ -203,7 +203,7 @@ jobs:
         env:
           ANDROID_NDK_HOME: ""
         run: |
-          bazelisk test ... --config oss_windows -c dbg --build_tests_only
+          bazelisk test ... -c dbg --build_tests_only
 
   # actions/cache works without this job, but having this would increase the likelihood of cache hit
   # in other jobs. Another approach would be to use "needs:".

@@ -36,7 +36,7 @@ jobs:
       - name: bazel build
         working-directory: ./src
         run: |
-          bazelisk build --config oss_linux package --config release_build
+          bazelisk build package --config release_build
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v6
@@ -68,4 +68,4 @@ jobs:
       - name: bazel test
         working-directory: ./src
         run: |
-          bazelisk test ... --config oss_linux -c dbg
+          bazelisk test ... -c dbg
