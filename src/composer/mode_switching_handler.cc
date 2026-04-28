@@ -32,33 +32,25 @@
 
 #include "composer/mode_switching_handler.h"
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
-#include "base/singleton.h"
 
 namespace mozc {
 namespace composer {
 
-ModeSwitchingHandler::ModeSwitchingHandler() {
-  // Default patterns are fixed right now.
-  // AddRule(key, {display_mode, input_mode});
-  AddRule("google", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("Google", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("Chrome", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("chrome", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("Android", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("android", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("http", {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC});
-  AddRule("www.", {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC});
-  AddRule("\\\\", {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC});
-}
-
 ModeSwitchingHandler::Rule ModeSwitchingHandler::GetModeSwitchingRule(
-    absl::string_view key) const {
-  const auto it = patterns_.find(key);
-  if (it != patterns_.end()) {
-    return it->second;
+    absl::string_view key) {
+  // Modern compilers are smart enough to optimize this kind of multiple string
+  // comparisons. Neither flat_hash_map nor sorted array is necessary for this
+  // small number of patterns.
+  if (key == "google" || key == "Google" ||
+      key == "Chrome" || key == "chrome" ||
+      key == "Android" || key == "android") {
+      return {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE};
+  }
+
+  if (key == "http" || key == "www." || key == "\\\\") {
+      return {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC};
   }
 
   if (IsDriveLetter(key)) {
@@ -71,14 +63,6 @@ ModeSwitchingHandler::Rule ModeSwitchingHandler::GetModeSwitchingRule(
 bool ModeSwitchingHandler::IsDriveLetter(absl::string_view key) {
   return key.size() == 3 && absl::ascii_isalpha(key[0]) && key[1] == ':' &&
          key[2] == '\\';
-}
-
-void ModeSwitchingHandler::AddRule(absl::string_view key, const Rule rule) {
-  patterns_.emplace(key, rule);
-}
-
-ModeSwitchingHandler* ModeSwitchingHandler::GetModeSwitchingHandler() {
-  return Singleton<ModeSwitchingHandler>::get();
 }
 
 }  // namespace composer

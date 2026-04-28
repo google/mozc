@@ -1110,8 +1110,7 @@ void Composer::AutoSwitchMode() {
       GetTransliterator(transliteration::HALF_ASCII));
 
   const ModeSwitchingHandler::Rule mode_switching =
-      ModeSwitchingHandler::GetModeSwitchingHandler()->GetModeSwitchingRule(
-          key);
+      ModeSwitchingHandler::GetModeSwitchingRule(key);
 
   // |display_mode| affects the existing composition the user typed.
   switch (mode_switching.display_mode) {

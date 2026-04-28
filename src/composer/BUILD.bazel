@@ -399,8 +399,6 @@ mozc_cc_library(
     srcs = ["mode_switching_handler.cc"],
     hdrs = ["mode_switching_handler.h"],
     deps = [
-        "//base:singleton",
-        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )

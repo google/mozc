@@ -48,51 +48,49 @@ MATCHER_P2(RuleEq, display_mode, input_mode,
 }
 
 TEST(ModeSwitchingHandlerTest, GetModeSwitchingRule) {
-  ModeSwitchingHandler handler;
-
-  EXPECT_THAT(handler.GetModeSwitchingRule("google"),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("google"),
               RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
                      ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_THAT(handler.GetModeSwitchingRule("Google"),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("Google"),
               RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
                      ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_THAT(handler.GetModeSwitchingRule("Chrome"),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("Chrome"),
               RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
                      ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_THAT(handler.GetModeSwitchingRule("chrome"),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("chrome"),
               RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
                      ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_THAT(handler.GetModeSwitchingRule("Android"),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("Android"),
               RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
                      ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_THAT(handler.GetModeSwitchingRule("android"),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("android"),
               RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
                      ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_THAT(handler.GetModeSwitchingRule("http"),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("http"),
               RuleEq(ModeSwitchingHandler::HALF_ALPHANUMERIC,
                      ModeSwitchingHandler::HALF_ALPHANUMERIC));
 
-  EXPECT_THAT(handler.GetModeSwitchingRule("www."),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("www."),
               RuleEq(ModeSwitchingHandler::HALF_ALPHANUMERIC,
                      ModeSwitchingHandler::HALF_ALPHANUMERIC));
 
-  EXPECT_THAT(handler.GetModeSwitchingRule("\\\\"),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("\\\\"),
               RuleEq(ModeSwitchingHandler::HALF_ALPHANUMERIC,
                      ModeSwitchingHandler::HALF_ALPHANUMERIC));
 
-  EXPECT_THAT(handler.GetModeSwitchingRule("C:\\"),
+  EXPECT_THAT(ModeSwitchingHandler::GetModeSwitchingRule("C:\\"),
               RuleEq(ModeSwitchingHandler::HALF_ALPHANUMERIC,
                      ModeSwitchingHandler::HALF_ALPHANUMERIC));
 
   // Normal text should return NO_CHANGE.
   EXPECT_THAT(
-      handler.GetModeSwitchingRule("foobar"),
+      ModeSwitchingHandler::GetModeSwitchingRule("foobar"),
       RuleEq(ModeSwitchingHandler::NO_CHANGE, ModeSwitchingHandler::NO_CHANGE));
 }
 
