@@ -194,7 +194,7 @@ def get_vs_env_vars(
 def get_vc_dir(
     arch: str, vcvarsall_path_hint: Union[str, None] = None
 ) -> pathlib.Path:
-  """Returns the VC directory path for use as 'BAZEL_VC'.
+  r"""Returns the VC directory path for use as 'BAZEL_VC'.
 
   Args:
     arch: host/target architecture
