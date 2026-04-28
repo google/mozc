@@ -13,12 +13,18 @@ set TMP_MOZC_BASH_PATH=%TMP_MOZC_SRC_DIR%\third_party\msys64\usr\bin\bash.exe
 if exist %TMP_MOZC_BASH_PATH% set BAZEL_SH=%TMP_MOZC_BASH_PATH%
 set TMP_MOZC_BASH_PATH=
 
+rem Inject BAZEL_VC via vs_util.py if the user has not set it explicitly.
+if not defined BAZEL_VC (
+  for /f "usebackq delims=" %%P in (`python "%TMP_MOZC_SRC_DIR%\build_tools\vs_util.py"`) do set BAZEL_VC=%%P
+)
+
 set TMP_MOZC_BAZEL_WRAPPER_DIR=
 set TMP_MOZC_SRC_DIR=
 
 :: For debugging.
 echo BAZEL_LLVM=%BAZEL_LLVM%
 echo BAZEL_REAL=%BAZEL_REAL%
+echo BAZEL_VC=%BAZEL_VC%
 
 %BAZEL_REAL% %* & call:myexit
 
