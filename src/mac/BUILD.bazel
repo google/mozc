@@ -179,6 +179,7 @@ mozc_objc_library(
         "//client",
         "//client:client_interface",
         "//ipc",
+        "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
