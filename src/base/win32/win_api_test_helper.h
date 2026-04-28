@@ -74,7 +74,7 @@ class WinAPITestHelper {
   class RestoreInfo;
   typedef RestoreInfo* RestoreInfoHandle;
 
-  typedef void* FunctionPointer;
+  using FunctionPointer = void (*)();
   struct HookRequest {
    public:
     HookRequest(const std::string& src_module, const std::string& src_proc_name,
@@ -88,7 +88,8 @@ class WinAPITestHelper {
   static HookRequest MakeHookRequest(const std::string& module,
                                      const std::string& proc_name,
                                      const NewProcType& new_proc_ref) {
-    return HookRequest(module, proc_name, &new_proc_ref);
+    return HookRequest(module, proc_name,
+                       reinterpret_cast<FunctionPointer>(&new_proc_ref));
   }
 
   // Overwrites on-memory Import Address Table (IAT) of |target_module| with
