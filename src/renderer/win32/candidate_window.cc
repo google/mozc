@@ -35,6 +35,7 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -56,9 +57,6 @@ namespace mozc {
 namespace renderer {
 namespace win32 {
 namespace {
-
-// 96 DPI is the default DPI in Windows.
-constexpr int kDefaultDPI = 96;
 
 // layout size constants in pixel unit in the default DPI.
 constexpr int kIndicatorWidthInDefaultDPI = 4;
@@ -239,12 +237,19 @@ CandidateWindow::CandidateWindow()
       footer_logo_display_size_(0, 0),
       send_command_interface_(nullptr),
       table_layout_(std::make_unique<TableLayout>()),
-      text_renderer_(TextRenderer::Create()),
+      dpi_(::GetDpiForSystem()),
+      text_renderer_(TextRenderer::Create(dpi_)),
       indicator_width_(0),
       metrics_changed_(false),
       mouse_moving_(true) {
+  UpdateDpiDependentResources();
+}
+
+CandidateWindow::~CandidateWindow() = default;
+
+void CandidateWindow::UpdateDpiDependentResources() {
+  const double scale_factor = GetDPIScalingFactor(dpi_);
   double image_scale_factor = 1.0;
-  const double scale_factor = GetDPIScalingFactor();
   if (scale_factor < 1.125) {
     footer_logo_.reset(LoadBitmapFromResource(::GetModuleHandle(nullptr),
                                               IDB_FOOTER_LOGO_COLOR_100));
@@ -263,7 +268,7 @@ CandidateWindow::CandidateWindow()
     image_scale_factor = 2.0;
   }
 
-  // If DPI is not default value, re-calculate the size based on the DPI.
+  footer_logo_display_size_ = Size(0, 0);
   if (footer_logo_.is_valid()) {
     BITMAP bm = {};
     if (::GetObject(footer_logo_.get(), sizeof(bm), &bm)) {
@@ -276,11 +281,18 @@ CandidateWindow::CandidateWindow()
   indicator_width_ = kIndicatorWidthInDefaultDPI * scale_factor;
 }
 
-CandidateWindow::~CandidateWindow() {}
-
 LRESULT CandidateWindow::OnCreate(LPCREATESTRUCT create_struct) {
   EnableOrDisableWindowForWorkaround();
   return 0;
+}
+
+void CandidateWindow::UpdateDpi(uint32_t dpi) {
+  if (dpi == dpi_) {
+    return;
+  }
+  dpi_ = dpi;
+  UpdateDpiDependentResources();
+  text_renderer_->OnDpiChanged(dpi_);
 }
 
 void CandidateWindow::EnableOrDisableWindowForWorkaround() {
@@ -300,10 +312,6 @@ void CandidateWindow::OnDestroy() {
   // windows are not closed. WindowManager should close these windows
   // before process termination.
   ::PostQuitMessage(0);
-}
-
-void CandidateWindow::OnDpiChanged(UINT dpiX, UINT dpiY, RECT* rect) {
-  metrics_changed_ = true;
 }
 
 BOOL CandidateWindow::OnEraseBkgnd(HDC dc) {
@@ -839,7 +847,7 @@ void CandidateWindow::DrawSelectedRect(HDC dc) {
 
 void CandidateWindow::DrawInformationIcon(HDC dc) {
   DCHECK(table_layout_->IsLayoutFrozen()) << "Table layout is not frozen.";
-  const double scale_factor = GetDPIScalingFactor();
+  const double scale_factor = GetDPIScalingFactor(dpi_);
   for (size_t i = 0; i < candidate_window_->candidate_size(); ++i) {
     if (candidate_window_->candidate(i).has_information_id()) {
       CRect rect = ToCRect(table_layout_->GetRowRect(i));

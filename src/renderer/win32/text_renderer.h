@@ -32,6 +32,7 @@
 
 #include <windows.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -77,10 +78,14 @@ class TextRenderer {
   virtual ~TextRenderer() = default;
 
   // Returns an instance of TextRenderer.
-  static std::unique_ptr<TextRenderer> Create();
+  static std::unique_ptr<TextRenderer> Create(uint32_t dpi);
 
   // Updates font cache.
   virtual void OnThemeChanged() = 0;
+
+  // If |dpi| differs from the previously seen DPI, updates the stored DPI
+  // and rebuilds the font cache. No-op otherwise.
+  virtual void OnDpiChanged(uint32_t dpi) = 0;
 
   // Retrieves the bounding box for a given string.
   virtual Size MeasureString(FONT_TYPE font_type,

@@ -35,6 +35,7 @@
 #include <atlwin.h>
 #include <windows.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -64,7 +65,6 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
 
   BEGIN_MSG_MAP(InfolistWindow)
   MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
-  MESSAGE_HANDLER(WM_DPICHANGED, OnDpiChanged)
   MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
   MESSAGE_HANDLER(WM_GETMINMAXINFO, OnGetMinMaxInfo)
   MESSAGE_HANDLER(WM_SETTINGCHANGE, OnSettingChange)
@@ -78,13 +78,18 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   InfolistWindow& operator=(const InfolistWindow&) = delete;
   ~InfolistWindow();
   void OnDestroy();
-  void OnDpiChanged(UINT dpiX, UINT dpiY, RECT* rect);
   BOOL OnEraseBkgnd(HDC dc);
   void OnGetMinMaxInfo(MINMAXINFO* min_max_info);
   void OnPaint(HDC dc);
   void OnPrintClient(HDC dc, UINT uFlags);
   void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
   void OnTimer(UINT_PTR nIDEvent);
+
+  // If |dpi| differs from the cached DPI, updates the cached DPI, re-scales
+  // |style_|, and flags the text renderer for refresh on the next
+  // UpdateLayout. Idempotent — safe to call unconditionally before
+  // UpdateLayout.
+  void UpdateDpi(uint32_t dpi);
 
   void UpdateLayout(const commands::CandidateWindow& candidates);
   void SetSendCommandInterface(
@@ -103,13 +108,6 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   inline LRESULT OnDestroy(UINT msg_id, WPARAM wparam, LPARAM lparam,
                            BOOL& handled) {
     OnDestroy();
-    return 0;
-  }
-  inline LRESULT OnDpiChanged(UINT msg_id, WPARAM wparam, LPARAM lparam,
-                              BOOL& handled) {
-    OnDpiChanged(static_cast<UINT>(LOWORD(wparam)),
-                 static_cast<UINT>(HIWORD(wparam)),
-                 reinterpret_cast<RECT*>(lparam));
     return 0;
   }
   inline LRESULT OnEraseBkgnd(UINT msg_id, WPARAM wparam, LPARAM lparam,
@@ -145,6 +143,7 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
 
   client::SendCommandInterface* send_command_interface_;
   std::unique_ptr<commands::CandidateWindow> candidate_window_;
+  uint32_t dpi_;
   std::unique_ptr<TextRenderer> text_renderer_;
   std::unique_ptr<renderer::RendererStyle> style_;
   bool metrics_changed_;

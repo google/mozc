@@ -35,6 +35,7 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include <cstdint>
 #include <string>
 
 #include "base/coordinates.h"
@@ -79,24 +80,30 @@ void FillSolidRect(HDC dc, const RECT* rect, COLORREF color) {
 InfolistWindow::InfolistWindow()
     : send_command_interface_(nullptr),
       candidate_window_(new commands::CandidateWindow),
-      text_renderer_(TextRenderer::Create()),
+      dpi_(::GetDpiForSystem()),
+      text_renderer_(TextRenderer::Create(dpi_)),
       style_(new RendererStyle),
       metrics_changed_(false),
       visible_(false) {
-  GetScaledRendererStyle(style_.get());
+  GetScaledRendererStyle(style_.get(), dpi_);
 }
 
 InfolistWindow::~InfolistWindow() {}
+
+void InfolistWindow::UpdateDpi(uint32_t dpi) {
+  if (dpi == dpi_) {
+    return;
+  }
+  dpi_ = dpi;
+  GetScaledRendererStyle(style_.get(), dpi_);
+  text_renderer_->OnDpiChanged(dpi_);
+}
 
 void InfolistWindow::OnDestroy() {
   // PostQuitMessage may stop the message loop even though other
   // windows are not closed. WindowManager should close these windows
   // before process termination.
   ::PostQuitMessage(0);
-}
-
-void InfolistWindow::OnDpiChanged(UINT dpiX, UINT dpiY, RECT* rect) {
-  metrics_changed_ = true;
 }
 
 BOOL InfolistWindow::OnEraseBkgnd(HDC dc) {
