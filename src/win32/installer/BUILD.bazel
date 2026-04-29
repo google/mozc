@@ -117,6 +117,7 @@ genrule(
         "--wxs_path=$(location " + _WXS_FILE + ")",
         "--wix_path=$(location @wix//:wix.exe)",
         "--branding=" + BRANDING,
+        "--vs_install_dir=\"$$BAZEL_VC\"",
     ]) + select({
         ":build_arm64_binaries": " " + " ".join([
             "--mozc_tip64arm=$(location //win32/tip:mozc_tip64arm)",

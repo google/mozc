@@ -45,7 +45,12 @@ Building Mozc on Windows requires the following software.
 *   `.NET 6` or later (for `dotnet` command).
 *   [Bazelisk](https://github.com/bazelbuild/bazelisk)
 
-> [!NOTE] Bazelisk is a wrapper of [Bazel](https://bazel.build) that allows you
+> [!TIP]
+> Visual Studio 2026 Community Edition is also supported to build Mozc. When
+> both VS 2022 and 2026 are installed, VS 2022 will be used.
+
+> [!NOTE]
+> Bazelisk is a wrapper of [Bazel](https://bazel.build) that allows you
 > to use a specific version of Bazel.
 
 ### Download the repository from GitHub

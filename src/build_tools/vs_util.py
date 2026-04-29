@@ -77,7 +77,7 @@ def get_vcvarsall(
         r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
     )
 
-  cmd = [
+  base_cmd = [
       str(vswhere_path),
       '-products',
       'Microsoft.VisualStudio.Product.Enterprise',
@@ -86,41 +86,43 @@ def get_vcvarsall(
       'Microsoft.VisualStudio.Product.BuildTools',
       '-find',
       'VC/Auxiliary/Build/vcvarsall.bat',
-      '-version',
-      '[17,18)',  # See https://github.com/microsoft/vswhere/wiki/Versions
       '-latest',
       '-utf8',
-  ]
-  cmd += [
       '-requires',
       'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
   ]
   if arch.endswith('arm64'):
-    cmd += ['Microsoft.VisualStudio.Component.VC.Tools.ARM64']
+    base_cmd += ['Microsoft.VisualStudio.Component.VC.Tools.ARM64']
 
-  process = subprocess.Popen(
-      cmd,
-      stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE,
-      shell=False,
-      text=True,
-      encoding='utf-8',
-  )
-  stdout, stderr = process.communicate()
-  exitcode = process.wait()
-  if exitcode != 0:
-    msgs = ['Failed to execute vswhere.exe']
-    if stdout:
-      msgs += ['-----stdout-----', stdout]
-    if stderr:
-      msgs += ['-----stderr-----', stderr]
-    raise ChildProcessError('\n'.join(msgs))
+  # Try Visual Studio 2022 first, then fall back to Visual Studio 2026 when
+  # VS 2022 is not installed. This keeps VS 2022 as the default on machines
+  # that have both versions installed.
+  # See https://github.com/microsoft/vswhere/wiki/Versions
+  for version_filter in ('[17,18)', '[18,19)'):
+    cmd = base_cmd + ['-version', version_filter]
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=False,
+        text=True,
+        encoding='utf-8',
+    )
+    stdout, stderr = process.communicate()
+    exitcode = process.wait()
+    if exitcode != 0:
+      msgs = ['Failed to execute vswhere.exe']
+      if stdout:
+        msgs += ['-----stdout-----', stdout]
+      if stderr:
+        msgs += ['-----stderr-----', stderr]
+      raise ChildProcessError('\n'.join(msgs))
 
-  lines = stdout.splitlines()
-  if len(lines) > 0:
-    vcvarsall = pathlib.Path(lines[0])
-    if vcvarsall.exists():
-      return vcvarsall
+    lines = stdout.splitlines()
+    if len(lines) > 0:
+      vcvarsall = pathlib.Path(lines[0])
+      if vcvarsall.exists():
+        return vcvarsall
 
   msg = 'Could not find vcvarsall.bat.'
   if arch.endswith('arm64'):
