@@ -36,6 +36,7 @@
 #include <istream>  // NOLINT
 #include <memory>
 #include <sstream>
+#include <streambuf>
 #include <string>
 #include <utility>
 #include <vector>
@@ -415,12 +416,19 @@ void Table::DeleteRule(const absl::string_view input) {
   entries_.DeleteEntry(input);
 }
 
-bool Table::LoadFromString(const std::string& str) {
-  std::istringstream is(str);
+bool Table::LoadFromString(absl::string_view str) {
+  struct viewbuf : std::streambuf {
+    explicit viewbuf(absl::string_view sv) {
+      char* p = const_cast<char*>(sv.data());
+      setg(p, p, p + sv.size());
+    }
+  };
+  viewbuf buffer(str);
+  std::istream is(&buffer);
   return LoadFromStream(&is);
 }
 
-bool Table::LoadFromFile(const char* filepath) {
+bool Table::LoadFromFile(absl::string_view filepath) {
   std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filepath));
   if (ifs == nullptr) {
     return false;

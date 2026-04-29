@@ -74,9 +74,9 @@ class Entry final {
  public:
   Entry(absl::string_view input, absl::string_view result,
         absl::string_view pending, TableAttributes attributes);
-  constexpr const std::string& input() const { return input_; }
-  constexpr const std::string& result() const { return result_; }
-  constexpr const std::string& pending() const { return pending_; }
+  absl::string_view input() const { return input_; }
+  absl::string_view result() const { return result_; }
+  absl::string_view pending() const { return pending_; }
   constexpr TableAttributes attributes() const { return attributes_; }
 
  private:
@@ -109,8 +109,8 @@ class Table final {
 
   void DeleteRule(absl::string_view input);
 
-  bool LoadFromString(const std::string& str);
-  bool LoadFromFile(const char* filepath);
+  bool LoadFromString(absl::string_view str);
+  bool LoadFromFile(absl::string_view filepath);
 
   const Entry* LookUp(absl::string_view input) const;
   const Entry* LookUpPrefix(absl::string_view input, size_t* key_length,
