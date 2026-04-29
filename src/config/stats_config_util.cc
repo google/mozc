@@ -149,31 +149,28 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
 #endif  // _WIN32
 
 #ifdef __APPLE__
+constinit absl::Mutex g_mutex(absl::kConstInit);
+
+std::string GetConfigFilePath() {
+  return absl::StrCat(SystemUtil::GetUserProfileDirectory(),
+                      "/.usagestats.db");  // hidden file
+}
+
 class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  MacStatsConfigUtilImpl();
-
   bool IsEnabled() override;
   bool SetEnabled(bool val) override;
-
- private:
-  std::string config_file_;
-  absl::Mutex mutex_;
 };
-
-MacStatsConfigUtilImpl::MacStatsConfigUtilImpl()
-    : config_file_(absl::StrCat(SystemUtil::GetUserProfileDirectory(),
-                                "/.usagestats.db"))  //  // hidden file
-{}
 
 bool MacStatsConfigUtilImpl::IsEnabled() {
 #ifdef CHANNEL_DEV
   return true;
 #else   // CHANNEL_DEV
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(g_mutex);
   constexpr bool kDefaultValue = false;
 
-  std::ifstream ifs(config_file_.c_str(), std::ios::binary | std::ios::in);
+  const std::string config_file = GetConfigFilePath();
+  std::ifstream ifs(config_file.c_str(), std::ios::binary | std::ios::in);
 
   if (!ifs.is_open()) {
     return kDefaultValue;
@@ -197,13 +194,14 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 #ifdef CHANNEL_DEV
   return true;
 #else   // CHANNEL_DEV
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(g_mutex);
   const uint32_t value = static_cast<uint32_t>(val);
 
-  if (FileUtil::FileExists(config_file_).ok()) {
-    ::chmod(config_file_.c_str(), S_IRUSR | S_IWUSR);  // read/write
+  const std::string config_file = GetConfigFilePath();
+  if (FileUtil::FileExists(config_file).ok()) {
+    ::chmod(config_file.c_str(), S_IRUSR | S_IWUSR);  // read/write
   }
-  std::ofstream ofs(config_file_,
+  std::ofstream ofs(config_file,
                     std::ios::binary | std::ios::out | std::ios::trunc);
   if (!ofs) {
     return false;
@@ -212,7 +210,7 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
   if (!ofs.good()) {
     return false;
   }
-  return 0 == ::chmod(config_file_.c_str(), S_IRUSR);  // read only
+  return 0 == ::chmod(config_file.c_str(), S_IRUSR);  // read only
 #endif  // CHANNEL_DEV
 }
 #endif  // MACOSX
