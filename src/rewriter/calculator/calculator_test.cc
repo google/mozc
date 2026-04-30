@@ -142,6 +142,27 @@ TEST(CalculatorTest, BasicTest) {
 
   // Overflow and extreme values.
   VerifyRejection(calculator, "1e1000=");
+
+  // Mathematical functions support.
+  VerifyCalculation(calculator, "log(10)=", "1");
+  VerifyCalculation(calculator, "ln(1)=", "0");
+  VerifyCalculation(calculator, "sin(0)=", "0");
+  VerifyCalculation(calculator, "cos(0)=", "1");
+  VerifyCalculation(calculator, "abs(-4.5)=", "4.5");
+  VerifyCalculation(calculator, "sqrt(16)=", "4");
+
+  // Complex function combinations, floating-point args.
+  VerifyCalculation(calculator, "sin(3.141592653589793/2)=", "1");
+  VerifyCalculation(calculator, "log(2*50)=", "2");
+  VerifyCalculation(calculator, "sqrt(abs(-16))=", "4");
+  VerifyCalculation(calculator, "1+log(10)=", "2");
+  VerifyCalculation(calculator, "2*sin(0)+10=", "10");
+  VerifyCalculation(calculator, "(1+log(10))*3=", "6");
+
+  // Negative test cases.
+  VerifyRejection(calculator, "sqrt(-1)=");
+  VerifyRejection(calculator, "log(1+)=");
+  VerifyRejection(calculator, "sin(3=");
 }
 
 // Test large number of queries.  Test data is located at

@@ -43,15 +43,23 @@ class Calculator {
  public:
   // Represents the type of calculation token.
   enum class TokenType {
-    PLUS = 1,  // "+"
-    MINUS,     // "-"
-    TIMES,     // "*"
-    DIVIDE,    // "/"
-    MOD,       // "%"
-    POW,       // "^"
-    LP,        // "("
-    RP,        // ")"
-    INTEGER,   // Numbers (e.g. "123", "45.6")
+    PLUS = 1,   // "+"
+    MINUS,      // "-"
+    TIMES,      // "*"
+    DIVIDE,     // "/"
+    MOD,        // "%"
+    POW,        // "^"
+    LP,         // "("
+    RP,         // ")"
+    INTEGER,    // Numbers (e.g. "123", "45.6")
+    FUNC_LOG,   // "log" (base 10)
+    FUNC_LN,    // "ln" (natural logarithm)
+    FUNC_EXP,   // "exp"
+    FUNC_SQRT,  // "sqrt"
+    FUNC_SIN,   // "sin"
+    FUNC_COS,   // "cos"
+    FUNC_TAN,   // "tan"
+    FUNC_ABS,   // "abs"
   };
 
   // Represents a token in the expression.
@@ -68,7 +76,7 @@ class Calculator {
   using TokenSequence = std::vector<Token>;
 
   // Max byte length of operator character
-  static constexpr size_t kMaxLengthOfOperator = 3;
+  static constexpr size_t kMaxLengthOfOperator = 4;
 
   // Tokenizes |expression_body| and sets the tokens into |tokens|.
   // It returns false if |expression_body| includes an invalid token or
@@ -79,7 +87,7 @@ class Calculator {
   // Perform calculation with a given sequence of token.
   bool CalculateTokens(const TokenSequence& tokens, double* result_value) const;
 
-  // Mapping from operator character such as '+' to the corresponding
+  // Mapping from operator character such as '+' or "log" to the corresponding
   // token type.
   absl::flat_hash_map<absl::string_view, TokenType> operator_map_;
 };

@@ -38,6 +38,7 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
@@ -72,7 +73,7 @@ struct ParserContext {
 //    Term       : '*' | '/' | '%'         (Left-associative)
 //    Factor     : '^'                     (Right-associative)
 //    Unary      : '+' | '-'               (Prefix, right-associative)
-//    Primary    : Integer | '(' Expression ')'
+//    Primary    : Integer | Function | '(' Expression ')'
 //
 // -----------------------------------------------------------------------------
 // 2. Behavior of right-associativity vs left-associativity:
@@ -83,9 +84,8 @@ struct ParserContext {
 //
 // -----------------------------------------------------------------------------
 // 3. Mutual Recursion:
-//    - ParsePrimary handles parentheses '( Expression )'.
-//    - This calls ParseExpression, completing the recursion cycle. Minimum
-//      forward-declaration is required below to allow this cycle.
+//    - ParsePrimary handles parentheses '( Expression )' and functions.
+//    - Minimum forward-declaration is required below to allow this cycle.
 //    - Recursive calls are guarded by the operation count limit
 //      (kMaxOperations) to prevent stack overflow.
 // -----------------------------------------------------------------------------
@@ -117,6 +117,56 @@ std::optional<double> ParsePrimary(ParserContext& ctx) {
     ++ctx.pos;
     return val;
   }
+
+  // Handle mathematical functions (e.g. log, sin, cos)
+  TokenType type = ctx.tokens[ctx.pos].type;
+  if (type == TokenType::FUNC_LOG || type == TokenType::FUNC_LN ||
+      type == TokenType::FUNC_EXP || type == TokenType::FUNC_SQRT ||
+      type == TokenType::FUNC_SIN || type == TokenType::FUNC_COS ||
+      type == TokenType::FUNC_TAN || type == TokenType::FUNC_ABS) {
+    ++ctx.pos;
+    // Require left parenthesis '('
+    if (ctx.pos >= ctx.tokens.size() ||
+        ctx.tokens[ctx.pos].type != TokenType::LP) {
+      return std::nullopt;
+    }
+    ++ctx.pos;
+    std::optional<double> arg = ParseExpression(ctx);
+    if (!arg.has_value()) {
+      return std::nullopt;
+    }
+    // Require right parenthesis ')'
+    if (ctx.pos >= ctx.tokens.size() ||
+        ctx.tokens[ctx.pos].type != TokenType::RP) {
+      return std::nullopt;
+    }
+    ++ctx.pos;
+
+    if (type == TokenType::FUNC_LOG) {
+      return std::log10(*arg);
+    } else if (type == TokenType::FUNC_LN) {
+      return std::log(*arg);
+    } else if (type == TokenType::FUNC_EXP) {
+      return std::exp(*arg);
+    } else if (type == TokenType::FUNC_SQRT) {
+      if (*arg < 0.0) {
+        return std::nullopt;
+      }
+      return std::sqrt(*arg);
+    } else if (type == TokenType::FUNC_SIN) {
+      return std::sin(*arg);
+    } else if (type == TokenType::FUNC_COS) {
+      return std::cos(*arg);
+    } else if (type == TokenType::FUNC_TAN) {
+      return std::tan(*arg);
+    } else if (type == TokenType::FUNC_ABS) {
+      return std::abs(*arg);
+    } else {
+      DCHECK(false) << "Unreachable function type in ParsePrimary";
+      return std::nullopt;
+    }
+  }
+
   return std::nullopt;
 }
 
@@ -258,10 +308,16 @@ Calculator::Calculator() {
   operator_map_["^"] = TokenType::POW;
   operator_map_["("] = TokenType::LP;
   operator_map_[")"] = TokenType::RP;
+  operator_map_["log"] = TokenType::FUNC_LOG;
+  operator_map_["ln"] = TokenType::FUNC_LN;
+  operator_map_["exp"] = TokenType::FUNC_EXP;
+  operator_map_["sqrt"] = TokenType::FUNC_SQRT;
+  operator_map_["sin"] = TokenType::FUNC_SIN;
+  operator_map_["cos"] = TokenType::FUNC_COS;
+  operator_map_["tan"] = TokenType::FUNC_TAN;
+  operator_map_["abs"] = TokenType::FUNC_ABS;
 }
 
-// Basic arithmetic operations are available.
-// TODO(tok): Add more number of operators.
 bool Calculator::CalculateString(const absl::string_view key,
                                  std::string* result) const {
   DCHECK(result);
@@ -309,7 +365,7 @@ bool Calculator::Tokenize(absl::string_view expression_body,
                           TokenSequence* tokens) const {
   const char* current = expression_body.data();
   const char* end = expression_body.data() + expression_body.size();
-  int num_operator = 0;  // Number of operators appeared
+  int num_operator = 0;  // Number of operators or functions appeared
   int num_value = 0;     // Number of values appeared
 
   DCHECK(tokens);
@@ -335,6 +391,22 @@ bool Calculator::Tokenize(absl::string_view expression_body,
       tokens->push_back({TokenType::INTEGER, value});
       ++num_value;
       continue;
+    }
+
+    // Read alphabetical function name token
+    if (absl::ascii_isalpha(*current)) {
+      while (current < end && absl::ascii_isalpha(*current)) {
+        ++current;
+      }
+      std::string name(token_begin, current - token_begin);
+      absl::AsciiStrToLower(&name);
+      const auto func_it = operator_map_.find(name);
+      if (func_it != operator_map_.end()) {
+        tokens->push_back({func_it->second, 0.0});
+        ++num_operator;
+        continue;
+      }
+      return false;
     }
 
     // Read operator token
