@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
@@ -45,11 +46,11 @@
 namespace mozc {
 namespace {
 
-constexpr char kName[] = "named_event_test";
+constexpr absl::string_view kName = "named_event_test";
 
 class NamedEventListenerThread {
  public:
-  NamedEventListenerThread(const char *name, absl::Duration initial_wait,
+  NamedEventListenerThread(absl::string_view name, absl::Duration initial_wait,
                            absl::Duration wait, int max_num_wait)
       : listener_(name), first_triggered_time_(0) {
     EXPECT_TRUE(listener_.IsAvailable());
@@ -141,11 +142,11 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
   const absl::Time notify_time = Clock::GetAbslTime();
   ASSERT_TRUE(notifier.Notify());
 
-  for (auto &listener : listeners) {
+  for (auto& listener : listeners) {
     listener->Join();
   }
 
-  for (const auto &listener : listeners) {
+  for (const auto& listener : listeners) {
     // There is a chance that |listener| is not triggered.
     if (listener->IsTriggered()) {
       EXPECT_LT(notify_time, listener->first_triggered_time());

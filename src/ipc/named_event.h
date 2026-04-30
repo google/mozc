@@ -33,6 +33,7 @@
 #include <cstddef>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
 #ifdef _WIN32
@@ -89,12 +90,12 @@ namespace mozc {
 // Util class for Named Event
 class NamedEventUtil {
  public:
-  NamedEventUtil(const NamedEventUtil &) = delete;
-  NamedEventUtil &operator=(const NamedEventUtil &) = delete;
+  NamedEventUtil(const NamedEventUtil&) = delete;
+  NamedEventUtil& operator=(const NamedEventUtil&) = delete;
   // return real event name
   // Windows: <kEventPathPrefix>.<sid>.<name>
   // Linux/Mac: <Util::GetUserProfileDirectory()>/.<name>.event
-  static std::string GetEventPath(const char *name);
+  static std::string GetEventPath(absl::string_view name);
 };
 
 class NamedEventListener {
@@ -102,14 +103,14 @@ class NamedEventListener {
   // Create Named Event named "name"
   // Windows: <kEventPathPrefix>.<sid>.<name>
   // Linux/Mac: <Util::GetUserProfileDirectory()>/.event.<name>
-  explicit NamedEventListener(const char *name);
+  explicit NamedEventListener(absl::string_view name);
   virtual ~NamedEventListener();
 
-  NamedEventListener(const NamedEventListener &) = delete;
-  NamedEventListener &operator=(const NamedEventListener &) = delete;
+  NamedEventListener(const NamedEventListener&) = delete;
+  NamedEventListener& operator=(const NamedEventListener&) = delete;
 
-  NamedEventListener(NamedEventListener &&) = delete;
-  NamedEventListener &operator=(NamedEventListener &&) = delete;
+  NamedEventListener(NamedEventListener&&) = delete;
+  NamedEventListener& operator=(NamedEventListener&&) = delete;
 
   // Return true if NamedEventListener is available
   bool IsAvailable() const;
@@ -143,7 +144,7 @@ class NamedEventListener {
 #ifdef _WIN32
   HANDLE handle_;
 #else   // _WIN32
-  sem_t *sem_;
+  sem_t* sem_;
   std::string key_filename_;
 #endif  // _WIN32
 };
@@ -153,7 +154,7 @@ class NamedEventNotifier {
   // Open Named event named "name"
   // The named event object should be created by
   // NamedEventListener before calling the constructor
-  explicit NamedEventNotifier(const char *name);
+  explicit NamedEventNotifier(absl::string_view name);
   virtual ~NamedEventNotifier();
 
   // return true if NamedEventNotifier is available
@@ -166,7 +167,7 @@ class NamedEventNotifier {
 #ifdef _WIN32
   HANDLE handle_;
 #else   // _WIN32
-  sem_t *sem_;
+  sem_t* sem_;
 #endif  // _WIN32
 };
 }  // namespace mozc

@@ -62,7 +62,7 @@ constexpr int kNumRequests = 100;
 
 class EchoServer : public IPCServer {
  public:
-  EchoServer(const std::string &path, int32_t num_connections,
+  EchoServer(absl::string_view path, int32_t num_connections,
              absl::Duration timeout)
       : IPCServer(path, num_connections, timeout) {}
   bool Process(absl::string_view input, std::string *output) override {

@@ -34,6 +34,7 @@
 #include <string>
 
 #include "absl/base/nullability.h"
+#include "absl/strings/string_view.h"
 #include "client/client_interface.h"
 #include "ipc/ipc.h"
 #include "protocol/renderer_command.pb.h"
@@ -51,13 +52,13 @@ class RendererLauncherInterface {
 
   // implement StartRenderer
   virtual void StartRenderer(
-      const std::string& name, const std::string& renderer_path,
+      absl::string_view name, absl::string_view renderer_path,
       bool disable_renderer_path_check,
       IPCClientFactoryInterface* client_factory_intarface) = 0;
 
   // force to terminate the renderer
   // do not use this method unless protocol version mismatch
-  virtual bool ForceTerminateRenderer(const std::string& name) = 0;
+  virtual bool ForceTerminateRenderer(absl::string_view name) = 0;
 
   // called when fatal error occurred
   virtual void OnFatal(RendererErrorType type) = 0;
@@ -87,7 +88,7 @@ class RendererClient final : public RendererInterface {
   static std::unique_ptr<RendererClient> Create();
 
   static std::unique_ptr<RendererClient> CreateForTesting(
-      const std::string& name,
+      absl::string_view name,
       IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
       RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
       RendererPathCheckMode renderer_path_check_mode);
@@ -113,7 +114,7 @@ class RendererClient final : public RendererInterface {
 
  private:
   RendererClient(
-      std::string name,
+      absl::string_view name,
       IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
       RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
       bool disable_renderer_path_check_for_testing);
@@ -129,8 +130,8 @@ class RendererClient final : public RendererInterface {
   std::unique_ptr<RendererLauncherInterface> default_renderer_launcher_;
 
   // Behavior overrides for testing
-  IPCClientFactoryInterface* const absl_nullable
-      ipc_client_factory_for_testing_;
+  IPCClientFactoryInterface* const
+      absl_nullable ipc_client_factory_for_testing_;
   RendererLauncherInterface* const absl_nullable renderer_launcher_for_testing_;
   const bool disable_renderer_path_check_for_testing_;
 };

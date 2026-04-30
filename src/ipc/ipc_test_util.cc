@@ -56,7 +56,7 @@ TestMachPortManager::~TestMachPortManager() {
   mach_port_destroy(mach_task_self(), port_);
 }
 
-bool TestMachPortManager::GetMachPort(const std::string &name,
+bool TestMachPortManager::GetMachPort(absl::string_view name,
                                       mach_port_t *port) {
   *port = port_;
   return true;
@@ -64,7 +64,7 @@ bool TestMachPortManager::GetMachPort(const std::string &name,
 
 // Server is always running for test because both client and server is
 // running in a same process.
-bool TestMachPortManager::IsServerRunning(const std::string &name) const {
+bool TestMachPortManager::IsServerRunning(absl::string_view name) const {
   return true;
 }
 #endif  // __APPLE__

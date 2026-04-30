@@ -46,6 +46,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/protobuf/message.h"
@@ -307,7 +308,7 @@ INSTANTIATE_TEST_CASE_P(BalloonImageParameters, BalloonImageTest,
                         ::testing::ValuesIn(kRenderingResultList));
 
 TEST_P(BalloonImageTest, TestImpl) {
-  const std::string& expected_image_path = mozc::testing::GetSourceFileOrDie(
+  const std::string expected_image_path = mozc::testing::GetSourceFileOrDie(
       {"data", "test", "renderer", "win32", GetParam()});
   const std::string textproto_path = expected_image_path + ".textproto";
   ASSERT_OK(FileUtil::FileExists(textproto_path))

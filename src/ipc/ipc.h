@@ -78,11 +78,11 @@ class IPCClientInterface {
   virtual ~IPCClientInterface() = default;
 
   virtual bool Connected() const = 0;
-  virtual bool Call(const std::string& request, std::string* response,
+  virtual bool Call(absl::string_view request, std::string* response,
                     absl::Duration timeout) = 0;
 
   virtual uint32_t GetServerProtocolVersion() const = 0;
-  virtual const std::string& GetServerProductVersion() const = 0;
+  virtual absl::string_view GetServerProductVersion() const = 0;
   virtual uint32_t GetServerProcessId() const = 0;
 
   // return last error
@@ -97,11 +97,11 @@ class MachPortManagerInterface {
   // If the mach port can be obtained successfully, set the specified
   // "port" and returns true.  Otherwise port doesn't change and
   // returns false.
-  virtual bool GetMachPort(const std::string& name, mach_port_t* port) = 0;
+  virtual bool GetMachPort(absl::string_view name, mach_port_t* port) = 0;
 
   // Returns true if the connecting server is running, checked via
   // OS-depended way.  This method can be defined differently for testing.
-  virtual bool IsServerRunning(const std::string& name) const = 0;
+  virtual bool IsServerRunning(absl::string_view name) const = 0;
 };
 #endif  // __APPLE__
 
@@ -134,7 +134,7 @@ class IPCClient : public IPCClientInterface {
   // Return server protocol version
   uint32_t GetServerProtocolVersion() const override;
 
-  const std::string& GetServerProductVersion() const override;
+  absl::string_view GetServerProductVersion() const override;
 
   uint32_t GetServerProcessId() const override;
 
@@ -146,7 +146,7 @@ class IPCClient : public IPCClientInterface {
   // When timeout (in msec) is set -1, 'Call' waits forever.
   // Note that on Linux and Windows, Call() closes the socket_. This means you
   // cannot call the Call() function more than once.
-  bool Call(const std::string& request, std::string* response,
+  bool Call(absl::string_view request, std::string* response,
             absl::Duration timeout) override;
 
   IPCErrorType GetLastIPCError() const override { return last_ipc_error_; }
@@ -229,7 +229,7 @@ class IPCServer {
   //          send a request within 'timeout'. If timeout is -1,
   //          IPCServer waits forever. Default setting is -1.
   // TODO(taku): timeout is not implemented properly
-  IPCServer(const std::string& name, int32_t num_connections,
+  IPCServer(absl::string_view name, int32_t num_connections,
             absl::Duration timeout);
   virtual ~IPCServer();
 
@@ -262,7 +262,7 @@ class IPCServer {
   }
 #endif  // __APPLE__
 
-  const std::string& GetServiceName() const { return name_; }
+  absl::string_view GetServiceName() const { return name_; }
 
  private:
   std::string name_;

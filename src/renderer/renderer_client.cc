@@ -42,6 +42,7 @@
 #include "absl/base/thread_annotations.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -109,7 +110,7 @@ class RendererLauncher : public RendererLauncherInterface {
   }
 
   void StartRenderer(
-      const std::string& name, const std::string& path,
+      absl::string_view name, absl::string_view path,
       bool disable_renderer_path_check,
       IPCClientFactoryInterface* ipc_client_factory_interface) override {
     if (Status() == RendererStatus::RENDERER_LAUNCHING ||
@@ -130,7 +131,7 @@ class RendererLauncher : public RendererLauncherInterface {
     launcher_.emplace([this] { ThreadMain(); });
   }
 
-  bool ForceTerminateRenderer(const std::string& name) override {
+  bool ForceTerminateRenderer(absl::string_view name) override {
     return IPCClient::TerminateServer(name);
   }
 
@@ -339,13 +340,13 @@ class RendererLauncher : public RendererLauncherInterface {
 };
 
 RendererClient::RendererClient(
-    std::string name,
+    absl::string_view name,
     IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
     RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
     bool disable_renderer_path_check_for_testing)
     : is_window_visible_(false),
       version_mismatch_nums_(0),
-      name_(std::move(name)),
+      name_(name),
       default_renderer_launcher_(std::make_unique<RendererLauncher>()),
       ipc_client_factory_for_testing_(ipc_client_factory_for_testing),
       renderer_launcher_for_testing_(renderer_launcher_for_testing),
@@ -491,16 +492,16 @@ bool RendererClient::ExecCommand(const commands::RendererCommand& command) {
   return true;
 }
 
-IPCClientFactoryInterface* absl_nonnull
-RendererClient::GetIPCClientFactory() const {
+IPCClientFactoryInterface* absl_nonnull RendererClient::GetIPCClientFactory()
+    const {
   if (ipc_client_factory_for_testing_ != nullptr) {
     return ipc_client_factory_for_testing_;
   }
   return IPCClientFactory::GetIPCClientFactory();  // This is singleton
 }
 
-RendererLauncherInterface* absl_nonnull
-RendererClient::GetRendererLauncher() const {
+RendererLauncherInterface* absl_nonnull RendererClient::GetRendererLauncher()
+    const {
   if (renderer_launcher_for_testing_ != nullptr) {
     return renderer_launcher_for_testing_;
   }
@@ -520,12 +521,12 @@ std::unique_ptr<RendererClient> RendererClient::Create() {
   if (!desktop_name.empty()) {
     absl::StrAppend(&name, ".", desktop_name);
   }
-  return std::unique_ptr<RendererClient>(new RendererClient(
-      name, nullptr, nullptr, false));
+  return std::unique_ptr<RendererClient>(
+      new RendererClient(name, nullptr, nullptr, false));
 }
 
 std::unique_ptr<RendererClient> RendererClient::CreateForTesting(
-    const std::string& name,
+    absl::string_view name,
     IPCClientFactoryInterface* absl_nullable ipc_client_factory_for_testing,
     RendererLauncherInterface* absl_nullable renderer_launcher_for_testing,
     RendererPathCheckMode renderer_path_check_mode) {

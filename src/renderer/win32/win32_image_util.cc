@@ -45,6 +45,7 @@
 #include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "base/coordinates.h"
 #include "base/win32/wide_char.h"
 
@@ -375,7 +376,7 @@ Rect GetBoundingRect(double left, double top, double width, double height) {
 // the ownerships of the returned pointers.
 std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
     double left, double top, double width, double height,
-    const std::string& text, const std::string& fontname, size_t font_point) {
+    absl::string_view text, absl::string_view fontname, size_t font_point) {
   constexpr size_t kDivision = SubdivisionalPixel::kDivision;
 
   const Rect& bounding_rect = GetBoundingRect(left, top, width, height);
@@ -953,7 +954,7 @@ size_t SafeFrameBuffer::GetIndex(int x, int y) const {
 }
 
 TextLabel::TextLabel(double left, double top, double width, double height,
-                     const std::string& text, const std::string& font,
+                     absl::string_view text, absl::string_view font,
                      size_t font_point, const RGBColor text_color)
     : pixels_(Get1bitGlyph(left, top, width, height, text, font, font_point)),
       bounding_rect_(GetBoundingRect(left, top, width, height)),

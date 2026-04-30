@@ -34,6 +34,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "ipc/ipc.h"
 
@@ -48,9 +49,9 @@ class IPCClientMock : public IPCClientInterface {
   explicit IPCClientMock(IPCClientFactoryMock *caller);
   bool Connected() const override;
   uint32_t GetServerProtocolVersion() const override;
-  const std::string &GetServerProductVersion() const override;
+  absl::string_view GetServerProductVersion() const override;
   uint32_t GetServerProcessId() const override;
-  bool Call(const std::string &request, std::string *response,
+  bool Call(absl::string_view request, std::string *response,
             absl::Duration timeout) override;
 
   IPCErrorType GetLastIPCError() const override { return IPC_NO_ERROR; }
@@ -60,13 +61,13 @@ class IPCClientMock : public IPCClientInterface {
   void set_server_protocol_version(const uint32_t server_protocol_version) {
     server_protocol_version_ = server_protocol_version;
   }
-  void set_server_product_version(const std::string &server_product_version) {
+  void set_server_product_version(absl::string_view server_product_version) {
     server_product_version_ = server_product_version;
   }
   void set_server_process_id(const uint32_t server_process_id) {
     server_process_id_ = server_process_id;
   }
-  void set_response(const std::string &response) { response_ = response; }
+  void set_response(absl::string_view response) { response_ = response; }
 
  private:
   IPCClientFactoryMock *caller_;
@@ -91,13 +92,13 @@ class IPCClientFactoryMock : public IPCClientFactoryInterface {
       absl::string_view unused_name) override;
 
   // This function is for unit tests.
-  const std::string &GetGeneratedRequest() const;
+  absl::string_view GetGeneratedRequest() const;
 
   // This function is for IPCClientMock.
-  void SetGeneratedRequest(const std::string &request);
+  void SetGeneratedRequest(absl::string_view request);
 
   // This function is for unit tests.
-  void SetMockResponse(const std::string &response);
+  void SetMockResponse(absl::string_view response);
 
   // This function is for unit tests.
   void SetConnection(bool connection);
@@ -109,7 +110,7 @@ class IPCClientFactoryMock : public IPCClientFactoryInterface {
   void SetServerProtocolVersion(uint32_t server_protocol_version);
 
   // This function is for unit tests.
-  void SetServerProductVersion(const std::string &server_product_version);
+  void SetServerProductVersion(absl::string_view server_product_version);
 
   // This function is for unit tests.
   void SetServerProcessId(uint32_t server_process_id);

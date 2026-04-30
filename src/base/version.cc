@@ -77,7 +77,7 @@ const char* Version::GetMozcEngineVersion() {
   return version::kMozcEngineVersion;
 }
 
-bool Version::CompareVersion(const std::string& lhs, const std::string& rhs) {
+bool Version::CompareVersion(absl::string_view lhs, absl::string_view rhs) {
   if (lhs == rhs) {
     return false;
   }

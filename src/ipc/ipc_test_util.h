@@ -34,6 +34,7 @@
 
 #include <memory>
 
+#include "absl/strings/string_view.h"
 #include "ipc/ipc.h"
 
 namespace mozc {
@@ -45,8 +46,8 @@ class TestMachPortManager : public mozc::MachPortManagerInterface {
   TestMachPortManager();
   ~TestMachPortManager();
 
-  virtual bool GetMachPort(const std::string& name, mach_port_t* port);
-  virtual bool IsServerRunning(const std::string& name) const;
+  virtual bool GetMachPort(absl::string_view name, mach_port_t* port);
+  virtual bool IsServerRunning(absl::string_view name) const;
 
  private:
   mach_port_t port_;

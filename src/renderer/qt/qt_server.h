@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "renderer/qt/qt_ipc_thread.h"
 #include "renderer/qt/qt_window_manager.h"
 
@@ -50,7 +51,7 @@ class QtServer : public QObject {
 
   int StartServer(int argc, char** argv);
 
-  void AsyncExecCommand(const std::string& command);
+  void AsyncExecCommand(absl::string_view command);
 
  public slots:
   void Update(std::string command);

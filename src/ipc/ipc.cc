@@ -88,7 +88,7 @@ uint32_t IPCClient::GetServerProtocolVersion() const {
   return ipc_path_manager_->GetServerProtocolVersion();
 }
 
-const std::string &IPCClient::GetServerProductVersion() const {
+absl::string_view IPCClient::GetServerProductVersion() const {
   DCHECK(ipc_path_manager_);
   return ipc_path_manager_->GetServerProductVersion();
 }
@@ -99,7 +99,7 @@ uint32_t IPCClient::GetServerProcessId() const {
 }
 
 // static
-bool IPCClient::TerminateServer(const absl::string_view name) {
+bool IPCClient::TerminateServer(absl::string_view name) {
   IPCClient client(name);
 
   if (!client.Connected()) {

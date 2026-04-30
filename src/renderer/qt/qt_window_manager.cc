@@ -37,6 +37,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "base/coordinates.h"
 #include "client/client_interface.h"
 #include "protocol/candidate_window.pb.h"
@@ -63,7 +64,9 @@ constexpr char kDescriptionColor[] = "#888888";
 constexpr char kShortcutColor[] = "#616161";
 constexpr char kShortcutBackgroundColor[] = "#F3F4FF";
 
-QString QStr(const std::string &str) { return QString::fromUtf8(str.c_str()); }
+QString QStr(absl::string_view str) {
+  return QString::fromUtf8(str.data(), str.size());
+}
 
 QColor QColorFromRGBAColor(RendererStyle::RGBAColor rgba) {
   return QColor(rgba.r(), rgba.g(), rgba.b(), 255 * rgba.a());
@@ -94,7 +97,7 @@ void QtWindowManager::OnClicked(int row, int column) {
 }
 
 void QtWindowManager::Initialize() {
-  const auto initialize_table = [](QTableWidget *table) {
+  const auto initialize_table = [](QTableWidget* table) {
     table->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint |
                           Qt::WindowStaysOnTopHint);
     table->setSelectionMode(QTableWidget::NoSelection);
@@ -135,19 +138,19 @@ void QtWindowManager::ShowAllWindows() {
 
 // static
 bool QtWindowManager::ShouldShowCandidateWindow(
-    const commands::RendererCommand &command) {
+    const commands::RendererCommand& command) {
   if (!command.visible()) {
     return false;
   }
 
   DCHECK(command.has_output());
-  const commands::Output &output = command.output();
+  const commands::Output& output = command.output();
 
   if (!output.has_candidate_window()) {
     return false;
   }
 
-  const commands::CandidateWindow &candidate_window = output.candidate_window();
+  const commands::CandidateWindow& candidate_window = output.candidate_window();
   if (candidate_window.candidate_size() == 0) {
     return false;
   }
@@ -157,9 +160,9 @@ bool QtWindowManager::ShouldShowCandidateWindow(
 
 namespace {
 // Copied from unix/candidate_window.cc
-void GetDisplayString(const commands::CandidateWindow::Candidate &candidate,
-                      std::string &shortcut, std::string &value,
-                      std::string &description) {
+void GetDisplayString(const commands::CandidateWindow::Candidate& candidate,
+                      std::string& shortcut, std::string& value,
+                      std::string& description) {
   shortcut.clear();
   value.clear();
   description.clear();
@@ -173,7 +176,7 @@ void GetDisplayString(const commands::CandidateWindow::Candidate &candidate,
     return;
   }
 
-  const commands::Annotation &annotation = candidate.annotation();
+  const commands::Annotation& annotation = candidate.annotation();
 
   if (annotation.has_shortcut()) {
     shortcut.assign(annotation.shortcut());
@@ -193,21 +196,21 @@ void GetDisplayString(const commands::CandidateWindow::Candidate &candidate,
   }
 }
 
-Rect GetRect(const QRect &qrect) {
+Rect GetRect(const QRect& qrect) {
   return Rect(qrect.x(), qrect.y(), qrect.width(), qrect.height());
 }
 
-Rect GetRect(const commands::RendererCommand::Rectangle &prect) {
+Rect GetRect(const commands::RendererCommand::Rectangle& prect) {
   const int width = prect.right() - prect.left();
   const int height = prect.bottom() - prect.top();
   return Rect(prect.left(), prect.top(), width, height);
 }
 
-bool IsUpdated(const commands::RendererCommand &prev_command,
-               const commands::RendererCommand &new_command) {
-  const commands::CandidateWindow &prev_cands =
+bool IsUpdated(const commands::RendererCommand& prev_command,
+               const commands::RendererCommand& new_command) {
+  const commands::CandidateWindow& prev_cands =
       prev_command.output().candidate_window();
-  const commands::CandidateWindow &new_cands =
+  const commands::CandidateWindow& new_cands =
       new_command.output().candidate_window();
   if (prev_cands.candidate_size() != new_cands.candidate_size()) {
     return true;
@@ -221,18 +224,18 @@ bool IsUpdated(const commands::RendererCommand &prev_command,
   return false;
 }
 
-int GetItemWidth(const QTableWidgetItem &item) {
+int GetItemWidth(const QTableWidgetItem& item) {
   QFontMetrics metrics(item.font());
   return metrics.boundingRect(item.text()).width() + kMarginWidth;
 }
 
-int GetItemHeight(const QTableWidgetItem &item) {
+int GetItemHeight(const QTableWidgetItem& item) {
   QFontMetrics metrics(item.font());
   return metrics.height() + kMarginHeight;
 }
 
 std::string GetIndexGuideString(
-    const commands::CandidateWindow &candidate_window) {
+    const commands::CandidateWindow& candidate_window) {
   if (!candidate_window.has_footer() ||
       !candidate_window.footer().index_visible()) {
     return "";
@@ -244,7 +247,7 @@ std::string GetIndexGuideString(
   return absl::StrCat(focused_index + 1, "/", total_items);
 }
 
-int GetFocusedRow(const commands::CandidateWindow &candidate_window) {
+int GetFocusedRow(const commands::CandidateWindow& candidate_window) {
   if (candidate_window.has_focused_index()) {
     return candidate_window.focused_index() -
            candidate_window.candidate(0).index();
@@ -252,8 +255,8 @@ int GetFocusedRow(const commands::CandidateWindow &candidate_window) {
   return -1;  // No focused row
 }
 
-void FillCandidateHighlight(const commands::CandidateWindow &candidate_window,
-                            const int row, QTableWidget *table) {
+void FillCandidateHighlight(const commands::CandidateWindow& candidate_window,
+                            const int row, QTableWidget* table) {
   if (row < 0) {
     return;
   }
@@ -282,8 +285,8 @@ void FillCandidateHighlight(const commands::CandidateWindow &candidate_window,
   table->item(row, 3)->setBackground(has_info ? indicator : background);
 }
 
-void FillCandidateWindow(const commands::CandidateWindow &candidate_window,
-                         QTableWidget *table) {
+void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
+                         QTableWidget* table) {
   const size_t cands_size = candidate_window.candidate_size();
   table->clear();
   table->setRowCount(cands_size + 1);  // +1 is for footer.
@@ -302,7 +305,7 @@ void FillCandidateWindow(const commands::CandidateWindow &candidate_window,
   // Fill the candidates
   std::string shortcut, value, description;
   for (size_t i = 0; i < cands_size; ++i) {
-    const commands::CandidateWindow::Candidate &candidate =
+    const commands::CandidateWindow::Candidate& candidate =
         candidate_window.candidate(i);
     GetDisplayString(candidate, shortcut, value, description);
 
@@ -339,7 +342,7 @@ void FillCandidateWindow(const commands::CandidateWindow &candidate_window,
     footer_item->setBackground(footer_bg_brush);
     table->setItem(cands_size, i, footer_item);
   }
-  QTableWidgetItem *footer2 = table->item(cands_size, 2);
+  QTableWidgetItem* footer2 = table->item(cands_size, 2);
   footer2->setText(QStr(GetIndexGuideString(candidate_window)));
   footer2->setTextAlignment(Qt::AlignRight);
   max_width2 = std::max(max_width2, GetItemWidth(*footer2));
@@ -356,8 +359,8 @@ void FillCandidateWindow(const commands::CandidateWindow &candidate_window,
 
 class VirtualRect {
  public:
-  static VirtualRect FromNativeRect(const Rect &native_rect) {
-    for (const QScreen *screen : QGuiApplication::screens()) {
+  static VirtualRect FromNativeRect(const Rect& native_rect) {
+    for (const QScreen* screen : QGuiApplication::screens()) {
       const Rect rect = TranslateToVirtual(screen, native_rect);
       const QRect screen_rect = screen->geometry();
 
@@ -370,7 +373,7 @@ class VirtualRect {
     // fall back to primary screen
     // TODO: Return the nearest monitor rect instead.
     // See GetMonitorRect
-    const QScreen *screen = QGuiApplication::primaryScreen();
+    const QScreen* screen = QGuiApplication::primaryScreen();
     const Rect rect = TranslateToVirtual(screen, native_rect);
     return VirtualRect(rect, mozc::renderer::GetRect(screen->geometry()));
   }
@@ -380,11 +383,11 @@ class VirtualRect {
   Rect GetMonitorRect() const { return monitor_rect_; }
 
  private:
-  VirtualRect(const Rect &rect, const Rect &monitor_rect)
+  VirtualRect(const Rect& rect, const Rect& monitor_rect)
       : rect_(rect), monitor_rect_(monitor_rect) {}
 
-  static Rect TranslateToVirtual(const QScreen *screen,
-                                 const Rect &native_rect) {
+  static Rect TranslateToVirtual(const QScreen* screen,
+                                 const Rect& native_rect) {
     const double device_pixel_ratio = screen->devicePixelRatio();
     // screen_left, screen_top have the same value in both virtual and native
     // coordinate
@@ -407,7 +410,7 @@ class VirtualRect {
 }  // namespace
 
 Point QtWindowManager::GetWindowPosition(
-    const commands::RendererCommand &command, const Size &win_size) {
+    const commands::RendererCommand& command, const Size& win_size) {
   const Rect native_preedit_rect = GetRect(command.preedit_rectangle());
   // Qt6 applications use virtual coordinates. Since IBus uses the device-pixel
   // native coordinate system, we need to translate a received rect to virtual.
@@ -426,8 +429,8 @@ Point QtWindowManager::GetWindowPosition(
 }
 
 Rect QtWindowManager::UpdateCandidateWindow(
-    const commands::RendererCommand &command) {
-  const commands::CandidateWindow &candidate_window =
+    const commands::RendererCommand& command) {
+  const commands::CandidateWindow& candidate_window =
       command.output().candidate_window();
 
   if (IsUpdated(prev_command_, command)) {
@@ -456,12 +459,12 @@ Rect QtWindowManager::UpdateCandidateWindow(
 }
 
 bool QtWindowManager::ShouldShowInfolistWindow(
-    const commands::RendererCommand &command) {
+    const commands::RendererCommand& command) {
   if (!command.output().has_candidate_window()) {
     return false;
   }
 
-  const commands::CandidateWindow &candidate_window =
+  const commands::CandidateWindow& candidate_window =
       command.output().candidate_window();
   if (candidate_window.candidate_size() <= 0) {
     return false;
@@ -491,7 +494,7 @@ bool QtWindowManager::ShouldShowInfolistWindow(
 
 Rect QtWindowManager::GetMonitorRect(int x, int y) {
   QPoint point{x, y};
-  const QScreen *screen = QGuiApplication::screenAt(point);
+  const QScreen* screen = QGuiApplication::screenAt(point);
   if (screen == nullptr) {
     // (x, y) does not belong to any screen. Fall back to the primary screen.
     // TODO: Return the nearest monitor rect instead.
@@ -503,8 +506,8 @@ Rect QtWindowManager::GetMonitorRect(int x, int y) {
 }
 
 void QtWindowManager::UpdateInfolistWindow(
-    const commands::RendererCommand &command,
-    const Rect &candidate_window_rect) {
+    const commands::RendererCommand& command,
+    const Rect& candidate_window_rect) {
   if (!ShouldShowInfolistWindow(command)) {
     infolist_->hide();
     return;
@@ -512,7 +515,7 @@ void QtWindowManager::UpdateInfolistWindow(
 
   infolist_->clear();
 
-  const commands::InformationList &info =
+  const commands::InformationList& info =
       command.output().candidate_window().usages();
   const size_t size = info.information_size();
 
@@ -522,8 +525,8 @@ void QtWindowManager::UpdateInfolistWindow(
   int total_height = 12;                 // Heuristics margin.
 
   // Caption title
-  const std::string &caption = style_.infolist_style().caption_string();
-  QTableWidgetItem *infolist_title = new QTableWidgetItem(QStr(caption));
+  absl::string_view caption = style_.infolist_style().caption_string();
+  QTableWidgetItem* infolist_title = new QTableWidgetItem(QStr(caption));
   infolist_title->setBackground(QBrush(
       QColorFromRGBAColor(style_.infolist_style().caption_background_color())));
   infolist_->setItem(0, 0, infolist_title);
@@ -565,7 +568,7 @@ void QtWindowManager::UpdateInfolistWindow(
   infolist_->show();
 }
 
-void QtWindowManager::UpdateLayout(const commands::RendererCommand &command) {
+void QtWindowManager::UpdateLayout(const commands::RendererCommand& command) {
   if (!ShouldShowCandidateWindow(command)) {
     HideAllWindows();
     return;
@@ -585,7 +588,7 @@ bool QtWindowManager::IsAvailable() const {
   return true;
 }
 
-bool QtWindowManager::ExecCommand(const commands::RendererCommand &command) {
+bool QtWindowManager::ExecCommand(const commands::RendererCommand& command) {
   switch (command.type()) {
     case commands::RendererCommand::NOOP:
       break;
@@ -610,7 +613,7 @@ bool QtWindowManager::ExecCommand(const commands::RendererCommand &command) {
 }
 
 bool QtWindowManager::SetSendCommandInterface(
-    client::SendCommandInterface *send_command_interface) {
+    client::SendCommandInterface* send_command_interface) {
   send_command_interface_ = send_command_interface;
   return true;
 }

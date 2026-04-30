@@ -92,13 +92,13 @@ class TestRendererServer : public RendererServer {
 class DummyRendererLauncher : public RendererLauncherInterface {
  public:
   void StartRenderer(
-      const std::string& name, const std::string& renderer_path,
+      absl::string_view name, absl::string_view renderer_path,
       bool disable_renderer_path_check,
       IPCClientFactoryInterface* ipc_client_factory_interface) override {
     LOG(INFO) << name << " " << renderer_path;
   }
 
-  bool ForceTerminateRenderer(const std::string& name) override { return true; }
+  bool ForceTerminateRenderer(absl::string_view name) override { return true; }
 
   void OnFatal(RendererErrorType type) override {
     LOG(ERROR) << static_cast<int>(type);

@@ -193,8 +193,8 @@ int RendererServer::StartServer() {
   LoopAndReturn();
 
   // send "ready" event to the client
-  const std::string name = GetServiceName();
-  NamedEventNotifier notifier(name.c_str());
+  absl::string_view name = GetServiceName();
+  NamedEventNotifier notifier(name);
   notifier.Notify();
 
   // start main event loop

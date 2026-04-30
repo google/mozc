@@ -93,14 +93,14 @@ constexpr size_t kKeySize = 32;
 
 // Do not use ConfigFileStream, since client won't link
 // to the embedded resource files
-std::string GetIPCKeyFileName(const std::string &name) {
+std::string GetIPCKeyFileName(absl::string_view name) {
   std::string basename =
       absl::StrCat(port::IsWindows() ? "" : ".",  // hidden file on POSIX
                    name, ".ipc");
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
 
-bool IsValidKey(const std::string &name) {
+bool IsValidKey(absl::string_view name) {
   if (kKeySize != name.size()) {
     LOG(ERROR) << "IPCKey is invalid length";
     return false;
@@ -152,7 +152,7 @@ class IPCPathManagerMap {
     manager_map_.clear();
   }
 
-  IPCPathManager *GetIPCPathManager(const absl::string_view name) {
+  IPCPathManager *GetIPCPathManager(absl::string_view name) {
     absl::MutexLock l(mutex_);
     const auto it = manager_map_.find(name);
     if (it != manager_map_.end()) {
@@ -173,7 +173,7 @@ class IPCPathManagerMap {
 }  // namespace
 
 IPCPathManager *IPCPathManager::GetIPCPathManager(
-    const absl::string_view name) {
+    absl::string_view name) {
   IPCPathManagerMap *manager_map = Singleton<IPCPathManagerMap>::get();
   DCHECK(manager_map != nullptr);
   return manager_map->GetIPCPathManager(name);
@@ -298,7 +298,7 @@ uint32_t IPCPathManager::GetServerProtocolVersion() const {
   return ipc_path_info_.protocol_version();
 }
 
-const std::string &IPCPathManager::GetServerProductVersion() const {
+absl::string_view IPCPathManager::GetServerProductVersion() const {
   return ipc_path_info_.product_version();
 }
 
@@ -312,7 +312,7 @@ void IPCPathManager::Clear() {
 }
 
 bool IPCPathManager::IsValidServer(uint32_t pid,
-                                   const absl::string_view server_path) {
+                                   absl::string_view server_path) {
   absl::MutexLock l(mutex_);
   if (pid == 0) {
     // For backward compatibility.

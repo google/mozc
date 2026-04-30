@@ -38,6 +38,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/number_util.h"
 #include "base/version.h"
@@ -77,14 +78,14 @@ class TestIPCClient : public IPCClientInterface {
     return params_.server_protocol_version;
   }
 
-  const std::string& GetServerProductVersion() const override {
+  absl::string_view GetServerProductVersion() const override {
     return params_.server_product_version;
   }
 
   uint32_t GetServerProcessId() const override { return 0; }
 
   // just count up how many times Call is called.
-  bool Call(const std::string& request, std::string* response,
+  bool Call(absl::string_view request, std::string* response,
             absl::Duration timeout) override {
     ++params_.counter;
     return true;
@@ -126,14 +127,14 @@ class TestRendererLauncher : public RendererLauncherInterface {
   // implement StartServer.
   // return true if server can launched successfully.
   void StartRenderer(
-      const std::string& name, const std::string& renderer_path,
+      absl::string_view name, absl::string_view renderer_path,
       bool disable_renderer_path_check,
       IPCClientFactoryInterface* ipc_client_factory_interface) override {
     start_renderer_called_ = true;
     LOG(INFO) << name << " " << renderer_path;
   }
 
-  bool ForceTerminateRenderer(const std::string& name) override {
+  bool ForceTerminateRenderer(absl::string_view name) override {
     force_terminate_renderer_called_ = true;
     return true;
   }

@@ -234,6 +234,7 @@ mozc_cc_test(
         "//base:thread",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ],
 )

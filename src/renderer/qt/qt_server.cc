@@ -41,6 +41,7 @@
 
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 #include "ipc/named_event.h"
@@ -95,8 +96,8 @@ QtServer::QtServer() : timeout_(0) {
 
 QtServer::~QtServer() = default;
 
-void QtServer::AsyncExecCommand(const std::string &command) {
-  emit EmitUpdated(command);
+void QtServer::AsyncExecCommand(absl::string_view command) {
+  emit EmitUpdated(std::string(command));
 }
 
 void QtServer::Update(std::string command) {
@@ -108,7 +109,7 @@ void QtServer::Update(std::string command) {
   ExecCommandInternal(protocol);
 }
 
-int QtServer::StartServer(int argc, char **argv) {
+int QtServer::StartServer(int argc, char** argv) {
 #if defined(__linux__) && !defined(__ANDROID__)
   // |QWidget::move()| never works with wayland platform backend. Always use
   // 'xcb' platform backend.  https://github.com/google/mozc/issues/794
@@ -120,7 +121,7 @@ int QtServer::StartServer(int argc, char **argv) {
 
   // send "ready" event to the client
   const std::string name = GetServiceName();
-  NamedEventNotifier notifier(name.c_str());
+  NamedEventNotifier notifier(name);
   notifier.Notify();
 
   renderer_.Initialize();
@@ -129,7 +130,7 @@ int QtServer::StartServer(int argc, char **argv) {
   return app.exec();
 }
 
-bool QtServer::ExecCommandInternal(const commands::RendererCommand &command) {
+bool QtServer::ExecCommandInternal(const commands::RendererCommand& command) {
   MOZC_VLOG(2) << command;
 
   return renderer_.ExecCommand(command);

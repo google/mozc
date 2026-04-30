@@ -37,6 +37,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/const.h"
@@ -79,8 +80,8 @@ bool IsProcessAlive(pid_t pid) {
 #endif  // !_WIN32
 }  // namespace
 
-std::string NamedEventUtil::GetEventPath(const char* name) {
-  name = (name == nullptr) ? "nullptr" : name;
+std::string NamedEventUtil::GetEventPath(absl::string_view name) {
+  name = name.empty() ? "nullptr" : name;
   std::string event_name = absl::StrCat(
       kEventPathPrefix, SystemUtil::GetUserSidAsString(), ".", name);
 #ifdef _WIN32
@@ -102,7 +103,7 @@ std::string NamedEventUtil::GetEventPath(const char* name) {
 }
 
 #ifdef _WIN32
-NamedEventListener::NamedEventListener(const char* name)
+NamedEventListener::NamedEventListener(absl::string_view name)
     : is_owner_(false), handle_(nullptr) {
   std::wstring event_path =
       win32::Utf8ToWide(NamedEventUtil::GetEventPath(name));
@@ -211,7 +212,8 @@ int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
   return result;
 }
 
-NamedEventNotifier::NamedEventNotifier(const char* name) : handle_(nullptr) {
+NamedEventNotifier::NamedEventNotifier(absl::string_view name)
+    : handle_(nullptr) {
   std::wstring event_path =
       win32::Utf8ToWide(NamedEventUtil::GetEventPath(name));
   handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false, event_path.c_str());
@@ -246,7 +248,7 @@ bool NamedEventNotifier::Notify() {
 
 #else   // _WIN32
 
-NamedEventListener::NamedEventListener(const char* name)
+NamedEventListener::NamedEventListener(absl::string_view name)
     : is_owner_(false), sem_(SEM_FAILED) {
   key_filename_ = NamedEventUtil::GetEventPath(name);
 
@@ -321,7 +323,8 @@ int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
   return NamedEventListener::TIMEOUT;
 }
 
-NamedEventNotifier::NamedEventNotifier(const char* name) : sem_(SEM_FAILED) {
+NamedEventNotifier::NamedEventNotifier(absl::string_view name)
+    : sem_(SEM_FAILED) {
   const std::string key_filename = NamedEventUtil::GetEventPath(name);
   sem_ = ::sem_open(key_filename.c_str(), 0);
   if (sem_ == SEM_FAILED) {

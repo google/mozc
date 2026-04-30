@@ -64,8 +64,8 @@ namespace {
 
 constexpr int kInvalidSocket = -1;
 
-absl::Status mkdir_p(const std::string &dirname) {
-  const std::string parent_dir = FileUtil::Dirname(dirname);
+absl::Status mkdir_p(absl::string_view dirname) {
+  const std::string parent_dir(FileUtil::Dirname(dirname));
   struct stat st;
   if (!parent_dir.empty() && ::stat(parent_dir.c_str(), &st) < 0) {
     if (absl::Status s = mkdir_p(parent_dir); !s.ok()) {
@@ -139,7 +139,7 @@ bool IsPeerValid(int socket, pid_t *pid) {
   return true;
 }
 
-IPCErrorType SendMessage(int socket, const std::string &msg,
+IPCErrorType SendMessage(int socket, absl::string_view msg,
                          absl::Duration timeout) {
   int offset = 0;
   while (msg.size() != offset) {
@@ -208,13 +208,13 @@ void SetCloseOnExecFlag(int fd) {
 
 // Returns true if address is in abstract namespace. See unix(7) on Linux for
 // details.
-bool IsAbstractSocket(const std::string &address) {
+bool IsAbstractSocket(absl::string_view address) {
   return (!address.empty()) && (address[0] == '\0');
 }
 }  // namespace
 
 // Client
-IPCClient::IPCClient(const absl::string_view name)
+IPCClient::IPCClient(absl::string_view name)
     : socket_(kInvalidSocket),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -222,8 +222,8 @@ IPCClient::IPCClient(const absl::string_view name)
   Init(name, "");
 }
 
-IPCClient::IPCClient(const absl::string_view name,
-                     const absl::string_view server_path)
+IPCClient::IPCClient(absl::string_view name,
+                     absl::string_view server_path)
     : socket_(kInvalidSocket),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -231,8 +231,8 @@ IPCClient::IPCClient(const absl::string_view name,
   Init(name, server_path);
 }
 
-void IPCClient::Init(const absl::string_view name,
-                     const absl::string_view server_path) {
+void IPCClient::Init(absl::string_view name,
+                     absl::string_view server_path) {
   last_ipc_error_ = IPC_NO_CONNECTION;
 
   // Try twice, because key may be changed.
@@ -304,7 +304,7 @@ IPCClient::~IPCClient() {
 }
 
 // RPC call
-bool IPCClient::Call(const std::string &request, std::string *response,
+bool IPCClient::Call(absl::string_view request, std::string *response,
                      absl::Duration timeout) {
   if (!connected_) {
     LOG(ERROR) << "Call failed: not connected";
@@ -336,7 +336,7 @@ bool IPCClient::Call(const std::string &request, std::string *response,
 bool IPCClient::Connected() const { return connected_; }
 
 // Server
-IPCServer::IPCServer(const std::string &name, int32_t num_connections,
+IPCServer::IPCServer(absl::string_view name, int32_t num_connections,
                      absl::Duration timeout)
     : name_(name),
       connected_(false),

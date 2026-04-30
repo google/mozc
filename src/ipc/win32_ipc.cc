@@ -101,7 +101,7 @@ bool InitOverlapped(OVERLAPPED *overlapped, HANDLE wait_handle) {
 
 class IPCClientMutexBase {
  public:
-  explicit IPCClientMutexBase(const absl::string_view ipc_channel_name) {
+  explicit IPCClientMutexBase(absl::string_view ipc_channel_name) {
     // Make a kernel mutex object so that multiple ipc connections are
     // serialized here. In Windows, there is no useful way to serialize
     // the multiple connections to the single-thread named pipe server.
@@ -184,7 +184,7 @@ class FallbackClientMutex : public IPCClientMutexBase {
 // serialize each client. Currently |ipc_name| starts with "session" and
 // "renderer" are expected.
 const wil::unique_mutex_nothrow &GetClientMutex(
-    const absl::string_view ipc_name) {
+    absl::string_view ipc_name) {
   if (ipc_name.starts_with("session")) {
     return Singleton<ConverterClientMutex>::get()->mutex();
   }
@@ -314,7 +314,7 @@ IPCErrorType SafeWaitOverlappedResult(HANDLE device_handle, HANDLE quit_event,
 }
 
 IPCErrorType SendIpcMessage(HANDLE device_handle, HANDLE write_wait_handle,
-                            const std::string &msg, absl::Duration timeout) {
+                            absl::string_view msg, absl::Duration timeout) {
   if (msg.empty()) {
     LOG(WARNING) << "msg is empty.";
     return IPC_UNKNOWN_ERROR;
@@ -443,7 +443,7 @@ void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
 
 }  // namespace
 
-IPCServer::IPCServer(const std::string &name, int32_t num_connections,
+IPCServer::IPCServer(absl::string_view name, int32_t num_connections,
                      absl::Duration timeout)
     : name_(name),
       connected_(false),
@@ -624,7 +624,7 @@ void IPCServer::Loop() {
 }
 
 // old interface
-IPCClient::IPCClient(const absl::string_view name)
+IPCClient::IPCClient(absl::string_view name)
     : pipe_event_(CreateManualResetEvent()),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -632,8 +632,8 @@ IPCClient::IPCClient(const absl::string_view name)
   Init(name, "");
 }
 
-IPCClient::IPCClient(const absl::string_view name,
-                     const absl::string_view server_path)
+IPCClient::IPCClient(absl::string_view name,
+                     absl::string_view server_path)
     : pipe_event_(CreateManualResetEvent()),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -641,8 +641,8 @@ IPCClient::IPCClient(const absl::string_view name,
   Init(name, server_path);
 }
 
-void IPCClient::Init(const absl::string_view name,
-                     const absl::string_view server_path) {
+void IPCClient::Init(absl::string_view name,
+                     absl::string_view server_path) {
   last_ipc_error_ = IPC_NO_CONNECTION;
 
   // We should change the mutex based on which IPC server we will talk with.
@@ -763,7 +763,7 @@ IPCClient::~IPCClient() {}
 
 bool IPCClient::Connected() const { return connected_; }
 
-bool IPCClient::Call(const std::string &request, std::string *response,
+bool IPCClient::Call(absl::string_view request, std::string *response,
                      absl::Duration timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   if (!connected_) {

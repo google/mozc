@@ -88,7 +88,7 @@ class IPCPathManager {
 
   // return product version.
   // return "0.0.0.0" if product version is not defined
-  const std::string &GetServerProductVersion() const;
+  absl::string_view GetServerProductVersion() const;
 
   // return process id of the server
   uint32_t GetServerProcessId() const;

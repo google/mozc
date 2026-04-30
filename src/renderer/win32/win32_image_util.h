@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "base/coordinates.h"
 
 namespace mozc {
@@ -331,7 +332,7 @@ class TextLabel {
       BinarySubdivisionalPixel;
 
   TextLabel(double left, double top, double width, double height,
-            const std::string& text, const std::string& font, size_t font_point,
+            absl::string_view text, absl::string_view font, size_t font_point,
             const RGBColor text_color);
   TextLabel(const TextLabel&) = delete;
   TextLabel& operator=(const TextLabel&) = delete;

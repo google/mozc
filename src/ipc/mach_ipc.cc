@@ -38,6 +38,7 @@
 #include <map>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/mac/mac_util.h"
 #include "base/singleton.h"
@@ -51,7 +52,7 @@ namespace {
 // Since the behavior of launch_msg() is changed from Yosemite (10.10),
 // this function no longer relies on the information from launch_msg().
 // When we add new services, we should update this function too.
-bool GetMachPortName(const std::string &name, std::string *port_name) {
+bool GetMachPortName(absl::string_view name, std::string* port_name) {
   // Defined in data/mac/com.google.inputmethod.Japanese.Converter.plist
   if (name == "session") {
     port_name->assign(MacUtil::GetLabelForSuffix("") + "Converter.session");
@@ -66,7 +67,7 @@ bool GetMachPortName(const std::string &name, std::string *port_name) {
   return false;
 }
 
-const char *GetBootstrapError(kern_return_t value) {
+const char* GetBootstrapError(kern_return_t value) {
   switch (value) {
     case BOOTSTRAP_SUCCESS:  // 0
       return "success (0)";
@@ -95,7 +96,7 @@ const char *GetBootstrapError(kern_return_t value) {
 // starting server as far as possible.
 class DefaultClientMachPortManager : public MachPortManagerInterface {
  public:
-  virtual bool GetMachPort(const std::string &name, mach_port_t *port) {
+  virtual bool GetMachPort(absl::string_view name, mach_port_t* port) {
     std::string port_name;
     if (!GetMachPortName(name, &port_name)) {
       LOG(ERROR) << "Failed to get the port name";
@@ -113,7 +114,7 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
     return true;
   }
 
-  virtual bool IsServerRunning(const std::string &name) const {
+  virtual bool IsServerRunning(absl::string_view name) const {
     std::string server_label = MacUtil::GetLabelForSuffix("");
     if (name == "session") {
       server_label += "Converter";
@@ -172,7 +173,7 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
     mach_ports_.clear();
   }
 
-  virtual bool GetMachPort(const std::string &name, mach_port_t *port) {
+  virtual bool GetMachPort(absl::string_view name, mach_port_t* port) {
     std::string port_name;
     if (!GetMachPortName(name, &port_name)) {
       LOG(ERROR) << "Failed to get the port name";
@@ -201,7 +202,7 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
 
   // In the server side, it always return "true" because the caller
   // itself is the server.
-  virtual bool IsServerRunning(const std::string &name) const { return true; }
+  virtual bool IsServerRunning(absl::string_view name) const { return true; }
 
  private:
   std::map<std::string, mach_port_t> mach_ports_;
@@ -225,13 +226,12 @@ struct mach_ipc_receive_message {
 }  // namespace
 
 // Client implementation
-IPCClient::IPCClient(const absl::string_view name)
+IPCClient::IPCClient(absl::string_view name)
     : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, "");
 }
 
-IPCClient::IPCClient(const absl::string_view name,
-                     const absl::string_view server_path)
+IPCClient::IPCClient(absl::string_view name, absl::string_view server_path)
     : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, server_path);
 }
@@ -240,18 +240,18 @@ IPCClient::~IPCClient() {
   // Do nothing
 }
 
-void IPCClient::Init(const absl::string_view name,
-                     const absl::string_view /*server_path*/) {
+void IPCClient::Init(absl::string_view name,
+                     absl::string_view /*server_path*/) {
   ipc_path_manager_ = IPCPathManager::GetIPCPathManager(name);
   if (!ipc_path_manager_->LoadPathName()) {
     LOG(ERROR) << "Cannot load IPC path name";
   }
 }
 
-bool IPCClient::Call(const std::string &request, std::string *response,
+bool IPCClient::Call(absl::string_view request, std::string* response,
                      absl::Duration timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
-  MachPortManagerInterface *manager = mach_port_manager_;
+  MachPortManagerInterface* manager = mach_port_manager_;
   if (manager == nullptr) {
     manager = Singleton<DefaultClientMachPortManager>::get();
   }
@@ -279,7 +279,7 @@ bool IPCClient::Call(const std::string &request, std::string *response,
   // sending which doesn't copy the message data but share the memory
   // area between client and server.
   mach_ipc_send_message send_message;
-  mach_msg_header_t *send_header = &(send_message.header);
+  mach_msg_header_t* send_header = &(send_message.header);
   send_header->msgh_bits =
       MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, MACH_MSG_TYPE_MAKE_SEND) |
       MACH_MSGH_BITS_COMPLEX;  // To enable OOL message
@@ -290,7 +290,7 @@ bool IPCClient::Call(const std::string &request, std::string *response,
   send_header->msgh_id = IPC_PROTOCOL_VERSION;
   send_message.body.msgh_descriptor_count = 1;
   send_message.data.address =
-      static_cast<void *>(const_cast<char *>(request.data()));
+      static_cast<void*>(const_cast<char*>(request.data()));
   send_message.data.size = request.size();
   send_message.data.deallocate = false;  // Doesn't deallocate data immediately
   send_message.data.copy = MACH_MSG_VIRTUAL_COPY;  // Copy on write
@@ -319,7 +319,7 @@ bool IPCClient::Call(const std::string &request, std::string *response,
 
   // Receive server response
   mach_ipc_receive_message receive_message;
-  mach_msg_header_t *receive_header;
+  mach_msg_header_t* receive_header;
   // try to receive multiple messages because more than one processes
   // send responses.
   const int trial = 2;
@@ -348,7 +348,7 @@ bool IPCClient::Call(const std::string &request, std::string *response,
 
     if (receive_header->msgh_id == IPC_PROTOCOL_VERSION) {
       last_ipc_error_ = IPC_NO_ERROR;
-      response->assign(static_cast<char *>(receive_message.data.address),
+      response->assign(static_cast<char*>(receive_message.data.address),
                        receive_message.data.size);
       mach_port_destroy(mach_task_self(), client_port);
       vm_deallocate(mach_task_self(),
@@ -372,7 +372,7 @@ bool IPCClient::Connected() const {
     return false;
   }
 
-  MachPortManagerInterface *manager = mach_port_manager_;
+  MachPortManagerInterface* manager = mach_port_manager_;
   if (manager == nullptr) {
     manager = Singleton<DefaultClientMachPortManager>::get();
   }
@@ -381,13 +381,13 @@ bool IPCClient::Connected() const {
 }
 
 // Server implementation
-IPCServer::IPCServer(const std::string &name, int32_t num_connections,
+IPCServer::IPCServer(absl::string_view name, int32_t num_connections,
                      absl::Duration timeout)
     : name_(name), mach_port_manager_(nullptr), timeout_(timeout) {
   // This is a fake IPC path manager: it just stores the server
   // version and IPC name but we don't use the stored IPC name itself.
   // It's just for compatibility.
-  IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
+  IPCPathManager* manager = IPCPathManager::GetIPCPathManager(name);
   // The IPC server uses old path name at this time.
   // TODO(mukai): Switch to new path name when the new IPC client is
   // widely distributed.
@@ -407,7 +407,7 @@ IPCServer::~IPCServer() {
 }
 
 bool IPCServer::Connected() const {
-  MachPortManagerInterface *manager = mach_port_manager_;
+  MachPortManagerInterface* manager = mach_port_manager_;
   if (manager == nullptr) {
     manager = Singleton<DefaultServerMachPortManager>::get();
   }
@@ -416,7 +416,7 @@ bool IPCServer::Connected() const {
 }
 
 void IPCServer::Loop() {
-  MachPortManagerInterface *manager = mach_port_manager_;
+  MachPortManagerInterface* manager = mach_port_manager_;
   if (manager == nullptr) {
     manager = Singleton<DefaultServerMachPortManager>::get();
   }
@@ -458,7 +458,7 @@ void IPCServer::Loop() {
       continue;
     }
 
-    absl::string_view request(static_cast<char *>(receive_message.data.address),
+    absl::string_view request(static_cast<char*>(receive_message.data.address),
                               receive_message.data.size);
     if (!Process(request, &response)) {
       LOG(INFO) << "Process() returns false.  Quit the wait loop.";
