@@ -777,6 +777,7 @@ mozc_cc_binary(
     testonly = True,
     srcs = ["immutable_converter_main.cc"],
     deps = [
+        ":debug_util",
         ":immutable_converter",
         ":lattice",
         ":node",
@@ -983,4 +984,28 @@ bzl_library(
     name = "evalution_bzl",
     srcs = ["evaluation.bzl"],
     test_size = "small",
+)
+
+mozc_cc_library(
+    name = "debug_util",
+    srcs = ["debug_util.cc"],
+    hdrs = ["debug_util.h"],
+    deps = [
+        ":lattice",
+        ":node",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "debug_util_test",
+    srcs = ["debug_util_test.cc"],
+    deps = [
+        ":debug_util",
+        ":lattice",
+        ":node",
+        "//testing:gunit_main",
+    ],
 )
