@@ -39,7 +39,7 @@
 #include <cstdlib>
 #include <string>
 
-#include "absl/log/check.h"
+#include "absl/base/const_init.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -47,7 +47,6 @@
 #include "base/file_util.h"
 #include "base/mmap.h"
 #include "base/random.h"
-#include "base/singleton.h"
 #include "base/system_util.h"
 
 #ifdef _WIN32
@@ -163,14 +162,14 @@ bool RemovePasswordFile() {
 
 //////////////////////////////////////////////////////////////////
 // PlainPasswordManager
-class PlainPasswordManager : public PasswordManagerInterface {
+class PlainPasswordManager {
  public:
-  bool SetPassword(const std::string& password) const override;
-  bool GetPassword(std::string* password) const override;
-  bool RemovePassword() const override;
+  static bool SetPassword(const std::string& password);
+  static bool GetPassword(std::string* password);
+  static bool RemovePassword();
 };
 
-bool PlainPasswordManager::SetPassword(const std::string& password) const {
+bool PlainPasswordManager::SetPassword(const std::string& password) {
   if (password.size() != kPasswordSize) {
     LOG(ERROR) << "Invalid password given";
     return false;
@@ -184,7 +183,7 @@ bool PlainPasswordManager::SetPassword(const std::string& password) const {
   return true;
 }
 
-bool PlainPasswordManager::GetPassword(std::string* password) const {
+bool PlainPasswordManager::GetPassword(std::string* password) {
   if (password == nullptr) {
     LOG(ERROR) << "password is nullptr";
     return false;
@@ -205,22 +204,20 @@ bool PlainPasswordManager::GetPassword(std::string* password) const {
   return true;
 }
 
-bool PlainPasswordManager::RemovePassword() const {
-  return RemovePasswordFile();
-}
+bool PlainPasswordManager::RemovePassword() { return RemovePasswordFile(); }
 
 //////////////////////////////////////////////////////////////////
 // WinPasswordManager
 // We use this manager with both Windows and Mac
 #if (defined(_WIN32) || defined(__APPLE__))
-class WinMacPasswordManager : public PasswordManagerInterface {
+class WinMacPasswordManager {
  public:
-  virtual bool SetPassword(const std::string& password) const;
-  virtual bool GetPassword(std::string* password) const;
-  virtual bool RemovePassword() const;
+  static bool SetPassword(const std::string& password);
+  static bool GetPassword(std::string* password);
+  static bool RemovePassword();
 };
 
-bool WinMacPasswordManager::SetPassword(const std::string& password) const {
+bool WinMacPasswordManager::SetPassword(const std::string& password) {
   if (password.size() != kPasswordSize) {
     LOG(ERROR) << "password size is invalid";
     return false;
@@ -235,7 +232,7 @@ bool WinMacPasswordManager::SetPassword(const std::string& password) const {
   return SavePassword(enc_password);
 }
 
-bool WinMacPasswordManager::GetPassword(std::string* password) const {
+bool WinMacPasswordManager::GetPassword(std::string* password) {
   if (password == nullptr) {
     LOG(ERROR) << "password is nullptr";
     return false;
@@ -261,9 +258,7 @@ bool WinMacPasswordManager::GetPassword(std::string* password) const {
   return true;
 }
 
-bool WinMacPasswordManager::RemovePassword() const {
-  return RemovePasswordFile();
-}
+bool WinMacPasswordManager::RemovePassword() { return RemovePasswordFile(); }
 #endif  // _WIN32 | __APPLE__
 
 // We use plain text file for password storage on Linux. If you port this module
@@ -279,21 +274,22 @@ typedef WinMacPasswordManager DefaultPasswordManager;
 #endif  // (defined(_WIN32) || defined(__APPLE__))
 
 namespace {
+
+constinit absl::Mutex g_mutex(absl::kConstInit);
+
 class PasswordManagerImpl {
  public:
-  PasswordManagerImpl() {
-    password_manager_ = Singleton<DefaultPasswordManager>::get();
-    DCHECK(password_manager_ != nullptr);
-  }
+  PasswordManagerImpl() = delete;
+  ~PasswordManagerImpl() = delete;
 
-  bool InitPassword() {
-    absl::MutexLock l(mutex_);
+  static bool InitPassword() {
+    absl::MutexLock l(g_mutex);
     return InitPasswordUnlocked();
   }
 
-  bool GetPassword(std::string* password) {
-    absl::MutexLock l(mutex_);
-    if (password_manager_->GetPassword(password)) {
+  static bool GetPassword(std::string* password) {
+    absl::MutexLock l(g_mutex);
+    if (DefaultPasswordManager::GetPassword(password)) {
       return true;
     }
 
@@ -304,7 +300,7 @@ class PasswordManagerImpl {
       return false;
     }
 
-    if (!password_manager_->GetPassword(password)) {
+    if (!DefaultPasswordManager::GetPassword(password)) {
       LOG(ERROR) << "Cannot get password.";
       return false;
     }
@@ -312,47 +308,33 @@ class PasswordManagerImpl {
     return true;
   }
 
-  bool RemovePassword() {
-    absl::MutexLock l(mutex_);
-    return password_manager_->RemovePassword();
-  }
-
-  void SetPasswordManagerHandler(PasswordManagerInterface* handler) {
-    absl::MutexLock l(mutex_);
-    password_manager_ = handler;
+  static bool RemovePassword() {
+    absl::MutexLock l(g_mutex);
+    return DefaultPasswordManager::RemovePassword();
   }
 
  private:
-  bool InitPasswordUnlocked() {
+  static bool InitPasswordUnlocked() {
     std::string password;
-    if (password_manager_->GetPassword(&password)) {
+    if (DefaultPasswordManager::GetPassword(&password)) {
       return true;
     }
     password = CreateRandomPassword();
-    return password_manager_->SetPassword(password);
+    return DefaultPasswordManager::SetPassword(password);
   }
-
-  PasswordManagerInterface* password_manager_;
-  absl::Mutex mutex_;
 };
 }  // namespace
 
 bool PasswordManager::InitPassword() {
-  return Singleton<PasswordManagerImpl>::get()->InitPassword();
+  return PasswordManagerImpl::InitPassword();
 }
 
 bool PasswordManager::GetPassword(std::string* password) {
-  return Singleton<PasswordManagerImpl>::get()->GetPassword(password);
+  return PasswordManagerImpl::GetPassword(password);
 }
 
 // remove current password
 bool PasswordManager::RemovePassword() {
-  return Singleton<PasswordManagerImpl>::get()->RemovePassword();
-}
-
-// set internal interface for unittesting
-void PasswordManager::SetPasswordManagerHandler(
-    PasswordManagerInterface* handler) {
-  Singleton<PasswordManagerImpl>::get()->SetPasswordManagerHandler(handler);
+  return PasswordManagerImpl::RemovePassword();
 }
 }  // namespace mozc
