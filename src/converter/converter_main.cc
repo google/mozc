@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/no_destructor.h"
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -53,7 +54,6 @@
 #include "base/init_mozc.h"
 #include "base/number_util.h"
 #include "base/protobuf/text_format.h"
-#include "base/singleton.h"
 #include "base/system_util.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
@@ -112,31 +112,15 @@ int FindCandidate(const Segment& segment, absl::string_view value) {
   return -1;
 }
 
-// Wrapper class for pos id printing
-class PosIdPrintUtil {
- public:
-  PosIdPrintUtil(const PosIdPrintUtil&) = delete;
-  PosIdPrintUtil& operator=(const PosIdPrintUtil&) = delete;
-  static std::string IdToString(int id) {
-    return Singleton<PosIdPrintUtil>::get()->IdToStringInternal(id);
+std::string IdToString(int id) {
+  static const absl::NoDestructor<internal::PosIdPrinter> printer(
+      internal::PosIdPrinter(InputFileStream(absl::GetFlag(FLAGS_id_def))));
+  const absl::string_view pos_string = printer->IdToString(id);
+  if (pos_string.empty()) {
+    return absl::StrCat(id);
   }
-
- private:
-  PosIdPrintUtil()
-      : pos_id_printer_(InputFileStream(absl::GetFlag(FLAGS_id_def))) {}
-
-  std::string IdToStringInternal(int id) const {
-    const absl::string_view pos_string = pos_id_printer_.IdToString(id);
-    if (pos_string.empty()) {
-      return absl::StrCat(id);
-    }
-    return absl::StrFormat("%s (%d)", pos_string, id);
-  }
-
-  internal::PosIdPrinter pos_id_printer_;
-
-  friend class Singleton<PosIdPrintUtil>;
-};
+  return absl::StrFormat("%s (%d)", pos_string, id);
+}
 
 std::string SegmentTypeToString(Segment::SegmentType type) {
 #define RETURN_STR(val) \
@@ -230,8 +214,8 @@ void PrintCandidate(const Segment& parent, size_t candidates_size, int num,
                   cand.content_key);
   lines.push_back(absl::StrFormat("cost: %d  scost: %d  wcost: %d", cand.cost,
                                   cand.structure_cost, cand.wcost));
-  lines.push_back("lid: " + PosIdPrintUtil::IdToString(cand.lid));
-  lines.push_back("rid: " + PosIdPrintUtil::IdToString(cand.rid));
+  lines.push_back("lid: " + IdToString(cand.lid));
+  lines.push_back("rid: " + IdToString(cand.rid));
   lines.push_back("attr: " + CandidateAttributesToString(cand.attributes));
   lines.push_back("num_style: " + NumberStyleToString(cand.style));
   const std::string segbdd_str = InnerSegmentBoundaryToString(cand);
