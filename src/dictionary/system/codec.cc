@@ -39,7 +39,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "dictionary/dictionary_token.h"

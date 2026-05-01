@@ -46,7 +46,6 @@ mozc_cc_library(
     ],
     deps = [
         ":words_info",
-        "//base:singleton",
         "//base:util",
         "//base:vlog",
         "//dictionary:dictionary_token",
