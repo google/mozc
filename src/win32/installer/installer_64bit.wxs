@@ -296,27 +296,17 @@
             <ServiceControl Id="StopGoogleIMEJaCacheService" Name="GoogleIMEJaCacheService" Stop="both" Remove="uninstall" Wait="yes" />
           </Component>
           <Component Id="GIMEJaTIP32" Permanent="no" Bitness="always32">
-            <File Id="GoogleIMEJaTIP32.dll" Name="GoogleIMEJaTIP32.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP32Path)" Vital="yes">
-              <Class Context="InprocServer32" ThreadingModel="apartment" Description="Google Japanese Input" Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
-            </File>
+            <File Id="GoogleIMEJaTIP32.dll" Name="GoogleIMEJaTIP32.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP32Path)" Vital="yes" />
           </Component>
           <Component Id="GIMEJaTIP64" Permanent="no" Bitness="always64">
-            <File Id="GoogleIMEJaTIP64.dll" Name="GoogleIMEJaTIP64.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64Path)" Vital="yes">
-              <?if $(var.MozcTIP64ArmPath) == "" and $(var.MozcTIP64XPath) == "" and $(var.MozcUniversalInstaller) == "" ?>
-                <Class Context="InprocServer32" ThreadingModel="apartment" Description="Google Japanese Input" Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
-              <?endif?>
-            </File>
+            <File Id="GoogleIMEJaTIP64.dll" Name="GoogleIMEJaTIP64.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64Path)" Vital="yes" />
           </Component>
           <?if $(var.MozcTIP64ArmPath) != "" and $(var.MozcTIP64XPath) != "" ?>
             <Component Id="GIMEJaTIP64Arm" Permanent="no" Bitness="always64">
               <File Id="GoogleIMEJaTIP64Arm.dll" Name="GoogleIMEJaTIP64Arm.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64ArmPath)" Vital="yes" />
             </Component>
             <Component Id="GIMEJaTIP64X" Permanent="no" Bitness="always64">
-              <File Id="GoogleIMEJaTIP64X.dll" Name="GoogleIMEJaTIP64X.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64XPath)" Vital="yes">
-                <?if $(var.MozcUniversalInstaller) == "" ?>
-                  <Class Context="InprocServer32" ThreadingModel="apartment" Description="Google Japanese Input" Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
-                <?endif?>
-              </File>
+              <File Id="GoogleIMEJaTIP64X.dll" Name="GoogleIMEJaTIP64X.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64XPath)" Vital="yes" />
             </Component>
           <?endif?>
           <Component Id="GIMEJaBroker" Permanent="no">

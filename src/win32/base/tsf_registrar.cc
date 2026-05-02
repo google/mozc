@@ -56,6 +56,22 @@ constexpr wchar_t kTipInProcServer32[] = L"InProcServer32";
 constexpr wchar_t kTipThreadingModel[] = L"ThreadingModel";
 constexpr wchar_t kTipTextServiceModel[] = L"Apartment";
 
+constexpr REGSAM AdjustRegFlagBitness(REGSAM base_flags,
+                                      COMServerBitness bitness) {
+  REGSAM flags = base_flags;
+  switch (bitness) {
+    case COMServerBitness::k32bit:
+      flags |= KEY_WOW64_32KEY;
+      flags &= ~KEY_WOW64_64KEY;
+      break;
+    case COMServerBitness::k64bit:
+      flags |= KEY_WOW64_64KEY;
+      flags &= ~KEY_WOW64_32KEY;
+      break;
+  }
+  return flags;
+}
+
 // The categories this text service is registered under.
 // This needs to be const as the included constants are defined as const.
 const GUID kCategories[] = {
@@ -78,10 +94,12 @@ const GUID kCategories[] = {
 //   * The description of this module;
 //   * The path to this module, and;
 //   * The type of this module (threading moddel).
-HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t* path, DWORD length) {
+HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t* path, DWORD length,
+                                        COMServerBitness bitness) {
   if (length == 0) {
     return E_OUTOFMEMORY;
   }
+  const REGSAM reg_flags = AdjustRegFlagBitness(KEY_READ | KEY_WRITE, bitness);
   // Open the registry key "HKEY_CLASSES_ROOT\CLSID", which stores information
   // of all COM modules installed in this PC.
   // To register a COM module to Windows, we should create a key of its GUID
@@ -92,7 +110,7 @@ HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t* path, DWORD length) {
   //  * The threading model of this module.
   ATL::CRegKey parent;
   LONG result = parent.Open(HKEY_CLASSES_ROOT, &kTipInfoKeyPrefix[0],
-                            KEY_READ | KEY_WRITE);
+                            reg_flags);
   if (result != ERROR_SUCCESS) {
     return HRESULT_FROM_WIN32(result);
   }
@@ -107,7 +125,7 @@ HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t* path, DWORD length) {
 
   ATL::CRegKey key;
   result = key.Create(parent, &ime_key[0], REG_NONE, REG_OPTION_NON_VOLATILE,
-                      KEY_READ | KEY_WRITE, nullptr, nullptr);
+                      reg_flags, nullptr, nullptr);
   if (result != ERROR_SUCCESS) {
     return HRESULT_FROM_WIN32(result);
   }
@@ -138,7 +156,7 @@ HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t* path, DWORD length) {
 // Unregisters this module from Windows.
 // This function just deletes the all registry keys under
 // "HKCR\CLSID\{xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx}".
-void TsfRegistrar::UnregisterCOMServer() {
+void TsfRegistrar::UnregisterCOMServer(COMServerBitness bitness) {
   // Create the registry key for this COM server.
   // Only Administrators can create keys under HKEY_CLASSES_ROOT.
   wchar_t ime_key[64] = {};
@@ -147,9 +165,10 @@ void TsfRegistrar::UnregisterCOMServer() {
     return;
   }
 
+  const REGSAM reg_flags = AdjustRegFlagBitness(KEY_READ | KEY_WRITE, bitness);
   ATL::CRegKey key;
-  HRESULT result =
-      key.Open(HKEY_CLASSES_ROOT, &kTipInfoKeyPrefix[0], KEY_READ | KEY_WRITE);
+  HRESULT result = key.Open(HKEY_CLASSES_ROOT, &kTipInfoKeyPrefix[0],
+                            reg_flags);
   if (result != ERROR_SUCCESS) {
     return;
   }
