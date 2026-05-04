@@ -41,7 +41,6 @@
 #include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/mac/scoped_cftyperef.h"
-#include "base/singleton.h"
 
 #if TARGET_OS_IPHONE
 #import <UIKit/UIKit.h>

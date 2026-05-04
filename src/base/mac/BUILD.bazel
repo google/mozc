@@ -90,7 +90,6 @@ mozc_objc_library(
     ],
     deps = [
         "//base:const",
-        "//base:singleton",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
