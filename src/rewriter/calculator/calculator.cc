@@ -41,6 +41,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 #include "base/japanese_util.h"
 #include "base/number_util.h"
 
@@ -327,17 +328,12 @@ std::optional<std::string> Calculator::CalculateString(
   std::string normalized_key =
       japanese_util::FullWidthAsciiToHalfWidthAscii(key);
 
-  absl::string_view expression_body;
-  if (normalized_key.front() == '=') {
-    // Expression starts with '='.
-    expression_body =
-        absl::string_view(normalized_key.data() + 1, normalized_key.size() - 1);
-  } else if (normalized_key.back() == '=') {
-    // Expression is ended with '='.
-    expression_body =
-        absl::string_view(normalized_key.data(), normalized_key.size() - 1);
-  } else {
-    // Expression does not start nor end with '='.
+  if (normalized_key.starts_with('=') && normalized_key.ends_with('=')) {
+    return std::nullopt;
+  }
+  absl::string_view expression_body = normalized_key;
+  if (!absl::ConsumePrefix(&expression_body, "=") &&
+      !absl::ConsumeSuffix(&expression_body, "=")) {
     return std::nullopt;
   }
 
@@ -358,45 +354,52 @@ std::optional<std::string> Calculator::CalculateString(
 
 std::optional<Calculator::TokenSequence> Calculator::Tokenize(
     absl::string_view expression_body) const {
-  const char* current = expression_body.data();
-  const char* end = expression_body.data() + expression_body.size();
   int num_operator = 0;  // Number of operators or functions appeared
   int num_value = 0;     // Number of values appeared
 
   TokenSequence tokens;
+  absl::string_view rest = expression_body;
 
-  while (current < end) {
+  while (!rest.empty()) {
     // Skip spaces
-    while ((*current == ' ') || (*current == '\t')) {
-      ++current;
+    while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t')) {
+      rest.remove_prefix(1);
     }
-    const char* token_begin = current;
+    if (rest.empty()) {
+      break;
+    }
 
     // Read value token
-    while (((*current >= '0') && (*current <= '9')) || (*current == '.')) {
-      ++current;
+    size_t value_len = 0;
+    while (value_len < rest.size() &&
+           (absl::ascii_isdigit(rest[value_len]) ||
+            rest[value_len] == '.')) {
+      ++value_len;
     }
-    if (token_begin < current) {
-      std::string number_token(token_begin, current - token_begin);
+    if (value_len > 0) {
+      const absl::string_view number_token = rest.substr(0, value_len);
       double value = 0.0;
       if (!NumberUtil::SafeStrToDouble(number_token, &value)) {
         return std::nullopt;
       }
       tokens.push_back({TokenType::INTEGER, value});
       ++num_value;
+      rest.remove_prefix(value_len);
       continue;
     }
 
     // Read alphabetical function name token
-    if (absl::ascii_isalpha(*current)) {
-      while (current < end && absl::ascii_isalpha(*current)) {
-        ++current;
+    if (absl::ascii_isalpha(rest.front())) {
+      size_t func_len = 0;
+      while (func_len < rest.size() && absl::ascii_isalpha(rest[func_len])) {
+        ++func_len;
       }
-      std::string name(token_begin, current - token_begin);
+      std::string name(rest.data(), func_len);
       absl::AsciiStrToLower(&name);
       const auto func_it = operator_map_.find(name);
       if (func_it != operator_map_.end()) {
         tokens.push_back({func_it->second, 0.0});
+        rest.remove_prefix(func_len);
         ++num_operator;
         continue;
       }
@@ -404,18 +407,19 @@ std::optional<Calculator::TokenSequence> Calculator::Tokenize(
     }
 
     // Read operator token
+    bool matched_operator = false;
     for (size_t length = 1; length <= kMaxLengthOfOperator; ++length) {
-      if (current + length > end) {
-        // Invalid token
-        return std::nullopt;
+      if (length > rest.size()) {
+        break;
       }
-      absl::string_view window(current, length);
+      const absl::string_view window = rest.substr(0, length);
       const auto op_it = operator_map_.find(window);
       if (op_it == operator_map_.end()) {
         continue;
       }
       tokens.push_back({op_it->second, 0.0});
-      current += length;
+      rest.remove_prefix(length);
+      matched_operator = true;
       // Does not count parenthesis as an operator.
       if ((op_it->second != TokenType::LP) &&
           (op_it->second != TokenType::RP)) {
@@ -423,7 +427,7 @@ std::optional<Calculator::TokenSequence> Calculator::Tokenize(
       }
       break;
     }
-    if (token_begin < current) {
+    if (matched_operator) {
       continue;
     }
 
