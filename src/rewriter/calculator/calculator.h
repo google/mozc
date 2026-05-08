@@ -31,6 +31,7 @@
 #define MOZC_REWRITER_CALCULATOR_CALCULATOR_H_
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -70,7 +71,7 @@ class Calculator {
 
   Calculator();
 
-  bool CalculateString(absl::string_view key, std::string* result) const;
+  std::optional<std::string> CalculateString(absl::string_view key) const;
 
  private:
   using TokenSequence = std::vector<Token>;
@@ -78,14 +79,16 @@ class Calculator {
   // Max byte length of operator character
   static constexpr size_t kMaxLengthOfOperator = 4;
 
-  // Tokenizes |expression_body| and sets the tokens into |tokens|.
-  // It returns false if |expression_body| includes an invalid token or
+  // Tokenizes |expression_body| and returns the tokens if the tokenization
+  // is successful.
+  // It returns std::nullopt if |expression_body| includes an invalid token or
   // does not include both of a number token and an operator token.
   // Parenthesis is not considered as an operator.
-  bool Tokenize(absl::string_view expression_body, TokenSequence* tokens) const;
+  std::optional<TokenSequence> Tokenize(
+      absl::string_view expression_body) const;
 
   // Perform calculation with a given sequence of token.
-  bool CalculateTokens(const TokenSequence& tokens, double* result_value) const;
+  std::optional<double> CalculateTokens(const TokenSequence& tokens) const;
 
   // Mapping from operator character such as '+' or "log" to the corresponding
   // token type.

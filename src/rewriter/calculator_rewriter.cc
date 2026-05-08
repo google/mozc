@@ -79,8 +79,8 @@ CalculatorRewriter::CheckResizeSegmentsRequest(const ConversionRequest& request,
   }
   // The decision to calculate and calculation itself are both done by the
   // calculator.
-  std::string result;
-  if (!calculator_.CalculateString(merged_key, &result)) {
+  std::optional<std::string> result = calculator_.CalculateString(merged_key);
+  if (!result.has_value()) {
     return std::nullopt;
   }
 
@@ -113,13 +113,13 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest& request,
     return false;
   }
 
-  std::string result;
-  if (!calculator_.CalculateString(key, &result)) {
+  std::optional<std::string> result = calculator_.CalculateString(key);
+  if (!result.has_value()) {
     return false;
   }
 
   // Insert the result.
-  if (!InsertCandidate(result, 0, segments->mutable_conversion_segment(0))) {
+  if (!InsertCandidate(*result, 0, segments->mutable_conversion_segment(0))) {
     return false;
   }
 

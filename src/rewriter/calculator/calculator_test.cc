@@ -32,6 +32,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
+#include <optional>
 #include <ostream>
 #include <string>
 
@@ -39,6 +40,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/string_view.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -49,11 +51,14 @@ namespace {
 void VerifyCalculation(const Calculator& calculator,
                        const absl::string_view expression,
                        const absl::string_view expected) {
-  std::string result;
-  EXPECT_TRUE(calculator.CalculateString(expression, &result))
+  std::optional<std::string> result = calculator.CalculateString(expression);
+  EXPECT_TRUE(result.has_value())
       << expression << "  expected = " << expected;
+  if (!result.has_value()) {
+    return;
+  }
   double result_val;
-  EXPECT_TRUE(absl::SimpleAtod(result, &result_val));
+  EXPECT_TRUE(absl::SimpleAtod(*result, &result_val));
   double expected_val;
   EXPECT_TRUE(absl::SimpleAtod(expected, &expected_val));
   const double err = std::fabs(result_val - expected_val);
@@ -62,24 +67,22 @@ void VerifyCalculation(const Calculator& calculator,
       << "comparison: " << result_val << " vs " << expected_val << std::endl
       << "error: " << err << std::endl
       << "expr = " << expression << std::endl
-      << "result = " << result;
+      << "result = " << *result;
 }
 
 // Runs calculation and compare results in PRINTED string.
 void VerifyCalculationInString(const Calculator& calculator,
                                const absl::string_view expression,
                                const absl::string_view expected) {
-  std::string result;
-  EXPECT_TRUE(calculator.CalculateString(expression, &result))
-      << expression << "  expected = " << expected;
-  EXPECT_EQ(result, expected) << "expr = " << expression << std::endl;
+  ASSERT_THAT(calculator.CalculateString(expression),
+              ::testing::Optional(std::string(expected)))
+      << "expr = " << expression;
 }
 
 // Tries to calculate |wrong_key| and returns true if it fails.
 void VerifyRejection(const Calculator& calculator,
                      const absl::string_view wrong_key) {
-  std::string result;
-  EXPECT_FALSE(calculator.CalculateString(wrong_key, &result))
+  EXPECT_FALSE(calculator.CalculateString(wrong_key).has_value())
       << "expression: " << wrong_key << std::endl;
 }
 
@@ -191,8 +194,8 @@ TEST(CalculatorTest, StressTest) {
     // If (__ANDROID__ && x86) the result differs from expectation
     // because of floating point specification so on such environment
     // Following verification is skipped.
-    std::string unused_result;
-    calculator.CalculateString(query, &unused_result);
+    std::optional<std::string> unused_result =
+        calculator.CalculateString(query);
 #if !defined(__ANDROID__) || !defined(__i386__)
     if (line.size() == query_length) {
       // False test
@@ -208,15 +211,14 @@ TEST(CalculatorTest, StressTest) {
 
 TEST(CalculatorTest, LimitAndValidationTest) {
   Calculator calculator;
-  std::string unused_result;
 
   // Large but valid operations under limit (e.g. 100 unary operations).
   std::string valid_case = std::string(100, '+') + "1=";
-  EXPECT_TRUE(calculator.CalculateString(valid_case, &unused_result));
+  EXPECT_TRUE(calculator.CalculateString(valid_case).has_value());
 
   // Directly violating input length limit (e.g. 2100 bytes).
   std::string over_length_case = std::string(2100, '+') + "1=";
-  EXPECT_FALSE(calculator.CalculateString(over_length_case, &unused_result));
+  EXPECT_FALSE(calculator.CalculateString(over_length_case).has_value());
 }
 
 }  // namespace mozc
