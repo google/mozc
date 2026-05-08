@@ -118,13 +118,6 @@ bool IsMixedConversionEnabled(const ConversionRequest& request) {
   return request.request().mixed_conversion();
 }
 
-bool AllowPartialMatch(const ConversionRequest& request) {
-  return IsMixedConversionEnabled(request) &&
-         request.request()
-             .decoder_experiment_params()
-             .user_history_allow_partial_match();
-}
-
 bool IsZeroQuerySuggestionEnabled(const ConversionRequest& request) {
   return request.request().zero_query_suggestion();
 }
@@ -944,8 +937,7 @@ bool UserHistoryPredictor::GetKeyValueForPartialMatch(
     uint32_t& result_attribute,
     converter::InnerSegmentBoundary& result_inner_segment_boundary,
     EntryPriorityQueue& entry_queue) const {
-  if (!AllowPartialMatch(request) ||
-      !absl::StartsWith(request_key, entry.key()) ||
+  if (!absl::StartsWith(request_key, entry.key()) ||
       entry.key().size() >= request_key.size()) {
     return false;
   }

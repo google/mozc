@@ -5881,7 +5881,6 @@ TEST_F(UserHistoryPredictorTest, PartialMatchTest) {
 
   commands::DecoderExperimentParams* params =
       request_.mutable_decoder_experiment_params();
-  params->set_user_history_allow_partial_match(true);
   request_.set_mixed_conversion(true);
 
   const uint16_t first_name_id = modules->GetPosMatcher().GetFirstNameId();
