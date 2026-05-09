@@ -77,7 +77,15 @@ def get_vcvarsall(
         r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
     )
 
-  base_cmd = [
+  # Default to '[17,19)' so that vswhere -latest picks VS 2026 when
+  # available and falls back to VS 2022 otherwise. Setting MOZC_USE_VS2022
+  # narrows the range to '[17,18)' to pin to VS 2022 even on machines that
+  # also have VS 2026 installed.
+  # See https://github.com/microsoft/vswhere/wiki/Versions
+  version_filter = (
+      '[17,18)' if os.environ.get('MOZC_USE_VS2022') else '[17,19)'
+  )
+  cmd = [
       str(vswhere_path),
       '-products',
       'Microsoft.VisualStudio.Product.Enterprise',
@@ -86,43 +94,41 @@ def get_vcvarsall(
       'Microsoft.VisualStudio.Product.BuildTools',
       '-find',
       'VC/Auxiliary/Build/vcvarsall.bat',
+      '-version',
+      version_filter,
       '-latest',
       '-utf8',
+  ]
+  cmd += [
       '-requires',
       'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
   ]
   if arch.endswith('arm64'):
-    base_cmd += ['Microsoft.VisualStudio.Component.VC.Tools.ARM64']
+    cmd += ['Microsoft.VisualStudio.Component.VC.Tools.ARM64']
 
-  # Try Visual Studio 2022 first, then fall back to Visual Studio 2026 when
-  # VS 2022 is not installed. This keeps VS 2022 as the default on machines
-  # that have both versions installed.
-  # See https://github.com/microsoft/vswhere/wiki/Versions
-  for version_filter in ('[17,18)', '[18,19)'):
-    cmd = base_cmd + ['-version', version_filter]
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=False,
-        text=True,
-        encoding='utf-8',
-    )
-    stdout, stderr = process.communicate()
-    exitcode = process.wait()
-    if exitcode != 0:
-      msgs = ['Failed to execute vswhere.exe']
-      if stdout:
-        msgs += ['-----stdout-----', stdout]
-      if stderr:
-        msgs += ['-----stderr-----', stderr]
-      raise ChildProcessError('\n'.join(msgs))
+  process = subprocess.Popen(
+      cmd,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+      shell=False,
+      text=True,
+      encoding='utf-8',
+  )
+  stdout, stderr = process.communicate()
+  exitcode = process.wait()
+  if exitcode != 0:
+    msgs = ['Failed to execute vswhere.exe']
+    if stdout:
+      msgs += ['-----stdout-----', stdout]
+    if stderr:
+      msgs += ['-----stderr-----', stderr]
+    raise ChildProcessError('\n'.join(msgs))
 
-    lines = stdout.splitlines()
-    if len(lines) > 0:
-      vcvarsall = pathlib.Path(lines[0])
-      if vcvarsall.exists():
-        return vcvarsall
+  lines = stdout.splitlines()
+  if len(lines) > 0:
+    vcvarsall = pathlib.Path(lines[0])
+    if vcvarsall.exists():
+      return vcvarsall
 
   msg = 'Could not find vcvarsall.bat.'
   if arch.endswith('arm64'):

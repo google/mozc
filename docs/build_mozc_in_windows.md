@@ -36,18 +36,23 @@ python build_tools/open.py bazel-bin/win32/installer/Mozc64.msi
 
 Building Mozc on Windows requires the following software.
 
-*   [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/#visual-studio-community-2022)
+*   [Visual Studio 2026 Community Edition](https://visualstudio.microsoft.com/downloads)
     with the following components.
     *   Windows 11 SDK
-    *   MSVC v143 - VS 2022 C++ x64/x86 build tools (Latest)
-    *   C++ ATL for latest v143 build tools (x86 & x64)
+    *   MSVC Build Tools for x64/x86 (Latest)
+    *   C++ ATL x64/x86 (Latest MSVC)
+    *   C++ CMake tools for Windows
 *   Python 3.12 or later.
 *   `.NET 6` or later (for `dotnet` command).
 *   [Bazelisk](https://github.com/bazelbuild/bazelisk)
 
+> [!NOTE]
+> VS 2022 is also still supported to build Mozc. When both VS 2022 and 2026 are
+> installed, VS 2026 will be used.
+
 > [!TIP]
-> Visual Studio 2026 Community Edition is also supported to build Mozc. When
-> both VS 2022 and 2026 are installed, VS 2022 will be used.
+> If you want to build Mozc always with VS 2022, set `MOZC_USE_VS2022`
+> environment variable.
 
 > [!NOTE]
 > Bazelisk is a wrapper of [Bazel](https://bazel.build) that allows you
@@ -121,8 +126,8 @@ Then, uninstall `Mozc` from the list of installed applications.
 To compile executables for ARM64, the following Visual Studio components also
 need to be installed:
 
-*   MSVC v143 - VS 2022 C++ ARM64/ARM64EC build tools (Latest)
-*   C++ ATL for latest v143 build tools (ARM64/ARM64EC)
+*   MSVC Built Tools for ARM64/ARM64EC (Latest)
+*   C++ ATL for ARM64/ARM64EC (Latest MSVC)
 
 To build `Mozc64.msi` for ARM64, run the following commands:
 
