@@ -54,11 +54,6 @@
 #include "base/vlog.h"
 #include "base/win32/wide_char.h"
 
-// Disable StrCat macro to use absl::StrCat.
-#ifdef StrCat
-#undef StrCat
-#endif  // StrCat
-
 namespace mozc {
 namespace {
 

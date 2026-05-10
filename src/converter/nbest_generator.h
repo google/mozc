@@ -50,8 +50,6 @@
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 
-#undef STRICT  // minwindef.h has the definition.
-
 namespace mozc {
 
 class NBestGenerator {

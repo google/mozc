@@ -63,8 +63,6 @@
 #include <ftw.h>
 #endif  // __ANDROID__ || TARGET_OS_IPHONE
 
-#undef StrCat
-
 namespace mozc::file {
 
 #ifdef _WIN32
