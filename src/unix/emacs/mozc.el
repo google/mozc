@@ -658,13 +658,13 @@ line on Emacs 24.
 This function fixes the asymmetry between them on Emacs 24 and later versions.
 This hack could be moved to mozc-posn-at-x-y in a future version."
   (let ((y (cdr (posn-x-y position))))
-    (if (<= 27 emacs-major-version)
-	(+ y (window-tab-line-height) (window-header-line-height))
-      (if (or (null header-line-format) (<= emacs-major-version 23))
-          y
-	(+ y (or mozc-cached-header-line-height
-		 (setq mozc-cached-header-line-height (mozc-header-line-height))
-		 0))))))
+    (cond ((fboundp #'window-tab-line-height)
+           (+ y (window-tab-line-height) (window-header-line-height)))
+          ((or (null header-line-format) (<= emacs-major-version 23))
+           y)
+          (t (+ y (or mozc-cached-header-line-height
+                      (setq mozc-cached-header-line-height
+                            (mozc-header-line-height)) 0))))))
 
 (defsubst mozc-window-width (&optional window)
   "Return the width of WINDOW in pixel.
