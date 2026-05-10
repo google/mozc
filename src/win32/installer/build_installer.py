@@ -78,13 +78,30 @@ def run_wix4(args) -> None:
   """
   arch = args.arch
 
+  vcvarsall_hint = None
+  if args.vs_install_dir:
+    vcvarsall_hint = str(
+        pathlib.Path(args.vs_install_dir).joinpath(
+            'Auxiliary', 'Build', 'vcvarsall.bat'
+        )
+    )
+
   # 'VCTOOLSREDISTDIR' environment variable is the same among x86, x64 and arm64
   # architectures, so just using 'x64' should be fine here.
-  redist_root = pathlib.Path(
-      vs_util.get_vs_env_vars('x64')['VCTOOLSREDISTDIR']
-  ).resolve()
+  vs_env = vs_util.get_vs_env_vars('x64', vcvarsall_hint)
+  redist_root = pathlib.Path(vs_env['VCTOOLSREDISTDIR']).resolve()
 
-  redist_64bit = redist_root.joinpath(arch).joinpath('Microsoft.VC143.CRT')
+  # The CRT redist subfolder is named after the platform toolset, not the
+  # MSVC compiler version: VS 2022 ships 'Microsoft.VC143.CRT' (toolset v143,
+  # MSVC 14.3x/14.4x) while VS 2026 ships 'Microsoft.VC145.CRT' (toolset
+  # v145, MSVC 14.50+). v144 was skipped. Pick the subfolder by reading the
+  # MSVC compiler minor version that vcvarsall.bat exports as
+  # 'VCTOOLSVERSION'.
+  vc_tools_minor = int(vs_env['VCTOOLSVERSION'].split('.')[1])
+  crt_subdir = (
+      'Microsoft.VC145.CRT' if vc_tools_minor >= 50 else 'Microsoft.VC143.CRT'
+  )
+  redist_64bit = redist_root.joinpath(arch).joinpath(crt_subdir)
   version_file = pathlib.Path(args.version_file).resolve()
   version = mozc_version.MozcVersion(version_file)
   credit_file = pathlib.Path(args.credit_file).resolve()
@@ -193,6 +210,12 @@ def main():
       dest='enable_win_universal_installer',
       default=False,
       action='store_true',
+  )
+  parser.add_argument(
+      '--vs_install_dir',
+      type=str,
+      default='',
+      help='Path to the Visual Studio VC directory (same as BAZEL_VC).',
   )
 
   args = parser.parse_args()

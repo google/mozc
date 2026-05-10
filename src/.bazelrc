@@ -39,6 +39,7 @@ build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows
 build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_x86_windows-clang-cl
 build:windows_env --host_platform=//:host-windows-clang-cl
 build:windows_env --repo_env=BAZEL_WIN32_WINNT=/D_WIN32_WINNT=0x0A00
+build:windows_env --action_env=BAZEL_VC
 
 ## Compiler options
 common:linux_env   --config=compiler_gcc_like
