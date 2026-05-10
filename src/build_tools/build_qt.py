@@ -840,6 +840,36 @@ def extract_qt_src(args: argparse.Namespace) -> None:
           f.extractall(path=qt_src_dir, filter=filter)
       else:
         f.extractall(path=qt_src_dir, members=qt_extract_filter(f))
+  # TODO: https://github.com/google/mozc/issues/1457 - Remove this.
+  apply_patch_to_qt_src(qt_src_dir, args.dryrun)
+
+
+def apply_patch_to_qt_src(
+    qt_src_dir: pathlib.Path,
+    dryrun: bool = False,
+) -> None:
+  """Apply local patches to the extracted Qt source.
+
+  Args:
+    qt_src_dir: The root directory of the extracted Qt source.
+    dryrun: True to skip actual file modifications.
+  """
+  # Workaround for QTBUG-145239: qyieldcpu.h fails to compile with
+  # macOS 26.4 SDK on Apple Silicon.
+  # https://qt-project.atlassian.net/browse/QTBUG-145239
+  # https://codereview.qt-project.org/c/qt/qtbase/+/724619
+  qyieldcpu_h = qt_src_dir.joinpath('src', 'corelib', 'thread', 'qyieldcpu.h')
+  if dryrun:
+    print(f'dryrun: patching {qyieldcpu_h} for QTBUG-145239')
+    return
+  content = qyieldcpu_h.read_text(encoding='utf-8')
+  content = content.replace(
+      '#if __has_builtin(__yield)\n',
+      '#if __has_builtin(__builtin_arm_yield)\n'
+      '    __builtin_arm_yield();\n'
+      '#elif __has_builtin(__yield)\n',
+  )
+  qyieldcpu_h.write_text(content, encoding='utf-8')
 
 
 def main():
