@@ -38,6 +38,18 @@
 #include "testing/mozctest.h"
 #endif  // __ANDROID__
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_OSX
+#include <string>
+
+#include "absl/strings/str_cat.h"
+#include "base/file_util.h"
+#include "base/system_util.h"
+#include "testing/mozctest.h"
+#endif  // TARGET_OS_OSX
+#endif  // __APPLE__
+
 #ifdef _WIN32
 #include <bit>
 
@@ -673,6 +685,62 @@ TEST(StatsConfigUtilTestWin, IsEnabled) {
 }
 #endif  // !CHANNEL_DEV
 #endif  // _WIN32
+
+#ifdef TARGET_OS_OSX
+class StatsConfigUtilTestMac : public ::mozc::testing::TestWithTempUserProfile {
+ protected:
+  std::string ConfigFilePath() const {
+    return absl::StrCat(SystemUtil::GetUserProfileDirectory(),
+                        "/.usagestats.db");
+  }
+};
+
+#ifdef CHANNEL_DEV
+TEST_F(StatsConfigUtilTestMac, IsEnabledIsAlwaysTrueInDevChannel) {
+  // In dev channel, IsEnabled always returns true regardless of the file's
+  // state.
+  EXPECT_TRUE(StatsConfigUtil::IsEnabled());
+  // SetEnabled is also a no-op that always returns true.
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_TRUE(StatsConfigUtil::IsEnabled());
+}
+
+TEST_F(StatsConfigUtilTestMac, SetEnabledNeverWritesFileInDevChannel) {
+  // In dev channel, SetEnabled must not touch the on-disk config file.
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(FileUtil::FileExists(ConfigFilePath()).ok());
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(FileUtil::FileExists(ConfigFilePath()).ok());
+}
+#else   // !CHANNEL_DEV
+TEST_F(StatsConfigUtilTestMac, IsEnabledDefaultsToFalse) {
+  // Without a config file, IsEnabled returns false.
+  ASSERT_FALSE(FileUtil::FileExists(ConfigFilePath()).ok());
+  EXPECT_FALSE(StatsConfigUtil::IsEnabled());
+}
+
+TEST_F(StatsConfigUtilTestMac, SetEnabledTrueRoundTrip) {
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_TRUE(FileUtil::FileExists(ConfigFilePath()).ok());
+  EXPECT_TRUE(StatsConfigUtil::IsEnabled());
+}
+
+TEST_F(StatsConfigUtilTestMac, SetEnabledFalseRoundTrip) {
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_TRUE(FileUtil::FileExists(ConfigFilePath()).ok());
+  EXPECT_FALSE(StatsConfigUtil::IsEnabled());
+}
+
+TEST_F(StatsConfigUtilTestMac, SetEnabledOverwritesPreviousValue) {
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_TRUE(StatsConfigUtil::IsEnabled());
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(StatsConfigUtil::IsEnabled());
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_TRUE(StatsConfigUtil::IsEnabled());
+}
+#endif  // CHANNEL_DEV
+#endif  // TARGET_OS_OSX
 
 #ifdef __ANDROID__
 TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {

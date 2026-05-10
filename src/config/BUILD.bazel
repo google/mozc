@@ -136,6 +136,12 @@ mozc_cc_test(
             "//testing:mozctest",
             "//protocol:config_cc_proto",
         ],
+        macos = [
+            "//base:file_util",
+            "//base:system_util",
+            "//testing:mozctest",
+            "@com_google_absl//absl/strings",
+        ],
         windows = [
             "//base:bits",
             "//base/win32:win_api_test_helper",
