@@ -122,7 +122,6 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
@@ -338,6 +337,5 @@ mozc_cc_library(
         "//base:init_mozc",
         "//base:run_level",
         "//base:system_util",
-        "@com_google_absl//absl/flags:flag",
     ],
 )

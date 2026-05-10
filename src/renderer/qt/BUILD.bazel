@@ -99,7 +99,6 @@ mozc_cc_qt_library(
         "//ipc:named_event",
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings:string_view",
     ],

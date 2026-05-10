@@ -35,11 +35,8 @@
 
 #include <QApplication>
 #include <QMetaType>
-#include <algorithm>
-#include <cstdint>
 #include <string>
 
-#include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/system_util.h"
@@ -52,12 +49,6 @@
 #ifndef NDEBUG
 #include "config/config_handler.h"
 #endif  // NDEBUG
-
-// By default, mozc_renderer quits when user-input continues to be
-// idle for 10min.
-ABSL_FLAG(int32_t, timeout, 10 * 60, "timeout of candidate server (sec)");
-ABSL_FLAG(bool, restricted, false,
-          "launch candidates server with restricted mode");
 
 Q_DECLARE_METATYPE(std::string);
 
@@ -78,16 +69,7 @@ std::string GetServiceName() {
 }
 }  // namespace
 
-QtServer::QtServer() : timeout_(0) {
-  if (absl::GetFlag(FLAGS_restricted)) {
-    absl::SetFlag(&FLAGS_timeout,
-                  // set 60 sec with restricted mode
-                  std::min(absl::GetFlag(FLAGS_timeout), 60));
-  }
-
-  timeout_ = 1000 * std::clamp(absl::GetFlag(FLAGS_timeout), 3, 24 * 60 * 60);
-  MOZC_VLOG(2) << "timeout is set to be : " << timeout_;
-
+QtServer::QtServer() {
 #ifndef NDEBUG
   mozc::internal::SetConfigVLogLevel(
       config::ConfigHandler::GetSharedConfig()->verbose_level());
@@ -135,8 +117,6 @@ bool QtServer::ExecCommandInternal(const commands::RendererCommand& command) {
 
   return renderer_.ExecCommand(command);
 }
-
-uint32_t QtServer::timeout() const { return timeout_; }
 
 }  // namespace renderer
 }  // namespace mozc

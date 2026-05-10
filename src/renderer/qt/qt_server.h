@@ -30,7 +30,6 @@
 #ifndef MOZC_RENDERER_QT_QT_SERVER_H_
 #define MOZC_RENDERER_QT_QT_SERVER_H_
 
-#include <cstdint>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -64,16 +63,10 @@ class QtServer : public QObject {
   // of AsyncExecCommand()
   bool ExecCommandInternal(const commands::RendererCommand& command);
 
-  // return timeout (msec) passed by FLAGS_timeout
-  uint32_t timeout() const;
-
   QtWindowManager renderer_;
 
  private:
   QtIpcThread ipc_thread_;
-
-  // From RendererServer
-  uint32_t timeout_;
 };
 
 }  // namespace renderer

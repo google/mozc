@@ -31,13 +31,9 @@
 
 #include <cstdlib>
 
-#include "absl/flags/declare.h"
-#include "absl/flags/flag.h"
 #include "base/init_mozc.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
-
-ABSL_DECLARE_FLAG(bool, restricted);
 
 namespace mozc::renderer {
 
@@ -50,10 +46,6 @@ void InitMozcRenderer(const char* argv0, int* argc, char*** argv) {
 
   mozc::SystemUtil::DisableIME();
 
-  // restricted mode
-  if (run_level == mozc::RunLevel::RESTRICTED) {
-    absl::SetFlag(&FLAGS_restricted, true);
-  }
   mozc::InitMozc(argv0, argc, argv);
 }
 
