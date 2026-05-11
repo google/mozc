@@ -33,18 +33,6 @@
 namespace mozc {
 namespace config {
 
-// Interface class
-class StatsConfigUtilInterface {
- public:
-  StatsConfigUtilInterface() = default;
-  StatsConfigUtilInterface(const StatsConfigUtilInterface&) = delete;
-  StatsConfigUtilInterface& operator=(const StatsConfigUtilInterface&) = delete;
-  virtual ~StatsConfigUtilInterface() = default;
-
-  virtual bool IsEnabled() = 0;
-  virtual bool SetEnabled(bool val) = 0;
-};
-
 class StatsConfigUtil {
  public:
   StatsConfigUtil() = delete;
@@ -62,11 +50,6 @@ class StatsConfigUtil {
   // Note: Administrative privilege is required in Windows.
   // Returns true if succeeded.
   static bool SetEnabled(bool val);
-
-  // Inject a dependency
-  static void SetHandler(StatsConfigUtilInterface* handler);
-
-  // Should never be allocated.
 };
 
 }  // namespace config
