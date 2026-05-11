@@ -147,7 +147,6 @@ mozc_cc_test(
             "//base/win32:win_api_test_helper",
             "@com_google_absl//absl/base",
             "@com_google_absl//absl/container:flat_hash_map",
-            "//base:singleton",
         ],
     ),
 )
