@@ -306,6 +306,7 @@ class ConverterMain {
 };
 
 constexpr absl::string_view kSupplementalModelDefaultPath =
+    // Empty for the OSS edition.
     "";
 
 // When supplemental model is not enabled, the Load function is a no-op and
