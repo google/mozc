@@ -98,9 +98,7 @@ mozc_cc_library(
     visibility = [
         "//:__subpackages__",
     ],
-    deps = [
-        "//base:singleton",
-    ] + mozc_select(
+    deps = mozc_select(
         android = [
             ":config_handler",
             "//protocol:config_cc_proto",
@@ -150,13 +148,6 @@ mozc_cc_test(
             "//base:singleton",
         ],
     ),
-)
-
-mozc_cc_library(
-    name = "stats_config_util_mock",
-    testonly = True,
-    hdrs = ["stats_config_util_mock.h"],
-    deps = [":stats_config_util"],
 )
 
 mozc_cc_library(

@@ -29,8 +29,6 @@
 
 #include "config/stats_config_util.h"
 
-#include "base/singleton.h"
-
 #ifdef _WIN32
 #include <atlbase.h>
 #include <lmcons.h>
@@ -80,10 +78,10 @@ constexpr wchar_t kOmahaUsageKeyForEveryone[] =
 
 constexpr wchar_t kSendStatsName[] = L"usagestats";
 
-class WinStatsConfigUtilImpl : public StatsConfigUtilInterface {
+class WinStatsConfigUtilImpl {
  public:
-  bool IsEnabled() override;
-  bool SetEnabled(bool val) override;
+  static bool IsEnabled();
+  static bool SetEnabled(bool val);
 };
 
 bool WinStatsConfigUtilImpl::IsEnabled() {
@@ -156,10 +154,10 @@ std::string GetConfigFilePath() {
                       "/.usagestats.db");  // hidden file
 }
 
-class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
+class MacStatsConfigUtilImpl {
  public:
-  bool IsEnabled() override;
-  bool SetEnabled(bool val) override;
+  static bool IsEnabled();
+  static bool SetEnabled(bool val);
 };
 
 bool MacStatsConfigUtilImpl::IsEnabled() {
@@ -216,12 +214,12 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 #endif  // MACOSX
 
 #ifdef __ANDROID__
-class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
+class AndroidStatsConfigUtilImpl {
  public:
-  bool IsEnabled() override {
+  static bool IsEnabled() {
     return ConfigHandler::GetSharedConfig()->upload_usage_stats();
   }
-  bool SetEnabled(bool val) override {
+  static bool SetEnabled(bool val) {
     // TODO(horo): Implement this.
     return false;
   }
@@ -230,15 +228,11 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
+class NullStatsConfigUtilImpl {
  public:
-  bool IsEnabled() override { return false; }
-  bool SetEnabled(bool val) override { return true; }
+  static bool IsEnabled() { return false; }
+  static bool SetEnabled(bool val) { return true; }
 };
-
-StatsConfigUtilInterface* g_stats_config_util_handler = nullptr;
-
-// GetStatsConfigUtil and SetHandler are not thread safe.
 
 #if !defined(GOOGLE_JAPANESE_INPUT_BUILD)
 // For non-official build, use null implementation.
@@ -254,23 +248,14 @@ typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
 #endif  // Platforms
 
-StatsConfigUtilInterface& GetStatsConfigUtil() {
-  if (g_stats_config_util_handler == nullptr) {
-    return *(Singleton<DefaultConfigUtilImpl>::get());
-  } else {
-    return *g_stats_config_util_handler;
-  }
-}
 }  // namespace
 
-void StatsConfigUtil::SetHandler(StatsConfigUtilInterface* handler) {
-  g_stats_config_util_handler = handler;
+bool StatsConfigUtil::IsEnabled() {
+  return DefaultConfigUtilImpl::IsEnabled();
 }
 
-bool StatsConfigUtil::IsEnabled() { return GetStatsConfigUtil().IsEnabled(); }
-
 bool StatsConfigUtil::SetEnabled(bool val) {
-  return GetStatsConfigUtil().SetEnabled(val);
+  return DefaultConfigUtilImpl::SetEnabled(val);
 }
 
 }  // namespace config
