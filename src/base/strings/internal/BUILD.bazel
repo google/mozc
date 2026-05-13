@@ -83,6 +83,12 @@ mozc_cc_binary(
 )
 
 mozc_cc_library(
+    name = "const_init_string_helpers",
+    srcs = ["const_init_string_helpers.cc"],
+    hdrs = ["const_init_string_helpers.h"],
+)
+
+mozc_cc_library(
     name = "utf8_internal",
     srcs = ["utf8_internal.cc"],
     hdrs = ["utf8_internal.h"],
