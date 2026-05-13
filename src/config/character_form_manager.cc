@@ -38,6 +38,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/no_destructor.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -47,7 +48,6 @@
 #include "base/bits.h"
 #include "base/config_file_stream.h"
 #include "base/number_util.h"
-#include "base/singleton.h"
 #include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
@@ -621,7 +621,8 @@ CharacterFormManager::Data::Data() {
 }
 
 CharacterFormManager* CharacterFormManager::GetCharacterFormManager() {
-  return Singleton<CharacterFormManager>::get();
+  static absl::NoDestructor<CharacterFormManager> manager;
+  return manager.get();
 }
 
 CharacterFormManager::CharacterFormManager() : data_(std::make_unique<Data>()) {
