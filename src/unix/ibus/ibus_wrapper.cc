@@ -42,9 +42,9 @@ static_assert(std::is_same<gchar, char>::value, "gchar must be char.");
 static_assert(std::is_same<gboolean, int>::value, "gboolean must be int.");
 static_assert(std::is_same<gpointer, void*>::value, "gpointer must be void*.");
 
-#if !IBUS_CHECK_VERSION(1, 5, 4)
-#error "ibus-mozc requires IBus>=1.5.4"
-#endif  // libibus (<1.5.4)
+#if !IBUS_CHECK_VERSION(1, 5, 33)
+#error "ibus-mozc requires IBus>=1.5.33"
+#endif  // libibus (<1.5.33)
 
 namespace mozc {
 namespace ibus {
