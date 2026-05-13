@@ -84,7 +84,6 @@ mozc_cc_library(
         "//base:file_util",
         "//base:process",
         "//base:run_level",
-        "//base:singleton",
         "//base:system_util",
         "//base:version",
         "//base:vlog",
