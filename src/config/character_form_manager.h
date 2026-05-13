@@ -34,9 +34,9 @@
 #include <optional>
 #include <string>
 
+#include "absl/base/no_destructor.h"
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
-#include "base/singleton.h"
 #include "protocol/config.pb.h"
 
 namespace mozc {
@@ -141,8 +141,7 @@ class CharacterFormManager {
  private:
   class Data;
 
-  // TODO(team): Get rid of Singleton.
-  friend class Singleton<CharacterFormManager>;
+  friend class absl::NoDestructor<CharacterFormManager>;
 
   CharacterFormManager();
   ~CharacterFormManager() = default;
