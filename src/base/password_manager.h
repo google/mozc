@@ -34,8 +34,6 @@
 
 namespace mozc {
 
-class PasswordManagerInterface;
-
 // PasswordManager is a class for managing
 // a password(passphrase) used for user-data encryption.
 // It doesn't save user password, but save a session
@@ -65,20 +63,8 @@ class PasswordManager {
 
   // remove current password
   static bool RemovePassword();
-
-  // set internal interface for unittesting
-  static void SetPasswordManagerHandler(PasswordManagerInterface* handler);
 };
 
-// Implements PasswordManager implementation.
-class PasswordManagerInterface {
- public:
-  virtual ~PasswordManagerInterface() = default;
-
-  virtual bool SetPassword(const std::string& password) const = 0;
-  virtual bool GetPassword(std::string* password) const = 0;
-  virtual bool RemovePassword() const = 0;
-};
 }  // namespace mozc
 
 #endif  // MOZC_BASE_PASSWORD_MANAGER_H_
