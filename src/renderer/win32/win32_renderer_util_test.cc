@@ -33,8 +33,6 @@
 #include <atltypes.h>
 #include <windows.h>
 
-#undef StrCat  // b/328804050
-
 #include <bit>
 #include <cstdint>
 #include <memory>

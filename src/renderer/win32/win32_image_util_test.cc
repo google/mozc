@@ -35,8 +35,6 @@
 
 #include <cstdlib>
 
-#undef StrCat
-
 #include <cstddef>
 #include <cstdint>
 #include <memory>
