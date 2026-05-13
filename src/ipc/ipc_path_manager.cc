@@ -38,6 +38,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/base/no_destructor.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -50,7 +51,6 @@
 #include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/random.h"
-#include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
 #include "base/vlog.h"
@@ -174,8 +174,7 @@ class IPCPathManagerMap {
 
 IPCPathManager *IPCPathManager::GetIPCPathManager(
     absl::string_view name) {
-  IPCPathManagerMap *manager_map = Singleton<IPCPathManagerMap>::get();
-  DCHECK(manager_map != nullptr);
+  static absl::NoDestructor<IPCPathManagerMap> manager_map;
   return manager_map->GetIPCPathManager(name);
 }
 
