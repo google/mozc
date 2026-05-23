@@ -595,6 +595,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	∟	すうがく ちょっかく	直角		SYMBOL
 記号	∮	すうがく いんてぐらる せきぶん へいろせきぶん けいさん ふぁい けいろせきぶん しゅうかいせきぶん	閉路積分記号		SYMBOL
 記号	ℵ	あれふ			SYMBOL		U+2135
+数	⓪	きごう まる0 まるぜろ まるれい	丸数字		SYMBOL	number rewriter
 数	①	きごう まる1 まるいち	丸数字		SYMBOL	number rewriter
 数	②	きごう まる2 まるに	丸数字		SYMBOL	number rewriter
 数	③	きごう まる3 まるさん	丸数字		SYMBOL	number rewriter
@@ -1344,6 +1345,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	❥	きごう はーと	ハート			ROTATED HEAVY BLACK HEART BULLET (U+2765)	U+2765
 記号	❦	きごう はーと	ハート			FLORAL HEART (U+2766)	U+2766
 記号	❧	きごう はーと	ハート			ROTATED FLORAL HEART BULLET (U+2767)	U+2767
+数	⓿	きごう まる0 まるぜろ まるれい	丸数字			NEGATIVE CIRCLED DIGIT ZERO (U+24FF)	U+24FF
 数	❶	きごう まる1 まるいち	丸数字			DINGBAT NEGATIVE CIRCLED DIGIT ONE (U+2776)	U+2776
 数	❷	きごう まる2 まるに	丸数字			DINGBAT NEGATIVE CIRCLED DIGIT TWO (U+2777)	U+2777
 数	❸	きごう まる3 まるさん	丸数字			DINGBAT NEGATIVE CIRCLED DIGIT THREE (U+2778)	U+2778
@@ -1354,6 +1356,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 数	❽	きごう まる8 まるはち	丸数字			DINGBAT NEGATIVE CIRCLED DIGIT EIGHT (U+277D)	U+277D
 数	❾	きごう まる9 まるきゅう まるく	丸数字			DINGBAT NEGATIVE CIRCLED DIGIT NINE (U+277E)	U+277E
 数	❿	きごう まる10 まるじゅう	丸数字			DINGBAT NEGATIVE CIRCLED NUMBER TEN (U+277F)	U+277F
+数	🄋	きごう まる0 まるぜろ まるれい	丸数字			DINGBAT CIRCLED SANS-SERIF DIGIT ZERO (U+1F10B)	U+1F10B
 数	➀	きごう まる1 まるいち	丸数字			DINGBAT CIRCLED SANS-SERIF DIGIT ONE (U+2780)	U+2780
 数	➁	きごう まる2 まるに	丸数字			DINGBAT CIRCLED SANS-SERIF DIGIT TWO (U+2781)	U+2781
 数	➂	きごう まる3 まるさん	丸数字			DINGBAT CIRCLED SANS-SERIF DIGIT THREE (U+2782)	U+2782
@@ -1364,6 +1367,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 数	➇	きごう まる8 まるはち	丸数字			DINGBAT CIRCLED SANS-SERIF DIGIT EIGHT (U+2787)	U+2787
 数	➈	きごう まる9 まるきゅう まるく	丸数字			DINGBAT CIRCLED SANS-SERIF DIGIT NINE (U+2788)	U+2788
 数	➉	きごう まる10 まるじゅう	丸数字			DINGBAT CIRCLED SANS-SERIF NUMBER TEN (U+2789)	U+2789
+数	🄌	きごう まる0 まるぜろ まるれい	丸数字			DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT ZERO (U+1F10C)	U+1F10C
 数	➊	きごう まる1 まるいち	丸数字			DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT ONE (U+278A)	U+278A
 数	➋	きごう まる2 まるに	丸数字			DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT TWO (U+278B)	U+278B
 数	➌	きごう まる3 まるさん	丸数字			DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT THREE (U+278C)	U+278C

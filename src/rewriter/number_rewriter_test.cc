@@ -343,13 +343,13 @@ TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   Segments segments;
 
-  // These special forms doesn't have zeros.
+  // Roman numerals don't have zeros.
   Segment* seg = SetupSegments(pos_matcher_, "0", &segments);
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
-  EXPECT_FALSE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
-  // "0" has superscripts and subscripts
+  // "0" has a circled number, superscripts and subscripts.
+  EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_TRUE(HasDescription(*seg, kSuperscriptDescription));
   EXPECT_TRUE(HasDescription(*seg, kSubscriptDescription));
 
@@ -474,7 +474,7 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ(seg->candidates_size(), 6);
+  EXPECT_EQ(seg->candidates_size(), 7);
 
   EXPECT_EQ(seg->candidate(0).value, "0");
   EXPECT_EQ(seg->candidate(0).content_value, "0");
@@ -492,13 +492,17 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
   EXPECT_EQ(seg->candidate(3).content_value, "零");
   EXPECT_EQ(seg->candidate(3).description, kOldKanjiDescription);
 
-  EXPECT_EQ(seg->candidate(4).value, "⁰");
-  EXPECT_EQ(seg->candidate(4).content_value, "⁰");
-  EXPECT_EQ(seg->candidate(4).description, kSuperscriptDescription);
+  EXPECT_EQ(seg->candidate(4).value, "⓪");
+  EXPECT_EQ(seg->candidate(4).content_value, "⓪");
+  EXPECT_EQ(seg->candidate(4).description, kMaruNumberDescription);
 
-  EXPECT_EQ(seg->candidate(5).value, "₀");
-  EXPECT_EQ(seg->candidate(5).content_value, "₀");
-  EXPECT_EQ(seg->candidate(5).description, kSubscriptDescription);
+  EXPECT_EQ(seg->candidate(5).value, "⁰");
+  EXPECT_EQ(seg->candidate(5).content_value, "⁰");
+  EXPECT_EQ(seg->candidate(5).description, kSuperscriptDescription);
+
+  EXPECT_EQ(seg->candidate(6).value, "₀");
+  EXPECT_EQ(seg->candidate(6).content_value, "₀");
+  EXPECT_EQ(seg->candidate(6).description, kSubscriptDescription);
 
   seg->clear_candidates();
 }
@@ -518,7 +522,7 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ(seg->candidates_size(), 6);
+  EXPECT_EQ(seg->candidates_size(), 7);
 
   EXPECT_EQ(seg->candidate(0).value, "00");
   EXPECT_EQ(seg->candidate(0).content_value, "00");
@@ -536,13 +540,17 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
   EXPECT_EQ(seg->candidate(3).content_value, "零");
   EXPECT_EQ(seg->candidate(3).description, kOldKanjiDescription);
 
-  EXPECT_EQ(seg->candidate(4).value, "⁰");
-  EXPECT_EQ(seg->candidate(4).content_value, "⁰");
-  EXPECT_EQ(seg->candidate(4).description, kSuperscriptDescription);
+  EXPECT_EQ(seg->candidate(4).value, "⓪");
+  EXPECT_EQ(seg->candidate(4).content_value, "⓪");
+  EXPECT_EQ(seg->candidate(4).description, kMaruNumberDescription);
 
-  EXPECT_EQ(seg->candidate(5).value, "₀");
-  EXPECT_EQ(seg->candidate(5).content_value, "₀");
-  EXPECT_EQ(seg->candidate(5).description, kSubscriptDescription);
+  EXPECT_EQ(seg->candidate(5).value, "⁰");
+  EXPECT_EQ(seg->candidate(5).content_value, "⁰");
+  EXPECT_EQ(seg->candidate(5).description, kSuperscriptDescription);
+
+  EXPECT_EQ(seg->candidate(6).value, "₀");
+  EXPECT_EQ(seg->candidate(6).content_value, "₀");
+  EXPECT_EQ(seg->candidate(6).description, kSubscriptDescription);
 
   seg->clear_candidates();
 }
