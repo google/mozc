@@ -1075,17 +1075,6 @@ bool UserHistoryPredictor::GetKeyValueForPartialMatch(
 bool UserHistoryPredictor::AllowLowFreqFullSentenceEntryMatch(
     const ConversionRequest& request, absl::string_view request_key,
     const UserHistoryPredictor::MatchType mtype, const Entry& entry) {
-  // The flag is named `user_history_allow_exact_match`, but it will also
-  // include prefix matching under specific conditions. This affects how
-  // full-sentence entries with a low frequency are utilized. This is an
-  // experimental flag and is removed in the future.
-  if (!IsMixedConversionEnabled(request) ||
-      !request.request()
-           .decoder_experiment_params()
-           .user_history_allow_exact_match()) {
-    return false;
-  }
-
   // exact match.
   if (mtype == MatchType::EXACT_MATCH) {
     return true;
@@ -1110,7 +1099,7 @@ bool UserHistoryPredictor::LookupEntry(
     const ConversionRequest& request, absl::string_view request_key,
     absl::string_view key_base,
     const Trie<std::string>* absl_nullable key_expanded, const Entry& entry,
-    const Entry* absl_nullable prev_entry,
+    const Entry* absl_nullable prev_entry, bool exact_match_only,
     EntryPriorityQueue& entry_queue) const {
   Entry* result = nullptr;
 
@@ -1139,15 +1128,25 @@ bool UserHistoryPredictor::LookupEntry(
     return false;
   }
 
+  // `exact_match_only` is called on the conversion that only requires exact
+  // match result.
+  // RIGHT_PREFIX_MATCH automatically fills the remaining suffix with
+  // the logic of partial match.
+  if (exact_match_only && mtype != MatchType::RIGHT_PREFIX_MATCH &&
+      mtype != MatchType::EXACT_MATCH) {
+    return false;
+  }
+
   // Full sentence with low frequency is suppressed unless
   // AllowLowFreqFullSentenceEntryMatch() returns true.
-  if (IsLowFreqFullSentenceEntry(request, entry) &&
+  if (!exact_match_only && IsLowFreqFullSentenceEntry(request, entry) &&
       !AllowLowFreqFullSentenceEntryMatch(request, request_key, mtype, entry)) {
     return false;
   }
 
   // For mobile, prefer exact match.
-  const bool prefer_exact_match = IsMixedConversionEnabled(request);
+  const bool prefer_exact_match =
+      IsMixedConversionEnabled(request) || exact_match_only;
 
   left_last_access_time = entry.last_access_time();
   left_most_last_access_time =
@@ -1182,13 +1181,18 @@ bool UserHistoryPredictor::LookupEntry(
       uint32_t result_attribute = 0;
       converter::InnerSegmentBoundary inner_segment_boundary;
 
-      if (GetKeyValueForExactAndRightPrefixMatch(
+      if (!exact_match_only &&
+          GetKeyValueForExactAndRightPrefixMatch(
               request, request_key, prefer_exact_match, entry, last_entry,
               left_last_access_time, left_most_last_access_time, key, value,
-              inner_segment_boundary) ||
-          GetKeyValueForPartialMatch(request, request_key, entry, key, value,
-                                     result_attribute, inner_segment_boundary,
-                                     entry_queue)) {
+              inner_segment_boundary)) {
+        result =
+            AddEntryWithNewKeyValue(request, std::move(key), std::move(value),
+                                    inner_segment_boundary, entry, entry_queue);
+        SetAttribute(*result, result_attribute);
+      } else if (GetKeyValueForPartialMatch(
+                     request, request_key, entry, key, value, result_attribute,
+                     inner_segment_boundary, entry_queue)) {
         result =
             AddEntryWithNewKeyValue(request, std::move(key), std::move(value),
                                     inner_segment_boundary, entry, entry_queue);
@@ -1268,8 +1272,8 @@ bool UserHistoryPredictor::LookupEntry(
     entry_queue.Push(result);
   }
 
-  if (IsMixedConversionEnabled(request)) {
-    // For mobile, we don't generate joined result.
+  // For mobile or conversion mode, we don't generate joined result.
+  if (IsMixedConversionEnabled(request) || exact_match_only) {
     return true;
   }
 
@@ -1369,7 +1373,7 @@ std::vector<Result> UserHistoryPredictor::Predict(
     max_prediction_size = 3;
   }
 
-  EntryPriorityQueue entry_queue = CreateEntryQueueFromHistory(
+  EntryPriorityQueue entry_queue = CreateEntryQueueFromHistoryForPrediction(
       request, prev_entry.get(), max_prediction_size * 5);
 
   if (entry_queue.size() == 0) {
@@ -1381,10 +1385,37 @@ std::vector<Result> UserHistoryPredictor::Predict(
                      entry_queue);
 }
 
+std::vector<Result> UserHistoryPredictor::Convert(
+    const ConversionRequest& request) const {
+  if (!ShouldPredict(request)) {
+    return {};
+  }
+
+  ConstEntrySnapshot prev_entry = LookupPrevEntry(request);
+
+  constexpr int kMaxCandidatesSize = 5;
+
+  EntryPriorityQueue entry_queue = CreateEntryQueueFromHistoryForConversion(
+      request, prev_entry.get(), kMaxCandidatesSize);
+
+  if (entry_queue.size() == 0) {
+    MOZC_VLOG(2) << "no prefix match candidate is found.";
+    return {};
+  }
+
+  return MakeResults(request, kMaxCandidatesSize,
+                     0 /* max_prediction_char_coverage */, entry_queue);
+}
+
 bool UserHistoryPredictor::ShouldPredict(
     const ConversionRequest& request) const {
   if (storage_.IsSyncerInCriticalSection()) {
     MOZC_VLOG(2) << "Syncer is running";
+    return false;
+  }
+
+  if (storage_.IsEmpty()) {
+    MOZC_VLOG(2) << "dic is empty";
     return false;
   }
 
@@ -1398,31 +1429,31 @@ bool UserHistoryPredictor::ShouldPredict(
     return false;
   }
 
-  if (request.request_type() == ConversionRequest::CONVERSION) {
-    MOZC_VLOG(2) << "request type is CONVERSION";
-    return false;
-  }
-
-  if (!request.config().use_history_suggest()) {
-    MOZC_VLOG(2) << "no history suggest";
-    return false;
-  }
-
-  if (storage_.IsEmpty()) {
-    MOZC_VLOG(2) << "dic is empty";
-    return false;
-  }
-
   absl::string_view request_key = request.key();
 
-  if (request_key.empty() && !IsZeroQuerySuggestionEnabled(request)) {
-    MOZC_VLOG(2) << "key length is 0";
-    return false;
-  }
+  // Prediction/suggestion specific rules.
+  if (request.request_type() == ConversionRequest::SUGGESTION ||
+      request.request_type() == ConversionRequest::PREDICTION ||
+      request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
+      request.request_type() == ConversionRequest::PARTIAL_PREDICTION) {
+    if (request_key.empty() && !IsZeroQuerySuggestionEnabled(request)) {
+      MOZC_VLOG(2) << "key length is 0";
+      return false;
+    }
 
-  if (StartsWithPunctuation(request_key)) {
-    MOZC_VLOG(2) << "request_key starts with punctuations";
-    return false;
+    if (!request.config().use_history_suggest()) {
+      MOZC_VLOG(2) << "no history suggest";
+      return false;
+    }
+
+    if (StartsWithPunctuation(request_key)) {
+      MOZC_VLOG(2) << "request_key starts with punctuations";
+      return false;
+    }
+  } else if (request.request_type() == ConversionRequest::CONVERSION) {
+    if (request_key.empty()) {
+      return false;
+    }
   }
 
   return true;
@@ -1481,8 +1512,8 @@ UserHistoryPredictor::ConstEntrySnapshot UserHistoryPredictor::LookupPrevEntry(
 }
 
 UserHistoryPredictor::EntryPriorityQueue
-UserHistoryPredictor::CreateEntryQueueFromHistory(
-    const ConversionRequest& request, const Entry* prev_entry,
+UserHistoryPredictor::CreateEntryQueueFromHistoryForPrediction(
+    const ConversionRequest& request, const Entry* absl_nullable prev_entry,
     size_t max_entry_queue_size) const {
   // Gets romanized input key if the given preedit looks misspelled.
   const std::string roman_request_key = GetRomanMisspelledKey(request);
@@ -1521,10 +1552,12 @@ UserHistoryPredictor::CreateEntryQueueFromHistory(
       return true;
     }
 
+    static constexpr bool kDisableExactMatchOnly = false;
+
     // Lookup key from elm_value and prev_entry.
     // If a new entry is found, the entry is pushed to the entry_queue.
     if (LookupEntry(request, request_key, base_key, expanded.get(), entry,
-                    prev_entry, entry_queue)) {
+                    prev_entry, kDisableExactMatchOnly, entry_queue)) {
       return true;
     }
 
@@ -1549,9 +1582,39 @@ UserHistoryPredictor::CreateEntryQueueFromHistory(
       // in dictionary predictor.
       if (c.score > 0.0 &&
           LookupEntry(request, c.correction, c.correction, nullptr, entry,
-                      prev_entry, entry_queue)) {
+                      prev_entry, kDisableExactMatchOnly, entry_queue)) {
         break;
       }
+    }
+
+    return true;
+  });
+
+  return entry_queue;
+}
+
+UserHistoryPredictor::EntryPriorityQueue
+UserHistoryPredictor::CreateEntryQueueFromHistoryForConversion(
+    const ConversionRequest& request, const Entry* absl_nullable prev_entry,
+    size_t max_entry_queue_size) const {
+  const std::string request_key = request.composer().GetQueryForConversion();
+  EntryPriorityQueue entry_queue;
+
+  storage_.ForEach([&](uint64_t fp, const Entry& entry) {
+    // already found enough entry_queue.
+    if (entry_queue.size() >= max_entry_queue_size) {
+      return false;
+    }
+
+    if (!IsValidEntryIgnoringRemovedField(entry)) {
+      return true;
+    }
+
+    static constexpr bool kEnableExactMatchOnly = true;
+
+    if (LookupEntry(request, request_key, request_key, nullptr, entry,
+                    prev_entry, kEnableExactMatchOnly, entry_queue)) {
+      return true;
     }
 
     return true;

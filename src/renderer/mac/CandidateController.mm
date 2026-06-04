@@ -233,8 +233,8 @@ void CandidateController::AlignWindows() {
   // the top-left position of the window because we want to show the
   // window just below of the preedit.
   const TableLayout *candidate_layout = candidate_window_->GetTableLayout();
-  const mozc::Point candidate_zero_point(candidate_layout->GetColumnRect(COLUMN_CANDIDATE).Left(),
-                                         0);
+  const mozc::Point candidate_zero_point(
+      candidate_layout->GetColumnRect(kColumnCandidate).Left(), 0);
 
   const mozc::Point target_point(preedit_rect.Left(), preedit_rect.Bottom());
   const mozc::Rect candidate_rect = WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(

@@ -39,6 +39,8 @@ TEST(RendererStyleHandlerTest, GetRendererStyle) {
   RendererStyle style;
   RendererStyleHandler::GetRendererStyle(&style);
   EXPECT_TRUE(style.has_window_border());
+  EXPECT_TRUE(style.has_infolist_style());
+  EXPECT_TRUE(style.infolist_style().has_focused_border_color());
 }
 
 }  // namespace renderer

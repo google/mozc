@@ -40,6 +40,10 @@ load(
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
 )
+load(
+    "//build_tools:embed_file.bzl",
+    "mozc_embed_file",
+)
 
 package(default_visibility = ["//visibility:private"])
 
@@ -229,13 +233,27 @@ mozc_cc_test(
     ],
 )
 
+mozc_embed_file(
+    name = "renderer_style_data",
+    srcs = ["renderer_style.textproto"],
+    out = "renderer_style.inc",
+    as_string_view = True,
+    var_name = "kStyleTextProto",
+)
+
 mozc_cc_library(
     name = "renderer_style_handler",
-    srcs = ["renderer_style_handler.cc"],
+    srcs = [
+        "renderer_style_handler.cc",
+        ":renderer_style_data",
+    ],
     hdrs = ["renderer_style_handler.h"],
     visibility = ["//renderer:__subpackages__"],
     deps = [
+        "//base/protobuf:text_format",
         "//protocol:renderer_cc_proto",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

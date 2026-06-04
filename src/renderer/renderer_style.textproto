@@ -1,0 +1,82 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# proto-file: third_party/mozc/src/protocol/renderer_style.proto
+# proto-message: RendererStyle
+window_border: 1
+scrollbar_width: 4
+row_rect_padding: 0
+border_color { r: 150 g: 150 b: 150 }
+shortcut_style {
+  font_size: 14
+  foreground_color { r: 119 g: 119 b: 119 }
+  background_color { r: 243 g: 244 b: 255 }
+  left_padding: 8
+  right_padding: 8
+}
+gap1_style { font_size: 14 }
+candidate_style { font_size: 14 }
+description_style {
+  font_size: 12
+  foreground_color { r: 136 g: 136 b: 136 }
+  right_padding: 8
+}
+# We want to ensure that the candidate window is at least wide
+# enough to render "そのほかの文字種  " as a candidate.
+column_minimum_width_string: "そのほかの文字種  "
+footer_style { font_size: 14 left_padding: 4 right_padding: 4 }
+footer_sub_label_style {
+  font_size: 10
+  foreground_color { r: 167 g: 167 b: 167 }
+  left_padding: 4
+  right_padding: 4
+}
+footer_border_colors { r: 96 g: 96 b: 96 }
+footer_top_color { r: 255 g: 255 b: 255 }
+footer_bottom_color { r: 238 g: 238 b: 238 }
+logo_file_name: "candidate_window_logo.tiff"
+focused_background_color { r: 209 g: 234 b: 255 }
+focused_border_color { r: 127 g: 172 b: 221 }
+scrollbar_background_color { r: 224 g: 224 b: 224 }
+scrollbar_indicator_color { r: 117 g: 144 b: 184 }
+infolist_style {
+  caption_string: "用例"
+  caption_height: 20
+  caption_padding: 1
+  caption_style { font_size: 12 left_padding: 2 }
+  caption_background_color { r: 236 g: 240 b: 250 }
+  window_border: 1
+  row_rect_padding: 2
+  window_width: 300
+  title_style { font_size: 15 left_padding: 5 }
+  description_style { font_size: 12 left_padding: 15 }
+  border_color { r: 150 g: 150 b: 150 }
+  focused_background_color { r: 209 g: 234 b: 255 }
+  focused_border_color { r: 127 g: 172 b: 221 }
+}

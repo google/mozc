@@ -148,6 +148,8 @@ class MockPredictor : public PredictorInterface {
   ~MockPredictor() override = default;
   MOCK_METHOD(std::vector<Result>, Predict, (const ConversionRequest& request),
               (const, override));
+  MOCK_METHOD(std::vector<Result>, Convert, (const ConversionRequest& request),
+              (const, override));
   MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
 };
 
@@ -380,6 +382,42 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   EXPECT_FALSE(predictor->Predict(convreq2).empty());
   EXPECT_TRUE(pred1->predict_called());
   EXPECT_TRUE(pred2->predict_called());
+}
+
+TEST_F(PredictorTest, Convert_NotConvertRequest) {
+  auto predictor1 = std::make_unique<MockPredictor>();
+  auto predictor2 = std::make_unique<MockPredictor>();
+
+  EXPECT_CALL(*predictor1, Convert(_)).Times(0);
+  EXPECT_CALL(*predictor2, Convert(_)).Times(0);
+
+  auto predictor = std::make_unique<Predictor>(*modules_, std::move(predictor1),
+                                               std::move(predictor2));
+  const ConversionRequest convreq =
+      CreateConversionRequest(ConversionRequest::SUGGESTION);
+  EXPECT_TRUE(predictor->Convert(convreq).empty());
+}
+
+TEST_F(PredictorTest, Convert_ConvertRequest) {
+  auto predictor1 = std::make_unique<MockPredictor>();
+  auto predictor2 = std::make_unique<MockPredictor>();
+
+  std::vector<Result> expected_results(1);
+  expected_results[0].value = "conversion_result";
+
+  EXPECT_CALL(*predictor1, Convert(_)).Times(0);
+  EXPECT_CALL(*predictor2, Convert(_))
+      .Times(1)
+      .WillOnce(Return(expected_results));
+
+  auto predictor = std::make_unique<Predictor>(*modules_, std::move(predictor1),
+                                               std::move(predictor2));
+  const ConversionRequest convreq =
+      CreateConversionRequest(ConversionRequest::CONVERSION);
+
+  std::vector<Result> results = predictor->Convert(convreq);
+  ASSERT_EQ(results.size(), 1);
+  EXPECT_EQ(results[0].value, "conversion_result");
 }
 
 TEST_F(MixedDecodingPredictorTest, FillPos) {

@@ -81,8 +81,16 @@ message RendererStyle {
   // enough to render column_minimum_width_string as a candidate.
   optional string column_minimum_width_string = 5;
 
+  // Note. It is safe to reuse field numbers and renumber fields in future,
+  // since this proto is not used as a binary format.
+  reserved 6;
+  reserved "text_styles";
+
   // Candidate view text styles
-  repeated TextStyle text_styles = 6;
+  optional TextStyle shortcut_style = 19;
+  optional TextStyle gap1_style = 20;
+  optional TextStyle candidate_style = 21;
+  optional TextStyle description_style = 22;
 
   // Footer style
   repeated RGBAColor footer_border_colors = 7;

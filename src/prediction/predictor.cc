@@ -136,6 +136,16 @@ std::vector<Result> Predictor::Predict(const ConversionRequest& request) const {
                                            : PredictForDesktop(request);
 }
 
+std::vector<Result> Predictor::Convert(const ConversionRequest& request) const {
+  if (request.request_type() != ConversionRequest::CONVERSION) {
+    return {};
+  }
+
+  // Returns history candidates only.
+  // TODO(all): Call dictionary_predictor->Convert() to unify the backend.
+  return user_history_predictor_->Convert(request);
+}
+
 void Predictor::Finish(const ConversionRequest& request,
                        absl::Span<const Result> results, uint32_t revert_id) {
   user_history_predictor_->Finish(request, results, revert_id);

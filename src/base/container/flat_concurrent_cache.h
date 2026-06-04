@@ -72,7 +72,7 @@ class FlatConcurrentCache {
     auto [hash, bucket] = GetBucket(key);
     SpinLockHolder l(&bucket->mu);
     if (int i = bucket->FindIndex(key, hash, equal_); i != -1) {
-      *value = *bucket->value[i];
+      *value = bucket->value[i];
       bucket->UpdateClock(i);
       return true;
     }
@@ -80,14 +80,14 @@ class FlatConcurrentCache {
   }
 
   // `value` accepts both references and movable objects.
-  void Insert(const Key& key, Value&& value) {
+  template <typename V>
+  void Insert(const Key& key, V&& value) {
     auto [hash, bucket] = GetBucket(key);
     SpinLockHolder l(&bucket->mu);
 
     // Update the value when key is found.
     if (int i = bucket->FindIndex(key, hash, equal_); i != -1) {
-      bucket->value[i] =
-          std::forward<Value>(value);  // std::optional::operator=
+      bucket->value[i] = std::forward<V>(value);
       bucket->UpdateClock(i);
       return;
     }
@@ -95,8 +95,8 @@ class FlatConcurrentCache {
     // Evicts the oldest value and insert new value.
     const int index = bucket->Evict();
     bucket->subhash[index] = hash;
-    bucket->key[index] = key;  // std::optional::operator=
-    bucket->value[index] = std::forward<Value>(value);
+    bucket->key.Construct(index, key);
+    bucket->value.Construct(index, std::forward<V>(value));
     bucket->access_clock[index] = bucket->access_clock_val;
   }
 
@@ -113,25 +113,76 @@ class FlatConcurrentCache {
       const Bucket& bucket = buckets_[i];
       SpinLockHolder l(&bucket.mu);
       for (int j = 0; j < bucket.num; ++j) {
-        functor(*bucket.key[j], *bucket.value[j]);
+        functor(bucket.key[j], bucket.value[j]);
       }
     }
   }
 
  private:
+  // RawArray is a memory-efficient alternative to std::optional<T>[N].
+  // std::optional carries an individual boolean flag and padding for alignment
+  // for each element. In FlatConcurrentCache, the initialization state of
+  // elements in a bucket is already tracked collectively by the 'num' field
+  // (elements 0 to num-1 are active). Therefore, individual flags are redundant
+  // and waste significant memory. RawArray manages raw memory storage with
+  // correct alignment and supports manual construction/destruction of elements
+  // without extra memory overhead.
+  template <typename T, size_t N>
+  class RawArray {
+   public:
+    RawArray() = default;
+    ~RawArray() = default;
+
+    RawArray(const RawArray&) = delete;
+    RawArray(RawArray&&) = delete;
+    RawArray& operator=(const RawArray&) = delete;
+    RawArray& operator=(RawArray&&) = delete;
+
+    T* ptr(size_t i) { return reinterpret_cast<T*>(storage_[i].data); }
+    const T* ptr(size_t i) const {
+      return reinterpret_cast<const T*>(storage_[i].data);
+    }
+
+    T& operator[](size_t i) { return *ptr(i); }
+    const T& operator[](size_t i) const { return *ptr(i); }
+
+    // Constructs an element at index 'i' using std::construct_at.
+    // Contract:
+    // - Construct must not be called twice for the same index without a Destroy
+    // in between.
+    // - Destroy must be called later to clean up the element.
+    template <typename... Args>
+    void Construct(size_t i, Args&&... args) {
+      std::construct_at(ptr(i), std::forward<Args>(args)...);
+    }
+
+    // Destructs the element at index 'i' using std::destroy_at.
+    // Contract:
+    // - Destroy must not be called before Construct.
+    void Destroy(size_t i) { std::destroy_at(ptr(i)); }
+
+   private:
+    struct Element {
+      alignas(T) std::byte data[sizeof(T)];
+    };
+    Element storage_[N];
+  };
+
   struct Bucket {
     mutable SpinLock mu;
     uint8_t subhash[kGroupSize];
     uint8_t num = 0;
     uint8_t access_clock[kGroupSize];
     uint8_t access_clock_val = 0;
-    std::optional<Key> key[kGroupSize];
-    std::optional<Value> value[kGroupSize];
+    RawArray<Key, kGroupSize> key;
+    RawArray<Value, kGroupSize> value;
+
+    ~Bucket() { Clear(); }
 
     void Clear() {
       for (int i = 0; i < num; ++i) {
-        key[i].reset();
-        value[i].reset();
+        key.Destroy(i);
+        value.Destroy(i);
       }
       num = 0;
       access_clock_val = 0;
@@ -140,7 +191,7 @@ class FlatConcurrentCache {
     int FindIndex(const Key& k, uint8_t hash, const Equal& equal) const {
       for (int i = 0; i < num; ++i) {
         // key[i] is valid because of `num`.
-        if (subhash[i] == hash && equal(k, *key[i])) return i;
+        if (subhash[i] == hash && equal(k, key[i])) return i;
       }
       return -1;
     }
@@ -163,8 +214,8 @@ class FlatConcurrentCache {
       for (int i = 1; i < num; ++i) {
         if (access_clock[i] < access_clock[min_idx]) min_idx = i;
       }
-      key[min_idx].reset();
-      value[min_idx].reset();
+      key.Destroy(min_idx);
+      value.Destroy(min_idx);
       return min_idx;
     }
   };

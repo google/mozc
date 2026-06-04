@@ -60,6 +60,8 @@ class Predictor : public PredictorInterface {
 
   std::vector<Result> Predict(const ConversionRequest& request) const;
 
+  std::vector<Result> Convert(const ConversionRequest& request) const;
+
   absl::string_view GetPredictorName() const override { return "Predictor"; }
 
   // Hook(s) for all mutable operations.

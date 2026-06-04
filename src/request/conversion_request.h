@@ -50,9 +50,9 @@
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/options.h"
 
 namespace mozc {
-inline constexpr size_t kMaxConversionCandidatesSize = 200;
 
 namespace internal {
 
@@ -131,88 +131,13 @@ class copy_or_view_ptr {
 // detailed context information such as commands::Context.
 class ConversionRequest {
  public:
-  enum RequestType {
-    CONVERSION,          // normal conversion
-    REVERSE_CONVERSION,  // reverse conversion
-    PREDICTION,          // show prediction with user tab key
-    SUGGESTION,          // show prediction automatically
-    PARTIAL_PREDICTION,  // show prediction using the text before cursor
-    PARTIAL_SUGGESTION,  // show suggestion using the text before cursor
-  };
+  using RequestType = ::mozc::RequestType;
+  using enum ::mozc::RequestType;
 
-  enum ComposerKeySelection {
-    // Use Composer::GetQueryForConversion() to generate conversion key. This
-    // option uses the exact composition which user sees, e.g., "とうk".
-    CONVERSION_KEY,
+  using ComposerKeySelection = ::mozc::ComposerKeySelection;
+  using enum ::mozc::ComposerKeySelection;
 
-    // Use Composer::GetQueryForPrediction() to generate conversion key. This
-    // option trims the trailing unresolved romaji. For example, if composition
-    // is "とうk", the conversion key becomes "とう". This option is mainly used
-    // in dictionary_predictor.cc for realtime conversion.
-    PREDICTION_KEY,
-
-    // TODO(team): We may want to implement other options. For instance,
-    // Composer::GetQueriesForPrediction() expands the trailing romaji to a set
-    // of possible hiragana.
-  };
-
-  // Options must be trivially copyable to get hash value directly.
-  struct Options {
-    RequestType request_type = CONVERSION;
-
-    // Which composer's method to use for conversion key; see the comment around
-    // the definition of ComposerKeySelection above.
-    ComposerKeySelection composer_key_selection = CONVERSION_KEY;
-
-    int max_conversion_candidates_size = kMaxConversionCandidatesSize;
-    int max_user_history_prediction_candidates_size = 3;
-    int max_user_history_prediction_candidates_size_for_zero_query = 4;
-    int max_dictionary_prediction_candidates_size = 20;
-
-    // If true, insert a top candidate from the actual (non-immutable) converter
-    // to realtime conversion results. Note that setting this true causes a big
-    // performance loss (3 times slower).
-    bool use_actual_converter_for_realtime_conversion = false;
-
-    // Don't use this flag directly. This flag is used by DictionaryPredictor to
-    // skip some heavy rewriters, such as UserBoundaryHistoryRewriter and
-    // TransliterationRewriter.
-    // TODO(noriyukit): Fix such a hacky handling for realtime conversion.
-    bool skip_slow_rewriters = false;
-
-    // If true, partial candidates are created on prediction/suggestion.
-    // For example, "私の" is created from composition "わたしのなまえ".
-    bool create_partial_candidates = false;
-
-    // If false, stop using user history for conversion.
-    // This is used for supporting CONVERT_WITHOUT_HISTORY command.
-    // Please refer to session/internal/keymap.h
-    bool enable_user_history_for_conversion = true;
-
-    // If true, enable kana modifier insensitive conversion.
-    bool kana_modifier_insensitive_conversion = true;
-
-    // If true, use conversion_segment(0).key() instead of ComposerData.
-    // TODO(b/365909808): Create a new string field to store the key.
-    bool use_already_typing_corrected_key = false;
-
-    // Enables incognito mode even when Config.incognito_mode() or
-    // Request.is_incognito_mode() is false. Use this flag to dynamically change
-    // the incognito_mode per client request.
-    bool incognito_mode = false;
-
-    // Overrides the bos_id to a specific POS id to specify the context
-    // information. Note that the bos_id must be in the valid range.
-    // POS id 0 is reserved for the default BOS/EOS.
-    uint16_t bos_id = 0;
-
-    // Disables to add prefix penalty.
-    // Used to calculate the cost of a suffix of a word.
-    bool disable_prefix_penalty = false;
-  };
-
-  static_assert(std::is_trivially_copyable<Options>::value,
-                "Options must be trivially copyable");
+  using Options = ::mozc::ConversionOptions;
 
   // Default constructor stores the view.
   // All default variable returns global reference.
@@ -246,7 +171,9 @@ class ConversionRequest {
   const config::Config& config() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return *config_;
   }
-  const Options& options() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // Returns options by value. Cheap to copy and avoids reference lifetime
+  // issues.
+  Options options() const {
     return options_;
   }
   const prediction::Result& history_result() const
@@ -434,7 +361,7 @@ class ConversionRequestBuilder {
   ConversionRequestBuilder& SetEmptyHistoryResult() {
     return SetHistoryResultView(prediction::Result::DefaultResult());
   }
-  ConversionRequestBuilder& SetOptions(ConversionRequest::Options&& options) {
+  ConversionRequestBuilder& SetOptions(ConversionRequest::Options options) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.options_ = std::move(options);

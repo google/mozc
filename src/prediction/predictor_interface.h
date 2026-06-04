@@ -53,6 +53,14 @@ class PredictorInterface {
   virtual std::vector<Result> Predict(
       const ConversionRequest& request) const = 0;
 
+  // Returns conversions.
+  // Almost the same as Prediction, but it returns exact-match results only.
+  // Note: Convert method is not fully supported and still experimental feature.
+  // Do not use it in production.
+  virtual std::vector<Result> Convert(const ConversionRequest& request) const {
+    return {};
+  }
+
   // Finish the conversion. Stores the history for penalization.
   // results[0] stores the committed result.
   // We can revert the Finish operation with the revert_id and Revert method.

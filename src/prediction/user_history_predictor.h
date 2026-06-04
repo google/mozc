@@ -70,6 +70,9 @@ class UserHistoryPredictor : public PredictorInterface {
 
   std::vector<Result> Predict(const ConversionRequest& request) const override;
 
+  // TODO(taku): Make it a virtual method of PredictorInterface.
+  std::vector<Result> Convert(const ConversionRequest& request) const;
+
   // Hook(s) for all mutable operations.
   void Finish(const ConversionRequest& request,
               absl::Span<const Result> results, uint32_t revert_id) override;
@@ -180,6 +183,8 @@ class UserHistoryPredictor : public PredictorInterface {
   };
 
   // Returns true if this predictor should return results for the input.
+  // TODO(taku): better to rename this function as it is used both for
+  // prediction and conversion.
   bool ShouldPredict(const ConversionRequest& request) const;
 
   // Gets match type from two strings
@@ -275,6 +280,7 @@ class UserHistoryPredictor : public PredictorInterface {
                    absl::string_view request_key, absl::string_view key_base,
                    const Trie<std::string>* absl_nullable key_expanded,
                    const Entry& entry, const Entry* absl_nullable prev_entry,
+                   bool exact_match_only,
                    EntryPriorityQueue& entry_queue) const;
 
   // For the EXACT and RIGHT_PREFIX match, we will generate joined
@@ -323,8 +329,13 @@ class UserHistoryPredictor : public PredictorInterface {
       converter::InnerSegmentBoundarySpan inner_segment_boundary, Entry entry,
       EntryPriorityQueue& entry_queue) const;
 
-  // Creates entry queue from request and history storage.
-  EntryPriorityQueue CreateEntryQueueFromHistory(
+  // Creates entry queue from request and history storage on prediction mode.
+  EntryPriorityQueue CreateEntryQueueFromHistoryForPrediction(
+      const ConversionRequest& request, const Entry* absl_nullable prev_entry,
+      size_t max_entry_queue_size) const;
+
+  // Creates entry queue from request and history storage on conversion mode.
+  EntryPriorityQueue CreateEntryQueueFromHistoryForConversion(
       const ConversionRequest& request, const Entry* absl_nullable prev_entry,
       size_t max_entry_queue_size) const;
 

@@ -224,7 +224,7 @@ TEST(RealtimeDecoderTest, DecodeSuffix) {
     // Only called once as the result is cached.
     EXPECT_CALL(
         decoder, Decode(Truly([&](const ConversionRequest& req) {
-          const auto& options = req.options();
+          const ConversionRequest::Options options = req.options();
           return (options.max_conversion_candidates_size == 1 &&
                   !options.create_partial_candidates &&
                   !options.kana_modifier_insensitive_conversion &&

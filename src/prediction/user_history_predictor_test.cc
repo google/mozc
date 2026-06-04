@@ -755,34 +755,54 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     }
 
     // reproduced
+    {
+      // Prediction
 
-    const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq1);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "私の名前は中野です");
+      const ConversionRequest convreq1 =
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
+      results = predictor->Predict(convreq1);
+      EXPECT_FALSE(results.empty());
+      EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments_proxy.Clear();
-    const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq2);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "私の名前は中野です");
+      segments_proxy.Clear();
+      const ConversionRequest convreq2 =
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
+      results = predictor->Predict(convreq2);
+      EXPECT_FALSE(results.empty());
+      EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    // Exact Match
-    segments_proxy.Clear();
-    const ConversionRequest convreq3 = SetUpInputForSuggestion(
-        "わたしのなまえはなかのです", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq3);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "私の名前は中野です");
+      // Exact Match
+      segments_proxy.Clear();
+      const ConversionRequest convreq3 = SetUpInputForSuggestion(
+          "わたしのなまえはなかのです", &composer_, &segments_proxy);
+      results = predictor->Predict(convreq3);
+      EXPECT_FALSE(results.empty());
+      EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments_proxy.Clear();
-    const ConversionRequest convreq4 = SetUpInputForSuggestion(
-        "わたしのなまえはなかのです", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq4);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "私の名前は中野です");
+      segments_proxy.Clear();
+      const ConversionRequest convreq4 = SetUpInputForSuggestion(
+          "わたしのなまえはなかのです", &composer_, &segments_proxy);
+      results = predictor->Predict(convreq4);
+      EXPECT_FALSE(results.empty());
+      EXPECT_EQ(results[0].value, "私の名前は中野です");
+    }
+
+    {
+      // Conversion
+      // Partial match
+      const ConversionRequest convreq1 =
+          SetUpInputForConversion("わたしの", &composer_, &segments_proxy);
+      results = predictor->Convert(convreq1);
+      EXPECT_TRUE(results.empty());
+
+      // Exact Match
+      segments_proxy.Clear();
+      const ConversionRequest convreq2 = SetUpInputForConversion(
+          "わたしのなまえはなかのです", &composer_, &segments_proxy);
+      results = predictor->Convert(convreq2);
+      EXPECT_FALSE(results.empty());
+      EXPECT_EQ(results[0].value, "私の名前は中野です");
+    }
 
     segments_proxy.Clear();
     const ConversionRequest convreq5 = SetUpInputForSuggestion(
@@ -1690,11 +1710,11 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     // Zero query suggestion is disabled.
     const ConversionRequest non_zero_query_convreq =
         ConversionRequestBuilder()
-            .SetComposer(composer_)
             .SetRequestView(non_zero_query_request)
             .SetContextView(context)
             .SetConfigView(config_)
             .SetHistoryResultView(segments_proxy.history_result())
+            .SetRequestType(ConversionRequest::SUGGESTION)
             .Build();
 
     segments_proxy.AddSegment("");  // empty request
@@ -3000,7 +3020,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   for (size_t i = 0; i < std::size(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
     EXPECT_EQ(predictor_peer.LookupEntry(convreq, "あｋ", "あ", expanded.get(),
-                                         entry, nullptr, results),
+                                         entry, nullptr, false, results),
               kTests1[i].expect_result)
         << kTests1[i].entry_key;
   }
@@ -3019,7 +3039,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   for (size_t i = 0; i < std::size(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
     EXPECT_EQ(predictor_peer.LookupEntry(convreq, "", "", expanded.get(), entry,
-                                         nullptr, results),
+                                         nullptr, false, results),
               kTests2[i].expect_result)
         << kTests2[i].entry_key;
   }
@@ -3054,7 +3074,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   for (size_t i = 0; i < std::size(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
     EXPECT_EQ(predictor_peer.LookupEntry(convreq, "あし", "あ", expanded.get(),
-                                         entry, nullptr, results),
+                                         entry, nullptr, false, results),
               kTests1[i].expect_result)
         << kTests1[i].entry_key;
   }
@@ -3072,9 +3092,47 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   for (size_t i = 0; i < std::size(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
     EXPECT_EQ(predictor_peer.LookupEntry(convreq, "し", "", expanded.get(),
-                                         entry, nullptr, results),
+                                         entry, nullptr, false, results),
               kTests2[i].expect_result)
         << kTests2[i].entry_key;
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, ExpandedLookupExact) {
+  UserHistoryPredictor* predictor = GetUserHistoryPredictor();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
+  UserHistoryPredictor::Entry entry;
+  UserHistoryPredictorTestPeer::EntryPriorityQueue results;
+
+  const std::vector<absl::string_view> kTestData = {"よ", "よろ", "よろし",
+                                                    "よろしく"};
+
+  const ConversionRequest convreq = ConversionRequestBuilder().Build();
+
+  // prefix match.
+  constexpr bool kExactMatchOnly = true;
+
+  for (absl::string_view entry_key : kTestData) {
+    entry.set_key(entry_key);
+    for (absl::string_view query_key : kTestData) {
+      const bool expecetd = absl::StartsWith(entry_key, query_key);
+      EXPECT_EQ(
+          predictor_peer.LookupEntry(convreq, query_key, query_key, nullptr,
+                                     entry, nullptr, !kExactMatchOnly, results),
+          expecetd);
+    }
+  }
+
+  // Exact match
+  for (absl::string_view entry_key : kTestData) {
+    entry.set_key(entry_key);
+    for (absl::string_view query_key : kTestData) {
+      const bool expecetd = entry_key == query_key;
+      EXPECT_EQ(
+          predictor_peer.LookupEntry(convreq, query_key, query_key, nullptr,
+                                     entry, nullptr, kExactMatchOnly, results),
+          expecetd);
+    }
   }
 }
 
@@ -5816,55 +5874,42 @@ TEST_F(UserHistoryPredictorTest, ExactMatchTest) {
     segments_proxy.Clear();
   }
 
-  for (bool allow_exact_match : {false, true}) {
-    for (int freq : {1, 2}) {
-      request_.mutable_decoder_experiment_params()
-          ->set_user_history_allow_exact_match(allow_exact_match);
+  for (int freq : {1, 2}) {
+    UserHistoryPredictorTestPeer predictor_peer(*predictor);
+    auto entry = predictor_peer.storage_().MutableLookup(kKey, kValue);
+    ASSERT_TRUE(entry);
+    entry->set_suggestion_freq(freq);
+    ASSERT_EQ(entry->inner_segment_boundary_size(), 3);
 
-      UserHistoryPredictorTestPeer predictor_peer(*predictor);
-      auto entry = predictor_peer.storage_().MutableLookup(kKey, kValue);
-      ASSERT_TRUE(entry);
-      entry->set_suggestion_freq(freq);
-      ASSERT_EQ(entry->inner_segment_boundary_size(), 3);
-
-      // Short partial
-      segments_proxy.Clear();
-      const ConversionRequest convreq1 = SetUpInputForPrediction(
-          "わたしのなまえは", &composer_, &segments_proxy);
-      results = predictor->Predict(convreq1);
-      // Partial matche is allowed when the entry is typed twice or more.
-      if (freq >= 2) {
-        EXPECT_FALSE(results.empty());
-      } else {
-        EXPECT_TRUE(results.empty());
-      }
-
-      // Partial that reaches to the last segment.
-      segments_proxy.Clear();
-      const ConversionRequest convreq2 = SetUpInputForPrediction(
-          "わたしのなまえはな", &composer_, &segments_proxy);
-      results = predictor->Predict(convreq2);
-      if (allow_exact_match || freq >= 2) {
-        EXPECT_FALSE(results.empty());
-        EXPECT_EQ(results[0].value, kValue);
-        EXPECT_EQ(results[0].key, kKey);
-      } else {
-        EXPECT_TRUE(results.empty());
-      }
-
-      // Exact
-      segments_proxy.Clear();
-      const ConversionRequest convreq3 =
-          SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
-      results = predictor->Predict(convreq3);
-      if (allow_exact_match || freq >= 2) {
-        EXPECT_FALSE(results.empty());
-        EXPECT_EQ(results[0].value, kValue);
-        EXPECT_EQ(results[0].key, kKey);
-      } else {
-        EXPECT_TRUE(results.empty());
-      }
+    // Short partial
+    segments_proxy.Clear();
+    const ConversionRequest convreq1 = SetUpInputForPrediction(
+        "わたしのなまえは", &composer_, &segments_proxy);
+    results = predictor->Predict(convreq1);
+    // Partial matche is allowed when the entry is typed twice or more.
+    if (freq >= 2) {
+      EXPECT_FALSE(results.empty());
+    } else {
+      EXPECT_TRUE(results.empty());
     }
+
+    // Partial that reaches to the last segment.
+    segments_proxy.Clear();
+    const ConversionRequest convreq2 = SetUpInputForPrediction(
+        "わたしのなまえはな", &composer_, &segments_proxy);
+    results = predictor->Predict(convreq2);
+    EXPECT_FALSE(results.empty());
+    EXPECT_EQ(results[0].value, kValue);
+    EXPECT_EQ(results[0].key, kKey);
+
+    // Exact
+    segments_proxy.Clear();
+    const ConversionRequest convreq3 =
+        SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
+    results = predictor->Predict(convreq3);
+    EXPECT_FALSE(results.empty());
+    EXPECT_EQ(results[0].value, kValue);
+    EXPECT_EQ(results[0].key, kKey);
   }
 }
 

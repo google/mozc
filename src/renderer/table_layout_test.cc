@@ -52,12 +52,16 @@ namespace renderer {
     EXPECT_EQ((actual_rect).Height(), (expect_height));                      \
   } while (false)
 
-enum COLUMN_TYPE {
-  COLUMN_SHORTCUT = 0,
-  COLUMN_GAP1,
-  COLUMN_CANDIDATE,
-  COLUMN_DESCRIPTION,
-  NUMBER_OF_COLUMNS,
+// Represents the column structure of the macOS candidate table view.
+// Note: This is defined locally here and not shared with CandidateView.h
+// because CandidateView.h depends on Cocoa framework, which is not available in
+// cross-platform test environments like Linux.
+enum ColumnType {
+  kColumnShortcut = 0,  // Show candidate shortcut key.
+  kColumnGap1,          // Padding region between shortcut and candidate string.
+  kColumnCandidate,     // Show candidate string value.
+  kColumnDescription,   // Show description annotation message.
+  kNumberOfColumns,     // Number of columns. (This item should be last).
 };
 
 TEST(TableLayoutTest, AllElement) {
@@ -69,7 +73,7 @@ TEST(TableLayoutTest, AllElement) {
   constexpr int kRowRectPadding = 2;
 
   TableLayout layout;
-  layout.Initialize(kNumberOfRow, NUMBER_OF_COLUMNS);
+  layout.Initialize(kNumberOfRow, kNumberOfColumns);
   layout.SetVScrollBar(kVSCrollBarWidth);
   layout.SetRowRectPadding(kRowRectPadding);
   layout.SetWindowBorder(kWindowBorder);
@@ -79,12 +83,12 @@ TEST(TableLayoutTest, AllElement) {
   layout.EnsureHeaderSize(Size(0, kHeaderHeight));
   layout.EnsureFooterSize(Size(0, kFooterHeight));
 
-  layout.EnsureCellSize(COLUMN_GAP1, kGap1);
+  layout.EnsureCellSize(kColumnGap1, kGap1);
   for (size_t row = 0; row < kNumberOfRow; ++row) {
     const Size candidate(row + 1, 10);
     const Size description(15, 5);
-    layout.EnsureCellSize(COLUMN_CANDIDATE, candidate);
-    layout.EnsureCellSize(COLUMN_DESCRIPTION, description);
+    layout.EnsureCellSize(kColumnCandidate, candidate);
+    layout.EnsureCellSize(kColumnDescription, description);
   }
 
   layout.FreezeLayout();
@@ -94,12 +98,12 @@ TEST(TableLayoutTest, AllElement) {
   EXPECT_RECT_EQ(1, 150, 45, 13, layout.GetFooterRect());
   EXPECT_RECT_EQ(35, 10, 11, 140, layout.GetVScrollBarRect());
   EXPECT_RECT_EQ(1, 24, 34, 14, layout.GetRowRect(1));
-  EXPECT_RECT_EQ(8, 10, 10, 140, layout.GetColumnRect(COLUMN_CANDIDATE));
-  EXPECT_RECT_EQ(3, 26, 0, 10, layout.GetCellRect(1, COLUMN_SHORTCUT));
+  EXPECT_RECT_EQ(8, 10, 10, 140, layout.GetColumnRect(kColumnCandidate));
+  EXPECT_RECT_EQ(3, 26, 0, 10, layout.GetCellRect(1, kColumnShortcut));
   // Although the specified cell with of column 1 is 2, the actual layout
   // width of this cell is 10 because of the width of column 9.
-  EXPECT_RECT_EQ(8, 26, 10, 10, layout.GetCellRect(1, COLUMN_CANDIDATE));
-  EXPECT_RECT_EQ(18, 26, 15, 10, layout.GetCellRect(1, COLUMN_DESCRIPTION));
+  EXPECT_RECT_EQ(8, 26, 10, 10, layout.GetCellRect(1, kColumnCandidate));
+  EXPECT_RECT_EQ(18, 26, 15, 10, layout.GetCellRect(1, kColumnDescription));
 }
 
 TEST(TableLayoutTest, AllElementWithMinimumFooterWidth) {
@@ -112,7 +116,7 @@ TEST(TableLayoutTest, AllElementWithMinimumFooterWidth) {
   constexpr int kRowRectPadding = 2;
 
   TableLayout layout;
-  layout.Initialize(kNumberOfRow, NUMBER_OF_COLUMNS);
+  layout.Initialize(kNumberOfRow, kNumberOfColumns);
   layout.SetVScrollBar(kVSCrollBarWidth);
   layout.SetRowRectPadding(kRowRectPadding);
   layout.SetWindowBorder(kWindowBorder);
@@ -122,12 +126,12 @@ TEST(TableLayoutTest, AllElementWithMinimumFooterWidth) {
   layout.EnsureHeaderSize(Size(0, kHeaderHeight));
   layout.EnsureFooterSize(Size(kFooterWidth, kFooterHeight));
 
-  layout.EnsureCellSize(COLUMN_GAP1, kGap1);
+  layout.EnsureCellSize(kColumnGap1, kGap1);
   for (size_t row = 0; row < kNumberOfRow; ++row) {
     const Size candidate(row + 1, 10);
     const Size description(15, 5);
-    layout.EnsureCellSize(COLUMN_CANDIDATE, candidate);
-    layout.EnsureCellSize(COLUMN_DESCRIPTION, description);
+    layout.EnsureCellSize(kColumnCandidate, candidate);
+    layout.EnsureCellSize(kColumnDescription, description);
   }
 
   layout.FreezeLayout();
@@ -139,12 +143,12 @@ TEST(TableLayoutTest, AllElementWithMinimumFooterWidth) {
   EXPECT_RECT_EQ(1, 150, 100, 13, layout.GetFooterRect());
   EXPECT_RECT_EQ(90, 10, 11, 140, layout.GetVScrollBarRect());
   EXPECT_RECT_EQ(1, 24, 89, 14, layout.GetRowRect(1));
-  EXPECT_RECT_EQ(8, 10, 10, 140, layout.GetColumnRect(COLUMN_CANDIDATE));
-  EXPECT_RECT_EQ(3, 26, 0, 10, layout.GetCellRect(1, COLUMN_SHORTCUT));
+  EXPECT_RECT_EQ(8, 10, 10, 140, layout.GetColumnRect(kColumnCandidate));
+  EXPECT_RECT_EQ(3, 26, 0, 10, layout.GetCellRect(1, kColumnShortcut));
   // Although the specified cell with of column 1 is 2, the actual layout
   // width of this cell is 10 because of the width of column 9.
-  EXPECT_RECT_EQ(8, 26, 10, 10, layout.GetCellRect(1, COLUMN_CANDIDATE));
-  EXPECT_RECT_EQ(18, 26, 15, 10, layout.GetCellRect(1, COLUMN_DESCRIPTION));
+  EXPECT_RECT_EQ(8, 26, 10, 10, layout.GetCellRect(1, kColumnCandidate));
+  EXPECT_RECT_EQ(18, 26, 15, 10, layout.GetCellRect(1, kColumnDescription));
 }
 
 TEST(TableLayoutTest, EnsureCellsWidth) {

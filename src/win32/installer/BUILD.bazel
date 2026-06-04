@@ -40,7 +40,11 @@ _TARGET_COMPATIBLE_WITH = [
 ]
 
 mozc_py_binary(
-    name = "build_installer",
+    # Note, "build_installer" cannot be used as a name here, since "install" is a keyword that
+    # Windows treats as a specific UAC behavior.
+    # https://github.com/google/mozc/issues/1519
+    # https://learn.microsoft.com/en-us/windows/security/application-security/application-control/user-account-control/architecture
+    name = "build_msi",
     srcs = ["build_installer.py"],
     test_lib = False,
     deps = [
@@ -100,7 +104,7 @@ genrule(
     }),
     outs = [_MSI_FILE],
     cmd = " ".join([
-        "$(location :build_installer)",
+        "$(location :build_msi)",
         "--output=$@",
         "--version_file=$(location //base:mozc_version_txt)",
         "--mozc_tool=$(location //gui/tool:mozc_tool_win)",
@@ -137,7 +141,7 @@ genrule(
     }),
     target_compatible_with = _TARGET_COMPATIBLE_WITH,
     tools = [
-        ":build_installer",
+        ":build_msi",
     ],
     visibility = ["//:__subpackages__"],
 )

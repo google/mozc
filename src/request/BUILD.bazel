@@ -36,6 +36,19 @@ load(
 package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
+    name = "options",
+    hdrs = ["options.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//converter:__pkg__",
+        "//dictionary:__subpackages__",
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+    ],
+)
+
+mozc_cc_library(
     name = "conversion_request",
     hdrs = ["conversion_request.h"],
     visibility = [
@@ -47,6 +60,7 @@ mozc_cc_library(
         "//rewriter:__pkg__",
     ],
     deps = [
+        ":options",
         "//base:util",
         "//base/strings:assign",
         "//composer",

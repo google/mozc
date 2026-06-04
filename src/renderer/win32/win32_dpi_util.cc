@@ -75,9 +75,10 @@ void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style,
   style->set_scrollbar_width(style->scrollbar_width() * scale_factor);
   style->set_row_rect_padding(style->row_rect_padding() * scale_factor);
 
-  for (RendererStyle::TextStyle& text_style : *style->mutable_text_styles()) {
-    ScaleTextStyle(&text_style, scale_factor);
-  }
+  ScaleTextStyle(style->mutable_shortcut_style(), scale_factor);
+  ScaleTextStyle(style->mutable_gap1_style(), scale_factor);
+  ScaleTextStyle(style->mutable_candidate_style(), scale_factor);
+  ScaleTextStyle(style->mutable_description_style(), scale_factor);
 
   ScaleTextStyle(style->mutable_footer_style(), scale_factor);
   ScaleTextStyle(style->mutable_footer_sub_label_style(), scale_factor);

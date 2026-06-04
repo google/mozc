@@ -141,6 +141,7 @@ bool RealtimeDecoder::PushBackTopConversionResult(
   // This method emulates usual converter's behavior so here disable
   // partial candidates.
   options.create_partial_candidates = false;
+  options.used_in_predictor_realtime_conversion = true;
   options.request_type = ConversionRequest::CONVERSION;
   const ConversionRequest tmp_request = ConversionRequestBuilder()
                                             .SetConversionRequestView(request)
@@ -286,6 +287,7 @@ std::optional<Result> RealtimeDecoder::DecodeSuffix(
   options.create_partial_candidates = false;
   options.kana_modifier_insensitive_conversion = false;
   options.use_actual_converter_for_realtime_conversion = false;
+  options.used_in_predictor_realtime_conversion = true;
 
   const bool has_prefix = prefix_rid != 0;
 

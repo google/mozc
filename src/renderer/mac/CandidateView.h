@@ -40,17 +40,18 @@ class SendCommandInterface;
 namespace renderer {
 class TableLayout;
 class RendererStyle;
-}  // namespace mozc::renderer
-}  // namespace mozc
 
-// usage type for each column.
-enum COLUMN_TYPE {
-  COLUMN_SHORTCUT = 0,  // show shortcut key
-  COLUMN_GAP1,          // padding region 1
-  COLUMN_CANDIDATE,     // show candidate string
-  COLUMN_DESCRIPTION,   // show description message
-  NUMBER_OF_COLUMNS,    // number of columns. (this item should be last)
+// Detailed usage type for each column in the macOS candidate table view.
+enum ColumnType {
+  kColumnShortcut = 0,  // Show candidate shortcut key.
+  kColumnGap1,          // Padding region between shortcut and candidate string.
+  kColumnCandidate,     // Show candidate string value.
+  kColumnDescription,   // Show description annotation message.
+  kNumberOfColumns,     // Number of columns. (This item should be last).
 };
+
+}  // namespace renderer
+}  // namespace mozc
 
 // CandidateView is an NSView subclass to draw the candidate window
 // according to the current candidates.

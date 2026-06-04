@@ -31,15 +31,17 @@
 
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
-def mozc_embed_file(name, srcs, out, var_name, **kwargs):
+def mozc_embed_file(name, srcs, out, var_name, as_string_view = False, **kwargs):
+    args = ["--name=" + var_name]
+    if as_string_view:
+        args.append("--as_string_view")
+
     mozc_run_build_tool(
         name = name,
         srcs = {
             "--input": srcs,
         },
-        args = [
-            "--name=" + var_name,
-        ],
+        args = args,
         outs = {"--output": out},
         tool = "//build_tools:embed_file",
         **kwargs

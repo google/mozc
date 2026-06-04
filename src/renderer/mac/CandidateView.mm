@@ -48,6 +48,12 @@ using mozc::commands::CandidateWindow;
 using mozc::commands::Output;
 using mozc::commands::SessionCommand;
 using mozc::renderer::RendererStyleHandler;
+using mozc::renderer::ColumnType;
+using mozc::renderer::kColumnShortcut;
+using mozc::renderer::kColumnGap1;
+using mozc::renderer::kColumnCandidate;
+using mozc::renderer::kColumnDescription;
+using mozc::renderer::kNumberOfColumns;
 using mozc::renderer::TableLayout;
 using mozc::renderer::mac::MacViewUtil;
 
@@ -151,7 +157,7 @@ using mozc::renderer::mac::MacViewUtil;
 
 - (NSSize)updateLayout {
   candidateStringsCache_ = nil;
-  tableLayout_.Initialize(candidate_window_.candidate_size(), NUMBER_OF_COLUMNS);
+  tableLayout_.Initialize(candidate_window_.candidate_size(), kNumberOfColumns);
   tableLayout_.SetWindowBorder(style_.window_border());
 
   // calculating focusedRow_
@@ -215,14 +221,14 @@ using mozc::renderer::mac::MacViewUtil;
   }
 
   const NSAttributedString *gap1 =
-      MacViewUtil::ToNSAttributedString(" ", style_.text_styles(COLUMN_GAP1));
-  tableLayout_.EnsureCellSize(COLUMN_GAP1, MacViewUtil::ToSize([gap1 size]));
+      MacViewUtil::ToNSAttributedString(" ", style_.gap1_style());
+  tableLayout_.EnsureCellSize(kColumnGap1, MacViewUtil::ToSize([gap1 size]));
 
   NSMutableArray *newCache = [[NSMutableArray array] init];
   for (size_t i = 0; i < candidate_window_.candidate_size(); ++i) {
     const CandidateWindow::Candidate &candidate = candidate_window_.candidate(i);
     const NSAttributedString *shortcut = MacViewUtil::ToNSAttributedString(
-        candidate.annotation().shortcut(), style_.text_styles(COLUMN_SHORTCUT));
+        candidate.annotation().shortcut(), style_.shortcut_style());
     std::string value = candidate.value();
     if (candidate.annotation().has_prefix()) {
       value.insert(0, candidate.annotation().prefix());  // Prepend the prefix() to value.
@@ -235,30 +241,30 @@ using mozc::renderer::mac::MacViewUtil;
     }
 
     const NSAttributedString *candidateValue =
-        MacViewUtil::ToNSAttributedString(value, style_.text_styles(COLUMN_CANDIDATE));
+        MacViewUtil::ToNSAttributedString(value, style_.candidate_style());
     const NSAttributedString *description = MacViewUtil::ToNSAttributedString(
-        candidate.annotation().description(), style_.text_styles(COLUMN_DESCRIPTION));
+        candidate.annotation().description(), style_.description_style());
     if ([shortcut length] > 0) {
       const NSSize shortcutSize =
-          MacViewUtil::applyTheme([shortcut size], style_.text_styles(COLUMN_SHORTCUT));
-      tableLayout_.EnsureCellSize(COLUMN_SHORTCUT, MacViewUtil::ToSize(shortcutSize));
+          MacViewUtil::applyTheme([shortcut size], style_.shortcut_style());
+      tableLayout_.EnsureCellSize(kColumnShortcut, MacViewUtil::ToSize(shortcutSize));
     }
     if ([candidateValue length] > 0) {
       const NSSize valueSize =
-          MacViewUtil::applyTheme([candidateValue size], style_.text_styles(COLUMN_CANDIDATE));
-      tableLayout_.EnsureCellSize(COLUMN_CANDIDATE, MacViewUtil::ToSize(valueSize));
+          MacViewUtil::applyTheme([candidateValue size], style_.candidate_style());
+      tableLayout_.EnsureCellSize(kColumnCandidate, MacViewUtil::ToSize(valueSize));
     }
     if ([description length] > 0) {
       const NSSize descriptionSize =
-          MacViewUtil::applyTheme([description size], style_.text_styles(COLUMN_DESCRIPTION));
-      tableLayout_.EnsureCellSize(COLUMN_DESCRIPTION, MacViewUtil::ToSize(descriptionSize));
+          MacViewUtil::applyTheme([description size], style_.description_style());
+      tableLayout_.EnsureCellSize(kColumnDescription, MacViewUtil::ToSize(descriptionSize));
     }
 
     [newCache
         addObject:[NSArray arrayWithObjects:shortcut, gap1, candidateValue, description, nil]];
   }
 
-  tableLayout_.EnsureColumnsWidth(COLUMN_CANDIDATE, COLUMN_DESCRIPTION, columnMinimumWidth_);
+  tableLayout_.EnsureColumnsWidth(kColumnCandidate, kColumnDescription, columnMinimumWidth_);
 
   candidateStringsCache_ = newCache;
   tableLayout_.FreezeLayout();
@@ -305,26 +311,37 @@ using mozc::renderer::mac::MacViewUtil;
     [NSBezierPath strokeRect:focusedRect];
   } else {
     // Draw normal background
-    for (int i = COLUMN_SHORTCUT; i < NUMBER_OF_COLUMNS; ++i) {
-      const mozc::Rect cellRect = tableLayout_.GetCellRect(row, i);
+    auto drawBackground = [&](ColumnType type,
+                              const mozc::renderer::RendererStyle::TextStyle& text_style) {
+      const mozc::Rect cellRect = tableLayout_.GetCellRect(row, type);
       if (cellRect.size.width > 0 && cellRect.size.height > 0 &&
-          style_.text_styles(i).has_background_color()) {
-        [MacViewUtil::ToNSColor(style_.text_styles(i).background_color()) set];
+          text_style.has_background_color()) {
+        [MacViewUtil::ToNSColor(text_style.background_color()) set];
         [NSBezierPath fillRect:MacViewUtil::ToNSRect(cellRect)];
       }
-    }
+    };
+    drawBackground(kColumnShortcut, style_.shortcut_style());
+    drawBackground(kColumnGap1, style_.gap1_style());
+    drawBackground(kColumnCandidate, style_.candidate_style());
+    drawBackground(kColumnDescription, style_.description_style());
   }
 
-  NSArray *candidate = [candidateStringsCache_ objectAtIndex:row];
-  for (int i = COLUMN_SHORTCUT; i < NUMBER_OF_COLUMNS; ++i) {
-    const NSAttributedString *text = [candidate objectAtIndex:i];
-    NSRect cellRect = MacViewUtil::ToNSRect(tableLayout_.GetCellRect(row, i));
-    NSPoint &candidatePosition = cellRect.origin;
-    // Adjust the positions
-    candidatePosition.x += style_.text_styles(i).left_padding();
-    candidatePosition.y += (cellRect.size.height - [text size].height) / 2;
-    [text drawAtPoint:candidatePosition];
-  }
+  NSArray<NSAttributedString *> *candidate = [candidateStringsCache_ objectAtIndex:row];
+
+  auto drawText = [&](ColumnType type,
+                      const mozc::renderer::RendererStyle::TextStyle& text_style) {
+    const NSAttributedString *text = [candidate objectAtIndex:type];
+    NSRect cellRect = MacViewUtil::ToNSRect(tableLayout_.GetCellRect(row, type));
+    NSPoint position = cellRect.origin;
+    position.x += text_style.left_padding();
+    position.y += (cellRect.size.height - [text size].height) / 2;
+    [text drawAtPoint:position];
+  };
+
+  drawText(kColumnShortcut, style_.shortcut_style());
+  drawText(kColumnGap1, style_.gap1_style());
+  drawText(kColumnCandidate, style_.candidate_style());
+  drawText(kColumnDescription, style_.description_style());
 
   if (candidate_window_.candidate(row).has_information_id()) {
     NSRect rect = MacViewUtil::ToNSRect(tableLayout_.GetRowRect(row));
