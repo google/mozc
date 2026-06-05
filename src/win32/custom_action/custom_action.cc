@@ -36,8 +36,6 @@
 #include <wow64apiset.h>
 // clang-format on
 
-#undef StrCat  // NOLINT: TODO: triggers clang-tidy, defined by windows.h.
-
 #include <cstdarg>
 #include <cstddef>
 #include <memory>
