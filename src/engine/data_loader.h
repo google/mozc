@@ -40,7 +40,6 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
-#include "absl/synchronization/notification.h"
 #include "base/thread.h"
 #include "engine/modules.h"
 #include "protocol/engine_builder.pb.h"
@@ -86,7 +85,9 @@ class DataLoader {
 
   // Disables specific handling for high priority data.
   void NotifyHighPriorityDataRegisteredForTesting() {
-    high_priority_data_registered_.Notify();
+    absl::MutexLock lock(&signal_mu_);
+    high_priority_notified_ = true;
+    signal_cv_.SignalAll();
   }
 
  private:
@@ -141,8 +142,10 @@ class DataLoader {
   // meaning that the model registered later is preferred.
   uint32_t sequence_id_ ABSL_GUARDED_BY(mutex_) = 0;
 
-  // Notify when a new high priority data is registered.
-  absl::Notification high_priority_data_registered_;
+  // Used to signal the loading thread to re-evaluate pending requests.
+  mutable absl::Mutex signal_mu_;
+  bool high_priority_notified_ ABSL_GUARDED_BY(signal_mu_) = false;
+  absl::CondVar signal_cv_;
 
   TaskManager load_;
 };
