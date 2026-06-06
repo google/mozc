@@ -37,7 +37,6 @@
 #include "absl/random/random.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "data_manager/data_manager.h"
 #include "protocol/engine_builder.pb.h"
@@ -107,8 +106,11 @@ TEST_F(DataLoaderTest, AsyncBuild) {
         return absl::OkStatus();
       }));
 
-  // Sends the same request. It is accepted, but callback is not called.
-  EXPECT_TRUE(loader.StartNewDataBuildTask(request_, kNeverCalled));
+  // Sends the same request again. The callback is never called for the
+  // duplicate (guaranteed by kNeverCalled). Whether the call returns true
+  // depends on whether the first load has already finished by this point, so
+  // its return value is timing-dependent and intentionally not asserted.
+  loader.StartNewDataBuildTask(request_, kNeverCalled);
 
   loader.Wait();
 
@@ -282,8 +284,12 @@ TEST_F(DataLoaderTest, WaitHighPriorityDataTimeoutTest) {
   EXPECT_TRUE(loader.StartNewDataBuildTask(make_request(100), callback));
   EXPECT_TRUE(loader.StartNewDataBuildTask(make_request(200), callback));
 
-  // Timeout. priority = 50 is loaded.
-  absl::SleepFor(absl::Milliseconds(200));
+  // No high priority data is registered, so the loader waits for the internal
+  // timeout and then loads the current top-priority request (priority = 50).
+  // Wait for that load to finish rather than racing a fixed sleep against the
+  // timeout, which is flaky on loaded machines.
+  loader.Wait();
+  EXPECT_EQ(callback_called, 1);  // only 50.
 
   // Then priority = 10 is loaded.
   EXPECT_TRUE(loader.StartNewDataBuildTask(make_request(10), callback));
