@@ -33,6 +33,7 @@
 #include <cstring>
 #include <string>
 
+#include "absl/base/no_destructor.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -43,7 +44,6 @@
 #include "base/environ.h"
 #include "base/file_util.h"
 #include "base/port.h"
-#include "base/singleton.h"
 
 #ifdef __ANDROID__
 #include "base/android_util.h"
@@ -97,8 +97,10 @@ constexpr absl::string_view kMozcDocumentDir = "/usr/lib/mozc/documents";
 
 class ProgramInvocationNameHolder final {
  public:
-  ProgramInvocationNameHolder() = default;
-  ~ProgramInvocationNameHolder() = default;
+  static ProgramInvocationNameHolder *GetInstance() {
+    static absl::NoDestructor<ProgramInvocationNameHolder> impl;
+    return impl.get();
+  }
 
   void Set(absl::string_view name) {
     absl::MutexLock l(mutex_);
@@ -111,19 +113,31 @@ class ProgramInvocationNameHolder final {
   }
 
  private:
+  friend class absl::NoDestructor<ProgramInvocationNameHolder>;
+
+  ProgramInvocationNameHolder() = default;
+  ~ProgramInvocationNameHolder() = default;
+
   std::string name_;
   mutable absl::Mutex mutex_;
 };
 
 class UserProfileDirectoryImpl final {
  public:
-  UserProfileDirectoryImpl() = default;
-  ~UserProfileDirectoryImpl() = default;
+  static UserProfileDirectoryImpl *GetInstance() {
+    static absl::NoDestructor<UserProfileDirectoryImpl> impl;
+    return impl.get();
+  }
 
   std::string GetDir();
   void SetDir(const std::string& dir);
 
  private:
+  friend class absl::NoDestructor<UserProfileDirectoryImpl>;
+
+  UserProfileDirectoryImpl() = default;
+  ~UserProfileDirectoryImpl() = default;
+
   std::string GetUserProfileDirectory() const;
 
   std::string dir_;
@@ -157,14 +171,21 @@ void UserProfileDirectoryImpl::SetDir(const std::string& dir) {
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class LocalAppDataDirectoryCache {
  public:
-  LocalAppDataDirectoryCache() : result_(E_FAIL) {
-    result_ = SafeTryGetLocalAppData(&path_);
+  static LocalAppDataDirectoryCache *GetInstance() {
+    static absl::NoDestructor<LocalAppDataDirectoryCache> impl;
+    return impl.get();
   }
   HRESULT result() const { return result_; }
   const bool succeeded() const { return SUCCEEDED(result_); }
   const std::string& path() const { return path_; }
 
  private:
+  friend class absl::NoDestructor<LocalAppDataDirectoryCache>;
+
+  LocalAppDataDirectoryCache() : result_(E_FAIL) {
+    result_ = SafeTryGetLocalAppData(&path_);
+  }
+
   // b/5707813 implies that TryGetLocalAppData causes an exception and makes
   // Singleton<LocalAppDataDirectoryCache> invalid state which results in an
   // infinite spin loop in call_once. To prevent this, the constructor of
@@ -288,8 +309,8 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
     return FileUtil::JoinPath({MacUtil::GetCachesDirectory(), kProductPrefix});
 
 #elif defined(_WIN32)
-    DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
-    std::string dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
+    DCHECK(SUCCEEDED(LocalAppDataDirectoryCache::GetInstance()->result()));
+    std::string dir = LocalAppDataDirectoryCache::GetInstance()->path();
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
     dir = FileUtil::JoinPath(dir, kCompanyNameInEnglish);
@@ -353,7 +374,7 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
 }  // namespace
 
 std::string SystemUtil::GetUserProfileDirectory() {
-  return Singleton<UserProfileDirectoryImpl>::get()->GetDir();
+  return UserProfileDirectoryImpl::GetInstance()->GetDir();
 }
 
 std::string SystemUtil::GetLoggingDirectory() {
@@ -369,7 +390,7 @@ std::string SystemUtil::GetLoggingDirectory() {
 }
 
 void SystemUtil::SetUserProfileDirectory(const std::string& path) {
-  Singleton<UserProfileDirectoryImpl>::get()->SetDir(path);
+  UserProfileDirectoryImpl::GetInstance()->SetDir(path);
 }
 
 #ifdef _WIN32
@@ -377,14 +398,21 @@ namespace {
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class ProgramFilesX86Cache {
  public:
-  ProgramFilesX86Cache() : result_(E_FAIL) {
-    result_ = SafeTryProgramFilesPath(&path_);
+  static ProgramFilesX86Cache *GetInstance() {
+    static absl::NoDestructor<ProgramFilesX86Cache> impl;
+    return impl.get();
   }
   const bool succeeded() const { return SUCCEEDED(result_); }
   const HRESULT result() const { return result_; }
   const std::string& path() const { return path_; }
 
  private:
+  friend class absl::NoDestructor<ProgramFilesX86Cache>;
+
+  ProgramFilesX86Cache() : result_(E_FAIL) {
+    result_ = SafeTryProgramFilesPath(&path_);
+  }
+
   // b/5707813 implies that the Shell API causes an exception in some cases.
   // In order to avoid potential infinite loops in call_once. the constructor
   // of ProgramFilesX86Cache must be exception free.
@@ -476,14 +504,14 @@ std::string SystemUtil::GetServerDirectory() {
   if (!install_dir_from_registry.empty()) {
     return install_dir_from_registry;
   }
-  DCHECK(SUCCEEDED(Singleton<ProgramFilesX86Cache>::get()->result()));
+  DCHECK(SUCCEEDED(ProgramFilesX86Cache::GetInstance()->result()));
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   return FileUtil::JoinPath(
-      FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
+      FileUtil::JoinPath(ProgramFilesX86Cache::GetInstance()->path(),
                          kCompanyNameInEnglish),
       kProductNameInEnglish);
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
-  return FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
+  return FileUtil::JoinPath(ProgramFilesX86Cache::GetInstance()->path(),
                             kProductNameInEnglish);
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -562,10 +590,17 @@ namespace {
 
 class UserSidImpl {
  public:
-  UserSidImpl();
+  static UserSidImpl *GetInstance() {
+    static absl::NoDestructor<UserSidImpl> impl;
+    return impl.get();
+  }
   const std::string& get() { return sid_; }
 
  private:
+  friend class absl::NoDestructor<UserSidImpl>;
+
+  UserSidImpl();
+
   std::string sid_;
 };
 
@@ -609,7 +644,7 @@ UserSidImpl::UserSidImpl() {
 
 std::string SystemUtil::GetUserSidAsString() {
 #ifdef _WIN32
-  return Singleton<UserSidImpl>::get()->get();
+  return UserSidImpl::GetInstance()->get();
 #else   // _WIN32
   return GetUserNameAsString();
 #endif  // _WIN32
@@ -746,6 +781,16 @@ namespace {
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class SystemDirectoryCache {
  public:
+  static SystemDirectoryCache *GetInstance() {
+    static absl::NoDestructor<SystemDirectoryCache> impl;
+    return impl.get();
+  }
+  const bool succeeded() const { return system_dir_ != nullptr; }
+  const wchar_t* system_dir() const { return system_dir_; }
+
+ private:
+  friend class absl::NoDestructor<SystemDirectoryCache>;
+
   SystemDirectoryCache() : system_dir_(nullptr) {
     const UINT copied_len_wo_null_if_success =
         ::GetSystemDirectory(path_buffer_, std::size(path_buffer_));
@@ -756,10 +801,7 @@ class SystemDirectoryCache {
     DCHECK_EQ(L'\0', path_buffer_[copied_len_wo_null_if_success]);
     system_dir_ = path_buffer_;
   }
-  const bool succeeded() const { return system_dir_ != nullptr; }
-  const wchar_t* system_dir() const { return system_dir_; }
 
- private:
   wchar_t path_buffer_[MAX_PATH];
   wchar_t* system_dir_;
 };
@@ -768,21 +810,21 @@ class SystemDirectoryCache {
 
 // TODO(team): Support other platforms.
 bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
-  if (!Singleton<SystemDirectoryCache>::get()->succeeded()) {
+  if (!SystemDirectoryCache::GetInstance()->succeeded()) {
     return false;
   }
-  if (!Singleton<ProgramFilesX86Cache>::get()->succeeded()) {
+  if (!ProgramFilesX86Cache::GetInstance()->succeeded()) {
     return false;
   }
-  if (!Singleton<LocalAppDataDirectoryCache>::get()->succeeded()) {
+  if (!LocalAppDataDirectoryCache::GetInstance()->succeeded()) {
     return false;
   }
   return true;
 }
 
 const wchar_t* SystemUtil::GetSystemDir() {
-  DCHECK(Singleton<SystemDirectoryCache>::get()->succeeded());
-  return Singleton<SystemDirectoryCache>::get()->system_dir();
+  DCHECK(SystemDirectoryCache::GetInstance()->succeeded());
+  return SystemDirectoryCache::GetInstance()->system_dir();
 }
 #endif  // _WIN32
 
@@ -869,14 +911,14 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
 }
 
 void SystemUtil::SetProgramInvocationName(absl::string_view name) {
-  Singleton<ProgramInvocationNameHolder>::get()->Set(name);
+  ProgramInvocationNameHolder::GetInstance()->Set(name);
 }
 
 std::string SystemUtil::GetProgramRunfilesDirectory() {
   if constexpr (port::IsWasm()) {
     return "/";
   }
-  const std::string name = Singleton<ProgramInvocationNameHolder>::get()->Get();
+  const std::string name = ProgramInvocationNameHolder::GetInstance()->Get();
   if (name.empty()) {
     return "";
   }
