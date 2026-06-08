@@ -76,6 +76,58 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
+    name = "const_init_immutable_string",
+    hdrs = ["const_init_immutable_string.h"],
+    defines = mozc_select(
+        client = [],
+        default = ["MOZC_NO_ATOMIC_FLAG_WAIT"],
+    ),
+    deps = ["//base/strings/internal:const_init_string_helpers"] + mozc_select(
+        client = [],
+        default = [
+            "@com_google_absl//absl/base:core_headers",
+            "@com_google_absl//absl/synchronization",
+        ],
+    ),
+)
+
+mozc_cc_test(
+    name = "const_init_immutable_string_test",
+    size = "small",
+    srcs = ["const_init_immutable_string_test.cc"],
+    deps = [
+        ":const_init_immutable_string",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "const_init_mutable_string",
+    hdrs = ["const_init_mutable_string.h"],
+    defines = mozc_select(
+        client = [],
+        default = ["MOZC_NO_ATOMIC_FLAG_WAIT"],
+    ),
+    deps = ["//base/strings/internal:const_init_string_helpers"] + mozc_select(
+        client = [],
+        default = [
+            "@com_google_absl//absl/base:core_headers",
+            "@com_google_absl//absl/synchronization",
+        ],
+    ),
+)
+
+mozc_cc_test(
+    name = "const_init_mutable_string_test",
+    size = "small",
+    srcs = ["const_init_mutable_string_test.cc"],
+    deps = [
+        ":const_init_mutable_string",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
     name = "japanese",
     srcs = [
         "japanese.cc",
