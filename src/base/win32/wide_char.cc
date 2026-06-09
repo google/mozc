@@ -38,6 +38,7 @@
 
 #include "absl/base/casts.h"
 #include "absl/log/check.h"
+#include "absl/strings/resize_and_overwrite.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc::win32 {
@@ -71,18 +72,20 @@ std::wstring Utf8ToWide(const absl::string_view input) {
     return std::wstring();
   }
 
-  size_t wchar_count = WideCharsLen(input);
+  const size_t wchar_count = WideCharsLen(input);
   std::wstring result;
   // MultiByteToWideChar doesn't null-terminate the output string when the
   // length is explicitly specified.
-  result.resize(wchar_count);
-
-  // This API call should always succeed as long as the codepage (CP_UTF8) and
-  // flag (0) are valid.
-  const int copied_wchars = ::MultiByteToWideChar(
-      CP_UTF8, 0, input.data(), input.size(), result.data(), result.size());
-  CHECK_GE(copied_wchars, 0);
-  DCHECK_EQ(wchar_count, copied_wchars);
+  absl::StringResizeAndOverwrite(
+      result, wchar_count, [&](wchar_t* buf, size_t size) {
+        // This API call should always succeed as long as the codepage
+        // (CP_UTF8) and flag (0) are valid.
+        const int copied_wchars = ::MultiByteToWideChar(
+            CP_UTF8, 0, input.data(), input.size(), buf, size);
+        CHECK_GE(copied_wchars, 0);
+        DCHECK_EQ(wchar_count, copied_wchars);
+        return absl::implicit_cast<size_t>(copied_wchars);
+      });
   return result;
 }
 
@@ -102,13 +105,15 @@ std::string WideToUtf8(const std::wstring_view input) {
   std::string result;
   // WideCharToMultiByte doesn't null-terminate the output string when the
   // length is explicitly specified.
-  result.resize(char_count);
-  const int copied_chars =
-      ::WideCharToMultiByte(CP_UTF8, 0, input.data(), input.size(),
-                            result.data(), result.size(), nullptr, nullptr);
-
-  CHECK_GE(copied_chars, 0);
-  DCHECK_EQ(char_count, copied_chars);
+  absl::StringResizeAndOverwrite(
+      result, char_count, [&](char* buf, size_t size) {
+        const int copied_chars =
+            ::WideCharToMultiByte(CP_UTF8, 0, input.data(), input.size(), buf,
+                                  size, nullptr, nullptr);
+        CHECK_GE(copied_chars, 0);
+        DCHECK_EQ(char_count, copied_chars);
+        return absl::implicit_cast<size_t>(copied_chars);
+      });
   return result;
 }
 
