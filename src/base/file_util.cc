@@ -43,9 +43,11 @@
 #include <system_error>  // NOLINT(build/c++11)
 #include <utility>
 
+#include "absl/base/casts.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/resize_and_overwrite.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
@@ -625,8 +627,11 @@ absl::StatusOr<std::string> FileUtil::GetContents(
   ifs.seekg(0, std::ios_base::beg);
   std::string content;
   if (mode & std::ios::binary) {
-    content.resize(size);
-    ifs.read(content.data(), size);
+    absl::StringResizeAndOverwrite(
+        content, size, [&](char* buf, size_t buf_size) {
+          ifs.read(buf, buf_size);
+          return absl::implicit_cast<size_t>(ifs.gcount());
+        });
   } else {
     // In the text mode, the read size can be smaller than the file size as
     // "\r\n" can be translated to "\n" on Windows. Therefore, we just reserve a
