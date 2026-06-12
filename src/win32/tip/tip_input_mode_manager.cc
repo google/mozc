@@ -46,8 +46,6 @@ namespace win32 {
 namespace tsf {
 namespace {
 
-typedef ::mozc::commands::CompositionMode CompositionMode;
-
 template <typename T>
 void Dedup(std::vector<T>* container) {
   std::sort(container->begin(), container->end());
@@ -62,7 +60,7 @@ TipInputModeManagerImpl::StatePair TipInputModeManagerImpl::GetOverriddenState(
   if (input_scopes.empty()) {
     return base_state;
   }
-  std::vector<ConversionMode> states;
+  std::vector<commands::CompositionMode> states;
   for (const auto& input_scope : input_scopes) {
     switch (input_scope) {
       // Some InputStope can be mapped to commands::Context::InputFieldType.
@@ -81,20 +79,20 @@ TipInputModeManagerImpl::StatePair TipInputModeManagerImpl::GetOverriddenState(
       case IS_TIME_HOUR:
       case IS_TIME_MINORSEC:
       case IS_ALPHANUMERIC_HALFWIDTH:
-        states.push_back(kDirect);
+        states.push_back(commands::DIRECT);
         break;
       case IS_HIRAGANA:
-        states.push_back(kHiragana);
+        states.push_back(commands::HIRAGANA);
         break;
       case IS_NUMBER_FULLWIDTH:
       case IS_ALPHANUMERIC_FULLWIDTH:
-        states.push_back(kFullAscii);
+        states.push_back(commands::FULL_ASCII);
         break;
       case IS_KATAKANA_HALFWIDTH:
-        states.push_back(kHalfKatakana);
+        states.push_back(commands::HALF_KATAKANA);
         break;
       case IS_KATAKANA_FULLWIDTH:
-        states.push_back(kFullKatakana);
+        states.push_back(commands::FULL_KATAKANA);
         break;
       default:
         break;
@@ -109,7 +107,7 @@ TipInputModeManagerImpl::StatePair TipInputModeManagerImpl::GetOverriddenState(
     // TODO(yukawa): consider this case.
     return base_state;
   }
-  if (states[0] == kDirect) {
+  if (states[0] == commands::DIRECT) {
     return StatePair(false, base_state.conversion_mode);
   }
   return StatePair(true, states[0]);
@@ -164,14 +162,14 @@ TipInputModeManager::Action TipInputModeManager::OnMoveFocusedWindow() {
 }
 
 TipInputModeManager::NotifyActionSet TipInputModeManager::OnReceiveCommand(
-    bool mozc_open_close_mode, DWORD mozc_logical_mode,
-    DWORD mozc_visible_mode) {
+    bool mozc_open_close_mode, commands::CompositionMode mozc_logical_mode,
+    commands::CompositionMode mozc_visible_mode) {
   const StatePair prev_tsf_state = tsf_state_;
 
   tsf_state_.open_close = mozc_open_close_mode;
-  tsf_state_.conversion_mode = static_cast<ConversionMode>(mozc_logical_mode);
+  tsf_state_.conversion_mode = mozc_logical_mode;
   mozc_state_.open_close = mozc_open_close_mode;
-  mozc_state_.conversion_mode = static_cast<ConversionMode>(mozc_visible_mode);
+  mozc_state_.conversion_mode = mozc_visible_mode;
 
   NotifyActionSet action_set = kNotifyNothing;
   if (prev_tsf_state.open_close != tsf_state_.open_close) {
@@ -193,9 +191,9 @@ void TipInputModeManager::OnInitialize(bool system_open_close_mode,
   if (use_global_mode_) {
     return;
   }
-  CompositionMode mozc_mode = commands::HIRAGANA;
+  commands::CompositionMode mozc_mode = commands::HIRAGANA;
   if (ConversionModeUtil::ToMozcMode(system_conversion_mode, &mozc_mode)) {
-    tsf_state_.conversion_mode = static_cast<ConversionMode>(mozc_mode);
+    tsf_state_.conversion_mode = mozc_mode;
   }
   mozc_state_.conversion_mode = tsf_state_.conversion_mode;
 }
@@ -212,10 +210,10 @@ TipInputModeManager::Action TipInputModeManager::OnSetFocus(
   Dedup(&new_input_scopes);
 
   tsf_state_.open_close = system_open_close_mode;
-  CompositionMode mozc_mode = commands::HIRAGANA;
+  commands::CompositionMode mozc_mode = commands::HIRAGANA;
   if (!use_global_mode_) {
     if (ConversionModeUtil::ToMozcMode(system_conversion_mode, &mozc_mode)) {
-      tsf_state_.conversion_mode = static_cast<ConversionMode>(mozc_mode);
+      tsf_state_.conversion_mode = mozc_mode;
     }
   }
 
@@ -251,10 +249,10 @@ TipInputModeManager::Action TipInputModeManager::OnChangeConversionMode(
     return kDoNothing;
   }
 
-  CompositionMode mozc_mode = commands::HIRAGANA;
+  commands::CompositionMode mozc_mode = commands::HIRAGANA;
   if (ConversionModeUtil::ToMozcMode(new_conversion_mode, &mozc_mode)) {
-    tsf_state_.conversion_mode = static_cast<ConversionMode>(mozc_mode);
-    mozc_state_.conversion_mode = static_cast<ConversionMode>(mozc_mode);
+    tsf_state_.conversion_mode = mozc_mode;
+    mozc_state_.conversion_mode = mozc_mode;
   }
 
   if (prev_effective.conversion_mode != mozc_state_.conversion_mode) {
@@ -294,13 +292,12 @@ bool TipInputModeManager::GetTsfOpenClose() const {
   return tsf_state_.open_close;
 }
 
-TipInputModeManagerImpl::ConversionMode
-TipInputModeManager::GetEffectiveConversionMode() const {
+commands::CompositionMode TipInputModeManager::GetEffectiveConversionMode()
+    const {
   return mozc_state_.conversion_mode;
 }
 
-TipInputModeManagerImpl::ConversionMode
-TipInputModeManager::GetTsfConversionMode() const {
+commands::CompositionMode TipInputModeManager::GetTsfConversionMode() const {
   return tsf_state_.conversion_mode;
 }
 

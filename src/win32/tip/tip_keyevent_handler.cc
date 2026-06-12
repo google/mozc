@@ -122,10 +122,9 @@ bool GetOpenAndMode(TipTextService* text_service, ITfContext* context,
   if (private_context) {
     prefer_kana_input = private_context->input_behavior().prefer_kana_input;
   }
-  const CompositionMode tsf_mode =
-      static_cast<CompositionMode>(input_mode_manager->GetTsfConversionMode());
-  const CompositionMode effective_mode = static_cast<CompositionMode>(
-      input_mode_manager->GetEffectiveConversionMode());
+  const CompositionMode tsf_mode = input_mode_manager->GetTsfConversionMode();
+  const CompositionMode effective_mode =
+      input_mode_manager->GetEffectiveConversionMode();
 
   const bool has_valid_logical_mode = ConversionModeUtil::ToNativeMode(
       tsf_mode, prefer_kana_input, logical_mode);

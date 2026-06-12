@@ -85,8 +85,7 @@ void UpdateLanguageBarOnFocusChange(TipTextService* text_service,
       text_service->GetThreadContext()->GetInputModeManager();
   const bool open = input_mode_manager->GetEffectiveOpenClose();
   const CompositionMode mozc_mode =
-      open ? static_cast<CompositionMode>(
-                 input_mode_manager->GetEffectiveConversionMode())
+      open ? input_mode_manager->GetEffectiveConversionMode()
            : commands::DIRECT;
   text_service->UpdateLangbar(!disabled, static_cast<uint32_t>(mozc_mode));
 }
@@ -123,8 +122,8 @@ bool TipUiHandler::Update(TipTextService* text_service, ITfContext* context,
   const TipInputModeManager* input_mode_manager =
       text_service->GetThreadContext()->GetInputModeManager();
   const bool open = input_mode_manager->GetEffectiveOpenClose();
-  const CompositionMode mozc_mode = static_cast<CompositionMode>(
-      input_mode_manager->GetEffectiveConversionMode());
+  const CompositionMode mozc_mode =
+      input_mode_manager->GetEffectiveConversionMode();
   const bool result = UpdateInternal(text_service, context, read_cookie);
   if (open) {
     text_service->UpdateLangbar(true, mozc_mode);

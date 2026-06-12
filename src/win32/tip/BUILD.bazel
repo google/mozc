@@ -864,6 +864,7 @@ mozc_cc_test(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":tip_input_mode_manager",
+        "//protocol:commands_cc_proto",
         "//testing:gunit_main",
     ],
 )
