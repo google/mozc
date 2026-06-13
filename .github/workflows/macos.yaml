@@ -163,7 +163,21 @@ jobs:
       - name: bazel test
         working-directory: ./src
         run: |
-          bazelisk test ... --build_tests_only -c dbg
+          bazelisk test ... -c dbg --build_tests_only --build_event_json_file=bep.jsonl
+
+      - name: Collect failing test logs
+        if: failure()
+        working-directory: ./src
+        run: |
+          python3 build_tools/collect_test_logs.py --bep bep.jsonl --out "${GITHUB_WORKSPACE}/test_logs"
+
+      - name: Upload failing test logs
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-logs-${{ runner.os }}
+          path: test_logs
+          if-no-files-found: ignore
 
   # actions/cache works without this job, but having this would increase the likelihood of cache hit
   # in other jobs. Another approach would be to use "needs:".
