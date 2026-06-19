@@ -147,6 +147,7 @@ mozc_cc_test(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":win_util",
         ":win_util_test_dll",  # fixdeps: keep
         "//base:system_util",
         "//testing:gunit_main",
@@ -162,7 +163,7 @@ mozc_cc_binary(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     win_def_file = "win_util_test_dll.def",
-    deps = ["//base:system_util"],
+    deps = [":win_util"],
 )
 
 mozc_cc_library(
@@ -186,16 +187,24 @@ mozc_cc_library(
     ],
 )
 
-# TODO(b/269889028): Change these filegroup rules to mozc_cc_library after
-# fixing cyclic dependency with base:system_util.
-filegroup(
-    name = "win_util_h",
-    srcs = ["win_util.h"],
-)
-
-filegroup(
-    name = "win_util_cc",
+mozc_cc_library(
+    name = "win_util",
     srcs = ["win_util.cc"],
+    hdrs = ["win_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":wide_char",
+        "//base:vlog",
+        "//bazel/win32:aux_ulib",
+        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_microsoft_wil//:wil",
+    ],
 )
 
 mozc_cc_library(

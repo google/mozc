@@ -36,21 +36,25 @@
 #include <aux_ulib.h>
 #include <psapi.h>
 #include <shellapi.h>
+#include <shlobj.h>
 #include <stringapiset.h>
 #include <wil/resource.h>
 #include <winternl.h>
 
 #include <clocale>
 #include <cstdint>
+#include <iterator>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 
 #include "absl/base/call_once.h"
+#include "absl/base/no_destructor.h"
+#include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "base/system_util.h"
 #include "base/vlog.h"
 #include "base/win32/wide_char.h"
 
@@ -88,6 +92,143 @@ bool IsProcessSandboxedImpl() {
 // TODO(b/290998032): Remove this.
 constexpr std::wstring_view to_wstring_view(const wchar_t* ptr) {
   return ptr == nullptr ? std::wstring_view() : std::wstring_view(ptr);
+}
+
+HRESULT TryGetLocalAppDataForAppContainer(std::string* dir) {
+  // User profiles for processes running under AppContainer seem to be as
+  // follows, while the scheme is not officially documented.
+  //   "%LOCALAPPDATA%\Packages\<package sid>\..."
+  // Note: You can also obtain this path by GetAppContainerFolderPath API.
+  // http://msdn.microsoft.com/en-us/library/windows/desktop/hh448543.aspx
+  // Anyway, here we use heuristics to obtain "LocalLow" folder path.
+  wchar_t config[MAX_PATH] = {};
+  const HRESULT result = ::SHGetFolderPathW(
+      nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, &config[0]);
+  if (FAILED(result)) {
+    return result;
+  }
+  std::wstring path = config;
+  const std::wstring::size_type local_pos = path.find(L"\\Packages\\");
+  if (local_pos == std::wstring::npos) {
+    return E_FAIL;
+  }
+  path.erase(local_pos);
+  *dir = win32::WideToUtf8(path);
+  if (dir->empty()) {
+    return E_FAIL;
+  }
+  absl::StrAppend(dir, "Low");
+  return S_OK;
+}
+
+HRESULT TryGetLocalAppDataLow(std::string* dir) {
+  if (dir == nullptr) {
+    return E_FAIL;
+  }
+  dir->clear();
+
+  wchar_t* task_mem_buffer = nullptr;
+  const HRESULT result = ::SHGetKnownFolderPath(FOLDERID_LocalAppDataLow, 0,
+                                                nullptr, &task_mem_buffer);
+  if (FAILED(result)) {
+    if (task_mem_buffer != nullptr) {
+      ::CoTaskMemFree(task_mem_buffer);
+    }
+    return result;
+  }
+
+  if (task_mem_buffer == nullptr) {
+    return E_UNEXPECTED;
+  }
+
+  std::wstring wpath = task_mem_buffer;
+  ::CoTaskMemFree(task_mem_buffer);
+
+  const std::string path = win32::WideToUtf8(wpath);
+  if (path.empty()) {
+    return E_UNEXPECTED;
+  }
+
+  *dir = path;
+  return S_OK;
+}
+
+HRESULT TryGetLocalAppData(std::string* dir) {
+  if (dir == nullptr) {
+    return E_FAIL;
+  }
+  dir->clear();
+
+  bool in_app_container = false;
+  if (!WinUtil::IsProcessInAppContainer(::GetCurrentProcess(),
+                                        &in_app_container)) {
+    return E_FAIL;
+  }
+  if (in_app_container) {
+    return TryGetLocalAppDataForAppContainer(dir);
+  }
+  return TryGetLocalAppDataLow(dir);
+}
+
+// b/5707813 implies that TryGetLocalAppData causes an exception in some cases.
+// To prevent that from putting the cached value into an invalid state (which
+// historically resulted in an infinite spin loop in call_once), the value must
+// be computed by an exception-free function.
+// Note that __try and __except does not guarantees that any destruction
+// of internal C++ objects when a non-C++ exception occurs except that
+// /EHa compiler option is specified.
+// Do not use /EHs option, otherwise we must admit potential
+// memory leakes when any non-C++ exception occues in TryGetLocalAppData.
+// See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
+HRESULT __declspec(nothrow) SafeTryGetLocalAppData(std::string* dir) {
+  __try {
+    return TryGetLocalAppData(dir);
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    return E_UNEXPECTED;
+  }
+}
+
+HRESULT TryProgramFilesPath(std::string* path) {
+  if (path == nullptr) {
+    return E_FAIL;
+  }
+  path->clear();
+
+  wchar_t program_files_path_buffer[MAX_PATH] = {};
+  // For historical reasons Mozc executables have been installed under
+  // %ProgramFiles(x86)%.
+  // TODO(https://github.com/google/mozc/issues/1086): Stop using "(x86)".
+  const HRESULT result =
+      ::SHGetFolderPathW(nullptr, CSIDL_PROGRAM_FILESX86, nullptr,
+                         SHGFP_TYPE_CURRENT, program_files_path_buffer);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  const std::string program_files =
+      win32::WideToUtf8(program_files_path_buffer);
+  if (program_files.empty()) {
+    return E_FAIL;
+  }
+  *path = program_files;
+  return S_OK;
+}
+
+// b/5707813 implies that the Shell API causes an exception in some cases.
+// In order to avoid potential infinite loops in call_once, the cached value
+// must be computed by an exception-free function.
+// Note that __try and __except does not guarantees that any destruction
+// of internal C++ objects when a non-C++ exception occurs except that
+// /EHa compiler option is specified.
+// Do not use /EHs option, otherwise we must admit potential
+// memory leaks when any non-C++ exception occurs in TryProgramFilesPath.
+// See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
+HRESULT __declspec(nothrow) SafeTryProgramFilesPath(std::string* path) {
+  __try {
+    return TryProgramFilesPath(path);
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    return E_UNEXPECTED;
+  }
 }
 
 }  // namespace
@@ -413,11 +554,53 @@ bool WinUtil::IsProcessSandboxed() {
   return sandboxed;
 }
 
+const std::optional<std::wstring>& WinUtil::GetSystem32Path() {
+  static const absl::NoDestructor<std::optional<std::wstring>> dir(
+      []() -> std::optional<std::wstring> {
+        wchar_t path_buffer[MAX_PATH] = {};
+        const UINT copied_len_wo_null_if_success =
+            ::GetSystemDirectory(path_buffer, std::size(path_buffer));
+        if (copied_len_wo_null_if_success >= std::size(path_buffer)) {
+          // Function failed.
+          return std::nullopt;
+        }
+        DCHECK_EQ(L'\0', path_buffer[copied_len_wo_null_if_success]);
+        return std::wstring(path_buffer);
+      }());
+  return *dir;
+}
+
+const std::optional<std::string>& WinUtil::GetProgramFilesX86Path() {
+  static const absl::NoDestructor<std::optional<std::string>> path(
+      []() -> std::optional<std::string> {
+        std::string program_files;
+        if (SUCCEEDED(SafeTryProgramFilesPath(&program_files))) {
+          return program_files;
+        }
+        return std::nullopt;
+      }());
+  return *path;
+}
+
+const std::optional<std::string>& WinUtil::GetLocalAppDataPath() {
+  static const absl::NoDestructor<std::optional<std::string>> dir(
+      []() -> std::optional<std::string> {
+        std::string path;
+        if (SUCCEEDED(SafeTryGetLocalAppData(&path))) {
+          return path;
+        }
+        return std::nullopt;
+      }());
+  return *dir;
+}
+
 bool WinUtil::ShellExecuteInSystemDir(const wchar_t* verb, const wchar_t* file,
                                       const wchar_t* parameters) {
+  const std::optional<std::wstring>& system_dir = GetSystem32Path();
   const auto result =
       static_cast<uint32_t>(reinterpret_cast<uintptr_t>(::ShellExecuteW(
-          0, verb, file, parameters, SystemUtil::GetSystemDir(), SW_SHOW)));
+          nullptr, verb, file, parameters,
+          system_dir.has_value() ? system_dir->c_str() : nullptr, SW_SHOW)));
   LOG_IF(ERROR, result <= 32)
       << "ShellExecute failed." << ", error:" << result
       << ", verb: " << win32::WideToUtf8(to_wstring_view(verb))

@@ -51,7 +51,6 @@
 #include "base/vlog.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
-#include "base/win32/win_util.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 

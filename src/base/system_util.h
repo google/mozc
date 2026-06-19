@@ -102,24 +102,6 @@ class SystemUtil {
   static std::string GetDesktopNameAsString();
 
 #ifdef _WIN32
-  // From an early stage of the development of Mozc, we have somehow abused
-  // CHECK macro assuming that any failure of fundamental APIs like
-  // ::SHGetFolderPathW or ::SHGetKnownFolderPathis is worth being notified
-  // as a crash.  But the circumstances have been changed.  As filed as
-  // b/3216603, increasing number of instances of various applications begin
-  // to use their own sandbox technology, where these kind of fundamental APIs
-  // are far more likely to fail with an unexpected error code.
-  // EnsureVitalImmutableDataIsAvailable is a simple fail-fast mechanism to
-  // this situation.  This function simply returns false instead of making
-  // the process crash if any of following functions cannot work as expected.
-  // - SystemDirectoryCache
-  // - ProgramFilesX86Cache
-  // - LocalAppDataDirectoryCache
-  // TODO(taku,yukawa): Implement more robust and reliable mechanism against
-  //   sandboxed environment, where such kind of fundamental APIs are far more
-  //   likely to fail.  See b/3216603.
-  static bool EnsureVitalImmutableDataIsAvailable();
-
   // return system directory. If failed, return nullptr.
   // You need not to delete the returned pointer.
   // This function is thread safe.

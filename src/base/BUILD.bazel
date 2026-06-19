@@ -474,16 +474,8 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "system_util",
-    # TODO(b/269889028): win_util has cyclic dependency between this library.
-    # Solve it and make them independent libraries.
-    srcs = ["system_util.cc"] +
-           mozc_select(
-               windows = ["//base/win32:win_util_cc"],
-           ),
-    hdrs = ["system_util.h"] +
-           mozc_select(
-               windows = ["//base/win32:win_util_h"],
-           ),
+    srcs = ["system_util.cc"],
+    hdrs = ["system_util.h"],
     local_defines = mozc_select(
         linux = [
             'MOZC_DOCUMENT_DIR=\\"' + LINUX_MOZC_DOCUMENT_DIR + '\\"',
@@ -496,7 +488,6 @@ mozc_cc_library(
         ":file_util",
         ":port",
         ":util",
-        "//bazel/win32:aux_ulib",  # win_util
         "//bazel/win32:imm32",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
@@ -511,9 +502,8 @@ mozc_cc_library(
         android = [":android_util"],
         apple = ["//base/mac:mac_util"],
         windows = [
-            ":vlog",
             "//base/win32:wide_char",
-            "@com_microsoft_wil//:wil",
+            "//base/win32:win_util",
         ],
     ),
 )

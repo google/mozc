@@ -34,6 +34,7 @@
 #include <windows.h>
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -128,6 +129,18 @@ class WinUtil {
 
   // Returns true if the current process is restricted or in AppContainer.
   static bool IsProcessSandboxed();
+
+  // Returns the Windows system directory (e.g. "C:\\Windows\\System32"), or
+  // std::nullopt on failure. The result is computed once and cached.
+  static const std::optional<std::wstring>& GetSystem32Path();
+
+  // Returns the (x86) Program Files directory as UTF-8, or std::nullopt if it
+  // cannot be determined. The result is computed once and cached.
+  static const std::optional<std::string>& GetProgramFilesX86Path();
+
+  // Returns the LocalLow application data directory as UTF-8, or std::nullopt
+  // if it cannot be determined. The result is computed once and cached.
+  static const std::optional<std::string>& GetLocalAppDataPath();
 
   // Execute ShellExecute API with given parameters on the system directory,
   // which is expected to be more appropriate than tha directory where the
