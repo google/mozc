@@ -78,6 +78,13 @@ selects.config_setting_group(
     ],
 )
 
+selects.config_setting_group(
+    name = "build_x64_binaries",
+    match_any = [
+        "@platforms//cpu:x86_64",
+    ],
+)
+
 genrule(
     name = "installer",
     srcs = [
@@ -86,7 +93,6 @@ genrule(
         "//server:mozc_server_win",
         "//win32/broker:mozc_broker_main",
         "//win32/cache_service:mozc_cache_service",
-        "//win32/tip:mozc_tip32",
         "//win32/tip:mozc_tip64",
         "//win32/custom_action",
         "//zenz_scorer:mozc_zenz_scorer",
@@ -107,6 +113,9 @@ genrule(
             "//win32/tip:mozc_tip64arm",
             "//win32/tip:mozc_tip64x",
         ],
+        ":build_x64_binaries": [
+            "//win32/tip:mozc_tip32",
+        ],
         "//conditions:default": [],
     }),
     outs = [_MSI_FILE],
@@ -119,7 +128,6 @@ genrule(
         "--mozc_server=$(location //server:mozc_server_win)",
         "--mozc_broker=$(location //win32/broker:mozc_broker_main)",
         "--mozc_cache_service=$(location //win32/cache_service:mozc_cache_service)",
-        "--mozc_tip32=$(location //win32/tip:mozc_tip32)",
         "--mozc_tip64=$(location //win32/tip:mozc_tip64)",
         "--custom_action=$(location //win32/custom_action)",
         "--icon_path=$(location //data/images/win:product_icon.ico)",
@@ -141,6 +149,7 @@ genrule(
             "--mozc_tip64arm=$(location //win32/tip:mozc_tip64arm)",
             "--mozc_tip64x=$(location //win32/tip:mozc_tip64x)",
         ]),
+        ":build_x64_binaries": " --mozc_tip32=$(location //win32/tip:mozc_tip32)",
         "//conditions:default": "",
     }) + select({
         ":debug_build": " --debug_build",

@@ -27,10 +27,8 @@ python build_tools/open.py bazel-bin/win32/installer/Mozc64.msi
 
 ### System Requirements
 
-64-bit Windows 10 or later.
-
-> [!IMPORTANT] Building Mozc on a Windows ARM64 environment is not yet supported
-> ([#1296](https://github.com/google/mozc/issues/1296)).
+64-bit Windows 10 or later. Windows ARM64 hosts are also supported for ARM64
+package builds.
 
 ### Software Requirements
 
@@ -119,16 +117,31 @@ Then, uninstall `Mozc` from the list of installed applications.
 ### Build `Mozc64.msi` for ARM64
 
 To compile executables for ARM64, the following Visual Studio components also
-need to be installed:
+need to be installed. These components are required both for native ARM64 builds
+on Windows ARM64 hosts and for cross-builds from x64 Windows hosts:
 
 *   MSVC v143 - VS 2022 C++ ARM64/ARM64EC build tools (Latest)
 *   C++ ATL for latest v143 build tools (ARM64/ARM64EC)
+
+When building from an x64 Windows host, initialize the Visual Studio environment
+for cross-compilation:
+
+```
+vcvarsall.bat amd64_arm64
+```
+
+When building on a Windows ARM64 host, initialize the Visual Studio environment
+for ARM64:
+
+```
+vcvarsall.bat arm64
+```
 
 To build `Mozc64.msi` for ARM64, run the following commands:
 
 ```
 python build_tools/build_qt.py --release --confirm_license --target_arch=arm64
-bazelisk build --config oss_windows --config release_build package --platforms=//:windows-arm64
+bazelisk build --config oss_windows --config release_build --config windows_arm64 package
 ```
 
 ### Build `Mozc64.msi` for both X64 and ARM64

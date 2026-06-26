@@ -513,6 +513,7 @@ mozc_cc_library(
         windows = [
             ":vlog",
             "//base/win32:wide_char",
+            "//bazel/win32:shell32",
             "@com_microsoft_wil//:wil",
         ],
     ),

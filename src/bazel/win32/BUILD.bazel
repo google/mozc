@@ -102,5 +102,9 @@ mozc_win32_lib(
 )
 
 mozc_win32_lib(
+    name = "shell32",
+)
+
+mozc_win32_lib(
     name = "user32",
 )

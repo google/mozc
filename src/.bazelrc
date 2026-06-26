@@ -41,6 +41,12 @@ build:windows_env --host_platform=//:host-windows-clang-cl
 build:windows_env --repo_env=BAZEL_WIN32_WINNT=/D_WIN32_WINNT=0x0A00
 build:windows_env --action_env=BAZEL_VC
 
+## Windows ARM64 build options
+build:windows_arm64 --platforms=//:windows-arm64
+# clang-cl 20.1.1 crashes while generating SEH unwind info for protobuf/upb
+# ARM64 Windows inline assembly. Defining __SEH__ selects upstream's workaround.
+build:windows_arm64 --copt=/D__SEH__ --host_copt=/D__SEH__
+
 ## Compiler options
 common:linux_env   --config=compiler_gcc_like
 common:android_env --config=compiler_gcc_like

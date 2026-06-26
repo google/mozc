@@ -119,6 +119,8 @@ def _windows_sdk_impl(repo_ctx):
     arch = repo_ctx.os.arch
     if arch == "amd64" or arch == "x86_64":
         arch = "x64"
+    elif arch == "aarch64":
+        arch = "arm64"
 
     winsdk_path = repo_ctx.path(winsdk_dir)
     repo_ctx.symlink(winsdk_path.get_child("bin/" + winsdk_ver + "/" + arch), "bin")

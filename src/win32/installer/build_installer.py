@@ -139,7 +139,9 @@ def run_wix4(args) -> None:
   document_dir = credit_file.parent
   qt_dir = pathlib.Path(args.qt_core_dll).parent.parent.resolve()
   icon_path = pathlib.Path(args.icon_path).resolve()
-  mozc_tip32 = pathlib.Path(args.mozc_tip32).resolve()
+  mozc_tip32 = (
+      pathlib.Path(args.mozc_tip32).resolve() if args.mozc_tip32 else ''
+  )
   mozc_tip64 = pathlib.Path(args.mozc_tip64).resolve()
   mozc_broker = pathlib.Path(args.mozc_broker).resolve()
   mozc_server = pathlib.Path(args.mozc_server).resolve()
