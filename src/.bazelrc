@@ -63,6 +63,11 @@ build:compiler_msvc_like --cxxopt "/utf-8" --host_cxxopt "/utf-8"
 build:compiler_gcc_like  --per_file_copt="external/.*@-w" --host_per_file_copt="external/.*@-w"
 build:compiler_msvc_like --per_file_copt="external/.*@/w" --host_per_file_copt="external/.*@/w"
 
+# Make the following workaround for llvm/llvm-project#47432 work.
+# https://github.com/protocolbuffers/protobuf/commit/0e84323cd6fba27c7834b5596f3ef14b7e69e7b8
+build:compiler_msvc_like --per_file_copt="external/protobuf[+]/upb/wire/encode.c@/D__SEH__=1"
+build:compiler_msvc_like --host_per_file_copt="external/protobuf[+]/upb/wire/encode.c@/D__SEH__=1"
+
 ## Linux specific options
 build:linux_env --build_tag_filters=-nolinux --copt "-fPIC"
 test:linux_env   --test_tag_filters=-nolinux
