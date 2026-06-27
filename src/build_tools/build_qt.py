@@ -408,7 +408,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
         '-platform',
         'win32-msvc',
     ]
-    if args.target_arch in ['x64', 'amd64']:
+    if args.target_arch == 'x64':
       qt_configure_options += ['-intelcet']
 
   if args.confirm_license:
@@ -490,7 +490,10 @@ def parse_args() -> argparse.Namespace:
   )
   if is_windows():
     parser.add_argument(
-        '--target_arch', help='"x64" or "arm64"', type=str, default='x64'
+        '--target_arch',
+        help='target architecture',
+        choices=['x64', 'arm64'],
+        default=normalize_win_arch(platform.uname().machine),
     )
     parser.add_argument(
         '--vcvarsall_path', help='Path of vcvarsall.bat', type=str, default=None
@@ -729,14 +732,21 @@ def normalize_win_arch(arch: str) -> str:
   """Normalize the architecture name for Windows build environment.
 
   Args:
-    arch: a string representation of a CPU architecture to be normalized.
+    arch: 'amd64', 'x64', 'arm64', or its capitalization variants.
 
   Returns:
-    String representation of a CPU architecture (e.g. 'x64' and 'arm64')
+    Either 'x64' or 'arm64'.
+
+  Raises:
+    ValueError: When the given architecture does not match any of them.
   """
-  normalized = arch.lower()
-  if normalized == 'amd64':
-    return 'x64'
+  normalized = {
+      'amd64': 'x64',
+      'x64': 'x64',
+      'arm64': 'arm64',
+  }.get(arch.lower())
+  if not normalized:
+    raise ValueError(f'Unsupported architecture: {arch}')
   return normalized
 
 
