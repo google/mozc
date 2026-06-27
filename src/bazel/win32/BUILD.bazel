@@ -32,10 +32,22 @@
 #  - Windows SDK library link options.
 #  - (that's it for now)
 
+load("//:build_defs.bzl", "MOZC_TAGS", "mozc_win32_resource")
 load("//bazel:stubs.bzl", "bzl_library")
 load("//bazel/win32:internal.bzl", "mozc_win32_lib")
 
 package(default_visibility = ["//:__subpackages__"])
+
+# A linker input to embed the default Win32 manifest settings (e.g. the
+# supported OS versions) that all the production binaries specify. This is
+# added to all the executables built with mozc_cc_test and mozc_cc_binary
+# unless opted out explicitly.
+mozc_win32_resource(
+    name = "win32_default_manifest",
+    manifests = ["win32_default.manifest"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+)
 
 bzl_library(
     name = "build_defs_bzl",

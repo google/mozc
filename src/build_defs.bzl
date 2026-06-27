@@ -74,6 +74,13 @@ def _copts_unsigned_char():
         "//conditions:default": ["-funsigned-char"],
     })
 
+def _win32_default_manifest_deps():
+    """Returns deps to embed the default Win32 manifest settings on Windows."""
+    return select({
+        "@platforms//os:windows": ["//bazel/win32:win32_default_manifest"],
+        "//conditions:default": [],
+    })
+
 def _update_visibility(visibility = None):
     """
     Returns updated visibility. This is temporarily used for the code location migration.
@@ -100,12 +107,28 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def mozc_cc_binary(deps = [], copts = [], linkopts = [], **kwargs):
+def mozc_cc_binary(deps = [], copts = [], linkopts = [], enable_win32_default_manifest = True, **kwargs):
+    """cc_binary wrapper adding default dependecies such as '//:macro'.
+
+    Args:
+      deps: deps for cc_binary.  //:macro is added.
+      copts: copts for cc_binary.
+      linkopts: linkopts for cc_binary.
+      enable_win32_default_manifest: optional. If True (default), embed the
+          default Win32 manifest settings on Windows. Ignored for shared
+          libraries, where an application manifest is not applicable.
+      **kwargs: other args for cc_binary.
     """
-    cc_binary wrapper adding //:macro dependecny.
-    """
+    win32_default_manifest_deps = []
+
+    # Skip shared libraries (linkshared = True). An application manifest is
+    # embedded as the RT_MANIFEST resource with ID 1, which the loader honors
+    # only for the executable (.exe), not for DLLs, so embedding it into a
+    # shared library would have no effect.
+    if enable_win32_default_manifest and not kwargs.get("linkshared"):
+        win32_default_manifest_deps = _win32_default_manifest_deps()
     cc_binary(
-        deps = deps + ["//:macro"],
+        deps = deps + ["//:macro"] + win32_default_manifest_deps,
         copts = copts + _copts_unsigned_char(),
         linkopts = linkopts + mozc_select(
             wasm = [
@@ -137,7 +160,7 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
     cc_test(
         name = name,
         tags = tags,
-        deps = deps + ["//:macro"],
+        deps = deps + ["//:macro"] + _win32_default_manifest_deps(),
         copts = copts + _copts_unsigned_char(),
         **kwargs
     )
@@ -411,6 +434,9 @@ def mozc_win32_cc_prod_binary(
         srcs = srcs,
         defines = defines,
         deps = deps,
+        # Production binaries control their own manifests through
+        # mozc_win32_resource_from_template.
+        enable_win32_default_manifest = False,
         features = features,
         # '/CETCOMPAT' is available only on x86/x64 architectures.
         linkopts = modified_linkopts + select({
