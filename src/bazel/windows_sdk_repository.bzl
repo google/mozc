@@ -115,10 +115,21 @@ def _windows_sdk_impl(repo_ctx):
         )
         return
 
-    # Hopefully "x86" and "arm64" should just work, but we need to check later.
-    arch = repo_ctx.os.arch
-    if arch == "amd64" or arch == "x86_64":
-        arch = "x64"
+    # Normalizes repo_ctx.os.arch to the Windows SDK's bin/<ver>/<arch> layout.
+    arch = {
+        "amd64": "x64",
+        "x86_64": "x64",
+        "aarch64": "arm64",
+        "arm64": "arm64",
+    }.get(repo_ctx.os.arch.lower())
+    if not arch:
+        repo_ctx.file("BUILD.bazel", "")
+        repo_ctx.template(
+            "windows_sdk_rules.bzl",
+            repo_ctx.path(Label("@//bazel:windows_sdk_rules.noop.template.bzl")),
+            executable = False,
+        )
+        return
 
     winsdk_path = repo_ctx.path(winsdk_dir)
     repo_ctx.symlink(winsdk_path.get_child("bin/" + winsdk_ver + "/" + arch), "bin")
