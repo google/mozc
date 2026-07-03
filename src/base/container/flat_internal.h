@@ -80,7 +80,7 @@ template <class T, class Compare = std::less<>>
 constexpr void SortAndVerifyUnique(absl::Span<T> span,
                                    const Compare &cmp = Compare()) {
   std::sort(span.begin(), span.end(), cmp);
-  for (int i = 0; i + i < span.size(); ++i) {
+  for (int i = 0; i + 1 < span.size(); ++i) {
     if (!cmp(span[i], span[i + 1]) && !cmp(span[i + 1], span[i])) {
       DuplicateEntryFound();
     }
