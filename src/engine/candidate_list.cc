@@ -304,7 +304,8 @@ bool CandidateList::MoveToId(const int base_id) {
 
 bool CandidateList::MoveToPageIndex(const size_t page_index) {
   const auto [begin, end] = GetPageRange(focused_index_);
-  if (begin + page_index > end) {
+  // Note: |end| is exclusive, i.e. the valid index range is [begin, end).
+  if (begin + page_index >= end) {
     return false;
   }
   focused_index_ = begin + page_index;

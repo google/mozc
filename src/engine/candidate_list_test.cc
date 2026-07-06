@@ -227,6 +227,16 @@ TEST_F(CandidateListTest, MoveToPageIndex) {
   // main12
   EXPECT_TRUE(main_list_->MoveToId(10));
 
+  // main12 (id 10) is at page index 3 of the last page, whose valid page
+  // indexes are [0, 4) as the list has 13 elements in total.
+  EXPECT_TRUE(main_list_->MoveToPageIndex(3));
+  EXPECT_EQ(main_list_->focused_id(), 10);
+
+  // Regression test for https://github.com/google/mozc/issues/1543.
+  // Boundary check: page index 4 points to one past the last candidate.
+  EXPECT_FALSE(main_list_->MoveToPageIndex(4));
+  EXPECT_EQ(main_list_->focused_id(), 10);
+
   // invalid index
   EXPECT_FALSE(main_list_->MoveToPageIndex(7));
 }
