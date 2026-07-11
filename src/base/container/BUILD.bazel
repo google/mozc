@@ -140,6 +140,26 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
+    name = "frozen_string_map",
+    hdrs = ["frozen_string_map.h"],
+    deps = [
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "frozen_string_map_test",
+    size = "small",
+    srcs = ["frozen_string_map_test.cc"],
+    deps = [
+        ":frozen_string_map",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+mozc_cc_library(
     name = "serialized_string_array",
     srcs = ["serialized_string_array.cc"],
     hdrs = ["serialized_string_array.h"],

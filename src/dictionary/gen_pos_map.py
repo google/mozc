@@ -36,18 +36,10 @@ import optparse
 from build_tools import code_generator_util
 
 
-HEADER = """// Copyright 2009 Google Inc. All Rights Reserved.
-// Author: keni
-
-#ifndef MOZC_DICTIONARY_POS_MAP_INC_
-#define MOZC_DICTIONARY_POS_MAP_INC_
-
-// POS conversion rules
-static const absl::NoDestructor<PosMap> kPosMap({
-"""
-FOOTER = """});
-
-#endif  // MOZC_DICTIONARY_POS_MAP_INC_
+HEADER = """// POS conversion rules from third-party IME POS names to Mozc POS types.
+// This file contains only the key-value entries, and is designed to be
+// #included inside the braced entry list of a map definition; see
+// user_dictionary_importer.cc.
 """
 
 
@@ -96,8 +88,7 @@ def OutputPosMap(pos_map, output):
       )
     else:
       value = '::mozc::user_dictionary::UserDictionary::' + value
-    output.write('  { %s, %s },\n' % (key, value))
-  output.write(FOOTER)
+    output.write('      { %s, %s },\n' % (key, value))
 
 
 def ParseOptions():
