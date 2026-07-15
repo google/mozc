@@ -33,6 +33,7 @@
 #include <cmath>
 #include <cstddef>
 #include <string>
+#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -42,6 +43,7 @@
 #include "client/client_interface.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
+#include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/window_util.h"
 
@@ -70,6 +72,30 @@ QBrush QBrushFromColor(const RendererStyle::RGBAColor& rgba) {
 }
 
 }  // namespace
+
+void FooterBackgroundDelegate::paint(QPainter* painter,
+                                     const QStyleOptionViewItem& option,
+                                     const QModelIndex& index) const {
+  // The footer is the last row of the candidate window.
+  if (index.row() == index.model()->rowCount() - 1) {
+    QRect rect = option.rect;
+
+    // Separator lines between the main content area and the footer.
+    for (int i = 0; i < separator_colors_.size(); ++i) {
+      painter->fillRect(QRect(rect.left(), rect.top() + i, rect.width(), 1),
+                        separator_colors_[i]);
+    }
+    rect.adjust(0, separator_colors_.size(), 0, 0);
+
+    // The gradient is anchored to the remaining cell rectangle, which spans
+    // the full height of the footer row.
+    QLinearGradient gradient(rect.topLeft(), rect.bottomLeft());
+    gradient.setColorAt(0, top_);
+    gradient.setColorAt(1, bottom_);
+    painter->fillRect(rect, gradient);
+  }
+  QStyledItemDelegate::paint(painter, option, index);
+}
 
 QtWindowManager::QtWindowManager() {
   RendererStyleHandler::GetRendererStyle(&style_);
@@ -113,6 +139,8 @@ void QtWindowManager::Initialize() {
 
   candidates_ = new QTableWidget();
   initialize_table(candidates_);
+  footer_delegate_ = new FooterBackgroundDelegate(candidates_);
+  candidates_->setItemDelegate(footer_delegate_);
   QObject::connect(candidates_, &QTableWidget::cellClicked,
                    [&](int row, int col) { OnClicked(row, col); });
 
@@ -130,17 +158,39 @@ void QtWindowManager::ApplyStyleToWidgets() {
       QColorFromColor(style_.candidate_style().background_color());
   const QColor foreground =
       QColorFromColor(style_.candidate_style().foreground_color());
+  const QColor border = QColorFromColor(style_.border_color());
+
+  // By default the QTableWidget frame and viewport are drawn by the widget
+  // style from the application palette, which does not necessarily match the
+  // renderer style. Override them with a style sheet. Note that these colors
+  // are deliberately not applied via QWidget::setPalette: palette changes are
+  // not reliably honored on widgets that have a style sheet, which would leave
+  // stale colors behind when the theme changes at runtime.
+  const QString sheet = QString(
+                            "QTableWidget { border: %1px solid %2;"
+                            " background-color: %3; color: %4; }")
+                            .arg(style_.window_border())
+                            .arg(border.name())
+                            .arg(background.name())
+                            .arg(foreground.name());
 
   for (QTableWidget* table : {candidates_, infolist_}) {
     if (table == nullptr) {
       continue;
     }
-    QPalette palette = table->palette();
-    palette.setColor(QPalette::Base, background);
-    palette.setColor(QPalette::Window, background);
-    palette.setColor(QPalette::Text, foreground);
-    palette.setColor(QPalette::WindowText, foreground);
-    table->setPalette(palette);
+    table->setStyleSheet(sheet);
+  }
+
+  if (footer_delegate_ != nullptr) {
+    footer_delegate_->SetGradientColors(
+        QColorFromColor(style_.footer_top_color()),
+        QColorFromColor(style_.footer_bottom_color()));
+    QList<QColor> separator_colors;
+    for (const RendererStyle::RGBAColor& color :
+         style_.footer_border_colors()) {
+      separator_colors.append(QColorFromColor(color));
+    }
+    footer_delegate_->SetSeparatorColors(std::move(separator_colors));
   }
 }
 
@@ -325,8 +375,6 @@ void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
       QBrushFromColor(style.candidate_style().foreground_color());
   const QBrush description_brush =
       QBrushFromColor(style.description_style().foreground_color());
-  const QBrush footer_bg_brush = QBrushFromColor(style.footer_bottom_color());
-
   // Fill the candidates
   std::string shortcut, value, description;
   for (size_t i = 0; i < cands_size; ++i) {
@@ -362,17 +410,22 @@ void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
     total_height += height;
   }
 
-  // Footer
+  // Footer. The background is painted by FooterBackgroundDelegate.
   for (int i = 0; i < table->columnCount(); ++i) {
     auto footer_item = new QTableWidgetItem();
-    footer_item->setBackground(footer_bg_brush);
     table->setItem(cands_size, i, footer_item);
   }
   QTableWidgetItem* footer2 = table->item(cands_size, 2);
   footer2->setText(QStr(GetIndexGuideString(candidate_window)));
-  footer2->setTextAlignment(Qt::AlignRight);
+  footer2->setForeground(
+      QBrushFromColor(style.footer_style().foreground_color()));
+  footer2->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
   max_width2 = std::max(max_width2, GetItemWidth(*footer2));
-  const int footer_height = GetItemHeight(*footer2);
+  // The separator lines drawn by FooterBackgroundDelegate consume the top
+  // pixels of the footer cell; enlarge the row so that the visible footer
+  // content area keeps its height.
+  const int footer_height =
+      GetItemHeight(*footer2) + style.footer_border_colors_size();
   table->setRowHeight(cands_size, footer_height);
   total_height += footer_height;
 

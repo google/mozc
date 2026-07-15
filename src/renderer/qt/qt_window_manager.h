@@ -31,6 +31,7 @@
 #define MOZC_RENDERER_QT_QT_WINDOW_MANAGER_H_
 
 #include <QtWidgets>
+#include <utility>
 
 #include "base/coordinates.h"
 #include "client/client_interface.h"
@@ -39,6 +40,33 @@
 
 namespace mozc {
 namespace renderer {
+
+// The gradient needs to be drawn by the delegate rather than set as the items'
+// background brush, because gradient QBrush coordinate mapping is not reliable
+// in the QTableWidget cell-background path.
+class FooterBackgroundDelegate : public QStyledItemDelegate {
+ public:
+  explicit FooterBackgroundDelegate(QObject* parent = nullptr)
+      : QStyledItemDelegate(parent) {}
+
+  void SetGradientColors(const QColor& top, const QColor& bottom) {
+    top_ = top;
+    bottom_ = bottom;
+  }
+
+  // One 1-pixel separator line is drawn per color, from top to bottom.
+  void SetSeparatorColors(QList<QColor> colors) {
+    separator_colors_ = std::move(colors);
+  }
+
+  void paint(QPainter* painter, const QStyleOptionViewItem& option,
+             const QModelIndex& index) const override;
+
+ private:
+  QColor top_;
+  QColor bottom_;
+  QList<QColor> separator_colors_;
+};
 
 class QtWindowManager {
  public:
@@ -83,14 +111,18 @@ class QtWindowManager {
 
   void OnClicked(int row, int column);
 
-  // Applies the foreground / background colors of the current style_ to the
-  // candidate and infolist widgets' palettes, so that areas not covered by
-  // individual cells (e.g. the viewport) also follow the theme.
+  // Applies the colors of the current style_ to the candidate and infolist
+  // widgets via a style sheet, so that areas not covered by individual cells
+  // (e.g. the window border and the viewport) also follow the style.
   void ApplyStyleToWidgets();
 
  private:
   QTableWidget *candidates_ = nullptr;
   QTableWidget *infolist_ = nullptr;
+
+  // Does not have the ownership. `footer_delegate_` is a child QObject of
+  // `candidates_`, which is responsible for destroying it.
+  FooterBackgroundDelegate* footer_delegate_ = nullptr;
 
   RendererStyle style_;
   commands::RendererCommand prev_command_;
