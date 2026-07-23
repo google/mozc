@@ -317,9 +317,12 @@ using mozc::renderer::mac::MacViewUtil;
     [NSBezierPath strokeRect:focusedRect];
   } else {
     // Draw normal background
+    const mozc::Rect rowRect = tableLayout_.GetRowRect(row);
     auto drawBackground = [&](ColumnType type,
-                              const mozc::renderer::RendererStyle::TextStyle& text_style) {
-      const mozc::Rect cellRect = tableLayout_.GetCellRect(row, type);
+                              const mozc::renderer::RendererStyle::TextStyle &text_style) {
+      mozc::Rect cellRect = tableLayout_.GetCellRect(row, type);
+      cellRect.origin.y = rowRect.origin.y;
+      cellRect.size.height = rowRect.size.height;
       if (cellRect.size.width > 0 && cellRect.size.height > 0 &&
           text_style.has_background_color()) {
         [MacViewUtil::ToNSColor(text_style.background_color()) set];
