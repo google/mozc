@@ -234,6 +234,8 @@ class NBestGenerator {
 #ifdef MOZC_CANDIDATE_DEBUG
   std::vector<converter::Candidate> bad_candidates_;
 #endif  // MOZC_CANDIDATE_DEBUG
+
+  friend class ImmutableDecoder;
 };
 
 }  // namespace mozc

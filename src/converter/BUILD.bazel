@@ -507,6 +507,72 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
+    name = "immutable_decoder",
+    srcs = [
+        "immutable_decoder.cc",
+    ],
+    hdrs = ["immutable_decoder.h"],
+    visibility = [
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+    ],
+    deps = [
+        ":attribute",
+        ":caching_connector",
+        ":connector",
+        ":inner_segment",
+        ":lattice",
+        ":nbest_generator",
+        ":node",
+        ":node_list_builder",
+        ":segmenter",
+        ":segments",
+        "//base:japanese_util",
+        "//base:util",
+        "//base:vlog",
+        "//base/container:trie",
+        "//base/strings:unicode",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_token",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher",
+        "//engine:modules",
+        "//prediction:result",
+        "//prediction:suggestion_filter",
+        "//request:options",
+        "@com_google_absl//absl/base:nullability",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "immutable_decoder_test",
+    size = "small",
+    srcs = [
+        "immutable_decoder_test.cc",
+    ],
+    deps = [
+        ":attribute",
+        ":immutable_converter",
+        ":immutable_decoder",
+        ":inner_segment",
+        ":segments",
+        "//data_manager/testing:mock_data_manager",
+        "//engine:modules",
+        "//prediction:result",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
     name = "converter_interface",
     hdrs = ["converter_interface.h"],
     visibility = [

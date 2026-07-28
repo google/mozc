@@ -692,6 +692,9 @@ mozc_cc_library(
     hdrs = [
         "realtime_decoder.h",
     ],
+    visibility = [
+        "//converter:__pkg__",
+    ],
     deps = [
         ":result",
         "//base:util",
