@@ -486,6 +486,10 @@ class UserHistoryPredictor : public PredictorInterface {
   bool IsProperNoun(const ConversionRequest& request,
                     const Result& result) const;
 
+  bool ShouldAllowPartialMatch(
+      const ConversionRequest& request, const Result& result,
+      const SegmentsForLearning& learning_segments) const;
+
   // Returns true if the low frequency full sentence entry can be
   // suggested.
   static bool AllowLowFreqFullSentenceEntryMatch(

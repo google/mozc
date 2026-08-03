@@ -6052,4 +6052,95 @@ TEST_F(UserHistoryPredictorTest, PartialMatchTest) {
   }
 }
 
+TEST_F(UserHistoryPredictorTest, CompoundNounPartialMatchTest) {
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<engine::Modules> modules,
+      engine::ModulesPresetBuilder()
+          .PresetDictionary(std::make_unique<MockDictionary>())
+          .Build(std::make_unique<testing::MockDataManager>()));
+  auto realtime_decoder = std::make_unique<MockRealtimeDecoder>();
+  auto predictor =
+      std::make_unique<UserHistoryPredictor>(*modules, *realtime_decoder);
+  predictor->Wait();
+
+  request_.set_mixed_conversion(true);
+  request_.mutable_decoder_experiment_params()
+      ->set_user_history_enable_compound_noun_partial_match(true);
+
+  EXPECT_CALL(*realtime_decoder, DecodeSuffix(_, _, _))
+      .WillRepeatedly([&](const ConversionRequest& request, uint16_t prefix_rid,
+                          absl::string_view suffix) -> std::optional<Result> {
+        Result result;
+        if (suffix == "たなかしょうてんは") {
+          result.key = "たなかしょうてんは";
+          result.value = "田中商店は";
+          result.cost = 10000;
+          result.lid = modules->GetPosMatcher().GetFunctionalId();
+          result.inner_segment_boundary =
+              converter::InnerSegmentBoundaryBuilder()
+                  .Add(24, 12, 24, 12)
+                  .Add(3, 3, 0, 0)
+                  .Build(result.key, result.value);
+          return result;
+        }
+        if (suffix == "は") {
+          result.key = "は";
+          result.value = "は";
+          result.cost = 500;
+          result.lid = modules->GetPosMatcher().GetFunctionalId();
+          return result;
+        }
+        return std::nullopt;
+      });
+
+  SegmentsProxy segments_proxy;
+
+  // Learn compound noun ("たなかしょうてん" -> "田中商店")
+  const ConversionRequest convreq =
+      SetUpInputForConversion("たなかしょうてん", &composer_, &segments_proxy);
+  segments_proxy.Clear();
+  segments_proxy.AddSegment("たなか");
+  segments_proxy.AddCandidate(0, "田中");
+  segments_proxy.MutableCandidate(0, 0)->rid =
+      modules->GetPosMatcher().GetGeneralNounId();
+
+  segments_proxy.AddSegment("しょうてん");
+  segments_proxy.AddCandidate(1, "商店");
+  segments_proxy.MutableCandidate(1, 0)->rid =
+      modules->GetPosMatcher().GetGeneralNounId();
+
+  predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+  predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+
+  // Predict with suffix "は" -> "たなかしょうてんは"
+  segments_proxy.Clear();
+  const ConversionRequest predict_suffix_req = SetUpInputForPrediction(
+      "たなかしょうてんは", &composer_, &segments_proxy);
+  std::vector<Result> results = predictor->Predict(predict_suffix_req);
+
+  bool found = false;
+  for (const auto& res : results) {
+    if (res.key == "たなかしょうてんは" && res.value == "田中商店は") {
+      found = true;
+      break;
+    }
+  }
+  EXPECT_TRUE(found);
+
+  // Convert with suffix "は" -> "たなかしょうてんは"
+  segments_proxy.Clear();
+  const ConversionRequest convert_suffix_req = SetUpInputForConversion(
+      "たなかしょうてんは", &composer_, &segments_proxy);
+  std::vector<Result> convert_results = predictor->Convert(convert_suffix_req);
+
+  bool convert_found = false;
+  for (const auto& res : convert_results) {
+    if (res.key == "たなかしょうてんは" && res.value == "田中商店は") {
+      convert_found = true;
+      break;
+    }
+  }
+  EXPECT_TRUE(convert_found);
+}
+
 }  // namespace mozc::prediction
