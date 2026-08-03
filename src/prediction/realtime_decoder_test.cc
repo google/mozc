@@ -208,6 +208,32 @@ TEST(RealtimeDecoderTest, Decode) {
     }
     EXPECT_TRUE(realtime_top_found);
   }
+
+  // Test case when suppress_realtime_conversion_with_converter flag is true.
+  {
+    ConversionRequest::Options options;
+    options.max_conversion_candidates_size = 10;
+    options.use_actual_converter_for_realtime_conversion = true;
+    options.request_type = ConversionRequest::PREDICTION;
+
+    commands::Request request;
+    request.mutable_decoder_experiment_params()
+        ->set_suppress_realtime_conversion_with_converter(true);
+
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetRequestView(request)
+                                          .SetOptions(std::move(options))
+                                          .Build();
+
+    std::vector<Result> results = decoder.Decode(convreq);
+
+    // Converter call is suppressed, so only 1 result from ImmutableConverter
+    // is returned (no REALTIME_TOP).
+    ASSERT_EQ(results.size(), 1);
+    EXPECT_EQ(results[0].GetPredictionTypesForTesting(),
+              Attribute::REALTIME_CONVERSION);
+    EXPECT_EQ(results[0].key, kKey);
+  }
 }
 
 TEST(RealtimeDecoderTest, DecodeSuffix) {

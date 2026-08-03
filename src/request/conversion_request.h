@@ -277,6 +277,11 @@ class ConversionRequestBuilder {
         request_.request()
             .decoder_experiment_params()
             .particle_omission_transition_cost_bonus();
+    if (request_.request()
+            .decoder_experiment_params()
+            .suppress_realtime_conversion_with_converter()) {
+      request_.options_.use_actual_converter_for_realtime_conversion = false;
+    }
     return request_;
   }
 
