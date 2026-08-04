@@ -220,7 +220,8 @@ UserBoundaryHistoryRewriter::CheckResizeSegmentsRequest(
   }
 
   if (DisableLaegacyRewriterInMixedConversion(request,
-                                              kDisableUserBoundaryHistory)) {
+                                              kDisableUserBoundaryHistory) ||
+      DisableLegacyRewriter(request, kDisableUserBoundaryHistory)) {
     return std::nullopt;
   }
 

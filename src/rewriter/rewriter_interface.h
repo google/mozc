@@ -144,6 +144,17 @@ class RewriterInterface {
              mode));
   }
 
+  // Returns true if (disable_legacy_rewriter_in_all_conversion_mode() & mode)
+  // is true.
+  // TODO(taku): Remove this function once the migration finishes.
+  static bool DisableLegacyRewriter(const ConversionRequest& request,
+                                    int mode) {
+    return (request.request()
+                .decoder_experiment_params()
+                .disable_legacy_rewriter_in_all_conversion_mode() &
+            mode);
+  }
+
  protected:
   RewriterInterface() = default;
 };

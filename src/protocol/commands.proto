@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 155
+// Next ID: 156
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -672,6 +672,11 @@ message DecoderExperimentParams {
   // experiments from legacy modules to new supplemental model and user history
   // predictor.
   optional int32 disable_legacy_rewriter_mode = 147 [default = 0];
+
+  // Mode to disable legacy rewriters in all conversion modes (even when
+  // mixed_conversion is false).
+  optional int32 disable_legacy_rewriter_in_all_conversion_mode = 155
+      [default = 0];
 
   // Use NextTopStates instead of NextStates in Predictor.
   optional bool ngram_use_next_top_states = 149 [default = false];

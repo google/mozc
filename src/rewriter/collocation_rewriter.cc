@@ -546,7 +546,8 @@ std::unique_ptr<CollocationRewriter> CollocationRewriter::Create(
 
 bool CollocationRewriter::Rewrite(const ConversionRequest& request,
                                   Segments* segments) const {
-  if (DisableLaegacyRewriterInMixedConversion(request, kDisableCollocation)) {
+  if (DisableLaegacyRewriterInMixedConversion(request, kDisableCollocation) ||
+      DisableLegacyRewriter(request, kDisableCollocation)) {
     return false;
   }
 
