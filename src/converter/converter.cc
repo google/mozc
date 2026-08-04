@@ -518,7 +518,196 @@ void Converter::ApplyConversion(Segments* segments,
     MOZC_VLOG(1) << "Convert failed for key: " << segments->segment(0).key();
   }
 
+  MaybeApplyUserHistoryPredictorToConversion(request, segments);
+
   ApplyPostProcessing(request, segments);
+}
+
+void Converter::MaybeApplyUserHistoryPredictorToConversion(
+    const ConversionRequest& request, Segments* segments) const {
+  if (!predictor_ || segments == nullptr ||
+      segments->conversion_segments_size() == 0 || segments->resized()) {
+    return;
+  }
+
+  // UserHistoryPredictor is invoked directly only when legacy user history
+  // rewriters (UserSegmentHistoryRewriter and UserBoundaryHistoryRewriter) are
+  // disabled.
+  constexpr int kLegacyHistoryMode =
+      RewriterInterface::kDisableUserSegmentHistory |
+      RewriterInterface::kDisableUserBoundaryHistory;
+  if (!RewriterInterface::DisableLegacyRewriter(request, kLegacyHistoryMode)) {
+    return;
+  }
+
+  const std::vector<prediction::Result> results = predictor_->Convert(request);
+  if (results.empty()) {
+    return;
+  }
+  const prediction::Result& top_result = results.front();
+  if (top_result.key.empty() || top_result.value.empty()) {
+    return;
+  }
+
+  // Calculate default top value by concatenating candidate(0).value of default
+  // segments.
+  std::string default_top_value;
+  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
+    const Segment& seg = segments->conversion_segment(i);
+    if (seg.candidates_size() == 0) {
+      return;
+    }
+    absl::StrAppend(&default_top_value, seg.candidate(0).value);
+  }
+
+  const bool is_multi_segment = (top_result.inner_segment_boundary.size() > 1);
+  const bool default_is_single_segment =
+      (segments->conversion_segments_size() == 1);
+
+  // Finds candidate index with matching value in a segment (-1 if not found).
+  auto find_candidate_index = [](const Segment& seg,
+                                 absl::string_view value) -> int {
+    for (int i = 0; i < seg.candidates_size(); ++i) {
+      if (seg.candidate(i).value == value) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
+  // Resizes conversion segments to match inner segment boundaries of result
+  // and re-runs conversion if needed. Returns false if resizing/conversion
+  // fails.
+  auto maybe_resize_segments = [&](const prediction::Result& result) -> bool {
+    std::vector<uint8_t> new_sizes;
+    for (const auto& inner_seg : result.inner_segments()) {
+      const size_t char_len = Util::CharsLen(inner_seg.GetKey());
+      if (char_len == 0 || char_len > std::numeric_limits<uint8_t>::max()) {
+        return false;
+      }
+      new_sizes.push_back(static_cast<uint8_t>(char_len));
+    }
+
+    bool need_resize =
+        (segments->conversion_segments_size() < new_sizes.size());
+    if (!need_resize) {
+      for (size_t i = 0; i < new_sizes.size(); ++i) {
+        if (segments->conversion_segment(i).key_len() != new_sizes[i]) {
+          need_resize = true;
+          break;
+        }
+      }
+    }
+
+    if (need_resize) {
+      if (!ResizeSegments(segments, request, 0, new_sizes)) {
+        LOG(WARNING)
+            << "Failed to resize or convert segments for history match";
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Promotes an existing candidate with matching value to target_pos,
+  // or pushes a new candidate to the front of the segment.
+  auto apply_candidate =
+      [&](Segment* segment, size_t target_pos, absl::string_view key,
+          absl::string_view value, absl::string_view content_key,
+          absl::string_view content_value, uint16_t lid, uint16_t rid,
+          int32_t cost, int32_t wcost, uint32_t attributes,
+          uint32_t consumed_key_size = 0,
+          converter::InnerSegmentBoundary boundary = {}) {
+        const int existing_index = find_candidate_index(*segment, value);
+        if (existing_index >= 0) {
+          const size_t pos = std::min(
+              target_pos, static_cast<size_t>(segment->candidates_size() - 1));
+          segment->move_candidate(existing_index, pos);
+          Candidate* cand = segment->mutable_candidate(pos);
+          cand->cost = std::min(cand->cost, cost);
+          cand->wcost = std::min(cand->wcost, wcost);
+          cand->attributes |= attributes | Attribute::USER_HISTORY_PREDICTION;
+          if (!boundary.empty()) {
+            cand->inner_segment_boundary = std::move(boundary);
+          }
+        } else {
+          Candidate* cand = segment->push_front_candidate();
+          strings::Assign(cand->key, key);
+          strings::Assign(cand->value, value);
+          strings::Assign(cand->content_key, content_key);
+          strings::Assign(cand->content_value, content_value);
+          cand->lid = lid;
+          cand->rid = rid;
+          cand->wcost = wcost;
+          cand->cost = cost;
+          cand->attributes = attributes | Attribute::USER_HISTORY_PREDICTION;
+          cand->consumed_key_size = consumed_key_size;
+          cand->inner_segment_boundary = std::move(boundary);
+        }
+      };
+
+  // If top_result already matches the default conversion output, no history
+  // candidate promotion or segment resizing is needed.
+  if (top_result.value == default_top_value) {
+    return;
+  }
+
+  // Fail-safe: Older history entries may lack inner_segments boundary
+  // information. If top_result is a single-segment prediction without boundary
+  // info, but the default Viterbi conversion produced multiple segments, we
+  // cannot safely infer sub-segment boundaries. Skip applying history
+  // prediction to avoid corrupting the multi-segment structure.
+  // TODO(taku): Infer or populate inner_segment_boundary for legacy history
+  // entries so multi-segment default conversions can also be supported.
+  if (!is_multi_segment && !default_is_single_segment) {
+    return;
+  }
+
+  // If top_result is a multi-segment prediction, adjust segment boundaries to
+  // match top_result's inner segment lengths, re-run conversion if necessary,
+  // and promote each inner segment's value to the top of its corresponding
+  // segment.
+  if (is_multi_segment) {
+    if (!maybe_resize_segments(top_result)) {
+      return;
+    }
+
+    size_t seg_idx = 0;
+    for (const auto& inner_seg : top_result.inner_segments()) {
+      if (seg_idx >= segments->conversion_segments_size()) break;
+      Segment* segment = segments->mutable_conversion_segment(seg_idx);
+      apply_candidate(segment, /*target_pos=*/0, inner_seg.GetKey(),
+                      inner_seg.GetValue(), inner_seg.GetContentKey(),
+                      inner_seg.GetContentValue(), top_result.lid,
+                      top_result.rid, top_result.cost, top_result.wcost,
+                      top_result.attributes);
+      ++seg_idx;
+    }
+    return;
+  }
+
+  // If top_result and default conversion are both single-segment, promote
+  // top_result to the top position of segment 0, and append subsequent
+  // single-segment history results (up to top 5) to segment 0.
+  if (default_is_single_segment) {
+    Segment* segment = segments->mutable_conversion_segment(0);
+    constexpr size_t kMaxHistoryCandidatesSize = 5;
+    const size_t max_results =
+        std::min(results.size(), kMaxHistoryCandidatesSize);
+
+    for (size_t res_idx = 0; res_idx < max_results; ++res_idx) {
+      const prediction::Result& res = results[res_idx];
+      if (res.key.empty() || res.value.empty()) continue;
+      if (res.inner_segment_boundary.size() > 1) continue;
+
+      auto [content_key, content_val] =
+          res.inner_segments().GetMergedContentKeyAndValue();
+      apply_candidate(segment, /*target_pos=*/res_idx, res.key, res.value,
+                      content_key, content_val, res.lid, res.rid, res.cost,
+                      res.wcost, res.attributes, res.consumed_key_size,
+                      res.inner_segment_boundary);
+    }
+  }
 }
 
 void Converter::CompletePosIds(Candidate* candidate) const {
