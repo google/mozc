@@ -216,11 +216,6 @@ class Converter final : public ConverterInterface {
   void RewriteAndSuppressCandidates(const ConversionRequest& request,
                                     Segments* segments) const;
 
-  // Applies prediction::Result returned by predictor_->Convert to Segments if
-  // legacy user history rewriter is disabled.
-  void MaybeApplyUserHistoryPredictorToConversion(
-      const ConversionRequest& request, Segments* segments) const;
-
   // Limits the number of candidates based on a request.
   // This method doesn't drop meta candidates for T13n conversion.
   void TrimCandidates(const ConversionRequest& request,

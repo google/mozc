@@ -132,14 +132,16 @@ class RewriterInterface {
     kDisableCollocation = 4,
   };
 
-  // Returns true if (disable_legacy_rewriter_mode() & mode) is true.
+  // Returns true if (disable_legacy_rewriter_mode() & mode) and
+  // mixed_conversion is true.
   // TODO(taku): Remove this function once the migration finishes.
-  static bool DisableLegacyRewriter(const ConversionRequest& request,
-                                    int mode) {
-    return ((request.request()
+  static bool DisableLaegacyRewriterInMixedConversion(
+      const ConversionRequest& request, int mode) {
+    return (request.request().mixed_conversion() &&
+            (request.request()
                  .decoder_experiment_params()
                  .disable_legacy_rewriter_mode() &
-             mode) != 0);
+             mode));
   }
 
  protected:

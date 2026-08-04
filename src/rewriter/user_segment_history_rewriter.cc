@@ -720,7 +720,8 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest& request,
     }
   }
 
-  if (DisableLegacyRewriter(request, kDisableUserSegmentHistory)) {
+  if (DisableLaegacyRewriterInMixedConversion(request,
+                                              kDisableUserSegmentHistory)) {
     return false;
   }
 
