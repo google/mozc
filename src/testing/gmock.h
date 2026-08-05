@@ -42,6 +42,9 @@ MATCHER(IsOkStatus, negation ? "is not OK" : "is OK") { return arg.ok(); }
 
 #define ASSERT_OK(expr) ASSERT_THAT(expr, ::mozc::IsOkStatus())
 #define EXPECT_OK(expr) EXPECT_THAT(expr, ::mozc::IsOkStatus())
+#define ASSERT_OK_AND_ASSIGN(var, expr) \
+  ASSERT_OK(expr);                      \
+  var = std::move(expr).value()
 
 #endif  // EXPECT_OK
 
