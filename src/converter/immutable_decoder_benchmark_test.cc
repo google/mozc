@@ -32,7 +32,6 @@
 #include <utility>
 #include <vector>
 
-#include "testing/base/public/benchmark.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/file/temp_dir.h"
@@ -49,6 +48,7 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
+#include "testing/benchmark.h"
 #include "testing/mozctest.h"
 
 namespace mozc {
