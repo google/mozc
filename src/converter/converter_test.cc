@@ -70,6 +70,7 @@
 #include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
+#include "engine/supplemental_model_mock.h"
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
@@ -2604,6 +2605,135 @@ TEST_F(ConverterTest, AddUserHistory) {
       });
 
   EXPECT_TRUE(converter->AddUserHistory("key", "value"));
+}
+
+TEST_F(ConverterTest, PostCorrectInConversionMode) {
+  // Test 1: PostCorrect modifies value without changing inner segment boundary.
+  // "わたしのなまえ" -> "私の名前" (1 segment) is corrected to "僕の名前".
+  {
+    class ValueModifyingSupplementalModel
+        : public engine::MockSupplementalModel {
+     public:
+      bool IsAvailable() const override { return true; }
+      void PostCorrect(
+          const ConversionRequest& request,
+          std::vector<prediction::Result>& results) const override {
+        if (!results.empty()) {
+          results.front().value = "僕の名前";
+          InnerSegmentBoundaryBuilder builder;
+          builder.Add(results.front().key.size(), results.front().value.size(),
+                      results.front().key.size(), results.front().value.size());
+          results.front().inner_segment_boundary =
+              builder.Build(results.front().key, results.front().value);
+        }
+      }
+    };
+
+    auto supplemental_model = std::make_unique<
+        ::testing::NiceMock<ValueModifyingSupplementalModel>>();
+
+    ASSERT_OK_AND_ASSIGN(
+        std::unique_ptr<engine::Modules> modules,
+        engine::ModulesPresetBuilder()
+            .PresetSupplementalModel(std::move(supplemental_model))
+            .Build(std::make_unique<testing::MockDataManager>()));
+    auto rewriter = std::make_unique<Rewriter>(*modules);
+    std::unique_ptr<Converter> converter = CreateConverter(
+        std::move(modules), std::move(rewriter), DEFAULT_PREDICTOR);
+
+    commands::Request request_proto;
+    request_proto.mutable_decoder_experiment_params()
+        ->set_disable_legacy_rewriter_in_all_conversion_mode(
+            RewriterInterface::kDisableCollocation);
+    composer::Composer composer;
+    composer.SetPreeditTextForTestOnly("わたしのなまえ");
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequest(request_proto)
+            .SetRequestType(ConversionRequest::CONVERSION)
+            .Build();
+
+    Segments segments;
+    EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "僕の名前");
+
+    // When kDisableCollocation is not set, PostCorrect is not applied in
+    // conversion mode.
+    Segments segments_legacy;
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("わたしのなまえ", ConversionRequest::CONVERSION),
+        &segments_legacy));
+    EXPECT_EQ(segments_legacy.conversion_segments_size(), 2);
+    EXPECT_EQ(segments_legacy.conversion_segment(0).candidate(0).value, "私の");
+    EXPECT_EQ(segments_legacy.conversion_segment(1).candidate(0).value, "名前");
+  }
+
+  // Test 2: PostCorrect changes inner segment boundary requiring Resize.
+  // "しんだいしゃ" -> "寝台車" (1 segment) is corrected to
+  // "死んだ" (3 chars, 9 bytes) + "医者" (2 chars, 6 bytes).
+  {
+    class ResizingSupplementalModel : public engine::MockSupplementalModel {
+     public:
+      bool IsAvailable() const override { return true; }
+      void PostCorrect(
+          const ConversionRequest& request,
+          std::vector<prediction::Result>& results) const override {
+        if (!results.empty()) {
+          results.front().key = "しんだいしゃ";
+          results.front().value = "死んだ医者";
+          InnerSegmentBoundaryBuilder builder;
+          builder.Add(9, 9, 9, 9);  // しんだ (9 bytes) -> 死んだ (9 bytes)
+          builder.Add(9, 6, 9, 6);  // いしゃ (9 bytes) -> 医者 (6 bytes)
+          results.front().inner_segment_boundary =
+              builder.Build(results.front().key, results.front().value);
+        }
+      }
+    };
+
+    auto supplemental_model =
+        std::make_unique<::testing::NiceMock<ResizingSupplementalModel>>();
+
+    ASSERT_OK_AND_ASSIGN(
+        std::unique_ptr<engine::Modules> modules,
+        engine::ModulesPresetBuilder()
+            .PresetSupplementalModel(std::move(supplemental_model))
+            .Build(std::make_unique<testing::MockDataManager>()));
+
+    auto rewriter = std::make_unique<Rewriter>(*modules);
+    std::unique_ptr<Converter> converter = CreateConverter(
+        std::move(modules), std::move(rewriter), DEFAULT_PREDICTOR);
+
+    commands::Request request_proto;
+    request_proto.mutable_decoder_experiment_params()
+        ->set_disable_legacy_rewriter_in_all_conversion_mode(
+            RewriterInterface::kDisableCollocation);
+    composer::Composer composer;
+    composer.SetPreeditTextForTestOnly("しんだいしゃ");
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequest(request_proto)
+            .SetRequestType(ConversionRequest::CONVERSION)
+            .Build();
+
+    Segments segments;
+    EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 2);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "死んだ");
+    EXPECT_EQ(segments.conversion_segment(1).candidate(0).value, "医者");
+
+    // When kDisableCollocation is not set, PostCorrect is not applied in
+    // conversion mode.
+    Segments segments_legacy;
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("しんだいしゃ", ConversionRequest::CONVERSION),
+        &segments_legacy));
+    EXPECT_EQ(segments_legacy.conversion_segments_size(), 2);
+    EXPECT_EQ(segments_legacy.conversion_segment(0).candidate(0).value,
+              "新だい");
+  }
 }
 
 }  // namespace converter

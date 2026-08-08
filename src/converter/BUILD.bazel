@@ -596,6 +596,7 @@ mozc_cc_test(
         "//engine",
         "//engine:mock_data_engine_factory",
         "//engine:modules",
+        "//engine:supplemental_model_mock",
         "//prediction:predictor",
         "//prediction:predictor_interface",
         "//prediction:result",

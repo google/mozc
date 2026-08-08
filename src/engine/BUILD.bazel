@@ -120,6 +120,7 @@ mozc_cc_library(
     testonly = 1,
     hdrs = ["supplemental_model_mock.h"],
     visibility = [
+        "//converter:__pkg__",
         "//prediction:__pkg__",
         "//rewriter:__pkg__",
     ],

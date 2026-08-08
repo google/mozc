@@ -237,8 +237,24 @@ class Converter final : public ConverterInterface {
   bool PredictForRequestWithSegments(const ConversionRequest& request,
                                      Segments* segments) const;
 
+  // Resizes conversion segments to match inner segment boundaries of result
+  // and re-runs conversion if needed. Returns false if resizing/conversion
+  // fails.
+  bool ResizeSegmentsByResult(const ConversionRequest& request,
+                              const prediction::Result& result,
+                              Segments* segments) const;
+
+  // Applies each inner segment of `result` to the corresponding conversion
+  // segment.
+  void ApplyTopResultToSegments(const prediction::Result& result,
+                                uint32_t additional_attributes,
+                                Segments* segments) const;
+
   // Post processing after conversion.
   // Rewriter, SuppressionDictionary, etc.
+  void MaybeApplyPostCorrection(const ConversionRequest& request,
+                                Segments* segments) const;
+
   void ApplyPostProcessing(const ConversionRequest& request,
                            Segments* segments) const;
 

@@ -518,7 +518,146 @@ void Converter::ApplyConversion(Segments* segments,
     MOZC_VLOG(1) << "Convert failed for key: " << segments->segment(0).key();
   }
 
+  MaybeApplyPostCorrection(request, segments);
   ApplyPostProcessing(request, segments);
+}
+
+bool Converter::ResizeSegmentsByResult(const ConversionRequest& request,
+                                       const prediction::Result& result,
+                                       Segments* segments) const {
+  std::vector<uint8_t> new_sizes;
+  for (const auto& inner_seg : result.inner_segments()) {
+    const size_t char_len = Util::CharsLen(inner_seg.GetKey());
+    if (char_len == 0 || char_len > std::numeric_limits<uint8_t>::max()) {
+      return false;
+    }
+    new_sizes.push_back(static_cast<uint8_t>(char_len));
+  }
+
+  bool need_resize = (segments->conversion_segments_size() < new_sizes.size());
+  if (!need_resize) {
+    for (size_t i = 0; i < new_sizes.size(); ++i) {
+      if (segments->conversion_segment(i).key_len() != new_sizes[i]) {
+        need_resize = true;
+        break;
+      }
+    }
+  }
+
+  if (need_resize) {
+    if (!ResizeSegments(segments, request, 0, new_sizes)) {
+      LOG(WARNING) << "Failed to resize or convert segments for result match";
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void Converter::ApplyTopResultToSegments(const prediction::Result& result,
+                                         uint32_t additional_attributes,
+                                         Segments* segments) const {
+  if (result.inner_segments().size() != segments->conversion_segments_size()) {
+    return;
+  }
+
+  size_t seg_idx = 0;
+  for (const auto& inner_seg : result.inner_segments()) {
+    if (seg_idx >= segments->conversion_segments_size()) break;
+    Segment* segment = segments->mutable_conversion_segment(seg_idx++);
+
+    // Find existing candidate with matching value.
+    int existing_index = -1;
+    for (int i = 0; i < segment->candidates_size(); ++i) {
+      if (segment->candidate(i).value == inner_seg.GetValue()) {
+        existing_index = i;
+        break;
+      }
+    }
+
+    if (existing_index >= 0) {
+      segment->move_candidate(existing_index, 0);
+      Candidate* cand = segment->mutable_candidate(0);
+      cand->cost = std::min(cand->cost, result.cost);
+      cand->wcost = std::min(cand->wcost, result.wcost);
+      cand->attributes |= (result.attributes | additional_attributes);
+    } else {
+      Candidate* cand = segment->push_front_candidate();
+      strings::Assign(cand->key, inner_seg.GetKey());
+      strings::Assign(cand->value, inner_seg.GetValue());
+      strings::Assign(cand->content_key, inner_seg.GetContentKey());
+      strings::Assign(cand->content_value, inner_seg.GetContentValue());
+      cand->lid = result.lid;
+      cand->rid = result.rid;
+      cand->wcost = result.wcost;
+      cand->cost = result.cost;
+      cand->attributes = (result.attributes | additional_attributes);
+    }
+  }
+}
+
+void Converter::MaybeApplyPostCorrection(const ConversionRequest& request,
+                                         Segments* segments) const {
+  if (segments == nullptr || segments->conversion_segments_size() == 0 ||
+      segments->resized() || !modules_->GetSupplementalModel().IsAvailable()) {
+    return;
+  }
+
+  // SupplementalModel::PostCorrect is invoked directly in conversion mode only
+  // when legacy CollocationRewriter is disabled.
+  if (!RewriterInterface::DisableLegacyRewriter(
+          request, RewriterInterface::kDisableCollocation)) {
+    return;
+  }
+
+  // 1. Build a single Result from the top candidates of conversion segments.
+  prediction::Result input_result;
+  InnerSegmentBoundaryBuilder builder;
+  for (const auto& segment : segments->conversion_segments()) {
+    if (segment.candidates_size() == 0) {
+      return;
+    }
+    const Candidate& cand = segment.candidate(0);
+    absl::StrAppend(&input_result.key, cand.key);
+    absl::StrAppend(&input_result.value, cand.value);
+    input_result.attributes |= cand.attributes;
+    input_result.wcost += cand.wcost;
+    input_result.cost += cand.cost;
+    builder.Add(cand.key.size(), cand.value.size(), cand.content_key.size(),
+                cand.content_value.size());
+  }
+  input_result.inner_segment_boundary =
+      builder.Build(input_result.key, input_result.value);
+  input_result.lid = segments->conversion_segments().front().candidate(0).lid;
+  input_result.rid = segments->conversion_segments().back().candidate(0).rid;
+
+  // 2. Call PostCorrect with std::vector<prediction::Result>.
+  std::vector<prediction::Result> results = {input_result};
+  modules_->GetSupplementalModel().PostCorrect(request, results);
+  if (results.empty()) {
+    return;
+  }
+
+  const prediction::Result& top_result = results.front();
+
+  // If PostCorrect didn't modify value or inner segment boundary, no changes
+  // are needed.
+  if (top_result.value == input_result.value &&
+      top_result.inner_segment_boundary ==
+          input_result.inner_segment_boundary) {
+    return;
+  }
+
+  // 3. If inner segment boundary changed, resize segments to match.
+  if (top_result.inner_segment_boundary !=
+      input_result.inner_segment_boundary) {
+    if (!ResizeSegmentsByResult(request, top_result, segments)) {
+      return;
+    }
+  }
+
+  // 4. Update the top candidate of each segment with the corrected result.
+  ApplyTopResultToSegments(top_result, Attribute::DEFAULT_ATTRIBUTE, segments);
 }
 
 void Converter::CompletePosIds(Candidate* candidate) const {
