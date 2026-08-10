@@ -41,7 +41,7 @@
 namespace mozc {
 namespace {
 
-constexpr char kTestTokenArray[] =
+alignas(uint32_t) constexpr char kTestTokenArray[] =
     // The last two items must be 0x00, because they are now unused field.
     // {"あ", "", ZERO_QUERY_EMOJI, 0x00, 0x00}
     "\x04\x00\x00\x00"

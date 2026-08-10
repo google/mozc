@@ -2364,7 +2364,7 @@ TEST_F(DictionaryPredictionAggregatorTest, CandidatesFromUserDictionary) {
 }
 
 namespace {
-constexpr char kTestZeroQueryTokenArray[] =
+alignas(uint32_t) constexpr char kTestZeroQueryTokenArray[] =
     // The last two items must be 0x00, because they are now unused field.
     // {"あ", "❕", ZERO_QUERY_EMOJI, 0x00, 0x00}
     "\x04\x00\x00\x00"
