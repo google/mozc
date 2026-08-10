@@ -127,6 +127,11 @@ class Attribute {
     REALTIME_TOP = 1 << 29,
     // Disables rescoring. Keeps the original cost.
     DISABLE_RESCORING = 1 << 30,
+    // Set when an older user history entry lacks inner boundary information.
+    // This attribute conveys that the original user history had no inner
+    // boundary. Special care is needed when a single segment placeholder
+    // is used as the inner boundary for such entries.
+    USER_HISTORY_EMPTY_INNER_SEGMENT_BOUNDARY = 1 << 31,
   };
 };
 }  // namespace converter

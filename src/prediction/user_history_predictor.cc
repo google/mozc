@@ -791,6 +791,10 @@ UserHistoryPredictor::Entry* absl_nonnull UserHistoryPredictor::AddEntry(
   Entry* new_entry = entry_queue.NewEntry();
   DCHECK(new_entry);
   *new_entry = entry;
+  if (new_entry->inner_segment_boundary_size() == 0) {
+    new_entry->set_attributes(new_entry->attributes() |
+                              Attribute::EMPTY_INNER_SEGMENT_BOUNDARY);
+  }
   return new_entry;
 }
 
@@ -799,11 +803,7 @@ UserHistoryPredictor::AddEntryWithNewKeyValue(
     const ConversionRequest& request, std::string key, std::string value,
     converter::InnerSegmentBoundarySpan inner_segment_boundary, Entry entry,
     EntryPriorityQueue& entry_queue) const {
-  // We add an entry even if it was marked as removed so that it can be used to
-  // generate prediction by entry chaining. The deleted entry itself is never
-  // shown in the final prediction result as it is filtered finally.
-  Entry* new_entry = entry_queue.NewEntry();
-  *new_entry = std::move(entry);
+  Entry* new_entry = AddEntry(entry, entry_queue);
   new_entry->set_key(std::move(key));
   new_entry->set_value(std::move(value));
   MaybePopulateInnerSegmentBoundary(request, inner_segment_boundary,
@@ -980,9 +980,17 @@ bool UserHistoryPredictor::GetKeyValueForPartialMatch(
   // e.g., Adding "氏" rather than "市".
   const uint16_t first_name_id = modules_.GetPosMatcher().GetFirstNameId();
 
-  auto full_result_opt = decoder_.DecodeSuffix(request, 0, request_key);
+  // Uses PREDICTION mode to call decoder_.
+  ConversionRequest::Options options;
+  options.max_conversion_candidates_size = 1;
+  options.use_actual_converter_for_realtime_conversion = false;
+  options.request_type = ConversionRequest::PREDICTION;
+  const ConversionRequest decoder_request =
+      ConversionRequestBuilder().SetOptions(std::move(options)).Build();
+
+  auto full_result_opt = decoder_.DecodeSuffix(decoder_request, 0, request_key);
   auto suffix_result_opt =
-      decoder_.DecodeSuffix(request, first_name_id, suffix);
+      decoder_.DecodeSuffix(decoder_request, first_name_id, suffix);
 
   // Failed to decode suffix.
   if (!full_result_opt || !suffix_result_opt) {
@@ -1779,12 +1787,20 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     result.value = result_entry->value();
     result.attributes |= converter::Attribute::USER_HISTORY_PREDICTION |
                          converter::Attribute::NO_VARIANTS_EXPANSION;
-    // Do not populate inner segment information from entry to result,
-    // as this information may introduce unexpected side-effect during the
-    // the training. Inner segment information should only be fed from
-    // the realtime decoder.
-    if (result_entry->attributes() &
-        Attribute::POPULATE_INNER_SEGMENT_BOUNDARY) {
+    if ((result_entry->inner_segment_boundary_size() == 0) ||
+        (result_entry->attributes() &
+         Attribute::EMPTY_INNER_SEGMENT_BOUNDARY)) {
+      result.attributes |=
+          converter::Attribute::USER_HISTORY_EMPTY_INNER_SEGMENT_BOUNDARY;
+    }
+    // Do not populate inner segment information from entry to result for
+    // prediction, as this information may introduce unexpected side-effect
+    // during training. Inner segment information should be populated for
+    // conversion requests or when explicitly requested by
+    // POPULATE_INNER_SEGMENT_BOUNDARY (e.g. from realtime decoder).
+    if ((request.request_type() == ConversionRequest::CONVERSION) ||
+        (result_entry->attributes() &
+         Attribute::POPULATE_INNER_SEGMENT_BOUNDARY)) {
       // POPULATE_INNER_SEGMENT_BOUNDARY is set when the `result_entry` is
       // `generated` by the decoder.
       absl::c_copy(result_entry->inner_segment_boundary(),
