@@ -55,6 +55,7 @@
 #include "composer/composer.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
+#include "converter/converter_util.h"
 #include "converter/history_reconstructor.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/inner_segment.h"
@@ -309,9 +310,9 @@ void Converter::FinishConversion(const ConversionRequest& request,
       absl::IntervalClosed, bitgen, 1, std::numeric_limits<uint64_t>::max());
   segments->set_revert_id(revert_id);
 
-  const prediction::Result history_result = MakeHistoryResult(*segments);
+  const prediction::Result history_result = HistorySegmentsToResult(*segments);
   const std::vector<prediction::Result> committed_results =
-      MakeLearningResults(*segments);
+      MakeLearningResultsFromSegments(*segments);
   const ConversionRequest finish_req = ConversionRequestBuilder()
                                            .SetConversionRequestView(request)
                                            .SetHistoryResultView(history_result)
@@ -621,28 +622,14 @@ void Converter::MaybeApplyPostCorrection(const ConversionRequest& request,
   }
 
   // 1. Build a single Result from the top candidates of conversion segments.
-  prediction::Result input_result;
-  InnerSegmentBoundaryBuilder builder;
-  for (const auto& segment : segments->conversion_segments()) {
-    if (segment.candidates_size() == 0) {
-      return;
-    }
-    const Candidate& cand = segment.candidate(0);
-    absl::StrAppend(&input_result.key, cand.key);
-    absl::StrAppend(&input_result.value, cand.value);
-    input_result.attributes |= cand.attributes;
-    input_result.wcost += cand.wcost;
-    input_result.cost += cand.cost;
-    builder.Add(cand.key.size(), cand.value.size(), cand.content_key.size(),
-                cand.content_value.size());
+  const std::optional<prediction::Result> input_result =
+      ConversionSegmentsToResult(segments->conversion_segments());
+  if (!input_result.has_value()) {
+    return;
   }
-  input_result.inner_segment_boundary =
-      builder.Build(input_result.key, input_result.value);
-  input_result.lid = segments->conversion_segments().front().candidate(0).lid;
-  input_result.rid = segments->conversion_segments().back().candidate(0).rid;
 
   // 2. Call PostCorrect with std::vector<prediction::Result>.
-  std::vector<prediction::Result> results = {input_result};
+  std::vector<prediction::Result> results = {*input_result};
   modules_->GetSupplementalModel().PostCorrect(request, results);
   if (results.empty()) {
     return;
@@ -652,15 +639,15 @@ void Converter::MaybeApplyPostCorrection(const ConversionRequest& request,
 
   // If PostCorrect didn't modify value or inner segment boundary, no changes
   // are needed.
-  if (top_result.value == input_result.value &&
+  if (top_result.value == input_result->value &&
       top_result.inner_segment_boundary ==
-          input_result.inner_segment_boundary) {
+          input_result->inner_segment_boundary) {
     return;
   }
 
   // 3. If inner segment boundary changed, resize segments to match.
   if (top_result.inner_segment_boundary !=
-      input_result.inner_segment_boundary) {
+      input_result->inner_segment_boundary) {
     if (!ResizeSegmentsByResult(request, top_result, segments)) {
       return;
     }
@@ -978,7 +965,7 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest& request,
   DCHECK(segments);
   DCHECK(predictor_);
 
-  const prediction::Result history_result = MakeHistoryResult(*segments);
+  const prediction::Result history_result = HistorySegmentsToResult(*segments);
 
   const ConversionRequest conv_req = ConversionRequestBuilder()
                                          .SetConversionRequestView(request)
@@ -990,131 +977,11 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest& request,
   Segment* segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
 
-  // TODO(taku): Make utility functions to convert
-  // Segments <-> history_result, committed_results.
-
   for (const prediction::Result& result : results) {
-    Candidate* candidate = segment->add_candidate();
-    strings::Assign(candidate->key, result.key);
-    strings::Assign(candidate->value, result.value);
-    strings::Assign(candidate->description, result.description);
-    strings::Assign(candidate->display_value, result.display_value);
-    candidate->lid = result.lid;
-    candidate->rid = result.rid;
-    candidate->wcost = result.wcost;
-    candidate->cost = result.cost;
-    candidate->attributes = result.attributes;
-    candidate->consumed_key_size = result.consumed_key_size;
-    candidate->inner_segment_boundary = result.inner_segment_boundary;
-
-    // When inner_segment_boundary is available, generate
-    // content_key and content_value from the boundary info.
-    std::tie(candidate->content_key, candidate->content_value) =
-        result.inner_segments().GetMergedContentKeyAndValue();
-#ifndef NDEBUG
-    absl::StrAppend(&candidate->log, "\n", result.log);
-#endif  // NDEBUG
+    PopulateCandidateFromResult(result, segment->add_candidate());
   }
 
   return !results.empty();
-}
-
-// static
-std::vector<prediction::Result> Converter::MakeLearningResults(
-    const Segments& segments) {
-  std::vector<prediction::Result> results;
-
-  if (segments.conversion_segments_size() == 0) {
-    return results;
-  }
-
-  // - segments_size = 1: Populates the nbest candidates to result.
-  if (segments.conversion_segments_size() == 1) {
-    // Populates only top 5 results.
-    // See UserHistoryPredictor::MaybeRemoveUnselectedHistory
-    constexpr int kMaxHistorySize = 5;
-    for (const auto& candidate : segments.conversion_segment(0).candidates()) {
-      prediction::Result result;
-      strings::Assign(result.key, candidate->key);
-      strings::Assign(result.value, candidate->value);
-      strings::Assign(result.description, candidate->description);
-      strings::Assign(result.display_value, candidate->display_value);
-      result.lid = candidate->lid;
-      result.rid = candidate->rid;
-      result.wcost = candidate->wcost;
-      result.cost = candidate->cost;
-      result.attributes = candidate->attributes;
-      result.consumed_key_size = candidate->consumed_key_size;
-      result.inner_segment_boundary = candidate->inner_segment_boundary;
-      // Force to set inner_segment_boundary from key/content_key.
-      if (result.inner_segment_boundary.empty()) {
-        result.inner_segment_boundary = BuildInnerSegmentBoundary(
-            {{candidate->key.size(), candidate->value.size(),
-              candidate->content_key.size(), candidate->content_value.size()}},
-            result.key, result.value);
-      }
-      results.emplace_back(std::move(result));
-      if (results.size() >= kMaxHistorySize) break;
-    }
-
-    return results;
-  }
-
-  // segments_size > 1: Populates the top candidate to result by
-  //                    concatenating the segments.
-  {
-    prediction::Result result;
-    InnerSegmentBoundaryBuilder builder;
-    for (const auto& segment : segments.conversion_segments()) {
-      if (segment.candidates_size() == 0) return {};
-      const Candidate& candidate = segment.candidate(0);
-      absl::StrAppend(&result.key, candidate.key);
-      absl::StrAppend(&result.value, candidate.value);
-      result.attributes |= candidate.attributes;
-      result.wcost += candidate.wcost;
-      result.cost += candidate.cost;
-      builder.Add(candidate.key.size(), candidate.value.size(),
-                  candidate.content_key.size(), candidate.content_value.size());
-    }
-    result.inner_segment_boundary = builder.Build(result.key, result.value);
-    result.lid = segments.conversion_segments().front().candidate(0).lid;
-    result.rid = segments.conversion_segments().back().candidate(0).rid;
-
-    results.emplace_back(std::move(result));
-  }
-
-  return results;
-}
-
-// static
-prediction::Result Converter::MakeHistoryResult(const Segments& segments) {
-  prediction::Result result;
-
-  if (segments.history_segments_size() == 0) {
-    return result;
-  }
-
-  InnerSegmentBoundaryBuilder builder;
-  for (const auto& segment : segments.history_segments()) {
-    if (segment.candidates_size() == 0) {
-      return prediction::Result::DefaultResult();  // Returns an empty result.
-    }
-    const Candidate& candidate = segment.candidate(0);
-    absl::StrAppend(&result.key, candidate.key);
-    absl::StrAppend(&result.value, candidate.value);
-    result.attributes |= candidate.attributes;
-    builder.Add(candidate.key.size(), candidate.value.size(),
-                candidate.content_key.size(), candidate.content_value.size());
-  }
-
-  result.inner_segment_boundary = builder.Build(result.key, result.value);
-
-  const int size = segments.history_segments_size();
-  result.lid = segments.history_segment(0).candidate(0).lid;
-  result.rid = segments.history_segment(size - 1).candidate(0).rid;
-  result.cost = segments.history_segment(size - 1).candidate(0).cost;
-
-  return result;
 }
 
 }  // namespace converter

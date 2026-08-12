@@ -703,6 +703,7 @@ mozc_cc_library(
         "//base/strings:assign",
         "//converter:attribute",
         "//converter:converter_interface",
+        "//converter:converter_util",
         "//converter:immutable_converter_interface",
         "//converter:inner_segment",
         "//converter:segments",

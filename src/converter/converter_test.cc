@@ -54,6 +54,7 @@
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/converter_interface.h"
+#include "converter/converter_util.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/inner_segment.h"
@@ -872,7 +873,7 @@ TEST_F(ConverterTest, StartSuggestion) {
             .SetComposer(composer)
             .SetRequestView(client_request)
             .SetConfigView(config)
-            .SetHistoryResult(Converter::MakeHistoryResult(segments))
+            .SetHistoryResult(HistorySegmentsToResult(segments))
             .SetOptions(std::move(options))
             .Build();
 
@@ -898,7 +899,7 @@ TEST_F(ConverterTest, StartSuggestion) {
             .SetComposer(composer)
             .SetRequestView(client_request)
             .SetConfigView(config)
-            .SetHistoryResult(Converter::MakeHistoryResult(segments))
+            .SetHistoryResult(HistorySegmentsToResult(segments))
             .SetOptions(std::move(options))
             .Build();
 
@@ -1040,7 +1041,7 @@ TEST_F(ConverterTest, PredictSetKey) {
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistoryResult(Converter::MakeHistoryResult(segments))
+            .SetHistoryResult(HistorySegmentsToResult(segments))
             .SetRequestType(ConversionRequest::PREDICTION)
             .Build();
     ASSERT_TRUE(converter->StartPrediction(request, &segments));
@@ -1144,7 +1145,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistoryResult(Converter::MakeHistoryResult(segments))
+            .SetHistoryResult(HistorySegmentsToResult(segments))
             .SetOptions(
                 {.composer_key_selection = ConversionRequest::CONVERSION_KEY})
             .Build();
@@ -1161,7 +1162,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistoryResult(Converter::MakeHistoryResult(segments))
+            .SetHistoryResult(HistorySegmentsToResult(segments))
             .SetOptions(
                 {.composer_key_selection = ConversionRequest::PREDICTION_KEY})
             .Build();
@@ -1197,7 +1198,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   const ConversionRequest request =
       ConversionRequestBuilder()
           .SetComposer(composer)
-          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .SetHistoryResult(HistorySegmentsToResult(segments))
           .SetConfig(config)
           .Build();
   EXPECT_TRUE(converter->StartConversion(request, &segments));
@@ -1405,7 +1406,7 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   const ConversionRequest request1 =
       ConversionRequestBuilder()
           .SetComposer(composer)
-          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .SetHistoryResult(HistorySegmentsToResult(segments))
           .SetRequest(request_proto)
           .Build();
   ASSERT_TRUE(converter->StartConversion(request1, &segments));
@@ -1423,7 +1424,7 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
       ConversionRequestBuilder()
           .SetComposer(composer)
           .SetRequest(request_proto)
-          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .SetHistoryResult(HistorySegmentsToResult(segments))
           .Build();
   ASSERT_TRUE(converter->StartConversion(request2, &segments));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1440,7 +1441,7 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
       ConversionRequestBuilder()
           .SetComposer(composer)
           .SetRequest(request_proto)
-          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .SetHistoryResult(HistorySegmentsToResult(segments))
           .Build();
   ASSERT_TRUE(converter->StartConversion(request3, &segments));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1496,7 +1497,7 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
             .SetComposer(composer)
             .SetRequestView(request)
             .SetConfigView(config)
-            .SetHistoryResult(Converter::MakeHistoryResult(segments))
+            .SetHistoryResult(HistorySegmentsToResult(segments))
             .SetOptions(std::move(options))
             .Build();
     EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
@@ -1687,7 +1688,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
           .SetComposer(composer)
           .SetRequestView(request)
           .SetConfigView(config)
-          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .SetHistoryResult(HistorySegmentsToResult(segments))
           .SetOptions(std::move(options))
           .Build();
 
@@ -1801,7 +1802,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
           .SetComposer(composer)
           .SetRequestView(request)
           .SetConfigView(config)
-          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .SetHistoryResult(HistorySegmentsToResult(segments))
           .SetOptions(std::move(options))
           .Build();
 
@@ -2363,131 +2364,6 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     EXPECT_TRUE(cand1->key.empty());
     EXPECT_TRUE(cand1->content_key.empty());
   }
-}
-
-TEST_F(ConverterTest, MakeLearningResultsTest) {
-  // Empty segments.
-  {
-    const Segments segments;
-    EXPECT_TRUE(Converter::MakeLearningResults(segments).empty());
-  }
-
-  // Single segment and multiple candidates.
-  {
-    Segments segments;
-    Segment* segment = segments.add_segment();
-    for (int i = 0; i < 10; ++i) {
-      Candidate* c = segment->add_candidate();
-      c->key = absl::StrCat("k", i);
-      c->content_key = "k";
-      c->value = absl::StrCat("v", i);
-      c->content_value = "v";
-      c->description = "description";
-      c->display_value = "display_value";
-      c->lid = i;
-      c->rid = i + 1;
-      c->cost = i + 2;
-      c->wcost = 10 * i;
-    }
-
-    const std::vector<prediction::Result> results =
-        Converter::MakeLearningResults(segments);
-    EXPECT_EQ(results.size(), 5);
-    for (int i = 0; i < results.size(); ++i) {
-      const Candidate& c = segment->candidate(i);
-      const prediction::Result& result = results[i];
-      EXPECT_EQ(c.key, result.key);
-      EXPECT_EQ(c.value, result.value);
-      EXPECT_EQ(c.description, result.description);
-      EXPECT_EQ(c.display_value, result.display_value);
-      EXPECT_EQ(c.lid, result.lid);
-      EXPECT_EQ(c.rid, result.rid);
-      EXPECT_EQ(c.cost, result.cost);
-      EXPECT_EQ(c.wcost, result.wcost);
-
-      EXPECT_EQ(result.inner_segments().size(), 1);
-      for (const auto& iter : result.inner_segments()) {
-        EXPECT_EQ(iter.GetKey(), c.key);
-        EXPECT_EQ(iter.GetContentKey(), c.content_key);
-        EXPECT_EQ(iter.GetValue(), c.value);
-        EXPECT_EQ(iter.GetContentValue(), c.content_value);
-      }
-    }
-  }
-
-  // multiple segments
-  {
-    Segments segments;
-    for (int i = 0; i < 3; ++i) {
-      Segment* segment = segments.add_segment();
-      Candidate* c = segment->add_candidate();
-      c->key = absl::StrCat("k", i);
-      c->content_key = "k";
-      c->value = absl::StrCat("v", i);
-      c->content_value = "v";
-      c->lid = i;
-      c->rid = i + 1;
-      c->cost = i;
-      c->wcost = 10 * i;
-    };
-
-    const std::vector<prediction::Result> results =
-        Converter::MakeLearningResults(segments);
-    EXPECT_EQ(results.size(), 1);
-
-    const prediction::Result& result = results.front();
-    EXPECT_EQ(result.key, "k0k1k2");
-    EXPECT_EQ(result.value, "v0v1v2");
-    EXPECT_EQ(result.lid, segments.segment(0).candidate(0).lid);
-    EXPECT_EQ(result.rid, segments.segment(2).candidate(0).rid);
-    EXPECT_EQ(result.cost, 0 + 1 + 2);
-    EXPECT_EQ(result.wcost, 0 + 10 + 20);
-
-    int n = 0;
-    for (const auto& iter : result.inner_segments()) {
-      const Candidate& c = segments.segment(n).candidate(0);
-      EXPECT_EQ(iter.GetKey(), c.key);
-      EXPECT_EQ(iter.GetContentKey(), c.content_key);
-      EXPECT_EQ(iter.GetValue(), c.value);
-      EXPECT_EQ(iter.GetContentValue(), c.content_value);
-      ++n;
-    }
-    EXPECT_EQ(n, 3);
-  }
-}
-
-TEST_F(ConverterTest, MakeHistoryResultTest) {
-  Segments segments;
-  for (int i = 0; i < 3; ++i) {
-    Segment* segment = segments.add_segment();
-    segment->set_segment_type(Segment::HISTORY);
-    Candidate* c = segment->add_candidate();
-    c->key = absl::StrCat("k", i);
-    c->content_key = "k";
-    c->value = absl::StrCat("v", i);
-    c->content_value = "v";
-    c->lid = i;
-    c->rid = i + 1;
-    c->cost = i;
-  };
-
-  const prediction::Result result = Converter::MakeHistoryResult(segments);
-  EXPECT_EQ(result.key, "k0k1k2");
-  EXPECT_EQ(result.value, "v0v1v2");
-  EXPECT_EQ(result.lid, segments.segment(0).candidate(0).lid);
-  EXPECT_EQ(result.rid, segments.segment(2).candidate(0).rid);
-  EXPECT_EQ(result.cost, 2);  // only the last cost.
-
-  int n = 0;
-  for (const auto& iter : result.inner_segments()) {
-    const Candidate& c = segments.segment(n).candidate(0);
-    EXPECT_EQ(iter.GetKey(), c.key);
-    EXPECT_EQ(iter.GetContentKey(), c.content_key);
-    EXPECT_EQ(iter.GetValue(), c.value);
-    EXPECT_EQ(iter.GetContentValue(), c.content_value);
-    ++n;
-  }
-  EXPECT_EQ(n, 3);
 }
 
 TEST_F(ConverterTest, Bugfix424676259) {

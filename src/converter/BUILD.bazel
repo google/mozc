@@ -74,6 +74,43 @@ mozc_cc_library(
     ],
 )
 
+mozc_cc_library(
+    name = "converter_util",
+    srcs = ["converter_util.cc"],
+    hdrs = ["converter_util.h"],
+    visibility = [
+        "//converter:__pkg__",
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+        "//session:__pkg__",
+    ],
+    deps = [
+        ":inner_segment",
+        ":segments",
+        "//base/strings:assign",
+        "//prediction:result",
+        "//request:conversion_request",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "converter_util_test",
+    size = "small",
+    srcs = ["converter_util_test.cc"],
+    deps = [
+        ":converter_util",
+        ":inner_segment",
+        ":segments",
+        "//prediction:result",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 mozc_cc_test(
     name = "segments_test",
     size = "small",
@@ -539,6 +576,7 @@ mozc_cc_library(
     deps = [
         ":attribute",
         ":converter_interface",
+        ":converter_util",
         ":history_reconstructor",
         ":immutable_converter_interface",
         ":inner_segment",
@@ -575,6 +613,7 @@ mozc_cc_test(
         ":attribute",
         ":converter",
         ":converter_interface",
+        ":converter_util",
         ":immutable_converter",
         ":immutable_converter_interface",
         ":inner_segment",
