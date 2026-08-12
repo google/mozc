@@ -54,7 +54,7 @@ namespace converter {
 
 class Segment final {
  public:
-  enum SegmentType {
+  enum SegmentType : uint8_t {
     FREE,            // FULL automatic conversion.
     FIXED_BOUNDARY,  // cannot consist of multiple segments.
     FIXED_VALUE,     // cannot consist of multiple segments.
@@ -160,7 +160,6 @@ class Segment final {
   static constexpr int kCandidatesPoolSize = 16;
 
   // LINT.IfChange
-  SegmentType segment_type_;
   // Note that |key_| is shorter than usual when partial suggestion is
   // performed.
   // For example if the preedit text is "しれ|ません", there is only a segment
@@ -169,10 +168,11 @@ class Segment final {
   // for partial suggestion or not.
   // You should detect that by using both Composer and Segments.
   std::string key_;
-  size_t key_len_ = 0;
   std::deque<Candidate*> candidates_;
   std::vector<Candidate> meta_candidates_;
   std::vector<std::unique_ptr<Candidate>> pool_;
+  uint32_t key_len_ = 0;
+  SegmentType segment_type_ = FREE;
   // LINT.ThenChange(//converter/segments_matchers.h)
 };
 
@@ -454,12 +454,11 @@ class Segments final {
   const_iterator history_segments_end() const;
 
   // LINT.IfChange
-  size_t max_history_segments_size_;
-  bool resized_;
-
   ObjectPool<Segment> pool_;
   std::deque<Segment*> segments_;
   uint64_t revert_id_ = 0;
+  uint32_t max_history_segments_size_ = 0;
+  bool resized_ = false;
   // LINT.ThenChange(//converter/segments_matchers.h)
 };
 

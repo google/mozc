@@ -62,7 +62,7 @@ class Candidate {
  public:
   Candidate() = default;
 
-  enum Command {
+  enum Command : uint8_t {
     DEFAULT_COMMAND = 0,
     ENABLE_INCOGNITO_MODE,      // enables "incognito mode".
     DISABLE_INCOGNITO_MODE,     // disables "incognito mode".
@@ -70,7 +70,7 @@ class Candidate {
     DISABLE_PRESENTATION_MODE,  // disables "presentation mode".
   };
 
-  enum Category {
+  enum Category : uint8_t {
     DEFAULT_CATEGORY,  // Realtime conversion, history prediction, etc
     SYMBOL,            // Symbol, emoji
     OTHER,             // Misc candidate
@@ -82,7 +82,7 @@ class Candidate {
   std::string content_key;
   std::string content_value;
 
-  size_t consumed_key_size = 0;
+  uint32_t consumed_key_size = 0;
 
   // Meta information
   // TODO(taku): Better to introduce a struct to save heap usage.
@@ -114,15 +114,17 @@ class Candidate {
   // (cost without transition cost between left/right boundaries)
   // Cost of only transitions (cost without word cost adjacent context)
   int32_t structure_cost = 0;
+  // The original cost before rescoring. Used for debugging purpose.
+  int32_t cost_before_rescoring = 0;
+
+  // Attributes of this candidate. Can set multiple attributes
+  // defined in enum |Attribute|.
+  uint32_t attributes = 0;
 
   // lid of left-most node
   uint16_t lid = 0;
   // rid of right-most node
   uint16_t rid = 0;
-
-  // Attributes of this candidate. Can set multiple attributes
-  // defined in enum |Attribute|.
-  uint32_t attributes = 0;
 
   Category category = DEFAULT_CATEGORY;
 
@@ -140,9 +142,6 @@ class Candidate {
   // lengths of key, value, content key and content value.
   InnerSegmentBoundary inner_segment_boundary;
   // LINT.ThenChange(//converter/segments_matchers.h)
-
-  // The original cost before rescoring. Used for debugging purpose.
-  int32_t cost_before_rescoring = 0;
 #ifdef MOZC_CANDIDATE_DEBUG
   void Dlog(absl::string_view filename, int line,
             absl::string_view message) const;

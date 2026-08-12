@@ -60,10 +60,10 @@ constexpr size_t kMaxHistorySize = 32;
 
 Segment::Segment(const Segment& x)
     : removed_candidates_for_debug_(x.removed_candidates_for_debug_),
-      segment_type_(x.segment_type_),
       key_(x.key_),
+      meta_candidates_(x.meta_candidates_),
       key_len_(x.key_len_),
-      meta_candidates_(x.meta_candidates_) {
+      segment_type_(x.segment_type_) {
   DeepCopyCandidates(x.candidates_);
 }
 
@@ -268,10 +268,10 @@ std::string Segment::DebugString() const {
 }
 
 Segments::Segments(const Segments& x)
-    : max_history_segments_size_(x.max_history_segments_size_),
-      resized_(x.resized_),
-      pool_(32),
-      revert_id_(x.revert_id_) {
+    : pool_(32),
+      revert_id_(x.revert_id_),
+      max_history_segments_size_(x.max_history_segments_size_),
+      resized_(x.resized_) {
   // Deep-copy segments.
   for (const Segment* segment : x.segments_) {
     *add_segment() = *segment;

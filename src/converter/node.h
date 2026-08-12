@@ -38,7 +38,7 @@
 namespace mozc {
 
 struct Node {
-  enum NodeType {
+  enum NodeType : uint8_t {
     NOR_NODE,  // normal node
     BOS_NODE,  // BOS (beginning of sentence)
     EOS_NODE,  // EOS (end of sentence)
@@ -46,7 +46,7 @@ struct Node {
     HIS_NODE,  // history node
   };
 
-  enum Attribute {
+  enum Attribute : uint16_t {
     DEFAULT_ATTRIBUTE = 0,
     SYSTEM_DICTIONARY = 1 << 0,      // System dictionary (not used now)
     USER_DICTIONARY = 1 << 1,        // User dictionary
@@ -96,7 +96,10 @@ struct Node {
   int32_t cost;
 
   NodeType node_type;
-  uint32_t attributes;
+
+  // Bit field of Attribute. 16 bit is enough as the
+  // biggest value is KEY_EXPANDED = 1 << 9.
+  uint16_t attributes;
 
   // key: The user input.
   // value: The surface form of the word.
