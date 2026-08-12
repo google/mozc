@@ -101,7 +101,6 @@ class DictionaryPredictionAggregatorTestPeer {
   DEFINE_PEER(AggregateEnglish);
   DEFINE_PEER(AggregateUnigramForMixedConversion);
   DEFINE_PEER(GetRealtimeCandidateMaxSize);
-  DEFINE_PEER(GetZeroQueryCandidatesForKey);
 
 #undef DEFINE_PEER
 
@@ -2360,115 +2359,6 @@ TEST_F(DictionaryPredictionAggregatorTest, CandidatesFromUserDictionary) {
     EXPECT_TRUE(GetMergedTypes(results) & UNIGRAM);
     EXPECT_TRUE(FindResultByValue(results, "しょうとかっと"));
     EXPECT_TRUE(FindResultByValue(results, "ショートカット"));
-  }
-}
-
-namespace {
-alignas(uint32_t) constexpr char kTestZeroQueryTokenArray[] =
-    // The last two items must be 0x00, because they are now unused field.
-    // {"あ", "❕", ZERO_QUERY_EMOJI, 0x00, 0x00}
-    "\x04\x00\x00\x00"
-    "\x02\x00\x00\x00"
-    "\x03\x00"
-    "\x00\x00"
-    "\x00\x00\x00\x00"
-    // {"ああ", "( •̀ㅁ•́;)", ZERO_QUERY_EMOTICON, 0x00, 0x00}
-    "\x05\x00\x00\x00"
-    "\x01\x00\x00\x00"
-    "\x02\x00"
-    "\x00\x00"
-    "\x00\x00\x00\x00"
-    // {"あい", "❕", ZERO_QUERY_EMOJI, 0x00, 0x00}
-    "\x06\x00\x00\x00"
-    "\x02\x00\x00\x00"
-    "\x03\x00"
-    "\x00\x00"
-    "\x00\x00\x00\x00"
-    // {"あい", "❣", ZERO_QUERY_NONE, 0x00, 0x00}
-    "\x06\x00\x00\x00"
-    "\x03\x00\x00\x00"
-    "\x00\x00"
-    "\x00\x00"
-    "\x00\x00\x00\x00"
-    // {"猫", "😾", ZERO_QUERY_EMOJI, 0x00, 0x00}
-    "\x07\x00\x00\x00"
-    "\x08\x00\x00\x00"
-    "\x03\x00"
-    "\x00\x00"
-    "\x00\x00\x00\x00";
-
-const char* kTestZeroQueryStrings[] = {"",     "( •̀ㅁ•́;)", "❕", "❣", "あ",
-                                       "ああ", "あい",     "猫", "😾"};
-}  // namespace
-
-TEST_F(DictionaryPredictionAggregatorTest, GetZeroQueryCandidates) {
-  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
-      CreateAggregatorWithMockData();
-  const DictionaryPredictionAggregatorTestPeer& aggregator =
-      data_and_aggregator->aggregator();
-
-  // Create test zero query data.
-  std::unique_ptr<uint32_t[]> string_data_buffer;
-  ZeroQueryDict zero_query_dict;
-  {
-    // kTestZeroQueryTokenArray contains a trailing '\0', so create a
-    // absl::string_view that excludes it by subtracting 1.
-    const absl::string_view token_array_data(
-        kTestZeroQueryTokenArray, std::size(kTestZeroQueryTokenArray) - 1);
-    std::vector<absl::string_view> strs;
-    for (const char* str : kTestZeroQueryStrings) {
-      strs.push_back(str);
-    }
-    const absl::string_view string_array_data =
-        SerializedStringArray::SerializeToBuffer(strs, &string_data_buffer);
-    zero_query_dict.Init(token_array_data, string_array_data);
-  }
-
-  struct TestCase {
-    std::string key;
-    bool expected_result;
-    // candidate value and ZeroQueryType.
-    std::vector<std::string> expected_candidates;
-    std::vector<ZeroQueryType> expected_types;
-
-    std::string DebugString() const {
-      const std::string candidates = absl::StrJoin(expected_candidates, ", ");
-      std::string types;
-      for (size_t i = 0; i < expected_types.size(); ++i) {
-        if (i != 0) {
-          types.append(", ");
-        }
-        absl::StrAppendFormat(&types, "%d", types[i]);
-      }
-      return absl::StrFormat(
-          "key: %s\n"
-          "expected_result: %d\n"
-          "expected_candidates: %s\n"
-          "expected_types: %s",
-          key, expected_result, candidates, types);
-    }
-  } kTestCases[] = {
-      {"あい", true, {"❕", "❣"}, {ZERO_QUERY_EMOJI, ZERO_QUERY_NONE}},
-      {"猫", true, {"😾"}, {ZERO_QUERY_EMOJI}},
-      {"あ", false, {}, {}},  // Do not look up for one-char non-Kanji key
-      {"あい", true, {"❕", "❣"}, {ZERO_QUERY_EMOJI, ZERO_QUERY_NONE}},
-      {"あいう", false, {}, {}},
-      {"", false, {}, {}},
-      {"ああ", true, {"( •̀ㅁ•́;)"}, {ZERO_QUERY_EMOTICON}}};
-
-  for (const auto& test_case : kTestCases) {
-    ASSERT_EQ(test_case.expected_candidates.size(),
-              test_case.expected_types.size());
-
-    const ConversionRequest request;
-    std::vector<Result> results;
-    constexpr uint16_t kId = 0;  // EOS
-    aggregator.GetZeroQueryCandidatesForKey(
-        request, test_case.key, zero_query_dict, kId, kId, &results);
-    EXPECT_EQ(results.size(), test_case.expected_candidates.size());
-    for (size_t i = 0; i < test_case.expected_candidates.size(); ++i) {
-      EXPECT_EQ(results[i].value, test_case.expected_candidates[i]);
-    }
   }
 }
 

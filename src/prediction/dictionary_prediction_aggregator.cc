@@ -132,34 +132,6 @@ bool IsLongKeyForRealtimeCandidates(const ConversionRequest& request) {
   return Util::CharsLen(request.key()) >= kFewResultThreshold;
 }
 
-// Returns the normalized number history if `request` contains it.
-// Note:
-//  Now this function supports arabic number candidates only and
-//  we don't support kanji number candidates for now.
-//  This is because We have several kanji number styles, for example,
-//  "一二", "十二", "壱拾弐", etc for 12.
-//  If the history in `request` is empty, it fallback to `preceding_text`.
-// TODO(toshiyuki): Define the spec and support Kanji.
-std::optional<std::string> GetNumberHistory(const ConversionRequest& request) {
-  absl::string_view history_value = request.converter_history_value(1);
-  if (history_value.empty()) {
-    // Note: Full width number is not supported in `preceding_text`.
-    history_value = request.context().preceding_text();
-    const auto it =
-        std::find_if(history_value.rbegin(), history_value.rend(),
-                     [](char c) { return !absl::ascii_isdigit(c); });
-    history_value = history_value.substr(it.base() - history_value.begin());
-  }
-  if (history_value.empty() || !NumberUtil::IsArabicNumber(history_value)) {
-    return std::nullopt;
-  }
-  return japanese_util::FullWidthToHalfWidth(history_value);
-}
-
-bool IsEmailPrefix(absl::string_view str) {
-  return str.ends_with('@') && mozc::Util::IsAscii(str);
-}
-
 class PredictiveLookupCallback : public DictionaryInterface::Callback {
  public:
   PredictiveLookupCallback(PredictionTypes types, size_t limit,
@@ -398,8 +370,7 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       kanji_number_id_(modules.GetPosMatcher().GetKanjiNumberId()),
       zip_code_id_(modules.GetPosMatcher().GetZipcodeId()),
       unknown_id_(modules.GetPosMatcher().GetUnknownId()),
-      zero_query_dict_(modules.GetZeroQueryDict()),
-      zero_query_number_dict_(modules.GetZeroQueryNumberDict()),
+      zero_query_decoder_(modules),
       handwriting_decoder_(modules, decoder) {}
 
 std::vector<Result> DictionaryPredictionAggregator::AggregateResultsForTesting(
@@ -660,71 +631,8 @@ void DictionaryPredictionAggregator::AggregateUnigram(
 void DictionaryPredictionAggregator::AggregateZeroQuery(
     const ConversionRequest& request, std::vector<Result>* results) const {
   DCHECK(results);
-
-  // There are 4 sources in zero query suggestion.
-
-  absl::string_view history_value = request.converter_history_value(1);
-  absl::string_view history_key = request.converter_history_key(1);
-
-  if (history_value.empty() && history_key.empty()) {
-    // (b/475682454): Use the preceding text as the history value and key.
-    // We may want to tokenize the preceding text to increase the coverage.
-    history_value = request.context().preceding_text();
-    history_key = history_value;
-  }
-
-  if (history_key.empty() || history_value.empty()) {
-    return;
-  }
-
-  // 1. Supplemental model.
-  modules_.GetSupplementalModel().Predict(request, *results);
-
-  // 2. Zero query number dictionary(data / zero_query / zero_query_number.def)
-  // "30" -> "年"
-  // TOOD(taku): Consider to aggregate other candidates.
-  if (AggregateNumberZeroQuery(request, results)) {
-    return;
-  }
-
-  // 3. Zero query dictionary (data/zero_query/zero_query.def)
-  // "あけまして" -> "おめでとうございます”
-  constexpr uint16_t kId = 0;  // EOS
-  GetZeroQueryCandidatesForKey(request, history_value, zero_query_dict_, kId,
-                               kId, results);
-  // Special treatment for email address.
-  // "user@" -> "google.com"
-  if (IsEmailPrefix(history_key) && (history_key == history_value)) {
-    GetZeroQueryCandidatesForKey(request, "@", zero_query_dict_, kId, kId,
-                                 results);
-  }
-
-  // 4. English decoder.
-  modules_.GetSupplementalModel().DecodeEnglish(request, *results);
-
-  // We do not want zero query results from suffix dictionary for Latin
-  // input mode. For example, we do not need "です", "。" just after "when".
-  if (IsLatinInputMode(request)) {
-    return;
-  }
-
-  // We do not want zero query results from suffix dictionary if the request
-  // does not have the history POS information.
-  // (b/475682454): Context does not have POS information. Suffix dictionary
-  // may generate noisy predictions.
-  if (request.converter_history_rid() == 0) {
-    return;
-  }
-
-  // 5. Zero query suffix dictionary.
-  //    "東京" -> "は"
-  if (results->empty() || !IsZeroQuerySuffixPredictionDisabled(request) ||
-      request_util::IsHandwriting(request)) {
-    // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
-    // all suffix entries.
-    GetPredictiveResultsForUnigram(suffix_dictionary_, request, SUFFIX,
-                                   kPredictionMaxResultsSize, results);
-  }
+  std::vector<Result> zero_query_results = zero_query_decoder_.Decode(request);
+  absl::c_move(zero_query_results, std::back_inserter(*results));
 }
 
 void DictionaryPredictionAggregator::AggregateRealtime(
@@ -825,27 +733,6 @@ void DictionaryPredictionAggregator::AggregateBigram(
     CheckBigramResult(*find_history_token, history_ctype, last_history_ctype,
                       request, &result);
   }
-}
-
-// Returns true if we add zero query result.
-bool DictionaryPredictionAggregator::AggregateNumberZeroQuery(
-    const ConversionRequest& request, std::vector<Result>* results) const {
-  DCHECK(results);
-
-  auto number_key_opt = GetNumberHistory(request);
-  if (!number_key_opt) return false;
-
-  const std::string number_key = std::move(number_key_opt.value());
-
-  GetZeroQueryCandidatesForKey(request, number_key, zero_query_number_dict_,
-                               counter_suffix_word_id_, counter_suffix_word_id_,
-                               results);
-
-  GetZeroQueryCandidatesForKey(request, "default", zero_query_number_dict_,
-                               counter_suffix_word_id_, counter_suffix_word_id_,
-                               results);
-
-  return true;
 }
 
 void DictionaryPredictionAggregator::AggregateEnglish(
@@ -1069,51 +956,6 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
       tmp.assign((*results)[i].value);
       (*results)[i].value = japanese_util::HalfWidthAsciiToFullWidthAscii(tmp);
     }
-  }
-}
-
-void DictionaryPredictionAggregator::GetZeroQueryCandidatesForKey(
-    const ConversionRequest& request, absl::string_view key,
-    const ZeroQueryDict& dict, uint16_t lid, uint16_t rid,
-    std::vector<Result>* results) const {
-  DCHECK(results);
-
-  absl::Span<const ZeroQueryEntry> entries = dict.equal_range(key);
-  if (entries.empty()) {
-    return;
-  }
-
-  const bool is_key_one_char_and_not_kanji =
-      Util::CharsLen(key) == 1 && !Util::ContainsScriptType(key, Util::KANJI);
-
-  int cost = 0;
-  constexpr int kSuffixPenalty = 10;
-
-  auto add_entry = [&](const ZeroQueryEntry& entry) {
-    Result result;
-    result.SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
-    result.key = dict.value(entry);
-    result.value = dict.value(entry);
-    result.wcost = cost;
-    result.lid = lid;
-    result.rid = rid;
-    results->emplace_back(std::move(result));
-    cost += kSuffixPenalty;
-  };
-
-  for (const ZeroQueryEntry& entry : entries) {
-    if (entry.type != ZERO_QUERY_EMOJI) {
-      add_entry(entry);
-      continue;
-    }
-
-    // Emoji should not be suggested for single Hiragana / Katakana input,
-    // because they tend to be too much aggressive.
-    if (is_key_one_char_and_not_kanji) {
-      continue;
-    }
-
-    add_entry(entry);
   }
 }
 

@@ -45,7 +45,7 @@
 #include "prediction/handwriting_decoder.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
-#include "prediction/zero_query_dict.h"
+#include "prediction/zero_query_decoder.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
@@ -161,9 +161,6 @@ class DictionaryPredictionAggregator
   void AggregateUnigramForHandwriting(const ConversionRequest& request,
                                       std::vector<Result>* results) const;
 
-  bool AggregateNumberZeroQuery(const ConversionRequest& request,
-                                std::vector<Result>* results) const;
-
   //////////////////////////////////////////////////////////////////////////
   // GetPredictiveResultsForXXX functions which are primitive utility
   // functions to get results from dictionary::DictionaryInterface.
@@ -185,15 +182,6 @@ class DictionaryPredictionAggregator
       const ConversionRequest& request, absl::string_view request_key,
       PredictionTypes types, size_t lookup_limit,
       std::vector<Result>* results) const;
-
-  // Looks up the given range and appends zero query candidate list for |key|
-  // to |results|.
-  // Returns false if there is no result for |key|.
-  void GetZeroQueryCandidatesForKey(const ConversionRequest& request,
-                                    absl::string_view key,
-                                    const ZeroQueryDict& dict, uint16_t lid,
-                                    uint16_t rid,
-                                    std::vector<Result>* results) const;
 
   //////////////////////////////////////////////////////////////////////////
   // Misc functions
@@ -246,8 +234,7 @@ class DictionaryPredictionAggregator
   const uint16_t kanji_number_id_;
   const uint16_t zip_code_id_;
   const uint16_t unknown_id_;
-  const ZeroQueryDict& zero_query_dict_;
-  const ZeroQueryDict& zero_query_number_dict_;
+  const ZeroQueryDecoder zero_query_decoder_;
   const HandwritingDecoder handwriting_decoder_;
 };
 

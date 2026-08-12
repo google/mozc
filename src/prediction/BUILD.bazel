@@ -334,6 +334,7 @@ mozc_cc_library(
         ":result",
         ":result_filter",
         ":single_kanji_decoder",
+        ":zero_query_decoder",
         ":zero_query_dict",
         "//base:japanese_util",
         "//base:number_util",
@@ -601,6 +602,49 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_library(
+    name = "zero_query_decoder",
+    srcs = ["zero_query_decoder.cc"],
+    hdrs = ["zero_query_decoder.h"],
+    deps = [
+        ":result",
+        ":zero_query_dict",
+        "//base:japanese_util",
+        "//base:number_util",
+        "//base:util",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_token",
+        "//engine:modules",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
+        "//request:request_util",
+        "//transliteration",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "zero_query_decoder_test",
+    srcs = ["zero_query_decoder_test.cc"],
+    deps = [
+        ":result",
+        ":zero_query_decoder",
+        ":zero_query_dict",
+        "//base/container:serialized_string_array",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher",
+        "//engine:modules",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
