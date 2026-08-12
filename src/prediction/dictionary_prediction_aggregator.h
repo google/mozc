@@ -42,6 +42,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
+#include "prediction/handwriting_decoder.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/zero_query_dict.h"
@@ -100,16 +101,6 @@ class DictionaryPredictionAggregator
       const ConversionRequest& request) const override;
 
  private:
-  struct HandwritingQueryInfo {
-    // Hiragana key for dictionary look up.
-    // ex. "かんじじてん" for "かん字じ典"
-    std::string query;
-    // The list of non-Hiragana strings. They should be appeared in the result
-    // token value in order.
-    // ex. {"字", "典"} for "かん字じ典"
-    std::vector<std::string> constraints;
-  };
-
   //////////////////////////////////////////////////////////////////////////
   // Top level basic aggregators.
   // Do not implement preconditions for calling the actual operation within
@@ -207,12 +198,6 @@ class DictionaryPredictionAggregator
   //////////////////////////////////////////////////////////////////////////
   // Misc functions
 
-  // Generates `HandwritingQueryInfo` for the given composition event.
-  std::optional<HandwritingQueryInfo> GenerateQueryForHandwriting(
-      const ConversionRequest& request,
-      const commands::SessionCommand::CompositionEvent& composition_event)
-      const;
-
   // Changes the prediction type for irrelevant bigram candidate.
   void CheckBigramResult(const dictionary::Token& history_token,
                          Util::ScriptType history_ctype,
@@ -263,6 +248,7 @@ class DictionaryPredictionAggregator
   const uint16_t unknown_id_;
   const ZeroQueryDict& zero_query_dict_;
   const ZeroQueryDict& zero_query_number_dict_;
+  const HandwritingDecoder handwriting_decoder_;
 };
 
 }  // namespace prediction

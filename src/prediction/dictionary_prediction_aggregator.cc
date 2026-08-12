@@ -399,7 +399,8 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       zip_code_id_(modules.GetPosMatcher().GetZipcodeId()),
       unknown_id_(modules.GetPosMatcher().GetUnknownId()),
       zero_query_dict_(modules.GetZeroQueryDict()),
-      zero_query_number_dict_(modules.GetZeroQueryNumberDict()) {}
+      zero_query_number_dict_(modules.GetZeroQueryNumberDict()),
+      handwriting_decoder_(modules, decoder) {}
 
 std::vector<Result> DictionaryPredictionAggregator::AggregateResultsForTesting(
     const ConversionRequest& request) const {
@@ -762,74 +763,9 @@ void DictionaryPredictionAggregator::AggregateUnigramForDictionary(
 void DictionaryPredictionAggregator::AggregateUnigramForHandwriting(
     const ConversionRequest& request, std::vector<Result>* results) const {
   DCHECK(results);
-  DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
-         request.request_type() == ConversionRequest::SUGGESTION);
-
-  const ResultsSizeAdjuster adjuster(request, results);
-
-  const commands::DecoderExperimentParams& param =
-      request.request().decoder_experiment_params();
-  const int handwriting_cost_offset =
-      param.handwriting_conversion_candidate_cost_offset();
-
-  int processed_count = 0;
-  const int size_to_process = param.max_composition_event_to_process();
-  absl::Span<const commands::SessionCommand::CompositionEvent>
-      composition_events = request.composer().GetHandwritingCompositions();
-  for (size_t i = 0; i < composition_events.size(); ++i) {
-    const commands::SessionCommand::CompositionEvent& elm =
-        composition_events[i];
-    if (elm.probability() <= 0.0) {
-      continue;
-    }
-    const int recognition_cost = -500.0 * log(elm.probability());
-    constexpr int kAsisCostOffset = 3453;  // 500 * log(1000) = ~3453
-    Result asis_result = {
-        .key = elm.composition_string(),
-        .value = elm.composition_string(),
-        .attributes =
-            (Attribute::UNIGRAM | Attribute::NO_VARIANTS_EXPANSION |
-             Attribute::NO_EXTRA_DESCRIPTION | Attribute::NO_MODIFICATION),
-        // Set small cost for the top recognition result.
-        .wcost = (i == 0) ? 0 : kAsisCostOffset + recognition_cost,
-    };
-
-    const std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
-        query_info = processed_count < size_to_process
-                         ? GenerateQueryForHandwriting(request, elm)
-                         : std::nullopt;
-    if (query_info.has_value()) {
-      ++processed_count;
-
-      dictionary::InlineCallback cb;
-      cb.OnToken([&](absl::string_view key, absl::string_view actual_key,
-                     const Token& token) {
-        using enum DictionaryInterface::Callback::ResultType;
-        const int penalty = handwriting_cost_offset + recognition_cost;
-        size_t next_pos = 0;
-        for (absl::string_view constraint : query_info->constraints) {
-          const size_t pos = token.value.find(constraint, next_pos);
-          if (pos == std::string::npos) {
-            return TRAVERSE_CONTINUE;
-          }
-          next_pos = pos + 1;
-        }
-        Result result;
-        result.InitializeByTokenAndTypes(token, UNIGRAM);
-        result.wcost += penalty;
-        results->emplace_back(std::move(result));
-        return (results->size() < adjuster.cutoff_threshold())
-                   ? TRAVERSE_CONTINUE
-                   : TRAVERSE_DONE;
-      });
-
-      dictionary_.LookupExact(query_info->query, request.options(), &cb);
-
-      // Rewrite key with the look-up query.
-      asis_result.key = query_info->query;
-    }
-    results->emplace_back(std::move(asis_result));
-  }
+  std::vector<Result> handwriting_results =
+      handwriting_decoder_.Decode(request);
+  absl::c_move(handwriting_results, std::back_inserter(*results));
 }
 
 void DictionaryPredictionAggregator::AggregateUnigramForMixedConversion(
@@ -1248,59 +1184,6 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
       DLOG(FATAL) << "Unexpected request type: " << request_type;
       return 0;
   }
-}
-
-std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
-DictionaryPredictionAggregator::GenerateQueryForHandwriting(
-    const ConversionRequest& request,
-    const commands::SessionCommand::CompositionEvent& composition_event) const {
-  if (composition_event.probability() < 0.0001) {
-    // Skip generating the query info for unconfident composition,
-    // since running reverse conversion is slow.
-    return std::nullopt;
-  }
-  if (absl::StrContains(composition_event.composition_string(), " ")) {
-    // Skip providing converted candidates for queries including white space.
-    return std::nullopt;
-  }
-  if (!Util::ContainsScriptType(composition_event.composition_string(),
-                                Util::HIRAGANA)) {
-    // Skip providing converted candidates for queries not including Hiragana.
-    return std::nullopt;
-  }
-
-  const ConversionRequest request_for_realtime =
-      ConversionRequestBuilder()
-          .SetConversionRequestView(request)
-          .SetRequestType(ConversionRequest::REVERSE_CONVERSION)
-          .SetKey(composition_event.composition_string())
-          .Build();
-
-  HandwritingQueryInfo info;
-  std::vector<Result> results = decoder_.ReverseDecode(request_for_realtime);
-  if (results.empty()) return info;
-
-  Result& result = results.front();
-  info.query = std::move(result.value);
-
-  // b/324976556:
-  // We have to use the segment key instead of the candidate key.
-  // candidate key does not always match segment key for T13N chars.
-  std::string utf8_str;
-  const Utf8AsChars original_chars(result.key);
-  for (const absl::string_view c : original_chars) {
-    if (Util::GetScriptType(c) != Util::HIRAGANA) {
-      absl::StrAppend(&utf8_str, c);
-    } else if (!utf8_str.empty()) {
-      info.constraints.emplace_back(utf8_str);
-      utf8_str.clear();
-    }
-  }
-  if (!utf8_str.empty()) {
-    info.constraints.emplace_back(utf8_str);
-  }
-
-  return info;
 }
 
 // Filter out irrelevant bigrams. For example, we don't want to

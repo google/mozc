@@ -328,6 +328,7 @@ mozc_cc_library(
     ],
     hdrs = ["dictionary_prediction_aggregator.h"],
     deps = [
+        ":handwriting_decoder",
         ":number_decoder",
         ":realtime_decoder",
         ":result",
@@ -732,5 +733,53 @@ mozc_cc_test(
         "//request:options",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "handwriting_decoder",
+    srcs = ["handwriting_decoder.cc"],
+    hdrs = ["handwriting_decoder.h"],
+    deps = [
+        ":realtime_decoder",
+        ":result",
+        "//base:util",
+        "//base/strings:unicode",
+        "//converter:attribute",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_token",
+        "//engine:modules",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
+        "//request:request_util",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "handwriting_decoder_test",
+    srcs = ["handwriting_decoder_test.cc"],
+    deps = [
+        ":handwriting_decoder",
+        ":realtime_decoder",
+        ":result",
+        "//base:util",
+        "//composer",
+        "//composer:table",
+        "//config:config_handler",
+        "//converter:attribute",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_mock",
+        "//dictionary:dictionary_token",
+        "//engine:modules",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//request:conversion_request",
+        "//request:request_test_util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
