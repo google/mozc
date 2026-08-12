@@ -156,6 +156,14 @@ struct Result {
   std::string value;
   std::string description;
   std::string display_value;
+  // Boundary information for realtime conversion.
+  // This will be set only for realtime conversion result candidates.
+  // This contains inner segment size for key and value.
+  // If the candidate key and value are
+  // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
+  // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
+  converter::InnerSegmentBoundary inner_segment_boundary;
+
   // Unified attributes field.
   uint32_t attributes = ::mozc::converter::Attribute::DEFAULT_ATTRIBUTE;
   // Context "insensitive" candidate cost.
@@ -168,31 +176,24 @@ struct Result {
   // separately from the original LM cost to perform rescoring in a rigorous
   // manner.
   int cost = 0;
-  uint16_t lid = 0;
-  uint16_t rid = 0;
-  // Boundary information for realtime conversion.
-  // This will be set only for realtime conversion result candidates.
-  // This contains inner segment size for key and value.
-  // If the candidate key and value are
-  // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
-  // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
-  converter::InnerSegmentBoundary inner_segment_boundary;
-  size_t consumed_key_size = 0;
+  uint32_t consumed_key_size = 0;
   // The total penalty added to this result.
   int penalty = 0;
   // The original cost before rescoring. Used for debugging purpose.
   int cost_before_rescoring = 0;
-  // If removed is true, this result is not used for a candidate.
-  bool removed = false;
   // Confidence score of typing correction. Larger is more confident.
   float typing_correction_score = 0.0;
   // Adjustment for `wcost` made by the typing correction. This value can be
   // zero, positive (penalty) or negative (bonus), and it is added to `wcost`.
   int typing_correction_adjustment = 0;
-
   // The probability of post correction. When zero, this candidate is not
   // handed by the post-correction component.
   float post_correction_prob = 0.0;
+
+  uint16_t lid = 0;
+  uint16_t rid = 0;
+  // If removed is true, this result is not used for a candidate.
+  bool removed = false;
 #ifndef NDEBUG
   std::string log;
 #endif  // NDEBUG

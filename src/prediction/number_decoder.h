@@ -100,17 +100,8 @@ struct State {
         state.big_digit, state.consumed_key_byte_len);
   }
 
-  // Current small digit number in integer (e.g. 2000, <= 9999)
-  int small_digit_num = -1;
   // Current number in string (e.g. 46億, 2億6000万)
   std::string current_num_str;
-  // The current index for the small digit ('digit' in NumberDecoderEntry).
-  // e.g. (small_digit_number : digit index) = (1:1), (10:2), (100:3), (1000:4)
-  int small_digit = -1;
-  // The current index for the big digit
-  // e.g. (digit_str : digit index) = ("万":1), ("億", 2), ...
-  int big_digit = -1;
-  size_t consumed_key_byte_len = 0;
 
   // Key to decode
   absl::string_view key;
@@ -119,16 +110,25 @@ struct State {
   // ["に", "じゅう"] for "にじゅう": "20"
   std::vector<absl::string_view> consumed_keys;
 
+  // Current small digit number in integer (e.g. 2000, <= 9999)
+  int small_digit_num = -1;
+  // The current index for the small digit ('digit' in NumberDecoderEntry).
+  // e.g. (small_digit_number : digit index) = (1:1), (10:2), (100:3), (1000:4)
+  int small_digit = -1;
+  // The current index for the big digit
+  // e.g. (digit_str : digit index) = ("万":1), ("億", 2), ...
+  int big_digit = -1;
   // The digit number
   // 12万(=120000) → 6
   int digit_num = 0;
+  uint32_t consumed_key_byte_len = 0;
 };
 
 }  // namespace number_decoder_internal
 
 struct NumberDecoderResult {
   NumberDecoderResult() = default;
-  NumberDecoderResult(size_t len, std::string c, int digit_num)
+  NumberDecoderResult(uint32_t len, std::string c, int digit_num)
       : consumed_key_byte_len(len),
         candidate(std::move(c)),
         digit_num(digit_num) {}
@@ -139,9 +139,9 @@ struct NumberDecoderResult {
                  result.candidate, result.digit_num);
   }
 
-  size_t consumed_key_byte_len;
   std::string candidate;
-  int digit_num;  // 12万(=120000) → 6
+  uint32_t consumed_key_byte_len = 0;
+  int digit_num = 0;  // 12万(=120000) → 6
 };
 
 constexpr bool operator==(const NumberDecoderResult& lhs,
