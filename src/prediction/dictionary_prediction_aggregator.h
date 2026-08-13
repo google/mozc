@@ -32,8 +32,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <optional>
-#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -42,6 +40,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
+#include "prediction/english_decoder.h"
 #include "prediction/handwriting_decoder.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
@@ -175,14 +174,6 @@ class DictionaryPredictionAggregator
       const ConversionRequest& request, PredictionTypes types,
       size_t lookup_limit, std::vector<Result>* results) const;
 
-  // Performs a custom look up for English words where case-conversion might be
-  // applied to lookup key and/or output results.
-  void GetPredictiveResultsForEnglishKey(
-      const dictionary::DictionaryInterface& dictionary,
-      const ConversionRequest& request, absl::string_view request_key,
-      PredictionTypes types, size_t lookup_limit,
-      std::vector<Result>* results) const;
-
   //////////////////////////////////////////////////////////////////////////
   // Misc functions
 
@@ -236,6 +227,7 @@ class DictionaryPredictionAggregator
   const uint16_t unknown_id_;
   const ZeroQueryDecoder zero_query_decoder_;
   const HandwritingDecoder handwriting_decoder_;
+  const EnglishDecoder english_decoder_;
 };
 
 }  // namespace prediction

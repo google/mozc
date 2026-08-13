@@ -371,7 +371,8 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       zip_code_id_(modules.GetPosMatcher().GetZipcodeId()),
       unknown_id_(modules.GetPosMatcher().GetUnknownId()),
       zero_query_decoder_(modules),
-      handwriting_decoder_(modules, decoder) {}
+      handwriting_decoder_(modules, decoder),
+      english_decoder_(modules) {}
 
 std::vector<Result> DictionaryPredictionAggregator::AggregateResultsForTesting(
     const ConversionRequest& request) const {
@@ -738,27 +739,16 @@ void DictionaryPredictionAggregator::AggregateBigram(
 void DictionaryPredictionAggregator::AggregateEnglish(
     const ConversionRequest& request, std::vector<Result>* results) const {
   DCHECK(results);
-
-  const ResultsSizeAdjuster adjuster(request, results);
-
-  GetPredictiveResultsForEnglishKey(dictionary_, request, request.key(),
-                                    ENGLISH, adjuster.cutoff_threshold(),
-                                    results);
-
-  modules_.GetSupplementalModel().DecodeEnglish(request, *results);
+  std::vector<Result> english_results = english_decoder_.Decode(request);
+  absl::c_move(english_results, std::back_inserter(*results));
 }
 
 void DictionaryPredictionAggregator::AggregateEnglishUsingRawInput(
     const ConversionRequest& request, std::vector<Result>* results) const {
   DCHECK(results);
-
-  const ResultsSizeAdjuster adjuster(request, results);
-
-  GetPredictiveResultsForEnglishKey(dictionary_, request,
-                                    request.composer().GetRawString(), ENGLISH,
-                                    adjuster.cutoff_threshold(), results);
-
-  modules_.GetSupplementalModel().DecodeEnglish(request, *results);
+  std::vector<Result> english_results =
+      english_decoder_.DecodeUsingRawInput(request);
+  absl::c_move(english_results, std::back_inserter(*results));
 }
 
 void DictionaryPredictionAggregator::AggregateNumber(
@@ -910,53 +900,6 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
       types, lookup_limit, request_key.size(), expanded, history_key,
       history_value, zip_code_id_, unknown_id_, results);
   dictionary.LookupPredictive(request_key, request.options(), &callback);
-}
-
-void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
-    const DictionaryInterface& dictionary, const ConversionRequest& request,
-    const absl::string_view request_key, PredictionTypes types,
-    size_t lookup_limit, std::vector<Result>* results) const {
-  const size_t prev_results_size = results->size();
-  const absl::btree_set<std::string> empty_expanded;
-  if (Util::IsUpperAscii(request_key)) {
-    // For upper case key, look up its lower case version and then transform
-    // the results to upper case.
-    std::string key(request_key);
-    Util::LowerString(&key);
-    PredictiveLookupCallback callback(types, lookup_limit, key.size(),
-                                      empty_expanded, zip_code_id_, unknown_id_,
-                                      results);
-    dictionary.LookupPredictive(key, request.options(), &callback);
-    for (size_t i = prev_results_size; i < results->size(); ++i) {
-      Util::UpperString(&(*results)[i].value);
-    }
-  } else if (Util::IsCapitalizedAscii(request_key)) {
-    // For capitalized key, look up its lower case version and then transform
-    // the results to capital.
-    std::string key(request_key);
-    Util::LowerString(&key);
-    PredictiveLookupCallback callback(types, lookup_limit, key.size(),
-                                      empty_expanded, zip_code_id_, unknown_id_,
-                                      results);
-    dictionary.LookupPredictive(key, request.options(), &callback);
-    for (size_t i = prev_results_size; i < results->size(); ++i) {
-      Util::CapitalizeString(&(*results)[i].value);
-    }
-  } else {
-    // For other cases (lower and as-is), just look up directly.
-    PredictiveLookupCallback callback(types, lookup_limit, request_key.size(),
-                                      empty_expanded, zip_code_id_, unknown_id_,
-                                      results);
-    dictionary.LookupPredictive(request_key, request.options(), &callback);
-  }
-  // If input mode is FULL_ASCII, then convert the results to full-width.
-  if (request.composer().GetInputMode() == transliteration::FULL_ASCII) {
-    std::string tmp;
-    for (size_t i = prev_results_size; i < results->size(); ++i) {
-      tmp.assign((*results)[i].value);
-      (*results)[i].value = japanese_util::HalfWidthAsciiToFullWidthAscii(tmp);
-    }
-  }
 }
 
 size_t DictionaryPredictionAggregator::GetCandidateCutoffThreshold(

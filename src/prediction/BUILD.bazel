@@ -328,6 +328,7 @@ mozc_cc_library(
     ],
     hdrs = ["dictionary_prediction_aggregator.h"],
     deps = [
+        ":english_decoder",
         ":handwriting_decoder",
         ":number_decoder",
         ":realtime_decoder",
@@ -689,6 +690,50 @@ mozc_py_binary(
     deps = [
         ":gen_zero_query_util",
         "//build_tools:code_generator_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "english_decoder",
+    srcs = ["english_decoder.cc"],
+    hdrs = ["english_decoder.h"],
+    deps = [
+        ":result",
+        "//base:japanese_util",
+        "//base:number_util",
+        "//base:util",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_token",
+        "//engine:modules",
+        "//request:conversion_request",
+        "//transliteration",
+        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "english_decoder_test",
+    srcs = ["english_decoder_test.cc"],
+    deps = [
+        ":english_decoder",
+        ":result",
+        "//base:util",
+        "//composer",
+        "//composer:table",
+        "//config:config_handler",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_mock",
+        "//dictionary:dictionary_token",
+        "//engine:modules",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//transliteration",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
