@@ -67,7 +67,7 @@ class Segment final {
   // Using ::mozc::converter::Candidate is preferred.
   using Candidate = ::mozc::converter::Candidate;
 
-  Segment() : segment_type_(FREE), pool_(kCandidatesPoolSize) {}
+  Segment() : pool_(kCandidatesPoolSize), segment_type_(FREE) {}
 
   Segment(const Segment& x);
   Segment& operator=(const Segment& x);
@@ -333,7 +333,7 @@ class Segments final {
   using const_range = Range<const_iterator>;
 
   // constructors
-  Segments() : max_history_segments_size_(0), resized_(false), pool_(32) {}
+  Segments() : pool_(32), max_history_segments_size_(0), resized_(false) {}
 
   Segments(const Segments& x);
   Segments& operator=(const Segments& x);

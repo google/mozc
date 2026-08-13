@@ -129,8 +129,8 @@ struct State {
 struct NumberDecoderResult {
   NumberDecoderResult() = default;
   NumberDecoderResult(uint32_t len, std::string c, int digit_num)
-      : consumed_key_byte_len(len),
-        candidate(std::move(c)),
+      : candidate(std::move(c)),
+        consumed_key_byte_len(len),
         digit_num(digit_num) {}
 
   template <typename Sink>
