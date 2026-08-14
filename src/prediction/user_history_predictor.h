@@ -502,7 +502,6 @@ class UserHistoryPredictor : public PredictorInterface {
       const ConversionRequest& request, absl::string_view request_key,
       const UserHistoryPredictor::MatchType mtype, const Entry& entry);
 
-  const dictionary::DictionaryInterface& dictionary_;
   const dictionary::UserDictionaryInterface& user_dictionary_;
   const engine::Modules& modules_;
 

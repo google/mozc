@@ -76,8 +76,6 @@ class DictionaryPredictor : public PredictorInterface {
   friend class DictionaryPredictorTestPeer;
   friend class MockDataAndPredictor;
 
-  // pair: <rid, key_length>
-  using PrefixPenaltyKey = std::pair<uint16_t, int16_t>;
 
   // Constructor for testing
   DictionaryPredictor(
@@ -177,7 +175,6 @@ class DictionaryPredictor : public PredictorInterface {
   void MaybeRescoreResults(const ConversionRequest& request,
                            absl::Span<Result> results) const;
 
-  static void AddRescoringDebugDescription(absl::Span<Result> results);
 
   std::shared_ptr<Result> MaybeGetPreviousTopResult(
       const Result& current_top_result, const ConversionRequest& request) const;

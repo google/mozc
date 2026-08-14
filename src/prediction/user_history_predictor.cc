@@ -68,7 +68,6 @@
 #include "converter/attribute.h"
 #include "converter/inner_segment.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
@@ -317,8 +316,7 @@ UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
 
 UserHistoryPredictor::UserHistoryPredictor(const engine::Modules& modules,
                                            const RealtimeDecoder& decoder)
-    : dictionary_(modules.GetDictionary()),
-      user_dictionary_(modules.GetUserDictionary()),
+    : user_dictionary_(modules.GetUserDictionary()),
       modules_(modules),
       storage_(modules_.GetUserHistoryStorage()),
       revert_cache_(kRevertCacheSize),

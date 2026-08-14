@@ -92,7 +92,6 @@ class DictionaryPredictorTestPeer
 
   PEER_STATIC_METHOD(IsAggressiveSuggestion);
   PEER_STATIC_METHOD(RemoveMissSpelledCandidates);
-  PEER_STATIC_METHOD(AddRescoringDebugDescription);
   PEER_METHOD(GetLMCost);
   PEER_METHOD(RerankAndFilterResults);
   PEER_METHOD(AggregateTypingCorrectedResultsForMixedConversion);

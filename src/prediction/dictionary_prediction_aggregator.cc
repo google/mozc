@@ -75,8 +75,6 @@
 namespace mozc::prediction {
 namespace {
 
-using ::mozc::converter::Attribute;
-
 using ::mozc::commands::Request;
 using ::mozc::composer::TypeCorrectedQuery;
 using ::mozc::converter::Attribute;

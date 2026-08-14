@@ -232,8 +232,7 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
       request.options().max_dictionary_prediction_candidates_size,
       results.size());
 
-  filter::ResultFilter filter(request, pos_matcher_, connector_,
-                              suggestion_filter_);
+  filter::ResultFilter filter(request, connector_, suggestion_filter_);
 
   absl::flat_hash_map<std::string, uint32_t> merged_attributes;
   if (IsDebug(request)) {
@@ -730,39 +729,6 @@ void DictionaryPredictor::MaybeRescoreResults(
   modules_.GetSupplementalModel().RescoreResults(request, results);
 }
 
-// static
-void DictionaryPredictor::AddRescoringDebugDescription(
-    absl::Span<Result> results) {
-  // Calculate the ranking by the original costs. Note: this can be slightly
-  // different from the actual ranking because, when the candidates were
-  // generated, `filter.ShouldRemove()` was applied to the results ordered by
-  // the rescored costs. To get the true original ranking, we need to apply
-  // `filter.ShouldRemove()` to the results ordered by the original cost.
-  // This is just for debugging, so such difference won't matter.
-  std::vector<const Result*> cands;
-  cands.reserve(results.size());
-  int diff = 0;
-  for (const auto& result : results) {
-    diff += std::abs(result.cost - result.cost_before_rescoring);
-    cands.emplace_back(&result);
-  }
-  // No rescoring happened.
-  if (diff == 0) {
-    return;
-  }
-  std::sort(cands.begin(), cands.end(), [](const auto* lhs, const auto* rhs) {
-    return lhs->cost_before_rescoring < rhs->cost_before_rescoring;
-  });
-  absl::flat_hash_map<const Result*, size_t> orig_rank;
-  for (size_t i = 0; i < cands.size(); ++i) {
-    orig_rank[cands[i]] = i + 1;
-  }
-  // Populate the debug description.
-  for (size_t i = 0; i < results.size(); ++i) {
-    const size_t rank = i + 1;
-    AppendDescription(results[i], orig_rank[&results[i]], "→", rank);
-  }
-}
 
 std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
     const Result& current_top_result, const ConversionRequest& request) const {

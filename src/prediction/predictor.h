@@ -38,7 +38,6 @@
 #include "absl/types/span.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
-#include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/realtime_decoder.h"

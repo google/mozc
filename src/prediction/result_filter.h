@@ -38,7 +38,6 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "converter/connector.h"
-#include "dictionary/pos_matcher.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
@@ -48,7 +47,7 @@ namespace mozc::prediction::filter {
 class ResultFilter {
  public:
   ResultFilter(
-      const ConversionRequest& request, dictionary::PosMatcher pos_matcher,
+      const ConversionRequest& request,
       const Connector& connector ABSL_ATTRIBUTE_LIFETIME_BOUND,
       const SuggestionFilter& suggestion_filter ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
@@ -76,10 +75,8 @@ class ResultFilter {
 
  private:
   absl::string_view request_key_;
-  std::string history_key_;
   std::string history_value_;
   const size_t request_key_len_;
-  const dictionary::PosMatcher pos_matcher_;
   const Connector& connector_;
   const SuggestionFilter& suggestion_filter_;
   const bool is_mixed_conversion_;

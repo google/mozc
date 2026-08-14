@@ -44,7 +44,6 @@
 #include "base/util.h"
 #include "converter/attribute.h"
 #include "converter/connector.h"
-#include "dictionary/pos_matcher.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
@@ -89,14 +88,11 @@ bool MaybeRedundant(const Result& reference_result,
 }  // namespace
 
 ResultFilter::ResultFilter(const ConversionRequest& request,
-                           dictionary::PosMatcher pos_matcher,
                            const Connector& connector,
                            const SuggestionFilter& suggestion_filter)
     : request_key_(request.key()),
-      history_key_(request.converter_history_key(1)),
       history_value_(request.converter_history_value(1)),
       request_key_len_(Util::CharsLen(request_key_)),
-      pos_matcher_(pos_matcher),
       connector_(connector),
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(request.request().mixed_conversion()),
