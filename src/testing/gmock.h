@@ -42,9 +42,18 @@ MATCHER(IsOkStatus, negation ? "is not OK" : "is OK") { return arg.ok(); }
 
 #define ASSERT_OK(expr) ASSERT_THAT(expr, ::mozc::IsOkStatus())
 #define EXPECT_OK(expr) EXPECT_THAT(expr, ::mozc::IsOkStatus())
-#define ASSERT_OK_AND_ASSIGN(var, expr) \
-  ASSERT_OK(expr);                      \
-  var = std::move(expr).value()
+
+#define MOZC_GMOCK_CONCAT_IMPL_(x, y) x##y
+#define MOZC_GMOCK_CONCAT_(x, y) MOZC_GMOCK_CONCAT_IMPL_(x, y)
+
+#define MOZC_ASSERT_OK_AND_ASSIGN_IMPL_(status_or, var, expr) \
+  auto status_or = (expr);                                    \
+  ASSERT_OK(status_or);                                       \
+  var = *std::move(status_or)
+
+#define ASSERT_OK_AND_ASSIGN(var, ...) \
+  MOZC_ASSERT_OK_AND_ASSIGN_IMPL_(     \
+      MOZC_GMOCK_CONCAT_(_status_or_value, __LINE__), var, (__VA_ARGS__))
 
 #endif  // EXPECT_OK
 
