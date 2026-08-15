@@ -40,10 +40,6 @@
 
 namespace mozc {
 
-namespace composer {
-class Composer;
-}  // namespace composer
-
 class ConverterInterface {
  public:
   ConverterInterface(const ConverterInterface&) = delete;

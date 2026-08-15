@@ -1421,74 +1421,6 @@ void ImmutableConverter::Resegment(const Segments& segments,
   }
 }
 
-// Single segment conversion results should be set to |segments|.
-void ImmutableConverter::InsertFirstSegmentToCandidates(
-    const ConversionOptions& options, Segments* segments,
-    const Lattice& lattice, absl::Span<const uint16_t> group,
-    size_t max_candidates_size, bool allow_exact) const {
-  const size_t only_first_segment_candidate_pos =
-      segments->conversion_segment(0).candidates_size();
-  InsertCandidates(options, segments, lattice, group, max_candidates_size,
-                   ONLY_FIRST_SEGMENT);
-  // Note that inserted candidates might consume the entire key.
-  // e.g. key: "なのは", value: "ナノは"
-  // Erase them later.
-  if (segments->conversion_segment(0).candidates_size() <=
-      only_first_segment_candidate_pos) {
-    return;
-  }
-
-  // Set new costs for only first segment candidates
-  // Basically, only first segment candidates cost is smaller
-  // than that of single segment conversion results.
-  // For example, the cost of "私の" is smaller than "私の名前は".
-  // To merge these two categories of results, we will add the
-  // cost penalty based on the cost diff.
-  const Segment& first_segment = segments->conversion_segment(0);
-  const int base_cost_diff = std::max(
-      0, (first_segment.candidate(0).cost -
-          first_segment.candidate(only_first_segment_candidate_pos).cost));
-  const int base_wcost_diff = std::max(
-      0, (first_segment.candidate(0).wcost -
-          first_segment.candidate(only_first_segment_candidate_pos).wcost));
-  constexpr int kOnlyFirstSegmentOffset = 300;
-
-  if (allow_exact) {
-    for (size_t i = only_first_segment_candidate_pos;
-         i < first_segment.candidates_size(); ++i) {
-      Candidate* candidate =
-          segments->mutable_conversion_segment(0)->mutable_candidate(i);
-      if (candidate->key.size() < first_segment.key().size()) {
-        candidate->cost += (base_cost_diff + kOnlyFirstSegmentOffset);
-        candidate->wcost += (base_wcost_diff + kOnlyFirstSegmentOffset);
-        DCHECK(!(candidate->attributes & Attribute::PARTIALLY_KEY_CONSUMED));
-        candidate->attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
-      }
-      candidate->consumed_key_size = Util::CharsLen(candidate->key);
-    }
-  } else {
-    for (size_t i = only_first_segment_candidate_pos;
-         i < first_segment.candidates_size();) {
-      Candidate* candidate =
-          segments->mutable_conversion_segment(0)->mutable_candidate(i);
-      if (candidate->key.size() >= first_segment.key().size()) {
-        segments->mutable_conversion_segment(0)->erase_candidate(i);
-        // If the size of candidate's key is greater than or
-        // equal to 1st segment's key,
-        // it means that the result consumes the entire key.
-        // Such results are not appropriate for PARTIALLY_KEY_CONSUMED so erase
-        // it.
-        continue;
-      }
-      candidate->cost += (base_cost_diff + kOnlyFirstSegmentOffset);
-      candidate->wcost += (base_wcost_diff + kOnlyFirstSegmentOffset);
-      DCHECK(!(candidate->attributes & Attribute::PARTIALLY_KEY_CONSUMED));
-      candidate->attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
-      candidate->consumed_key_size = Util::CharsLen(candidate->key);
-      ++i;
-    }
-  }
-}
 
 bool ImmutableConverter::IsSegmentEndNode(const ConversionOptions& options,
                                           const Segments& segments,
@@ -1648,9 +1580,6 @@ void ImmutableConverter::InsertCandidatesImpl(
       segment->set_segment_type(Segment::FIXED_VALUE);
     }
 
-    if (type == ONLY_FIRST_SEGMENT) {
-      break;
-    }
     begin_pos = std::string::npos;
     prev = node;
   }

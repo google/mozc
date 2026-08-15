@@ -114,8 +114,6 @@ class Candidate {
   // (cost without transition cost between left/right boundaries)
   // Cost of only transitions (cost without word cost adjacent context)
   int32_t structure_cost = 0;
-  // The original cost before rescoring. Used for debugging purpose.
-  int32_t cost_before_rescoring = 0;
 
   // Attributes of this candidate. Can set multiple attributes
   // defined in enum |Attribute|.

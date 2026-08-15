@@ -219,11 +219,6 @@ class Converter final : public ConverterInterface {
   void TrimCandidates(const ConversionRequest& request,
                       Segments* segments) const;
 
-  // Returns the substring of |str|. This substring consists of similar script
-  // type and you can use it as preceding text for conversion.
-  bool GetLastConnectivePart(absl::string_view preceding_text, std::string* key,
-                             std::string* value, uint16_t* id) const;
-
   // Gets the reading of `text`.
   // If `multi_segment` is true, `text` can consist of multiple segments.
   // Otherwise, only allows `text` to be one dictionary entry.

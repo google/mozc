@@ -73,7 +73,6 @@ class ImmutableConverter : public ImmutableConverterInterface {
   enum InsertCandidatesType {
     MULTI_SEGMENTS,      // Normal conversion ("私の|名前は|中野です")
     SINGLE_SEGMENT,      // Realtime conversion ("私の名前は中野です")
-    ONLY_FIRST_SEGMENT,  // Insert only first segment ("私の")
     // Insert only first segment for n-best path
     // ここでは着物を脱ぐ
     // ここで履物を脱ぐ
@@ -124,15 +123,6 @@ class ImmutableConverter : public ImmutableConverterInterface {
                                  Lattice* lattice) const;
 
   // TODO(toshiyuki): Change parameter order for mutable |segments|.
-
-  // Inserts first segment from conversion result to candidates.
-  // Costs will be modified using the existing candidates.
-  void InsertFirstSegmentToCandidates(const ConversionOptions& options,
-                                      Segments* segments,
-                                      const Lattice& lattice,
-                                      absl::Span<const uint16_t> group,
-                                      size_t max_candidates_size,
-                                      bool allow_exact) const;
 
   void InsertCandidates(const ConversionOptions& options, Segments* segments,
                         const Lattice& lattice,
