@@ -143,13 +143,9 @@ const ConversionPreferences& EngineConverter::conversion_preferences() const {
   return conversion_preferences_;
 }
 
-bool EngineConverter::Convert(const composer::Composer& composer) {
-  return ConvertWithPreferences(composer, conversion_preferences_);
-}
-
-bool EngineConverter::ConvertWithPreferences(
-    const composer::Composer& composer,
-    const ConversionPreferences& preferences) {
+bool EngineConverter::Convert(const composer::Composer& composer,
+                              const commands::Context& context,
+                              const ConversionPreferences& preferences) {
   DCHECK(CheckState(COMPOSITION | SUGGESTION | CONVERSION));
 
   DCHECK(request_);
@@ -161,6 +157,7 @@ bool EngineConverter::ConvertWithPreferences(
       ConversionRequestBuilder()
           .SetComposer(composer)
           .SetRequestView(*request_)
+          .SetContextView(context)
           .SetConfigView(*config_)
           .SetOptions(std::move(options))
           .Build();
@@ -488,13 +485,8 @@ bool EngineConverter::SwitchKanaType(const composer::Composer& composer) {
 }
 
 bool EngineConverter::Suggest(const composer::Composer& composer,
-                              const commands::Context& context) {
-  return SuggestWithPreferences(composer, context, conversion_preferences_);
-}
-
-bool EngineConverter::SuggestWithPreferences(
-    const composer::Composer& composer, const commands::Context& context,
-    const ConversionPreferences& preferences) {
+                              const commands::Context& context,
+                              const ConversionPreferences& preferences) {
   DCHECK(CheckState(COMPOSITION | SUGGESTION));
   candidate_list_visible_ = false;
 
@@ -609,18 +601,14 @@ bool EngineConverter::SuggestWithPreferences(
   return true;
 }
 
-bool EngineConverter::Predict(const composer::Composer& composer) {
-  return PredictWithPreferences(composer, conversion_preferences_);
-}
-
 bool EngineConverter::IsEmptySegment(const Segment& segment) const {
   return ((segment.candidates_size() == 0) &&
           (segment.meta_candidates_size() == 0));
 }
 
-bool EngineConverter::PredictWithPreferences(
-    const composer::Composer& composer,
-    const ConversionPreferences& preferences) {
+bool EngineConverter::Predict(const composer::Composer& composer,
+                              const commands::Context& context,
+                              const ConversionPreferences& preferences) {
   // TODO(komatsu): DCHECK should be
   // DCHECK(CheckState(COMPOSITION | SUGGESTION | PREDICTION));
   DCHECK(CheckState(COMPOSITION | SUGGESTION | CONVERSION | PREDICTION));
@@ -637,6 +625,7 @@ bool EngineConverter::PredictWithPreferences(
       ConversionRequestBuilder()
           .SetComposer(composer)
           .SetRequestView(*request_)
+          .SetContextView(context)
           .SetConfigView(*config_)
           .SetOptions(std::move(options))
           .Build();
@@ -689,7 +678,7 @@ void EngineConverter::MaybeExpandPrediction(
   ResetResult();
 
   const size_t previous_index = candidate_list_.focused_index();
-  if (!PredictWithPreferences(composer, conversion_preferences_)) {
+  if (!Predict(composer, conversion_preferences_)) {
     return;
   }
 

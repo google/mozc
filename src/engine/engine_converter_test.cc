@@ -2373,8 +2373,8 @@ TEST_F(EngineConverterTest, SuppressSuggestionWhenNotRequested) {
   ConversionPreferences conversion_preferences =
       converter.conversion_preferences();
   conversion_preferences.request_suggestion = false;
-  EXPECT_FALSE(converter.SuggestWithPreferences(
-      *composer_, Context::default_instance(), conversion_preferences));
+  EXPECT_FALSE(converter.Suggest(*composer_, Context::default_instance(),
+                                 conversion_preferences));
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_FALSE(converter.IsActive());
 }
@@ -3917,6 +3917,47 @@ TEST_F(EngineConverterTest, CommitContext) {
 
   EXPECT_CALL(*mock_converter, CommitContext(_)).WillOnce(Return());
   converter.CommitContext(*composer_, Context::default_instance());
+}
+
+TEST_F(EngineConverterTest, ConvertWithContext) {
+  auto mock_converter = std::make_shared<MockConverter>();
+  EngineConverter converter(mock_converter, request_, config_);
+
+  commands::Context context;
+  context.set_preceding_text("left_context");
+  context.set_following_text("right_context");
+
+  EXPECT_CALL(*mock_converter, StartConversion(_, _))
+      .WillOnce([&](const ConversionRequest& req, Segments* segments) {
+        EXPECT_EQ(req.context().preceding_text(), "left_context");
+        EXPECT_EQ(req.context().following_text(), "right_context");
+        SetAiueo(segments);
+        return true;
+      });
+
+  composer_->InsertCharacterPreedit(kChars_Aiueo);
+  EXPECT_TRUE(converter.Convert(*composer_, context));
+}
+
+TEST_F(EngineConverterTest, PredictWithContext) {
+  auto mock_converter = std::make_shared<MockConverter>();
+  EngineConverter converter(mock_converter, request_, config_);
+
+  commands::Context context;
+  context.set_preceding_text("left_context");
+  context.set_following_text("right_context");
+
+  EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .WillOnce([&](const ConversionRequest& req,
+                    const Segment& previous_suggestions, Segments* segments) {
+        EXPECT_EQ(req.context().preceding_text(), "left_context");
+        EXPECT_EQ(req.context().following_text(), "right_context");
+        SetAiueo(segments);
+        return true;
+      });
+
+  composer_->InsertCharacterPreedit(kChars_Aiueo);
+  EXPECT_TRUE(converter.Predict(*composer_, context));
 }
 
 }  // namespace engine

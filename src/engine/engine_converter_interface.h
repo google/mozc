@@ -89,11 +89,23 @@ class EngineConverterInterface {
   // conversion.
   virtual const ConversionPreferences& conversion_preferences() const = 0;
 
-  // Send a conversion request to the converter.
-  virtual bool Convert(const composer::Composer& composer) = 0;
-  virtual bool ConvertWithPreferences(
-      const composer::Composer& composer,
-      const ConversionPreferences& preferences) = 0;
+  // Sends a conversion request to the converter.
+  virtual bool Convert(const composer::Composer& composer,
+                       const commands::Context& context,
+                       const ConversionPreferences& preferences) = 0;
+  virtual bool Convert(const composer::Composer& composer,
+                       const commands::Context& context) {
+    return Convert(composer, context, conversion_preferences());
+  }
+  virtual bool Convert(const composer::Composer& composer,
+                       const ConversionPreferences& preferences) {
+    return Convert(composer, commands::Context::default_instance(),
+                   preferences);
+  }
+  virtual bool Convert(const composer::Composer& composer) {
+    return Convert(composer, commands::Context::default_instance(),
+                   conversion_preferences());
+  }
 
   // Get reading text (e.g. from "猫" to "ねこ").
   virtual bool GetReadingText(absl::string_view str, std::string* reading) = 0;
@@ -111,18 +123,41 @@ class EngineConverterInterface {
   // half-width Katakana by rotation.
   virtual bool SwitchKanaType(const composer::Composer& composer) = 0;
 
-  // Send a suggestion request to the converter.
+  // Sends a suggestion request to the converter.
   virtual bool Suggest(const composer::Composer& composer,
-                       const commands::Context& context) = 0;
-  virtual bool SuggestWithPreferences(
-      const composer::Composer& composer, const commands::Context& context,
-      const ConversionPreferences& preferences) = 0;
+                       const commands::Context& context,
+                       const ConversionPreferences& preferences) = 0;
+  virtual bool Suggest(const composer::Composer& composer,
+                       const commands::Context& context) {
+    return Suggest(composer, context, conversion_preferences());
+  }
+  virtual bool Suggest(const composer::Composer& composer,
+                       const ConversionPreferences& preferences) {
+    return Suggest(composer, commands::Context::default_instance(),
+                   preferences);
+  }
+  virtual bool Suggest(const composer::Composer& composer) {
+    return Suggest(composer, commands::Context::default_instance(),
+                   conversion_preferences());
+  }
 
-  // Send a prediction request to the converter.
-  virtual bool Predict(const composer::Composer& composer) = 0;
-  virtual bool PredictWithPreferences(
-      const composer::Composer& composer,
-      const ConversionPreferences& preferences) = 0;
+  // Sends a prediction request to the converter.
+  virtual bool Predict(const composer::Composer& composer,
+                       const commands::Context& context,
+                       const ConversionPreferences& preferences) = 0;
+  virtual bool Predict(const composer::Composer& composer,
+                       const commands::Context& context) {
+    return Predict(composer, context, conversion_preferences());
+  }
+  virtual bool Predict(const composer::Composer& composer,
+                       const ConversionPreferences& preferences) {
+    return Predict(composer, commands::Context::default_instance(),
+                   preferences);
+  }
+  virtual bool Predict(const composer::Composer& composer) {
+    return Predict(composer, commands::Context::default_instance(),
+                   conversion_preferences());
+  }
 
   // Clear conversion segments, but keep the context.
   virtual void Cancel() = 0;

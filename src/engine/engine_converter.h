@@ -77,10 +77,11 @@ class EngineConverter : public EngineConverterInterface {
   const ConversionPreferences& conversion_preferences() const override;
 
   // Sends a conversion request to the converter.
-  bool Convert(const composer::Composer& composer) override;
-  bool ConvertWithPreferences(
-      const composer::Composer& composer,
-      const ConversionPreferences& preferences) override;
+  // Brings base class overloads into scope to avoid name hiding.
+  using EngineConverterInterface::Convert;
+  bool Convert(const composer::Composer& composer,
+               const commands::Context& context,
+               const ConversionPreferences& preferences) override;
 
   // Gets reading text (e.g. from "猫" to "ねこ").
   bool GetReadingText(absl::string_view source_text,
@@ -100,17 +101,18 @@ class EngineConverter : public EngineConverterInterface {
   bool SwitchKanaType(const composer::Composer& composer) override;
 
   // Sends a suggestion request to the converter.
+  // Brings base class overloads into scope to avoid name hiding.
+  using EngineConverterInterface::Suggest;
   bool Suggest(const composer::Composer& composer,
-               const commands::Context& context) override;
-  bool SuggestWithPreferences(
-      const composer::Composer& composer, const commands::Context& context,
-      const ConversionPreferences& preferences) override;
+               const commands::Context& context,
+               const ConversionPreferences& preferences) override;
 
   // Sends a prediction request to the converter.
-  bool Predict(const composer::Composer& composer) override;
-  bool PredictWithPreferences(
-      const composer::Composer& composer,
-      const ConversionPreferences& preferences) override;
+  // Brings base class overloads into scope to avoid name hiding.
+  using EngineConverterInterface::Predict;
+  bool Predict(const composer::Composer& composer,
+               const commands::Context& context,
+               const ConversionPreferences& preferences) override;
 
   // Clears conversion segments, but keep the context.
   void Cancel() override;
