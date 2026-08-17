@@ -521,6 +521,7 @@ genrule(
     # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
     local = True,
     tags = ["manual"],
+    target_compatible_with = ["@platforms//os:macos"],
     tools = [":tweak_installer_files"],
 )
 
@@ -571,6 +572,7 @@ genrule(
     local = True,
     # TODO(b/269007577): version_file, auto_updater_dir and build_type should be supported.
     tags = ["manual"],
+    target_compatible_with = ["@platforms//os:macos"],
     tools = [":build_package"],
     visibility = [
         "//:__pkg__",
@@ -599,6 +601,7 @@ genrule(
     # Use local execution instead of sandbox because it uses `hdiutil` that accesses to /Volumes/.
     local = True,
     tags = ["manual"],
+    target_compatible_with = ["@platforms//os:macos"],
     tools = ["//build_tools:build_diskimage_mac"],
 )
 
@@ -624,4 +627,5 @@ genrule(
     # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
     local = True,
     tags = ["manual"],
+    target_compatible_with = ["@platforms//os:macos"],
 )
