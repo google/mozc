@@ -36,10 +36,8 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/util.h"
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
+#include "prediction/dictionary_decoder.h"
 #include "prediction/english_decoder.h"
 #include "prediction/handwriting_decoder.h"
 #include "prediction/realtime_decoder.h"
@@ -151,38 +149,11 @@ class DictionaryPredictionAggregator
 
   //////////////////////////////////////////////////////////////////////////
   // Sub aggregators called inside the top Aggregators.
-  void AggregateUnigramForMixedConversion(const ConversionRequest& request,
-                                          std::vector<Result>* results) const;
-
-  void AggregateUnigramForDictionary(const ConversionRequest& request,
-                                     std::vector<Result>* results) const;
-
   void AggregateUnigramForHandwriting(const ConversionRequest& request,
                                       std::vector<Result>* results) const;
 
   //////////////////////////////////////////////////////////////////////////
-  // GetPredictiveResultsForXXX functions which are primitive utility
-  // functions to get results from dictionary::DictionaryInterface.
-  void GetPredictiveResultsForUnigram(
-      const dictionary::DictionaryInterface& dictionary,
-      const ConversionRequest& request, PredictionTypes types,
-      size_t lookup_limit, std::vector<Result>* results) const;
-
-  void GetPredictiveResultsForBigram(
-      const dictionary::DictionaryInterface& dictionary,
-      absl::string_view history_key, absl::string_view history_value,
-      const ConversionRequest& request, PredictionTypes types,
-      size_t lookup_limit, std::vector<Result>* results) const;
-
-  //////////////////////////////////////////////////////////////////////////
   // Misc functions
-
-  // Changes the prediction type for irrelevant bigram candidate.
-  void CheckBigramResult(const dictionary::Token& history_token,
-                         Util::ScriptType history_ctype,
-                         Util::ScriptType last_history_ctype,
-                         const ConversionRequest& request,
-                         Result* result) const;
 
   void MaybePopulateTypingCorrectionPenalty(const ConversionRequest& request,
                                             std::vector<Result>* results) const;
@@ -215,18 +186,12 @@ class DictionaryPredictionAggregator
 
   // Test peer to access private methods
   friend class DictionaryPredictionAggregatorTestPeer;
-  friend class ResultsSizeAdjuster;
 
   const engine::Modules& modules_;
   const RealtimeDecoder& decoder_;
-  const dictionary::DictionaryInterface& dictionary_;
-  const dictionary::DictionaryInterface& suffix_dictionary_;
-  const uint16_t counter_suffix_word_id_;
-  const uint16_t kanji_number_id_;
-  const uint16_t zip_code_id_;
-  const uint16_t unknown_id_;
-  const ZeroQueryDecoder zero_query_decoder_;
+  const DictionaryDecoder dictionary_decoder_;
   const HandwritingDecoder handwriting_decoder_;
+  const ZeroQueryDecoder zero_query_decoder_;
   const EnglishDecoder english_decoder_;
 };
 

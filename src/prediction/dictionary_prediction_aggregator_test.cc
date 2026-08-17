@@ -99,7 +99,6 @@ class DictionaryPredictionAggregatorTestPeer {
   DEFINE_PEER(AggregateRealtime);
   DEFINE_PEER(AggregateZeroQuery);
   DEFINE_PEER(AggregateEnglish);
-  DEFINE_PEER(AggregateUnigramForMixedConversion);
   DEFINE_PEER(GetRealtimeCandidateMaxSize);
 
 #undef DEFINE_PEER
@@ -1067,7 +1066,8 @@ TEST_F(DictionaryPredictionAggregatorTest,
     std::vector<Result> results;
     const ConversionRequest convreq = CreatePredictionConversionRequest(
         kHiraganaA, false /* init_composer */);
-    aggregator.AggregateUnigramForMixedConversion(convreq, &results);
+    int min_unigram_key_len = 0;
+    aggregator.AggregateUnigram(convreq, &results, &min_unigram_key_len);
 
     // Check if "aaa" is not filtered.
     auto iter =
@@ -1094,7 +1094,8 @@ TEST_F(DictionaryPredictionAggregatorTest,
     std::vector<Result> results;
     const ConversionRequest convreq = CreatePredictionConversionRequest(
         kHiraganaAA, false /* init_composer */);
-    aggregator.AggregateUnigramForMixedConversion(convreq, &results);
+    int min_unigram_key_len = 0;
+    aggregator.AggregateUnigram(convreq, &results, &min_unigram_key_len);
 
     // Check if "aaa" is not found as its key is あ.
     auto iter =
