@@ -527,7 +527,10 @@ genrule(
 # .keystone_install stored in the installer .dmg file.
 genrule(
     name = "keystone_install",
-    srcs = ["//mac/installer:.keystone_install_template"],
+    srcs = mozc_select(
+        default = ["//mac/installer:.keystone_install_template"],
+        oss = ["//mac/installer:.keystone_install_template"],
+    ),
     outs = [".keystone_install"],
     cmd = " ".join([
         "$(location" +

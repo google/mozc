@@ -33,6 +33,7 @@ package(default_visibility = ["//mac:__subpackages__"])
 
 exports_files(
     srcs = [
+        ".keystone_install_template",
         "InstallerSections.plist",
         "distribution.xml",
         "postflight_template.sh",
