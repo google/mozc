@@ -122,7 +122,7 @@ def main():
     if args.codesign_identity == '-':
       shutil.copyfile('package.pkg', output_path)
     else:
-      keychain_path = os.path.join(
+      keychain_path = os.path.join(  # pyrefly: ignore[no-matching-overload]
           os.getenv('HOME'), 'Library/Keychains', args.keychain
       )
       codesign_commands = [
