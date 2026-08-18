@@ -29,6 +29,7 @@
 
 #include "converter/converter.h"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -2625,6 +2626,7 @@ TEST_F(ConverterTest, ApplyUserHistoryToConversionSingleSegmentTest) {
   results[0].rid = 200;
   results[0].cost = 500;
   results[0].wcost = 300;
+  results[0].attributes = Attribute::USER_HISTORY_PREDICTION;
 
   results[1].key = "きょう";
   results[1].value = "今日";
@@ -2632,6 +2634,7 @@ TEST_F(ConverterTest, ApplyUserHistoryToConversionSingleSegmentTest) {
   results[1].rid = 201;
   results[1].cost = 600;
   results[1].wcost = 400;
+  results[1].attributes = Attribute::USER_HISTORY_PREDICTION;
 
   EXPECT_CALL(*mock_predictor, Convert(_)).WillRepeatedly(Return(results));
 
@@ -2873,6 +2876,269 @@ TEST_F(ConverterTest, ApplyUserHistoryToConversionE2ETest) {
     EXPECT_TRUE(converter->StartConversion(convreq, &segments));
     ASSERT_GT(segments.conversion_segments_size(), 0);
   }
+}
+
+TEST_F(ConverterTest, ApplyPredictionToConversionMergedResultsTest) {
+  auto mock_predictor = std::make_unique<MockPredictor>();
+  auto mock_rewriter = std::make_unique<MockRewriter>();
+
+  // UserHistory returns "本日" and "きょう".
+  std::vector<prediction::Result> history_results(2);
+  history_results[0].key = "きょう";
+  history_results[0].value = "本日";
+  history_results[0].lid = 100;
+  history_results[0].rid = 200;
+  history_results[0].cost = 500;
+  history_results[0].wcost = 300;
+  history_results[0].attributes = Attribute::USER_HISTORY_PREDICTION;
+  history_results[1].key = "きょう";
+  history_results[1].value = "きょう";
+  history_results[1].attributes = Attribute::USER_HISTORY_PREDICTION;
+
+  EXPECT_CALL(*mock_predictor, Convert(_))
+      .WillRepeatedly(Return(history_results));
+
+  // PostCorrect returns "本日" (duplicate of history[0]) and "今宵".
+  class TestSupplementalModel : public engine::MockSupplementalModel {
+   public:
+    bool IsAvailable() const override { return true; }
+    void PostCorrect(const ConversionRequest& request,
+                     std::vector<prediction::Result>& results) const override {
+      results.clear();
+      prediction::Result r1;
+      r1.key = "きょう";
+      r1.value = "本日";  // Duplicate of history_results[0]
+      results.push_back(r1);
+
+      prediction::Result r2;
+      r2.key = "きょう";
+      r2.value = "今宵";
+      results.push_back(r2);
+    }
+  };
+
+  auto supplemental_model =
+      std::make_unique<::testing::NiceMock<TestSupplementalModel>>();
+
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<engine::Modules> modules,
+      engine::ModulesPresetBuilder()
+          .PresetSupplementalModel(std::move(supplemental_model))
+          .Build(std::make_unique<testing::MockDataManager>()));
+
+  auto converter = std::make_unique<Converter>(
+      std::move(modules),
+      [](const engine::Modules& modules) {
+        return std::make_unique<ImmutableConverter>(modules);
+      },
+      [&mock_predictor](
+          const engine::Modules& modules, const ConverterInterface& converter,
+          const ImmutableConverterInterface& immutable_converter) {
+        return std::move(mock_predictor);
+      },
+      [&mock_rewriter](const engine::Modules& modules) {
+        return std::move(mock_rewriter);
+      });
+
+  commands::Request request_proto;
+  request_proto.mutable_decoder_experiment_params()
+      ->set_disable_legacy_rewriter_in_all_conversion_mode(
+          RewriterInterface::kDisableUserSegmentHistory |
+          RewriterInterface::kDisableUserBoundaryHistory |
+          RewriterInterface::kDisableCollocation);
+
+  composer::Composer composer;
+  composer.SetPreeditTextForTestOnly("きょう");
+  const ConversionRequest convreq =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequest(request_proto)
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+
+  Segments segments;
+  EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  const Segment& seg = segments.conversion_segment(0);
+  ASSERT_GE(seg.candidates_size(), 3);
+
+  // Position 0: "本日" (User history prediction has higher priority)
+  EXPECT_EQ(seg.candidate(0).value, "本日");
+  EXPECT_TRUE(seg.candidate(0).attributes & Attribute::USER_HISTORY_PREDICTION);
+  // Position 1: "きょう" (2nd user history candidate)
+  EXPECT_EQ(seg.candidate(1).value, "きょう");
+  // Position 2: "今宵" (PostCorrection result; duplicate "本日" was skipped)
+  EXPECT_EQ(seg.candidate(2).value, "今宵");
+
+  // Verify "本日" only appears once among top 3 candidates.
+  int count_honjitsu = 0;
+  for (size_t i = 0; i < std::min<size_t>(seg.candidates_size(), 3); ++i) {
+    if (seg.candidate(i).value == "本日") {
+      ++count_honjitsu;
+    }
+  }
+  EXPECT_EQ(count_honjitsu, 1);
+}
+
+TEST_F(ConverterTest, ApplyPredictionToConversionWeakHistoryDemotedTest) {
+  auto mock_predictor = std::make_unique<MockPredictor>();
+  auto mock_rewriter = std::make_unique<MockRewriter>();
+
+  std::vector<prediction::Result> history_results(1);
+  history_results[0].key = "きょう";
+  history_results[0].value = "本日";
+  history_results[0].attributes = Attribute::WEAK_USER_HISTORY_PREDICTION;
+
+  EXPECT_CALL(*mock_predictor, Convert(_))
+      .WillRepeatedly(Return(history_results));
+
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<engine::Modules> modules,
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>()));
+
+  auto converter = std::make_unique<Converter>(
+      std::move(modules),
+      [](const engine::Modules& modules) {
+        return std::make_unique<ImmutableConverter>(modules);
+      },
+      [&mock_predictor](
+          const engine::Modules& modules, const ConverterInterface& converter,
+          const ImmutableConverterInterface& immutable_converter) {
+        return std::move(mock_predictor);
+      },
+      [&mock_rewriter](const engine::Modules& modules) {
+        return std::move(mock_rewriter);
+      });
+
+  commands::Request request_proto;
+  request_proto.mutable_decoder_experiment_params()
+      ->set_disable_legacy_rewriter_in_all_conversion_mode(
+          RewriterInterface::kDisableUserSegmentHistory |
+          RewriterInterface::kDisableUserBoundaryHistory);
+
+  composer::Composer composer;
+  composer.SetPreeditTextForTestOnly("きょう");
+  const ConversionRequest convreq =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequest(request_proto)
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+
+  Segments segments;
+  EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  const Segment& seg = segments.conversion_segment(0);
+  ASSERT_GE(seg.candidates_size(), 2);
+  // Weak history candidate should not override default Viterbi result at pos 0.
+  EXPECT_NE(seg.candidate(0).value, "本日");
+  // Weak history candidate is demoted to subsequent candidate positions.
+  EXPECT_EQ(seg.candidate(1).value, "本日");
+  EXPECT_TRUE(seg.candidate(1).attributes &
+              Attribute::WEAK_USER_HISTORY_PREDICTION);
+}
+
+TEST_F(ConverterTest,
+       ApplyPredictionToConversionHandwritingModePostCorrectionSkippedTest) {
+  class TestSupplementalModel : public engine::MockSupplementalModel {
+   public:
+    bool IsAvailable() const override { return true; }
+    void PostCorrect(const ConversionRequest& request,
+                     std::vector<prediction::Result>& results) const override {
+      if (!results.empty()) {
+        results.front().value = "今宵";
+      }
+    }
+  };
+
+  auto supplemental_model =
+      std::make_unique<::testing::NiceMock<TestSupplementalModel>>();
+
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<engine::Modules> modules,
+      engine::ModulesPresetBuilder()
+          .PresetSupplementalModel(std::move(supplemental_model))
+          .Build(std::make_unique<testing::MockDataManager>()));
+
+  auto rewriter = std::make_unique<Rewriter>(*modules);
+  std::unique_ptr<Converter> converter = CreateConverter(
+      std::move(modules), std::move(rewriter), DEFAULT_PREDICTOR);
+
+  commands::Request request_proto;
+  request_proto.set_is_handwriting(true);
+  request_proto.mutable_decoder_experiment_params()
+      ->set_disable_legacy_rewriter_in_all_conversion_mode(
+          RewriterInterface::kDisableCollocation);
+
+  composer::Composer composer;
+  composer.SetPreeditTextForTestOnly("きょう");
+  const ConversionRequest convreq =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequest(request_proto)
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+
+  Segments segments;
+  EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  const Segment& seg = segments.conversion_segment(0);
+  // In handwriting mode, PostCorrection should be skipped.
+  EXPECT_NE(seg.candidate(0).value, "今宵");
+}
+
+TEST_F(ConverterTest, ApplyPredictionToConversionHistoryContextTest) {
+  class HistoryContextCheckingSupplementalModel
+      : public engine::MockSupplementalModel {
+   public:
+    bool IsAvailable() const override { return true; }
+    void PostCorrect(const ConversionRequest& request,
+                     std::vector<prediction::Result>& results) const override {
+      EXPECT_EQ(request.converter_history_value(), "私は");
+      if (!results.empty()) {
+        results.front().value = "本日";
+      }
+    }
+  };
+
+  auto supplemental_model = std::make_unique<
+      ::testing::NiceMock<HistoryContextCheckingSupplementalModel>>();
+
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<engine::Modules> modules,
+      engine::ModulesPresetBuilder()
+          .PresetSupplementalModel(std::move(supplemental_model))
+          .Build(std::make_unique<testing::MockDataManager>()));
+
+  auto rewriter = std::make_unique<Rewriter>(*modules);
+  std::unique_ptr<Converter> converter = CreateConverter(
+      std::move(modules), std::move(rewriter), DEFAULT_PREDICTOR);
+
+  commands::Request request_proto;
+  request_proto.mutable_decoder_experiment_params()
+      ->set_disable_legacy_rewriter_in_all_conversion_mode(
+          RewriterInterface::kDisableCollocation);
+
+  composer::Composer composer;
+  composer.SetPreeditTextForTestOnly("きょう");
+  const ConversionRequest convreq =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequest(request_proto)
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+
+  Segments segments;
+  Segment* history_seg = segments.add_segment();
+  history_seg->set_segment_type(Segment::HISTORY);
+  history_seg->set_key("わたしは");
+  Segment::Candidate* cand = history_seg->add_candidate();
+  cand->key = "わたしは";
+  cand->value = "私は";
+
+  EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "本日");
 }
 
 }  // namespace converter
