@@ -85,6 +85,8 @@ class DataManager {
 
   virtual absl::Span<const uint16_t> GetPosMatcherData() const;
 
+  virtual absl::string_view GetPosIdMapData() const;
+
   // [token_array_data, string_array_data]
   virtual std::array<absl::string_view, 2> GetUserPosData() const;
 
@@ -181,6 +183,7 @@ class DataManager {
   std::optional<std::string> filename_ = std::nullopt;
   Mmap mmap_;
   absl::string_view pos_matcher_data_;
+  absl::string_view pos_id_map_data_;
   absl::string_view user_pos_token_array_data_;
   absl::string_view user_pos_string_array_data_;
   absl::string_view connection_data_;

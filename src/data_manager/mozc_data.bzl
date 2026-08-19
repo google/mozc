@@ -142,6 +142,7 @@ def mozc_dataset(
     sources = [
         ":" + name + "@user_pos",
         ":" + name + "@pos_matcher",
+        ":" + name + "@pos_id_map",
         ":" + name + "@collocation",
         ":" + name + "@collocation_suppression",
         ":" + name + "@connection",
@@ -166,6 +167,7 @@ def mozc_dataset(
     arguments = (
         # TODO(noriyukit): Rename keys to more descriptive names.
         "pos_matcher:32:$(@D)/pos_matcher.data " +
+        "pos_id_map:32:$(location :" + name + "@pos_id_map) " +
         "user_pos_token:32:$(@D)/user_pos_token_array.data " +
         "user_pos_string:32:$(@D)/user_pos_string_array.data " +
         "coll:32:$(location :" + name + "@collocation) " +
@@ -316,6 +318,18 @@ def mozc_dataset(
             "--output_pos_matcher_data=$@"
         ),
         tools = ["//dictionary:gen_pos_matcher_code"],
+    )
+
+    native.genrule(
+        name = name + "@pos_id_map",
+        srcs = [id_def],
+        outs = ["pos_id_map.data"],
+        cmd = (
+            "$(location //dictionary:gen_pos_id_map) " +
+            "--id_file=$(location " + id_def + ") " +
+            "--output=$@"
+        ),
+        tools = ["//dictionary:gen_pos_id_map"],
     )
 
     def _get_collocation_error_rate(data_tag):

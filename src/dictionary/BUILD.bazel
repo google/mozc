@@ -599,6 +599,16 @@ mozc_cc_library(
 )
 
 mozc_py_binary(
+    name = "gen_pos_id_map",
+    srcs = ["gen_pos_id_map.py"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "@abseil-py//absl:app",
+        "@abseil-py//absl/flags",
+    ],
+)
+
+mozc_py_binary(
     name = "gen_pos_rewrite_rule",
     srcs = ["gen_pos_rewrite_rule.py"],
     visibility = [

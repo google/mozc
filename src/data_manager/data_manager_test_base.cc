@@ -274,6 +274,11 @@ void DataManagerTestBase::RunAllTests() {
   SegmenterTest_SameAsInternal();
   SuggestionFilterTest_IsBadSuggestion();
   CounterSuffixTest_ValidateTest();
+  PosIdMapTest_Load();
+}
+
+void DataManagerTestBase::PosIdMapTest_Load() {
+  EXPECT_FALSE(data_manager_->GetPosIdMapData().empty());
 }
 
 }  // namespace mozc

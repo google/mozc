@@ -209,6 +209,10 @@ absl::Status DataManager::InitFromReader(const DataSetReader& reader) {
   if (!status.ok()) {
     return status;
   }
+  if (!reader.Get("pos_id_map", &pos_id_map_data_)) {
+    MOZC_VLOG(1) << "pos_id_map is not provided";
+    pos_id_map_data_ = "";
+  }
   if (!reader.Get("conn", &connection_data_)) {
     return absl::NotFoundError("Cannot find a connection data");
   }
@@ -491,6 +495,10 @@ std::array<absl::string_view, 2> DataManager::GetUserPosData() const {
 
 absl::Span<const uint16_t> DataManager::GetPosMatcherData() const {
   return MakeAlignedConstSpan<uint16_t>(pos_matcher_data_);
+}
+
+absl::string_view DataManager::GetPosIdMapData() const {
+  return pos_id_map_data_;
 }
 
 absl::Span<const uint8_t> DataManager::GetPosGroupData() const {

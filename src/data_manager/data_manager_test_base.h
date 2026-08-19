@@ -71,6 +71,7 @@ class DataManagerTestBase : public ::testing::Test {
   void SegmenterTest_SameAsInternal();
   void SuggestionFilterTest_IsBadSuggestion();
   void CounterSuffixTest_ValidateTest();
+  void PosIdMapTest_Load();
 
   std::unique_ptr<DataManager> data_manager_;
   const uint16_t lsize_;
