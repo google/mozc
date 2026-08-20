@@ -124,6 +124,12 @@ mozc_py_binary(
     srcs = ["embed_file.py"],
 )
 
+mozc_py_binary(
+    name = "unzip",
+    srcs = ["unzip.py"],
+    deps = [":util"],
+)
+
 mozc_py_library(
     name = "serialized_string_array_builder",
     srcs = ["serialized_string_array_builder.py"],

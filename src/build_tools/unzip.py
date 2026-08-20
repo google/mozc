@@ -33,6 +33,8 @@
 This is a similar tool with unzip on Linux and macOS, and it works on Windows.
 
 % python3 unzip.py data.zip -d /tmp/output
+
+% python3 unzip.py data.zip file1.txt file2.txt -d /tmp/output
 """
 
 import argparse
@@ -42,10 +44,15 @@ from build_tools import util
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument('file', metavar='FILE')
-  parser.add_argument('-d', dest='outdir', default='.')
+  parser.add_argument('file', metavar='FILE', help='Zip file to extract')
+  parser.add_argument(
+      'members', nargs='*', help='Specific members to extract (optional)'
+  )
+  parser.add_argument('-d', dest='outdir', default='.', help='Output directory')
   args = parser.parse_args()
-  util.ExtractZip(args.file, args.outdir)
+  util.ExtractZip(
+      args.file, args.outdir, members=args.members if args.members else None
+  )
 
 
 if __name__ == '__main__':

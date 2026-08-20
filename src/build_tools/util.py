@@ -202,9 +202,9 @@ class _ZipFileWithPermissions(zipfile.ZipFile):
     return targetpath
 
 
-def ExtractZip(zip_path, out_dir):
+def ExtractZip(zip_path, out_dir, members=None):
   with _ZipFileWithPermissions(zip_path) as zip_file:
-    zip_file.extractall(path=out_dir)
+    zip_file.extractall(path=out_dir, members=members)
 
 
 # ANSI Color sequences
