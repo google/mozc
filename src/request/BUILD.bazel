@@ -105,6 +105,7 @@ mozc_cc_library(
         ":options",
         "//composer",
         "//protocol:commands_cc_proto",
+        "//transliteration",
     ],
 )
 

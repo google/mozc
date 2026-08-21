@@ -47,6 +47,7 @@ mozc_cc_library(
         "//converter:__pkg__",
         "//engine:__pkg__",
         "//prediction:__pkg__",
+        "//request:__pkg__",
         "//rewriter:__pkg__",
         "//session:__pkg__",
     ],

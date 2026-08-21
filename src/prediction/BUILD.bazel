@@ -326,6 +326,7 @@ mozc_cc_library(
     ],
     hdrs = ["dictionary_prediction_aggregator.h"],
     deps = [
+        ":decoder_util",
         ":dictionary_decoder",
         ":english_decoder",
         ":handwriting_decoder",
@@ -603,10 +604,47 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
+    name = "decoder_util",
+    srcs = ["decoder_util.cc"],
+    hdrs = ["decoder_util.h"],
+    deps = [
+        ":result",
+        "//base:number_util",
+        "//base:util",
+        "//converter:attribute",
+        "//converter:node_list_builder",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_token",
+        "//request:conversion_request",
+        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "decoder_util_test",
+    srcs = ["decoder_util_test.cc"],
+    deps = [
+        ":decoder_util",
+        ":result",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_token",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
     name = "zero_query_decoder",
     srcs = ["zero_query_decoder.cc"],
     hdrs = ["zero_query_decoder.h"],
     deps = [
+        ":decoder_util",
         ":result",
         ":zero_query_dict",
         "//base:japanese_util",
@@ -694,6 +732,7 @@ mozc_cc_library(
     srcs = ["english_decoder.cc"],
     hdrs = ["english_decoder.h"],
     deps = [
+        ":decoder_util",
         ":result",
         "//base:japanese_util",
         "//base:number_util",
@@ -738,6 +777,7 @@ mozc_cc_library(
     srcs = ["dictionary_decoder.cc"],
     hdrs = ["dictionary_decoder.h"],
     deps = [
+        ":decoder_util",
         ":result",
         ":result_filter",
         "//base:number_util",
@@ -874,6 +914,7 @@ mozc_cc_library(
     srcs = ["handwriting_decoder.cc"],
     hdrs = ["handwriting_decoder.h"],
     deps = [
+        ":decoder_util",
         ":realtime_decoder",
         ":result",
         "//base:util",

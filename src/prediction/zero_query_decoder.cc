@@ -48,6 +48,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
+#include "prediction/decoder_util.h"
 #include "prediction/result.h"
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
@@ -60,18 +61,6 @@ namespace {
 
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::Token;
-
-// Note that PREDICTION mode is much slower than SUGGESTION.
-// Number of prediction calls should be minimized.
-constexpr size_t kPredictionMaxResultsSize = 100000;
-
-// TODO(taku): Move shared prediction utilities to a common library.
-// Returns true if the input mode is Latin-character-input mode, regardless
-// of the actual keyboard layout.
-bool IsLatinInputMode(const ConversionRequest& request) {
-  return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
-         request.composer().GetInputMode() == transliteration::FULL_ASCII;
-}
 
 bool IsZeroQuerySuffixPredictionDisabled(const ConversionRequest& request) {
   return request.request()
@@ -107,12 +96,10 @@ bool IsEmailPrefix(absl::string_view str) {
   return str.ends_with('@') && mozc::Util::IsAscii(str);
 }
 
-// TODO(taku): Move shared callback/lookup helper to a common prediction
-// library.
-class PredictiveLookupCallback : public DictionaryInterface::Callback {
+class SuffixLookupCallback : public DictionaryInterface::Callback {
  public:
-  PredictiveLookupCallback(PredictionTypes types, size_t limit, int zip_code_id,
-                           int unknown_id, std::vector<Result>* results)
+  SuffixLookupCallback(PredictionTypes types, size_t limit, int zip_code_id,
+                       int unknown_id, std::vector<Result>* results)
       : types_(types),
         limit_(limit),
         zip_code_id_(zip_code_id),
@@ -125,12 +112,7 @@ class PredictiveLookupCallback : public DictionaryInterface::Callback {
       return TRAVERSE_CONTINUE;
     }
     Result result;
-    result.SetTypesAndTokenAttributes(types_, token.attributes);
-    result.key = token.key;
-    result.value = token.value;
-    result.wcost = token.cost;
-    result.lid = token.lid;
-    result.rid = token.rid;
+    result.InitializeByTokenAndTypes(token, types_);
     results_->emplace_back(std::move(result));
     if (results_->size() >= limit_) {
       return TRAVERSE_DONE;
@@ -205,7 +187,7 @@ std::vector<Result> ZeroQueryDecoder::Decode(
 
   // We do not want zero query results from suffix dictionary for Latin
   // input mode. For example, we do not need "です", "。" just after "when".
-  if (IsLatinInputMode(request)) {
+  if (request_util::IsLatinInputMode(request)) {
     return results;
   }
 
@@ -224,13 +206,15 @@ std::vector<Result> ZeroQueryDecoder::Decode(
     // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
     // all suffix entries.
     const auto [base, expanded] = request.composer().GetQueriesForPrediction();
-    PredictiveLookupCallback callback(SUFFIX, kPredictionMaxResultsSize,
-                                      zip_code_id_, unknown_id_, &results);
     if (expanded.empty()) {
+      SuffixLookupCallback callback(SUFFIX, kPredictionMaxResultsSize,
+                                    zip_code_id_, unknown_id_, &results);
       suffix_dictionary_.LookupPredictive(base, request.options(), &callback);
     } else {
       for (absl::string_view expanded_char : expanded) {
         const std::string request_key = absl::StrCat(base, expanded_char);
+        SuffixLookupCallback callback(SUFFIX, kPredictionMaxResultsSize,
+                                      zip_code_id_, unknown_id_, &results);
         suffix_dictionary_.LookupPredictive(request_key, request.options(),
                                             &callback);
       }

@@ -42,109 +42,13 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
+#include "prediction/decoder_util.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc::prediction {
-namespace {
 
-using ::mozc::dictionary::DictionaryInterface;
-using ::mozc::dictionary::Token;
-
-constexpr size_t kSuggestionMaxResultsSize = 256;
-constexpr size_t kPredictionMaxResultsSize = 100000;
-
-// TODO(taku): Move shared prediction cutoff threshold to a common library.
-size_t GetCandidateCutoffThreshold(
-    ConversionRequest::RequestType request_type) {
-  DCHECK(request_type == ConversionRequest::PREDICTION ||
-         request_type == ConversionRequest::SUGGESTION ||
-         request_type == ConversionRequest::PARTIAL_PREDICTION ||
-         request_type == ConversionRequest::PARTIAL_SUGGESTION);
-  if (request_type == ConversionRequest::PREDICTION ||
-      request_type == ConversionRequest::PARTIAL_PREDICTION) {
-    return kPredictionMaxResultsSize;
-  }
-  return kSuggestionMaxResultsSize;
-}
-
-// TODO(taku): Move shared callback/lookup helper to a common prediction
-// library.
-class PredictiveLookupCallback : public DictionaryInterface::Callback {
- public:
-  PredictiveLookupCallback(PredictionTypes types, size_t limit,
-                           size_t original_key_len, int zip_code_id,
-                           int unknown_id, std::vector<Result>* results)
-      : types_(types),
-        limit_(limit),
-        original_key_len_(original_key_len),
-        zip_code_id_(zip_code_id),
-        unknown_id_(unknown_id),
-        results_(results) {}
-
-  ResultType OnToken(absl::string_view key, absl::string_view expanded_new_key,
-                     const Token& token) override {
-    if (((token.attributes & Token::USER_DICTIONARY) != 0 &&
-         token.lid == unknown_id_) ||
-        token.lid == zip_code_id_) {
-      const auto orig_key = absl::ClippedSubstr(key, 0, original_key_len_);
-      if (token.key != orig_key) {
-        return TRAVERSE_CONTINUE;
-      }
-    }
-    if (IsNoisyNumberToken(key, token)) {
-      return TRAVERSE_CONTINUE;
-    }
-
-    Result result;
-    result.InitializeByTokenAndTypes(token, types_);
-    results_->emplace_back(std::move(result));
-    if (results_->size() >= limit_) {
-      return TRAVERSE_DONE;
-    }
-    return TRAVERSE_CONTINUE;
-  }
-
- private:
-  bool IsNoisyNumberToken(absl::string_view key, const Token& token) const {
-    const auto orig_key = absl::ClippedSubstr(key, 0, original_key_len_);
-    if (!NumberUtil::IsArabicNumber(orig_key)) {
-      return false;
-    }
-    const absl::string_view key_suffix(token.key.data() + orig_key.size(),
-                                       token.key.size() - orig_key.size());
-    if (key_suffix.empty()) {
-      return false;
-    }
-    if (Util::GetFirstScriptType(key_suffix) == Util::NUMBER) {
-      return true;
-    }
-
-    if (!token.value.starts_with(orig_key)) {
-      return false;
-    }
-
-    const absl::string_view value_suffix(token.value.data() + orig_key.size(),
-                                         token.value.size() - orig_key.size());
-    if (value_suffix.empty()) {
-      return false;
-    }
-    if (Util::GetFirstScriptType(value_suffix) == Util::NUMBER) {
-      return true;
-    }
-    return Util::CharsLen(value_suffix) >= 3;
-  }
-
-  const PredictionTypes types_;
-  const size_t limit_;
-  const size_t original_key_len_;
-  const int zip_code_id_;
-  const int unknown_id_;
-  std::vector<Result>* results_;
-};
-
-}  // namespace
 
 EnglishDecoder::EnglishDecoder(const engine::Modules& modules)
     : modules_(modules),

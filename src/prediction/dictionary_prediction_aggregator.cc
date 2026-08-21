@@ -60,6 +60,7 @@
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
+#include "prediction/decoder_util.h"
 #include "prediction/number_decoder.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
@@ -78,18 +79,6 @@ using ::mozc::composer::TypeCorrectedQuery;
 using ::mozc::converter::Attribute;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::Token;
-
-// Note that PREDICTION mode is much slower than SUGGESTION.
-// Number of prediction calls should be minimized.
-constexpr size_t kSuggestionMaxResultsSize = 256;
-constexpr size_t kPredictionMaxResultsSize = 100000;
-
-// Returns true if the input mode is Latin-character-input mode, regardless
-// of the actual keyboard layout.
-bool IsLatinInputMode(const ConversionRequest& request) {
-  return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
-         request.composer().GetInputMode() == transliteration::FULL_ASCII;
-}
 
 // Return true if the current keyboard is capable to type Latin characters
 // regardless of actual input mode. QWERTY keyboard is the typical case.
@@ -189,7 +178,8 @@ DictionaryPredictionAggregator::AggregateResultsForMixedConversion(
 
   // `min_unigram_key_len` is only used here.
   const size_t key_len = Util::CharsLen(key);
-  if (IsLanguageAwareInputEnabled(request) && !IsLatinInputMode(request) &&
+  if (IsLanguageAwareInputEnabled(request) &&
+      !request_util::IsLatinInputMode(request) &&
       IsQwertyMobileTable(request) && key_len >= min_unigram_key_len) {
     // QWERTY-Romaji mode to type Japanese. Handle the ごおgぇ -> Google.
     AggregateEnglishUsingRawInput(request, &results);
@@ -347,7 +337,7 @@ void DictionaryPredictionAggregator::AggregateUnigram(
 
   // User switches to Latin input mode type Latin characters or English words.
   // No need to perform Japanese decoding.
-  if (IsLatinInputMode(request)) {
+  if (request_util::IsLatinInputMode(request)) {
     // For SUGGESTION request in Desktop, We don't look up English words when
     // key length is one.
     const bool is_mixed_conversion = IsMixedConversionEnabled(request);
@@ -457,13 +447,7 @@ void DictionaryPredictionAggregator::AggregateSingleKanji(
 
 size_t DictionaryPredictionAggregator::GetCandidateCutoffThreshold(
     ConversionRequest::RequestType request_type) {
-  DCHECK(request_type == ConversionRequest::PREDICTION ||
-         request_type == ConversionRequest::SUGGESTION);
-  if (request_type == ConversionRequest::PREDICTION) {
-    // If PREDICTION, many candidates are needed than SUGGESTION.
-    return kPredictionMaxResultsSize;
-  }
-  return kSuggestionMaxResultsSize;
+  return mozc::prediction::GetCandidateCutoffThreshold(request_type);
 }
 
 size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(

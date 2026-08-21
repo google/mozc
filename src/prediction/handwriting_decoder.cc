@@ -47,6 +47,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
+#include "prediction/decoder_util.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
@@ -59,46 +60,6 @@ namespace {
 using ::mozc::converter::Attribute;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::Token;
-
-constexpr size_t kSuggestionMaxResultsSize = 256;
-constexpr size_t kPredictionMaxResultsSize = 100000;
-
-// TODO(taku): Move shared prediction cutoff threshold to a common library.
-size_t GetCandidateCutoffThreshold(
-    ConversionRequest::RequestType request_type) {
-  DCHECK(request_type == ConversionRequest::PREDICTION ||
-         request_type == ConversionRequest::SUGGESTION);
-  if (request_type == ConversionRequest::PREDICTION) {
-    return kPredictionMaxResultsSize;
-  }
-  return kSuggestionMaxResultsSize;
-}
-
-// TODO(taku): Move shared ResultsSizeAdjuster to a common prediction library.
-class ResultsSizeAdjuster {
- public:
-  ResultsSizeAdjuster(const ConversionRequest& request,
-                      std::vector<Result>* results)
-      : cutoff_threshold_(GetCandidateCutoffThreshold(request.request_type())),
-        results_(results),
-        prev_size_(results_->size()) {}
-
-  ~ResultsSizeAdjuster() { AdjustSize(); }
-
-  void AdjustSize() const {
-    const size_t added_size = results_->size() - prev_size_;
-    if (added_size >= cutoff_threshold_) {
-      results_->resize(prev_size_);
-    }
-  }
-
-  size_t cutoff_threshold() const { return cutoff_threshold_; }
-
- private:
-  const size_t cutoff_threshold_ = 0;
-  std::vector<Result>* results_ = nullptr;
-  const size_t prev_size_ = 0;
-};
 
 }  // namespace
 
