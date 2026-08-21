@@ -1098,6 +1098,15 @@ bool UserHistoryPredictor::AllowLowFreqFullSentenceEntryMatch(
                .first.size() < request_key.size();
   }
 
+  // partial match for compound nouns / proper nouns.
+  // - key="たなかしょうてんは", entry="田中|商店"
+  //   (allow_partial_match=true) => OK
+  // - key="きのうはおつかれさまでしたけど", entry="昨日|は|お疲れ様|でした"
+  //   (allow_partial_match=false) => NG
+  if (mtype == MatchType::RIGHT_PREFIX_MATCH && entry.allow_partial_match()) {
+    return true;
+  }
+
   return false;
 }
 
