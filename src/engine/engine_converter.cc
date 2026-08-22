@@ -1726,6 +1726,16 @@ void EngineConverter::FillAllCandidateWords(
 
 void EngineConverter::FillIncognitoCandidateWords(
     commands::CandidateList* candidates) const {
+  // |incognito_segments_| can be empty when the incognito prediction failed
+  // to produce suggestions (e.g. no user history in incognito mode).  Unlike
+  // FillAllCandidateWords(), this method had no bounds check and dereferenced
+  // the empty segment container.  Add the same guard as the sibling method.
+  if (segment_index_ >= incognito_segments_.conversion_segments_size()) {
+    LOG(WARNING) << "Invalid segment_index_: " << segment_index_
+                 << ", incognito_segments_size: "
+                 << incognito_segments_.conversion_segments_size();
+    return;
+  }
   const Segment& segment =
       incognito_segments_.conversion_segment(segment_index_);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
