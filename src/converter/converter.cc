@@ -288,6 +288,36 @@ void Converter::ApplyPostProcessing(const ConversionRequest& request,
 
 void Converter::FinishConversion(const ConversionRequest& request,
                                  Segments* segments) const {
+  // Consolidates multi-segment candidates (span > 1) into single segments
+  // before committing to history and learning. During conversion, individual
+  // segments are preserved for navigation and reversion, but upon commit,
+  // covered trailing segments are merged and erased.
+  const size_t hist_size = segments->history_segments_size();
+  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
+    Segment* seg = segments->mutable_conversion_segment(i);
+    if (seg->candidates_size() == 0) {
+      continue;
+    }
+    const Candidate& top_cand = seg->candidate(0);
+    const size_t span = top_cand.effective_converted_segment_count();
+    // For multi-segment candidates (span > 1) or non-conversion requests
+    // (e.g. PREDICTION), update the segment key with the candidate's full
+    // composite reading before trailing segments are erased, ensuring that
+    // history recording and learning receive the complete segment key.
+    if ((request.request_type() != ConversionRequest::CONVERSION || span > 1) &&
+        !top_cand.key.empty()) {
+      seg->set_key(top_cand.key);
+    }
+    // When a candidate spans multiple conversion segments, absorb them into
+    // the current segment and erase the trailing (span - 1) segments.
+    if (span > 1 && i + 1 < segments->conversion_segments_size()) {
+      DCHECK_LE(span - 1, segments->conversion_segments_size() - 1 - i);
+      const size_t erase_count =
+          std::min(span - 1, segments->conversion_segments_size() - 1 - i);
+      segments->erase_segments(hist_size + i + 1, erase_count);
+    }
+  }
+
   for (Segment& segment : *segments) {
     // revert SUBMITTED segments to FIXED_VALUE
     // SUBMITTED segments are created by "submit first segment" operation
@@ -320,13 +350,6 @@ void Converter::FinishConversion(const ConversionRequest& request,
                                            .Build();
   rewriter_->Finish(finish_req, *segments);
   predictor_->Finish(finish_req, committed_results, segments->revert_id());
-
-  if (request.request_type() != ConversionRequest::CONVERSION &&
-      segments->conversion_segments_size() >= 1 &&
-      segments->conversion_segment(0).candidates_size() >= 1) {
-    Segment* segment = segments->mutable_conversion_segment(0);
-    segment->set_key(segment->candidate(0).key);
-  }
 
   // Remove the front segments except for some segments which will be
   // used as history segments.

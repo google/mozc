@@ -976,5 +976,83 @@ TEST(EngineOutputTest, FillRemovedCandidateWords) {
   output::FillRemovedCandidates(segment, &candidates_proto);
 }
 
+TEST(EngineOutputTest, FillConversion_MultiSegmentSpan) {
+  Segments segments;
+  Segment* seg0 = segments.add_segment();
+  seg0->set_key("わたしは");
+  converter::Candidate* cand0 = seg0->push_back_candidate();
+  cand0->value = "私";
+  cand0->key = "わたし";
+
+  converter::Candidate* cand1 = seg0->push_back_candidate();
+  cand1->value = "私は";
+  cand1->key = "わたしは";
+  cand1->converted_segment_count = 2;
+
+  Segment* seg1 = segments.add_segment();
+  seg1->set_key("は");
+  converter::Candidate* cand2 = seg1->push_back_candidate();
+  cand2->value = "は";
+  cand2->key = "は";
+
+  // When candidate 0 (normal) is selected: 2 segments rendered
+  {
+    commands::Preedit preedit;
+    output::FillConversion(segments, 0, 0, &preedit);
+    EXPECT_EQ(preedit.segment_size(), 2);
+    EXPECT_EQ(preedit.segment(0).value(), "私");
+    EXPECT_EQ(preedit.segment(1).value(), "は");
+  }
+
+  // When candidate 1 (converted_segment_count = 2) is selected: only 1 segment
+  // rendered
+  {
+    commands::Preedit preedit;
+    output::FillConversion(segments, 0, 1, &preedit);
+    EXPECT_EQ(preedit.segment_size(), 1);
+    EXPECT_EQ(preedit.segment(0).value(), "私は");
+    EXPECT_EQ(preedit.segment(0).key(), "わたしは");
+    EXPECT_EQ(preedit.segment(0).annotation(),
+              commands::Preedit::Segment::HIGHLIGHT);
+    EXPECT_EQ(preedit.cursor(), Util::CharsLen("私は"));
+  }
+
+  // When candidate 1 (converted_segment_count = 2) is candidate(0) on seg0,
+  // and focus is on seg1 (focused_segment_index = 1):
+  // current_index (0) < focused_index (1) and current_index + count (2) >
+  // focused_index (1), so span is truncated to 1.
+  {
+    Segments segs_with_multi_top;
+    Segment* s0 = segs_with_multi_top.add_segment();
+    s0->set_key("わたしは");
+    converter::Candidate* c0 = s0->push_back_candidate();
+    c0->value = "私は";
+    c0->key = "わたしは";
+    c0->converted_segment_count = 2;
+
+    Segment* s1 = segs_with_multi_top.add_segment();
+    s1->set_key("なかのです");
+    converter::Candidate* c1 = s1->push_back_candidate();
+    c1->value = "中野です";
+    c1->key = "なかのです";
+
+    commands::Preedit preedit;
+    output::FillConversion(segs_with_multi_top, 1, 0, &preedit);
+    EXPECT_EQ(preedit.segment_size(), 2);
+    EXPECT_EQ(preedit.segment(0).value(), "私は");
+    EXPECT_EQ(preedit.segment(1).value(), "中野です");
+    EXPECT_EQ(preedit.segment(1).annotation(),
+              commands::Preedit::Segment::HIGHLIGHT);
+  }
+
+  // Empty conversion segments returns early without error.
+  {
+    Segments empty_segments;
+    commands::Preedit preedit;
+    output::FillConversion(empty_segments, 0, 0, &preedit);
+    EXPECT_EQ(preedit.segment_size(), 0);
+  }
+}
+
 }  // namespace engine
 }  // namespace mozc

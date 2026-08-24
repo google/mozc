@@ -84,6 +84,24 @@ class Candidate {
 
   uint32_t consumed_key_size = 0;
 
+  // Number of whole conversion segments covered/consumed by this candidate,
+  // starting from the current segment.
+  //
+  // Note: This assumes alignment with the existing segment boundaries
+  // (i.e. spans 1, 2, ..., N complete segments). Candidates with non-aligned
+  // boundaries (crossing mid-segment) cannot be represented by this field and
+  // require segment resizing (ResizeSegment).
+  //
+  // Defaults to 1 for standard segment candidates. Even if set to 0,
+  // callers should use effective_converted_segment_count() which clamps to 1.
+  uint32_t converted_segment_count = 1;
+
+  // Returns the effective number of segments covered by this candidate.
+  // Guaranteed to be at least 1 even if converted_segment_count is 0.
+  uint32_t effective_converted_segment_count() const {
+    return std::max<uint32_t>(1, converted_segment_count);
+  }
+
   // Meta information
   // TODO(taku): Better to introduce a struct to save heap usage.
   // These fields are mostly empty.

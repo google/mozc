@@ -34,6 +34,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -451,6 +453,7 @@ bool EngineConverter::SwitchKanaType(const composer::Composer& composer) {
               .SetComposer(composer)
               .SetRequestView(*request_)
               .SetConfigView(*config_)
+              .SetRequestType(ConversionRequest::CONVERSION)
               .Build();
       if (!converter_->ResizeSegments(&segments_, conversion_request, 0,
                                       {offset})) {
@@ -723,9 +726,10 @@ void EngineConverter::Commit(const composer::Composer& composer,
     return;
   }
 
-  for (size_t i = 0; i < segments_.conversion_segments_size(); ++i) {
-    if (!converter_->CommitSegmentValue(&segments_, i,
-                                        GetCandidateIndexForConverter(i))) {
+  for (size_t i = 0; i < segments_.conversion_segments_size();
+       i += GetSegmentSpan(i)) {
+    const int cand_idx = GetCandidateIndexForConverter(i);
+    if (!converter_->CommitSegmentValue(&segments_, i, cand_idx)) {
       LOG(WARNING) << "Failed to commit segment " << i;
     }
   }
@@ -862,6 +866,14 @@ void EngineConverter::CommitSegmentsInternal(const composer::Composer& composer,
   candidate_list_visible_ = false;
   *consumed_key_size = 0;
 
+  // If the selected candidate on the first segment covers all conversion
+  // segments (e.g. full-sentence candidate), commit the entire conversion
+  // rather than partially committing only the first segment.
+  if (IsFullSentenceCandidateSelected()) {
+    Commit(composer, context);
+    return;
+  }
+
   // If commit all segments, just call Commit.
   if (segments_.conversion_segments_size() <= segments_to_commit) {
     Commit(composer, context);
@@ -997,12 +1009,15 @@ void EngineConverter::SegmentFocusInternal(size_t index) {
 }
 
 void EngineConverter::SegmentFocusRight() {
-  if (segment_index_ + 1 >= segments_.conversion_segments_size()) {
-    // If |segment_index_| is at the tail of the segments,
-    // focus on the head.
+  DCHECK_LT(segment_index_, segments_.conversion_segments_size());
+  const size_t span =
+      GetSelectedCandidate(segment_index_).effective_converted_segment_count();
+  if (segment_index_ + span >= segments_.conversion_segments_size()) {
+    // If the next segment position reaches or exceeds the tail of the
+    // segments, focus on the head.
     SegmentFocusLeftEdge();
   } else {
-    SegmentFocusInternal(segment_index_ + 1);
+    SegmentFocusInternal(segment_index_ + span);
   }
 }
 
@@ -1017,7 +1032,15 @@ void EngineConverter::SegmentFocusLeft() {
     // focus on the tail.
     SegmentFocusLast();
   } else {
-    SegmentFocusInternal(segment_index_ - 1);
+    // With multi-segment candidates, the previous segment's start index is not
+    // necessarily `segment_index_ - 1`. Traverse from the beginning using
+    // segment spans to find the start index of the segment immediately
+    // preceding `segment_index_`.
+    size_t prev = 0;
+    for (size_t i = 0; i < segment_index_; i += GetSegmentSpan(i)) {
+      prev = i;
+    }
+    SegmentFocusInternal(prev);
   }
 }
 
@@ -1034,13 +1057,41 @@ void EngineConverter::ResizeSegmentWidth(const composer::Composer& composer,
 
   DCHECK(request_);
   DCHECK(config_);
-  const ConversionRequest conversion_request = ConversionRequestBuilder()
-                                                   .SetComposer(composer)
-                                                   .SetRequestView(*request_)
-                                                   .SetConfigView(*config_)
-                                                   .Build();
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequestView(*request_)
+          .SetConfigView(*config_)
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+  const Segment& segment = segments_.conversion_segment(segment_index_);
+  const converter::Candidate& candidate = GetSelectedCandidate(segment_index_);
+
+  // For multi-segment candidates with step resize (+/-1), resize based on
+  // the full candidate key length.
+  // e.g. For 2-segment candidate "私の名前は" (key: "わたしのなまえは", 8
+  // chars) when segment(0).key_len() is 4, delta=+1 should target 9 chars
+  // (offset = 9 - 4 = +5) rather than 5 chars (4 + 1).
+  const size_t current_len =
+      (std::abs(delta) == 1 &&
+       candidate.effective_converted_segment_count() > 1 &&
+       !candidate.key.empty())
+          ? Util::CharsLen(candidate.key)
+          : segment.key_len();
+
+  // target_len: The desired absolute key length after resizing (+/- delta).
+  const int target_len = static_cast<int>(current_len) + delta;
+  // offset_length: The relative offset from segment.key_len() passed to
+  // ResizeSegment.
+  const int offset_length = target_len - static_cast<int>(segment.key_len());
+
+  if (target_len <= 0 || target_len > std::numeric_limits<uint8_t>::max() ||
+      offset_length == 0) {
+    return;
+  }
+
   if (!converter_->ResizeSegment(&segments_, conversion_request, segment_index_,
-                                 delta)) {
+                                 offset_length)) {
     return;
   }
 
@@ -1306,6 +1357,12 @@ void EngineConverter::SegmentFix() {
           &segments_, segment_index_,
           GetCandidateIndexForConverter(segment_index_))) {
     LOG(WARNING) << "CommitSegmentValue failed";
+    return;
+  }
+  // CommitSegmentValue moves the selected candidate to candidate(0),
+  // so reset the selected index for this segment to 0.
+  if (segment_index_ < selected_candidate_indices_.size()) {
+    selected_candidate_indices_[segment_index_] = 0;
   }
 }
 
@@ -1316,16 +1373,25 @@ void EngineConverter::GetPreedit(const size_t index, const size_t size,
   DCHECK(preedit);
 
   preedit->clear();
-  for (size_t i = index; i < size; ++i) {
-    if (CheckState(CONVERSION)) {
-      // In conversion mode, all the key of candidates is same.
-      preedit->append(segments_.conversion_segment(i).key());
-    } else {
-      DCHECK(CheckState(SUGGESTION | PREDICTION));
-      // In suggestion or prediction modes, each key may have
-      // different keys, so content_key is used although it is
-      // possibly dropped the conjugational word (ex. the content_key
-      // of "はしる" is "はし").
+  if (CheckState(CONVERSION)) {
+    const size_t end = index + size;
+    for (size_t i = index; i < end; i += GetSegmentSpan(i)) {
+      const Segment& segment = segments_.conversion_segment(i);
+      const converter::Candidate& candidate = GetSelectedCandidate(i);
+      if (candidate.effective_converted_segment_count() > 1 &&
+          !candidate.key.empty()) {
+        preedit->append(candidate.key);
+      } else {
+        preedit->append(segment.key());
+      }
+    }
+  } else {
+    DCHECK(CheckState(SUGGESTION | PREDICTION));
+    // In suggestion or prediction modes, each key may have
+    // different keys, so content_key is used although it is
+    // possibly dropped the conjugational word (ex. the content_key
+    // of "はしる" is "はし").
+    for (size_t i = index; i < size; ++i) {
       preedit->append(GetSelectedCandidate(i).content_key);
     }
   }
@@ -1338,7 +1404,8 @@ void EngineConverter::GetConversion(const size_t index, const size_t size,
   DCHECK(conversion);
 
   conversion->clear();
-  for (size_t i = index; i < size; ++i) {
+  const size_t end = index + size;
+  for (size_t i = index; i < end; i += GetSegmentSpan(i)) {
     conversion->append(GetSelectedCandidateValue(i));
   }
 }
@@ -1362,7 +1429,8 @@ void EngineConverter::UpdateResultTokens(const size_t index,
     }
   };
 
-  for (size_t i = index; i < size; ++i) {
+  const size_t end = index + size;
+  for (size_t i = index; i < end; i += GetSegmentSpan(i)) {
     const int cand_idx = GetCandidateIndexForConverter(i);
     const converter::Candidate& candidate =
         segments_.conversion_segment(i).candidate(cand_idx);
@@ -1397,6 +1465,11 @@ size_t EngineConverter::GetConsumedPreeditSize(const size_t index,
   }
 
   DCHECK(CheckState(CONVERSION));
+  // If the selected candidate on the first segment covers all conversion
+  // segments, all characters are considered consumed.
+  if (IsFullSentenceCandidateSelected()) {
+    return kConsumedAllCharacters;
+  }
   size_t result = 0;
   for (size_t i = index; i < size; ++i) {
     const int id = GetCandidateIndexForConverter(i);
@@ -1582,6 +1655,24 @@ const converter::Candidate& EngineConverter::GetSelectedCandidate(
   return segments_.conversion_segment(segment_index).candidate(id);
 }
 
+size_t EngineConverter::GetSegmentSpan(const size_t segment_index) const {
+  const converter::Candidate& candidate = GetSelectedCandidate(segment_index);
+  const size_t count = candidate.effective_converted_segment_count();
+  if (segment_index < segment_index_ &&
+      segment_index + count > segment_index_) {
+    return segment_index_ - segment_index;
+  }
+  return count;
+}
+
+bool EngineConverter::IsFullSentenceCandidateSelected() const {
+  if (segment_index_ != 0) {
+    return false;
+  }
+  return GetSelectedCandidate(0).effective_converted_segment_count() >=
+         segments_.conversion_segments_size();
+}
+
 void EngineConverter::FillConversion(commands::Preedit* preedit) const {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   output::FillConversion(segments_, segment_index_,
@@ -1602,7 +1693,7 @@ void EngineConverter::FillCandidateWindow(
   // The position to display the candidate window.
   size_t position = 0;
   std::string conversion;
-  for (size_t i = 0; i < segment_index_; ++i) {
+  for (size_t i = 0; i < segment_index_; i += GetSegmentSpan(i)) {
     position += Util::CharsLen(GetSelectedCandidate(i).value);
   }
 

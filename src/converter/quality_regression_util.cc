@@ -84,7 +84,7 @@ constexpr absl::string_view kZeroQueryNotExpect = "ZeroQuery Not Expected";
 
 int32_t GetRank(absl::string_view value, const Segments& segments,
                 size_t current_segment) {
-  if (current_segment == segments.segments_size()) {
+  if (current_segment >= segments.segments_size()) {
     return value.empty() ? 0 : -1;
   }
   const Segment& seg = segments.segment(current_segment);
@@ -103,8 +103,10 @@ int32_t GetRank(absl::string_view value, const Segments& segments,
       rank++;
       continue;
     }
+    const size_t next_segment =
+        current_segment + cand->effective_converted_segment_count();
     const int rest =
-        GetRank(value.substr(cand_value.size()), segments, current_segment + 1);
+        GetRank(value.substr(cand_value.size()), segments, next_segment);
     if (rest == -1) {
       rank++;
       continue;
@@ -360,8 +362,10 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     return true;
   }
 
-  for (const Segment& segment : segments) {
+  for (size_t i = 0; i < segments.segments_size();) {
+    const Segment& segment = segments.segment(i);
     absl::StrAppend(actual_value, segment.candidate(0).value);
+    i += segment.candidate(0).effective_converted_segment_count();
   }
 
   if (command == kConversionMatch) {

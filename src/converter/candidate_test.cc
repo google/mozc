@@ -176,5 +176,25 @@ TEST(CandidateTest, InnerSegmentIterator) {
     EXPECT_EQ(functional_values[1], "blue");
   }
 }
+
+TEST(CandidateTest, EffectiveConvertedSegmentCount) {
+  Candidate candidate;
+
+  // By default, converted_segment_count is 1.
+  EXPECT_EQ(candidate.converted_segment_count, 1);
+  EXPECT_EQ(candidate.effective_converted_segment_count(), 1);
+
+  // Even if explicitly set to 0, effective_converted_segment_count clamps to 1.
+  candidate.converted_segment_count = 0;
+  EXPECT_EQ(candidate.effective_converted_segment_count(), 1);
+
+  // Values >= 1 are preserved as-is.
+  candidate.converted_segment_count = 2;
+  EXPECT_EQ(candidate.effective_converted_segment_count(), 2);
+
+  candidate.converted_segment_count = 10;
+  EXPECT_EQ(candidate.effective_converted_segment_count(), 10);
+}
+
 }  // namespace converter
 }  // namespace mozc

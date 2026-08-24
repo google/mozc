@@ -62,6 +62,7 @@ MATCHER_P(EqualsCandidate, candidate, "") {
   COMPARE_FIELD(content_key);
   COMPARE_FIELD(content_value);
   COMPARE_FIELD(consumed_key_size);
+  COMPARE_FIELD(converted_segment_count);
   COMPARE_FIELD(prefix);
   COMPARE_FIELD(suffix);
   COMPARE_FIELD(description);

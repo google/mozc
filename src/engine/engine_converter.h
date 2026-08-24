@@ -284,6 +284,8 @@ class EngineConverter : public EngineConverterInterface {
   void SegmentFocus();
 
   // Notifies the converter that the current segment is fixed.
+  // Sets the segment type to FIXED_VALUE and moves the selected candidate to
+  // candidate(0).
   void SegmentFix();
 
   // Fixes the conversion of the [0, segments_to_commit -1 ] segments,
@@ -334,6 +336,14 @@ class EngineConverter : public EngineConverterInterface {
 
   // Returns the candidate to be used by the converter.
   const converter::Candidate& GetSelectedCandidate(size_t segment_index) const;
+
+  // Returns the number of segments covered by candidate at segment_index,
+  // clamped to avoid overlapping the focused segment.
+  size_t GetSegmentSpan(size_t segment_index) const;
+
+  // Returns true if the selected candidate on the first segment covers all
+  // conversion segments.
+  bool IsFullSentenceCandidateSelected() const;
 
   // Returns the length of committed candidate's key in characters.
   // True is returned if the selected candidate is successfully committed.

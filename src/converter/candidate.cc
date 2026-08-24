@@ -59,6 +59,7 @@ void Candidate::Clear() {
   content_value.clear();
   content_key.clear();
   consumed_key_size = 0;
+  converted_segment_count = 1;
   prefix.clear();
   suffix.clear();
   description.clear();
@@ -93,7 +94,8 @@ std::string Candidate::DebugString() const {
      << " cval=" << content_value << " cost=" << cost
      << " scost=" << structure_cost << " wcost=" << wcost << " lid=" << lid
      << " rid=" << rid << " attributes=" << std::bitset<16>(attributes)
-     << " consumed_key_size=" << consumed_key_size;
+     << " consumed_key_size=" << consumed_key_size
+     << " converted_segment_count=" << converted_segment_count;
   if (!prefix.empty()) {
     os << " prefix=" << prefix;
   }

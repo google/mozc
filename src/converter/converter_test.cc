@@ -552,6 +552,69 @@ TEST_F(ConverterTest, CommitSegmentValue) {
   }
 }
 
+TEST_F(ConverterTest, CommitSegmentValueWithMultiSegmentCandidate) {
+  auto engine_status = MockDataEngineFactory::Create();
+  ASSERT_OK(engine_status);
+  std::unique_ptr<Engine> engine = *std::move(engine_status);
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
+  CHECK(converter);
+  Segments segments;
+
+  segments.set_max_history_segments_size(3);
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_key("わたしの");
+    converter::Candidate* cand0 = segment->add_candidate();
+    cand0->value = "私の";
+    cand0->key = "わたしの";
+    converter::Candidate* cand1 = segment->add_candidate();
+    cand1->value = "私の名前は";
+    cand1->key = "わたしのなまえは";
+    cand1->converted_segment_count = 2;
+  }
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_key("なまえは");
+    converter::Candidate* cand = segment->add_candidate();
+    cand->value = "名前は";
+    cand->key = "なまえは";
+  }
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_key("なかのです");
+    converter::Candidate* cand = segment->add_candidate();
+    cand->value = "中野です";
+    cand->key = "なかのです";
+  }
+
+  ASSERT_EQ(segments.conversion_segments_size(), 3);
+
+  // CommitSegmentValue selects the multi-segment candidate without
+  // destructively erasing segments.
+  EXPECT_TRUE(converter->CommitSegmentValue(&segments, 0, 1));
+  EXPECT_EQ(segments.conversion_segments_size(), 3);
+  const Segment& seg0 = segments.conversion_segment(0);
+  EXPECT_EQ(seg0.segment_type(), Segment::FIXED_VALUE);
+  EXPECT_EQ(seg0.candidate(0).value, "私の名前は");
+  EXPECT_EQ(seg0.candidate(0).converted_segment_count, 2);
+
+  // FinishConversion merges the multi-segment candidate segments into history
+  // segments.
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+  converter->FinishConversion(request, &segments);
+  EXPECT_EQ(segments.conversion_segments_size(), 0);
+  EXPECT_EQ(segments.history_segments_size(), 2);
+  const Segment& final_seg0 = segments.history_segment(0);
+  EXPECT_EQ(final_seg0.key(), "わたしのなまえは");
+  EXPECT_EQ(final_seg0.candidate(0).value, "私の名前は");
+  const Segment& final_seg1 = segments.history_segment(1);
+  EXPECT_EQ(final_seg1.key(), "なかのです");
+  EXPECT_EQ(final_seg1.candidate(0).value, "中野です");
+}
+
 TEST_F(ConverterTest, CommitSegments) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
@@ -3139,6 +3202,55 @@ TEST_F(ConverterTest, ApplyPredictionToConversionHistoryContextTest) {
   EXPECT_TRUE(converter->StartConversion(convreq, &segments));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "本日");
+}
+
+TEST_F(ConverterTest, FinishConversion_FullSentence) {
+  std::unique_ptr<Converter> converter = CreateStubbedConverter();
+
+  Segments segments;
+  segments.set_max_history_segments_size(3);
+  Segment* seg0 = segments.add_segment();
+  seg0->set_key("わたしは");
+  Candidate* cand0 = seg0->add_candidate();
+  cand0->value = "私は";
+  cand0->key = "わたしは";
+  cand0->converted_segment_count = 2;
+
+  Segment* seg1 = segments.add_segment();
+  seg1->set_key("は");
+  Candidate* cand1 = seg1->add_candidate();
+  cand1->value = "は";
+  cand1->key = "は";
+
+  EXPECT_EQ(segments.conversion_segments_size(), 2);
+
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+
+  converter->FinishConversion(request, &segments);
+
+  EXPECT_EQ(segments.conversion_segments_size(), 0);
+  EXPECT_EQ(segments.history_segments_size(), 1);
+  EXPECT_EQ(segments.history_segment(0).key(), "わたしは");
+  EXPECT_EQ(segments.history_segment(0).candidate(0).value, "私は");
+}
+
+TEST(CandidateTest, ConvertedSegmentCountZeroSafety) {
+  Candidate cand;
+  EXPECT_EQ(cand.converted_segment_count, 1);
+  EXPECT_EQ(cand.effective_converted_segment_count(), 1);
+
+  cand.converted_segment_count = 0;
+  EXPECT_EQ(cand.effective_converted_segment_count(), 1);
+
+  cand.converted_segment_count = 3;
+  EXPECT_EQ(cand.effective_converted_segment_count(), 3);
+
+  cand.Clear();
+  EXPECT_EQ(cand.converted_segment_count, 1);
+  EXPECT_EQ(cand.effective_converted_segment_count(), 1);
 }
 
 }  // namespace converter

@@ -459,6 +459,25 @@ void FillPreedit(const composer::Composer& composer,
   preedit->set_is_toggleable(composer.IsToggleable());
 }
 
+namespace {
+size_t GetSegmentSpan(size_t current_index, size_t focused_index,
+                      const converter::Candidate& candidate) {
+  const size_t count = candidate.effective_converted_segment_count();
+  if (current_index < focused_index && current_index + count > focused_index) {
+    return focused_index - current_index;
+  }
+  return count;
+}
+
+absl::string_view GetKey(const Segment& segment,
+                         const converter::Candidate& candidate) {
+  return (candidate.effective_converted_segment_count() > 1 &&
+          !candidate.key.empty())
+             ? candidate.key
+             : segment.key();
+}
+}  // namespace
+
 void FillConversion(const Segments& segments, const size_t segment_index,
                     const int candidate_id, commands::Preedit* preedit) {
   constexpr uint32_t kBaseType = CONVERSION;
@@ -466,19 +485,29 @@ void FillConversion(const Segments& segments, const size_t segment_index,
   size_t cursor = 0;
   const Segments::const_range conversion_segments =
       segments.conversion_segments();
-  const Segment& current_segment = conversion_segments[segment_index];
-  for (const Segment& segment : conversion_segments) {
-    if (&segment == &current_segment) {
-      absl::string_view value = segment.candidate(candidate_id).value;
-      if (AddSegment(segment.key(), value, kBaseType | FOCUSED, preedit) &&
+  if (conversion_segments.empty()) {
+    return;
+  }
+  const size_t focused_segment_index =
+      std::min<size_t>(segment_index, conversion_segments.size() - 1);
+
+  for (size_t i = 0; i < conversion_segments.size();) {
+    const Segment& segment = conversion_segments[i];
+    if (i == focused_segment_index) {
+      const converter::Candidate& candidate = segment.candidate(candidate_id);
+      if (AddSegment(GetKey(segment, candidate), candidate.value,
+                     kBaseType | FOCUSED, preedit) &&
           (!preedit->has_highlighted_position())) {
         preedit->set_highlighted_position(cursor);
       }
-      cursor += Util::CharsLen(value);
+      cursor += Util::CharsLen(candidate.value);
+      i += GetSegmentSpan(i, focused_segment_index, candidate);
     } else {
-      absl::string_view value = segment.candidate(0).value;
-      AddSegment(segment.key(), value, kBaseType, preedit);
-      cursor += Util::CharsLen(value);
+      const converter::Candidate& candidate = segment.candidate(0);
+      AddSegment(GetKey(segment, candidate), candidate.value, kBaseType,
+                 preedit);
+      cursor += Util::CharsLen(candidate.value);
+      i += GetSegmentSpan(i, focused_segment_index, candidate);
     }
   }
   preedit->set_cursor(cursor);
