@@ -63,6 +63,7 @@ mozc_cc_library(
         ":options",
         "//base:util",
         "//base/strings:assign",
+        "//base/strings:japanese",
         "//composer",
         "//config:config_handler",
         "//converter:inner_segment",
@@ -71,6 +72,7 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
     ],
 )

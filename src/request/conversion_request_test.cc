@@ -225,4 +225,24 @@ TEST(ConversionRequestTest, IncognitoModeTest) {
     EXPECT_TRUE(convreq.incognito_mode());
   }
 }
+
+TEST(ConversionRequestTest, GetSurroundingContextTest) {
+  {
+    commands::Context context;
+    context.set_preceding_text("line1\nline2 ａｂｃ ");
+    context.set_following_text(" ｄｅｆ\r\nline4");
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetContext(context).Build();
+    const auto [left, right] = convreq.GetSurroundingContext();
+    EXPECT_EQ(left, "line2 abc");
+    EXPECT_EQ(right, "def");
+  }
+  {
+    const ConversionRequest convreq = ConversionRequestBuilder().Build();
+    const auto [left, right] = convreq.GetSurroundingContext();
+    EXPECT_TRUE(left.empty());
+    EXPECT_TRUE(right.empty());
+  }
+}
+
 }  // namespace mozc

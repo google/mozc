@@ -41,8 +41,10 @@
 
 #include "absl/base/attributes.h"
 #include "absl/log/check.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
+#include "base/strings/japanese.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
@@ -216,6 +218,29 @@ class ConversionRequest {
 
   // Returns the cost of the history if defined.
   int converter_history_cost() const { return history_result_->cost; }
+
+  // Returns normalized preceding and following surrounding context text.
+  // First: preceding context (left)
+  // Second: following context (right)
+  std::pair<std::string, std::string> GetSurroundingContext() const {
+    absl::string_view left_context_view = context_->preceding_text();
+    const auto lpos = left_context_view.find_last_of("\r\n");
+    if (lpos != absl::string_view::npos) {
+      left_context_view.remove_prefix(lpos + 1);
+    }
+    absl::string_view right_context_view = context_->following_text();
+    const auto rpos = right_context_view.find_first_of("\r\n");
+    if (rpos != absl::string_view::npos) {
+      right_context_view.remove_suffix(right_context_view.size() - rpos);
+    }
+    std::string left_context =
+        japanese::FullWidthAsciiToHalfWidthAscii(left_context_view);
+    std::string right_context =
+        japanese::FullWidthAsciiToHalfWidthAscii(right_context_view);
+    absl::StripAsciiWhitespace(&left_context);
+    absl::StripAsciiWhitespace(&right_context);
+    return std::make_pair(std::move(left_context), std::move(right_context));
+  }
 
   // Builder can access the private member for construction.
   friend class ConversionRequestBuilder;
