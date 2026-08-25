@@ -193,7 +193,9 @@ bool IsRareSymbolForDemotion(absl::string_view key,
 }
 
 // Insert Symbol into segment.
-void InsertCandidates(size_t default_offset, int32_t promotion_size,
+void InsertCandidates(absl::string_view candidate_key,
+                      size_t converted_segment_count, size_t default_offset,
+                      int32_t promotion_size,
                       const SerializedDictionary::IterRange& range,
                       bool context_sensitive, Segment* segment) {
   if (segment->candidates_size() == 0) {
@@ -212,16 +214,18 @@ void InsertCandidates(size_t default_offset, int32_t promotion_size,
   // include the target symbols, do assign description to these candidates.
   AddDescForCurrentCandidates(range, segment);
 
-  absl::string_view candidate_key =
-      ((!segment->key().empty()) ? segment->key() : segment->candidate(0).key);
   size_t offset = 0;
 
   // If the key is "かおもじ", set the insert position at the bottom,
   // giving priority to emoticons inserted by EmoticonRewriter.
   if (candidate_key == "かおもじ") {
     offset = segment->candidates_size();
+  } else if (converted_segment_count > 1) {
+    // Multi-segment symbol (e.g. ->, <->, !=, ー>) should be boosted directly
+    // to default_offset (0) without skipping single-character candidates.
+    offset = default_offset;
   } else {
-    // Find the position wehere we start to insert the symbols
+    // Find the position where we start to insert the symbols
     // We want to skip the single-kanji we inserted by single-kanji rewriter.
     // We also skip transliterated key candidates.
     offset = RewriterUtil::CalculateInsertPosition(*segment, default_offset);
@@ -239,8 +243,9 @@ void InsertCandidates(size_t default_offset, int32_t promotion_size,
   }
 
   const converter::Candidate& base_candidate = segment->candidate(0);
-  auto create_candidate = [&base_candidate, &candidate_key, context_sensitive](
-                              const SerializedDictionary::const_iterator& iter)
+  auto create_candidate =
+      [&base_candidate, &candidate_key, converted_segment_count,
+       context_sensitive](const SerializedDictionary::const_iterator& iter)
       -> std::unique_ptr<converter::Candidate> {
     auto candidate = std::make_unique<converter::Candidate>();
     candidate->lid = iter.lid();
@@ -251,6 +256,7 @@ void InsertCandidates(size_t default_offset, int32_t promotion_size,
     candidate->content_value.assign(iter.value().data(), iter.value().size());
     candidate->key = candidate_key;
     candidate->content_key = candidate_key;
+    candidate->converted_segment_count = converted_segment_count;
 
     if (context_sensitive) {
       candidate->attributes |= converter::Attribute::CONTEXT_SENSITIVE;
@@ -336,7 +342,7 @@ bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest& request,
     // if key is symbol, no need to see the context
     const bool context_sensitive = !IsSymbol(key);
 
-    InsertCandidates(GetOffset(request, key), promotion_size, range,
+    InsertCandidates(key, 1, GetOffset(request, key), promotion_size, range,
                      context_sensitive, &segment);
 
     modified = true;
@@ -347,11 +353,21 @@ bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest& request,
 
 bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest& request,
                                             Segments* segments) const {
-  if (segments->conversion_segments_size() != 1) {
+  const size_t segments_size = segments->conversion_segments_size();
+  if (segments_size == 0) {
     return false;
   }
 
-  absl::string_view key = segments->conversion_segment(0).key();
+  const bool enable_multi_segment = request.request()
+                                        .decoder_experiment_params()
+                                        .enable_multi_segment_candidate();
+  if (!enable_multi_segment && segments_size != 1) {
+    return false;
+  }
+
+  const absl::string_view key = enable_multi_segment
+                                    ? request.key()
+                                    : segments->conversion_segment(0).key();
   const SerializedDictionary::IterRange range = Lookup(*dictionary_, key);
   if (range.first == range.second) {
     return false;
@@ -360,15 +376,29 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest& request,
   const int32_t promotion_size = request.request()
                                      .decoder_experiment_params()
                                      .symbol_rewriter_promotion_size();
-  InsertCandidates(GetOffset(request, key), promotion_size, range,
+  const size_t converted_segment_count =
+      enable_multi_segment ? segments_size : 1;
+  // Multi-segment symbols (e.g., "->", "!=") should be boosted to the top
+  // (offset 0) so that the candidate is immediately visible. For single-segment
+  // symbols, use the default offset to avoid demoting regular candidates.
+  const size_t offset =
+      converted_segment_count > 1 ? 0 : GetOffset(request, key);
+  InsertCandidates(key, converted_segment_count, offset, promotion_size, range,
                    false,  // not context sensitive
                    segments->mutable_conversion_segment(0));
   return true;
 }
 
 std::optional<RewriterInterface::ResizeSegmentsRequest>
-SymbolRewriter::CheckResizeSegmentsRequest(const ConversionRequest& request,
-                                           const Segments& segments) const {
+SymbolRewriter::CheckResizeSegmentsRequest(
+    const ConversionRequest& request,
+    const converter::Segments& segments) const {
+  if (request.request()
+          .decoder_experiment_params()
+          .enable_multi_segment_candidate()) {
+    return std::nullopt;
+  }
+
   if (segments.conversion_segments_size() <= 1) {
     return std::nullopt;
   }

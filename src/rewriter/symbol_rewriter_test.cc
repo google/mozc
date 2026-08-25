@@ -135,13 +135,15 @@ class SymbolRewriterTest : public testing::TestWithTempUserProfile {
 TEST_F(SymbolRewriterTest, CheckResizeSegmentsRequestTest) {
   auto symbol_rewriter = std::make_from_tuple<SymbolRewriter>(
       data_manager_->GetSymbolRewriterData());
-  const ConversionRequest request;
 
   {
-    // Two segments should be resized to one segment (i.e. "ー>").
+    // Two segments should be resized to one segment (i.e. "ー>") (flag =
+    // false).
     Segments segments;
     AddSegment("ー", "test", &segments);
     AddSegment(">", "test", &segments);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey("ー>").Build();
     std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
         symbol_rewriter.CheckResizeSegmentsRequest(request, segments);
     ASSERT_TRUE(resize_request.has_value());
@@ -149,18 +151,61 @@ TEST_F(SymbolRewriterTest, CheckResizeSegmentsRequestTest) {
     EXPECT_EQ(resize_request->segment_sizes[0], 2);
   }
   {
-    // Already resized.
+    // Two segments with flag = true (multi-segment candidate).
     Segments segments;
-    AddSegment("ー>", "test", &segments);
+    AddSegment("ー", "test", &segments);
+    AddSegment(">", "test", &segments);
+    commands::Request request_proto;
+    request_proto.mutable_decoder_experiment_params()
+        ->set_enable_multi_segment_candidate(true);
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetRequest(request_proto)
+                                          .SetKey("ー>")
+                                          .Build();
     std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
         symbol_rewriter.CheckResizeSegmentsRequest(request, segments);
     EXPECT_FALSE(resize_request.has_value());
+    EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(HasCandidate(segments, 0, "→"));
+    const Segment& seg = segments.conversion_segment(0);
+    bool found = false;
+    for (size_t i = 0; i < seg.candidates_size(); ++i) {
+      if (seg.candidate(i).value == "→") {
+        EXPECT_EQ(seg.candidate(i).converted_segment_count, 2);
+        found = true;
+        break;
+      }
+    }
+    EXPECT_TRUE(found);
+  }
+  {
+    // Already resized.
+    Segments segments;
+    AddSegment("ー", "test", &segments);
+    AddSegment(">", "test", &segments);
+    segments.set_resized(true);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey("ー>").Build();
+    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+        symbol_rewriter.CheckResizeSegmentsRequest(request, segments);
+    EXPECT_FALSE(resize_request.has_value());
+  }
+  {
+    // Single segment.
+    Segments segments;
+    AddSegment("ー>", "test", &segments);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey("ー>").Build();
+    EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(HasCandidate(segments, 0, "→"));
   }
   {
     // No applicable symbols.
     Segments segments;
     AddSegment("ー", "test", &segments);
     AddSegment("ー", "test", &segments);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey("ーー").Build();
     std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
         symbol_rewriter.CheckResizeSegmentsRequest(request, segments);
     EXPECT_FALSE(resize_request.has_value());
@@ -422,7 +467,7 @@ TEST_F(SymbolRewriterTest, InvalidSizeOfSegments) {
     Segments segments;
     const ConversionRequest request;
 
-    // 1 segment. There are symbols assigned to "おんがく".
+    // 1 segment. There are symbols assigned to "ぎりしゃ".
     AddSegment("ぎりしゃ", "test", &segments);
     EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
   }
@@ -435,26 +480,14 @@ TEST_F(SymbolRewriterTest, InvalidSizeOfSegments) {
     // 0 segments.
     EXPECT_FALSE(symbol_rewriter.Rewrite(request, &segments));
 
-    // 2 segments. There are no symbols assigned to "おん" or "がく".
+    // 2 segments. When enable_multi_segment_candidate is false,
+    // segments are evaluated individually and request.key() ("おんがく")
+    // is not used. Since neither "おん" nor "がく" is a symbol on its own,
+    // Rewrite() returns false.
     AddSegment("おん", "test", &segments);
     AddSegment("がく", "test", &segments);
     EXPECT_FALSE(symbol_rewriter.Rewrite(request, &segments));
   }
-}
-
-TEST_F(SymbolRewriterTest, ResizeSegmentFailureIsNotFatal) {
-  auto symbol_rewriter = std::make_from_tuple<SymbolRewriter>(
-      data_manager_->GetSymbolRewriterData());
-
-  Segments segments;
-  const ConversionRequest request;
-  AddSegment("ー", "test", &segments);
-  AddSegment(">", "test", &segments);
-  std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
-      symbol_rewriter.CheckResizeSegmentsRequest(request, segments);
-  ASSERT_TRUE(resize_request.has_value());
-  EXPECT_EQ(resize_request->segment_index, 0);
-  EXPECT_EQ(resize_request->segment_sizes[0], 2);
 }
 
 TEST_F(SymbolRewriterTest, CaseNormalizationTest) {
