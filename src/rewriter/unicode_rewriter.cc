@@ -73,8 +73,8 @@ bool UCS4ExpressionToInteger(const absl::string_view input,
   return absl::SimpleHexAtoi(input.substr(2), codepoint);
 }
 
-void AddCandidate(absl::string_view key, absl::string_view value, int index,
-                  Segment* segment) {
+void AddCandidate(absl::string_view key, absl::string_view value,
+                  size_t converted_segment_count, int index, Segment* segment) {
   DCHECK(segment);
 
   if (index > segment->candidates_size()) {
@@ -84,10 +84,11 @@ void AddCandidate(absl::string_view key, absl::string_view value, int index,
   converter::Candidate* candidate = segment->insert_candidate(index);
   DCHECK(candidate);
 
-  segment->set_key(key);
   candidate->key = key;
+  candidate->content_key = key;
   candidate->value = value;
   candidate->content_value = value;
+  candidate->converted_segment_count = converted_segment_count;
   candidate->description = absl::StrCat("Unicode 変換 (", candidate->key, ")");
   // NO_MODIFICATION is required here, in order to escape
   // EnvironmentalFilterRewriter. Otherwise, some candidates from
@@ -120,7 +121,7 @@ bool UnicodeRewriter::RewriteToUnicodeCharFormat(
 
   absl::string_view key = segments->conversion_segment(0).key();
   Segment* segment = segments->mutable_conversion_segment(0);
-  AddCandidate(key, value, 5, segment);
+  AddCandidate(key, value, 1, 5, segment);
   return true;
 }
 
@@ -151,12 +152,17 @@ std::optional<std::string> GetValue(absl::string_view key) {
 std::optional<RewriterInterface::ResizeSegmentsRequest>
 UnicodeRewriter::CheckResizeSegmentsRequest(const ConversionRequest& request,
                                             const Segments& segments) const {
+  if (request.request()
+          .decoder_experiment_params()
+          .enable_multi_segment_candidate()) {
+    return std::nullopt;
+  }
   if (segments.resized() || segments.conversion_segments_size() <= 1) {
     // The given segments are already resized.
     return std::nullopt;
   }
 
-  absl::string_view key = request.key();
+  const absl::string_view key = request.key();
   const size_t key_len = Util::CharsLen(key);
   if (key_len > std::numeric_limits<uint8_t>::max()) {
     return std::nullopt;
@@ -179,18 +185,27 @@ UnicodeRewriter::CheckResizeSegmentsRequest(const ConversionRequest& request,
 // character is added. (ex. "U+0041" -> "A").
 bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
     const ConversionRequest& request, Segments* segments) const {
-  if (segments->conversion_segments_size() != 1) {
+  const size_t segments_size = segments->conversion_segments_size();
+  if (segments_size == 0) {
+    return false;
+  }
+  const bool enable_multi_segment = request.request()
+                                        .decoder_experiment_params()
+                                        .enable_multi_segment_candidate();
+  if (!enable_multi_segment && segments_size != 1) {
     return false;
   }
 
-  absl::string_view key = request.key();
+  const absl::string_view key = request.key();
   std::optional<std::string> value = GetValue(key);
   if (!value.has_value()) {
     return false;
   }
 
   Segment* segment = segments->mutable_conversion_segment(0);
-  AddCandidate(key, value.value(), 0, segment);
+  const size_t converted_segment_count =
+      enable_multi_segment ? segments_size : 1;
+  AddCandidate(key, value.value(), converted_segment_count, 0, segment);
   return true;
 }
 

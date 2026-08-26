@@ -230,7 +230,7 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
   UnicodeRewriter rewriter;
 
   {
-    // Multiple segments to be combined.
+    // Multiple segments to be combined (flag = false).
     Segments segments;
     InitSegments("U+0", "U+0", &segments);
     AddSegment("02", "02", &segments);
@@ -243,6 +243,29 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
     EXPECT_EQ(resize_request->segment_index, 0);
     EXPECT_EQ(resize_request->segment_sizes[0], 6);
     EXPECT_EQ(resize_request->segment_sizes[1], 0);
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  }
+
+  {
+    // Multiple segments to be combined (flag = true).
+    Segments segments;
+    InitSegments("U+0", "U+0", &segments);
+    AddSegment("02", "02", &segments);
+    AddSegment("0", "0", &segments);
+    commands::Request request_proto;
+    request_proto.mutable_decoder_experiment_params()
+        ->set_enable_multi_segment_candidate(true);
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetRequest(request_proto)
+                                          .SetKey("U+0020")
+                                          .Build();
+    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+        rewriter.CheckResizeSegmentsRequest(request, segments);
+    EXPECT_FALSE(resize_request.has_value());
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value.at(0), ' ');
+    EXPECT_EQ(
+        segments.conversion_segment(0).candidate(0).converted_segment_count, 3);
   }
 
   {
@@ -260,7 +283,7 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
   }
 
   {
-    // The size of segments is one.
+    // The size of segments is one (flag = false).
     Segments segments;
     InitSegments("U+0020", "U+0020", &segments);
     const ConversionRequest request =
@@ -270,6 +293,28 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
     EXPECT_FALSE(resize_request.has_value());
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value.at(0), ' ');
+    EXPECT_EQ(
+        segments.conversion_segment(0).candidate(0).converted_segment_count, 1);
+  }
+
+  {
+    // The size of segments is one (flag = true).
+    Segments segments;
+    InitSegments("U+0020", "U+0020", &segments);
+    commands::Request request_proto;
+    request_proto.mutable_decoder_experiment_params()
+        ->set_enable_multi_segment_candidate(true);
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetRequest(request_proto)
+                                          .SetKey("U+0020")
+                                          .Build();
+    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+        rewriter.CheckResizeSegmentsRequest(request, segments);
+    EXPECT_FALSE(resize_request.has_value());
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value.at(0), ' ');
+    EXPECT_EQ(
+        segments.conversion_segment(0).candidate(0).converted_segment_count, 1);
   }
 
   {

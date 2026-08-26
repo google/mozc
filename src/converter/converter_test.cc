@@ -2346,12 +2346,33 @@ TEST_F(ConverterTest, IntegrationWithUnicodeRewriter) {
   std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   {
+    // Default (enable_multi_segment_candidate = false).
     Segments segments;
     const ConversionRequest convreq =
         ConversionRequestBuilder().SetKey("U+3042").Build();
     ASSERT_TRUE(converter->StartConversion(convreq, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_TRUE(FindCandidateByValue("あ", segments.conversion_segment(0)));
+  }
+
+  {
+    // enable_multi_segment_candidate = true.
+    Segments segments;
+    commands::Request request_proto;
+    request_proto.mutable_decoder_experiment_params()
+        ->set_enable_multi_segment_candidate(true);
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetRequest(request_proto)
+                                          .SetKey("U+3042")
+                                          .Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 3);
+    const int index =
+        GetCandidateIndexByValue("あ", segments.conversion_segment(0));
+    EXPECT_NE(index, -1);
+    EXPECT_EQ(
+        segments.conversion_segment(0).candidate(index).converted_segment_count,
+        3);
   }
 }
 
