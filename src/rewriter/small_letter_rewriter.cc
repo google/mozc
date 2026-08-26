@@ -198,8 +198,9 @@ bool ConvertExpressions(const absl::string_view input, std::string* value) {
   return input != *value;
 }
 
-void AddCandidate(std::string key, std::string description, std::string value,
-                  int index, Segment* segment) {
+void AddCandidate(absl::string_view key, std::string description,
+                  std::string value, size_t converted_segment_count, int index,
+                  Segment* segment) {
   DCHECK(segment);
 
   if (index < 0 || index > segment->candidates_size()) {
@@ -209,10 +210,11 @@ void AddCandidate(std::string key, std::string description, std::string value,
   converter::Candidate* candidate = segment->insert_candidate(index);
   DCHECK(candidate);
 
-  segment->set_key(key);
-  candidate->key = std::move(key);
+  candidate->key = key;
+  candidate->content_key = key;
   candidate->value = value;
   candidate->content_value = std::move(value);
+  candidate->converted_segment_count = converted_segment_count;
   candidate->description = std::move(description);
   candidate->attributes |= (converter::Attribute::NO_LEARNING |
                             converter::Attribute::NO_VARIANTS_EXPANSION);
@@ -241,6 +243,11 @@ int SmallLetterRewriter::capability(const ConversionRequest& request) const {
 std::optional<RewriterInterface::ResizeSegmentsRequest>
 SmallLetterRewriter::CheckResizeSegmentsRequest(
     const ConversionRequest& request, const Segments& segments) const {
+  if (request.request()
+          .decoder_experiment_params()
+          .enable_multi_segment_candidate()) {
+    return std::nullopt;
+  }
   if (segments.resized() || segments.conversion_segments_size() <= 1) {
     return std::nullopt;
   }
@@ -266,7 +273,14 @@ SmallLetterRewriter::CheckResizeSegmentsRequest(
 
 bool SmallLetterRewriter::Rewrite(const ConversionRequest& request,
                                   Segments* segments) const {
-  if (segments->conversion_segments_size() != 1) {
+  const size_t segments_size = segments->conversion_segments_size();
+  if (segments_size == 0) {
+    return false;
+  }
+  const bool enable_multi_segment = request.request()
+                                        .decoder_experiment_params()
+                                        .enable_multi_segment_candidate();
+  if (!enable_multi_segment && segments_size != 1) {
     return false;
   }
 
@@ -278,10 +292,16 @@ bool SmallLetterRewriter::Rewrite(const ConversionRequest& request,
 
   Segment* segment = segments->mutable_conversion_segment(0);
 
-  // Candidates from this function should not be on high position. -1 will
-  // overwritten with the last index of candidates.
-  AddCandidate(std::string(key), "上下付き文字", std::move(value.value()), -1,
-               segment);
+  // Candidates from this function should not be on high position for
+  // single-segment expressions (-1 will be overwritten with the last index
+  // of candidates).
+  // For multi-segment expressions (e.g. ^123, _123, x^2), boost to the top
+  // (index 0) so that the candidate is immediately visible.
+  const size_t converted_segment_count =
+      enable_multi_segment ? segments_size : 1;
+  const int insert_index = converted_segment_count > 1 ? 0 : -1;
+  AddCandidate(key, "上下付き文字", std::move(value.value()),
+               converted_segment_count, insert_index, segment);
   return true;
 }
 

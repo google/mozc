@@ -161,9 +161,6 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
     InitSegments(item.input, item.input, &segments);
     const ConversionRequest request =
         ConversionRequestBuilder().SetKey(item.input).Build();
-    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
-        rewriter.CheckResizeSegmentsRequest(request, segments);
-    EXPECT_FALSE(resize_request.has_value());
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(ContainCandidate(segments, item.output));
   }
@@ -173,9 +170,6 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
     InitSegments(item, item, &segments);
     const ConversionRequest request =
         ConversionRequestBuilder().SetKey(item).Build();
-    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
-        rewriter.CheckResizeSegmentsRequest(request, segments);
-    EXPECT_FALSE(resize_request.has_value());
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }
 
@@ -185,20 +179,16 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
     InitSegments("^", "^", &segments);
     const ConversionRequest request =
         ConversionRequestBuilder().SetKey(invalid_input).Build();
-    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
-        rewriter.CheckResizeSegmentsRequest(request, segments);
-    EXPECT_FALSE(resize_request.has_value());
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }
 }
 
 TEST_F(SmallLetterRewriterTest, MultipleSegment) {
-  Segments segments;
   SmallLetterRewriter rewriter;
-  const ConversionRequest request;
 
   {
-    // Multiple segments are combined.
+    // Multiple segments (flag = false).
+    Segments segments;
     InitSegments("^123", "^123", &segments);
     AddSegment("45", "45", &segments);
     AddSegment("6", "6", &segments);
@@ -210,9 +200,35 @@ TEST_F(SmallLetterRewriterTest, MultipleSegment) {
     EXPECT_EQ(resize_request->segment_index, 0);
     EXPECT_EQ(resize_request->segment_sizes[0], 7);
     EXPECT_EQ(resize_request->segment_sizes[1], 0);
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }
+
+  {
+    // Multiple segments are combined (flag = true).
+    Segments segments;
+    InitSegments("^123", "^123", &segments);
+    AddSegment("45", "45", &segments);
+    AddSegment("6", "6", &segments);
+    commands::Request request_proto;
+    request_proto.mutable_decoder_experiment_params()
+        ->set_enable_multi_segment_candidate(true);
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetRequest(request_proto)
+                                          .SetKey("^123456")
+                                          .Build();
+    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+        rewriter.CheckResizeSegmentsRequest(request, segments);
+    EXPECT_FALSE(resize_request.has_value());
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(ContainCandidate(segments, "¹²³⁴⁵⁶"));
+    const Segment& seg = segments.conversion_segment(0);
+    EXPECT_EQ(seg.candidate(0).value, "¹²³⁴⁵⁶");
+    EXPECT_EQ(seg.candidate(0).converted_segment_count, 3);
+  }
+
   {
     // If the segments is already resized, returns false.
+    Segments segments;
     InitSegments("^123", "^123", &segments);
     AddSegment("^123", "^123", &segments);
     segments.set_resized(true);
@@ -222,10 +238,12 @@ TEST_F(SmallLetterRewriterTest, MultipleSegment) {
         rewriter.CheckResizeSegmentsRequest(request, segments);
     EXPECT_FALSE(resize_request.has_value());
   }
+
   {
     // History segment has to be ignored.
     // In this case 1st segment is HISTORY
     // so this rewriting returns true.
+    Segments segments;
     InitSegments("^123", "^123", &segments);
     AddSegment("^123", "^123", &segments);
     segments.set_resized(true);
