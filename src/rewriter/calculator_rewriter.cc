@@ -52,6 +52,9 @@
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
+namespace {
+constexpr absl::string_view kDescription = "計算結果";
+}  // namespace
 
 int CalculatorRewriter::capability(const ConversionRequest& request) const {
   if (request.request().mixed_conversion()) {
@@ -64,6 +67,12 @@ std::optional<RewriterInterface::ResizeSegmentsRequest>
 CalculatorRewriter::CheckResizeSegmentsRequest(const ConversionRequest& request,
                                                const Segments& segments) const {
   if (!request.config().use_calculator()) {
+    return std::nullopt;
+  }
+
+  if (request.request()
+          .decoder_experiment_params()
+          .enable_multi_segment_candidate()) {
     return std::nullopt;
   }
 
@@ -102,13 +111,20 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest& request,
   }
 
   const size_t segments_size = segments->conversion_segments_size();
-  if (segments_size != 1) {
+  if (segments_size == 0) {
     return false;
   }
 
-  // If |segments| has only one conversion segment, try calculation and insert
-  // the result on success.
-  absl::string_view key = segments->conversion_segment(0).key();
+  const bool enable_multi_segment = request.request()
+                                        .decoder_experiment_params()
+                                        .enable_multi_segment_candidate();
+  if (!enable_multi_segment && segments_size != 1) {
+    return false;
+  }
+
+  const absl::string_view key = enable_multi_segment
+                                    ? request.key()
+                                    : segments->conversion_segment(0).key();
   if (key.empty()) {
     return false;
   }
@@ -118,15 +134,20 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest& request,
     return false;
   }
 
-  // Insert the result.
-  if (!InsertCandidate(*result, 0, segments->mutable_conversion_segment(0))) {
+  const size_t converted_segment_count =
+      enable_multi_segment ? segments_size : 1;
+  // Insert the result into segment 0 covering all conversion segments.
+  if (!InsertCandidate(key, *result, converted_segment_count, 0,
+                       segments->mutable_conversion_segment(0))) {
     return false;
   }
 
   return true;
 }
 
-bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
+bool CalculatorRewriter::InsertCandidate(const absl::string_view key,
+                                         const absl::string_view value,
+                                         const size_t converted_segment_count,
                                          const size_t insert_pos,
                                          Segment* segment) const {
   if (segment->candidates_size() == 0) {
@@ -134,16 +155,21 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
     return false;
   }
 
-  const converter::Candidate& base_candidate = segment->candidate(0);
-
   // Normalize the expression, used in description.
-  std::string expression =
-      japanese_util::FullWidthAsciiToHalfWidthAscii(base_candidate.content_key);
+  std::string expression = japanese_util::FullWidthAsciiToHalfWidthAscii(key);
   absl::StrReplaceAll({{"・", "/"}, {"ー", "-"}}, &expression);  // "ー", onbiki
 
-  size_t offset = std::min(insert_pos, segment->candidates_size());
+  const size_t offset = std::min(insert_pos, segment->candidates_size());
 
-  for (int n = 0; n < 2; ++n) {
+  // Inserts up to 3 candidate variations:
+  // n = 0: Calculated result only (e.g., "1").
+  // n = 1: Expression with result (e.g., "(1+2*3)/7=1" or "2=1+1").
+  // n = 2: Normalized half-width expression only (e.g., "(1+2*3)/7=").
+  // Note: n = 2 is required because multi-segment expressions are no longer
+  // merged via segment resizing, so the transliterated full expression
+  // candidate is generated here explicitly.
+  const int num_candidates = converted_segment_count > 1 ? 3 : 2;
+  for (int n = 0; n < num_candidates; ++n) {
     int current_offset = offset + n;
     converter::Candidate* candidate = segment->insert_candidate(current_offset);
     if (candidate == nullptr) {
@@ -163,16 +189,17 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
     candidate->lid = reference_candidate.lid;
     candidate->rid = reference_candidate.rid;
     candidate->cost = reference_candidate.cost;
-    candidate->key = base_candidate.key;
-    candidate->content_key = base_candidate.content_key;
+    candidate->key = key;
+    candidate->content_key = key;
+    candidate->converted_segment_count = converted_segment_count;
     candidate->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
     candidate->attributes |= converter::Attribute::NO_LEARNING;
-    candidate->description = "計算結果";
 
-    if (n == 0) {  // without expression
-      candidate->value = std::string(value);
-      candidate->content_value = std::string(value);
-    } else {  // with expression
+    if (n == 0) {  // Result only (e.g., "1")
+      candidate->value = value;
+      candidate->content_value = value;
+      candidate->description = kDescription;
+    } else if (n == 1) {  // Expression + result (e.g., "(1+2*3)/7=1")
       DCHECK(!expression.empty());
       if (expression.front() == '=') {
         // Expression starts with '='.
@@ -185,6 +212,10 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
         candidate->value = absl::StrCat(expression, value);
         candidate->content_value = absl::StrCat(expression, value);
       }
+      candidate->description = kDescription;
+    } else {  // Expression only (e.g., "(1+2*3)/7=")
+      candidate->value = expression;
+      candidate->content_value = expression;
     }
   }
 

@@ -62,7 +62,8 @@ class CalculatorRewriter : public RewriterInterface {
   // Inserts a candidate with the string into the |segment|.
   // Position of insertion is indicated by |insert_pos|. It returns false if
   // insertion is failed.
-  bool InsertCandidate(absl::string_view value, size_t insert_pos,
+  bool InsertCandidate(absl::string_view key, absl::string_view value,
+                       size_t converted_segment_count, size_t insert_pos,
                        Segment* segment) const;
 
   const Calculator calculator_;

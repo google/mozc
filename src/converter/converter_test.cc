@@ -2252,12 +2252,30 @@ TEST_F(ConverterTest, IntegrationWithCalculatorRewriter) {
   std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   {
+    // Default (enable_multi_segment_candidate = false).
     Segments segments;
     const ConversionRequest convreq =
         ConversionRequestBuilder().SetKey("1+1=").Build();
     ASSERT_TRUE(converter->StartConversion(convreq, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "2");
+  }
+
+  {
+    // enable_multi_segment_candidate = true.
+    Segments segments;
+    commands::Request request_proto;
+    request_proto.mutable_decoder_experiment_params()
+        ->set_enable_multi_segment_candidate(true);
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetRequest(request_proto)
+                                          .SetKey("1+1=")
+                                          .Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 4);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "2");
+    EXPECT_EQ(
+        segments.conversion_segment(0).candidate(0).converted_segment_count, 4);
   }
 }
 
