@@ -52,7 +52,7 @@ py_test(
     tags = ["manual"],
     deps = [
         ":replace_macros.testonly_lib",
-        "@io_abseil_py//absl/testing:absltest",
+        "@abseil-py//absl/testing:absltest",
     ],
 )
 
@@ -68,7 +68,7 @@ py_test(
     tags = ["manual"],
     deps = [
         ":code_generator_util",
-        "@io_abseil_py//absl/testing:absltest",
+        "@abseil-py//absl/testing:absltest",
     ],
 )
 
@@ -89,7 +89,7 @@ py_test(
     tags = ["manual"],
     deps = [
         ":mozc_version_lib",
-        "@io_abseil_py//absl/testing:absltest",
+        "@abseil-py//absl/testing:absltest",
     ],
 )
 

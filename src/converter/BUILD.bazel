@@ -916,7 +916,7 @@ py_test(
     tags = ["manual"],
     deps = [
         ":gen_boundary_data_lib",
-        "@io_abseil_py//absl/testing:absltest",
+        "@abseil-py//absl/testing:absltest",
     ],
 )
 
