@@ -26,6 +26,11 @@ jobs:
           submodules: false
           persist-credentials: false
 
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: 'stable'
+
       - name: Run
         working-directory: ./src
         run: |
