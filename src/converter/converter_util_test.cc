@@ -35,6 +35,7 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/inner_segment.h"
 #include "converter/segments.h"
@@ -363,6 +364,55 @@ TEST(ConverterUtilTest, MakeLearningResultsFromSegments) {
     }
     EXPECT_EQ(n, 3);
   }
+}
+
+TEST(ConverterUtilTest, MergePredictionResultsNormalHistory) {
+  prediction::Result h0, h1, pc0, pc1;
+  h0.value = "history0";
+  h1.value = "history1";
+  pc0.value = "pc0";
+  pc1.value = "history0";  // duplicate with h0
+
+  std::vector<prediction::Result> merged =
+      MergePredictionResults({h0, h1}, {pc0, pc1});
+  ASSERT_EQ(merged.size(), 3);
+  EXPECT_EQ(merged[0].value, "history0");
+  EXPECT_EQ(merged[1].value, "history1");
+  EXPECT_EQ(merged[2].value, "pc0");
+}
+
+TEST(ConverterUtilTest, MergePredictionResultsWeakHistory) {
+  prediction::Result h0, h1, pc0, pc1;
+  h0.value = "weak_history0";
+  h0.attributes = Attribute::WEAK_USER_HISTORY_PREDICTION;
+  h1.value = "weak_history1";
+  pc0.value = "pc0";
+  pc1.value = "pc1";
+
+  std::vector<prediction::Result> merged =
+      MergePredictionResults({h0, h1}, {pc0, pc1});
+  ASSERT_EQ(merged.size(), 4);
+  // pc0 is placed at position 0, history follows, then remaining pc results.
+  EXPECT_EQ(merged[0].value, "pc0");
+  EXPECT_EQ(merged[1].value, "weak_history0");
+  EXPECT_EQ(merged[2].value, "weak_history1");
+  EXPECT_EQ(merged[3].value, "pc1");
+}
+
+TEST(ConverterUtilTest, MergePredictionResultsEmptyInputs) {
+  prediction::Result r0;
+  r0.value = "value0";
+
+  EXPECT_TRUE(MergePredictionResults({}, {}).empty());
+
+  std::vector<prediction::Result> only_history =
+      MergePredictionResults({r0}, {});
+  ASSERT_EQ(only_history.size(), 1);
+  EXPECT_EQ(only_history[0].value, "value0");
+
+  std::vector<prediction::Result> only_pc = MergePredictionResults({}, {r0});
+  ASSERT_EQ(only_pc.size(), 1);
+  EXPECT_EQ(only_pc[0].value, "value0");
 }
 
 }  // namespace

@@ -29,6 +29,8 @@
 
 #include "converter/converter_util.h"
 
+#include <algorithm>
+#include <cstddef>
 #include <optional>
 #include <tuple>
 #include <utility>
@@ -38,6 +40,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/inner_segment.h"
 #include "converter/segments.h"
@@ -208,6 +211,47 @@ Segments PrepareSegmentsFromRequest(const ConversionRequest& request) {
   segments.add_segment()->set_key(request.key());
 
   return segments;
+}
+
+std::vector<prediction::Result> MergePredictionResults(
+    std::vector<prediction::Result> user_history_results,
+    std::vector<prediction::Result> pc_results) {
+  std::vector<prediction::Result> results;
+  const bool is_weak_history = !user_history_results.empty() &&
+                               (user_history_results.front().attributes &
+                                Attribute::WEAK_USER_HISTORY_PREDICTION);
+
+  auto append_unique = [](prediction::Result res,
+                          std::vector<prediction::Result>* dst) {
+    if (std::none_of(dst->begin(), dst->end(),
+                     [&res](const prediction::Result& r) {
+                       return r.value == res.value;
+                     })) {
+      dst->push_back(std::move(res));
+    }
+  };
+
+  if (is_weak_history && !pc_results.empty()) {
+    // When the top history candidate is weak, prevent it from becoming the top
+    // candidate by prioritizing pc_results.front() (default conversion or
+    // post-corrected result) at position 0 and demoting history candidates
+    // to subsequent positions (consistent with
+    // Predictor::DemoteWeakUserHistory).
+    results.push_back(pc_results.front());
+    for (prediction::Result& res : user_history_results) {
+      append_unique(std::move(res), &results);
+    }
+    for (size_t i = 1; i < pc_results.size(); ++i) {
+      append_unique(std::move(pc_results[i]), &results);
+    }
+  } else {
+    // Normal history: user history results followed by post-correction results.
+    results = std::move(user_history_results);
+    for (prediction::Result& res : pc_results) {
+      append_unique(std::move(res), &results);
+    }
+  }
+  return results;
 }
 
 }  // namespace mozc::converter

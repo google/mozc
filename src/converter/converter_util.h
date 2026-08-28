@@ -113,6 +113,21 @@ void PopulateCandidateFromResult(const prediction::Result& result,
 // value, content_key, and content_value.
 Segments PrepareSegmentsFromRequest(const ConversionRequest& request);
 
+// Merges user history prediction results and post-correction (supplemental
+// model) results into a single list with deduplication.
+//
+// Ordering rules:
+// - Default: Prioritizes user history results over post-correction results.
+// - Weak history: If the top user history candidate is weak (has
+//   Attribute::WEAK_USER_HISTORY_PREDICTION), the top post-correction/default
+//   result is prioritized at position 0 to prevent low-confidence history from
+//   overriding Viterbi/PostCorrect, and history candidates are demoted to
+//   subsequent positions (consistent with Predictor::DemoteWeakUserHistory).
+// - Deduplication: Candidates with duplicate values (spellings) are skipped.
+std::vector<prediction::Result> MergePredictionResults(
+    std::vector<prediction::Result> user_history_results,
+    std::vector<prediction::Result> pc_results);
+
 }  // namespace mozc::converter
 
 #endif  // MOZC_CONVERTER_CONVERTER_UTIL_H_

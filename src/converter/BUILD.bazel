@@ -86,6 +86,7 @@ mozc_cc_library(
         "//session:__pkg__",
     ],
     deps = [
+        ":attribute",
         ":inner_segment",
         ":segments",
         "//base/strings:assign",
@@ -101,6 +102,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["converter_util_test.cc"],
     deps = [
+        ":attribute",
         ":converter_util",
         ":inner_segment",
         ":segments",
