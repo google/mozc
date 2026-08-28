@@ -36,6 +36,28 @@ load(
 package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
+    name = "reversed_view",
+    hdrs = [
+        "reversed_view.h",
+        "reversed_view_internal.h",
+    ],
+    visibility = ["//:__subpackages__"],
+    deps = [
+    ],
+)
+
+mozc_cc_test(
+    name = "reversed_view_test",
+    size = "small",
+    srcs = ["reversed_view_test.cc"],
+    deps = [
+        ":reversed_view",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
     name = "varint",
     hdrs = [
         "varint.h",
