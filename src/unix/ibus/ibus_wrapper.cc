@@ -254,6 +254,18 @@ void IbusEngineWrapper::GetContentType(uint* purpose, uint* hints) {
   ibus_engine_get_content_type(engine_, purpose, hints);
 }
 
+bool IbusEngineWrapper::HasPrivateInputHint() {
+#if IBUS_CHECK_VERSION(1, 5, 26)
+  uint purpose = IBUS_INPUT_PURPOSE_FREE_FORM;
+  uint hints = IBUS_INPUT_HINT_NONE;
+  GetContentType(&purpose, &hints);
+  return (hints & IBUS_INPUT_HINT_PRIVATE) != 0;
+#else   // IBUS_CHECK_VERSION(1, 5, 26)
+  // IBUS_INPUT_HINT_PRIVATE is available in IBus 1.5.26 and later.
+  return false;
+#endif  // IBUS_CHECK_VERSION(1, 5, 26)
+}
+
 void IbusEngineWrapper::CommitText(absl::string_view text) {
   IBusText* ibus_text = ibus_text_new_from_string(text.data());
   ibus_engine_commit_text(engine_, ibus_text);
