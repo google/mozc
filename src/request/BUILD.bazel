@@ -39,10 +39,8 @@ mozc_cc_library(
     name = "options",
     hdrs = ["options.h"],
     visibility = [
-        "//:__subpackages__",
         "//converter:__pkg__",
         "//dictionary:__subpackages__",
-        "//engine:__pkg__",
         "//prediction:__pkg__",
         "//rewriter:__pkg__",
     ],
