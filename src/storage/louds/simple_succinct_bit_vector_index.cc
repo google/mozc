@@ -50,23 +50,23 @@ class ZeroBitIndexIterator {
  public:
   using difference_type = ptrdiff_t;
   using value_type = int;
-  using pointer = const int *;
-  using reference = const int &;
+  using pointer = const int*;
+  using reference = const int&;
   using iterator_category = std::forward_iterator_tag;
 
   ZeroBitIndexIterator(absl::Span<const int> index, int chunk_size,
-                       const int *ptr)
+                       const int* ptr)
       : data_{index.data()}, chunk_size_{chunk_size}, ptr_{ptr} {}
 
-  const int *ptr() const { return ptr_; }
+  const int* ptr() const { return ptr_; }
 
-  ZeroBitIndexIterator &operator++() {
+  ZeroBitIndexIterator& operator++() {
     ++ptr_;
     return *this;
   }
 
-  friend bool operator!=(const ZeroBitIndexIterator &x,
-                         const ZeroBitIndexIterator &y) {
+  friend bool operator!=(const ZeroBitIndexIterator& x,
+                         const ZeroBitIndexIterator& y) {
     return x.ptr_ != y.ptr_;
   }
 
@@ -78,9 +78,9 @@ class ZeroBitIndexIterator {
   }
 
  private:
-  const int *data_;
+  const int* data_;
   int chunk_size_;
-  const int *ptr_;
+  const int* ptr_;
 };
 
 inline int BitCount0(uint32_t x) {
@@ -88,18 +88,22 @@ inline int BitCount0(uint32_t x) {
   return std::popcount(~x);
 }
 
-// Returns 1-bits in the data to length words.
-int Count1Bits(const uint8_t *data, int length) {
+// Returns 1-bits in the data to length 32-bit words.
+// Processes in 64-bit words as much as possible for speed.
+int Count1Bits(const uint8_t* data, int length) {
   int num_bits = 0;
-  for (; length > 0; --length) {
+  for (; length >= 2; length -= 2) {
+    num_bits += std::popcount(LoadUnalignedAdvance<uint64_t>(data));
+  }
+  if (length == 1) {
     num_bits += std::popcount(LoadUnalignedAdvance<uint32_t>(data));
   }
   return num_bits;
 }
 
 // Stores index (the cumulative number of the 1-bits from begin of each chunk).
-void InitIndex(const uint8_t *data, int length, int chunk_size,
-               std::vector<int> *index) {
+void InitIndex(const uint8_t* data, int length, int chunk_size,
+               std::vector<int>* index) {
   DCHECK_GE(chunk_size, 4);
   DCHECK(std::has_single_bit<uint32_t>(chunk_size)) << chunk_size;
   DCHECK_EQ(length % 4, 0);
@@ -125,14 +129,14 @@ void InitIndex(const uint8_t *data, int length, int chunk_size,
 
 void InitLowerBound0Cache(absl::Span<const int> index, int chunk_size,
                           size_t increment, size_t size,
-                          std::vector<const int *> *cache) {
+                          std::vector<const int*>* cache) {
   DCHECK_GT(increment, 0);
   cache->clear();
   cache->reserve(size + 2);
   cache->push_back(index.data());
   for (size_t i = 1; i <= size; ++i) {
     const int target_index = increment * i;
-    const int *ptr =
+    const int* ptr =
         std::lower_bound(ZeroBitIndexIterator(index, chunk_size, index.data()),
                          ZeroBitIndexIterator(index, chunk_size,
                                               index.data() + index.size()),
@@ -145,14 +149,14 @@ void InitLowerBound0Cache(absl::Span<const int> index, int chunk_size,
 
 void InitLowerBound1Cache(absl::Span<const int> index, int chunk_size,
                           size_t increment, size_t size,
-                          std::vector<const int *> *cache) {
+                          std::vector<const int*>* cache) {
   DCHECK_GT(increment, 0);
   cache->clear();
   cache->reserve(size + 2);
   cache->push_back(index.data());
   for (size_t i = 1; i <= size; ++i) {
     const int target_index = increment * i;
-    const int *ptr = std::lower_bound(index.data(), index.data() + index.size(),
+    const int* ptr = std::lower_bound(index.data(), index.data() + index.size(),
                                       target_index);
     cache->push_back(ptr);
   }
@@ -161,7 +165,7 @@ void InitLowerBound1Cache(absl::Span<const int> index, int chunk_size,
 
 }  // namespace
 
-void SimpleSuccinctBitVectorIndex::Init(const uint8_t *data, int length,
+void SimpleSuccinctBitVectorIndex::Init(const uint8_t* data, int length,
                                         size_t lb0_cache_size,
                                         size_t lb1_cache_size) {
   data_ = data;
@@ -200,11 +204,11 @@ void SimpleSuccinctBitVectorIndex::Reset() {
 int SimpleSuccinctBitVectorIndex::Rank1(int n) const {
   // Look up pre-computed 1-bits for the preceding chunks.
   const int num_chunks = n / (chunk_size_ * 8);
-  int result = index_[n / (chunk_size_ * 8)];
+  int result = index_[num_chunks];
 
   // Count 1-bits for remaining "words".
   result += Count1Bits(data_ + num_chunks * chunk_size_,
-                       (n / 8 - num_chunks * chunk_size_) / 4);
+                       (n / 32) - num_chunks * (chunk_size_ / 4));
 
   // Count 1-bits for remaining "bits".
   if (n % 32 > 0) {
@@ -227,7 +231,7 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
   DCHECK_GE(lb0_cache_index, 0);
 
   // Binary search on chunks.
-  const int *chunk_ptr =
+  const int* chunk_ptr =
       std::lower_bound(ZeroBitIndexIterator(index_, chunk_size_,
                                             lb0_cache_[lb0_cache_index]),
                        ZeroBitIndexIterator(index_, chunk_size_,
@@ -240,7 +244,7 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
 
   // Linear search on remaining "words"
   const int offset = (chunk_index * chunk_size_) & ~int{3};
-  const uint8_t *ptr = data_ + offset;
+  const uint8_t* ptr = data_ + offset;
   while (true) {
     const int bit_count = BitCount0(LoadUnaligned<uint32_t>(ptr));
     if (bit_count >= n) {
@@ -272,7 +276,7 @@ int SimpleSuccinctBitVectorIndex::Select1(int n) const {
   DCHECK_GE(lb1_cache_index, 0);
 
   // Binary search on chunks.
-  const int *chunk_ptr = std::lower_bound(lb1_cache_[lb1_cache_index],
+  const int* chunk_ptr = std::lower_bound(lb1_cache_[lb1_cache_index],
                                           lb1_cache_[lb1_cache_index + 1], n);
   const int chunk_index = (chunk_ptr - index_.data()) - 1;
   DCHECK_GE(chunk_index, 0);
@@ -280,7 +284,7 @@ int SimpleSuccinctBitVectorIndex::Select1(int n) const {
 
   // Linear search on remaining "words"
   const int offset = (chunk_index * chunk_size_) & ~int{3};
-  const uint8_t *ptr = data_ + offset;
+  const uint8_t* ptr = data_ + offset;
   while (true) {
     const int bit_count = std::popcount(LoadUnaligned<uint32_t>(ptr));
     if (bit_count >= n) {
