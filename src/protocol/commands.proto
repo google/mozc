@@ -626,20 +626,6 @@ message DecoderExperimentParams {
   optional int32 handwriting_conversion_candidate_cost_offset = 102
       [default = 1151];
 
-  enum BigramNwpFilteringMode {
-    // Control implementation is used. For example,
-    // - Kanji + Katakana will not be filtered.
-    // - If cost(prefix) > cost(original_entry), the candidate will be filtered.
-    // - The reading of the target candidate should be in the dictionary.
-    // - ,etc
-    DEFAULT = 0;
-    // In addition to the default filtering, filter entry if the character
-    // script type does not change from the prefix.
-    FILTER_SAME_CTYPE = 1;
-    // Filter all bigram candidates.
-    FILTER_ALL = 2;
-  }
-
   // Threshold for suffix NWP transition cost.
   // If the transition cost is greater than this value, the candidate will be
   // filtered.
