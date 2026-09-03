@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -96,12 +95,13 @@ std::vector<Result> SingleKanjiDecoder::Decode(
       // Do not include partial results
       break;
     }
-    const std::vector<std::string> kanji_list =
+    std::vector<std::string> kanji_list =
         single_kanji_dictionary_.LookupKanjiEntries(key, use_svs);
     if (kanji_list.empty()) {
       continue;
     }
-    AppendResults(key, original_request_key, kanji_list, offset, &results);
+    AppendResults(key, original_request_key, std::move(kanji_list), offset,
+                  &results);
     // Make sure that single kanji entries for shorter key should be
     // ranked lower than the entries for longer key.
     constexpr int kShorterKeyOffst = 3450;  // 500 * log(1000)
@@ -115,16 +115,17 @@ std::vector<Result> SingleKanjiDecoder::Decode(
 
 void SingleKanjiDecoder::AppendResults(absl::string_view kanji_key,
                                        absl::string_view original_request_key,
-                                       absl::Span<const std::string> kanji_list,
+                                       std::vector<std::string> kanji_list,
                                        const int offset,
                                        std::vector<Result>* results) const {
-  for (const std::string& kanji : kanji_list) {
+  for (std::string& kanji : kanji_list) {
     Result result;
     // Set the wcost to keep the `kanji_list` order.
     result.wcost = offset + results->size();
     result.attributes |= Attribute::SINGLE_KANJI;
+    // Note: kanji_key is reused for all entries in kanji_list, so it is copied.
     strings::Assign(result.key, kanji_key);
-    result.value = kanji;
+    result.value = std::move(kanji);
     result.lid = general_symbol_id_;
     result.rid = general_symbol_id_;
     if (kanji_key.size() < original_request_key.size()) {

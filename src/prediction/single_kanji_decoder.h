@@ -36,7 +36,6 @@
 
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "prediction/result.h"
@@ -57,7 +56,7 @@ class SingleKanjiDecoder {
  private:
   void AppendResults(absl::string_view kanji_key,
                      absl::string_view original_request_key,
-                     absl::Span<const std::string> kanji_list, int offset,
+                     std::vector<std::string> kanji_list, int offset,
                      std::vector<Result>* results) const;
 
   const dictionary::SingleKanjiDictionary& single_kanji_dictionary_;
