@@ -154,30 +154,31 @@ std::vector<Result> RealtimeDecoder::Decode(
     return results;
   }
 
-  // Copy candidates into the array of Results.
-  const Segment& segment = tmp_segments.conversion_segment(0);
-  for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    const converter::Candidate& candidate = segment.candidate(i);
+  // Move candidates into the array of Results.
+  Segment* segment = tmp_segments.mutable_conversion_segment(0);
+  for (size_t i = 0; i < segment->candidates_size(); ++i) {
+    converter::Candidate* candidate = segment->mutable_candidate(i);
 
     Result result;
-    result.key = candidate.key;
-    result.value = candidate.value;
-    result.cost = candidate.cost;
-    result.wcost = candidate.wcost;
-    result.lid = candidate.lid;
-    result.rid = candidate.rid;
-    result.inner_segment_boundary = candidate.inner_segment_boundary;
+    result.cost = candidate->cost;
+    result.wcost = candidate->wcost;
+    result.lid = candidate->lid;
+    result.rid = candidate->rid;
     result.SetTypesAndTokenAttributes(REALTIME, dictionary::Token::NONE);
     result.attributes |= Attribute::NO_VARIANTS_EXPANSION;
-    if (candidate.key.size() < segment.key().size()) {
+    if (candidate->key.size() < segment->key().size()) {
       result.attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
-      result.consumed_key_size = Util::CharsLen(candidate.key);
+      result.consumed_key_size = Util::CharsLen(candidate->key);
     }
     // Kana expansion happens inside the decoder.
-    if (candidate.attributes & Attribute::KEY_EXPANDED_IN_DICTIONARY) {
+    if (candidate->attributes & Attribute::KEY_EXPANDED_IN_DICTIONARY) {
       result.attributes |= KEY_EXPANDED_IN_DICTIONARY;
     }
-    result.attributes |= candidate.attributes;
+    result.attributes |= candidate->attributes;
+    result.key = std::move(candidate->key);
+    result.value = std::move(candidate->value);
+    result.inner_segment_boundary =
+        std::move(candidate->inner_segment_boundary);
     results.emplace_back(std::move(result));
   }
 
@@ -204,7 +205,7 @@ std::vector<Result> RealtimeDecoder::ReverseDecode(
   if (std::optional<Result> result_opt = converter::ConversionSegmentsToResult(
           tmp_segments.conversion_segments());
       result_opt.has_value()) {
-    return {result_opt.value()};
+    return {*std::move(result_opt)};
   }
 
   return {};
