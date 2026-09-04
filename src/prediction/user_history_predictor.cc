@@ -392,6 +392,8 @@ bool UserHistoryPredictor::RemoveNgramChain(absl::string_view target_key,
   };
 
   std::vector<absl::string_view> key_ngrams, value_ngrams;
+  key_ngrams.reserve(8);
+  value_ngrams.reserve(8);
   absl::AnyInvocable<RemoveNgramChainResult(Entry&, size_t, size_t)>
       remove_ngram_chain_internal =
           [&](Entry& entry, size_t key_ngrams_len,
@@ -1787,6 +1789,7 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
   }
 
   std::vector<Result> results;
+  results.reserve(entries.size());
 
   for (const auto* result_entry : entries) {
     Result result;
@@ -1810,6 +1813,8 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
          Attribute::POPULATE_INNER_SEGMENT_BOUNDARY)) {
       // POPULATE_INNER_SEGMENT_BOUNDARY is set when the `result_entry` is
       // `generated` by the decoder.
+      result.inner_segment_boundary.reserve(
+          result_entry->inner_segment_boundary_size());
       absl::c_copy(result_entry->inner_segment_boundary(),
                    std::back_inserter(result.inner_segment_boundary));
     }
@@ -2069,6 +2074,7 @@ UserHistoryPredictor::MakeLearningSegments(
 
   auto make_learning_segments = [&](const Result& result) {
     std::vector<SegmentForLearning> segments;
+    segments.reserve(result.inner_segments().size());
 
     // Note: History predictions are currently learned as single segments
     // even if they have boundaries in storage. This is because
@@ -2101,7 +2107,7 @@ UserHistoryPredictor::MakeLearningSegments(
 
     absl::string_view space_prefix = get_space_prefix();
     if (!segments.empty() || space_prefix.empty()) {
-      return {segments, !space_prefix.empty()};
+      return {std::move(segments), !space_prefix.empty()};
     }
 
     absl::string_view preceding_text = request.context().preceding_text();
@@ -2109,7 +2115,7 @@ UserHistoryPredictor::MakeLearningSegments(
 
     ConstEntrySnapshot head_entry = storage_.Head();
     if (!head_entry || !absl::EndsWith(preceding_text, head_entry->value())) {
-      return {segments, !kHasPrefixSpace};
+      return {std::move(segments), !kHasPrefixSpace};
     }
 
     // When `head` has functional value, head->next may store the context_value.
@@ -2118,13 +2124,13 @@ UserHistoryPredictor::MakeLearningSegments(
     ConstEntrySnapshot head_next_entry = storage_.HeadNext();
     if (head_next_entry &&
         absl::StartsWith(head_entry->value(), head_next_entry->value())) {
-      return {segments, !kHasPrefixSpace};
+      return {std::move(segments), !kHasPrefixSpace};
     }
 
     segments.push_back({0, 0, head_entry->key(), head_entry->value(),
                         head_entry->key(), head_entry->value()});
 
-    return {segments, kHasPrefixSpace};
+    return {std::move(segments), kHasPrefixSpace};
   };
 
   const Result& result = results.front();
