@@ -31,10 +31,10 @@
 #define MOZC_BASE_PORT_VARINT_H_
 
 
-#include "third_party/gloop/util/coding/varint.h"  // IWYU pragma: export
+#include "base/port/varint_internal.h"  // IWYU pragma: export
 
 namespace mozc::port {
-using ::Varint;
+using Varint = ::mozc::port::internal::Varint;
 }  // namespace mozc::port
 
 
