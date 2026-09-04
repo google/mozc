@@ -147,12 +147,14 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
       }
     }
     CharacterFormManager::GetCharacterFormManager()->ReloadConfig(*config_);
+    CharacterFormManager::GetCharacterFormManager()->ClearHistory();
 
     Clock::SetClockForUnitTest(nullptr);
   }
 
   void TearDown() override {
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
+    CharacterFormManager::GetCharacterFormManager()->ClearHistory();
     std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
         CreateUserSegmentHistoryRewriter());
     rewriter->Clear();
@@ -181,9 +183,11 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
       }
     }
     CharacterFormManager::GetCharacterFormManager()->ReloadConfig(*config_);
-    EXPECT_EQ(CharacterFormManager::GetCharacterFormManager()
-                  ->GetConversionCharacterForm("0"),
-              form);
+    if (form != Config::LAST_FORM) {
+      EXPECT_EQ(CharacterFormManager::GetCharacterFormManager()
+                    ->GetConversionCharacterForm("0"),
+                form);
+    }
   }
 
   ConversionRequest CreateConversionRequest() const {
@@ -1262,6 +1266,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         converter::Attribute::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    number_rewriter->Finish(convreq, segments);
     rewriter->Finish(convreq, segments);
   }
 
@@ -1310,7 +1315,9 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
     candidate->style =
         NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, segments);  // full-width for separated number
+    number_rewriter->Finish(convreq,
+                            segments);  // full-width for separated number
+    rewriter->Finish(convreq, segments);
   }
 
   {
@@ -1359,7 +1366,9 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
     candidate->style =
         NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, segments);  // half-width for separated number
+    number_rewriter->Finish(convreq,
+                            segments);  // half-width for separated number
+    rewriter->Finish(convreq, segments);
   }
 
   {
@@ -1383,6 +1392,272 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
   }
 }
 
+TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
+  SetNumberForm(Config::HALF_WIDTH);
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  rewriter->Clear();
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("10");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->insert_candidate(0);
+    candidate->value = "十";
+    candidate->content_value = "十";
+    candidate->content_key = "10";
+    candidate->lid = pos_matcher().GetNumberId();
+    candidate->rid = pos_matcher().GetNumberId();
+    candidate->style = NumberUtil::NumberString::NUMBER_KANJI;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    number_rewriter->Finish(convreq, segments);  // learn kanji
+    rewriter->Finish(convreq, segments);
+  }
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("1234");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->insert_candidate(0);
+    candidate->value = "1,234";
+    candidate->content_value = "1,234";
+    candidate->content_key = "1234";
+    candidate->lid = pos_matcher().GetNumberId();
+    candidate->rid = pos_matcher().GetNumberId();
+    candidate->style =
+        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    number_rewriter->Finish(convreq, segments);  // learn separated
+    rewriter->Finish(convreq, segments);
+  }
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    InitSegments(&segments, 1);
+    segments.mutable_segment(0)->set_key("9");
+    {
+      converter::Candidate* candidate =
+          segments.mutable_segment(0)->insert_candidate(0);
+      candidate->value = "9";
+      candidate->content_value = "9";
+      candidate->content_key = "9";
+      candidate->lid = pos_matcher().GetNumberId();
+      candidate->rid = pos_matcher().GetNumberId();
+    }
+    EXPECT_TRUE(number_rewriter->Rewrite(convreq, &segments));
+    rewriter->Rewrite(convreq, &segments);
+
+    // 9, not "九"
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "9");
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, NumberKanji) {
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  rewriter->Clear();
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("12");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->insert_candidate(0);
+    candidate->value = "十二";
+    candidate->content_value = "十二";
+    candidate->content_key = "12";
+    candidate->lid = pos_matcher().GetNumberId();
+    candidate->rid = pos_matcher().GetNumberId();
+    candidate->style = NumberUtil::NumberString::NUMBER_KANJI;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    number_rewriter->Finish(convreq, segments);
+    rewriter->Finish(convreq, segments);
+  }
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("14");
+    {
+      converter::Candidate* candidate =
+          segments.mutable_segment(0)->insert_candidate(0);
+      candidate->value = "14";
+      candidate->content_value = "14";
+      candidate->content_key = "14";
+      candidate->lid = pos_matcher().GetNumberId();
+      candidate->rid = pos_matcher().GetNumberId();
+    }
+
+    EXPECT_TRUE(number_rewriter->Rewrite(convreq, &segments));
+    rewriter->Rewrite(convreq, &segments);
+
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "十四");
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, NumberKanjiArabic) {
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  rewriter->Clear();
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("1200");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->insert_candidate(0);
+    candidate->value = "一二〇〇";
+    candidate->content_value = "一二〇〇";
+    candidate->content_key = "1200";
+    candidate->lid = pos_matcher().GetNumberId();
+    candidate->rid = pos_matcher().GetNumberId();
+    candidate->style = NumberUtil::NumberString::NUMBER_KANJI_ARABIC;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    number_rewriter->Finish(convreq, segments);
+    rewriter->Finish(convreq, segments);
+  }
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("3400");
+    {
+      converter::Candidate* candidate =
+          segments.mutable_segment(0)->insert_candidate(0);
+      candidate->value = "3400";
+      candidate->content_value = "3400";
+      candidate->content_key = "3400";
+      candidate->lid = pos_matcher().GetNumberId();
+      candidate->rid = pos_matcher().GetNumberId();
+    }
+
+    EXPECT_TRUE(number_rewriter->Rewrite(convreq, &segments));
+    rewriter->Rewrite(convreq, &segments);
+
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "三四〇〇");
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidthArabic) {
+  SetNumberForm(Config::LAST_FORM);
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  rewriter->Clear();
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("12");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->insert_candidate(0);
+    candidate->value = "１２";
+    candidate->content_value = "１２";
+    candidate->content_key = "12";
+    candidate->lid = pos_matcher().GetNumberId();
+    candidate->rid = pos_matcher().GetNumberId();
+    candidate->style = NumberUtil::NumberString::DEFAULT_STYLE;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    number_rewriter->Finish(convreq, segments);
+    rewriter->Finish(convreq, segments);
+  }
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("14");
+    {
+      converter::Candidate* candidate =
+          segments.mutable_segment(0)->insert_candidate(0);
+      candidate->value = "14";
+      candidate->content_value = "14";
+      candidate->content_key = "14";
+      candidate->lid = pos_matcher().GetNumberId();
+      candidate->rid = pos_matcher().GetNumberId();
+    }
+
+    EXPECT_TRUE(number_rewriter->Rewrite(convreq, &segments));
+    rewriter->Rewrite(convreq, &segments);
+
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "１４");
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, NumberMultipleSegmentsIgnored) {
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  rewriter->Clear();
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("12");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->insert_candidate(0);
+    candidate->value = "十二";
+    candidate->content_value = "十二";
+    candidate->content_key = "12";
+    candidate->lid = pos_matcher().GetNumberId();
+    candidate->rid = pos_matcher().GetNumberId();
+    candidate->style = NumberUtil::NumberString::NUMBER_KANJI;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    number_rewriter->Finish(convreq, segments);
+    rewriter->Finish(convreq, segments);
+  }
+
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    Segments segments;
+    Segment* seg1 = segments.add_segment();
+    seg1->set_key("2");
+    converter::Candidate* c1 = seg1->add_candidate();
+    c1->key = "2";
+    c1->content_key = "2";
+    c1->value = "2";
+    c1->content_value = "2";
+    c1->lid = pos_matcher().GetNumberId();
+    c1->rid = pos_matcher().GetNumberId();
+
+    Segment* seg2 = segments.add_segment();
+    seg2->set_key("かい");
+    converter::Candidate* c2 = seg2->add_candidate();
+    c2->key = "かい";
+    c2->content_key = "かい";
+    c2->value = "階";
+    c2->content_value = "階";
+
+    EXPECT_TRUE(number_rewriter->Rewrite(convreq, &segments));
+    rewriter->Rewrite(convreq, &segments);
+
+    // The top candidate of segment 0 remains "2", not rotated to "二"
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "2");
+  }
+}
+
 class UserSegmentHistoryNumberTest
     : public UserSegmentHistoryRewriterTest,
       public WithParamInterface<commands::Request> {};
@@ -1390,6 +1665,7 @@ class UserSegmentHistoryNumberTest
 INSTANTIATE_TEST_SUITE_P(
     NumberStyleLearningTestForRequest, UserSegmentHistoryNumberTest,
     ::testing::Values(
+        commands::Request(),
         []() {
           commands::Request request;
           request_test_util::FillMobileRequest(&request);
@@ -1423,70 +1699,6 @@ TEST_P(UserSegmentHistoryNumberTest, UserSegmentHistoryRewriterTest) {
     converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "1,234";
-    candidate->content_value = "1,2344";
-    candidate->content_key = "1234";
-    candidate->lid = pos_matcher().GetNumberId();
-    candidate->rid = pos_matcher().GetNumberId();
-    candidate->style =
-        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
-    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, segments);  // half-width for separated number
-  }
-
-  {
-    // This rewriter does not handle number candidate
-    segments.Clear();
-    segments.add_segment();
-    {
-      segments.mutable_segment(0)->set_key("1234");
-      converter::Candidate* candidate =
-          segments.mutable_segment(0)->insert_candidate(0);
-      candidate->value = "1234";
-      candidate->content_value = "1234";
-      candidate->content_key = "1234";
-      candidate->lid = pos_matcher().GetNumberId();
-      candidate->rid = pos_matcher().GetNumberId();
-    }
-    EXPECT_TRUE(number_rewriter->Rewrite(convreq, &segments));
-    rewriter->Rewrite(convreq, &segments);
-
-    EXPECT_EQ(segments.segment(0).candidate(0).value, "1234");
-  }
-}
-
-TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
-  SetNumberForm(Config::HALF_WIDTH);
-  Segments segments;
-  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
-      CreateUserSegmentHistoryRewriter());
-  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
-
-  rewriter->Clear();
-
-  {
-    const ConversionRequest convreq = CreateConversionRequest();
-    segments.Clear();
-    segments.add_segment();
-    segments.mutable_segment(0)->set_key("10");
-    converter::Candidate* candidate =
-        segments.mutable_segment(0)->insert_candidate(0);
-    candidate->value = "十";
-    candidate->content_value = "十";
-    candidate->content_key = "10";
-    candidate->lid = pos_matcher().GetNumberId();
-    candidate->rid = pos_matcher().GetNumberId();
-    candidate->style = NumberUtil::NumberString::NUMBER_KANJI;
-    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, segments);  // learn kanji
-  }
-  {
-    const ConversionRequest convreq = CreateConversionRequest();
-    segments.Clear();
-    segments.add_segment();
-    segments.mutable_segment(0)->set_key("1234");
-    converter::Candidate* candidate =
-        segments.mutable_segment(0)->insert_candidate(0);
-    candidate->value = "1,234";
     candidate->content_value = "1,234";
     candidate->content_key = "1234";
     candidate->lid = pos_matcher().GetNumberId();
@@ -1498,10 +1710,11 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
   }
 
   {
-    const ConversionRequest convreq = CreateConversionRequest();
-    InitSegments(&segments, 1);
-    segments.mutable_segment(0)->set_key("9");
+    // This rewriter does not handle number candidate
+    segments.Clear();
+    segments.add_segment();
     {
+      segments.mutable_segment(0)->set_key("9");
       converter::Candidate* candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "9";

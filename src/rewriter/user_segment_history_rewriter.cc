@@ -87,11 +87,6 @@ constexpr char kFileName[] = "user://segment.db";
 
 constexpr size_t kRevertCacheSize = 16;
 
-bool IsNumberStyleLearningEnabled(const ConversionRequest& request) {
-  // Enabled in mobile (software keyboard & hardware keyboard)
-  return request.request().kana_modifier_insensitive_conversion();
-}
-
 bool UseInnerSegments(const ConversionRequest& request) {
   return request.request().mixed_conversion();
 }
@@ -176,8 +171,6 @@ class FeatureKey {
                          absl::string_view base_value) const;
   std::string RightNumber(absl::string_view base_key,
                           absl::string_view base_value) const;
-
-  static std::string Number(uint16_t type);
 
  private:
   const Segments& segments_;
@@ -296,12 +289,6 @@ std::string FeatureKey::RightNumber(absl::string_view base_key,
   return "";
 }
 
-// Feature "Number"
-// used for number rewrite
-std::string FeatureKey::Number(uint16_t type) {
-  return StrJoinWithTabs("N", absl::StrCat(type));
-}
-
 bool IsNumberSegment(const Segment& segment) {
   if (segment.key().empty()) {
     return false;
@@ -316,18 +303,6 @@ bool IsNumberSegment(const Segment& segment) {
   return is_number;
 }
 
-void GetValueByType(const Segment* segment,
-                    NumberUtil::NumberString::Style style,
-                    std::string* output) {
-  DCHECK(output);
-  for (const converter::Candidate* candidate : segment->candidates()) {
-    if (candidate->style == style) {
-      *output = candidate->value;
-      return;
-    }
-  }
-}
-
 // NormalizeCandidate using config
 void NormalizeCandidate(const Segment* segment, int n,
                         std::string* normalized_value) {
@@ -340,37 +315,9 @@ void NormalizeCandidate(const Segment* segment, int n,
   }
 
   std::string result = candidate.value;
-  switch (candidate.style) {
-    case NumberUtil::NumberString::DEFAULT_STYLE:
-      CharacterFormManager::GetCharacterFormManager()->ConvertConversionString(
-          candidate.value, &result);
-      break;
-    case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
-    case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
-      // Convert separated arabic here and don't use character form manager
-      // so that suppressing mixed form of candidates
-      // ("1，234" etc.)
-      // and the forms of separated arabics are learned in converter using
-      // style.
-      {
-        const Config::CharacterForm form =
-            CharacterFormManager::GetCharacterFormManager()
-                ->GetConversionCharacterForm("0");
-        if (form == Config::FULL_WIDTH) {
-          GetValueByType(
-              segment,
-              NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH,
-              &result);
-        } else if (form == Config::HALF_WIDTH) {
-          GetValueByType(
-              segment,
-              NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH,
-              &result);
-        }
-      }
-      break;
-    default:
-      break;
+  if (candidate.style == NumberUtil::NumberString::DEFAULT_STYLE) {
+    CharacterFormManager::GetCharacterFormManager()->ConvertConversionString(
+        candidate.value, &result);
   }
   *normalized_value = result;
 }
@@ -585,32 +532,6 @@ bool UserSegmentHistoryRewriter::Replaceable(
            IsT13NCandidate(target_candidate)));
 }
 
-void UserSegmentHistoryRewriter::RememberNumberPreference(
-    const Segment& segment, std::vector<std::string>& revert_entries) {
-  const converter::Candidate& candidate = segment.candidate(0);
-
-  if ((candidate.style ==
-       NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH) ||
-      (candidate.style ==
-       NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH)) {
-    // in the case of:
-    // 1. submit "123"
-    // 2. submit "一二三"
-    // 3. submit "１、２３４"
-    // 4. type "123"
-    // We want "１２３", not "一二三"
-    // So learn default before learning separated
-    // However, access time is count by second, so
-    // separated and default is learned at same time
-    // This problem is solved by workaround on lookup.
-    Insert(FeatureKey::Number(NumberUtil::NumberString::DEFAULT_STYLE), true,
-           revert_entries);
-  }
-
-  // Always insert for numbers
-  Insert(FeatureKey::Number(candidate.style), true, revert_entries);
-}
-
 void UserSegmentHistoryRewriter::RememberFirstCandidate(
     const ConversionRequest& request, const Segments& segments,
     size_t segment_index, std::vector<std::string>& revert_entries) {
@@ -799,8 +720,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest& request,
             converter::Attribute::NO_HISTORY_LEARNING) {
       continue;
     }
-    if (IsNumberSegment(segment) && !IsNumberStyleLearningEnabled(request)) {
-      RememberNumberPreference(segment, revert_entries);
+    if (IsNumberSegment(segment)) {
       continue;
     }
     InsertTriggerKey(segment);
@@ -891,42 +811,6 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment& segment) {
   }
 }
 
-bool UserSegmentHistoryRewriter::RewriteNumber(Segment* segment) const {
-  std::vector<ScoreCandidate> scores;
-  for (size_t l = 0;
-       l < segment->candidates_size() + segment->meta_candidates_size(); ++l) {
-    int j = static_cast<int>(l);
-    if (j >= static_cast<int>(segment->candidates_size())) {
-      j -= static_cast<int>(segment->candidates_size() +
-                            segment->meta_candidates_size());
-    }
-    Score score = Fetch(FeatureKey::Number(segment->candidate(j).style), 10);
-
-    if (score.score) {
-      // Workaround for separated arabic.
-      // Because separated arabic and normal number is learned at the
-      // same time, make the time gap here so that separated arabic
-      // has higher rank by sorting of scores.
-      if (score.last_access_time > 0 &&
-          (segment->candidate(j).style !=
-           NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH) &&
-          (segment->candidate(j).style !=
-           NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH)) {
-        score.last_access_time--;
-      }
-      scores.emplace_back(score, &segment->candidate(j));
-    }
-  }
-
-  if (scores.empty()) {
-    return false;
-  }
-
-  std::stable_sort(scores.begin(), scores.end(),
-                   std::greater<ScoreCandidate>());
-  return SortCandidates(scores, segment);
-}
-
 bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest& request,
                                          Segments* segments) const {
   if (!IsAvailable(request, *segments)) {
@@ -961,11 +845,6 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest& request,
     }
 
     if (IsNumberSegment(*segment)) {
-      // Number candidates will be rewritten in number rewriter
-      // when number style learning is on.
-      if (!IsNumberStyleLearningEnabled(request)) {
-        modified |= RewriteNumber(segment);
-      }
       continue;
     }
 

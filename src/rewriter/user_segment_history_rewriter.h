@@ -108,9 +108,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   void RememberFirstCandidate(const ConversionRequest& request,
                               const Segments& segments, size_t segment_index,
                               std::vector<std::string>& revert_entries);
-  void RememberNumberPreference(const Segment& segment,
-                                std::vector<std::string>& revert_entries);
-  bool RewriteNumber(Segment* segment) const;
+
   bool ShouldRewrite(const Segment& segment, size_t* max_candidates_size) const;
   void InsertTriggerKey(const Segment& segment);
   bool IsPunctuation(const Segment& seg,

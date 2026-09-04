@@ -65,12 +65,14 @@ class NumberRewriter : public RewriterInterface {
                          Segments* segments) const;
   void RememberNumberStyle(const converter::Candidate& candidate);
   std::vector<converter::Candidate> GenerateCandidatesToInsert(
+      const ConversionRequest& request,
       const converter::Candidate& arabic_candidate,
       absl::Span<const NumberUtil::NumberString> numbers,
       bool should_rerank) const;
   bool ShouldRerankCandidates(const ConversionRequest& request,
                               const Segments& segments) const;
-  void RerankCandidates(std::vector<converter::Candidate>& candidates) const;
+  void RerankCandidates(const ConversionRequest& request,
+                        std::vector<converter::Candidate>& candidates) const;
 
   SerializedStringArray suffix_array_;
   const dictionary::PosMatcher pos_matcher_;

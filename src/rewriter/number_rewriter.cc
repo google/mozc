@@ -79,11 +79,6 @@ struct RewriteCandidateInfo {
   converter::Candidate candidate;  // Base candidate
 };
 
-bool IsNumberStyleLearningEnabled(const ConversionRequest& request) {
-  // Enabled in mobile (software keyboard & hardware keyboard)
-  return request.request().kana_modifier_insensitive_conversion();
-}
-
 // Returns RewriteCandidateInformation if available.
 // base_candidate_pos: the index of the base candidate.
 // *arabic_candidate: arabic candidate using numeric style conversion.
@@ -537,7 +532,8 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest& request,
     SetNumberInfoToExistingCandidates(output, pos_matcher_, seg);
 
     const std::vector<converter::Candidate> number_candidates =
-        GenerateCandidatesToInsert(info.candidate, output, should_rerank);
+        GenerateCandidatesToInsert(request, info.candidate, output,
+                                   should_rerank);
 
     // If all the candidates are already in the segment, do nothing.
     if (IsAlreadyUpdated(number_candidates, *seg)) {
@@ -560,7 +556,20 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest& request,
   return modified;
 }
 
+namespace {
+config::Config::CharacterForm GetConfiguredNumberCharacterForm(
+    const ConversionRequest& request) {
+  for (const auto& rule : request.config().character_form_rules()) {
+    if (rule.group() == "0") {
+      return rule.conversion_character_form();
+    }
+  }
+  return config::Config::LAST_FORM;
+}
+}  // namespace
+
 std::vector<converter::Candidate> NumberRewriter::GenerateCandidatesToInsert(
+    const ConversionRequest& request,
     const converter::Candidate& arabic_candidate,
     absl::Span<const NumberUtil::NumberString> numbers,
     bool should_rerank) const {
@@ -571,17 +580,13 @@ std::vector<converter::Candidate> NumberRewriter::GenerateCandidatesToInsert(
   }
   SetCandidatesInfo(arabic_candidate, &converted_numbers);
   if (should_rerank) {
-    RerankCandidates(converted_numbers);
+    RerankCandidates(request, converted_numbers);
   }
   return converted_numbers;
 }
 
 bool NumberRewriter::ShouldRerankCandidates(const ConversionRequest& request,
                                             const Segments& segments) const {
-  if (!IsNumberStyleLearningEnabled(request)) {
-    MOZC_VLOG(2) << "number style learning is not enabled.";
-    return false;
-  }
   if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito mode";
     return false;
@@ -604,14 +609,30 @@ bool NumberRewriter::ShouldRerankCandidates(const ConversionRequest& request,
 }
 
 void NumberRewriter::RerankCandidates(
+    const ConversionRequest& request,
     std::vector<converter::Candidate>& candidates) const {
   std::optional<const CharacterFormManager::NumberFormStyle> stored_entry =
       CharacterFormManager::GetCharacterFormManager()->GetLastNumberStyle();
   if (!stored_entry.has_value()) {
     return;
   }
-  const NumberUtil::NumberString::Style style = stored_entry->style;
-  const config::Config::CharacterForm form = stored_entry->form;
+  NumberUtil::NumberString::Style style = stored_entry->style;
+  config::Config::CharacterForm form = stored_entry->form;
+
+  // If an explicit character form rule (HALF_WIDTH or FULL_WIDTH) is configured
+  // for numbers, adapt form and separated style accordingly.
+  const config::Config::CharacterForm config_form =
+      GetConfiguredNumberCharacterForm(request);
+  if (config_form == config::Config::HALF_WIDTH ||
+      config_form == config::Config::FULL_WIDTH) {
+    form = config_form;
+    if (style == NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH ||
+        style == NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH) {
+      style = (config_form == config::Config::HALF_WIDTH)
+                  ? NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH
+                  : NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
+    }
+  }
 
   auto top_number_entry = candidates.begin();
   for (auto itr = candidates.begin(); itr != candidates.end(); ++itr) {
@@ -634,11 +655,6 @@ void NumberRewriter::RerankCandidates(
 
 void NumberRewriter::Finish(const ConversionRequest& request,
                             const Segments& segments) {
-  if (!IsNumberStyleLearningEnabled(request)) {
-    MOZC_VLOG(2) << "number style learning is not enabled.";
-    return;
-  }
-
   if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito_mode";
     return;
