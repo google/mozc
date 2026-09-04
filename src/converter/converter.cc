@@ -1002,13 +1002,13 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest& request,
                                          .SetHistoryResultView(history_result)
                                          .Build();
 
-  const std::vector<prediction::Result> results = predictor_->Predict(conv_req);
+  std::vector<prediction::Result> results = predictor_->Predict(conv_req);
 
   Segment* segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
 
-  for (const prediction::Result& result : results) {
-    PopulateCandidateFromResult(result, segment->add_candidate());
+  for (prediction::Result& result : results) {
+    PopulateCandidateFromResult(std::move(result), segment->add_candidate());
   }
 
   return !results.empty();

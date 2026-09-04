@@ -90,9 +90,12 @@ std::vector<prediction::Result> MakeLearningResultsFromSegments(
 prediction::Result CandidateToResult(const Candidate& candidate);
 
 // Populates Candidate fields from a prediction::Result.
+// Takes Result by value to allow callers to std::move() strings (key, value,
+// description, display_value) and inner_segment_boundary directly into
+// Candidate without duplicate heap allocations.
 //
 // Boundary handling:
-// - Copies result.inner_segment_boundary directly to
+// - Moves result.inner_segment_boundary directly to
 //   candidate->inner_segment_boundary.
 // - Automatically updates candidate->content_key and candidate->content_value
 //   from result.inner_segments().GetMergedContentKeyAndValue().
@@ -101,7 +104,7 @@ prediction::Result CandidateToResult(const Candidate& candidate);
 // content_key/value, cost, wcost, lid, rid, attributes, consumed_key_size,
 // inner_segment_boundary, description, display_value). Pre-existing Candidate
 // metadata (such as category, command, usage_id, prefix, suffix) is preserved.
-void PopulateCandidateFromResult(const prediction::Result& result,
+void PopulateCandidateFromResult(prediction::Result result,
                                  Candidate* candidate);
 
 // Prepares Segments containing HISTORY segments and a new conversion segment
