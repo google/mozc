@@ -41,7 +41,6 @@ load(
     "mozc_select_enable_supplemental_model",
     "mozc_select_enable_usage_rewriter",
 )
-load("//:config.bzl", "BAZEL_TOOLS_PREFIX")
 load("//:version.bzl", "DEFAULT_BUILD_LABEL_MACOS")
 load("//bazel:stubs.bzl", "bzl_library")
 
@@ -96,36 +95,14 @@ config_setting(
     },
 )
 
-alias(
-    name = "compiler",
-    actual = BAZEL_TOOLS_PREFIX + "//tools/cpp:compiler",
-    visibility = ["//:__subpackages__"],
-)
-
-config_setting(
-    name = "compiler_msvc_cl",
-    flag_values = {
-        ":compiler": "msvc-cl",
-    },
-    visibility = ["//:__subpackages__"],
-)
-
-config_setting(
-    name = "compiler_clang_cl",
-    flag_values = {
-        ":compiler": "clang-cl",
-    },
-    visibility = ["//:__subpackages__"],
-)
-
 selects.config_setting_group(
     name = "compiler_msvc_like",
     match_any = [
         # clang-cl.exe is a drop-in replacement for cl.exe.
         # Command line options are mostly compatible.
         # https://clang.llvm.org/docs/MSVCCompatibility.html
-        ":compiler_clang_cl",
-        ":compiler_msvc_cl",
+        "@rules_cc//cc/compiler:clang-cl",
+        "@rules_cc//cc/compiler:msvc-cl",
     ],
     visibility = ["//:__subpackages__"],
 )
