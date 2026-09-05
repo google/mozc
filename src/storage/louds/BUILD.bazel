@@ -152,6 +152,21 @@ mozc_cc_test(
     ],
 )
 
+mozc_cc_test(
+    name = "simple_succinct_bit_vector_index_benchmark_test",
+    size = "small",
+    srcs = ["simple_succinct_bit_vector_index_benchmark_test.cc"],
+    # Skip benchmarks under "bazel test". To actually run them:
+    #   bazel run :simple_succinct_bit_vector_index_benchmark_test  \
+    #      -c opt -- --benchmark_filter=all
+    args = ["--benchmark_filter=^$$"],
+    deps = [
+        ":simple_succinct_bit_vector_index",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
+    ],
+)
+
 mozc_cc_library(
     name = "bit_stream",
     srcs = ["bit_stream.cc"],
