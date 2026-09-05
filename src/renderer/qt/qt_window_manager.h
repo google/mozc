@@ -116,13 +116,22 @@ class QtWindowManager {
   // (e.g. the window border and the viewport) also follow the style.
   void ApplyStyleToWidgets();
 
+  // Updates the visual vertical scroll bar overlay on the right edge of the
+  // candidate window. The scroll bar is shown only when the candidate list
+  // consists of more than one page, as in the Windows renderer, and merely
+  // indicates the position of the current page; it is not interactive.
+  void UpdateVScrollBar(const commands::CandidateWindow& candidate_window);
+
  private:
   QTableWidget *candidates_ = nullptr;
   QTableWidget *infolist_ = nullptr;
 
-  // Does not have the ownership. `footer_delegate_` is a child QObject of
-  // `candidates_`, which is responsible for destroying it.
+  // Does not have the ownership. `footer_delegate_`, `vscroll_bar_` and
+  // `vscroll_indicator_` are child QObjects of `candidates_`, which is
+  // responsible for destroying them.
   FooterBackgroundDelegate* footer_delegate_ = nullptr;
+  QWidget* vscroll_bar_ = nullptr;
+  QWidget* vscroll_indicator_ = nullptr;
 
   RendererStyle style_;
   commands::RendererCommand prev_command_;
