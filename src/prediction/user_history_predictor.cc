@@ -1441,7 +1441,7 @@ bool UserHistoryPredictor::ShouldPredict(
     return false;
   }
 
-  if (request.config().history_learning_level() == config::Config::NO_HISTORY) {
+  if (request.history_learning_level() == config::Config::NO_HISTORY) {
     MOZC_VLOG(2) << "history learning level is NO_HISTORY";
     return false;
   }
@@ -2010,10 +2010,9 @@ void UserHistoryPredictor::Finish(const ConversionRequest& request,
     return;
   }
 
-  if (request.config().history_learning_level() !=
-      config::Config::DEFAULT_HISTORY) {
+  if (request.history_learning_level() != config::Config::DEFAULT_HISTORY) {
     MOZC_VLOG(2) << "history learning level is not DEFAULT_HISTORY: "
-                 << request.config().history_learning_level();
+                 << request.history_learning_level();
     return;
   }
 
