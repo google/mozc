@@ -69,7 +69,8 @@ bool KeyEventHandler::GetKeyEvent(uint keyval, uint keycode, uint modifiers,
   // IBus's default for switching input methods.
   // https://github.com/google/mozc/issues/853
   constexpr uint kExtraModMask =
-      IBUS_MOD3_MASK | IBUS_MOD4_MASK | IBUS_MOD5_MASK;
+      IBUS_MOD3_MASK | IBUS_MOD4_MASK | IBUS_MOD5_MASK |
+      IBUS_SUPER_MASK | IBUS_HYPER_MASK | IBUS_META_MASK;
   if (modifiers & kExtraModMask) {
     return false;
   }
