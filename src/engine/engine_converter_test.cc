@@ -2324,6 +2324,47 @@ TEST_F(EngineConverterTest, SuggestFillIncognitoCandidateWords) {
   }
 }
 
+TEST_F(EngineConverterTest, SuggestFillIncognitoCandidateWordsEmptySegments) {
+  Segments segments;
+  {  // Initialize mock segments for suggestion
+    Segment* segment = segments.add_segment();
+    converter::Candidate* candidate;
+    segment->set_key(kChars_Mo);
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Mozukusu;
+    candidate->content_key = kChars_Mozukusu;
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Momonga;
+    candidate->content_key = kChars_Momonga;
+  }
+  composer_->InsertCharacterPreedit(kChars_Mo);
+
+  // A matcher to test if the given conversion request sets incognito_mode().
+  constexpr auto IsIncognitoConversionRequest = [](bool is_incognito) {
+    return Property(&ConversionRequest::incognito_mode, Eq(is_incognito));
+  };
+  request_->set_fill_incognito_candidate_words(true);
+  auto mock_converter = std::make_shared<MockConverter>();
+  EngineConverter converter(mock_converter, request_, config_);
+
+  // Normal suggestion succeeds, but the incognito suggestion fails to produce
+  // any candidates.  In this case |incognito_segments_| is left empty even
+  // though the request asks to fill incognito candidate words.
+  // FillIncognitoCandidateWords must handle the empty container without
+  // accessing out-of-bounds segments.
+  EXPECT_CALL(*mock_converter,
+              StartPrediction(IsIncognitoConversionRequest(false), _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  EXPECT_CALL(*mock_converter,
+              StartPrediction(IsIncognitoConversionRequest(true), _))
+      .WillOnce(Return(false));
+
+  EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
+  commands::Output output;
+  converter.FillOutput(*composer_, &output);
+  EXPECT_FALSE(output.has_incognito_candidate_words());
+}
+
 TEST_F(EngineConverterTest, OnePhaseSuggestion) {
   auto mock_converter = std::make_shared<MockConverter>();
   EngineConverter converter(mock_converter, request_, config_);
