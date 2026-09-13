@@ -75,6 +75,12 @@ class TipEditSessionImpl {
   // - Invokes UI update.
   static void UpdateUI(TipTextService* text_service, ITfContext* context,
                        TfEditCookie read_cookie);
+
+  // Returns a mozc::commands::Context that carries the state of the focused
+  // input field managed by the thread context, that is, the focus revision and
+  // the learning suppression expected by the IS_PRIVATE input scope. This
+  // context is expected to be attached to every message sent to the server.
+  static commands::Context CreateMozcContext(TipTextService* text_service);
 };
 
 }  // namespace tsf

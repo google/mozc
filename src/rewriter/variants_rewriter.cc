@@ -569,8 +569,7 @@ bool VariantsRewriter::GenerateAlternatives(
 
 void VariantsRewriter::Finish(const ConversionRequest& request,
                               const Segments& segments) {
-  if (request.config().history_learning_level() !=
-      config::Config::DEFAULT_HISTORY) {
+  if (request.history_learning_level() != config::Config::DEFAULT_HISTORY) {
     MOZC_VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
     return;
   }

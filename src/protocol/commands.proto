@@ -537,6 +537,16 @@ message Context {
   // should update the revision whenever the input focus is changed.
   optional int32 revision = 5 [default = 0];
 
+  // Whether the input field being focused expects the IME not to update any
+  // personalized data with the user's input, e.g. the user conversion
+  // history. Unlike incognito mode, reading personalized data to perform
+  // conversion is still allowed. In other words, setting this field is
+  // equivalent to temporarily raising Config::history_learning_level to
+  // READ_ONLY. Converter modules need to check
+  // ConversionRequest::history_learning_level() instead of this value directly,
+  // as the effective learning level can be set in other ways.
+  optional bool no_personalized_learning = 6 [default = false];
+
   // Repeated fields to be used for experimental features.
   repeated string experimental_features = 100;
 }

@@ -171,6 +171,17 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
   return client;
 }
 
+// Returns a mozc::commands::Context that carries the state of the focused input
+// field. This context is expected to be attached to every message sent to the
+// server.
+commands::Context CreateContext(IbusEngineWrapper* engine) {
+  commands::Context context;
+  if (engine->HasPrivateInputHint()) {
+    context.set_no_personalized_learning(true);
+  }
+  return context;
+}
+
 std::optional<absl::string_view> GetMapValue(
     const absl::flat_hash_map<std::string, std::string>& map,
     absl::string_view key) {
@@ -266,7 +277,7 @@ void MozcEngine::CandidateClicked(IbusEngineWrapper* engine, uint index,
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::SELECT_CANDIDATE);
   command.set_id(id);
-  client_->SendCommand(command, &output);
+  client_->SendCommandWithContext(command, CreateContext(engine), &output);
   UpdateAll(engine, output);
 }
 
@@ -333,7 +344,8 @@ void MozcEngine::Enable(IbusEngineWrapper* engine) {
       command.set_composition_mode(mode);
     }
     commands::Output output;
-    if (!client_->SendCommand(command, &output)) {
+    if (!client_->SendCommandWithContext(command, CreateContext(engine),
+                                         &output)) {
       LOG(ERROR) << "SendCommand failed";
     }
     property_handler_->Update(engine, output);
@@ -397,7 +409,7 @@ bool MozcEngine::ProcessKeyEvent(IbusEngineWrapper* engine, uint keyval,
   key.set_activated(property_handler_->IsActivated());
   key.set_mode(property_handler_->GetOriginalCompositionMode());
 
-  commands::Context context;
+  commands::Context context = CreateContext(engine);
   SurroundingTextInfo surrounding_text_info;
   if (GetSurroundingText(engine, &surrounding_text_info)) {
     context.set_preceding_text(surrounding_text_info.preceding_text);
@@ -551,7 +563,8 @@ void MozcEngine::RevertSession(IbusEngineWrapper* engine) {
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::REVERT);
   commands::Output output;
-  if (!client_->SendCommand(command, &output)) {
+  if (!client_->SendCommandWithContext(command, CreateContext(engine),
+                                       &output)) {
     LOG(ERROR) << "RevertSession() failed";
     return;
   }
@@ -612,7 +625,8 @@ bool MozcEngine::ExecuteCallback(IbusEngineWrapper* engine,
   }
 
   commands::Output new_output;
-  if (!client_->SendCommand(session_command, &new_output)) {
+  if (!client_->SendCommandWithContext(session_command, CreateContext(engine),
+                                       &new_output)) {
     LOG(ERROR) << "Callback Command Failed";
     return false;
   }
