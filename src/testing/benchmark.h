@@ -30,6 +30,6 @@
 #ifndef MOZC_TESTING_BENCHMARK_H_
 #define MOZC_TESTING_BENCHMARK_H_
 
-#include "benchmark/benchmark.h"            // IWYU pragma: export
+#include "benchmark/benchmark.h"  // IWYU pragma: export
 
 #endif  // MOZC_TESTING_BENCHMARK_H_
