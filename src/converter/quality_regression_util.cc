@@ -120,14 +120,20 @@ absl::StatusOr<uint32_t> GetPlatformFromString(absl::string_view str) {
   std::string lower;
   lower.assign(str.data(), str.size());
   Util::LowerString(&lower);
-  if (str == "desktop") {
+  if (lower == "desktop") {
     return QualityRegressionUtil::DESKTOP;
   }
-  if (str == "oss") {
+  if (lower == "oss") {
     return QualityRegressionUtil::OSS;
   }
-  if (str == "mobile") {
+  if (lower == "mobile") {
     return QualityRegressionUtil::MOBILE;
+  }
+  if (lower == "preload") {
+    return QualityRegressionUtil::PRELOAD;
+  }
+  if (lower == "all") {
+    return QualityRegressionUtil::ALL;
   }
   return absl::InvalidArgumentError(
       absl::StrCat("Unknown platform name: ", str));
@@ -409,6 +415,9 @@ std::string QualityRegressionUtil::GetPlatformString(
   }
   if (platform_bitfiled & MOBILE) {
     v.push_back("MOBILE");
+  }
+  if (platform_bitfiled & PRELOAD) {
+    v.push_back("PRELOAD");
   }
   if (v.empty()) {
     v.push_back("UNKNOWN");

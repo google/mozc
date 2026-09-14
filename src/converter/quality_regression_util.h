@@ -53,10 +53,12 @@ namespace quality_regression {
 class QualityRegressionUtil {
  public:
   // bit fields
-  enum Platform {
-    DESKTOP = 1,
-    OSS = 2,
-    MOBILE = 4,
+  enum Platform : uint32_t {
+    DESKTOP = 1 << 0,
+    OSS = 1 << 1,
+    MOBILE = 1 << 2,
+    PRELOAD = 1 << 3,
+    ALL = DESKTOP | OSS | MOBILE | PRELOAD,
   };
 
   struct TestItem {
