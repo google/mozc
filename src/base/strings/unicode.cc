@@ -29,15 +29,39 @@
 
 #include "base/strings/unicode.h"
 
+#include <bit>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <string>
 #include <string_view>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/strings/internal/utf8_internal.h"
 
 namespace mozc {
 namespace strings {
+
+size_t CharsLen(const absl::string_view sv) {
+  // Count the bytes that are not UTF-8 continuation bytes (0b10xxxxxx), i.e.
+  // the leading byte of each character, processing eight bytes at a time with
+  // bit operations.
+  constexpr uint64_t kHighBits = 0x8080808080808080;
+  constexpr size_t kBlockSize = sizeof(uint64_t);
+  absl::Span<const char> chars = absl::MakeConstSpan(sv.data(), sv.size());
+  size_t continuations = 0;
+  while (chars.size() >= kBlockSize) {
+    uint64_t w;
+    std::memcpy(&w, chars.data(), kBlockSize);
+    continuations += std::popcount(w & ~(w << 1) & kHighBits);
+    chars.remove_prefix(kBlockSize);
+  }
+  for (const char c : chars) {
+    continuations += (static_cast<uint8_t>(c) & 0xc0) == 0x80;
+  }
+  return sv.size() - continuations;
+}
 
 bool IsValidUtf8(const absl::string_view sv) {
   const char* const last = sv.data() + sv.size();
