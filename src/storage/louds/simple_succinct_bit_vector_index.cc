@@ -254,15 +254,13 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
     ptr += 4;
   }
 
-  int index = (ptr - data_) * 8;
-  for (uint32_t word = ~LoadUnaligned<uint32_t>(ptr); n > 0;
-       word >>= 1, ++index) {
-    n -= (word & 1);
+  // Select the n-th 0-bit in the word: clear the lowest (n - 1) 1-bits of the
+  // inverted word, then the target position is the number of trailing zeros.
+  uint32_t word = ~LoadUnaligned<uint32_t>(ptr);
+  for (; n > 1; --n) {
+    word &= word - 1;
   }
-
-  // Index points to the "next bit" of the target one.
-  // Thus, subtract one to adjust.
-  return index - 1;
+  return (ptr - data_) * 8 + std::countr_zero(word);
 }
 
 int SimpleSuccinctBitVectorIndex::Select1(int n) const {
@@ -294,15 +292,13 @@ int SimpleSuccinctBitVectorIndex::Select1(int n) const {
     ptr += 4;
   }
 
-  int index = (ptr - data_) * 8;
-  for (uint32_t word = LoadUnaligned<uint32_t>(ptr); n > 0;
-       word >>= 1, ++index) {
-    n -= (word & 1);
+  // Select the n-th 1-bit in the word: clear the lowest (n - 1) 1-bits, then
+  // the target position is the number of trailing zeros.
+  uint32_t word = LoadUnaligned<uint32_t>(ptr);
+  for (; n > 1; --n) {
+    word &= word - 1;
   }
-
-  // Index points to the "next bit" of the target one.
-  // Thus, subtract one to adjust.
-  return index - 1;
+  return (ptr - data_) * 8 + std::countr_zero(word);
 }
 
 }  // namespace louds
