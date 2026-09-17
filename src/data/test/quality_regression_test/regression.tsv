@@ -100,3 +100,10 @@ regression	あめがふるかもしれない	雨が降るかもしれない	Conv
 regression	きのうはどのくらいねましたか	昨日はどのくらい寝ましたか	Conversion Expected
 regression	こんどのしゅじゅつはいつですか	今度の手術はいつですか	Conversion Expected
 regression	けんかをしてしまったのであやまりたい	喧嘩をしてしまったので謝りたい	Conversion Expected
+regression	きょうはたのしいわー	今日は楽しいわー	Conversion Expected
+regression	くるわぁ	来るわぁ	Conversion Expected
+regression	あしたからいくさー	明日から行くさー	Conversion Expected
+regression	これからいくさぁ	これから行くさぁ	Conversion Expected
+regression	これからいくぞー	これから行くぞー	Conversion Expected
+regression	ぜったいかつぞぉ	絶対勝つぞぉ	Conversion Expected
+regression	くるじゃん	来るじゃん	Conversion Expected

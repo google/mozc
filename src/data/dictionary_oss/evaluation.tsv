@@ -600,3 +600,10 @@ FAILED:	あめがふるかもしれない	雨がフルかもしれない	Convers
 FAILED:	きのうはどのくらいねましたか	機能はどのくらい寝ましたか	Conversion Expected	昨日はどのくらい寝ましたか	3.34.6239
 OK:	こんどのしゅじゅつはいつですか	今度の手術はいつですか	Conversion Expected	今度の手術はいつですか	3.34.6239
 FAILED:	けんかをしてしまったのであやまりたい	喧嘩をしてしまったので誤りたい	Conversion Expected	喧嘩をしてしまったので謝りたい	3.34.6239
+OK:	きょうはたのしいわー	今日は楽しいわー	Conversion Expected	今日は楽しいわー	3.34.6239
+FAILED:	くるわぁ	くるわぁ	Conversion Expected	来るわぁ	3.34.6239
+FAILED:	あしたからいくさー	明日から戦ー	Conversion Expected	明日から行くさー	3.34.6239
+OK:	これからいくさぁ	これから行くさぁ	Conversion Expected	これから行くさぁ	3.34.6239
+OK:	これからいくぞー	これから行くぞー	Conversion Expected	これから行くぞー	3.34.6239
+OK:	ぜったいかつぞぉ	絶対勝つぞぉ	Conversion Expected	絶対勝つぞぉ	3.34.6239
+OK:	くるじゃん	来るじゃん	Conversion Expected	来るじゃん	3.34.6239
