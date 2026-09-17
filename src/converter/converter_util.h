@@ -69,9 +69,9 @@ inline prediction::Result HistorySegmentsToResult(const Segments& segments) {
   return HistorySegmentsToResult(segments.history_segments());
 }
 
-// Converts Segments to learning results for Predictor::Finish().
-// - Single conversion segment: Returns up to top 5 candidates as individual
-//   Results via CandidateToResult.
+// Converts conversion segments to a list of prediction::Result.
+// - Single conversion segment: Returns up to `max_results` candidates as
+//   individual Results via CandidateToResult.
 // - Multiple conversion segments: Returns a single composite Result via
 //   ConversionSegmentsToResult.
 //
@@ -79,8 +79,8 @@ inline prediction::Result HistorySegmentsToResult(const Segments& segments) {
 // In the single-segment case, each candidate's inner_segment_boundary is
 // preserved (or synthesized via CandidateToResult). In the multi-segment case,
 // segment boundaries are merged into a composite inner_segment_boundary.
-std::vector<prediction::Result> MakeLearningResultsFromSegments(
-    const Segments& segments);
+std::vector<prediction::Result> ConversionSegmentsToResults(
+    const Segments& segments, size_t max_results = 5);
 
 // Converts a single Candidate to a prediction::Result.
 //

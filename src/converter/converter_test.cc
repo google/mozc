@@ -2803,6 +2803,66 @@ TEST_F(ConverterTest, PostCorrectInConversionMode) {
     EXPECT_EQ(segments_legacy.conversion_segment(0).candidate(0).value,
               "新だい");
   }
+
+  // Test 3: Single-segment conversion passes N-best candidates to PostCorrect,
+  // allowing supplemental model reranking.
+  {
+    class RerankingSupplementalModel : public engine::MockSupplementalModel {
+     public:
+      bool IsAvailable() const override { return true; }
+      void PostCorrect(
+          const ConversionRequest& request,
+          std::vector<prediction::Result>& results) const override {
+        EXPECT_GT(results.size(), 1);
+        if (results.size() > 1) {
+          std::rotate(results.begin(), results.begin() + 1,
+                      results.begin() + 2);
+        }
+      }
+    };
+
+    auto supplemental_model =
+        std::make_unique<::testing::NiceMock<RerankingSupplementalModel>>();
+
+    ASSERT_OK_AND_ASSIGN(
+        std::unique_ptr<engine::Modules> modules,
+        engine::ModulesPresetBuilder()
+            .PresetSupplementalModel(std::move(supplemental_model))
+            .Build(std::make_unique<testing::MockDataManager>()));
+
+    auto rewriter = std::make_unique<Rewriter>(*modules);
+    std::unique_ptr<Converter> converter = CreateConverter(
+        std::move(modules), std::move(rewriter), DEFAULT_PREDICTOR);
+
+    // First check default candidate order without PostCorrect.
+    Segments segments_default;
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("きょう", ConversionRequest::CONVERSION), &segments_default));
+    ASSERT_EQ(segments_default.conversion_segments_size(), 1);
+    ASSERT_GT(segments_default.conversion_segment(0).candidates_size(), 1);
+    const std::string second_candidate_value =
+        segments_default.conversion_segment(0).candidate(1).value;
+
+    // Now run with kDisableCollocation so PostCorrect reranks candidate 1 to 0.
+    commands::Request request_proto;
+    request_proto.mutable_decoder_experiment_params()
+        ->set_disable_legacy_rewriter_in_all_conversion_mode(
+            RewriterInterface::kDisableCollocation);
+    composer::Composer composer;
+    composer.SetPreeditTextForTestOnly("きょう");
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequest(request_proto)
+            .SetRequestType(ConversionRequest::CONVERSION)
+            .Build();
+
+    Segments segments;
+    EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+    ASSERT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
+              second_candidate_value);
+  }
 }
 
 TEST_F(ConverterTest, ApplyUserHistoryToConversionSingleSegmentTest) {
@@ -3334,6 +3394,58 @@ TEST_F(ConverterTest,
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment& seg = segments.conversion_segment(0);
   // In handwriting mode, PostCorrection should be skipped.
+  EXPECT_NE(seg.candidate(0).value, "今宵");
+}
+
+TEST_F(
+    ConverterTest,
+    ApplyPredictionToConversionUsedInPredictorRealtimeConversionSkippedTest) {
+  class TestSupplementalModel : public engine::MockSupplementalModel {
+   public:
+    bool IsAvailable() const override { return true; }
+    void PostCorrect(const ConversionRequest& request,
+                     std::vector<prediction::Result>& results) const override {
+      if (!results.empty()) {
+        results.front().value = "今宵";
+      }
+    }
+  };
+
+  auto supplemental_model =
+      std::make_unique<::testing::NiceMock<TestSupplementalModel>>();
+
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<engine::Modules> modules,
+      engine::ModulesPresetBuilder()
+          .PresetSupplementalModel(std::move(supplemental_model))
+          .Build(std::make_unique<testing::MockDataManager>()));
+
+  auto rewriter = std::make_unique<Rewriter>(*modules);
+  std::unique_ptr<Converter> converter = CreateConverter(
+      std::move(modules), std::move(rewriter), DEFAULT_PREDICTOR);
+
+  commands::Request request_proto;
+  request_proto.mutable_decoder_experiment_params()
+      ->set_disable_legacy_rewriter_in_all_conversion_mode(
+          RewriterInterface::kDisableCollocation);
+
+  composer::Composer composer;
+  composer.SetPreeditTextForTestOnly("きょう");
+  ConversionRequest::Options options;
+  options.request_type = ConversionRequest::CONVERSION;
+  options.used_in_predictor_realtime_conversion = true;
+  const ConversionRequest convreq = ConversionRequestBuilder()
+                                        .SetComposer(composer)
+                                        .SetRequest(request_proto)
+                                        .SetOptions(options)
+                                        .Build();
+
+  Segments segments;
+  EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  const Segment& seg = segments.conversion_segment(0);
+  // When used_in_predictor_realtime_conversion is true,
+  // MaybeApplyPredictionToConversion should be skipped.
   EXPECT_NE(seg.candidate(0).value, "今宵");
 }
 

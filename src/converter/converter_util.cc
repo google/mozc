@@ -108,21 +108,18 @@ prediction::Result HistorySegmentsToResult(
   return result;
 }
 
-std::vector<prediction::Result> MakeLearningResultsFromSegments(
-    const Segments& segments) {
+std::vector<prediction::Result> ConversionSegmentsToResults(
+    const Segments& segments, size_t max_results) {
   if (segments.conversion_segments_size() == 0) {
     return {};
   }
 
   // - segments_size = 1: Populates the nbest candidates to result.
   if (segments.conversion_segments_size() == 1) {
-    // Populates only top 5 results.
-    // See UserHistoryPredictor::MaybeRemoveUnselectedHistory
-    constexpr int kMaxHistorySize = 5;
     std::vector<prediction::Result> results;
     for (const auto& candidate : segments.conversion_segment(0).candidates()) {
       results.push_back(CandidateToResult(*candidate));
-      if (results.size() >= kMaxHistorySize) break;
+      if (results.size() >= max_results) break;
     }
     return results;
   }

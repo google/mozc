@@ -342,7 +342,7 @@ void Converter::FinishConversion(const ConversionRequest& request,
 
   const prediction::Result history_result = HistorySegmentsToResult(*segments);
   const std::vector<prediction::Result> committed_results =
-      MakeLearningResultsFromSegments(*segments);
+      ConversionSegmentsToResults(*segments);
   const ConversionRequest finish_req = ConversionRequestBuilder()
                                            .SetConversionRequestView(request)
                                            .SetHistoryResultView(history_result)
@@ -640,10 +640,15 @@ std::vector<prediction::Result> Converter::PredictForConversion(
                                          .SetHistoryResultView(history_result)
                                          .Build();
 
-  // 1. Run SupplementalModel (PostCorrect) on default_result.
+  // 1. Run SupplementalModel (PostCorrect).
   // Stop applying post correction when handwriting mode, consistent with
   // DictionaryPredictor::MaybeApplyPostCorrection.
-  std::vector<prediction::Result> pc_results = {default_result};
+  // For single-segment conversion, passes up to 5 N-best candidates so that
+  // supplemental model works consistently with SUGGESTION mode.
+  // TODO(taku): Extend multi-segment conversion to also pass N-best candidates
+  // instead of only the single top composite result.
+  std::vector<prediction::Result> pc_results =
+      ConversionSegmentsToResults(segments);
   if (!request_util::IsHandwriting(conv_req) &&
       modules_->GetSupplementalModel().IsAvailable() &&
       RewriterInterface::DisableLegacyRewriter(
@@ -764,8 +769,16 @@ void Converter::PopulatePredictionResultsToSegments(
 
 void Converter::MaybeApplyPredictionToConversion(
     const ConversionRequest& request, Segments* segments) const {
+  // NOTE: Skip when `used_in_predictor_realtime_conversion` is true to prevent
+  // PostCorrect and UserHistoryPredictor from being called twice per
+  // keystroke (once inside RealtimeDecoder's nested StartConversion call and
+  // once in DictionaryPredictor).
+  // TODO(taku): This is a temporary workaround during the migration period;
+  // remove once nested Converter::StartConversion in RealtimeDecoder is
+  // deprecated and removed.
   if (segments == nullptr || segments->conversion_segments_size() == 0 ||
-      segments->resized()) {
+      segments->resized() ||
+      request.options().used_in_predictor_realtime_conversion) {
     return;
   }
 

@@ -273,11 +273,11 @@ TEST(ConverterUtilTest, PrepareSegmentsFromRequest) {
   EXPECT_EQ(reconstructed.conversion_segment(0).key(), "はれ");
 }
 
-TEST(ConverterUtilTest, MakeLearningResultsFromSegments) {
+TEST(ConverterUtilTest, ConversionSegmentsToResults) {
   // Empty segments.
   {
     const Segments segments;
-    EXPECT_TRUE(MakeLearningResultsFromSegments(segments).empty());
+    EXPECT_TRUE(ConversionSegmentsToResults(segments).empty());
   }
 
   // Single segment and multiple candidates.
@@ -299,7 +299,7 @@ TEST(ConverterUtilTest, MakeLearningResultsFromSegments) {
     }
 
     const std::vector<prediction::Result> results =
-        MakeLearningResultsFromSegments(segments);
+        ConversionSegmentsToResults(segments);
     EXPECT_EQ(results.size(), 5);
     for (int i = 0; i < results.size(); ++i) {
       const Candidate& c = segment->candidate(i);
@@ -321,6 +321,11 @@ TEST(ConverterUtilTest, MakeLearningResultsFromSegments) {
         EXPECT_EQ(iter.GetContentValue(), c.content_value);
       }
     }
+
+    // Custom max_results parameter.
+    const std::vector<prediction::Result> results_custom =
+        ConversionSegmentsToResults(segments, /*max_results=*/8);
+    EXPECT_EQ(results_custom.size(), 8);
   }
 
   // Multiple segments.
@@ -340,7 +345,7 @@ TEST(ConverterUtilTest, MakeLearningResultsFromSegments) {
     }
 
     const std::vector<prediction::Result> results =
-        MakeLearningResultsFromSegments(segments);
+        ConversionSegmentsToResults(segments);
     EXPECT_EQ(results.size(), 1);
 
     const prediction::Result& result = results.front();
