@@ -624,6 +624,33 @@ mozc_cc_test(
     ],
 )
 
+mozc_cc_library(
+    name = "pos_pattern_matcher",
+    srcs = ["pos_pattern_matcher.cc"],
+    hdrs = ["pos_pattern_matcher.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":pos_id_map",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "pos_pattern_matcher_test",
+    size = "small",
+    srcs = ["pos_pattern_matcher_test.cc"],
+    deps = [
+        ":pos_id_map",
+        ":pos_pattern_matcher",
+        "//data_manager/testing:mock_data_manager",
+        "//testing:gunit",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
 mozc_py_binary(
     name = "gen_pos_id_map",
     srcs = ["gen_pos_id_map.py"],
