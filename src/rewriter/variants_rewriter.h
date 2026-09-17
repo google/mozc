@@ -140,6 +140,7 @@ class VariantsRewriter : public RewriterInterface {
   static void SetDescription(dictionary::PosMatcher pos_matcher,
                              int description_type,
                              converter::Candidate* candidate);
+  bool RewriteTopCandidateForSuggestion(Segment* seg) const;
   bool RewriteSegment(RewriteType type, Segment* seg) const;
 
   // Generates values for primary and secondary candidates.

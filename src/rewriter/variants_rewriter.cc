@@ -30,7 +30,6 @@
 #include "rewriter/variants_rewriter.h"
 
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -442,6 +441,39 @@ VariantsRewriter::CreateAlternativeCandidate(
   return result;
 }
 
+bool VariantsRewriter::RewriteTopCandidateForSuggestion(Segment* seg) const {
+  if (seg == nullptr || seg->candidates_size() == 0) {
+    return false;
+  }
+  Candidate* top_candidate = seg->mutable_candidate(0);
+  if (!(top_candidate->attributes & Attribute::REALTIME_CONVERSION)) {
+    return false;
+  }
+
+  std::string primary_value, secondary_value;
+  std::string primary_content_value, secondary_content_value;
+  converter::InnerSegmentBoundary primary_inner_segment_boundary;
+  converter::InnerSegmentBoundary secondary_inner_segment_boundary;
+
+  if (!GenerateAlternatives(*top_candidate, &primary_value, &secondary_value,
+                            &primary_content_value, &secondary_content_value,
+                            &primary_inner_segment_boundary,
+                            &secondary_inner_segment_boundary)) {
+    return false;
+  }
+
+  if (top_candidate->value == primary_value) {
+    return false;
+  }
+
+  top_candidate->value = std::move(primary_value);
+  top_candidate->content_value = std::move(primary_content_value);
+  top_candidate->inner_segment_boundary =
+      std::move(primary_inner_segment_boundary);
+  top_candidate->attributes |= Attribute::NO_EXTRA_DESCRIPTION;
+  return true;
+}
+
 bool VariantsRewriter::RewriteSegment(RewriteType type, Segment* seg) const {
   CHECK(seg);
   bool modified = false;
@@ -636,6 +668,26 @@ bool VariantsRewriter::Rewrite(const ConversionRequest& request,
                                Segments* segments) const {
   CHECK(segments);
   bool modified = false;
+
+  // NOTE:
+  // 1. In realtime conversion, conversion segments are already aggregated into
+  //    a single segment (with inner_segments) by the time post-correction
+  //    rewriters are applied.
+  // 2. This is a workaround to make variant rewriting work properly for such
+  //    realtime conversion results (e.g. full-width / half-width character
+  //    form normalization) using inner_segments.
+  // 3. This is a transitional implementation; ideally, this logic should be
+  //    refactored and placed in a cleaner, more appropriate layer.
+  if (request.request_type() != ConversionRequest::PARTIAL_SUGGESTION &&
+      request.request_type() != ConversionRequest::PARTIAL_PREDICTION &&
+      request.request()
+          .decoder_experiment_params()
+          .suppress_realtime_conversion_with_converter()) {
+    if (segments->conversion_segments_size() > 0) {
+      modified |= RewriteTopCandidateForSuggestion(
+          segments->mutable_conversion_segment(0));
+    }
+  }
 
   RewriteType type;
   if (request.request().mixed_conversion()) {  // For mobile.

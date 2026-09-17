@@ -1060,5 +1060,218 @@ TEST_F(VariantsRewriterTest, Finish) {
   EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
 }
 
+TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
+  std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
+  CharacterFormManager* manager =
+      CharacterFormManager::GetCharacterFormManager();
+
+  commands::Request client_request;
+  client_request.set_mixed_conversion(true);
+  client_request.mutable_decoder_experiment_params()
+      ->set_suppress_realtime_conversion_with_converter(true);
+  const ConversionRequest request =
+      ConversionRequestBuilder().SetRequest(client_request).Build();
+
+  Segments segments;
+  Segment* seg = segments.push_back_segment();
+
+  // Case 1: Top candidate has REALTIME_CONVERSION and NO_VARIANTS_EXPANSION.
+  // With CharacterFormManager set to FULL_WIDTH, the top candidate's number
+  // should be rewritten to FULL_WIDTH in place, without expanding candidates.
+  {
+    manager->SetCharacterForm("0", Config::FULL_WIDTH);
+
+    converter::Candidate* top = seg->add_candidate();
+    top->value = "123";
+    top->content_value = "123";
+    // Do NOT set NO_VARIANTS_EXPANSION on top so that only NO_EXTRA_DESCRIPTION
+    // (added by RewriteTopCandidateForSuggestion) prevents RewriteSegment from
+    // adding a description or expanding variants.
+    top->attributes |= converter::Attribute::REALTIME_CONVERSION;
+
+    converter::Candidate* second = seg->add_candidate();
+    second->value = "456";
+    second->content_value = "456";
+    second->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+
+    EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+    EXPECT_EQ(seg->candidates_size(), 2);
+    // Top candidate is rewritten in place without variant expansion or extra
+    // description.
+    EXPECT_EQ(seg->candidate(0).value, "１２３");
+    EXPECT_EQ(seg->candidate(0).content_value, "１２３");
+    EXPECT_EQ(seg->candidate(0).description, "");
+    // Attributes are preserved/protected.
+    EXPECT_TRUE(seg->candidate(0).attributes &
+                converter::Attribute::REALTIME_CONVERSION);
+    EXPECT_TRUE(seg->candidate(0).attributes &
+                converter::Attribute::NO_EXTRA_DESCRIPTION);
+    // Second candidate is untouched.
+    EXPECT_EQ(seg->candidate(1).value, "456");
+
+    seg->clear_candidates();
+  }
+
+  // Case 2: Already matches primary form -> no rewrite.
+  {
+    manager->SetCharacterForm("0", Config::HALF_WIDTH);
+
+    converter::Candidate* top = seg->add_candidate();
+    top->value = "123";
+    top->content_value = "123";
+    top->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                        converter::Attribute::NO_VARIANTS_EXPANSION);
+
+    EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "123");
+
+    seg->clear_candidates();
+  }
+
+  // Case 3: Flag is OFF -> no rewrite even if form differs.
+  {
+    manager->SetCharacterForm("0", Config::FULL_WIDTH);
+
+    commands::Request request_flag_off;
+    request_flag_off.set_mixed_conversion(true);
+    request_flag_off.mutable_decoder_experiment_params()
+        ->set_suppress_realtime_conversion_with_converter(false);
+    const ConversionRequest req_off =
+        ConversionRequestBuilder().SetRequest(request_flag_off).Build();
+
+    converter::Candidate* top = seg->add_candidate();
+    top->value = "123";
+    top->content_value = "123";
+    top->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                        converter::Attribute::NO_VARIANTS_EXPANSION);
+
+    EXPECT_FALSE(rewriter->Rewrite(req_off, &segments));
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "123");
+
+    seg->clear_candidates();
+  }
+
+  // Case 4: Compound with inner segment boundary (e.g. "あと2つ").
+  {
+    manager->SetCharacterForm("0", Config::FULL_WIDTH);
+
+    converter::Candidate* top = seg->add_candidate();
+    top->key = "あとふたつ";
+    top->value = "あと2つ";
+    top->content_key = top->key;
+    top->content_value = top->value;
+    top->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                        converter::Attribute::NO_VARIANTS_EXPANSION);
+    // Inner segments: "あと" (6B), "2" (1B), "つ" (3B)
+    converter::InnerSegmentBoundaryBuilder builder;
+    builder.Add(6, 6, 6, 6);
+    builder.Add(6, 1, 6, 1);
+    builder.Add(3, 3, 3, 3);
+    top->inner_segment_boundary = builder.Build(top->key, top->value);
+
+    EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "あと２つ");
+    std::vector<std::string> inner_values;
+    for (const auto& inner : seg->candidate(0).inner_segments()) {
+      inner_values.emplace_back(inner.GetValue());
+    }
+    EXPECT_THAT(inner_values, ::testing::ElementsAre("あと", "２", "つ"));
+
+    seg->clear_candidates();
+  }
+
+  // Case 5: Desktop suggestion (mixed_conversion = false).
+  {
+    manager->SetCharacterForm("0", Config::FULL_WIDTH);
+
+    commands::Request desktop_request;
+    desktop_request.set_mixed_conversion(false);
+    desktop_request.mutable_decoder_experiment_params()
+        ->set_suppress_realtime_conversion_with_converter(true);
+    const ConversionRequest req =
+        ConversionRequestBuilder()
+            .SetRequest(desktop_request)
+            .SetRequestType(ConversionRequest::SUGGESTION)
+            .Build();
+
+    converter::Candidate* top = seg->add_candidate();
+    top->value = "123";
+    top->content_value = "123";
+    top->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                        converter::Attribute::NO_VARIANTS_EXPANSION);
+
+    EXPECT_TRUE(rewriter->Rewrite(req, &segments));
+    EXPECT_EQ(seg->candidate(0).value, "１２３");
+
+    seg->clear_candidates();
+  }
+
+  // Case 6: Empty segment (candidates_size() == 0) -> returns false.
+  {
+    EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+  }
+
+  // Case 7: Candidate without REALTIME_CONVERSION attribute -> not rewritten.
+  {
+    manager->SetCharacterForm("0", Config::FULL_WIDTH);
+
+    converter::Candidate* top = seg->add_candidate();
+    top->value = "123";
+    top->content_value = "123";
+    top->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+
+    EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+    EXPECT_EQ(seg->candidate(0).value, "123");
+
+    seg->clear_candidates();
+  }
+
+  // Case 8: Candidate with no character form alternatives (e.g. hiragana) ->
+  // GenerateAlternatives returns false.
+  {
+    converter::Candidate* top = seg->add_candidate();
+    top->key = "あいう";
+    top->value = "あいう";
+    top->content_key = "あいう";
+    top->content_value = "あいう";
+    top->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                        converter::Attribute::NO_VARIANTS_EXPANSION);
+
+    EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+    EXPECT_EQ(seg->candidate(0).value, "あいう");
+
+    seg->clear_candidates();
+  }
+
+  // Case 9: PARTIAL_SUGGESTION and PARTIAL_PREDICTION are excluded from
+  // RewriteTopCandidateForSuggestion.
+  {
+    manager->SetCharacterForm("0", Config::FULL_WIDTH);
+
+    for (const ConversionRequest::RequestType req_type :
+         {ConversionRequest::PARTIAL_SUGGESTION,
+          ConversionRequest::PARTIAL_PREDICTION}) {
+      const ConversionRequest partial_req = ConversionRequestBuilder()
+                                                .SetRequest(client_request)
+                                                .SetRequestType(req_type)
+                                                .Build();
+
+      converter::Candidate* top = seg->add_candidate();
+      top->value = "123";
+      top->content_value = "123";
+      top->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                          converter::Attribute::NO_VARIANTS_EXPANSION);
+
+      EXPECT_FALSE(rewriter->Rewrite(partial_req, &segments));
+      EXPECT_EQ(seg->candidate(0).value, "123");
+
+      seg->clear_candidates();
+    }
+  }
+}
+
 }  // namespace
 }  // namespace mozc
