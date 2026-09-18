@@ -89,12 +89,9 @@ class Candidate final {
     DCHECK(subcandidate_list_);
     return *subcandidate_list_;
   }
-  CandidateList* mutable_subcandidate_list() {
-    if (!subcandidate_list_) {
-      subcandidate_list_ = std::make_unique<CandidateList>();
-    }
-    return subcandidate_list_.get();
-  }
+  // Defined out of line below: CandidateList is incomplete here and
+  // std::make_unique requires a complete type.
+  CandidateList* mutable_subcandidate_list();
 
  private:
   int id_ = 0;
@@ -212,6 +209,13 @@ class CandidateList final {
   bool rotate_;
   bool focused_;
 };
+
+inline CandidateList* Candidate::mutable_subcandidate_list() {
+  if (!subcandidate_list_) {
+    subcandidate_list_ = std::make_unique<CandidateList>();
+  }
+  return subcandidate_list_.get();
+}
 
 }  // namespace engine
 }  // namespace mozc
