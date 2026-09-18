@@ -241,8 +241,8 @@ class UserDictionary::TokensIndex {
     // - N = 1,000: +3,454
     // - N = 10,000: +4,605
     // - N = 100,000: +5,756
-    cost_penalty_ = static_cast<int>(
-        500.0 * std::log(user_pos_tokens_.size() + 1));
+    cost_penalty_ =
+        static_cast<int>(500.0 * std::log(user_pos_tokens_.size() + 1));
 
     MOZC_VLOG(1) << user_pos_tokens_.size() << " user dic entries loaded";
   }
@@ -373,7 +373,6 @@ void UserDictionary::LookupPredictive(absl::string_view key,
   }
 
   // Find the starting point of iteration over dictionary contents.
-  Token token;
   for (auto [begin, end] = std::equal_range(tokens->begin(), tokens->end(), key,
                                             OrderByKeyPrefix());
        begin != end; ++begin) {
@@ -393,9 +392,10 @@ void UserDictionary::LookupPredictive(absl::string_view key,
         Callback::TRAVERSE_DONE) {
       return;
     }
+    Token token;
     PopulateTokenFromUserPosToken(user_pos_token, PREDICTIVE, &token);
-    if (callback->OnToken(user_pos_token.key, user_pos_token.key, token) ==
-        Callback::TRAVERSE_DONE) {
+    if (callback->OnToken(user_pos_token.key, user_pos_token.key,
+                          std::move(token)) == Callback::TRAVERSE_DONE) {
       return;
     }
   }
@@ -417,7 +417,6 @@ void UserDictionary::LookupPrefix(absl::string_view key,
 
   // Find the starting point for iteration over dictionary contents.
   const absl::string_view first_char = Utf8AsChars(key).front();
-  Token token;
   for (auto it = std::lower_bound(tokens->begin(), tokens->end(), first_char,
                                   OrderByKey());
        it != tokens->end(); ++it) {
@@ -448,8 +447,10 @@ void UserDictionary::LookupPrefix(absl::string_view key,
         Callback::TRAVERSE_DONE) {
       return;
     }
+    Token token;
     PopulateTokenFromUserPosToken(user_pos_token, PREFIX, &token);
-    switch (callback->OnToken(user_pos_token.key, user_pos_token.key, token)) {
+    switch (callback->OnToken(user_pos_token.key, user_pos_token.key,
+                              std::move(token))) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_CULL:
@@ -481,15 +482,16 @@ void UserDictionary::LookupExact(absl::string_view key,
     return;
   }
 
-  Token token;
   for (; begin != end; ++begin) {
     const UserPos::Token& user_pos_token = *begin;
     if (user_pos_token.pos_type() ==
         user_dictionary::UserDictionary::SUGGESTION_ONLY) {
       continue;
     }
+    Token token;
     PopulateTokenFromUserPosToken(user_pos_token, EXACT, &token);
-    if (callback->OnToken(key, key, token) != Callback::TRAVERSE_CONTINUE) {
+    if (callback->OnToken(key, key, std::move(token)) !=
+        Callback::TRAVERSE_CONTINUE) {
       return;
     }
   }

@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "dictionary/dictionary_token.h"
 
@@ -54,8 +55,8 @@ struct Node {
     STARTS_WITH_PARTICLE = 1 << 4,   // User input starts with particle
     SPELLING_CORRECTION = 1 << 5,    // "Did you mean"
     // PARTIALY_KEY_CONSUMED is deleted.
-    SUFFIX_DICTIONARY = 1 << 8,      // Suffix dictionary
-    KEY_EXPANDED = 1 << 9,           // Keys are expanded.
+    SUFFIX_DICTIONARY = 1 << 8,  // Suffix dictionary
+    KEY_EXPANDED = 1 << 9,       // Keys are expanded.
   };
 
   // prev and next are linking pointers to connect minimum cost path
@@ -115,7 +116,7 @@ struct Node {
     value.clear();
   }
 
-  inline void InitFromToken(const dictionary::Token& token) {
+  void InitFromToken(dictionary::Token token) {
     prev = nullptr;
     next = nullptr;
     constrained_prev = nullptr;
@@ -137,8 +138,8 @@ struct Node {
       attributes |= USER_DICTIONARY;
       attributes |= NO_VARIANTS_EXPANSION;
     }
-    key = token.key;
-    value = token.value;
+    key = std::move(token.key);
+    value = std::move(token.value);
   }
 };
 

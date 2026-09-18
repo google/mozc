@@ -86,11 +86,9 @@ void SuffixDictionary::LookupPredictive(absl::string_view key,
         return x.substr(0, key.size()) < y.substr(0, key.size());
       });
 
-  Token token;
-  token.attributes = Token::SUFFIX_DICTIONARY;
   for (auto it = begin; it != end; ++it) {
-    token.key.assign((*it).data(), (*it).size());
-    switch (callback->OnKey(token.key)) {
+    const absl::string_view entry_key = *it;
+    switch (callback->OnKey(entry_key)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_NEXT_KEY:
@@ -100,11 +98,17 @@ void SuffixDictionary::LookupPredictive(absl::string_view key,
       default:
         break;
     }
-    if (callback->OnActualKey(token.key, token.key, /* num_expanded= */ 0) ==
+    if (callback->OnActualKey(entry_key, entry_key, /* num_expanded= */ 0) ==
         Callback::TRAVERSE_DONE) {
       return;
     }
     const size_t index = it - key_array_.begin();
+    // Invalid index.
+    if (index >= token_array_.size()) break;
+
+    Token token;
+    token.attributes = Token::SUFFIX_DICTIONARY;
+    token.key.assign(entry_key.data(), entry_key.size());
     if (value_array_[index].empty()) {
       token.value = token.key;
     } else {
@@ -112,14 +116,11 @@ void SuffixDictionary::LookupPredictive(absl::string_view key,
                          value_array_[index].size());
     }
 
-    // Invalid index.
-    if (index >= token_array_.size()) break;
-
     const TokenArrayData& data = token_array_[index];
     token.lid = data.lid;
     token.rid = data.rid;
     token.cost = data.cost;
-    if (callback->OnToken(token.key, token.key, token) !=
+    if (callback->OnToken(entry_key, entry_key, std::move(token)) !=
         Callback::TRAVERSE_CONTINUE) {
       break;
     }

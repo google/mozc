@@ -104,9 +104,21 @@ class DictionaryInterface {
     }
 
     // Called back when a token is decoded.
+    // Takes Token by value to allow callers to std::move() key and value
+    // directly into Node or other storage without duplicate heap copies.
+    //
+    // Callers who own a temporary Token should std::move() it into OnToken.
+    // Callers who reuse an internal Token across iterations (e.g.
+    // TokenDecodeIterator in SystemDictionary) must pass it by lvalue (copy),
+    // because internal iterator state like Token::value is preserved across
+    // iterations for SAME_AS_PREV_VALUE.
+    //
+    // Implementations (such as NodeListBuilder) should std::move() the
+    // received Token into their destination structures to avoid duplicate
+    // allocations.
     virtual ResultType OnToken(absl::string_view key,
                                absl::string_view expanded_key,
-                               const Token& token_info) {
+                               Token token_info) {
       return TRAVERSE_CONTINUE;
     }
 
@@ -224,8 +236,8 @@ class InlineCallback : public DictionaryInterface::Callback {
   using KeyHandler = std::function<ResultType(absl::string_view)>;
   using ActualKeyHandler =
       std::function<ResultType(absl::string_view, absl::string_view, int)>;
-  using TokenHandler = std::function<ResultType(
-      absl::string_view, absl::string_view, const Token&)>;
+  using TokenHandler =
+      std::function<ResultType(absl::string_view, absl::string_view, Token)>;
 
   InlineCallback() = default;
 
@@ -255,9 +267,10 @@ class InlineCallback : public DictionaryInterface::Callback {
   }
 
   ResultType OnToken(absl::string_view key, absl::string_view expanded_key,
-                     const Token& token_info) override {
-    return token_handler_ ? token_handler_(key, expanded_key, token_info)
-                          : TRAVERSE_CONTINUE;
+                     Token token_info) override {
+    return token_handler_
+               ? token_handler_(key, expanded_key, std::move(token_info))
+               : TRAVERSE_CONTINUE;
   }
 
  private:

@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/container/btree_set.h"
@@ -58,8 +59,8 @@ bool IsTokenEqualImpl(const Token& expected, const Token& actual) {
 DictionaryInterface::Callback::ResultType CollectTokenCallback::OnToken(
     absl::string_view,  // key
     absl::string_view,  // actual_key
-    const Token& token) {
-  tokens_.push_back(token);
+    Token token) {
+  tokens_.push_back(std::move(token));
   return TRAVERSE_CONTINUE;
 }
 
@@ -70,7 +71,9 @@ CheckTokenExistenceCallback::CheckTokenExistenceCallback(
 DictionaryInterface::Callback::ResultType CheckTokenExistenceCallback::OnToken(
     absl::string_view,  // key
     absl::string_view,  // actual_key
-    const Token& token) {
+    Token token) {
+  // Read-only inspection: token is only checked for equality and not stored,
+  // so std::move is not needed.
   if (IsTokenEqualImpl(*target_token_, token)) {
     found_ = true;
     return TRAVERSE_DONE;
@@ -106,7 +109,9 @@ bool CheckMultiTokensExistenceCallback::AreAllFound() const {
 DictionaryInterface::Callback::ResultType
 CheckMultiTokensExistenceCallback::OnToken(absl::string_view,  // key
                                            absl::string_view,  // actual_key
-                                           const Token& token) {
+                                           Token token) {
+  // Read-only inspection: token is only checked for equality and not stored,
+  // so std::move is not needed.
   for (auto iter = result_.begin(); iter != result_.end(); ++iter) {
     if (!iter->second && IsTokenEqualImpl(*iter->first, token)) {
       iter->second = true;

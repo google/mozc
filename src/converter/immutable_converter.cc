@@ -102,13 +102,13 @@ class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
         key_corrector_(key_corrector) {}
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                     const Token& token) override {
+                     Token token) override {
     const size_t offset =
         key_corrector_.GetOriginalOffset(pos_, token.key.size());
     if (!KeyCorrector::IsValidPosition(offset) || offset == 0) {
       return TRAVERSE_NEXT_KEY;
     }
-    Node* node = NewNodeFromToken(token);
+    Node* node = NewNodeFromToken(std::move(token));
     node->key.assign(original_lookup_key_.data() + pos_, offset);
     node->wcost += KeyCorrector::GetCorrectedCostPenalty(node->key);
     AppendToResult(node);
@@ -1420,7 +1420,6 @@ void ImmutableConverter::Resegment(const Segments& segments,
     segments_pos += segment.key().size();
   }
 }
-
 
 bool ImmutableConverter::IsSegmentEndNode(const ConversionOptions& options,
                                           const Segments& segments,

@@ -125,7 +125,7 @@ constexpr uint32_t kPredictionTypesMaskForTesting =
 using PredictionTypes = uint32_t;
 
 struct Result {
-  void InitializeByTokenAndTypes(const dictionary::Token& token,
+  void InitializeByTokenAndTypes(dictionary::Token token,
                                  PredictionTypes types);
   void SetTypesAndTokenAttributes(
       PredictionTypes prediction_types,

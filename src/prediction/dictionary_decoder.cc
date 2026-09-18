@@ -80,14 +80,15 @@ class PredictiveBigramLookupCallback : public PredictiveLookupCallback {
       const PredictiveBigramLookupCallback&) = delete;
 
   ResultType OnToken(absl::string_view key, absl::string_view expanded_key,
-                     const Token& token) override {
+                     Token token) override {
     // Skip the token if its value doesn't start with the previous user input,
     // |history_value_|.
     if (!token.value.starts_with(history_value_) ||
         token.value.size() <= history_value_.size()) {
       return TRAVERSE_CONTINUE;
     }
-    return PredictiveLookupCallback::OnToken(key, expanded_key, token);
+    return PredictiveLookupCallback::OnToken(key, expanded_key,
+                                             std::move(token));
   }
 
   // Removes the history key/values in the result.
@@ -411,44 +412,44 @@ void DictionaryDecoder::AggregatePrefix(const ConversionRequest& request,
   const int limit = GetCandidateCutoffThreshold(request.request_type());
 
   dictionary::InlineCallback cb;
-  cb.OnToken([&](absl::string_view key, absl::string_view actual_key,
-                 const Token& token) {
-    using enum DictionaryInterface::Callback::ResultType;
-    if ((token.attributes & Token::USER_DICTIONARY) != 0 &&
-        token.lid == unknown_id_) {
-      // No suggest-only words as prefix candidates
-      return TRAVERSE_CONTINUE;
-    }
-    // Avoid noisy script type nodes.
-    if (token.lid == kanji_number_id_ && token.rid == kanji_number_id_) {
-      // Kanji number entry can be looked up with the special reading and will
-      // be expanded for the number variants, so we want to suppress them here.
-      // For example, for the input "ろっぽんぎ", "六" can be looked up for
-      // the prefix reading "ろ" or "ろっ", and then be expanded with "6", "Ⅵ",
-      // etc.
-      return TRAVERSE_CONTINUE;
-    }
-    const Util::ScriptType script_type = Util::GetScriptType(token.value);
-    if (script_type == Util::NUMBER || script_type == Util::ALPHABET ||
-        script_type == Util::EMOJI) {
-      return TRAVERSE_CONTINUE;
-    }
-    if (Util::CharsLen(token.value) < kMinValueCharsLen) {
-      return TRAVERSE_CONTINUE;
-    }
-    Result result;
-    result.InitializeByTokenAndTypes(token, PREFIX);
-    if (key != actual_key) {
-      result.attributes |= Attribute::TYPING_CORRECTION;
-    }
-    const int key_len = Util::CharsLen(key);
-    if (key_len < request_key_len) {
-      result.attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
-      result.consumed_key_size = key_len;
-    }
-    results->emplace_back(std::move(result));
-    return (results->size() < limit) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
-  });
+  cb.OnToken(
+      [&](absl::string_view key, absl::string_view actual_key, Token token) {
+        using enum DictionaryInterface::Callback::ResultType;
+        if ((token.attributes & Token::USER_DICTIONARY) != 0 &&
+            token.lid == unknown_id_) {
+          // No suggest-only words as prefix candidates
+          return TRAVERSE_CONTINUE;
+        }
+        // Avoid noisy script type nodes.
+        if (token.lid == kanji_number_id_ && token.rid == kanji_number_id_) {
+          // Kanji number entry can be looked up with the special reading and
+          // will be expanded for the number variants, so we want to suppress
+          // them here. For example, for the input "ろっぽんぎ", "六" can be
+          // looked up for the prefix reading "ろ" or "ろっ", and then be
+          // expanded with "6", "Ⅵ", etc.
+          return TRAVERSE_CONTINUE;
+        }
+        const Util::ScriptType script_type = Util::GetScriptType(token.value);
+        if (script_type == Util::NUMBER || script_type == Util::ALPHABET ||
+            script_type == Util::EMOJI) {
+          return TRAVERSE_CONTINUE;
+        }
+        if (Util::CharsLen(token.value) < kMinValueCharsLen) {
+          return TRAVERSE_CONTINUE;
+        }
+        Result result;
+        result.InitializeByTokenAndTypes(std::move(token), PREFIX);
+        if (key != actual_key) {
+          result.attributes |= Attribute::TYPING_CORRECTION;
+        }
+        const int key_len = Util::CharsLen(key);
+        if (key_len < request_key_len) {
+          result.attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
+          result.consumed_key_size = key_len;
+        }
+        results->emplace_back(std::move(result));
+        return (results->size() < limit) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
+      });
 
   dictionary_.LookupPrefix(lookup_key, request.options(), &cb);
 }

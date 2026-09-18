@@ -229,11 +229,11 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
    public:
     ResultType OnToken(absl::string_view,  // key
                        absl::string_view,  // actual_key
-                       const Token& token) override {
+                       Token token) override {
       // Collect only user dictionary entries.
       if (token.attributes & Token::USER_DICTIONARY) {
-        entries_.push_back(Entry({.key = token.key,
-                                  .value = token.value,
+        entries_.push_back(Entry({.key = std::move(token.key),
+                                  .value = std::move(token.value),
                                   .lid = static_cast<uint16_t>(token.lid),
                                   .rid = static_cast<uint16_t>(token.rid)}));
       }

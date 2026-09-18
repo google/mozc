@@ -102,7 +102,7 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
   }
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                     const Token& token) override {
+                     Token token) override {
     if (!(token.attributes & Token::USER_DICTIONARY)) {
       if (!options_.use_spelling_correction &&
           (token.attributes & Token::SPELLING_CORRECTION)) {
@@ -121,7 +121,7 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
         user_dictionary_.IsSuppressedEntry(token.key, token.value)) {
       return TRAVERSE_CONTINUE;
     }
-    return callback_->OnToken(key, actual_key, token);
+    return callback_->OnToken(key, actual_key, std::move(token));
   }
 
   bool IsKanaModifierInsensitiveConversion() const override {

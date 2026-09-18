@@ -104,7 +104,7 @@ class PredictiveLookupCallback
                          int num_expanded) override;
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                     const dictionary::Token& token) override;
+                     dictionary::Token token) override;
 
  protected:
   int32_t penalty_ = 0;

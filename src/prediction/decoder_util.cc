@@ -147,16 +147,14 @@ DictionaryInterface::Callback::ResultType PredictiveLookupCallback::OnKey(
   return TRAVERSE_NEXT_KEY;
 }
 
-DictionaryInterface::Callback::ResultType
-PredictiveLookupCallback::OnActualKey(absl::string_view key,
-                                      absl::string_view actual_key,
-                                      int num_expanded) {
+DictionaryInterface::Callback::ResultType PredictiveLookupCallback::OnActualKey(
+    absl::string_view key, absl::string_view actual_key, int num_expanded) {
   penalty_ = GetSpatialCostPenalty(num_expanded);
   return TRAVERSE_CONTINUE;
 }
 
 DictionaryInterface::Callback::ResultType PredictiveLookupCallback::OnToken(
-    absl::string_view key, absl::string_view actual_key, const Token& token) {
+    absl::string_view key, absl::string_view actual_key, Token token) {
   if (((token.attributes & Token::USER_DICTIONARY) != 0 &&
        token.lid == unknown_id_) ||
       token.lid == zip_code_id_) {
@@ -170,7 +168,7 @@ DictionaryInterface::Callback::ResultType PredictiveLookupCallback::OnToken(
   }
 
   Result result;
-  result.InitializeByTokenAndTypes(token, types_);
+  result.InitializeByTokenAndTypes(std::move(token), types_);
   result.wcost += penalty_;
   if (penalty_ > 0) result.attributes |= Attribute::KEY_EXPANDED_IN_DICTIONARY;
   RewriteResult(result);

@@ -412,8 +412,9 @@ class LookupPrefixTestCallback : public TokenCallbackBase {
   }
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                     const Token& token) override {
-    result_.insert(std::make_pair(token.key, token.value));
+                     Token token) override {
+    result_.insert(
+        std::make_pair(std::move(token.key), std::move(token.value)));
     return TRAVERSE_CONTINUE;
   }
 

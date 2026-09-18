@@ -65,7 +65,7 @@ class CollectTokenCallback : public TokenCallbackBase {
   void Clear() { tokens_.clear(); }
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                     const Token& token) override;
+                     Token token) override;
 
  private:
   std::vector<Token> tokens_;
@@ -78,7 +78,7 @@ class CheckTokenExistenceCallback : public TokenCallbackBase {
   bool found() const { return found_; }
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                     const Token& token) override;
+                     Token token) override;
 
  private:
   const Token* target_token_;
@@ -92,7 +92,7 @@ class CheckMultiTokensExistenceCallback : public TokenCallbackBase {
   bool AreAllFound() const;
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                     const Token& token) override;
+                     Token token) override;
 
  private:
   size_t found_count_;

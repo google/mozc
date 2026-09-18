@@ -107,12 +107,12 @@ class SuffixLookupCallback : public DictionaryInterface::Callback {
         results_(results) {}
 
   ResultType OnToken(absl::string_view key, absl::string_view expanded_new_key,
-                     const Token& token) override {
+                     Token token) override {
     if (token.lid == zip_code_id_ || token.lid == unknown_id_) {
       return TRAVERSE_CONTINUE;
     }
     Result result;
-    result.InitializeByTokenAndTypes(token, types_);
+    result.InitializeByTokenAndTypes(std::move(token), types_);
     results_->emplace_back(std::move(result));
     if (results_->size() >= limit_) {
       return TRAVERSE_DONE;

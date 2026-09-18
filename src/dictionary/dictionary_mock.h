@@ -132,7 +132,7 @@ class MockCallback : public DictionaryInterface::Callback {
 
   MOCK_METHOD(ResultType, OnToken,
               (absl::string_view key, absl::string_view expanded_key,
-               const Token& token_info),
+               Token token_info),
               (override));
 };
 

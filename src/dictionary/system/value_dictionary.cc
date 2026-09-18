@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <queue>
 #include <string>
+#include <utility>
 
 #include "absl/strings/string_view.h"
 #include "base/util.h"
@@ -96,7 +97,7 @@ inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
     return result;
   }
   FillToken(suggestion_only_word_id, *value, token);
-  return callback->OnToken(*value, *value, *token);
+  return callback->OnToken(*value, *value, std::move(*token));
 }
 
 }  // namespace
@@ -162,7 +163,7 @@ void ValueDictionary::LookupExact(absl::string_view key,
   }
   Token token;
   FillToken(suggestion_only_word_id_, key, &token);
-  callback->OnToken(key, key, token);
+  callback->OnToken(key, key, std::move(token));
 }
 
 }  // namespace dictionary

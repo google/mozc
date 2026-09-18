@@ -32,6 +32,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
@@ -80,9 +81,11 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
   }
 
   // Creates a new node and prepends it to the current list.
+  // Takes token by value and std::move() its fields directly into Node,
+  // avoiding duplicate heap string allocations.
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                     const dictionary::Token& token) override {
-    Node* new_node = NewNodeFromToken(token);
+                     dictionary::Token token) override {
+    Node* new_node = NewNodeFromToken(std::move(token));
     DCHECK(new_node);
     AppendToResult(new_node);
     return (result_.size() > limit_) ? TRAVERSE_DONE : TRAVERSE_CONTINUE;
@@ -97,9 +100,9 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
   }
   std::vector<Node*> result() { return result_; }
 
-  Node* NewNodeFromToken(const dictionary::Token& token) {
+  Node* NewNodeFromToken(dictionary::Token token) {
     Node* new_node = allocator_->NewNode();
-    new_node->InitFromToken(token);
+    new_node->InitFromToken(std::move(token));
     new_node->wcost += penalty_;
     if (penalty_ > 0) new_node->attributes |= Node::KEY_EXPANDED;
     return new_node;

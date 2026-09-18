@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <string>
 #include <tuple>
+#include <utility>
 
 #include "absl/base/nullability.h"
 #include "absl/strings/string_view.h"
@@ -110,11 +111,10 @@ bool TiebreakLess(const Result& lhs, const Result& rhs) {
 using ::mozc::converter::Attribute;
 using ::mozc::dictionary::Token;
 
-void Result::InitializeByTokenAndTypes(const Token& token,
-                                       PredictionTypes types) {
+void Result::InitializeByTokenAndTypes(Token token, PredictionTypes types) {
   SetTypesAndTokenAttributes(types, token.attributes);
-  key = token.key;
-  value = token.value;
+  key = std::move(token.key);
+  value = std::move(token.value);
   wcost = token.cost;
   lid = token.lid;
   rid = token.rid;

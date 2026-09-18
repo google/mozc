@@ -690,6 +690,11 @@ void SystemDictionary::LookupPredictive(absl::string_view key,
                                   GetTokenArrayPtr(token_array_, key_id));
          !iter.Done(); iter.Next()) {
       const TokenInfo& token_info = iter.Get();
+      // Note: Do not std::move(*token_info.token). TokenDecodeIterator reuses
+      // its internal Token instance (especially token_.value) across iterations
+      // when decoding tokens with SAME_AS_PREV_VALUE. Passing by lvalue creates
+      // a copy in OnToken's parameter while keeping iter's internal state
+      // intact.
       const Callback::ResultType result =
           callback->OnToken(decoded_key, actual_key, *token_info.token);
       if (result == Callback::TRAVERSE_DONE) {
@@ -768,6 +773,8 @@ void RunCallbackOnEachPrefix(
       if (!token_filter(token_info)) {
         continue;
       }
+      // Note: Do not std::move(*token_info.token). TokenDecodeIterator reuses
+      // token_ across iterations for SAME_AS_PREV_VALUE.
       const Callback::ResultType res =
           callback->OnToken(prefix, prefix, *token_info.token);
       if (res == Callback::TRAVERSE_DONE || res == Callback::TRAVERSE_CULL) {
@@ -787,10 +794,9 @@ class ReverseLookupCallbackWrapper : public DictionaryInterface::Callback {
   ~ReverseLookupCallbackWrapper() override = default;
   SystemDictionary::Callback::ResultType OnToken(absl::string_view key,
                                                  absl::string_view actual_key,
-                                                 const Token& token) override {
-    Token modified_token = token;
-    modified_token.key.swap(modified_token.value);
-    return callback_->OnToken(key, actual_key, modified_token);
+                                                 Token token) override {
+    token.key.swap(token.value);
+    return callback_->OnToken(key, actual_key, std::move(token));
   }
 
   DictionaryInterface::Callback* callback_;
@@ -865,6 +871,8 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
                                   GetTokenArrayPtr(token_array_, key_id));
          !iter.Done(); iter.Next()) {
       const TokenInfo& token_info = iter.Get();
+      // Note: Do not std::move(*token_info.token). TokenDecodeIterator reuses
+      // token_ across iterations for SAME_AS_PREV_VALUE.
       result = callback->OnToken(prefix, *actual_prefix, *token_info.token);
       if (result == Callback::TRAVERSE_DONE ||
           result == Callback::TRAVERSE_CULL) {
@@ -939,6 +947,8 @@ void SystemDictionary::LookupExact(absl::string_view key,
   for (TokenDecodeIterator iter(*codec_, value_trie_, frequent_pos_, key,
                                 GetTokenArrayPtr(token_array_, key_id));
        !iter.Done(); iter.Next()) {
+    // Note: Do not std::move(*iter.Get().token). TokenDecodeIterator reuses
+    // token_ across iterations for SAME_AS_PREV_VALUE.
     if (callback->OnToken(key, key, *iter.Get().token) !=
         Callback::TRAVERSE_CONTINUE) {
       break;
@@ -1089,6 +1099,8 @@ void SystemDictionary::RegisterReverseLookupResults(
             token_info.id_in_value_trie != value_id) {
           continue;
         }
+        // Note: Do not std::move(*token_info.token). TokenDecodeIterator reuses
+        // token_ across iterations for SAME_AS_PREV_VALUE.
         callback->OnToken(tokens_key, tokens_key, *token_info.token);
       }
     }
