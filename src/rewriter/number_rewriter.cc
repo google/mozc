@@ -35,6 +35,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -42,6 +43,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
@@ -52,6 +54,7 @@
 #include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
@@ -65,6 +68,8 @@ namespace {
 
 using ::mozc::config::CharacterFormManager;
 using ::mozc::dictionary::PosMatcher;
+
+constexpr int kMaxLenForPhoneticNumber = 6;  // "100000" (じゅうまん)
 
 // Rewrite type
 enum RewriteType {
@@ -158,7 +163,6 @@ std::vector<RewriteCandidateInfo> GetRewriteCandidateInfos(
     const SerializedStringArray& suffix_array, const Segment& seg,
     const PosMatcher& pos_matcher) {
   std::vector<RewriteCandidateInfo> rewrite_candidate_info;
-  constexpr int kMaxLenForPhoneticNumber = 6;  // "100000" (じゅうまん)
 
   // Use the higher ranked candidate for deciding the insertion position.
   absl::flat_hash_set<std::string> seen;
@@ -319,6 +323,7 @@ void MergeCandidateInfoInternal(const converter::Candidate& base_cand,
   cand->rid = base_cand.rid;
   cand->style = result_cand.style;
   cand->description.assign(result_cand.description);
+  cand->inner_segment_boundary = base_cand.inner_segment_boundary;
 
   // Don't want to have FULL_WIDTH form for Hex/Oct/BIN..etc.
   if (cand->style == NumberUtil::NumberString::NUMBER_HEX ||
@@ -469,7 +474,117 @@ bool NumberRewriter::Rewrite(const ConversionRequest& request,
     modified |= RewriteOneSegment(request, &segment, segments);
   }
 
+  // NOTE:
+  // 1. In realtime conversion, conversion segments are already aggregated into
+  //    a single segment (with inner_segments) by the time post-correction
+  //    rewriters are applied.
+  // 2. This is a workaround to make number rewriting work properly for such
+  //    realtime conversion results (e.g. Kanji number conversion for phonetic
+  //    number + counter compounds) using inner_segments.
+  // 3. This is a transitional implementation; ideally, this logic should be
+  //    refactored and placed in a cleaner, more appropriate layer.
+  if (request.request_type() != ConversionRequest::PARTIAL_SUGGESTION &&
+      request.request_type() != ConversionRequest::PARTIAL_PREDICTION &&
+      request.request()
+          .decoder_experiment_params()
+          .suppress_realtime_conversion_with_converter()) {
+    if (segments->conversion_segments_size() > 0) {
+      modified |= RewriteTopCandidateForSuggestion(
+          segments->mutable_conversion_segment(0));
+    }
+  }
+
   return modified;
+}
+
+namespace {
+// Rewrites an Arabic number + counter suffix (e.g., "3年") in an inner segment
+// to Kanji ("三年").
+//
+// TODO(taku): Because `inner_segment_boundary` only stores byte lengths and
+// does not preserve POS IDs (`lid`/`rid`), native kun-yomi expressions
+// (e.g., "みっか" -> "3日", "ふたつ" -> "2つ") and calendar months
+// ("さんがつ" -> "3月") cannot currently be distinguished from Sino-Japanese
+// number + counter compounds ("さんねん" -> "三年") without POS or
+// content/functional boundary refinements in
+// `NBestGenerator::FillInnerSegmentInfo`.
+std::optional<std::string> RewriteInnerContentToKanji(
+    const SerializedStringArray& suffix_array, absl::string_view key,
+    absl::string_view content_value) {
+  if (Util::GetFirstScriptType(key) == Util::NUMBER ||
+      Util::GetFirstScriptType(content_value) != Util::NUMBER) {
+    return std::nullopt;
+  }
+  absl::string_view parsed_number, parsed_suffix;
+  uint32_t script_type = 0;
+  if (!number_compound_util::SplitStringIntoNumberAndCounterSuffix(
+          suffix_array, content_value, &parsed_number, &parsed_suffix,
+          &script_type) ||
+      parsed_number.empty()) {
+    return std::nullopt;
+  }
+  std::string kanji_number, arabic_number;
+  if (!NumberUtil::NormalizeNumbers(parsed_number, false, &kanji_number,
+                                    &arabic_number) ||
+      kanji_number.empty() ||
+      Util::CharsLen(arabic_number) > kMaxLenForPhoneticNumber) {
+    return std::nullopt;
+  }
+  return absl::StrCat(kanji_number, parsed_suffix);
+}
+}  // namespace
+
+bool NumberRewriter::RewriteTopCandidateForSuggestion(Segment* seg) const {
+  if (seg == nullptr || seg->candidates_size() == 0) {
+    return false;
+  }
+  // Only inspect index 0 (top_candidate).
+  //
+  // NumberRewriter runs before VariantsRewriter in the rewriter pipeline.
+  // When a Kanji number candidate is inserted at index 0, it is marked with
+  // NO_EXTRA_DESCRIPTION so that if VariantsRewriter subsequently applies
+  // character form normalization (e.g., full-width alphabet in
+  // "wikipediaを3年使う" -> "ｗｉｋｉｐｅｄｉａを三年使う"), VariantsRewriter
+  // updates index 0 in-place rather than inserting a third intermediate
+  // candidate, keeping the total suggestion count to at most 2:
+  //   [0] best composite candidate
+  //   [1] plain half-width fallback
+  const converter::Candidate& top_candidate = seg->candidate(0);
+  if (!(top_candidate.attributes & converter::Attribute::REALTIME_CONVERSION) ||
+      (top_candidate.attributes & converter::Attribute::USER_DICTIONARY)) {
+    return false;
+  }
+
+  bool modified = false;
+  std::string new_value;
+  converter::InnerSegmentBoundaryBuilder boundary_builder;
+  for (const auto& iter : top_candidate.inner_segments()) {
+    std::string content_value(iter.GetContentValue());
+    std::string value(iter.GetValue());
+    if (std::optional<std::string> kanji_content = RewriteInnerContentToKanji(
+            suffix_array_, iter.GetKey(), content_value);
+        kanji_content.has_value() && *kanji_content != content_value) {
+      content_value = *std::move(kanji_content);
+      value = absl::StrCat(content_value, iter.GetFunctionalValue());
+      modified = true;
+    }
+    absl::StrAppend(&new_value, value);
+    boundary_builder.Add(iter.GetKey().size(), value.size(),
+                         iter.GetContentKey().size(), content_value.size());
+  }
+  if (!modified) {
+    return false;
+  }
+
+  converter::Candidate* inserted = seg->insert_candidate(0);
+  *inserted = seg->candidate(1);  // Copy from original top candidate
+  inserted->value = std::move(new_value);
+  inserted->inner_segment_boundary =
+      boundary_builder.Build(inserted->key, inserted->value);
+  std::tie(inserted->content_key, inserted->content_value) =
+      inserted->inner_segments().GetMergedContentKeyAndValue();
+  inserted->attributes |= converter::Attribute::NO_EXTRA_DESCRIPTION;
+  return true;
 }
 
 namespace {
@@ -516,6 +631,9 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest& request,
     if (Util::GetScriptType(arabic_content_value) != Util::NUMBER) {
       if (Util::GetFirstScriptType(arabic_content_value) == Util::NUMBER) {
         // Rewrite for number suffix
+        if (IsAlreadyUpdated({info.candidate}, *seg)) {
+          continue;
+        }
         const int insert_pos =
             std::min<int>(info.position + 1, seg->candidates_size());
         InsertCandidate(seg, insert_pos, info.candidate, info.candidate);

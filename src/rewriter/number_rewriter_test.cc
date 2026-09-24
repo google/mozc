@@ -31,6 +31,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstring>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -45,6 +46,7 @@
 #include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -1412,6 +1414,119 @@ TEST_F(NumberRewriterTest, NumberStyleLearningExplicitFullWidth) {
   EXPECT_TRUE(rewriter->Rewrite(request, &new_segments));
   EXPECT_EQ(new_segments.conversion_segment(0).candidate(0).value,
             "１，２３４");
+}
+
+TEST_F(NumberRewriterTest, RewriteTopCandidateForSuggestion) {
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  commands::Request proto_request;
+  proto_request.mutable_decoder_experiment_params()
+      ->set_suppress_realtime_conversion_with_converter(true);
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequest(proto_request)
+          .SetRequestType(ConversionRequest::SUGGESTION)
+          .Build();
+
+  Segments segments;
+  Segment* seg = segments.push_back_segment();
+  seg->set_key("かいしからにしゅうかん");
+
+  converter::Candidate* cand = seg->add_candidate();
+  cand->key = "かいしからにしゅうかん";
+  cand->value = "開始から2週間";
+  cand->content_key = "かいしからにしゅうかん";
+  cand->content_value = "開始から2週間";
+  cand->lid = pos_matcher_.GetGeneralNounId();
+  cand->rid = pos_matcher_.GetGeneralNounId();
+  cand->attributes |= converter::Attribute::REALTIME_CONVERSION;
+  converter::InnerSegmentBoundaryBuilder builder;
+  builder.Add(strlen("かいしから"), strlen("開始から"), strlen("かいし"),
+              strlen("開始"));
+  builder.Add(strlen("にしゅうかん"), strlen("2週間"), strlen("にしゅうかん"),
+              strlen("2週間"));
+  cand->inner_segment_boundary = builder.Build(cand->key, cand->value);
+
+  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+  ASSERT_GE(seg->candidates_size(), 2);
+  EXPECT_EQ(seg->candidate(0).value, "開始から二週間");
+  EXPECT_EQ(seg->candidate(1).value, "開始から2週間");
+
+  // Rewriting multiple times should be idempotent.
+  EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+  EXPECT_EQ(seg->candidate(0).value, "開始から二週間");
+}
+
+TEST_F(NumberRewriterTest, NumberSuffixNoDuplicateWhenArabicAlreadyExists) {
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  commands::Request req;
+  req.mutable_decoder_experiment_params()
+      ->set_suppress_realtime_conversion_with_converter(true);
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequest(req)
+          .SetRequestType(ConversionRequest::SUGGESTION)
+          .Build();
+
+  Segments segments;
+  Segment* seg = segments.push_back_segment();
+  seg->set_key("100えんのにほんしゅ");
+
+  converter::Candidate* cand = seg->add_candidate();
+  cand->key = "100えんのにほんしゅ";
+  cand->value = "100円の日本酒";
+  cand->content_key = "100えん";
+  cand->content_value = "100円";
+  cand->lid = pos_matcher_.GetGeneralNounId();
+  cand->rid = pos_matcher_.GetGeneralNounId();
+  cand->attributes |= converter::Attribute::REALTIME_CONVERSION;
+  converter::InnerSegmentBoundaryBuilder builder;
+  builder.Add(strlen("100えんの"), strlen("100円の"), strlen("100えん"),
+              strlen("100円"));
+  builder.Add(strlen("にほんしゅ"), strlen("日本酒"), strlen("にほんしゅ"),
+              strlen("日本酒"));
+  cand->inner_segment_boundary = builder.Build(cand->key, cand->value);
+
+  // RewriteTopCandidateForSuggestion does not rewrite when key starts with
+  // ASCII digits ("100"), and RewriteOneSegment should not duplicate
+  // "100円の日本酒".
+  EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+  EXPECT_EQ(seg->candidates_size(), 1);
+  EXPECT_EQ(seg->candidate(0).value, "100円の日本酒");
+}
+
+TEST_F(NumberRewriterTest, UpdateCandidateClearsStaleInnerSegmentBoundary) {
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  commands::Request req;
+  req.mutable_decoder_experiment_params()
+      ->set_suppress_realtime_conversion_with_converter(true);
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequest(req)
+          .SetRequestType(ConversionRequest::SUGGESTION)
+          .Build();
+
+  Segments segments;
+  Segment* seg = segments.push_back_segment();
+  seg->set_key("にから");
+
+  converter::Candidate* cand = seg->add_candidate();
+  cand->key = "にから";
+  cand->value = "2から";
+  cand->content_key = "に";
+  cand->content_value = "2";
+  cand->lid = pos_matcher_.GetNumberId();
+  cand->rid = pos_matcher_.GetGeneralNounId();
+  cand->attributes |= converter::Attribute::REALTIME_CONVERSION;
+  converter::InnerSegmentBoundaryBuilder builder;
+  builder.Add(strlen("にから"), strlen("2から"), strlen("に"), strlen("2"));
+  cand->inner_segment_boundary = builder.Build(cand->key, cand->value);
+
+  EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+  ASSERT_GE(seg->candidates_size(), 3);
+  EXPECT_EQ(seg->candidate(0).value, "二から");
+  EXPECT_TRUE(seg->candidate(0).inner_segment_boundary.empty());
+  EXPECT_EQ(seg->candidate(1).value, "弐から");
+  EXPECT_EQ(seg->candidate(2).value, "2から");
 }
 
 }  // namespace mozc
