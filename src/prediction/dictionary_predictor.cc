@@ -36,6 +36,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -51,25 +52,30 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
+#include "composer/query.h"
+#include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/connector.h"
 #include "converter/segmenter.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
-#include "prediction/dictionary_prediction_aggregator.h"
+#include "prediction/decoder_util.h"
+#include "prediction/number_decoder.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/result_filter.h"
+#include "prediction/single_kanji_decoder.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_util.h"
-#include "transliteration/transliteration.h"
 
 namespace mozc::prediction {
 namespace {
 
+using ::mozc::commands::Request;
+using ::mozc::composer::TypeCorrectedQuery;
 using ::mozc::converter::Attribute;
 
 bool IsDebug(const ConversionRequest& request) {
@@ -80,9 +86,25 @@ bool IsDebug(const ConversionRequest& request) {
 #endif  // NDEBUG
 }
 
-bool IsLatinInputMode(const ConversionRequest& request) {
-  return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
-         request.composer().GetInputMode() == transliteration::FULL_ASCII;
+void AppendResults(std::vector<Result> src, std::vector<Result>* dst) {
+  absl::c_move(src, std::back_inserter(*dst));
+}
+
+// Return true if the current keyboard is capable to type Latin characters
+// regardless of actual input mode. QWERTY keyboard is the typical case.
+bool IsQwertyMobileTable(const ConversionRequest& request) {
+  const auto table = request.request().special_romanji_table();
+  return (table == Request::QWERTY_MOBILE_TO_HIRAGANA ||
+          table == Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
+}
+
+bool IsLanguageAwareInputEnabled(const ConversionRequest& request) {
+  const auto lang_aware = request.request().language_aware_input();
+  return lang_aware == Request::LANGUAGE_AWARE_SUGGESTION;
+}
+
+bool IsZeroQueryEnabled(const ConversionRequest& request) {
+  return request.request().zero_query_suggestion();
 }
 
 bool IsMixedConversionEnabled(const ConversionRequest& request) {
@@ -91,6 +113,53 @@ bool IsMixedConversionEnabled(const ConversionRequest& request) {
 
 bool IsTypingCorrectionEnabled(const ConversionRequest& request) {
   return request.config().use_typing_correction();
+}
+
+bool HasHistoryKeyLongerThanOrEqualTo(const ConversionRequest& request,
+                                      size_t utf8_len) {
+  return Util::CharsLen(request.converter_history_key(1)) >= utf8_len;
+}
+
+bool IsLongKeyForRealtimeCandidates(const ConversionRequest& request) {
+  constexpr int kFewResultThreshold = 8;
+  return Util::CharsLen(request.key()) >= kFewResultThreshold;
+}
+
+bool ShouldAggregateRealTimeConversionResults(
+    const ConversionRequest& request) {
+  constexpr size_t kMaxRealtimeKeySize = 300;  // 300 bytes in UTF8
+  absl::string_view key = request.key();
+  if (key.empty() || key.size() >= kMaxRealtimeKeySize) {
+    // 1) If key is empty, realtime conversion doesn't work.
+    // 2) If the key is too long, we'll hit a performance issue.
+    return false;
+  }
+
+  return (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
+          request.config().use_realtime_conversion() ||
+          IsMixedConversionEnabled(request));
+}
+
+bool IsZipCodeRequest(const absl::string_view key) {
+  if (key.empty()) {
+    return false;
+  }
+
+  int num_chars = 0;
+  for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
+    const char32_t c = iter.Get();
+    if (!('0' <= c && c <= '9') && (c != '-')) {
+      return false;
+    }
+    ++num_chars;
+  }
+
+  return num_chars < 6;
+}
+
+bool IsNotExceedingCutoffThreshold(const ConversionRequest& request,
+                                   absl::Span<const Result> results) {
+  return results.size() <= GetCandidateCutoffThreshold(request.request_type());
 }
 
 template <typename... Args>
@@ -132,26 +201,17 @@ void MaybeFixRealtimeTopCost(const ConversionRequest& request,
 
 DictionaryPredictor::DictionaryPredictor(const engine::Modules& modules,
                                          const RealtimeDecoder& decoder)
-    : DictionaryPredictor(modules, nullptr, decoder) {
-  // Explicitly allocate aggregator_ as decoder is unique_ptr and cannot be
-  // passed to the constructor of DictionaryPredictor and
-  // DictionaryPredictionAggregator at the same time.
-  aggregator_ = std::make_unique<prediction::DictionaryPredictionAggregator>(
-      modules, decoder_);
-}
-
-DictionaryPredictor::DictionaryPredictor(
-    const engine::Modules& modules,
-    std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
-    const RealtimeDecoder& decoder)
-    : aggregator_(std::move(aggregator)),
-      decoder_(decoder),
+    : decoder_(decoder),
       connector_(modules.GetConnector()),
       segmenter_(modules.GetSegmenter()),
       suggestion_filter_(modules.GetSuggestionFilter()),
       pos_matcher_(modules.GetPosMatcher()),
       general_symbol_id_(pos_matcher_.GetGeneralSymbolId()),
-      modules_(modules) {}
+      modules_(modules),
+      dictionary_decoder_(modules),
+      handwriting_decoder_(modules, decoder),
+      zero_query_decoder_(modules),
+      english_decoder_(modules) {}
 
 std::vector<Result> DictionaryPredictor::Predict(
     const ConversionRequest& request) const {
@@ -160,18 +220,14 @@ std::vector<Result> DictionaryPredictor::Predict(
     return {};
   }
 
-  std::vector<Result> results;
-
   // TODO(taku): Separate DesktopPredictor and MixedDecodingPredictor.
+  std::vector<Result> results;
   if (IsMixedConversionEnabled(request)) {
-    std::vector<Result> literal_results =
-        aggregator_->AggregateResultsForMixedConversion(request);
-    std::vector<Result> tc_results =
-        AggregateTypingCorrectedResultsForMixedConversion(request);
-    absl::c_move(literal_results, std::back_inserter(results));
-    absl::c_move(tc_results, std::back_inserter(results));
+    results = AggregateResultsForMixedConversion(request);
+    AppendResults(AggregateTypingCorrectedResultsForMixedConversion(request),
+                  &results);
   } else {
-    results = aggregator_->AggregateResultsForDesktop(request);
+    results = AggregateResultsForDesktop(request);
   }
 
   RewriteResultsForPrediction(request, absl::MakeSpan(results));
@@ -202,6 +258,122 @@ void DictionaryPredictor::RewriteResultsForPrediction(
   }
 }
 
+std::vector<Result> DictionaryPredictor::AggregateResultsForMixedConversion(
+    const ConversionRequest& request) const {
+  DCHECK(IsMixedConversionEnabled(request));
+
+  std::vector<Result> results;
+  absl::string_view key = request.key();
+
+  // Zero query prediction.
+  if (request.IsZeroQuerySuggestion()) {
+    if (IsZeroQueryEnabled(request)) {
+      AppendResults(zero_query_decoder_.Decode(request), &results);
+    }
+    return results;
+  }
+
+  if (request.request_type() == ConversionRequest::SUGGESTION &&
+      (!request.config().use_dictionary_suggest() || IsZipCodeRequest(key))) {
+    return results;
+  }
+
+  // Always aggregate realtime results when mixed conversion mode.
+  AggregateRealtime(
+      request, GetRealtimeCandidateMaxSize(request),
+      request.options().use_actual_converter_for_realtime_conversion, &results);
+
+  // In partial suggestion or prediction, only realtime candidates are used.
+  if (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
+      request.request_type() == ConversionRequest::PARTIAL_PREDICTION) {
+    return results;
+  }
+
+  // TODO(taku): Removes the dependency to `min_unigram_key_len`.
+  // This variable is only used in this method.
+  int min_unigram_key_len = 0;
+  AggregateUnigram(request, &results, &min_unigram_key_len);
+
+  if (IsNotExceedingCutoffThreshold(request, results)) {
+    AppendResults(NumberDecoder(modules_.GetPosMatcher()).Decode(request),
+                  &results);
+  }
+
+  constexpr int kMinHistoryKeyLen = 3;
+  if (HasHistoryKeyLongerThanOrEqualTo(request, kMinHistoryKeyLen) &&
+      !request.IsZeroQuerySuggestion()) {
+    dictionary_decoder_.AggregateBigram(request, &results);
+  }
+
+  // `min_unigram_key_len` is only used here.
+  const size_t key_len = Util::CharsLen(key);
+  if (IsLanguageAwareInputEnabled(request) &&
+      !request_util::IsLatinInputMode(request) &&
+      IsQwertyMobileTable(request) && key_len >= min_unigram_key_len) {
+    // QWERTY-Romaji mode to type Japanese. Handle the ごおgぇ -> Google.
+    AppendResults(english_decoder_.DecodeUsingRawInput(request), &results);
+  }
+
+  if (request_util::IsAutoPartialSuggestionEnabled(request) &&
+      IsNotExceedingCutoffThreshold(request, results)) {
+    dictionary_decoder_.AggregatePrefix(request, &results);
+  }
+
+  // Always aggregate single kanji results when mixed conversion mode.
+  AppendResults(SingleKanjiDecoder(modules_.GetPosMatcher(),
+                                   modules_.GetSingleKanjiDictionary())
+                    .Decode(request),
+                &results);
+
+  modules_.GetSupplementalModel().PopulateTypeCorrectedQuery(
+      request, absl::MakeSpan(results));
+
+  return results;
+}
+
+std::vector<Result> DictionaryPredictor::AggregateResultsForDesktop(
+    const ConversionRequest& request) const {
+  DCHECK(!IsMixedConversionEnabled(request));
+
+  std::vector<Result> results;
+
+  absl::string_view key = request.key();
+
+  if (request.request_type() == ConversionRequest::SUGGESTION &&
+      (!request.config().use_dictionary_suggest() || IsZipCodeRequest(key))) {
+    return results;
+  }
+
+  if (ShouldAggregateRealTimeConversionResults(request)) {
+    AggregateRealtime(
+        request, GetRealtimeCandidateMaxSize(request),
+        request.options().use_actual_converter_for_realtime_conversion,
+        &results);
+  }
+
+  // Desktop mode never sets PARTIAL mode, so we may use DCHECK after the
+  // refactoring.
+  if (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
+      request.request_type() == ConversionRequest::PARTIAL_PREDICTION) {
+    return results;
+  }
+
+  int min_unigram_key_len = 0;
+  AggregateUnigram(request, &results, &min_unigram_key_len);
+
+  if (IsNotExceedingCutoffThreshold(request, results)) {
+    AppendResults(NumberDecoder(modules_.GetPosMatcher()).Decode(request),
+                  &results);
+  }
+
+  constexpr int kMinHistoryKeyLen = 3;
+  if (HasHistoryKeyLongerThanOrEqualTo(request, kMinHistoryKeyLen)) {
+    dictionary_decoder_.AggregateBigram(request, &results);
+  }
+
+  return results;
+}
+
 std::vector<Result>
 DictionaryPredictor::AggregateTypingCorrectedResultsForMixedConversion(
     const ConversionRequest& request) const {
@@ -211,8 +383,207 @@ DictionaryPredictor::AggregateTypingCorrectedResultsForMixedConversion(
     return {};
   }
 
-  return aggregator_->AggregateTypingCorrectedResultsForMixedConversion(
-      request);
+  const std::optional<std::vector<TypeCorrectedQuery>> corrected =
+      modules_.GetSupplementalModel().CorrectComposition(request);
+  if (!corrected) {
+    return {};
+  }
+
+  std::vector<Result> results;
+
+  bool number_added = false;
+
+  for (const auto& query : corrected.value()) {
+    absl::string_view key = query.correction;
+
+    // Make ConversionRequest that uses conversion_segment(0).key() as typing
+    // corrected key instead of ComposerData to avoid the original key from
+    // being used during the candidate aggregation.
+    // Kana modifier insensitive dictionary lookup is also disabled as
+    // composition spellchecker has already fixed them.
+    ConversionRequest::Options options = request.options();
+    options.kana_modifier_insensitive_conversion = false;
+    options.use_already_typing_corrected_key = true;
+
+    // Populates all information, e.g., history segments, from `request`,
+    // and overrides the options and key.
+    const ConversionRequest corrected_request =
+        ConversionRequestBuilder()
+            .SetConversionRequestView(request)
+            .SetOptions(std::move(options))
+            .SetKey(key)
+            .Build();
+
+    std::vector<Result> corrected_results;
+
+    // Since COMPLETION query already performs predictive lookup,
+    // no need to run UNIGRAM and BIGRAM lookup.
+    const bool is_realtime_only =
+        (query.type & TypeCorrectedQuery::COMPLETION ||
+         request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
+         request.request_type() == ConversionRequest::PARTIAL_PREDICTION);
+
+    if (is_realtime_only) {
+      constexpr int kRealtimeSize = 1;
+      AggregateRealtime(corrected_request, kRealtimeSize,
+                        /* insert_realtime_top_from_actual_converter= */ false,
+                        &corrected_results);
+    } else {
+      int min_unigram_key_len = 0;
+      AggregateUnigram(corrected_request, &corrected_results,
+                       &min_unigram_key_len);
+
+      constexpr int kRealtimeSize = 2;
+      AggregateRealtime(corrected_request, kRealtimeSize,
+                        /* insert_realtime_top_from_actual_converter= */ false,
+                        &corrected_results);
+
+      if (!request.IsZeroQuerySuggestion()) {
+        dictionary_decoder_.AggregateBigram(corrected_request,
+                                            &corrected_results);
+      }
+
+      if (!number_added) {
+        const int prev_size = corrected_results.size();
+        AppendResults(
+            NumberDecoder(modules_.GetPosMatcher()).Decode(corrected_request),
+            &corrected_results);
+        number_added |= corrected_results.size() > prev_size;
+      }
+    }
+
+    const auto* manager =
+        config::CharacterFormManager::GetCharacterFormManager();
+
+    // Appends the result with TYPING_CORRECTION attribute.
+    for (Result& result : corrected_results) {
+      PopulateTypeCorrectedQuery(query, &result);
+      result.value = manager->ConvertConversionString(result.value);
+      results.emplace_back(std::move(result));
+    }
+  }
+
+  return results;
+}
+
+void DictionaryPredictor::AggregateUnigram(const ConversionRequest& request,
+                                           std::vector<Result>* results,
+                                           int* min_unigram_key_len) const {
+  DCHECK(results);
+  DCHECK(min_unigram_key_len);
+  *min_unigram_key_len = 0;
+
+  const size_t key_len = Util::CharsLen(request.key());
+  if (key_len == 0) {
+    return;
+  }
+
+  // User switches to Latin input mode type Latin characters or English words.
+  // No need to perform Japanese decoding.
+  if (request_util::IsLatinInputMode(request)) {
+    // For SUGGESTION request in Desktop, We don't look up English words when
+    // key length is one.
+    const bool is_mixed_conversion = IsMixedConversionEnabled(request);
+    const int min_key_len =
+        (is_mixed_conversion ||
+         request.request_type() == ConversionRequest::PREDICTION)
+            ? 1
+            : 2;
+    *min_unigram_key_len = min_key_len;
+    if (key_len >= min_key_len) {
+      AppendResults(english_decoder_.Decode(request), results);
+    }
+    return;
+  }
+
+  if (request_util::IsHandwriting(request)) {
+    const int min_key_len = 1;
+    *min_unigram_key_len = min_key_len;
+    if (key_len >= min_key_len) {
+      AppendResults(handwriting_decoder_.Decode(request), results);
+    }
+    return;
+  }
+
+  dictionary_decoder_.AggregateUnigram(request, results, min_unigram_key_len);
+}
+
+void DictionaryPredictor::AggregateRealtime(
+    const ConversionRequest& request, size_t realtime_candidates_size,
+    bool insert_realtime_top_from_actual_converter,
+    std::vector<Result>* results) const {
+  DCHECK(results);
+
+  ConversionRequest::Options options = request.options();
+  options.max_conversion_candidates_size = realtime_candidates_size;
+  options.use_actual_converter_for_realtime_conversion =
+      insert_realtime_top_from_actual_converter;
+
+  const ConversionRequest request_for_realtime =
+      ConversionRequestBuilder()
+          .SetConversionRequestView(request)
+          .SetOptions(std::move(options))
+          .Build();
+
+  AppendResults(decoder_.Decode(request_for_realtime), results);
+}
+
+size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
+    const ConversionRequest& request) {
+  const ConversionRequest::RequestType request_type = request.request_type();
+  DCHECK(request_type == ConversionRequest::PREDICTION ||
+         request_type == ConversionRequest::SUGGESTION ||
+         request_type == ConversionRequest::PARTIAL_PREDICTION ||
+         request_type == ConversionRequest::PARTIAL_SUGGESTION);
+  if (request.key().empty()) {
+    return 0;
+  }
+  if (request_util::IsHandwriting(request)) {
+    constexpr size_t kRealtimeCandidatesSizeForHandwriting = 3;
+    return kRealtimeCandidatesSizeForHandwriting;
+  }
+
+  const size_t size_limit =
+      request.options().max_dictionary_prediction_candidates_size;
+
+  // Set the initial values to max_size and default_size.
+  size_t max_size = size_limit;
+  if (request.options().create_partial_candidates) {
+    max_size = 20;
+  }
+  size_t default_size = 10;
+
+  // Reduce the number of candidates for long key.
+  if (IsLongKeyForRealtimeCandidates(request)) {
+    max_size = 8;
+    default_size = 5;
+  }
+
+  // Cap the numbers of candidates to the size limit.
+  max_size = std::min(max_size, size_limit);
+  default_size = std::min(default_size, size_limit);
+
+  const bool mixed_conversion = IsMixedConversionEnabled(request);
+  switch (request_type) {
+    case ConversionRequest::PREDICTION:
+      return mixed_conversion ? max_size : default_size;
+    case ConversionRequest::SUGGESTION:
+      // Fewer candidates are needed basically.
+      // But on mixed_conversion mode we should behave like as conversion
+      // mode.
+      return mixed_conversion ? default_size : 1;
+    case ConversionRequest::PARTIAL_PREDICTION:
+      // This is kind of prediction so richer result than PARTIAL_SUGGESTION
+      // is needed.
+      return max_size;
+    case ConversionRequest::PARTIAL_SUGGESTION:
+      // PARTIAL_SUGGESTION works like as conversion mode so returning
+      // some candidates is needed.
+      return default_size;
+    default:
+      DLOG(FATAL) << "Unexpected request type: " << request_type;
+      return 0;
+  }
 }
 
 std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
@@ -223,10 +594,9 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
   // Instead of sorting all the results, we construct a heap.
   // This is done in linear time and
   // we can pop as many results as we need efficiently.
-  std::make_heap(results.begin(), results.end(),
-                 [](const Result& lhs, const Result& rhs) {
-                   return ResultCostLess()(rhs, lhs);
-                 });
+  absl::c_make_heap(results, [](const Result& lhs, const Result& rhs) {
+    return ResultCostLess()(rhs, lhs);
+  });
 
   const size_t max_candidates_size = std::min<size_t>(
       request.options().max_dictionary_prediction_candidates_size,
@@ -257,9 +627,11 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
       break;
     }
 
-    if (i == 0 && (prev_top_result =
-                       MaybeGetPreviousTopResult(result, request)) != nullptr) {
-      final_results.emplace_back(*prev_top_result);
+    if (i == 0) {
+      prev_top_result = MaybeGetPreviousTopResult(result, request);
+      if (prev_top_result != nullptr) {
+        final_results.emplace_back(*prev_top_result);
+      }
     }
 
     if (filter.ShouldRemove(result, final_results.size())) {
@@ -272,7 +644,7 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
     }
 
     if ((!(result.attributes & Attribute::SPELLING_CORRECTION) &&
-         IsLatinInputMode(request)) ||
+         request_util::IsLatinInputMode(request)) ||
         (result.attributes & Attribute::SUFFIX_DICTIONARY)) {
       result.attributes |= Attribute::NO_VARIANTS_EXPANSION;
       result.attributes |= Attribute::NO_EXTRA_DESCRIPTION;
@@ -728,7 +1100,6 @@ void DictionaryPredictor::MaybeRescoreResults(
 
   modules_.GetSupplementalModel().RescoreResults(request, results);
 }
-
 
 std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
     const Result& current_top_result, const ConversionRequest& request) const {

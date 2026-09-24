@@ -45,11 +45,14 @@
 #include "converter/segmenter.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
-#include "prediction/dictionary_prediction_aggregator.h"
+#include "prediction/dictionary_decoder.h"
+#include "prediction/english_decoder.h"
+#include "prediction/handwriting_decoder.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
+#include "prediction/zero_query_decoder.h"
 #include "request/conversion_request.h"
 
 namespace mozc::prediction {
@@ -74,14 +77,6 @@ class DictionaryPredictor : public PredictorInterface {
  private:
   // Test peer to access private methods
   friend class DictionaryPredictorTestPeer;
-  friend class MockDataAndPredictor;
-
-
-  // Constructor for testing
-  DictionaryPredictor(
-      const engine::Modules& modules,
-      std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
-      const RealtimeDecoder& decoder);
 
   std::vector<Result> RerankAndFilterResults(const ConversionRequest& request,
                                              std::vector<Result> result) const;
@@ -166,8 +161,32 @@ class DictionaryPredictor : public PredictorInterface {
   int CalculatePrefixPenalty(const ConversionRequest& request,
                              const Result& result) const;
 
+  // These methods will be moved to DesktopPredictor and MixedDecodingPredictor.
+  virtual std::vector<Result> AggregateResultsForMixedConversion(
+      const ConversionRequest& request) const;
+
+  virtual std::vector<Result> AggregateResultsForDesktop(
+      const ConversionRequest& request) const;
+
   std::vector<Result> AggregateTypingCorrectedResultsForMixedConversion(
       const ConversionRequest& request) const;
+
+  // Aggregates basic unigram candidates from dictionary.
+  void AggregateUnigram(const ConversionRequest& request,
+                        std::vector<Result>* results,
+                        int* min_unigram_key_len) const;
+
+  // Aggregates results from the realtime decoder.
+  void AggregateRealtime(const ConversionRequest& request,
+                         size_t realtime_candidates_size,
+                         bool insert_realtime_top_from_actual_converter,
+                         std::vector<Result>* results) const;
+
+  //////////////////////////////////////////////////////////////////////////
+  // Misc functions
+
+  // Returns max size of realtime candidates.
+  static size_t GetRealtimeCandidateMaxSize(const ConversionRequest& request);
 
   void MaybeApplyPostCorrection(const ConversionRequest& request,
                                 std::vector<Result>& results) const;
@@ -175,11 +194,8 @@ class DictionaryPredictor : public PredictorInterface {
   void MaybeRescoreResults(const ConversionRequest& request,
                            absl::Span<Result> results) const;
 
-
   std::shared_ptr<Result> MaybeGetPreviousTopResult(
       const Result& current_top_result, const ConversionRequest& request) const;
-
-  std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator_;
 
   // Previous top result and request key length. (not result length).
   // When the previous and current result are consistent, we still keep showing
@@ -200,6 +216,10 @@ class DictionaryPredictor : public PredictorInterface {
   const dictionary::PosMatcher pos_matcher_;
   const uint16_t general_symbol_id_;
   const engine::Modules& modules_;
+  const DictionaryDecoder dictionary_decoder_;
+  const HandwritingDecoder handwriting_decoder_;
+  const ZeroQueryDecoder zero_query_decoder_;
+  const EnglishDecoder english_decoder_;
 };
 
 }  // namespace mozc::prediction
