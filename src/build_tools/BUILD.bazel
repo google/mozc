@@ -51,7 +51,7 @@ py_test(
     srcs = ["replace_macros_test.py"],
     tags = ["manual"],
     deps = [
-        ":replace_macros.testonly_lib",
+        ":replace_macros",
         "@abseil-py//absl/testing:absltest",
     ],
 )
