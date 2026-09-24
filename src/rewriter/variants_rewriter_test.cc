@@ -30,6 +30,7 @@
 #include "rewriter/variants_rewriter.h"
 
 #include <cstddef>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <utility>
@@ -1076,18 +1077,16 @@ TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
   Segment* seg = segments.push_back_segment();
 
   // Case 1: Top candidate has REALTIME_CONVERSION and NO_VARIANTS_EXPANSION.
-  // With CharacterFormManager set to FULL_WIDTH, the top candidate's number
-  // should be rewritten to FULL_WIDTH in place, without expanding candidates.
+  // With CharacterFormManager set to FULL_WIDTH, primary candidate "１２３" is
+  // inserted at index 0 and secondary candidate "123" is preserved at index 1.
   {
     manager->SetCharacterForm("0", Config::FULL_WIDTH);
 
     converter::Candidate* top = seg->add_candidate();
     top->value = "123";
     top->content_value = "123";
-    // Do NOT set NO_VARIANTS_EXPANSION on top so that only NO_EXTRA_DESCRIPTION
-    // (added by RewriteTopCandidateForSuggestion) prevents RewriteSegment from
-    // adding a description or expanding variants.
-    top->attributes |= converter::Attribute::REALTIME_CONVERSION;
+    top->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                        converter::Attribute::NO_VARIANTS_EXPANSION);
 
     converter::Candidate* second = seg->add_candidate();
     second->value = "456";
@@ -1095,19 +1094,17 @@ TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
     second->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
-    EXPECT_EQ(seg->candidates_size(), 2);
-    // Top candidate is rewritten in place without variant expansion or extra
-    // description.
+    EXPECT_EQ(seg->candidates_size(), 3);
     EXPECT_EQ(seg->candidate(0).value, "１２３");
     EXPECT_EQ(seg->candidate(0).content_value, "１２３");
     EXPECT_EQ(seg->candidate(0).description, "");
-    // Attributes are preserved/protected.
     EXPECT_TRUE(seg->candidate(0).attributes &
                 converter::Attribute::REALTIME_CONVERSION);
     EXPECT_TRUE(seg->candidate(0).attributes &
                 converter::Attribute::NO_EXTRA_DESCRIPTION);
-    // Second candidate is untouched.
-    EXPECT_EQ(seg->candidate(1).value, "456");
+    EXPECT_EQ(seg->candidate(1).value, "123");
+    EXPECT_EQ(seg->candidate(1).content_value, "123");
+    EXPECT_EQ(seg->candidate(2).value, "456");
 
     seg->clear_candidates();
   }
@@ -1172,8 +1169,9 @@ TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
     top->inner_segment_boundary = builder.Build(top->key, top->value);
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
-    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidates_size(), 2);
     EXPECT_EQ(seg->candidate(0).value, "あと２つ");
+    EXPECT_EQ(seg->candidate(1).value, "あと2つ");
     std::vector<std::string> inner_values;
     for (const auto& inner : seg->candidate(0).inner_segments()) {
       inner_values.emplace_back(inner.GetValue());
@@ -1204,7 +1202,9 @@ TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
                         converter::Attribute::NO_VARIANTS_EXPANSION);
 
     EXPECT_TRUE(rewriter->Rewrite(req, &segments));
+    EXPECT_EQ(seg->candidates_size(), 2);
     EXPECT_EQ(seg->candidate(0).value, "１２３");
+    EXPECT_EQ(seg->candidate(1).value, "123");
 
     seg->clear_candidates();
   }
@@ -1270,6 +1270,76 @@ TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
 
       seg->clear_candidates();
     }
+  }
+
+  // Case 10: Candidate at index 0 already rewritten by NumberRewriter (marked
+  // with NO_EXTRA_DESCRIPTION).
+  // - If index 0 has no character form variants ("石の上にも三年"), no third
+  //   candidate ("石の上にも３年") is inserted, keeping 2 candidates.
+  // - If index 0 has alphabet variants ("wikipediaを三年使う"), index 0 is
+  //   updated in-place to "ｗｉｋｉｐｅｄｉａを三年使う", keeping 2 candidates.
+  {
+    manager->SetCharacterForm("0", Config::FULL_WIDTH);
+    manager->SetCharacterForm("A", Config::FULL_WIDTH);
+
+    converter::Candidate* kanji_cand = seg->add_candidate();
+    kanji_cand->key = "いしのうえにもさんねん";
+    kanji_cand->value = "石の上にも三年";
+    kanji_cand->content_key = kanji_cand->key;
+    kanji_cand->content_value = kanji_cand->value;
+    kanji_cand->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                               converter::Attribute::NO_VARIANTS_EXPANSION |
+                               converter::Attribute::NO_EXTRA_DESCRIPTION);
+
+    converter::Candidate* arabic_cand = seg->add_candidate();
+    arabic_cand->key = "いしのうえにもさんねん";
+    arabic_cand->value = "石の上にも3年";
+    arabic_cand->content_key = arabic_cand->key;
+    arabic_cand->content_value = arabic_cand->value;
+    arabic_cand->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                                converter::Attribute::NO_VARIANTS_EXPANSION);
+
+    EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+    ASSERT_EQ(seg->candidates_size(), 2);
+    EXPECT_EQ(seg->candidate(0).value, "石の上にも三年");
+    EXPECT_EQ(seg->candidate(1).value, "石の上にも3年");
+
+    seg->clear_candidates();
+
+    // Mixed alphabet + Kanji number ("wikipediaを三年使う" at [0],
+    // "wikipediaを3年使う" at [1]):
+    converter::Candidate* mixed_top = seg->add_candidate();
+    mixed_top->key = "wikipediaを3ねんつかう";
+    mixed_top->value = "wikipediaを三年使う";
+    mixed_top->content_key = mixed_top->key;
+    mixed_top->content_value = mixed_top->value;
+    mixed_top->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                              converter::Attribute::NO_VARIANTS_EXPANSION |
+                              converter::Attribute::NO_EXTRA_DESCRIPTION);
+    converter::InnerSegmentBoundaryBuilder builder;
+    builder.Add(strlen("wikipediaを"), strlen("wikipediaを"),
+                strlen("wikipedia"), strlen("wikipedia"));
+    builder.Add(strlen("3ねん"), strlen("三年"), strlen("3ねん"),
+                strlen("三年"));
+    builder.Add(strlen("つかう"), strlen("使う"), strlen("つかう"),
+                strlen("使う"));
+    mixed_top->inner_segment_boundary =
+        builder.Build(mixed_top->key, mixed_top->value);
+
+    converter::Candidate* mixed_fallback = seg->add_candidate();
+    mixed_fallback->key = "wikipediaを3ねんつかう";
+    mixed_fallback->value = "wikipediaを3年使う";
+    mixed_fallback->content_key = mixed_fallback->key;
+    mixed_fallback->content_value = mixed_fallback->value;
+    mixed_fallback->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                                   converter::Attribute::NO_VARIANTS_EXPANSION);
+
+    EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+    ASSERT_EQ(seg->candidates_size(), 2);
+    EXPECT_EQ(seg->candidate(0).value, "ｗｉｋｉｐｅｄｉａを三年使う");
+    EXPECT_EQ(seg->candidate(1).value, "wikipediaを3年使う");
+
+    seg->clear_candidates();
   }
 }
 

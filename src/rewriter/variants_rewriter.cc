@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -458,19 +459,28 @@ bool VariantsRewriter::RewriteTopCandidateForSuggestion(Segment* seg) const {
   if (!GenerateAlternatives(*top_candidate, &primary_value, &secondary_value,
                             &primary_content_value, &secondary_content_value,
                             &primary_inner_segment_boundary,
-                            &secondary_inner_segment_boundary)) {
+                            &secondary_inner_segment_boundary) ||
+      top_candidate->value == primary_value) {
     return false;
   }
 
-  if (top_candidate->value == primary_value) {
-    return false;
+  // If NumberRewriter has already inserted a modified top candidate (marked
+  // with NO_EXTRA_DESCRIPTION), update top_candidate in-place so that both
+  // Kanji number conversion and character form normalization are combined into
+  // a single best candidate at index 0 (e.g. "ｗｉｋｉｐｅｄｉａを三年使う"),
+  // preserving the plain fallback at index 1 ("wikipediaを3年使う").
+  //
+  // Otherwise, insert a new candidate at index 0.
+  Candidate* target = top_candidate;
+  if (!(top_candidate->attributes & Attribute::NO_EXTRA_DESCRIPTION)) {
+    target = seg->insert_candidate(0);
+    *target = seg->candidate(1);
   }
-
-  top_candidate->value = std::move(primary_value);
-  top_candidate->content_value = std::move(primary_content_value);
-  top_candidate->inner_segment_boundary =
-      std::move(primary_inner_segment_boundary);
-  top_candidate->attributes |= Attribute::NO_EXTRA_DESCRIPTION;
+  target->value = std::move(primary_value);
+  target->inner_segment_boundary = std::move(primary_inner_segment_boundary);
+  std::tie(target->content_key, target->content_value) =
+      target->inner_segments().GetMergedContentKeyAndValue();
+  target->attributes |= Attribute::NO_EXTRA_DESCRIPTION;
   return true;
 }
 
