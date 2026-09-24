@@ -1,8 +1,10 @@
 name: CI for Linux
 # https://github.com/google/mozc/blob/master/docs/build_mozc_for_linux.md
 
-# Run on push.
-on: push
+# Run on push and pull request.
+on:
+  - push
+  - pull_request
 
 permissions:
   contents: read
@@ -39,6 +41,7 @@ jobs:
           bazelisk build package --config release_build
 
       - name: Upload Artifacts
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v7
         with:
           name: mozc.zip
@@ -68,16 +71,16 @@ jobs:
       - name: bazel test
         working-directory: ./src
         run: |
-          bazelisk test ... -c dbg --build_tests_only --build_event_json_file=bep.jsonl
+          bazelisk test ... -c dbg --build_tests_only --test_output=errors --build_event_json_file=bep.jsonl
 
       - name: Collect failing test logs
-        if: failure()
+        if: failure() && github.event_name == 'push'
         working-directory: ./src
         run: |
           python3 build_tools/collect_test_logs.py --bep bep.jsonl --out "${GITHUB_WORKSPACE}/test_logs"
 
       - name: Upload failing test logs
-        if: failure()
+        if: failure() && github.event_name == 'push'
         uses: actions/upload-artifact@v7
         with:
           name: test-logs-${{ runner.os }}
