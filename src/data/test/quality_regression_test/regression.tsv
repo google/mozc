@@ -107,6 +107,9 @@ regression	これからいくさぁ	これから行くさぁ	Conversion Expected
 regression	これからいくぞー	これから行くぞー	Conversion Expected
 regression	ぜったいかつぞぉ	絶対勝つぞぉ	Conversion Expected
 regression	くるじゃん	来るじゃん	Conversion Expected
+regression	もうかくわぁ	もう書くわぁ	Conversion Expected
+regression	もうつくさぁ	もう着くさぁ	Conversion Expected
+regression	あしたまつぞぉ	明日待つぞぉ	Conversion Expected
 regression	さかなくう	魚食う	Prediction Expected	2
 regression	めしたべる	飯食べる	Prediction Expected	2
 regression	しぶやいく	渋谷行く	Prediction Expected	2

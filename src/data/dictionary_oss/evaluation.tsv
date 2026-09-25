@@ -607,6 +607,9 @@ OK:	これからいくさぁ	これから行くさぁ	Conversion Expected	これ
 OK:	これからいくぞー	これから行くぞー	Conversion Expected	これから行くぞー	3.34.6239
 OK:	ぜったいかつぞぉ	絶対勝つぞぉ	Conversion Expected	絶対勝つぞぉ	3.34.6239
 OK:	くるじゃん	来るじゃん	Conversion Expected	来るじゃん	3.34.6239
+FAILED:	もうかくわぁ	もうかくわぁ	Conversion Expected	もう書くわぁ	3.34.6239
+FAILED:	もうつくさぁ	もう尽くさぁ	Conversion Expected	もう着くさぁ	3.34.6239
+OK:	あしたまつぞぉ	明日待つぞぉ	Conversion Expected	明日待つぞぉ	3.34.6239
 FAILED:	さかなくう	魚空	Prediction Expected 2	魚食う	3.34.6239
 OK:	めしたべる	飯食べる	Prediction Expected 2	飯食べる	3.34.6239
 OK:	しぶやいく	渋谷行く	Prediction Expected 2	渋谷行く	3.34.6239
