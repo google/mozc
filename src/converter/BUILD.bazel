@@ -928,7 +928,7 @@ mozc_py_binary(
 py_test(
     name = "gen_boundary_data_test",
     srcs = ["gen_boundary_data_test.py"],
-    tags = ["manual"],
+    tags = ["nowin"],
     deps = [
         ":gen_boundary_data_lib",
         "@abseil-py//absl/testing:absltest",

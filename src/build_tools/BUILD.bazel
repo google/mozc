@@ -49,7 +49,6 @@ py_test(
     name = "replace_macros_test",
     size = "small",
     srcs = ["replace_macros_test.py"],
-    tags = ["manual"],
     deps = [
         ":replace_macros",
         "@abseil-py//absl/testing:absltest",
@@ -65,7 +64,6 @@ py_test(
     name = "code_generator_util_test",
     size = "small",
     srcs = ["code_generator_util_test.py"],
-    tags = ["manual"],
     deps = [
         ":code_generator_util",
         "@abseil-py//absl/testing:absltest",
@@ -86,7 +84,6 @@ py_test(
     name = "mozc_version_test",
     size = "small",
     srcs = ["mozc_version_test.py"],
-    tags = ["manual"],
     deps = [
         ":mozc_version_lib",
         "@abseil-py//absl/testing:absltest",
