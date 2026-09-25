@@ -49,6 +49,7 @@
 #include "win32/base/keyevent_handler.h"
 #include "win32/base/surrogate_pair_observer.h"
 #include "win32/tip/tip_edit_session.h"
+#include "win32/tip/tip_edit_session_impl.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_status.h"
@@ -138,8 +139,7 @@ void FillMozcContextCommon(TipTextService* text_service, ITfContext* context,
   if (mozc_context == nullptr) {
     return;
   }
-  mozc_context->set_revision(
-      text_service->GetThreadContext()->GetFocusRevision());
+  *mozc_context = TipEditSessionImpl::CreateMozcContext(text_service);
   wil::com_ptr_nothrow<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view))) {
     return;
@@ -390,7 +390,9 @@ HRESULT OnKey(TipTextService* text_service, ITfContext* context,
     // Handle PrevPage button on the on-screen keyboard.
     SessionCommand command;
     command.set_type(SessionCommand::CONVERT_PREV_PAGE);
-    if (!private_context->GetClient()->SendCommand(command, &temporal_output)) {
+    if (!private_context->GetClient()->SendCommandWithContext(
+            command, TipEditSessionImpl::CreateMozcContext(text_service),
+            &temporal_output)) {
       *eaten = FALSE;
       return E_FAIL;
     }
@@ -400,7 +402,9 @@ HRESULT OnKey(TipTextService* text_service, ITfContext* context,
     // Handle NextPage button on the on-screen keyboard.
     SessionCommand command;
     command.set_type(SessionCommand::CONVERT_NEXT_PAGE);
-    if (!private_context->GetClient()->SendCommand(command, &temporal_output)) {
+    if (!private_context->GetClient()->SendCommandWithContext(
+            command, TipEditSessionImpl::CreateMozcContext(text_service),
+            &temporal_output)) {
       *eaten = FALSE;
       return E_FAIL;
     }
