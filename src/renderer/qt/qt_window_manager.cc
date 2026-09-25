@@ -80,6 +80,17 @@ void FooterBackgroundDelegate::paint(QPainter* painter,
   if (index.row() == index.model()->rowCount() - 1) {
     QRect rect = option.rect;
 
+    // When the window is wider than the sum of the columns (the extra width
+    // reserved for the vertical scroll bar), extend the last cell so that the
+    // footer decorations cover the entire window width, as in the Windows
+    // renderer.
+    if (index.column() == index.model()->columnCount() - 1) {
+      const auto* view = qobject_cast<const QAbstractItemView*>(option.widget);
+      if (view != nullptr) {
+        rect.setRight(view->viewport()->width() - 1);
+      }
+    }
+
     // Separator lines between the main content area and the footer.
     for (int i = 0; i < separator_colors_.size(); ++i) {
       painter->fillRect(QRect(rect.left(), rect.top() + i, rect.width(), 1),
@@ -144,6 +155,13 @@ void QtWindowManager::Initialize() {
   QObject::connect(candidates_, &QTableWidget::cellClicked,
                    [&](int row, int col) { OnClicked(row, col); });
 
+  // Visual vertical scroll bar overlaid on the right edge of the candidate
+  // window; see UpdateVScrollBar().
+  vscroll_bar_ = new QWidget(candidates_);
+  vscroll_bar_->setAttribute(Qt::WA_TransparentForMouseEvents);
+  vscroll_bar_->hide();
+  vscroll_indicator_ = new QWidget(vscroll_bar_);
+
   infolist_ = new QTableWidget();
   initialize_table(infolist_);
   infolist_->setColumnCount(1);
@@ -192,6 +210,57 @@ void QtWindowManager::ApplyStyleToWidgets() {
     }
     footer_delegate_->SetSeparatorColors(std::move(separator_colors));
   }
+
+  if (vscroll_bar_ != nullptr) {
+    vscroll_bar_->setStyleSheet(
+        QString("background-color: %1;")
+            .arg(QColorFromColor(style_.scrollbar_background_color()).name()));
+    vscroll_indicator_->setStyleSheet(
+        QString("background-color: %1;")
+            .arg(QColorFromColor(style_.scrollbar_indicator_color()).name()));
+  }
+}
+
+void QtWindowManager::UpdateVScrollBar(
+    const commands::CandidateWindow& candidate_window) {
+  if (vscroll_bar_ == nullptr) {
+    return;
+  }
+  // The scroll bar is shown only when the candidate list consists of more
+  // than one page.
+  if (candidate_window.candidate_size() <= 0 ||
+      candidate_window.candidate_size() >= candidate_window.size()) {
+    vscroll_bar_->hide();
+    return;
+  }
+
+  // The scroll bar covers the right edge of the candidate rows area: inside
+  // the window border and above the footer row.
+  const int border = style_.window_border();
+  const int scrollbar_width = style_.scrollbar_width();
+  const int footer_height = candidates_->rowHeight(candidates_->rowCount() - 1);
+  const int height = candidates_->height() - border * 2 - footer_height;
+  vscroll_bar_->setGeometry(candidates_->width() - border - scrollbar_width,
+                            border, scrollbar_width, height);
+
+  // The indicator represents the range of the currently displayed page in
+  // the whole candidate list, c.f. TableLayout::GetVScrollIndicatorRect().
+  const int begin_index = candidate_window.candidate(0).index();
+  const int end_index =
+      candidate_window.candidate(candidate_window.candidate_size() - 1).index();
+  const float unit = static_cast<float>(height) / candidate_window.size();
+  const float top = unit * begin_index;
+  const float bottom = unit * (end_index + 1);
+  // add 0.5f to round up
+  int rounded_top = static_cast<int>(top + 0.5f);
+  const int rounded_height = std::max(static_cast<int>(bottom - top + 0.5f), 1);
+  if (rounded_top + rounded_height > height) {
+    rounded_top = height - rounded_height;
+  }
+  vscroll_indicator_->setGeometry(0, rounded_top, scrollbar_width,
+                                  rounded_height);
+  vscroll_bar_->show();
+  vscroll_bar_->raise();
 }
 
 void QtWindowManager::HideAllWindows() {
@@ -432,8 +501,18 @@ void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
   // Resize
   table->setColumnWidth(1, max_width1);
   table->setColumnWidth(2, max_width2);
-  const int width = kColumn0Width + max_width1 + max_width2 + kColumn3Width;
-  table->resize(width, total_height);
+  int width = kColumn0Width + max_width1 + max_width2 + kColumn3Width;
+  // Reserve the width of the vertical scroll bar when the candidate list
+  // consists of more than one page; see QtWindowManager::UpdateVScrollBar().
+  if (static_cast<int>(cands_size) < candidate_window.size()) {
+    width += style.scrollbar_width();
+  }
+  // QWidget::resize() takes the outer size including the frame drawn by the
+  // style sheet (see QtWindowManager::ApplyStyleToWidgets), so add the window
+  // border on each side to keep the viewport large enough for all the rows
+  // and columns. Otherwise the last row and column are clipped by the frame.
+  const int border = style.window_border() * 2;
+  table->resize(width + border, total_height + border);
 }
 
 class VirtualRect {
@@ -531,6 +610,8 @@ Rect QtWindowManager::UpdateCandidateWindow(
   // Footer index
   candidates_->item(candidates_->rowCount() - 1, 2)
       ->setText(QStr(GetIndexGuideString(candidate_window)));
+
+  UpdateVScrollBar(candidate_window);
 
   candidates_->show();
   prev_command_ = command;
