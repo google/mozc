@@ -82,14 +82,18 @@ bool IsValidUtf8(absl::string_view sv);
 // Returns the codepoint count of the given UTF-8 string indicated as [first,
 // last) or a string_view.
 //
-// REQUIRES: The UTF-8 string must be valid. This implementation only sees the
-// leading byte of each character and doesn't check if it's well-formed.
+// REQUIRES: The UTF-8 string must be valid. This implementation only counts
+// the leading byte of each character and doesn't check if it's well-formed.
 // Complexity: linear
+size_t CharsLen(absl::string_view sv);
 template <typename InputIterator>
-  requires std::input_iterator<InputIterator>
-size_t CharsLen(InputIterator first, InputIterator last);
-inline size_t CharsLen(const absl::string_view sv) {
-  return CharsLen(sv.begin(), sv.end());
+  requires std::contiguous_iterator<InputIterator>
+size_t CharsLen(const InputIterator first, const InputIterator last) {
+  static_assert(
+      std::same_as<typename std::iterator_traits<InputIterator>::value_type,
+                   char>,
+      "The iterator value_type must be char.");
+  return CharsLen(absl::string_view(std::to_address(first), last - first));
 }
 
 // Returns the number of Unicode characters between [0, n]. It stops counting at
@@ -478,17 +482,6 @@ using Utf8AsUnicodeChar = Utf8AsCharsBase<UnicodeChar>;
 
 // Implementations.
 namespace strings {
-
-template <typename InputIterator>
-  requires std::input_iterator<InputIterator>
-size_t CharsLen(InputIterator first, const InputIterator last) {
-  size_t result = 0;
-  while (first != last) {
-    ++result;
-    std::advance(first, OneCharLen(first));
-  }
-  return result;
-}
 
 template <typename InputIterator>
   requires std::input_iterator<InputIterator>
