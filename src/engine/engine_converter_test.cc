@@ -3970,6 +3970,34 @@ TEST_F(EngineConverterTest, PredictWithContext) {
   EXPECT_TRUE(converter.Predict(*composer_, context));
 }
 
+TEST_F(EngineConverterTest, ConvertWithContextNoPersonalizedLearning) {
+  auto mock_converter = std::make_shared<MockConverter>();
+  EngineConverter converter(mock_converter, request_, config_);
+
+  commands::Context context;
+  context.set_no_personalized_learning(true);
+
+  EXPECT_CALL(*mock_converter, StartConversion(_, _))
+      .WillOnce([&](const ConversionRequest& req, Segments* segments) {
+        EXPECT_EQ(req.history_learning_level(), config::Config::READ_ONLY);
+        SetAiueo(segments);
+        return true;
+      });
+
+  composer_->InsertCharacterPreedit(kChars_Aiueo);
+  EXPECT_TRUE(converter.Convert(*composer_, context));
+
+  // The learning path on commit should also see the restricted level.
+  EXPECT_CALL(*mock_converter, CommitSegmentValue(_, 0, 0))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*mock_converter, FinishConversion(_, _))
+      .WillOnce([&](const ConversionRequest& req, Segments* segments) {
+        EXPECT_EQ(req.history_learning_level(), config::Config::READ_ONLY);
+        *segments = Segments();
+      });
+  converter.Commit(*composer_, context);
+}
+
 TEST_F(EngineConverterTest, FullSentenceCandidateInConversion) {
   auto mock_converter = std::make_shared<MockConverter>();
   EngineConverter converter(mock_converter, request_, config_);

@@ -216,7 +216,10 @@ class AsyncSwitchInputModeEditSessionImpl final
       SessionCommand command;
       command.set_type(commands::SessionCommand::TURN_OFF_IME);
       command.set_composition_mode(mozc_mode);
-      if (!private_context->GetClient()->SendCommand(command, &output)) {
+      if (!private_context->GetClient()->SendCommandWithContext(
+              command,
+              TipEditSessionImpl::CreateMozcContext(text_service_.get()),
+              &output)) {
         return E_FAIL;
       }
     } else if (!input_mode_manager->GetEffectiveOpenClose()) {
@@ -225,7 +228,10 @@ class AsyncSwitchInputModeEditSessionImpl final
       SessionCommand command;
       command.set_type(commands::SessionCommand::TURN_ON_IME);
       command.set_composition_mode(mozc_mode);
-      if (!private_context->GetClient()->SendCommand(command, &output)) {
+      if (!private_context->GetClient()->SendCommandWithContext(
+              command,
+              TipEditSessionImpl::CreateMozcContext(text_service_.get()),
+              &output)) {
         return E_FAIL;
       }
     } else {
@@ -234,7 +240,10 @@ class AsyncSwitchInputModeEditSessionImpl final
       SessionCommand command;
       command.set_type(SessionCommand::SWITCH_COMPOSITION_MODE);
       command.set_composition_mode(mozc_mode);
-      if (!private_context->GetClient()->SendCommand(command, &output)) {
+      if (!private_context->GetClient()->SendCommandWithContext(
+              command,
+              TipEditSessionImpl::CreateMozcContext(text_service_.get()),
+              &output)) {
         return E_FAIL;
       }
     }
@@ -285,7 +294,10 @@ class AsyncSessionCommandEditSessionImpl final
     if (private_context == nullptr) {
       return E_FAIL;
     }
-    if (!private_context->GetClient()->SendCommand(session_command_, &output)) {
+    if (!private_context->GetClient()->SendCommandWithContext(
+            session_command_,
+            TipEditSessionImpl::CreateMozcContext(text_service_.get()),
+            &output)) {
       return E_FAIL;
     }
     return TipEditSessionImpl::UpdateContext(
@@ -353,7 +365,9 @@ bool TurnOnImeAndTryToReconvertFromIme(TipTextService* text_service,
     SessionCommand command;
     command.set_type(SessionCommand::CONVERT_REVERSE);
     command.set_text(text_utf8);
-    if (!private_context->GetClient()->SendCommand(command, &output)) {
+    if (!private_context->GetClient()->SendCommandWithContext(
+            command, TipEditSessionImpl::CreateMozcContext(text_service),
+            &output)) {
       return false;
     }
   }
@@ -388,7 +402,9 @@ bool UndoCommint(TipTextService* text_service, ITfContext* context) {
   {
     SessionCommand command;
     command.set_type(SessionCommand::UNDO);
-    if (!private_context->GetClient()->SendCommand(command, &output)) {
+    if (!private_context->GetClient()->SendCommandWithContext(
+            command, TipEditSessionImpl::CreateMozcContext(text_service),
+            &output)) {
       return false;
     }
   }
@@ -837,7 +853,9 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService* text_service,
   command.set_type(SessionCommand::CONVERT_REVERSE);
   command.set_text(WideToUtf8(selected_text));
   Output output;
-  if (!private_context->GetClient()->SendCommand(command, &output)) {
+  if (!private_context->GetClient()->SendCommandWithContext(
+          command, TipEditSessionImpl::CreateMozcContext(text_service),
+          &output)) {
     return false;
   }
   return OnOutputReceivedSync(text_service, context.get(), std::move(output));
