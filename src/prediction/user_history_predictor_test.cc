@@ -66,6 +66,7 @@
 #include "composer/composer.h"
 #include "composer/query.h"
 #include "composer/table.h"
+#include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/attribute.h"
 #include "converter/inner_segment.h"
@@ -328,7 +329,13 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     data_and_predictor_ = CreateDataAndPredictor();
   }
 
-  void TearDown() override { request_.Clear(); }
+  void TearDown() override {
+    request_.Clear();
+    auto* char_form_manager =
+        config::CharacterFormManager::GetCharacterFormManager();
+    char_form_manager->SetDefaultRule();
+    char_form_manager->ClearHistory();
+  }
 
   ConversionRequest CreateConversionRequestWithOptions(
       const composer::Composer& composer, ConversionRequest::Options options,
@@ -6624,6 +6631,75 @@ TEST_F(UserHistoryPredictorTest, EmptyInnerSegmentBoundaryAttributeTest) {
     }
     EXPECT_TRUE(found);
   }
+}
+
+TEST_F(UserHistoryPredictorTest, CharacterFormNormalization) {
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
+  auto* char_form_manager =
+      config::CharacterFormManager::GetCharacterFormManager();
+  char_form_manager->ClearHistory();
+
+  // 1. Commit full-width number candidate "０１２３" for key "すうじ".
+  {
+    SegmentsProxy segments_proxy;
+    const ConversionRequest convreq =
+        SetUpInputForConversion("すうじ", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "０１２３");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+  }
+
+  // 2. When CharacterFormManager preferences are set to HALF_WIDTH,
+  // UserHistoryPredictor must dynamically normalize the suggestion to "0123".
+  {
+    char_form_manager->SetCharacterForm("0", config::Config::HALF_WIDTH);
+    SegmentsProxy segments_proxy;
+    const ConversionRequest convreq =
+        SetUpInputForPrediction("すう", &composer_, &segments_proxy);
+    const std::vector<Result> results = predictor->Predict(convreq);
+    ASSERT_FALSE(results.empty());
+    EXPECT_EQ(results[0].value, "0123");
+  }
+
+  // 3. When CharacterFormManager preferences are set to FULL_WIDTH,
+  // UserHistoryPredictor must dynamically normalize the suggestion to
+  // "０１２３".
+  {
+    char_form_manager->SetCharacterForm("0", config::Config::FULL_WIDTH);
+    SegmentsProxy segments_proxy;
+    const ConversionRequest convreq =
+        SetUpInputForPrediction("すう", &composer_, &segments_proxy);
+    const std::vector<Result> results = predictor->Predict(convreq);
+    ASSERT_FALSE(results.empty());
+    EXPECT_EQ(results[0].value, "０１２３");
+  }
+
+  // 4. Committing a half-width candidate updates CharacterFormManager
+  // preferences via GuessAndSetCharacterForm in Finish().
+  {
+    char_form_manager->SetCharacterForm("0", config::Config::LAST_FORM);
+    SegmentsProxy segments_proxy;
+    const ConversionRequest convreq =
+        SetUpInputForConversion("べつのきー", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "999");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+
+    // After committing half-width "999", LAST_FORM preference should be
+    // HALF_WIDTH.
+    EXPECT_EQ(char_form_manager->GetConversionCharacterForm("0"),
+              config::Config::HALF_WIDTH);
+
+    // And suggestion for "すう" should now normalize to "0123".
+    segments_proxy.Clear();
+    const ConversionRequest convreq_pred =
+        SetUpInputForPrediction("すう", &composer_, &segments_proxy);
+    const std::vector<Result> results = predictor->Predict(convreq_pred);
+    ASSERT_FALSE(results.empty());
+    EXPECT_EQ(results[0].value, "0123");
+  }
+
+  // Restore CharacterFormManager default state.
+  char_form_manager->SetDefaultRule();
+  char_form_manager->ClearHistory();
 }
 
 }  // namespace mozc::prediction

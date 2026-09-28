@@ -65,6 +65,7 @@
 #include "base/vlog.h"
 #include "composer/composer.h"
 #include "composer/query.h"
+#include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/inner_segment.h"
 #include "dictionary/dictionary_interface.h"
@@ -1887,6 +1888,36 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
       result.attributes |= converter::Attribute::NO_EXTRA_DESCRIPTION;
     }
 
+    // Normalize character form based on CharacterFormManager preferences
+    // (b/554421471).
+    // TODO(taku): This is a transitional workaround to resolve the mobile
+    // toggle-show-more regression caused by the UserSegmentHistoryRewriter
+    // migration.
+    //
+    // Root cause and architectural flaw:
+    // User history prediction candidates unconditionally have
+    // `Attribute::NO_VARIANTS_EXPANSION` attached (set above). While the
+    // original intent was to prevent downstream VariantsRewriter from polluting
+    // candidate lists with unwanted full/half-width variant expansions
+    // (EXPAND), VariantsRewriter treats NO_VARIANTS_EXPANSION as a hard bypass
+    // for BOTH expansion and dynamic normalization (SELECT). As a result, user
+    // history candidates are never normalized by VariantsRewriter according to
+    // current CharacterFormManager preferences.
+    //
+    // A fundamental architectural redesign is required:
+    // 1. Separate candidate expansion (generating alternative variant entries)
+    //    from character form normalization (aligning rank-0 candidates to
+    //    user preferences).
+    // 2. Unify all variant and character form processing (normalization,
+    //    expansion, deduplication, and commit learning) cleanly inside
+    //    VariantsRewriter across all candidate sources, rather than having
+    //    UserHistoryPredictor, NumberRewriter, and VariantsRewriter perform
+    //    fragmented, localized normalization.
+    if (Util::GetScriptType(result.value) == Util::NUMBER) {
+      result.value = config::CharacterFormManager::GetCharacterFormManager()
+                         ->ConvertConversionString(result.value);
+    }
+
     MaybeRewritePrefixSpace(request, result);
 
     MOZC_WORD_LOG(result, "Added by UserHistoryPredictor::InsertCandidates");
@@ -2107,6 +2138,30 @@ void UserHistoryPredictor::Finish(const ConversionRequest& request,
   if (!revert_entries.entries.empty()) {
     revert_entries.result = results.front();
     revert_cache_.Insert(revert_id, std::move(revert_entries));
+  }
+
+  // Update character form preferences based on committed results
+  // (b/554421471).
+  // TODO(taku): This is also a workaround for the fact that
+  // `VariantsRewriter::Finish` skips character form learning for any candidate
+  // with `Attribute::NO_VARIANTS_EXPANSION`. Because all user history
+  // candidates carry this attribute, selecting and committing a user history
+  // entry was previously ignored by VariantsRewriter, failing to update
+  // CharacterFormManager.
+  // In the future redesign, VariantsRewriter::Finish should unconditionally
+  // learn character forms from committed results regardless of
+  // NO_VARIANTS_EXPANSION, allowing this block to be removed.
+  auto* char_form_manager =
+      config::CharacterFormManager::GetCharacterFormManager();
+  for (const Result& result : results) {
+    if (result.attributes & converter::Attribute::NO_HISTORY_LEARNING) {
+      continue;
+    }
+    // Trailing ASCII whitespace might be present in result.value (e.g.
+    // alphanumeric keyboard layout commits). Strip it so script type and form
+    // can be properly recognized.
+    char_form_manager->GuessAndSetCharacterForm(
+        absl::StripTrailingAsciiWhitespace(result.value));
   }
 }
 
