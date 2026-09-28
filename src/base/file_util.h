@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_FILE_UTIL_H_
 #define MOZC_BASE_FILE_UTIL_H_
 
-#include <ctime>
+#include <cstdint>
 #include <ios>
 #include <string>
 
@@ -54,11 +54,7 @@
 
 namespace mozc {
 
-#if defined(_WIN32)
 using FileTimeStamp = uint64_t;
-#else   // _WIN32
-using FileTimeStamp = time_t;
-#endif  // _WIN32
 
 class FileUtilInterface {
  public:

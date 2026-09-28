@@ -572,30 +572,16 @@ absl::StatusOr<FileTimeStamp> FileUtil::GetModificationTime(
     absl::string_view filename) {
   MAYBE_INVOKE_MOCK(GetModificationTime, filename);
 
-  const pfstring pf_filename = to_pfstring(filename);
-
-#if defined(_WIN32)
-  if (pf_filename.empty()) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Utf8ToWide failed: ", filename));
+  const std::filesystem::path path = to_pfstring(filename);
+  std::error_code error_code;
+  const std::filesystem::file_time_type last_write_time =
+      std::filesystem::last_write_time(path, error_code);
+  if (error_code) {
+    return absl::ErrnoToStatus(
+        error_code.value(), absl::StrCat("last_write_time failed: ", filename,
+                                         ": ", error_code.message()));
   }
-  WIN32_FILE_ATTRIBUTE_DATA info = {};
-  if (!::GetFileAttributesEx(pf_filename.c_str(), GetFileExInfoStandard,
-                             &info)) {
-    const auto last_error = ::GetLastError();
-    return Win32ErrorToStatus(
-        last_error, absl::StrCat("GetFileAttributesEx(", filename, ") failed"));
-  }
-  return (static_cast<uint64_t>(info.ftLastWriteTime.dwHighDateTime) << 32) +
-         info.ftLastWriteTime.dwLowDateTime;
-#else   // !_WIN32
-  struct stat stat_info;
-  if (::stat(pf_filename.c_str(), &stat_info)) {
-    const int err = errno;
-    return absl::ErrnoToStatus(err, absl::StrCat("stat failed: ", filename));
-  }
-  return stat_info.st_mtime;
-#endif  // _WIN32
+  return last_write_time.time_since_epoch().count();
 }
 
 absl::StatusOr<std::string> FileUtil::ReadSymlink(absl::string_view filename) {
