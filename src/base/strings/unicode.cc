@@ -29,15 +29,50 @@
 
 #include "base/strings/unicode.h"
 
+#include <bit>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "base/strings/internal/utf8_internal.h"
 
 namespace mozc {
 namespace strings {
+
+size_t CharsLen(const absl::string_view sv) {
+  // Every UTF-8 character has exactly one leading byte (0b0xxxxxxx, 0b110xxxxx,
+  // 0b1110xxxx or 0b11110xxx) followed by zero or more continuation bytes
+  // (0b10xxxxxx). Therefore, the character count is the byte count minus the
+  // continuation byte count, and a byte is a continuation byte iff its bit 7
+  // is set and bit 6 is clear.
+  //
+  // The main loop processes eight bytes at a time: `w & ~(w << 1)` keeps bit 7
+  // of each byte only if bit 6 of the same byte is clear, so masking with
+  // kHighBits leaves exactly one set bit per continuation byte, which
+  // std::popcount then counts. The loop is written so that clang can
+  // auto-vectorize it (SSE2 on x86-64, NEON on arm64).
+  constexpr uint64_t kHighBits = 0x8080808080808080;
+  constexpr size_t kBlockSize = sizeof(uint64_t);
+  // Iterate over a local copy rather than the parameter itself. Under the
+  // Windows x64 ABI, `sv` is passed by hidden reference, and mutating it in the
+  // loop would make clang emit a runtime alias check against the string data
+  // and a slower fallback loop that writes `sv` back to memory.
+  absl::string_view rest = sv;
+  size_t continuations = 0;
+  while (rest.size() >= kBlockSize) {
+    const uint64_t w = LoadUnaligned<uint64_t>(rest.data());
+    continuations += std::popcount(w & ~(w << 1) & kHighBits);
+    rest.remove_prefix(kBlockSize);
+  }
+  // The remaining bytes (fewer than eight) are checked one by one.
+  for (const char c : rest) {
+    continuations += (static_cast<uint8_t>(c) & 0xc0) == 0x80;
+  }
+  return sv.size() - continuations;
+}
 
 bool IsValidUtf8(const absl::string_view sv) {
   const char* const last = sv.data() + sv.size();

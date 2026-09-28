@@ -107,6 +107,7 @@ mozc_cc_library(
     srcs = ["unicode.cc"],
     hdrs = ["unicode.h"],
     deps = [
+        "//base:bits",
         "//base/strings/internal:utf8_internal",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/base:nullability",

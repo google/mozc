@@ -341,12 +341,7 @@ bool IsUtf8TrailingByte(uint8_t c) { return (c & 0xc0) == 0x80; }
 }  // namespace
 
 size_t Util::CharsLen(absl::string_view str) {
-  size_t length = 0;
-  while (!str.empty()) {
-    ++length;
-    str = absl::ClippedSubstr(str, strings::OneCharLen(str.begin()));
-  }
-  return length;
+  return strings::CharsLen(str);
 }
 
 std::vector<size_t> Util::PrefixCharsLen(absl::string_view str) {
