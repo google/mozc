@@ -60,6 +60,14 @@ TEST(UnicodeTest, CharsLen) {
   EXPECT_EQ(CharsLen(kText), 9);
   EXPECT_EQ(CharsLen(kText.begin(), kText.end()), 9);
   EXPECT_EQ(CharsLen(kText.end(), kText.end()), 0);
+
+  // Mixed character widths with lengths around the eight-byte block size of
+  // the implementation.
+  EXPECT_EQ(CharsLen("abcdefg"), 7);
+  EXPECT_EQ(CharsLen("abcdefgh"), 8);
+  EXPECT_EQ(CharsLen("abcdefghi"), 9);
+  EXPECT_EQ(CharsLen("aあbいc😀"), 6);
+  EXPECT_EQ(CharsLen("😀🎉🚀🍣"), 4);
 }
 
 TEST(UnicodeTest, AtLeastCharsLen) {
