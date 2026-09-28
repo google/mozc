@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary_importer.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -40,8 +41,6 @@
 
 #include "absl/algorithm/container.h"
 #include "absl/base/attributes.h"
-#include "absl/base/no_destructor.h"
-#include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
@@ -54,6 +53,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "absl/types/span.h"
+#include "base/container/frozen_string_map.h"
 #include "base/japanese_util.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
@@ -86,22 +86,22 @@ std::pair<absl::string_view, absl::string_view> SplitPosAndLocale(
   return absl::StrSplit(pos, absl::MaxSplits(':', 1));
 }
 
-// hash_map from third_party IME pos to Mozc pos.
-// A data type to hold conversion rules of POSes. If mozc_pos is set to be an
-// empty string (""), it means that words of the POS should be ignored in Mozc.
+// kPosMap is a map from third_party IME pos to Mozc pos, which holds
+// conversion rules of POSes. If mozc_pos is set to be an invalid PosType, it
+// means that words of the POS should be ignored in Mozc.
 // key: string user POS defined in third_party_pos_map.def
 // value: PosType enum.
-using PosMap = absl::flat_hash_map<absl::string_view, UserDictionary::PosType>;
-
+constexpr auto kPosMap = CreateFrozenStringMap<[] {
+  return std::to_array<std::pair<absl::string_view, UserDictionary::PosType>>({
 // Include actual POS mapping rules defined outside the file.
 #include "dictionary/pos_map.inc"
+  });
+}>();
 
 }  // namespace
 
 // Convert POS of a third party IME to that of Mozc using the given mapping.
 bool ConvertEntry(const RawEntry& from, UserDictionary::Entry* to) {
-  const PosMap& pos_map = *kPosMap;
-
   if (to == nullptr) {
     LOG(ERROR) << "Null pointer is passed.";
     return false;
@@ -122,20 +122,19 @@ bool ConvertEntry(const RawEntry& from, UserDictionary::Entry* to) {
   absl::ConsumeSuffix(&pos, "*");
 
   // Search for mapping for the given POS.
-  const auto it = pos_map.find(pos);
-  if (it == pos_map.end()) {
+  const UserDictionary::PosType* pos_type = kPosMap.FindOrNull(pos);
+  if (pos_type == nullptr) {
     LOG(WARNING) << "Invalid POS is passed: " << from.pos;
     return false;
   }
 
-  const UserDictionary::PosType pos_type = it->second;
-  if (!UserDictionary::PosType_IsValid(pos_type)) {
+  if (!UserDictionary::PosType_IsValid(*pos_type)) {
     return false;
   }
 
   to->set_key(user_dictionary::NormalizeReading(from.key));
   to->set_value(from.value);
-  to->set_pos(pos_type);
+  to->set_pos(*pos_type);
 
   // Copy comment.
   if (!from.comment.empty()) {
