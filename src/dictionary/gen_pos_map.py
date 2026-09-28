@@ -50,6 +50,24 @@ FOOTER = """});
 #endif  // MOZC_DICTIONARY_POS_MAP_INC_
 """
 
+_PROTO_PACKAGE = 'org.mozc.android.inputmethod.japanese.protobuf'
+
+JAVA_HEADER = f"""package com.google.android.apps.inputmethod.libs.mozc.session;
+
+import {_PROTO_PACKAGE}.ProtoUserDictionaryStorage.UserDictionary.PosType;
+import com.google.common.collect.ImmutableMap;
+
+// POS conversion rules
+final class PosMap {{
+  static final ImmutableMap<String, PosType> POS_MAP =
+      ImmutableMap.<String, PosType>builder()
+"""
+JAVA_FOOTER = """          .buildOrThrow();
+
+  private PosMap() {}
+}
+"""
+
 
 def ParseUserPos(user_pos_file):
   with codecs.open(user_pos_file, 'r', encoding='utf8') as stream:
@@ -100,10 +118,20 @@ def OutputPosMap(pos_map, output):
   output.write(FOOTER)
 
 
+def OutputPosMapJava(pos_map, output):
+  output.write(JAVA_HEADER)
+  for key, value in sorted(pos_map.items()):
+    if value is None:
+      continue
+    key = code_generator_util.ToCppStringLiteral(key)
+    output.write(f'          .put({key}, PosType.{value})\n')
+  output.write(JAVA_FOOTER)
+
+
 def ParseOptions():
   parser = optparse.OptionParser()
   # Input: user_pos.def, third_party_pos_map.def
-  # Output: pos_map.h
+  # Output: pos_map.h or PosMap.java
   parser.add_option(
       '--user_pos_file', dest='user_pos_file', help='Path to user_pos.def'
   )
@@ -113,6 +141,9 @@ def ParseOptions():
       help='Path to third_party_pos_map.def',
   )
   parser.add_option('--output', dest='output', help='Path to output pos_map.h')
+  parser.add_option(
+      '--output_java', dest='output_java', help='Path to output PosMap.java'
+  )
   return parser.parse_args()[0]
 
 
@@ -123,8 +154,12 @@ def main():
       options.third_party_pos_map_file, options.user_pos_file
   )
 
-  with open(options.output, 'w', encoding='utf8') as stream:
-    OutputPosMap(pos_map, stream)
+  if options.output:
+    with open(options.output, 'w', encoding='utf8') as stream:
+      OutputPosMap(pos_map, stream)
+  if options.output_java:
+    with open(options.output_java, 'w', encoding='utf8') as stream:
+      OutputPosMapJava(pos_map, stream)
 
 
 if __name__ == '__main__':
