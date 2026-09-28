@@ -31,6 +31,7 @@
 #define MOZC_DICTIONARY_USER_DICTIONARY_H_
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -113,7 +114,14 @@ class UserDictionary : public UserDictionaryInterface {
 
  private:
   class TokensIndex;
-  class UserDictionaryReloader;
+
+  enum class ReloadState {
+    kIdle,
+    kRunning,
+    kRunningWithPending,
+  };
+
+  void ReloadThreadMain();
 
   std::shared_ptr<const TokensIndex> GetTokens() const {
     return tokens_.load();
@@ -124,7 +132,6 @@ class UserDictionary : public UserDictionaryInterface {
     tokens_.store(std::move(tokens));
   }
 
-  std::unique_ptr<UserDictionaryReloader> reloader_;
   std::unique_ptr<const UserPos> user_pos_;
   const PosMatcher pos_matcher_;
 
@@ -138,9 +145,12 @@ class UserDictionary : public UserDictionaryInterface {
   // UserDictionary. This variable is shared by the main thread and loader
   // thread.
   std::atomic<bool> canceled_signal_ = false;
+  std::atomic<uint64_t> modified_at_ = 0;
+  std::atomic<ReloadState> reload_state_ = ReloadState::kIdle;
 
   // user dictionary filename.
   const std::string filename_;
+  TaskManager reload_task_;
 
   friend class UserDictionaryTest;
 };

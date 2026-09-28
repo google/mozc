@@ -374,77 +374,6 @@ class UserDictionary::TokensIndex {
   int cost_penalty_ = 0;
 };
 
-class UserDictionary::UserDictionaryReloader {
- public:
-  explicit UserDictionaryReloader(UserDictionary& dic) : dic_(dic) {}
-
-  UserDictionaryReloader(const UserDictionaryReloader&) = delete;
-  UserDictionaryReloader& operator=(const UserDictionaryReloader&) = delete;
-
-  ~UserDictionaryReloader() { Wait(); }
-
-  // When the user dictionary exists AND the modification time has been updated,
-  // reloads the dictionary. Returns true when reloader thread is started or
-  // scheduled to reload in the running thread.
-  bool MaybeStartReload() {
-    absl::StatusOr<FileTimeStamp> modification_time =
-        FileUtil::GetModificationTime(dic_.GetFileName());
-    if (!modification_time.ok()) {
-      // If the file doesn't exist, return doing nothing.
-      // Therefore if the file is deleted after first reload,
-      // second reload does nothing so the content loaded by first reload
-      // is kept as is.
-      LOG(WARNING) << "Cannot get modification time of the user dictionary: "
-                   << modification_time.status();
-      return false;
-    }
-
-    if (modified_at_.exchange(*modification_time) == *modification_time) {
-      return false;
-    }
-    if (state_.exchange(State::kRunningWithPending) == State::kIdle) {
-      // Runs `ThreadMain()` in a background thread.
-      reload_.Schedule([this] { ThreadMain(); });
-    }
-    return true;
-  }
-
-  void Wait() { reload_.Wait(); }
-
- private:
-  enum class State {
-    kIdle,
-    kRunning,
-    kRunningWithPending,
-  };
-
-  void ThreadMain() {
-    while (!dic_.canceled_signal_.load()) {
-      state_.store(State::kRunning);
-
-      UserDictionaryStorage storage(dic_.GetFileName());
-
-      // Load from file
-      if (absl::Status s = storage.Load(); !s.ok()) {
-        LOG(ERROR) << "Failed to load the user dictionary: " << s;
-      } else {
-        dic_.Load(storage.GetProto());
-      }
-
-      State expected = State::kRunning;
-      if (state_.compare_exchange_strong(expected, State::kIdle)) {
-        return;
-      }
-    }
-    state_.store(State::kIdle);
-  }
-
-  TaskManager reload_;
-  std::atomic<FileTimeStamp> modified_at_ = 0;
-  std::atomic<State> state_ = State::kIdle;
-  UserDictionary& dic_;
-};
-
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
                                PosMatcher pos_matcher)
     : UserDictionary::UserDictionary(
@@ -453,8 +382,7 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
                                PosMatcher pos_matcher, std::string filename)
-    : reloader_(std::make_unique<UserDictionaryReloader>(*this)),
-      user_pos_(std::move(user_pos)),
+    : user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
       tokens_(std::make_shared<TokensIndex>(*user_pos_)),
       filename_(std::move(filename)) {
@@ -657,13 +585,53 @@ bool UserDictionary::HasSuppressedEntries() const {
 }
 
 bool UserDictionary::Reload() {
-  if (!reloader_->MaybeStartReload()) {
+  absl::StatusOr<FileTimeStamp> modification_time =
+      FileUtil::GetModificationTime(filename_);
+  if (!modification_time.ok()) {
+    // If the file doesn't exist, return doing nothing.
+    // Therefore if the file is deleted after first reload,
+    // second reload does nothing so the content loaded by first reload
+    // is kept as is.
+    LOG(WARNING) << "Cannot get modification time of the user dictionary: "
+                 << modification_time.status();
     LOG(INFO) << "MaybeStartReload() didn't start reloading";
+    return true;
+  }
+
+  if (modified_at_.exchange(*modification_time) == *modification_time) {
+    LOG(INFO) << "MaybeStartReload() didn't start reloading";
+    return true;
+  }
+  if (reload_state_.exchange(ReloadState::kRunningWithPending) ==
+      ReloadState::kIdle) {
+    // Runs `ReloadThreadMain()` in a background thread.
+    reload_task_.Schedule([this] { ReloadThreadMain(); });
   }
   return true;
 }
 
-void UserDictionary::WaitForReloader() { reloader_->Wait(); }
+void UserDictionary::WaitForReloader() { reload_task_.Wait(); }
+
+void UserDictionary::ReloadThreadMain() {
+  while (!canceled_signal_.load()) {
+    reload_state_.store(ReloadState::kRunning);
+
+    UserDictionaryStorage storage(filename_);
+
+    // Load from file
+    if (absl::Status s = storage.Load(); !s.ok()) {
+      LOG(ERROR) << "Failed to load the user dictionary: " << s;
+    } else {
+      Load(storage.GetProto());
+    }
+
+    ReloadState expected = ReloadState::kRunning;
+    if (reload_state_.compare_exchange_strong(expected, ReloadState::kIdle)) {
+      return;
+    }
+  }
+  reload_state_.store(ReloadState::kIdle);
+}
 
 bool UserDictionary::Load(
     const user_dictionary::UserDictionaryStorage& storage) {
