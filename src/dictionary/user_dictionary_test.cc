@@ -760,6 +760,46 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   }
 }
 
+TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename =
+      FileUtil::JoinPath(temp_dir.path(), "consecutive_reload_test.db");
+
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithFilename(filename));
+  dic->WaitForReloader();
+
+  constexpr int kNumUpdates = 10;
+  for (int i = 0; i < kNumUpdates; ++i) {
+    UserDictionaryStorage storage(filename);
+    if (i > 0) {
+      EXPECT_OK(storage.Load());
+    }
+    EXPECT_TRUE(storage.Lock());
+    EXPECT_OK(storage.CreateDictionary(absl::StrCat("dic_", i)));
+    UserDictionaryStorage::UserDictionary* user_dic =
+        storage.GetProto().mutable_dictionaries(i);
+    for (int j = 0; j < 500; ++j) {
+      UserDictionaryStorage::UserDictionaryEntry* entry =
+          user_dic->add_entries();
+      entry->set_key(absl::StrFormat("key_%d_%d", i, j));
+      entry->set_value(absl::StrFormat("value_%d_%d", i, j));
+      entry->set_pos(user_dictionary::UserDictionary::NOUN);
+    }
+    EXPECT_OK(storage.Save());
+    EXPECT_TRUE(storage.UnLock());
+
+    // Trigger Reload() immediately without waiting for the previous reload to
+    // finish.
+    EXPECT_TRUE(dic->Reload());
+  }
+
+  dic->WaitForReloader();
+
+  for (int i = 0; i < kNumUpdates; ++i) {
+    EXPECT_FALSE(LookupExact(absl::StrFormat("key_%d_0", i), *dic).empty());
+  }
+}
+
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   std::unique_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
   user_dic->WaitForReloader();

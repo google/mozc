@@ -272,14 +272,9 @@ class UserDictionary::UserDictionaryReloader {
   ~UserDictionaryReloader() { Wait(); }
 
   // When the user dictionary exists AND the modification time has been updated,
-  // reloads the dictionary.  Returns true when reloader thread is started.
+  // reloads the dictionary. Returns true when reloader thread is started or
+  // scheduled to reload in the running thread.
   bool MaybeStartReload() {
-    if (reload_.IsRunning()) {
-      // Previously started reload is still running.
-      // TODO(tomokinat): test this path.
-      return false;
-    }
-
     absl::StatusOr<FileTimeStamp> modification_time =
         FileUtil::GetModificationTime(dic_.GetFileName());
     if (!modification_time.ok()) {
@@ -291,32 +286,50 @@ class UserDictionary::UserDictionaryReloader {
                    << modification_time.status();
       return false;
     }
-    if (modified_at_ == *modification_time) {
+
+    if (modified_at_.exchange(*modification_time) == *modification_time) {
       return false;
     }
-    modified_at_ = *modification_time;
-    // Runs `ThreadMain()` in a background thread.
-    reload_.Schedule([this] { ThreadMain(); });
+    if (state_.exchange(State::kRunningWithPending) == State::kIdle) {
+      // Runs `ThreadMain()` in a background thread.
+      reload_.Schedule([this] { ThreadMain(); });
+    }
     return true;
   }
 
   void Wait() { reload_.Wait(); }
 
  private:
+  enum class State {
+    kIdle,
+    kRunning,
+    kRunningWithPending,
+  };
+
   void ThreadMain() {
-    UserDictionaryStorage storage(dic_.GetFileName());
+    while (!dic_.canceled_signal_.load()) {
+      state_.store(State::kRunning);
 
-    // Load from file
-    if (absl::Status s = storage.Load(); !s.ok()) {
-      LOG(ERROR) << "Failed to load the user dictionary: " << s;
-      return;
+      UserDictionaryStorage storage(dic_.GetFileName());
+
+      // Load from file
+      if (absl::Status s = storage.Load(); !s.ok()) {
+        LOG(ERROR) << "Failed to load the user dictionary: " << s;
+      } else {
+        dic_.Load(storage.GetProto());
+      }
+
+      State expected = State::kRunning;
+      if (state_.compare_exchange_strong(expected, State::kIdle)) {
+        return;
+      }
     }
-
-    dic_.Load(storage.GetProto());
+    state_.store(State::kIdle);
   }
 
   TaskManager reload_;
-  FileTimeStamp modified_at_ = 0;
+  std::atomic<FileTimeStamp> modified_at_ = 0;
+  std::atomic<State> state_ = State::kIdle;
   UserDictionary& dic_;
 };
 
