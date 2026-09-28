@@ -34,7 +34,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -42,8 +42,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -52,6 +52,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "base/bits.h"
+#include "base/container/serialized_string_array.h"
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/strings/assign.h"
@@ -66,107 +68,153 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
-#include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 namespace dictionary {
-namespace {
 
-struct OrderByKey {
-  bool operator()(const UserPos::Token& token, absl::string_view key) const {
-    return token.key < key;
-  }
-
-  bool operator()(absl::string_view key, const UserPos::Token& token) const {
-    return key < token.key;
-  }
-};
-
-struct OrderByKeyPrefix {
-  bool operator()(const UserPos::Token& token, absl::string_view prefix) const {
-    return absl::string_view(token.key).substr(0, prefix.size()) < prefix;
-  }
-
-  bool operator()(absl::string_view prefix, const UserPos::Token& token) const {
-    return prefix < absl::string_view(token.key).substr(0, prefix.size());
-  }
-};
-
-struct OrderByKeyThenById {
-  bool operator()(const UserPos::Token& lhs, const UserPos::Token& rhs) const {
-    const int comp = lhs.key.compare(rhs.key);
-    return comp == 0 ? (lhs.id < rhs.id) : (comp < 0);
-  }
-};
-
-class SuppressionDictionary {
- public:
-  bool AddEntry(std::string key, std::string value) {
-    if (key.empty() && value.empty()) {
-      LOG(WARNING) << "Both key and value are empty";
-      return false;
-    }
-
-    if (key.empty()) {
-      values_only_.emplace(std::move(value));
-    } else if (value.empty()) {
-      keys_only_.emplace(std::move(key));
-    } else {
-      keys_values_.emplace(std::move(key), std::move(value));
-    }
-
-    return true;
-  }
-
-  bool IsEmpty() const {
-    return keys_only_.empty() && values_only_.empty() && keys_values_.empty();
-  }
-
-  bool IsSuppressedEntry(const absl::string_view key,
-                         const absl::string_view value) const {
-    return !IsEmpty() &&
-           (keys_values_.contains(std::make_pair(key, value)) ||
-            keys_only_.contains(key) || values_only_.contains(value));
-  }
-
- private:
-  using KeyValue = std::pair<std::string, std::string>;
-  using KeyValueView = std::pair<absl::string_view, absl::string_view>;
-  struct KeyValueHash : public absl::Hash<KeyValueView> {
-    using is_transparent = void;
-  };
-  struct KeyValueEq : public std::equal_to<KeyValueView> {
-    using is_transparent = void;
-  };
-
-  absl::flat_hash_set<KeyValue, KeyValueHash, KeyValueEq> keys_values_;
-  absl::flat_hash_set<std::string> keys_only_;
-  absl::flat_hash_set<std::string> values_only_;
-};
-}  // namespace
-
+// Stores user dictionary tokens in a flat `SerializedStringArray` image
+// (`tokens_`), sorted by `(key, id)`, where each element has the binary layout
+// below. Suppression words (`SUPPRESSION_WORD`) are stored as 64-bit
+// fingerprints in `suppression_set_`.
+//
+// Binary layout of each element in `tokens_`:
+// +---------------------------------------+
+// | id (uint16_t, 2 bytes)                |
+// +---------------------------------------+
+// | attributes (uint8_t, 1 byte)          |
+// +---------------------------------------+
+// | raw_pos_type (uint8_t, 1 byte)        |
+// +---------------------------------------+
+// | key_len (uint16_t, 2 bytes)           |
+// +---------------------------------------+
+// | value_len (uint16_t, 2 bytes)         |
+// +---------------------------------------+
+// | key (key_len bytes)                   |
+// +---------------------------------------+
+// | value (value_len bytes)               |
+// +---------------------------------------+
+// | comment (remaining bytes)             |
+// +---------------------------------------+
 class UserDictionary::TokensIndex {
  public:
+  static constexpr size_t kTokenHeaderSize = 8;
+
+  // Lightweight zero-copy view over a serialized token entry.
+  class Token {
+   public:
+    explicit constexpr Token(absl::string_view data) : data_(data) {
+      DCHECK_GE(data.size(), kTokenHeaderSize);
+    }
+
+    uint16_t id() const { return LoadUnaligned<uint16_t>(data_.data()); }
+    uint8_t attributes() const { return static_cast<uint8_t>(data_[2]); }
+    uint8_t raw_pos_type() const { return static_cast<uint8_t>(data_[3]); }
+    uint16_t key_len() const {
+      return LoadUnaligned<uint16_t>(data_.data() + 4);
+    }
+    uint16_t value_len() const {
+      return LoadUnaligned<uint16_t>(data_.data() + 6);
+    }
+
+    absl::string_view key() const {
+      return absl::string_view(data_.data() + kTokenHeaderSize, key_len());
+    }
+    absl::string_view value() const {
+      return absl::string_view(data_.data() + kTokenHeaderSize + key_len(),
+                               value_len());
+    }
+    absl::string_view comment() const {
+      const size_t offset = kTokenHeaderSize + key_len() + value_len();
+      return absl::string_view(data_.data() + offset, data_.size() - offset);
+    }
+
+    bool has_attribute(UserPos::Token::Attribute attr) const {
+      return attributes() & attr;
+    }
+    user_dictionary::UserDictionary::PosType pos_type() const {
+      return static_cast<::mozc::user_dictionary::UserDictionary::PosType>(
+          raw_pos_type());
+    }
+
+   private:
+    absl::string_view data_;
+  };
+
+  using const_iterator = SerializedStringArray::const_iterator;
+
   explicit TokensIndex(const UserPos& user_pos) : user_pos_(user_pos) {}
 
   ~TokensIndex() = default;
 
-  bool empty() const { return user_pos_tokens_.empty(); }
-  size_t size() const { return user_pos_tokens_.size(); }
-  int cost_penalty() const { return cost_penalty_; }
+  bool empty() const { return tokens_.empty(); }
+  size_t size() const { return tokens_.size(); }
 
-  std::vector<UserPos::Token>::const_iterator begin() const {
-    return user_pos_tokens_.begin();
+  const_iterator begin() const { return tokens_.begin(); }
+  const_iterator end() const { return tokens_.end(); }
+
+  std::pair<const_iterator, const_iterator> EqualRange(
+      absl::string_view key) const {
+    return std::equal_range(begin(), end(), LookupKey{key}, OrderByKey());
   }
-  std::vector<UserPos::Token>::const_iterator end() const {
-    return user_pos_tokens_.end();
+
+  std::pair<const_iterator, const_iterator> PrefixEqualRange(
+      absl::string_view prefix) const {
+    return std::equal_range(begin(), end(), LookupKey{prefix},
+                            OrderByKeyPrefix());
+  }
+
+  const_iterator LowerBound(absl::string_view key) const {
+    return std::lower_bound(begin(), end(), LookupKey{key}, OrderByKey());
+  }
+
+  void PopulateToken(const Token& user_pos_token,
+                     UserDictionary::RequestType request_type,
+                     PosMatcher pos_matcher,
+                     mozc::dictionary::Token* token) const {
+    strings::Assign(token->key, user_pos_token.key());
+    strings::Assign(token->value, user_pos_token.value());
+    token->lid = token->rid = user_pos_token.id();
+    token->attributes = mozc::dictionary::Token::USER_DICTIONARY;
+
+    // * Overwrites POS ids.
+    // Actual pos id of suggestion-only candidates are 名詞-サ変.
+    // TODO(taku): We would like to change the POS to 名詞-サ変 in user-pos.def,
+    // because SUGGESTION_ONLY is not POS.
+    if (user_pos_token.pos_type() ==
+        user_dictionary::UserDictionary::SUGGESTION_ONLY) {
+      token->lid = token->rid = pos_matcher.GetUnknownId();
+    }
+
+    // * Overwrites costs.
+    // Locale is not Japanese.
+    if (user_pos_token.has_attribute(UserPos::Token::NON_JA_LOCALE)) {
+      token->cost = 10000;
+    } else {
+      token->cost =
+          UserPos::GetCostFromPosType(user_pos_token.pos_type(), cost_penalty_);
+      DCHECK_GT(token->cost, 0);
+    }
+
+    // The treatment for the words with default POS (NO_POS).
+    // Shorter keys have more penalty so that they are not shown in the context.
+    // TODO(taku): Better to apply this cost for all user defined words?
+    if (user_pos_token.pos_type() == user_dictionary::UserDictionary::NO_POS &&
+        (request_type == UserDictionary::PREFIX ||
+         request_type == UserDictionary::EXACT)) {
+      const int key_length = strings::AtLeastCharsLen(token->key, 4);
+      token->cost += (4 - key_length) * 2000;
+    }
   }
 
   void Load(const user_dictionary::UserDictionaryStorage& storage,
             std::atomic<bool>* canceled_signal) {
     DCHECK(canceled_signal);
-    user_pos_tokens_.clear();
+    DCHECK(tokens_.empty());
+    DCHECK(suppression_set_.empty());
+
+    std::vector<std::string> serialized_tokens;
+    absl::flat_hash_set<uint64_t> suppression_set;
     absl::flat_hash_set<uint64_t> seen;
 
     for (const UserDictionaryStorage::UserDictionary& dic :
@@ -202,23 +250,32 @@ class UserDictionary::TokensIndex {
 
         if (entry.pos() == user_dictionary::UserDictionary::SUPPRESSION_WORD) {
           // "抑制単語"
-          suppression_dictionary_.AddEntry(std::move(reading), entry.value());
+          suppression_set.insert(
+              SuppressedEntryFingerprint(reading, entry.value()));
         } else {
           const absl::string_view comment =
               absl::StripAsciiWhitespace(entry.comment());
-          for (auto& token :
+          for (const auto& token :
                user_pos_.GetTokens(reading, entry.value(), entry.pos())) {
-            strings::Assign(token.comment, comment);
-            user_pos_tokens_.push_back(std::move(token));
+            serialized_tokens.push_back(SerializeToken(token, comment));
           }
         }
       }
     }
-    user_pos_tokens_.shrink_to_fit();
 
-    // Sort first by key and then by POS ID.
-    std::sort(user_pos_tokens_.begin(), user_pos_tokens_.end(),
-              OrderByKeyThenById());
+    if (!serialized_tokens.empty()) {
+      absl::c_sort(serialized_tokens,
+                   [](absl::string_view lhs, absl::string_view rhs) {
+                     const Token lhs_token(lhs);
+                     const Token rhs_token(rhs);
+                     return std::make_pair(lhs_token.key(), lhs_token.id()) <
+                            std::make_pair(rhs_token.key(), rhs_token.id());
+                   });
+      tokens_.Set(SerializedStringArray::SerializeToBuffer(serialized_tokens,
+                                                           &tokens_buffer_));
+    }
+
+    suppression_set_ = std::move(suppression_set);
 
     // Adds cost penalty based on dictionary entry count N: 500 * log(N + 1).
     //
@@ -241,24 +298,79 @@ class UserDictionary::TokensIndex {
     // - N = 1,000: +3,454
     // - N = 10,000: +4,605
     // - N = 100,000: +5,756
-    cost_penalty_ =
-        static_cast<int>(500.0 * std::log(user_pos_tokens_.size() + 1));
+    cost_penalty_ = static_cast<int>(500.0 * std::log(tokens_.size() + 1));
 
-    MOZC_VLOG(1) << user_pos_tokens_.size() << " user dic entries loaded";
+    MOZC_VLOG(1) << tokens_.size() << " user dic entries loaded";
   }
 
   bool IsSuppressedEntry(absl::string_view key, absl::string_view value) const {
-    return suppression_dictionary_.IsSuppressedEntry(key, value);
+    if (!HasSuppressedEntries()) {
+      return false;
+    }
+    return suppression_set_.contains(SuppressedEntryFingerprint(key, value));
   }
 
-  bool HasSuppressedEntries() const {
-    return !suppression_dictionary_.IsEmpty();
+  bool HasSuppressedEntries() const { return !suppression_set_.empty(); }
+
+  static std::string SerializeToken(const UserPos::Token& token,
+                                    absl::string_view comment) {
+    DCHECK_LE(token.key.size(), std::numeric_limits<uint16_t>::max());
+    DCHECK_LE(token.value.size(), std::numeric_limits<uint16_t>::max());
+    std::string buf(kTokenHeaderSize + token.key.size() + token.value.size() +
+                        comment.size(),
+                    '\0');
+    char* ptr = buf.data();
+    StoreUnaligned<uint16_t>(token.id, ptr);
+    ptr[2] = static_cast<char>(token.attributes);
+    ptr[3] = static_cast<char>(token.raw_pos_type);
+    StoreUnaligned<uint16_t>(static_cast<uint16_t>(token.key.size()), ptr + 4);
+    StoreUnaligned<uint16_t>(static_cast<uint16_t>(token.value.size()),
+                             ptr + 6);
+    ptr += kTokenHeaderSize;
+    std::memcpy(ptr, token.key.data(), token.key.size());
+    ptr += token.key.size();
+    std::memcpy(ptr, token.value.data(), token.value.size());
+    ptr += token.value.size();
+    if (!comment.empty()) {
+      std::memcpy(ptr, comment.data(), comment.size());
+    }
+    return buf;
   }
 
  private:
+  static uint64_t SuppressedEntryFingerprint(absl::string_view key,
+                                             absl::string_view value) {
+    return CityFingerprintWithSeed(value, CityFingerprint(key));
+  }
+
+  struct LookupKey {
+    absl::string_view key;
+  };
+
+  struct OrderByKey {
+    bool operator()(absl::string_view raw_token, LookupKey key) const {
+      return Token(raw_token).key() < key.key;
+    }
+
+    bool operator()(LookupKey key, absl::string_view raw_token) const {
+      return key.key < Token(raw_token).key();
+    }
+  };
+
+  struct OrderByKeyPrefix {
+    bool operator()(absl::string_view raw_token, LookupKey prefix) const {
+      return Token(raw_token).key().substr(0, prefix.key.size()) < prefix.key;
+    }
+
+    bool operator()(LookupKey prefix, absl::string_view raw_token) const {
+      return prefix.key < Token(raw_token).key().substr(0, prefix.key.size());
+    }
+  };
+
   const UserPos& user_pos_;
-  SuppressionDictionary suppression_dictionary_;
-  std::vector<UserPos::Token> user_pos_tokens_;
+  SerializedStringArray tokens_;
+  std::unique_ptr<uint32_t[]> tokens_buffer_;
+  absl::flat_hash_set<uint64_t> suppression_set_;
   int cost_penalty_ = 0;
 };
 
@@ -386,11 +498,11 @@ void UserDictionary::LookupPredictive(absl::string_view key,
   }
 
   // Find the starting point of iteration over dictionary contents.
-  for (auto [begin, end] = std::equal_range(tokens->begin(), tokens->end(), key,
-                                            OrderByKeyPrefix());
-       begin != end; ++begin) {
-    const UserPos::Token& user_pos_token = *begin;
-    switch (callback->OnKey(user_pos_token.key)) {
+  for (auto [begin, end] = tokens->PrefixEqualRange(key); begin != end;
+       ++begin) {
+    const TokensIndex::Token user_pos_token(*begin);
+    const absl::string_view token_key = user_pos_token.key();
+    switch (callback->OnKey(token_key)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_NEXT_KEY:
@@ -400,15 +512,15 @@ void UserDictionary::LookupPredictive(absl::string_view key,
         break;
     }
     // b/333613472: Make sure not to set the additional penalties.
-    if (callback->OnActualKey(user_pos_token.key, user_pos_token.key,
+    if (callback->OnActualKey(token_key, token_key,
                               /* num_expanded= */ 0) ==
         Callback::TRAVERSE_DONE) {
       return;
     }
     Token token;
-    PopulateTokenFromUserPosToken(user_pos_token, PREDICTIVE, &token);
-    if (callback->OnToken(user_pos_token.key, user_pos_token.key,
-                          std::move(token)) == Callback::TRAVERSE_DONE) {
+    tokens->PopulateToken(user_pos_token, PREDICTIVE, pos_matcher_, &token);
+    if (callback->OnToken(token_key, token_key, std::move(token)) ==
+        Callback::TRAVERSE_DONE) {
       return;
     }
   }
@@ -430,21 +542,20 @@ void UserDictionary::LookupPrefix(absl::string_view key,
 
   // Find the starting point for iteration over dictionary contents.
   const absl::string_view first_char = Utf8AsChars(key).front();
-  for (auto it = std::lower_bound(tokens->begin(), tokens->end(), first_char,
-                                  OrderByKey());
-       it != tokens->end(); ++it) {
-    const UserPos::Token& user_pos_token = *it;
-    if (user_pos_token.key > key) {
+  for (auto it = tokens->LowerBound(first_char); it != tokens->end(); ++it) {
+    const TokensIndex::Token user_pos_token(*it);
+    const absl::string_view token_key = user_pos_token.key();
+    if (token_key > key) {
       break;
     }
     if (user_pos_token.pos_type() ==
         user_dictionary::UserDictionary::SUGGESTION_ONLY) {
       continue;
     }
-    if (!key.starts_with(user_pos_token.key)) {
+    if (!key.starts_with(token_key)) {
       continue;
     }
-    switch (callback->OnKey(user_pos_token.key)) {
+    switch (callback->OnKey(token_key)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_NEXT_KEY:
@@ -455,15 +566,14 @@ void UserDictionary::LookupPrefix(absl::string_view key,
       default:
         break;
     }
-    if (callback->OnActualKey(user_pos_token.key, user_pos_token.key,
+    if (callback->OnActualKey(token_key, token_key,
                               /* num_expanded= */ 0) ==
         Callback::TRAVERSE_DONE) {
       return;
     }
     Token token;
-    PopulateTokenFromUserPosToken(user_pos_token, PREFIX, &token);
-    switch (callback->OnToken(user_pos_token.key, user_pos_token.key,
-                              std::move(token))) {
+    tokens->PopulateToken(user_pos_token, PREFIX, pos_matcher_, &token);
+    switch (callback->OnToken(token_key, token_key, std::move(token))) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_CULL:
@@ -482,11 +592,11 @@ void UserDictionary::LookupExact(absl::string_view key,
   if (key.empty() || tokens->empty()) {
     return;
   }
-  auto [begin, end] =
-      std::equal_range(tokens->begin(), tokens->end(), key, OrderByKey());
+  auto [begin, end] = tokens->EqualRange(key);
   if (begin == end) {
     return;
   }
+
   if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
     return;
   }
@@ -496,13 +606,13 @@ void UserDictionary::LookupExact(absl::string_view key,
   }
 
   for (; begin != end; ++begin) {
-    const UserPos::Token& user_pos_token = *begin;
+    const TokensIndex::Token user_pos_token(*begin);
     if (user_pos_token.pos_type() ==
         user_dictionary::UserDictionary::SUGGESTION_ONLY) {
       continue;
     }
     Token token;
-    PopulateTokenFromUserPosToken(user_pos_token, EXACT, &token);
+    tokens->PopulateToken(user_pos_token, EXACT, pos_matcher_, &token);
     if (callback->OnToken(key, key, std::move(token)) !=
         Callback::TRAVERSE_CONTINUE) {
       return;
@@ -527,12 +637,10 @@ bool UserDictionary::LookupComment(absl::string_view key,
   }
 
   // Set the comment that was found first.
-  for (auto [begin, end] =
-           std::equal_range(tokens->begin(), tokens->end(), key, OrderByKey());
-       begin != end; ++begin) {
-    const UserPos::Token& token = *begin;
-    if (token.value == value && !token.comment.empty()) {
-      comment->assign(token.comment);
+  for (auto [begin, end] = tokens->EqualRange(key); begin != end; ++begin) {
+    const TokensIndex::Token token(*begin);
+    if (token.value() == value && !token.comment().empty()) {
+      strings::Assign(*comment, token.comment());
       return true;
     }
   }
@@ -581,41 +689,13 @@ std::vector<std::string> UserDictionary::GetPosList() const {
 
 std::string UserDictionary::GetFileName() const { return filename_; }
 
-void UserDictionary::PopulateTokenFromUserPosToken(
+void UserDictionary::PopulateTokenFromUserPosTokenForTesting(
     const UserPos::Token& user_pos_token, RequestType request_type,
     Token* token) const {
-  token->key = user_pos_token.key;
-  token->value = user_pos_token.value;
-  token->lid = token->rid = user_pos_token.id;
-  token->attributes = Token::USER_DICTIONARY;
-
-  // * Overwrites POS ids.
-  // Actual pos id of suggestion-only candidates are 名詞-サ変.
-  // TODO(taku): We would like to change the POS to 名詞-サ変 in user-pos.def,
-  // because SUGGESTION_ONLY is not POS.
-  if (user_pos_token.pos_type() ==
-      user_dictionary::UserDictionary::SUGGESTION_ONLY) {
-    token->lid = token->rid = pos_matcher_.GetUnknownId();
-  }
-
-  // * Overwrites costs.
-  // Locale is not Japanese.
-  if (user_pos_token.has_attribute(UserPos::Token::NON_JA_LOCALE)) {
-    token->cost = 10000;
-  } else {
-    token->cost = UserPos::GetCostFromPosType(user_pos_token.pos_type(),
-                                              GetTokens()->cost_penalty());
-    DCHECK_GT(token->cost, 0);
-  }
-
-  // The treatment for the words with default POS (NO_POS).
-  // Shorter keys have more penalty so that they are not shown in the context.
-  // TODO(taku): Better to apply this cost for all user defined words?
-  if (user_pos_token.pos_type() == user_dictionary::UserDictionary::NO_POS &&
-      (request_type == PREFIX || request_type == EXACT)) {
-    const int key_length = strings::AtLeastCharsLen(token->key, 4);
-    token->cost += (4 - key_length) * 2000;
-  }
+  const std::string serialized =
+      TokensIndex::SerializeToken(user_pos_token, "");
+  GetTokens()->PopulateToken(TokensIndex::Token(serialized), request_type,
+                             pos_matcher_, token);
 }
 
 }  // namespace dictionary

@@ -67,7 +67,7 @@ bool SerializedStringArray::VerifyData(absl::string_view data) {
     LOG(ERROR) << "Array size is missing";
     return false;
   }
-  const uint32_t *u32_array = reinterpret_cast<const uint32_t *>(data.data());
+  const uint32_t* u32_array = reinterpret_cast<const uint32_t*>(data.data());
   const size_type size = u32_array[0];
 
   const size_type min_required_data_size = 4 + (4 + 4) * size;
@@ -101,16 +101,19 @@ bool SerializedStringArray::VerifyData(absl::string_view data) {
   return true;
 }
 
-absl::string_view SerializedStringArray::SerializeToBuffer(
-    const absl::Span<const absl::string_view> strs,
-    std::unique_ptr<uint32_t[]> *buffer) {
-  const size_type header_byte_size = 4 * (1 + 2 * strs.size());
+namespace {
+
+template <typename T>
+absl::string_view SerializeToBufferImpl(absl::Span<const T> strs,
+                                        std::unique_ptr<uint32_t[]>* buffer) {
+  const SerializedStringArray::size_type header_byte_size =
+      4 * (1 + 2 * strs.size());
 
   // Calculate the offsets of each string.
   auto offsets = std::make_unique<uint32_t[]>(strs.size());
-  difference_type current_offset =
+  SerializedStringArray::difference_type current_offset =
       header_byte_size;  // The offset for first string.
-  for (difference_type i = 0; i < strs.size(); ++i) {
+  for (SerializedStringArray::difference_type i = 0; i < strs.size(); ++i) {
     offsets[i] = static_cast<uint32_t>(current_offset);
     // The next string is written after terminating '\0', so increment one byte
     // in addition to the string byte length.
@@ -122,25 +125,39 @@ absl::string_view SerializedStringArray::SerializeToBuffer(
   *buffer = std::make_unique<uint32_t[]>((current_offset + 3) / 4);
 
   (*buffer)[0] = static_cast<uint32_t>(strs.size());
-  for (difference_type i = 0; i < strs.size(); ++i) {
+  for (SerializedStringArray::difference_type i = 0; i < strs.size(); ++i) {
     // Fill offset and length.
     (*buffer)[2 * i + 1] = offsets[i];
     (*buffer)[2 * i + 2] = static_cast<uint32_t>(strs[i].size());
 
     // Copy string buffer at the calculated offset.  Guarantee that the buffer
     // is null-terminated.
-    char *dest = reinterpret_cast<char *>(buffer->get()) + offsets[i];
+    char* dest = reinterpret_cast<char*>(buffer->get()) + offsets[i];
     memcpy(dest, strs[i].data(), strs[i].size());
     dest[strs[i].size()] = '\0';
   }
 
-  return absl::string_view(reinterpret_cast<const char *>(buffer->get()),
+  return absl::string_view(reinterpret_cast<const char*>(buffer->get()),
                            current_offset);
+}
+
+}  // namespace
+
+absl::string_view SerializedStringArray::SerializeToBuffer(
+    const absl::Span<const absl::string_view> strs,
+    std::unique_ptr<uint32_t[]>* buffer) {
+  return SerializeToBufferImpl(strs, buffer);
+}
+
+absl::string_view SerializedStringArray::SerializeStringsToBuffer(
+    const absl::Span<const std::string> strs,
+    std::unique_ptr<uint32_t[]>* buffer) {
+  return SerializeToBufferImpl(strs, buffer);
 }
 
 void SerializedStringArray::SerializeToFile(
     const absl::Span<const absl::string_view> strs,
-    const std::string &filepath) {
+    const std::string& filepath) {
   std::unique_ptr<uint32_t[]> buffer;
   const absl::string_view data = SerializeToBuffer(strs, &buffer);
   CHECK_OK(FileUtil::SetContents(filepath, data));

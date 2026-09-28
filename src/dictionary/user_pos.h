@@ -91,8 +91,7 @@ class UserPos {
     uint8_t attributes = 0;
     uint8_t raw_pos_type = 0;  // POS information. UserDictionary::PosType.
     // The actual cost of user dictionary entries are populated
-    // in the dictionary lookup time via PopulateTokenFromUserPosToken.
-    std::string comment;  // This field comes from user dictionary.
+    // in the dictionary lookup time.
 
     // Attribute is used to dynamically assign cost, and is independent from the
     // POS.

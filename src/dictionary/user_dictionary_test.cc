@@ -35,7 +35,6 @@
 #include <cstring>
 #include <memory>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -59,7 +58,6 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"
@@ -79,7 +77,6 @@ using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::Field;
 using ::testing::IsEmpty;
-using ::testing::Not;
 using ::testing::Return;
 using ::testing::UnorderedElementsAreArray;
 
@@ -970,8 +967,8 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
   const int expected_cost = UserPos::GetCostFromPosType(user_token.pos_type());
   Token token;
 
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.key, "key");
   EXPECT_EQ(token.value, "value");
   EXPECT_EQ(token.lid, 10);
@@ -980,19 +977,19 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
   EXPECT_EQ(token.attributes, Token::USER_DICTIONARY);
 
   user_token.add_attribute(UserPos::Token::NON_JA_LOCALE);
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, 10000);
 
   user_token.attributes = 0;
   user_token.set_pos_type(user_dictionary::UserDictionary::ABBREVIATION);
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, 200);
 
   user_token.attributes = 0;
   user_token.set_pos_type(user_dictionary::UserDictionary::SUGGESTION_ONLY);
-  dic->PopulateTokenFromUserPosToken(
+  dic->PopulateTokenFromUserPosTokenForTesting(
       user_token, UserDictionary::UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.lid, pos_matcher.GetUnknownId());
   EXPECT_EQ(token.rid, pos_matcher.GetUnknownId());
@@ -1000,8 +997,8 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
 
   user_token.attributes = 0;
   user_token.set_pos_type(user_dictionary::UserDictionary::NO_POS);
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREDICTIVE,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(
+      user_token, UserDictionary::PREDICTIVE, &token);
   // NO_POS id is set via user_pos.def.
   EXPECT_EQ(token.cost, expected_cost);
 
@@ -1009,28 +1006,28 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
   user_token.set_pos_type(user_dictionary::UserDictionary::NO_POS);
 
   user_token.key = "a";  // one char
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, expected_cost + 2000 * 3);
 
   user_token.key = "aa";
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, expected_cost + 2000 * 2);
 
   user_token.key = "aaa";
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, expected_cost + 2000);
 
   user_token.key = "aaaa";
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, expected_cost);
 
   user_token.key = "aaaaaaa";
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, expected_cost);
 }
 
@@ -1050,8 +1047,8 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosTokenWithEntryPenalty) {
   user_token.set_pos_type(user_dictionary::UserDictionary::NOUN);
 
   Token token;
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   const int base_cost = UserPos::GetCostFromPosType(user_token.pos_type());
   const int expected_penalty =
       static_cast<int>(500.0 * std::log(11.0));  // N = 10
@@ -1060,8 +1057,8 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosTokenWithEntryPenalty) {
   // POS type with cost 0 in user_pos.def (e.g. WA_GROUP1_VERB) uses default
   // cost (5000) without penalty.
   user_token.set_pos_type(user_dictionary::UserDictionary::WA_GROUP1_VERB);
-  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
-                                     &token);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, 5000);
 }
 

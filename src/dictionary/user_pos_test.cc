@@ -31,18 +31,14 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
-#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 #include "absl/algorithm/container.h"
-#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/user_pos.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -152,8 +148,8 @@ TEST_F(UserPosTest, ConjugationTest) {
 }
 
 TEST_F(UserPosTest, SwapToken) {
-  UserPos::Token token1 = {"key1", "value1", 1, 1, 1, "comment1"};
-  UserPos::Token token2 = {"key2", "value2", 2, 2, 2, "comment2"};
+  UserPos::Token token1 = {"key1", "value1", 1, 1, 1};
+  UserPos::Token token2 = {"key2", "value2", 2, 2, 2};
 
   using std::swap;
   swap(token1, token2);
@@ -163,14 +159,12 @@ TEST_F(UserPosTest, SwapToken) {
   EXPECT_EQ(token1.id, 2);
   EXPECT_EQ(token1.attributes, 2);
   EXPECT_EQ(token1.raw_pos_type, 2);
-  EXPECT_EQ(token1.comment, "comment2");
 
   EXPECT_EQ(token2.key, "key1");
   EXPECT_EQ(token2.value, "value1");
   EXPECT_EQ(token2.id, 1);
   EXPECT_EQ(token2.attributes, 1);
   EXPECT_EQ(token2.raw_pos_type, 1);
-  EXPECT_EQ(token2.comment, "comment1");
 }
 
 TEST_F(UserPosTest, Attributes) {

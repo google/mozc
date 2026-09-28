@@ -34,6 +34,7 @@
 #include <iterator>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "testing/gunit.h"
@@ -71,10 +72,19 @@ constexpr absl::string_view kTestData(kTestDataArray,
                                       std::size(kTestDataArray) - 1);
 
 TEST(SerializedStringArrayTest, SerializeToBuffer) {
-  std::unique_ptr<uint32_t[]> buf;
-  const absl::string_view actual = SerializedStringArray::SerializeToBuffer(
-      {"Hello", "Mozc", "google"}, &buf);
-  EXPECT_EQ(actual, kTestData);
+  {
+    std::unique_ptr<uint32_t[]> buf;
+    const absl::string_view actual = SerializedStringArray::SerializeToBuffer(
+        {"Hello", "Mozc", "google"}, &buf);
+    EXPECT_EQ(actual, kTestData);
+  }
+  {
+    std::unique_ptr<uint32_t[]> buf;
+    const std::vector<std::string> strs = {"Hello", "Mozc", "google"};
+    const absl::string_view actual =
+        SerializedStringArray::SerializeToBuffer(strs, &buf);
+    EXPECT_EQ(actual, kTestData);
+  }
 }
 
 TEST(SerializedStringArrayTest, Basic) {

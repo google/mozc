@@ -102,12 +102,12 @@ class UserDictionary : public UserDictionaryInterface {
 
   enum RequestType { PREFIX, PREDICTIVE, EXACT };
 
-  // Populates Token from UserToken.
+  // Populates Token from UserPos::Token for unit testing.
   // This method sets the actual cost and rewrites POS id depending
   // on the POS and attribute.
-  void PopulateTokenFromUserPosToken(const UserPos::Token& user_pos_token,
-                                     RequestType request_type,
-                                     Token* token) const;
+  void PopulateTokenFromUserPosTokenForTesting(
+      const UserPos::Token& user_pos_token, RequestType request_type,
+      Token* token) const;
 
   std::string GetFileName() const override;
 
