@@ -212,7 +212,7 @@ absl::Status ParseFileInternal(
   }
   std::string line;
   while (!std::getline(ifs, line).fail()) {
-    if (line.empty() || line.c_str()[0] == '#') {
+    if (line.empty() || line[0] == '#') {
       continue;
     }
     QualityRegressionUtil::TestItem item;
