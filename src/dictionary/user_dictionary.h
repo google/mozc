@@ -32,6 +32,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <istream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -91,6 +92,9 @@ class UserDictionary : public UserDictionaryInterface {
   // Loads dictionary from UserDictionaryStorage.
   // mainly for unit testing
   bool Load(const user_dictionary::UserDictionaryStorage& storage) override;
+
+  // Streams dictionary entries directly from `ifs`.
+  bool Load(std::istream& ifs);
 
   // Reloads dictionary asynchronously
   bool Reload() override;

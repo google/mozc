@@ -35,9 +35,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <ios>
+#include <istream>
 #include <limits>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -54,8 +57,12 @@
 #include "absl/synchronization/mutex.h"
 #include "base/bits.h"
 #include "base/container/serialized_string_array.h"
+#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/hash.h"
+#include "base/protobuf/coded_stream.h"
+#include "base/protobuf/wire_format_lite.h"
+#include "base/protobuf/zero_copy_stream_impl.h"
 #include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
@@ -72,6 +79,13 @@
 
 namespace mozc {
 namespace dictionary {
+namespace {
+
+// 512MByte
+// We expand the limit of serialized message from 64MB(default) to 512MB.
+constexpr size_t kDefaultTotalBytesLimit = 512 << 20;
+
+}  // namespace
 
 // Stores user dictionary tokens in a flat `SerializedStringArray` image
 // (`tokens_`), sorted by `(key, id)`, where each element has the binary layout
@@ -207,60 +221,59 @@ class UserDictionary::TokensIndex {
     }
   }
 
-  void Load(const user_dictionary::UserDictionaryStorage& storage,
-            std::atomic<bool>* canceled_signal) {
+  bool Load(std::istream& ifs, std::atomic<bool>* canceled_signal) {
     DCHECK(canceled_signal);
     DCHECK(tokens_.empty());
     DCHECK(suppression_set_.empty());
 
+    mozc::protobuf::io::IstreamInputStream zero_copy_input(&ifs);
+    mozc::protobuf::io::CodedInputStream decoder(&zero_copy_input);
+    decoder.SetTotalBytesLimit(kDefaultTotalBytesLimit);
+
+    using WireFormatLite = ::mozc::protobuf::internal::WireFormatLite;
+
+    constexpr uint32_t kDictionariesTag = WireFormatLite::MakeTag(
+        user_dictionary::UserDictionaryStorage::kDictionariesFieldNumber,
+        WireFormatLite::WIRETYPE_LENGTH_DELIMITED);
+    constexpr uint32_t kEntriesTag = WireFormatLite::MakeTag(
+        user_dictionary::UserDictionary::kEntriesFieldNumber,
+        WireFormatLite::WIRETYPE_LENGTH_DELIMITED);
+
     std::vector<std::string> serialized_tokens;
-    absl::flat_hash_set<uint64_t> suppression_set;
     absl::flat_hash_set<uint64_t> seen;
+    user_dictionary::UserDictionary::Entry entry;
+    uint32_t len = 0;
 
-    for (const UserDictionaryStorage::UserDictionary& dic :
-         storage.dictionaries()) {
-      for (const UserDictionaryStorage::UserDictionaryEntry& entry :
-           dic.entries()) {
-        if (canceled_signal->load()) {
-          LOG(INFO) << "User dictionary loading is canceled";
-          return;
-        }
-
-        if (!user_dictionary::ValidateEntry(entry).ok()) {
-          continue;
-        }
-
-        // We cannot call NormalizeVoiceSoundMark inside NormalizeReading,
-        // because the normalization is user-visible.
-        // http://b/2480844
-        std::string reading = japanese::NormalizeVoicedSoundMark(
-            user_dictionary::NormalizeReading(entry.key()));
-
-        DCHECK(user_dictionary::UserDictionary_PosType_IsValid(entry.pos()));
-        static_assert(user_dictionary::UserDictionary_PosType_PosType_MAX <=
-                      std::numeric_limits<char>::max());
-        const char pos_type_as_char[] = {static_cast<char>(entry.pos())};
-        const uint64_t fp = CityFingerprint(
-            absl::StrCat(reading, "\t", entry.value(), "\t",
-                         absl::string_view(pos_type_as_char, 1)));
-        if (!seen.insert(fp).second) {
-          MOZC_VLOG(1) << "Found dup item";
-          continue;
-        }
-
-        if (entry.pos() == user_dictionary::UserDictionary::SUPPRESSION_WORD) {
-          // "抑制単語"
-          suppression_set.insert(
-              SuppressedEntryFingerprint(reading, entry.value()));
-        } else {
-          const absl::string_view comment =
-              absl::StripAsciiWhitespace(entry.comment());
-          for (const auto& token :
-               user_pos_.GetTokens(reading, entry.value(), entry.pos())) {
-            serialized_tokens.push_back(SerializeToken(token, comment));
-          }
-        }
+    while (const uint32_t tag = decoder.ReadTag()) {
+      if (canceled_signal->load()) {
+        LOG(INFO) << "User dictionary loading is canceled";
+        return true;
       }
+      if (tag == kDictionariesTag) {
+        // Read only the byte-length prefix of the UserDictionary submessage
+        // (without skipping its payload) so subsequent ReadTag() calls in this
+        // loop read the fields inside UserDictionary directly.
+        if (!decoder.ReadVarint32(&len)) {
+          return false;
+        }
+      } else if (tag == kEntriesTag) {
+        if (!decoder.ReadVarint32(&len)) {
+          return false;
+        }
+        const auto limit = decoder.PushLimit(len);
+        entry.Clear();
+        if (!entry.MergeFromCodedStream(&decoder) ||
+            !decoder.ConsumedEntireMessage()) {
+          return false;
+        }
+        decoder.PopLimit(limit);
+        AddEntry(entry, &seen, &serialized_tokens);
+      } else if (!WireFormatLite::SkipField(&decoder, tag)) {
+        return false;
+      }
+    }
+    if (!decoder.ConsumedEntireMessage() || !ifs.eof()) {
+      return false;
     }
 
     if (!serialized_tokens.empty()) {
@@ -274,8 +287,6 @@ class UserDictionary::TokensIndex {
       tokens_.Set(SerializedStringArray::SerializeToBuffer(serialized_tokens,
                                                            &tokens_buffer_));
     }
-
-    suppression_set_ = std::move(suppression_set);
 
     // Adds cost penalty based on dictionary entry count N: 500 * log(N + 1).
     //
@@ -301,6 +312,7 @@ class UserDictionary::TokensIndex {
     cost_penalty_ = static_cast<int>(500.0 * std::log(tokens_.size() + 1));
 
     MOZC_VLOG(1) << tokens_.size() << " user dic entries loaded";
+    return true;
   }
 
   bool IsSuppressedEntry(absl::string_view key, absl::string_view value) const {
@@ -338,6 +350,45 @@ class UserDictionary::TokensIndex {
   }
 
  private:
+  void AddEntry(const user_dictionary::UserDictionary::Entry& entry,
+                absl::flat_hash_set<uint64_t>* seen,
+                std::vector<std::string>* serialized_tokens) {
+    if (!user_dictionary::ValidateEntry(entry).ok()) {
+      return;
+    }
+
+    // We cannot call NormalizeVoiceSoundMark inside NormalizeReading,
+    // because the normalization is user-visible.
+    // http://b/2480844
+    const std::string reading = japanese::NormalizeVoicedSoundMark(
+        user_dictionary::NormalizeReading(entry.key()));
+
+    DCHECK(user_dictionary::UserDictionary_PosType_IsValid(entry.pos()));
+    static_assert(user_dictionary::UserDictionary_PosType_PosType_MAX <=
+                  std::numeric_limits<char>::max());
+    const char pos_type_as_char[] = {static_cast<char>(entry.pos())};
+    const uint64_t fp =
+        CityFingerprint(absl::StrCat(reading, "\t", entry.value(), "\t",
+                                     absl::string_view(pos_type_as_char, 1)));
+    if (!seen->insert(fp).second) {
+      MOZC_VLOG(1) << "Found dup item";
+      return;
+    }
+
+    if (entry.pos() == user_dictionary::UserDictionary::SUPPRESSION_WORD) {
+      // "抑制単語"
+      suppression_set_.insert(
+          SuppressedEntryFingerprint(reading, entry.value()));
+    } else {
+      const absl::string_view comment =
+          absl::StripAsciiWhitespace(entry.comment());
+      for (const auto& token :
+           user_pos_.GetTokens(reading, entry.value(), entry.pos())) {
+        serialized_tokens->push_back(SerializeToken(token, comment));
+      }
+    }
+  }
+
   static uint64_t SuppressedEntryFingerprint(absl::string_view key,
                                              absl::string_view value) {
     return CityFingerprintWithSeed(value, CityFingerprint(key));
@@ -616,13 +667,11 @@ void UserDictionary::ReloadThreadMain() {
   while (!canceled_signal_.load()) {
     reload_state_.store(ReloadState::kRunning);
 
-    UserDictionaryStorage storage(filename_);
-
-    // Load from file
-    if (absl::Status s = storage.Load(); !s.ok()) {
-      LOG(ERROR) << "Failed to load the user dictionary: " << s;
-    } else {
-      Load(storage.GetProto());
+    InputFileStream ifs(filename_, std::ios::binary);
+    if (!ifs) {
+      LOG(ERROR) << "Failed to open the user dictionary: " << filename_;
+    } else if (!Load(ifs)) {
+      LOG(ERROR) << "Failed to load the user dictionary: " << filename_;
     }
 
     ReloadState expected = ReloadState::kRunning;
@@ -635,6 +684,13 @@ void UserDictionary::ReloadThreadMain() {
 
 bool UserDictionary::Load(
     const user_dictionary::UserDictionaryStorage& storage) {
+  // proto-based loading is mainly for unittesting, so not optimized.
+  std::stringstream ifs;
+  storage.SerializeToOstream(&ifs);
+  return Load(ifs);
+}
+
+bool UserDictionary::Load(std::istream& ifs) {
   const size_t size = GetTokens()->size();
 
   constexpr size_t kVeryBigUserDictionarySize = 100000;
@@ -645,9 +701,11 @@ bool UserDictionary::Load(
   }
 
   auto tokens = std::make_shared<TokensIndex>(*user_pos_);
-  tokens->Load(storage, &canceled_signal_);
+  if (!tokens->Load(ifs, &canceled_signal_)) {
+    return false;
+  }
 
-  SetTokens(tokens);
+  SetTokens(std::move(tokens));
   return true;
 }
 

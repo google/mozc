@@ -35,6 +35,7 @@
 #include <cstring>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -757,6 +758,13 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   }
 }
 
+#ifndef _WIN32
+// On Windows, `storage.Save()` uses `MoveFileExW(...,
+// MOVEFILE_REPLACE_EXISTING)`, which fails with `ERROR_ACCESS_DENIED` if the
+// background reloader thread simultaneously holds an open `InputFileStream`
+// handle to the destination file. On POSIX platforms, `rename(2)` atomically
+// updates the directory entry to a new inode without conflicting with open read
+// descriptors.
 TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
   TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   const std::string filename =
@@ -796,6 +804,7 @@ TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
     EXPECT_FALSE(LookupExact(absl::StrFormat("key_%d_0", i), *dic).empty());
   }
 }
+#endif  // !_WIN32
 
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   std::unique_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
@@ -1156,6 +1165,68 @@ TEST_F(UserDictionaryTest, AsyncImportTest) {
     EXPECT_FALSE(storage.GetUserDictionaryId("dic0").ok());
     EXPECT_TRUE(storage.GetUserDictionaryId("dic1").ok());
   }
+}
+
+TEST_F(UserDictionaryTest, LoadFromStreamTest) {
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  dic->WaitForReloader();
+
+  user_dictionary::UserDictionaryStorage storage;
+  storage.set_version(1);
+  user_dictionary::UserDictionary* user_dic = storage.add_dictionaries();
+  user_dic->set_id(12345);
+  user_dic->set_name("test_dic");
+
+  {
+    user_dictionary::UserDictionary::Entry* entry = user_dic->add_entries();
+    entry->set_key("start");
+    entry->set_value("start_val");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
+    entry->set_comment("test_comment");
+  }
+  {
+    user_dictionary::UserDictionary::Entry* entry = user_dic->add_entries();
+    entry->set_key("suppress_key");
+    entry->set_value("suppress_val");
+    entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
+  }
+
+  std::string serialized = storage.SerializeAsString();
+  // Append unknown Fixed64 (tag = (15 << 3) | 1 = 0x79) and Fixed32
+  // (tag = (15 << 3) | 5 = 0x7d) fields to verify SkipField handling.
+  serialized.append("\x79\x01\x02\x03\x04\x05\x06\x07\x08", 9);
+  serialized.append("\x7d\x01\x02\x03\x04", 5);
+
+  {
+    std::istringstream iss(serialized);
+    EXPECT_TRUE(dic->Load(iss));
+  }
+  EXPECT_THAT(LookupExact("start", *dic),
+              ElementsAre(Entry{"start", "start_val", 100, 100}));
+  EXPECT_EQ(LookupComment(*dic, "start", "start_val"), "test_comment");
+  EXPECT_TRUE(dic->IsSuppressedEntry("suppress_key", "suppress_val"));
+
+  // Corrupted streams (truncated length varint or Entry message) should fail
+  // and keep existing tokens intact.
+  {
+    std::istringstream bad_dic_len_iss("\x12");
+    EXPECT_FALSE(dic->Load(bad_dic_len_iss));
+  }
+  {
+    std::istringstream bad_entry_len_iss("\x22");
+    EXPECT_FALSE(dic->Load(bad_entry_len_iss));
+  }
+  {
+    std::istringstream bad_iss("\x22\x05xyz");
+    EXPECT_FALSE(dic->Load(bad_iss));
+  }
+  // Invalid wire type (wire type 6: tag = (15 << 3) | 6 = 0x7e) should fail.
+  {
+    std::istringstream bad_wire_iss("\x7e");
+    EXPECT_FALSE(dic->Load(bad_wire_iss));
+  }
+  EXPECT_THAT(LookupExact("start", *dic),
+              ElementsAre(Entry{"start", "start_val", 100, 100}));
 }
 
 }  // namespace

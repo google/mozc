@@ -102,3 +102,12 @@ mozc_cc_library(
         "@com_google_protobuf//:protobuf",
     ],
 )
+
+mozc_cc_library(
+    name = "wire_format_lite",
+    hdrs = ["wire_format_lite.h"],
+    deps = [
+        ":protobuf",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
