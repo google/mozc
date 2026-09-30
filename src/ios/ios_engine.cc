@@ -33,11 +33,15 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/base/optimization.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "base/config_file_stream.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "data_manager/data_manager.h"
@@ -328,12 +332,33 @@ bool IosEngine::SetSpecialRomajiTable(
 
 bool IosEngine::ImportUserDictionary(const std::string& tsv_content,
                                      commands::Command* command) {
-  auto* input = command->mutable_input();
-  input->set_type(commands::Input::IMPORT_USER_DICTIONARY);
-  auto* user_dictionary_data = input->mutable_user_dictionary_import_data();
-  user_dictionary_data->set_data(tsv_content);
-  user_dictionary_data->set_dictionary_name(kIosSystemDictionaryName);
-  return EvalCommandLockGuarded(command);
+  // TODO(komatsu): Constructing a TSV string in Objective-C and parsing it back
+  // here is not optimal. Update the caller (GKBIMEJapaneseImpl.mm) to pass
+  // structured entries or UserDictionaryStorage proto directly.
+  user_dictionary::UserDictionaryStorage storage;
+  if (!tsv_content.empty()) {
+    user_dictionary::UserDictionary* dic = storage.add_dictionaries();
+    dic->set_name(kIosSystemDictionaryName);
+    for (const absl::string_view line :
+         absl::StrSplit(tsv_content, '\n', absl::SkipEmpty())) {
+      const std::vector<absl::string_view> fields = absl::StrSplit(line, '\t');
+      if (fields.size() < 3 || fields[0].empty() || fields[1].empty()) {
+        continue;
+      }
+      user_dictionary::UserDictionary::Entry* entry = dic->add_entries();
+      entry->set_key(fields[0]);
+      entry->set_value(fields[1]);
+      if (fields[2] == "顔文字") {
+        entry->set_pos(user_dictionary::UserDictionary::EMOTICON);
+      } else {
+        entry->set_pos(user_dictionary::UserDictionary::NO_POS);
+      }
+    }
+  }
+  constexpr absl::string_view kUserDictionaryFile = "user://user_dictionary.db";
+  return ConfigFileStream::AtomicUpdate(kUserDictionaryFile,
+                                        storage.SerializeAsString()) &&
+         Reload(command);
 }
 
 bool IosEngine::ClearUserHistory(commands::Command* command) {

@@ -31,6 +31,7 @@ load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
     "mozc_cc_library",
+    "mozc_cc_test",
     "mozc_select",
 )
 
@@ -41,6 +42,7 @@ mozc_cc_library(
     visibility = [
     ],
     deps = [
+        "//base:config_file_stream",
         "//base:util",
         "//config:config_handler",
         "//data_manager",
@@ -52,7 +54,27 @@ mozc_cc_library(
         "//session:session_handler",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
+    ],
+)
+
+mozc_cc_test(
+    name = "ios_engine_test",
+    size = "small",
+    srcs = ["ios_engine_test.cc"],
+    data = ["//data_manager/testing:mock_mozc.data"],
+    deps = [
+        ":ios_engine",
+        "//base:config_file_stream",
+        "//base:file_stream",
+        "//base:system_util",
+        "//base/file:temp_dir",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:user_dictionary_storage_cc_proto",
+        "//testing:gunit_main",
+        "//testing:mozctest",
     ],
 )
 
