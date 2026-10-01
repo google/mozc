@@ -27,16 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "config/stats_config_util.h"
+#include "gui/base/stats_config_util.h"
 
 #include "testing/gunit.h"
-
-#ifdef __ANDROID__
-#include "base/file/temp_dir.h"
-#include "config/config_handler.h"
-#include "protocol/config.pb.h"
-#include "testing/mozctest.h"
-#endif  // __ANDROID__
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -59,7 +52,7 @@
 #endif  // _WIN32
 
 namespace mozc {
-namespace config {
+namespace gui {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 #ifdef _WIN32
@@ -167,9 +160,7 @@ class SingleThreadedRegistryEmulator {
     restore_info_ = nullptr;
     current_ = nullptr;
   }
-  static void SetRunLevel(int run_level) {
-    current_->set_run_level(run_level);
-  }
+  static void SetRunLevel(int run_level) { current_->set_run_level(run_level); }
   static bool HasUsagestatsValue(HKEY key) {
     if (!current_->contains_key_in_usagestats_map(key)) {
       return false;
@@ -212,9 +203,7 @@ class SingleThreadedRegistryEmulator {
     }
     current_->erase_entry_from_usagestats_map(key);
   }
-  static void ClearUsagestatsValue() {
-    current_->clear_usagestats_map();
-  }
+  static void ClearUsagestatsValue() { current_->clear_usagestats_map(); }
   static LSTATUS WINAPI TestRegCreateKeyExW(
       HKEY key, LPCWSTR sub_key, DWORD reserved, LPWSTR class_name,
       DWORD options, REGSAM sam, LPSECURITY_ATTRIBUTES security_attributes,
@@ -742,23 +731,11 @@ TEST_F(StatsConfigUtilTestMac, SetEnabledOverwritesPreviousValue) {
 #endif  // CHANNEL_DEV
 #endif  // TARGET_OS_OSX
 
-#ifdef __ANDROID__
-TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
-  const TempFile config_file(testing::MakeTempFileOrDie());
-  ConfigHandler::SetConfigFileNameForTesting(config_file.path());
-  EXPECT_EQ(ConfigHandler::GetConfigFileNameForTesting(), config_file.path());
-  ConfigHandler::Reload();
-#ifdef CHANNEL_DEV
-  EXPECT_TRUE(StatsConfigUtil::IsEnabled());
-#else   // CHANNEL_DEV
-  EXPECT_FALSE(StatsConfigUtil::IsEnabled());
-#endif  // CHANNEL_DEV
-}
-#elif defined(__linux__)  // __ANDROID__
+#ifdef __linux__
 TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
-#endif                    // __linux__
+#endif  // __linux__
 
 #else   // !GOOGLE_JAPANESE_INPUT_BUILD
 TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {
@@ -766,5 +743,5 @@ TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {
 }
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-}  // namespace config
+}  // namespace gui
 }  // namespace mozc

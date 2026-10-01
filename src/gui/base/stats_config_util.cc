@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "config/stats_config_util.h"
+#include "gui/base/stats_config_util.h"
 
 #ifdef _WIN32
 #include <atlbase.h>
@@ -56,13 +56,8 @@
 #include "base/system_util.h"
 #endif  // __APPLE__
 
-#if defined(__ANDROID__)
-#include "config/config_handler.h"
-#include "protocol/config.pb.h"
-#endif  // __ANDROID__
-
 namespace mozc {
-namespace config {
+namespace gui {
 namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
@@ -213,19 +208,6 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 }
 #endif  // MACOSX
 
-#ifdef __ANDROID__
-class AndroidStatsConfigUtilImpl {
- public:
-  static bool IsEnabled() {
-    return ConfigHandler::GetSharedConfig()->upload_usage_stats();
-  }
-  static bool SetEnabled(bool val) {
-    // TODO(horo): Implement this.
-    return false;
-  }
-};
-#endif  // __ANDROID__
-
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class NullStatsConfigUtilImpl {
@@ -241,8 +223,6 @@ typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
 typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(__APPLE__)
 typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
-#elif defined(__ANDROID__)
-typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
 #else   // Platforms
 // Fall back mode.  Use null implementation.
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
@@ -250,13 +230,11 @@ typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
 
 }  // namespace
 
-bool StatsConfigUtil::IsEnabled() {
-  return DefaultConfigUtilImpl::IsEnabled();
-}
+bool StatsConfigUtil::IsEnabled() { return DefaultConfigUtilImpl::IsEnabled(); }
 
 bool StatsConfigUtil::SetEnabled(bool val) {
   return DefaultConfigUtilImpl::SetEnabled(val);
 }
 
-}  // namespace config
+}  // namespace gui
 }  // namespace mozc

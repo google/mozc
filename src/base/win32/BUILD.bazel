@@ -69,8 +69,8 @@ mozc_cc_library(
     visibility = [
         # For //base:update_util_test
         "//base:__subpackages__",
-        # For //config:stats_config_util_test.
-        "//config:__pkg__",
+        # For //gui/base:stats_config_util_test
+        "//gui/base:__subpackages__",
         # For //win32/base:omaha_util_test
         "//win32/base:__subpackages__",
     ],

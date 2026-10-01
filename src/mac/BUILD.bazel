@@ -147,7 +147,6 @@ mozc_objc_library(
         "//base:init_mozc",
         "//base:run_level",
         "//client",
-        "//config:stats_config_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
     ],

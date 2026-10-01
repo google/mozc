@@ -46,9 +46,6 @@
 namespace mozc {
 namespace win32 {
 namespace {
-// Most of the following codes are very similar to those in
-// config/stats_config_util_test.cc.
-// TODO(yukawa): Remove code duplication.
 
 const wchar_t kOmahaUsageKey[] =
     L"Software\\Google\\Update\\ClientState\\"
@@ -73,6 +70,7 @@ bool IsEqualInLowercase(const std::wstring& lhs, const std::wstring& rhs) {
 // Win32 registry emulator for unit testing. Can be safely used only in a
 // single thread test scenario. At most one instance can be created at the same
 // time in the same process.
+// See also gui/base/stats_config_util_test.cc
 class SingleThreadedRegistryEmulator {
  public:
   class PropertySelector {

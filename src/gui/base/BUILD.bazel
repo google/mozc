@@ -208,3 +208,41 @@ mozc_cc_qt_library(
         ],
     ),
 )
+
+mozc_cc_library(
+    name = "stats_config_util",
+    srcs = ["stats_config_util.cc"],
+    hdrs = ["stats_config_util.h"],
+    deps = mozc_select(
+        apple = [
+            "@com_google_absl//absl/strings",
+            "@com_google_absl//absl/synchronization",
+            "//base:file_util",
+            "//base:system_util",
+            "//base/mac:mac_util",
+        ],
+    ),
+)
+
+mozc_cc_test(
+    name = "stats_config_util_test",
+    size = "small",
+    srcs = ["stats_config_util_test.cc"],
+    deps = [
+        ":stats_config_util",
+        "//testing:gunit_main",
+    ] + mozc_select(
+        macos = [
+            "@com_google_absl//absl/strings",
+            "//base:file_util",
+            "//base:system_util",
+            "//testing:mozctest",
+        ],
+        windows = [
+            "@com_google_absl//absl/base",
+            "@com_google_absl//absl/container:flat_hash_map",
+            "//base:bits",
+            "//base/win32:win_api_test_helper",
+        ],
+    ),
+)

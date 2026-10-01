@@ -92,57 +92,6 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "stats_config_util",
-    srcs = ["stats_config_util.cc"],
-    hdrs = ["stats_config_util.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
-    deps = mozc_select(
-        android = [
-            ":config_handler",
-            "//protocol:config_cc_proto",
-        ],
-        apple = [
-            "//base/mac:mac_util",
-            "//base:system_util",
-            "@com_google_absl//absl/strings",
-            "@com_google_absl//absl/synchronization",
-            "//base:file_util",
-        ],
-    ),
-)
-
-mozc_cc_test(
-    name = "stats_config_util_test",
-    size = "small",
-    srcs = ["stats_config_util_test.cc"],
-    deps = [
-        ":stats_config_util",
-        "//testing:gunit_main",
-    ] + mozc_select(
-        android = [
-            ":config_handler",
-            "//base/file:temp_dir",
-            "//testing:mozctest",
-            "//protocol:config_cc_proto",
-        ],
-        macos = [
-            "//base:file_util",
-            "//base:system_util",
-            "//testing:mozctest",
-            "@com_google_absl//absl/strings",
-        ],
-        windows = [
-            "//base:bits",
-            "//base/win32:win_api_test_helper",
-            "@com_google_absl//absl/base",
-            "@com_google_absl//absl/container:flat_hash_map",
-        ],
-    ),
-)
-
-mozc_cc_library(
     name = "character_form_manager",
     srcs = ["character_form_manager.cc"],
     hdrs = ["character_form_manager.h"],

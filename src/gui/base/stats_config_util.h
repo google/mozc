@@ -27,11 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONFIG_STATS_CONFIG_UTIL_H_
-#define MOZC_CONFIG_STATS_CONFIG_UTIL_H_
+#ifndef MOZC_GUI_BASE_STATS_CONFIG_UTIL_H_
+#define MOZC_GUI_BASE_STATS_CONFIG_UTIL_H_
 
 namespace mozc {
-namespace config {
+namespace gui {
 
 class StatsConfigUtil {
  public:
@@ -52,7 +52,7 @@ class StatsConfigUtil {
   static bool SetEnabled(bool val);
 };
 
-}  // namespace config
+}  // namespace gui
 }  // namespace mozc
 
-#endif  // MOZC_CONFIG_STATS_CONFIG_UTIL_H_
+#endif  // MOZC_GUI_BASE_STATS_CONFIG_UTIL_H_

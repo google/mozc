@@ -35,16 +35,12 @@
 
 #ifdef _WIN32
 #include "base/run_level.h"
-#include "config/stats_config_util.h"
+#include "gui/base/stats_config_util.h"
 #include "win32/cache_service/cache_service_manager.h"
 #endif  // _WIN32
 
 namespace mozc {
 namespace gui {
-
-#ifdef _WIN32
-using mozc::config::StatsConfigUtil;
-#endif  // _WIN32
 
 AdministrationDialog::AdministrationDialog()
     : dialog_title_(
@@ -55,8 +51,8 @@ AdministrationDialog::AdministrationDialog()
   setWindowModality(Qt::NonModal);
 
   // signal/slot
-  connect(AdministrationDialogbuttonBox, SIGNAL(clicked(QAbstractButton *)),
-          this, SLOT(clicked(QAbstractButton *)));
+  connect(AdministrationDialogbuttonBox, SIGNAL(clicked(QAbstractButton*)),
+          this, SLOT(clicked(QAbstractButton*)));
 
   // When clicking these messages, CheckBoxs corresponding
   // to them should be toggled.
@@ -99,7 +95,7 @@ bool AdministrationDialog::CanStartService() {
   return true;
 }
 
-void AdministrationDialog::clicked(QAbstractButton *button) {
+void AdministrationDialog::clicked(QAbstractButton* button) {
 #ifdef _WIN32
   switch (AdministrationDialogbuttonBox->buttonRole(button)) {
     case QDialogButtonBox::ApplyRole:
@@ -152,7 +148,7 @@ void AdministrationDialog::clicked(QAbstractButton *button) {
 }
 
 // Catch MouseButtonRelease event to toggle the CheckBoxes
-bool AdministrationDialog::eventFilter(QObject *obj, QEvent *event) {
+bool AdministrationDialog::eventFilter(QObject* obj, QEvent* event) {
   if (event->type() == QEvent::MouseButtonRelease) {
     if (obj == usageStatsMessage) {
 #ifndef CHANNEL_DEV

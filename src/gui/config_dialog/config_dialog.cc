@@ -45,7 +45,7 @@
 #include "base/config_file_stream.h"
 #include "client/client.h"
 #include "config/config_handler.h"
-#include "config/stats_config_util.h"
+#include "gui/base/stats_config_util.h"
 #include "gui/base/util.h"
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
@@ -72,9 +72,9 @@
 
 namespace {
 template <typename T>
-void Connect(const QList<T *> &objects, const char *signal,
-             const QObject *receiver, const char *slot) {
-  for (typename QList<T *>::const_iterator itr = objects.begin();
+void Connect(const QList<T*>& objects, const char* signal,
+             const QObject* receiver, const char* slot) {
+  for (typename QList<T*>::const_iterator itr = objects.begin();
        itr != objects.end(); ++itr) {
     QObject::connect(*itr, signal, receiver, slot);
   }
@@ -83,8 +83,6 @@ void Connect(const QList<T *> &objects, const char *signal,
 
 namespace mozc {
 namespace gui {
-
-using ::mozc::config::StatsConfigUtil;
 
 // Qt Style sheet for the config dialog.
 // https://doc.qt.io/qt-6/stylesheet-reference.html
@@ -218,8 +216,8 @@ ConfigDialog::ConfigDialog()
   configDialogButtonBox->button(QDialogButtonBox::Apply)->setText(tr("Apply"));
 
   // signal/slot
-  QObject::connect(configDialogButtonBox, SIGNAL(clicked(QAbstractButton *)),
-                   this, SLOT(clicked(QAbstractButton *)));
+  QObject::connect(configDialogButtonBox, SIGNAL(clicked(QAbstractButton*)),
+                   this, SLOT(clicked(QAbstractButton*)));
   QObject::connect(clearUserHistoryButton, SIGNAL(clicked()), this,
                    SLOT(ClearUserHistory()));
   QObject::connect(clearUserPredictionButton, SIGNAL(clicked()), this,
@@ -250,13 +248,13 @@ ConfigDialog::ConfigDialog()
                    SIGNAL(clicked()), this, SLOT(LaunchAdministrationDialog()));
 
   // Event handlers to enable 'Apply' button.
-  Connect(findChildren<QPushButton *>(), SIGNAL(clicked()), this,
+  Connect(findChildren<QPushButton*>(), SIGNAL(clicked()), this,
           SLOT(EnableApplyButton()));
-  Connect(findChildren<QCheckBox *>(), SIGNAL(clicked()), this,
+  Connect(findChildren<QCheckBox*>(), SIGNAL(clicked()), this,
           SLOT(EnableApplyButton()));
-  Connect(findChildren<QComboBox *>(), SIGNAL(activated(int)), this,
+  Connect(findChildren<QComboBox*>(), SIGNAL(activated(int)), this,
           SLOT(EnableApplyButton()));
-  Connect(findChildren<QSpinBox *>(), SIGNAL(editingFinished()), this,
+  Connect(findChildren<QSpinBox*>(), SIGNAL(editingFinished()), this,
           SLOT(EnableApplyButton()));
   // 'Apply' button is disabled on launching.
   configDialogButtonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
@@ -279,7 +277,7 @@ ConfigDialog::ConfigDialog()
   // if the current application is not elevated by UAC,
   // add a shield icon
   if (!mozc::RunLevel::IsElevatedByUAC()) {
-    const QIcon &vista_shield_icon =
+    const QIcon& vista_shield_icon =
         QApplication::style()->standardIcon(QStyle::SP_VistaShield);
     launchAdministrationDialogButton->setIcon(vista_shield_icon);
     launchAdministrationDialogButtonForUsageStats->setIcon(vista_shield_icon);
@@ -326,7 +324,7 @@ ConfigDialog::ConfigDialog()
 #endif  // CHANNEL_DEV
 }
 
-bool ConfigDialog::SetConfig(const config::Config &config) {
+bool ConfigDialog::SetConfig(const config::Config& config) {
   if (!client_->CheckVersionOrRestartServer()) {
     LOG(ERROR) << "CheckVersionOrRestartServer failed";
     return false;
@@ -340,7 +338,7 @@ bool ConfigDialog::SetConfig(const config::Config &config) {
   return true;
 }
 
-bool ConfigDialog::GetConfig(config::Config *config) {
+bool ConfigDialog::GetConfig(config::Config* config) {
   if (!client_->CheckVersionOrRestartServer()) {
     LOG(ERROR) << "CheckVersionOrRestartServer failed";
     return false;
@@ -475,8 +473,8 @@ void ConfigDialog::GetSendStatsCheckBox() const {
 namespace {
 static constexpr int kPreeditMethodSize = 2;
 
-void SetComboboxForPreeditMethod(const config::Config &config,
-                                 QComboBox *combobox) {
+void SetComboboxForPreeditMethod(const config::Config& config,
+                                 QComboBox* combobox) {
   int index = static_cast<int>(config.preedit_method());
 #ifdef _WIN32
   if (config.use_keyboard_to_change_preedit_method()) {
@@ -486,8 +484,8 @@ void SetComboboxForPreeditMethod(const config::Config &config,
   combobox->setCurrentIndex(index);
 }
 
-void GetComboboxForPreeditMethod(const QComboBox *combobox,
-                                 config::Config *config) {
+void GetComboboxForPreeditMethod(const QComboBox* combobox,
+                                 config::Config* config) {
   int index = combobox->currentIndex();
   if (index >= kPreeditMethodSize) {
     // |use_keyboard_to_change_preedit_method| should be true and
@@ -506,7 +504,7 @@ void GetComboboxForPreeditMethod(const QComboBox *combobox,
 // TODO(taku)
 // Actually ConvertFromProto and ConvertToProto are almost the same.
 // The difference only SET_ and GET_. We would like to unify the twos.
-void ConfigDialog::ConvertFromProto(const config::Config &config) {
+void ConfigDialog::ConvertFromProto(const config::Config& config) {
   base_config_ = config;
   // tab1
   SetComboboxForPreeditMethod(config, inputModeComboBox);
@@ -589,7 +587,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
 #endif  // __APPLE__
 }
 
-void ConfigDialog::ConvertToProto(config::Config *config) const {
+void ConfigDialog::ConvertToProto(config::Config* config) const {
   *config = base_config_;
 
   // tab1
@@ -683,7 +681,7 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
 #undef GET_COMBOBOX
 #undef GET_CHECKBOX
 
-void ConfigDialog::clicked(QAbstractButton *button) {
+void ConfigDialog::clicked(QAbstractButton* button) {
   switch (configDialogButtonBox->buttonRole(button)) {
     case QDialogButtonBox::AcceptRole:
       if (Update()) {
@@ -769,7 +767,7 @@ void ConfigDialog::EditKeymap() {
       keymapname_sessionkeymap_map_.find(keymap_name);
   if (itr != keymapname_sessionkeymap_map_.end()) {
     // Load from predefined mapping file.
-    const char *keymap_file =
+    const char* keymap_file =
         keymap::KeyMapManager::GetKeyMapFileName(itr->second);
     std::unique_ptr<std::istream> ifs(
         ConfigFileStream::LegacyOpen(keymap_file));
@@ -849,7 +847,7 @@ void ConfigDialog::EnableApplyButton() {
 }
 
 // Catch MouseButtonRelease event to toggle the CheckBoxes
-bool ConfigDialog::eventFilter(QObject *obj, QEvent *event) {
+bool ConfigDialog::eventFilter(QObject* obj, QEvent* event) {
   if (event->type() == QEvent::MouseButtonRelease) {
     if (obj == usageStatsMessage) {
 #ifndef CHANNEL_DEV
