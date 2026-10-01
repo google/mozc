@@ -936,69 +936,14 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="2">
-             <widget class="QPushButton" name="clearUserPredictionButton">
-              <property name="minimumSize">
-               <size>
-                <width>120</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Clear all history</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0" colspan="3">
+            <item row="1" column="0" colspan="3">
              <widget class="QCheckBox" name="dictionarySuggestCheckBox">
               <property name="text">
                <string>Use system dictionary</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
-             <widget class="QPushButton" name="clearUnusedUserPredictionButton">
-              <property name="minimumSize">
-               <size>
-                <width>120</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Clear unused history</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <spacer name="horizontalSpacer_6">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="2" column="1">
-             <spacer name="verticalSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
-              <property name="sizeType">
-               <enum>QSizePolicy::Policy::Maximum</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>30</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="4" column="0" colspan="3">
+            <item row="2" column="0" colspan="3">
              <widget class="QCheckBox" name="realtimeConversionCheckBox">
               <property name="text">
                <string>Use realtime conversion</string>
@@ -1870,8 +1815,6 @@
   <tabstop>useJapaneseLayout</tabstop>
   <tabstop>characterFormEditor</tabstop>
   <tabstop>historySuggestCheckBox</tabstop>
-  <tabstop>clearUnusedUserPredictionButton</tabstop>
-  <tabstop>clearUserPredictionButton</tabstop>
   <tabstop>dictionarySuggestCheckBox</tabstop>
   <tabstop>realtimeConversionCheckBox</tabstop>
   <tabstop>suggestionsSizeSpinBox</tabstop>

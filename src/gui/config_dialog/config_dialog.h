@@ -62,10 +62,8 @@ class ConfigDialog : public QDialog, private Ui::ConfigDialog {
   // by the moc tool and |QObject::connect| against these methods results in
   // failure. See b/5935351 about how we found this issue.
  protected slots:
-  virtual void clicked(QAbstractButton *button);
+  virtual void clicked(QAbstractButton* button);
   virtual void ClearUserHistory();
-  virtual void ClearUserPrediction();
-  virtual void ClearUnusedUserPrediction();
   virtual void EditUserDictionary();
   virtual void EditKeymap();
   virtual void EditRomanTable();
@@ -77,17 +75,17 @@ class ConfigDialog : public QDialog, private Ui::ConfigDialog {
   virtual void EnableApplyButton();
 
  protected:
-  bool eventFilter(QObject *obj, QEvent *event) override;
+  bool eventFilter(QObject* obj, QEvent* event) override;
 
  private:
-  bool GetConfig(config::Config *config);
-  bool SetConfig(const config::Config &config);
+  bool GetConfig(config::Config* config);
+  bool SetConfig(const config::Config& config);
   // Set/GetSendStatsChechBox read/write registry or file directly
   // instead of config protobuf.
   void SetSendStatsCheckBox();
   void GetSendStatsCheckBox() const;
-  void ConvertToProto(config::Config *config) const;
-  void ConvertFromProto(const config::Config &config);
+  void ConvertToProto(config::Config* config) const;
+  void ConvertFromProto(const config::Config& config);
   bool Update();
   void Reload();
 

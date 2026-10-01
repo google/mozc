@@ -83,6 +83,8 @@ class EngineInterface {
   virtual bool ClearUserHistory() { return true; }
 
   // Clears user prediction data.
+  // TODO(b/567921560): Remove ClearUserPrediction and ClearUnusedUserPrediction
+  // once all callers are migrated to ClearUserHistory.
   virtual bool ClearUserPrediction() { return true; }
 
   // Clears unused user prediction data.

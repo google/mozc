@@ -366,22 +366,7 @@ bool IosEngine::ClearUserHistory(commands::Command* command) {
   commands::Input* input = command->mutable_input();
   input->set_id(session_id_);
   input->set_type(commands::Input::CLEAR_USER_HISTORY);
-  if (!EvalCommandLockGuarded(command)) {
-    return false;
-  }
-
-  command->Clear();
-  input = command->mutable_input();
-  input->set_id(session_id_);
-  input->set_type(commands::Input::CLEAR_USER_PREDICTION);
-  if (!EvalCommandLockGuarded(command)) {
-    return false;
-  }
-
-  // No need to call CLEAR_UNUSED_USER_PREDICTION.
-  // The above CLEAR_USER_PREDICTION deletes unused prediction entries too.
-
-  return true;
+  return EvalCommandLockGuarded(command);
 }
 
 bool IosEngine::Reload(commands::Command* command) {
