@@ -4822,5 +4822,110 @@ TEST_F(EngineConverterTest, CommitFirstSegmentSingleSegmentCandidate) {
   EXPECT_EQ(consumed_key_size, Util::CharsLen("きょうは"));
 }
 
+TEST_F(EngineConverterTest, CommitFirstSegmentPartialMultiSegmentCandidate) {
+  auto mock_converter = std::make_shared<MockConverter>();
+  EngineConverter converter(mock_converter, request_, config_);
+
+  Segments segments;
+  Segment* seg0 = segments.add_segment();
+  seg0->set_key("ここでは");
+  converter::Candidate* cand0 = seg0->push_back_candidate();
+  cand0->value = "ここで履物を";
+  cand0->key = "ここではきものを";
+  cand0->converted_segment_count = 2;
+
+  Segment* seg1 = segments.add_segment();
+  seg1->set_key("きものを");
+  converter::Candidate* cand1 = seg1->push_back_candidate();
+  cand1->value = "着物を";
+  cand1->key = "きものを";
+
+  Segment* seg2 = segments.add_segment();
+  seg2->set_key("ぬぐ");
+  converter::Candidate* cand2 = seg2->push_back_candidate();
+  cand2->value = "脱ぐ";
+  cand2->key = "ぬぐ";
+
+  EXPECT_CALL(*mock_converter, StartConversion(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  composer_->InsertCharacterPreedit("ここではきものをぬぐ");
+  EXPECT_TRUE(converter.Convert(*composer_));
+
+  EXPECT_CALL(*mock_converter, CommitSegments(_, ::testing::ElementsAre(0)))
+      .WillOnce([](Segments* segs, absl::Span<const size_t> ids) {
+        segs->mutable_conversion_segment(0)->set_segment_type(
+            Segment::SUBMITTED);
+        segs->erase_segments(segs->history_segments_size(), 1);
+        return true;
+      });
+
+  commands::Context context;
+  size_t consumed_key_size = 0;
+  converter.CommitFirstSegment(*composer_, context, &consumed_key_size);
+  EXPECT_TRUE(converter.IsActive());
+  EXPECT_EQ(consumed_key_size, Util::CharsLen("ここではきものを"));
+
+  commands::Output output;
+  converter.FillOutput(*composer_, &output);
+  EXPECT_EQ(output.result().value(), "ここで履物を");
+  EXPECT_EQ(output.result().key(), "ここではきものを");
+}
+
+TEST_F(EngineConverterTest, CommitHeadToFocusedSegmentsMultiSegmentCandidate) {
+  auto mock_converter = std::make_shared<MockConverter>();
+  EngineConverter converter(mock_converter, request_, config_);
+
+  Segments segments;
+  Segment* seg0 = segments.add_segment();
+  seg0->set_key("ここでは");
+  converter::Candidate* cand0 = seg0->push_back_candidate();
+  cand0->value = "ここでは";
+  cand0->key = "ここでは";
+  converter::Candidate* cand0_multi = seg0->push_back_candidate();
+  cand0_multi->value = "ここで履物を";
+  cand0_multi->key = "ここではきものを";
+  cand0_multi->converted_segment_count = 2;
+
+  Segment* seg1 = segments.add_segment();
+  seg1->set_key("きものを");
+  converter::Candidate* cand1 = seg1->push_back_candidate();
+  cand1->value = "着物を";
+  cand1->key = "きものを";
+
+  Segment* seg2 = segments.add_segment();
+  seg2->set_key("ぬぐ");
+  converter::Candidate* cand2 = seg2->push_back_candidate();
+  cand2->value = "脱ぐ";
+  cand2->key = "ぬぐ";
+
+  EXPECT_CALL(*mock_converter, StartConversion(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  composer_->InsertCharacterPreedit("ここではきものをぬぐ");
+  EXPECT_TRUE(converter.Convert(*composer_));
+  converter.CandidateMoveToId(1, *composer_);
+
+  EXPECT_CALL(*mock_converter, CommitSegments(_, ::testing::ElementsAre(1)))
+      .WillOnce([](Segments* segs, absl::Span<const size_t> ids) {
+        segs->mutable_conversion_segment(0)->set_segment_type(
+            Segment::SUBMITTED);
+        segs->erase_segments(segs->history_segments_size(), 1);
+        return true;
+      });
+
+  commands::Context context;
+  size_t consumed_key_size = 0;
+  converter.CommitHeadToFocusedSegments(*composer_, context,
+                                        &consumed_key_size);
+  EXPECT_TRUE(converter.IsActive());
+  EXPECT_EQ(consumed_key_size, Util::CharsLen("ここではきものを"));
+
+  commands::Output output;
+  converter.FillOutput(*composer_, &output);
+  EXPECT_EQ(output.result().value(), "ここで履物を");
+  EXPECT_EQ(output.result().key(), "ここではきものを");
+}
+
 }  // namespace engine
 }  // namespace mozc

@@ -10494,5 +10494,97 @@ TEST_F(SessionTest, MultiSegmentSelectionCancel) {
             "わたしのなまえはなかのです");
 }
 
+TEST_F(SessionTest, MultiSegmentSubmitCandidate) {
+  MockEngine engine;
+  auto converter = CreateEngineConverterMock(&engine);
+  Session session(engine);
+  InitSessionToPrecomposition(&session);
+
+  commands::Command command;
+  InsertCharacterChars("kokodehakimonowonugu", &session, &command);
+
+  Segments segments;
+  {
+    Segment* seg0 = segments.add_segment();
+    seg0->set_key("ここでは");
+    converter::Candidate* cand0_0 = seg0->add_candidate();
+    cand0_0->value = "ここでは";
+    cand0_0->key = "ここでは";
+    cand0_0->content_key = "ここでは";
+    cand0_0->converted_segment_count = 1;
+    converter::Candidate* cand0_1 = seg0->add_candidate();
+    cand0_1->value = "ここで履物を";
+    cand0_1->key = "ここではきものを";
+    cand0_1->content_key = "ここではきものを";
+    cand0_1->converted_segment_count = 2;
+
+    Segment* seg1 = segments.add_segment();
+    seg1->set_key("きものを");
+    converter::Candidate* cand1_0 = seg1->add_candidate();
+    cand1_0->value = "着物を";
+    cand1_0->key = "きものを";
+    cand1_0->content_key = "きものを";
+    cand1_0->converted_segment_count = 1;
+
+    Segment* seg2 = segments.add_segment();
+    seg2->set_key("ぬぐ");
+    converter::Candidate* cand2_0 = seg2->add_candidate();
+    cand2_0->value = "脱ぐ";
+    cand2_0->key = "ぬぐ";
+    cand2_0->content_key = "ぬぐ";
+    cand2_0->converted_segment_count = 1;
+  }
+
+  EXPECT_CALL(*converter, StartConversion(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  EXPECT_CALL(*converter, FocusSegmentValue(_, _, _))
+      .WillRepeatedly(Return(true));
+  EXPECT_CALL(*converter, CommitSegments(_, _))
+      .WillOnce([](Segments* segs, const auto& candidate_ids) {
+        EXPECT_EQ(candidate_ids.size(), 1);
+        EXPECT_EQ(candidate_ids[0], 1);
+        Segment* seg0 = segs->mutable_conversion_segment(0);
+        seg0->move_candidate(1, 0);
+        seg0->set_segment_type(Segment::SUBMITTED);
+        seg0->set_key("ここではきものを");
+        seg0->mutable_candidate(0)->converted_segment_count = 1;
+        segs->erase_segments(segs->history_segments_size(), 1);
+        return true;
+      });
+  EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
+      .WillRepeatedly([](Segments* segs, size_t seg_idx, int cand_idx) {
+        if (seg_idx < segs->conversion_segments_size()) {
+          segs->mutable_conversion_segment(seg_idx)->move_candidate(cand_idx,
+                                                                    0);
+        }
+        return true;
+      });
+  EXPECT_CALL(*converter, FinishConversion(_, _)).Times(::testing::AtLeast(1));
+
+  command.Clear();
+  session.Convert(&command);
+  ASSERT_TRUE(command.output().has_preedit());
+
+  // Submit multi-segment candidate "ここで履物を" (id 1) via mobile tap.
+  command.Clear();
+  SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
+  command.mutable_input()->mutable_command()->set_id(1);
+  session.SendCommand(&command);
+
+  // "ここで履物を" is committed, and only "脱ぐ" remains in preedit (NOT
+  // "着物を脱ぐ").
+  ASSERT_TRUE(command.output().has_result());
+  EXPECT_EQ(command.output().result().value(), "ここで履物を");
+  ASSERT_TRUE(command.output().has_preedit());
+  EXPECT_EQ(command.output().preedit().segment_size(), 1);
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "脱ぐ");
+
+  // Commit the remaining segment.
+  command.Clear();
+  session.Commit(&command);
+  ASSERT_TRUE(command.output().has_result());
+  EXPECT_EQ(command.output().result().value(), "脱ぐ");
+}
+
 }  // namespace session
 }  // namespace mozc

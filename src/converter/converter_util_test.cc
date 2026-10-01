@@ -92,6 +92,78 @@ TEST(ConverterUtilTest, ConversionSegmentsToResultMultiSegment) {
   EXPECT_EQ(i, 3);
 }
 
+TEST(ConverterUtilTest, ConversionSegmentsToResultWithMultiSegmentSpan) {
+  Segments segments;
+  // Segment 0: multi-segment candidate covering segments 0 and 1.
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_key("ここでは");
+    Candidate* c = segment->add_candidate();
+    c->key = "ここではきものを";
+    c->value = "ここで履物を";
+    c->converted_segment_count = 2;
+    c->inner_segment_boundary = BuildInnerSegmentBoundary(
+        {
+            {/*key=*/9, /*val=*/9, /*content_key=*/6, /*content_val=*/6},
+            {/*key=*/15, /*val=*/9, /*content_key=*/12, /*content_val=*/6},
+        },
+        c->key, c->value);
+    c->lid = 10;
+    c->rid = 20;
+    c->cost = 100;
+    c->wcost = 50;
+  }
+  // Segment 1: covered trailing segment (not yet erased).
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_key("きものを");
+    Candidate* c = segment->add_candidate();
+    c->key = "きものを";
+    c->value = "着物を";
+    c->content_key = "きもの";
+    c->content_value = "着物";
+    c->lid = 30;
+    c->rid = 40;
+    c->cost = 200;
+    c->wcost = 80;
+  }
+  // Segment 2: uncovered segment.
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_key("ぬぐ");
+    Candidate* c = segment->add_candidate();
+    c->key = "ぬぐ";
+    c->value = "脱ぐ";
+    c->content_key = "ぬぐ";
+    c->content_value = "脱ぐ";
+    c->lid = 50;
+    c->rid = 60;
+    c->cost = 150;
+    c->wcost = 60;
+  }
+
+  std::optional<prediction::Result> result =
+      ConversionSegmentsToResult(segments.conversion_segments());
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->key, "ここではきものをぬぐ");
+  EXPECT_EQ(result->value, "ここで履物を脱ぐ");
+  EXPECT_EQ(result->lid, 10);
+  EXPECT_EQ(result->rid, 60);
+  EXPECT_EQ(result->cost, 100 + 150);
+  EXPECT_EQ(result->wcost, 50 + 60);
+
+  ASSERT_EQ(result->inner_segments().size(), 3);
+  auto it = result->inner_segments().begin();
+  EXPECT_EQ((*it).GetKey(), "ここで");
+  EXPECT_EQ((*it).GetValue(), "ここで");
+  ++it;
+  EXPECT_EQ((*it).GetKey(), "はきものを");
+  EXPECT_EQ((*it).GetValue(), "履物を");
+  ++it;
+  EXPECT_EQ((*it).GetKey(), "ぬぐ");
+  EXPECT_EQ((*it).GetValue(), "脱ぐ");
+}
+
 TEST(ConverterUtilTest, HistorySegmentsToResult) {
   Segments segments;
   for (int i = 0; i < 3; ++i) {

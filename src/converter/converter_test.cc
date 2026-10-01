@@ -687,6 +687,52 @@ TEST_F(ConverterTest, CommitSegments) {
   }
 }
 
+TEST_F(ConverterTest, CommitSegmentsMultiSegment) {
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<Engine> engine,
+                       MockDataEngineFactory::Create());
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
+  CHECK(converter);
+  Segments segments;
+
+  // Segment 0: multi-segment candidate covering segments 0 and 1.
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_key("ここでは");
+    Candidate* candidate = segment->add_candidate();
+    candidate->key = "ここではきものを";
+    candidate->value = "ここで履物を";
+    candidate->converted_segment_count = 2;
+  }
+  // Segment 1: covered by segment 0's multi-segment candidate.
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_key("きものを");
+    Candidate* candidate = segment->add_candidate();
+    candidate->key = "きものを";
+    candidate->value = "着物を";
+  }
+  // Segment 2: uncovered segment.
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_key("ぬぐ");
+    Candidate* candidate = segment->add_candidate();
+    candidate->key = "ぬぐ";
+    candidate->value = "脱ぐ";
+  }
+
+  ASSERT_TRUE(converter->CommitSegments(&segments, {0}));
+
+  EXPECT_EQ(segments.history_segments_size(), 1);
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_EQ(segments.history_segment(0).segment_type(), Segment::SUBMITTED);
+  EXPECT_EQ(segments.history_segment(0).key(), "ここではきものを");
+  EXPECT_EQ(segments.history_segment(0).candidate(0).value, "ここで履物を");
+  EXPECT_EQ(segments.history_segment(0).candidate(0).converted_segment_count,
+            1);
+  EXPECT_EQ(segments.conversion_segment(0).key(), "ぬぐ");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "脱ぐ");
+}
+
 TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Engine> engine,
                        MockDataEngineFactory::Create());
@@ -3186,6 +3232,97 @@ TEST_F(ConverterTest, ApplyUserHistoryToConversionE2ETest) {
     EXPECT_TRUE(converter->StartConversion(convreq, &segments));
     ASSERT_GT(segments.conversion_segments_size(), 0);
   }
+}
+
+TEST_F(ConverterTest,
+       ApplyUserHistoryToConversionPartialCommitMultiSegmentTest) {
+  auto mock_predictor = std::make_unique<MockPredictor>();
+  auto mock_rewriter = std::make_unique<MockRewriter>();
+
+  std::vector<prediction::Result> results(1);
+  results[0].key = "わたしのなまえはなかのです";
+  results[0].value = "僕の名字中野です";
+  results[0].attributes = Attribute::USER_HISTORY_PREDICTION;
+  InnerSegmentBoundaryBuilder builder;
+  builder.Add(9, 3, 9, 3);      // わたし (9 bytes) -> 僕 (3 bytes)
+  builder.Add(15, 9, 15, 9);    // のなまえは (15 bytes) -> の名字 (9 bytes)
+  builder.Add(15, 12, 15, 12);  // なかのです (15 bytes) -> 中野です (12 bytes)
+  results[0].inner_segment_boundary =
+      builder.Build(results[0].key, results[0].value);
+  results[0].lid = 100;
+  results[0].rid = 200;
+  results[0].cost = 500;
+  results[0].wcost = 300;
+
+  EXPECT_CALL(*mock_predictor, Convert(_)).WillRepeatedly(Return(results));
+
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<engine::Modules> modules,
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>()));
+
+  auto converter = std::make_unique<Converter>(
+      std::move(modules),
+      [](const engine::Modules& modules) {
+        return std::make_unique<ImmutableConverter>(modules);
+      },
+      [&mock_predictor](
+          const engine::Modules& modules, const ConverterInterface& converter,
+          const ImmutableConverterInterface& immutable_converter) {
+        return std::move(mock_predictor);
+      },
+      [&mock_rewriter](const engine::Modules& modules) {
+        return std::move(mock_rewriter);
+      });
+
+  commands::Request request_proto;
+  request_proto.mutable_decoder_experiment_params()
+      ->set_disable_legacy_rewriter_in_all_conversion_mode(7);
+  request_proto.mutable_decoder_experiment_params()
+      ->set_enable_multi_segment_candidate(true);
+
+  composer::Composer composer;
+  composer.SetPreeditTextForTestOnly("わたしのなまえはなかのです");
+  const ConversionRequest convreq =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequest(request_proto)
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+
+  Segments segments;
+  ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+  ASSERT_EQ(segments.conversion_segments_size(), 3);
+
+  const int multi_cand_idx =
+      GetCandidateIndexByValue("僕の名字", segments.conversion_segment(0));
+  ASSERT_NE(multi_cand_idx, -1);
+  EXPECT_EQ(segments.conversion_segment(0)
+                .candidate(multi_cand_idx)
+                .converted_segment_count,
+            2);
+
+  // Partially commit the multi-segment candidate on segment 0 (mobile tap).
+  ASSERT_TRUE(converter->CommitSegments(&segments,
+                                        {static_cast<size_t>(multi_cand_idx)}));
+  EXPECT_EQ(segments.history_segments_size(), 1);
+  EXPECT_EQ(segments.history_segment(0).key(), "わたしのなまえは");
+  EXPECT_EQ(segments.history_segment(0).candidate(0).value, "僕の名字");
+  EXPECT_EQ(segments.history_segment(0).candidate(0).converted_segment_count,
+            1);
+
+  // Covered segment 1 ("なまえは") was erased; only segment 2 ("なかのです")
+  // remains.
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_EQ(segments.conversion_segment(0).key(), "なかのです");
+
+  // FinishConversion commits the remaining conversion segment ("なかのです").
+  segments.mutable_conversion_segment(0)->set_segment_type(
+      Segment::FIXED_VALUE);
+  converter->FinishConversion(convreq, &segments);
+  EXPECT_EQ(segments.conversion_segments_size(), 0);
+  ASSERT_EQ(segments.history_segments_size(), 2);
+  EXPECT_EQ(segments.history_segment(0).candidate(0).value, "僕の名字");
+  EXPECT_EQ(segments.history_segment(1).key(), "なかのです");
 }
 
 TEST_F(ConverterTest, ApplyPredictionToConversionMergedResultsTest) {
