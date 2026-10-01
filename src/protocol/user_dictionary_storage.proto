@@ -93,12 +93,16 @@ message UserDictionary {
   // LINT.ThenChange(
   //     dictionary/user_dictionary_util.cc
   // )
-  // ID of this dictionary
+  // Optional ID of this dictionary used only by dictionary management clients
+  // (e.g., GUI dictionary tool and ChromeOS OS Settings) to track dictionaries
+  // across edits and renames. The core conversion engine (UserDictionary) does
+  // not read or depend on this field.
   optional uint64 id = 1 [default = 0, jstype = JS_STRING];
 
   reserved 2;  // deprecated enabled
 
-  // name of dictionary
+  // Name of this dictionary (used by clients to identify dictionaries; ignored
+  // by the core conversion engine).
   optional string name = 3 [default = ""];
 
   // entry of each word
