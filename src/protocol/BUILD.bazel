@@ -43,7 +43,6 @@ proto_library(
         ":candidate_window_proto",
         ":config_proto",
         ":engine_builder_proto",
-        ":user_dictionary_storage_proto",
     ],
 )
 

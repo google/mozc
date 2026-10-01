@@ -111,8 +111,6 @@ class EngineInterface {
     return false;
   }
 
-  virtual void ImportUserDictionary(std::string name, std::string tsv) {}
-
  protected:
   EngineInterface() = default;
 };

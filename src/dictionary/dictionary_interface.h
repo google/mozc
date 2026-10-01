@@ -304,9 +304,6 @@ class UserDictionaryInterface : public DictionaryInterface {
 
   // Reload dictionary data from local disk.
   virtual bool Reload() { return true; }
-
-  // Returns the filename of user dictionary.
-  virtual std::string GetFileName() const { return ""; }
 };
 
 }  // namespace dictionary

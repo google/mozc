@@ -55,7 +55,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/engine_builder.pb.h"
-#include "protocol/user_dictionary_storage.pb.h"
 #include "session/common.h"
 #include "session/keymap.h"
 #include "session/session.h"
@@ -365,9 +364,6 @@ bool SessionHandler::EvalCommand(commands::Command* command) {
     case commands::Input::CLEANUP:
       eval_succeeded = Cleanup(command);
       break;
-    case commands::Input::IMPORT_USER_DICTIONARY:
-      eval_succeeded = ImportUserDictionary(command);
-      break;
     case commands::Input::ADD_USER_HISTORY:
       eval_succeeded = AddUserHistory(command);
       break;
@@ -627,31 +623,6 @@ bool SessionHandler::Cleanup(commands::Command* command) {
   }
 
   last_cleanup_time_ = current_time;
-
-  return true;
-}
-
-bool SessionHandler::ImportUserDictionary(commands::Command* command) {
-  if (!command->input().has_user_dictionary_import_data()) {
-    return false;
-  }
-
-  auto* user_dictionary_import_data =
-      command->mutable_input()->mutable_user_dictionary_import_data();
-
-  if (!user_dictionary_import_data ||
-      !user_dictionary_import_data->has_dictionary_name() ||
-      !user_dictionary_import_data->has_data()) {
-    return false;
-  }
-
-  // ImportUserDictionary is async. It returns immediately.
-  engine_->ImportUserDictionary(
-      std::move(*user_dictionary_import_data->mutable_dictionary_name()),
-      std::move(*user_dictionary_import_data->mutable_data()));
-
-  // Since `data` is moved, clear the proto for safety.
-  command->mutable_input()->clear_user_dictionary_import_data();
 
   return true;
 }

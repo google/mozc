@@ -41,7 +41,6 @@
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager.h"
-#include "dictionary/user_dictionary.h"
 #include "engine/data_loader.h"
 #include "engine/engine_converter.h"
 #include "engine/engine_converter_interface.h"
@@ -129,8 +128,6 @@ class Engine : public EngineInterface {
 
   void ClearOldSupplementalModels() override;
 
-  void ImportUserDictionary(std::string name, std::string tsv) override;
-
   void SetAlwaysWaitForTesting(bool value) { always_wait_for_testing_ = value; }
 
  private:
@@ -147,8 +144,6 @@ class Engine : public EngineInterface {
   std::shared_ptr<converter::Converter> converter_;
   std::shared_ptr<ConverterInterface> minimal_converter_;
   std::unique_ptr<DataLoader::Response> loader_response_;
-  std::unique_ptr<user_dictionary::AsyncUserDictionaryImporter>
-      async_user_dictionary_importer_;
   bool always_wait_for_testing_ = false;
 };
 

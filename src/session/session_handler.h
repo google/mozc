@@ -112,7 +112,6 @@ class SessionHandler {
       std::unique_ptr<const commands::Request> request = nullptr);
 
   bool Cleanup(commands::Command* command);
-  bool ImportUserDictionary(commands::Command* command);
   bool AddUserHistory(commands::Command* command);
   bool SendEngineReloadRequest(commands::Command* command);
   bool NoOperation(commands::Command* command);

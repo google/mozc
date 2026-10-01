@@ -148,7 +148,6 @@ mozc_cc_library(
         ":dictionary_interface",
         ":dictionary_token",
         ":pos_matcher",
-        ":user_dictionary_importer",
         ":user_dictionary_storage",
         ":user_dictionary_util",
         ":user_pos",
@@ -168,22 +167,18 @@ mozc_cc_library(
         "//protocol:user_dictionary_storage_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/algorithm:container",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
     ],
 )
 
 mozc_cc_test(
     name = "user_dictionary_test",
-    # The size is "large" because AsyncImportTest takes long time.
-    # https://github.com/google/mozc/issues/1418
-    size = "large",
+    size = "small",
     srcs = [
         "user_dictionary_test.cc",
     ],
@@ -198,8 +193,6 @@ mozc_cc_test(
         ":user_pos",
         "//base:file_util",
         "//base:random",
-        "//base:system_util",
-        "//base:thread",
         "//base/container:tuple",
         "//base/file:temp_dir",
         "//data_manager/testing:mock_data_manager",

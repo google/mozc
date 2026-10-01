@@ -216,7 +216,7 @@ mozc_cc_library(
         "//converter:immutable_converter",
         "//converter:immutable_converter_interface",
         "//data_manager",
-        "//dictionary:user_dictionary",
+        "//dictionary:dictionary_interface",
         "//prediction:predictor",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
