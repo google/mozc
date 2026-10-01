@@ -59,6 +59,15 @@ constexpr int kColumn3Width = 6;
 // TODO: b/519413639 - This hardcoded value is different from textproto (300).
 constexpr int kInfolistWidth = 520;
 
+// Item data roles of the cells in the candidate rows.
+enum CandidateItemRole {
+  // True when an infolist entry is available for the candidate of the row.
+  // Set only on the cells in the infolist indicator column.
+  kHasInformationRole = Qt::UserRole,
+  // True when the row is focused.
+  kIsFocusedRole,
+};
+
 QString QStr(absl::string_view str) {
   return QString::fromUtf8(str.data(), str.size());
 }
@@ -73,9 +82,9 @@ QBrush QBrushFromColor(const RendererStyle::RGBAColor& rgba) {
 
 }  // namespace
 
-void FooterBackgroundDelegate::paint(QPainter* painter,
-                                     const QStyleOptionViewItem& option,
-                                     const QModelIndex& index) const {
+void CandidateTableDelegate::paint(QPainter* painter,
+                                   const QStyleOptionViewItem& option,
+                                   const QModelIndex& index) const {
   // The footer is the last row of the candidate window.
   if (index.row() == index.model()->rowCount() - 1) {
     QRect rect = option.rect;
@@ -106,6 +115,31 @@ void FooterBackgroundDelegate::paint(QPainter* painter,
     painter->fillRect(rect, gradient);
   }
   QStyledItemDelegate::paint(painter, option, index);
+
+  // The focused row is surrounded by a 1-pixel frame, as in the Windows
+  // renderer. Each cell draws its own part of the frame.
+  if (index.data(kIsFocusedRole).toBool()) {
+    const QRect& rect = option.rect;
+    painter->fillRect(rect.left(), rect.top(), rect.width(), 1,
+                      focused_border_color_);
+    painter->fillRect(rect.left(), rect.bottom(), rect.width(), 1,
+                      focused_border_color_);
+    if (index.column() == 0) {
+      painter->fillRect(rect.left(), rect.top(), 1, rect.height(),
+                        focused_border_color_);
+    }
+    if (index.column() == index.model()->columnCount() - 1) {
+      painter->fillRect(rect.right(), rect.top(), 1, rect.height(),
+                        focused_border_color_);
+    }
+  }
+
+  // The infolist marker is a vertical bar with margins of 2 pixels on the
+  // top, bottom and right sides of the cell, as in the Windows renderer.
+  if (index.data(kHasInformationRole).toBool()) {
+    painter->fillRect(option.rect.adjusted(0, 2, -2, -2),
+                      infolist_marker_color_);
+  }
 }
 
 QtWindowManager::QtWindowManager() {
@@ -150,8 +184,8 @@ void QtWindowManager::Initialize() {
 
   candidates_ = new QTableWidget();
   initialize_table(candidates_);
-  footer_delegate_ = new FooterBackgroundDelegate(candidates_);
-  candidates_->setItemDelegate(footer_delegate_);
+  candidate_delegate_ = new CandidateTableDelegate(candidates_);
+  candidates_->setItemDelegate(candidate_delegate_);
   QObject::connect(candidates_, &QTableWidget::cellClicked,
                    [&](int row, int col) { OnClicked(row, col); });
 
@@ -199,8 +233,8 @@ void QtWindowManager::ApplyStyleToWidgets() {
     table->setStyleSheet(sheet);
   }
 
-  if (footer_delegate_ != nullptr) {
-    footer_delegate_->SetGradientColors(
+  if (candidate_delegate_ != nullptr) {
+    candidate_delegate_->SetGradientColors(
         QColorFromColor(style_.footer_top_color()),
         QColorFromColor(style_.footer_bottom_color()));
     QList<QColor> separator_colors;
@@ -208,7 +242,11 @@ void QtWindowManager::ApplyStyleToWidgets() {
          style_.footer_border_colors()) {
       separator_colors.append(QColorFromColor(color));
     }
-    footer_delegate_->SetSeparatorColors(std::move(separator_colors));
+    candidate_delegate_->SetSeparatorColors(std::move(separator_colors));
+    candidate_delegate_->SetInfolistMarkerColor(
+        QColorFromColor(style_.scrollbar_indicator_color()));
+    candidate_delegate_->SetFocusedBorderColor(
+        QColorFromColor(style_.focused_border_color()));
   }
 
   if (vscroll_bar_ != nullptr) {
@@ -399,15 +437,23 @@ void FillCandidateHighlight(const commands::CandidateWindow& candidate_window,
     return;
   }
 
-  const bool has_info = candidate_window.candidate(row).has_information_id();
-  const QBrush indicator = QBrushFromColor(style.focused_border_color());
+  // The marker itself is painted by CandidateTableDelegate.
+  table->item(row, 3)->setData(
+      kHasInformationRole,
+      candidate_window.candidate(row).has_information_id());
 
-  if (row == GetFocusedRow(candidate_window)) {
+  // The frame of the focused row is also painted by CandidateTableDelegate.
+  const bool is_focused = (row == GetFocusedRow(candidate_window));
+  for (int column = 0; column < table->columnCount(); ++column) {
+    table->item(row, column)->setData(kIsFocusedRole, is_focused);
+  }
+
+  if (is_focused) {
     const QBrush highlight = QBrushFromColor(style.focused_background_color());
     table->item(row, 0)->setBackground(highlight);
     table->item(row, 1)->setBackground(highlight);
     table->item(row, 2)->setBackground(highlight);
-    table->item(row, 3)->setBackground(has_info ? indicator : highlight);
+    table->item(row, 3)->setBackground(highlight);
     return;
   }
 
@@ -422,7 +468,7 @@ void FillCandidateHighlight(const commands::CandidateWindow& candidate_window,
   }
   table->item(row, 1)->setBackground(background);
   table->item(row, 2)->setBackground(background);
-  table->item(row, 3)->setBackground(has_info ? indicator : background);
+  table->item(row, 3)->setBackground(background);
 }
 
 void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
@@ -479,7 +525,7 @@ void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
     total_height += height;
   }
 
-  // Footer. The background is painted by FooterBackgroundDelegate.
+  // Footer. The background is painted by CandidateTableDelegate.
   for (int i = 0; i < table->columnCount(); ++i) {
     auto footer_item = new QTableWidgetItem();
     table->setItem(cands_size, i, footer_item);
@@ -529,7 +575,7 @@ void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
       max_width1 = std::max(max_width1, label_width);
     }
   }
-  // The separator lines drawn by FooterBackgroundDelegate consume the top
+  // The separator lines drawn by CandidateTableDelegate consume the top
   // pixels of the footer cell; enlarge the row so that the visible footer
   // content area keeps its height.
   const int footer_height =
