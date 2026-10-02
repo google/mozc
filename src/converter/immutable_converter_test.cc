@@ -751,4 +751,38 @@ TEST(ImmutableConverterTest, ParticleOmissionBonusPredictionTest) {
   EXPECT_EQ(cost_bonus_2000 - cost_bonus_2001, 1);
 }
 
+TEST(ImmutableConverterTest,
+     NormalizeHistorySegmentsClearsInconsistentInnerSegmentBoundary) {
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
+  Segments segments;
+
+  Segment* history_segment = segments.add_segment();
+  history_segment->set_key("１２");
+  history_segment->set_segment_type(Segment::HISTORY);
+  Candidate* history_cand = history_segment->add_candidate();
+  history_cand->key = "１２";
+  history_cand->value = "１２";
+  history_cand->content_key = "１２";
+  history_cand->content_value = "１２";
+  history_cand->inner_segment_boundary =
+      converter::BuildInnerSegmentBoundary({{6, 6, 6, 6}}, "１２", "１２");
+  ASSERT_FALSE(history_cand->inner_segment_boundary.empty());
+
+  Segment* conversion_segment = segments.add_segment();
+  conversion_segment->set_key("がつ");
+
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(request.options(),
+                                                          &segments));
+  ASSERT_EQ(segments.history_segments_size(), 1);
+  EXPECT_EQ(segments.history_segment(0).key(), "2");
+  EXPECT_EQ(segments.history_segment(0).candidate(0).key, "12");
+  EXPECT_EQ(segments.history_segment(0).candidate(0).value, "2");
+  EXPECT_TRUE(
+      segments.history_segment(0).candidate(0).inner_segment_boundary.empty());
+}
+
 }  // namespace mozc

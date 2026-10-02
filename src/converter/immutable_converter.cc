@@ -182,6 +182,10 @@ void NormalizeHistorySegments(Segments* segments) {
     }
 
     Candidate* c = segment.mutable_candidate(0);
+    const size_t original_key_size = c->key.size();
+    const size_t original_value_size = c->value.size();
+    const size_t original_content_key_size = c->content_key.size();
+    const size_t original_content_value_size = c->content_value.size();
     absl::string_view history_key =
         (c->key.size() > segment.key().size()) ? c->key : segment.key();
     const std::string value = c->value;
@@ -208,6 +212,12 @@ void NormalizeHistorySegments(Segments* segments) {
       c->value = key;
       c->content_value = key;
       c->content_key = key;
+    }
+    if (c->key.size() != original_key_size ||
+        c->value.size() != original_value_size ||
+        c->content_key.size() != original_content_key_size ||
+        c->content_value.size() != original_content_value_size) {
+      c->inner_segment_boundary.clear();
     }
   }
 }
