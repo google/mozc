@@ -114,7 +114,7 @@
       <Property Id="PROCESSOR_ARCHITECTURE" Secure="yes">
         <RegistrySearch Id="ProcessorArchitectureValue" Type="raw" Root="HKLM" Key="System\CurrentControlSet\Control\Session Manager\Environment" Name="PROCESSOR_ARCHITECTURE" />
       </Property>
-      <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="ARM64 環境へのインストールは未対応です" />
+      <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="このインストーラーは ARM64 版 Windows に対応していません。別途用意された専用のインストーラーを使用してください。" />
     <?endif?>
 
     <!-- Set Add/Remove Program Icon -->
