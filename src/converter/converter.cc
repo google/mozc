@@ -597,7 +597,8 @@ void Converter::ApplyResultToSegments(const prediction::Result& result,
   size_t seg_idx = 0;
   for (const auto& inner_seg : result.inner_segments()) {
     if (seg_idx >= segments->conversion_segments_size()) break;
-    Segment* segment = segments->mutable_conversion_segment(seg_idx++);
+    const size_t current_seg_idx = seg_idx++;
+    Segment* segment = segments->mutable_conversion_segment(current_seg_idx);
 
     // Find existing candidate with matching value.
     int existing_index = -1;
@@ -616,8 +617,9 @@ void Converter::ApplyResultToSegments(const prediction::Result& result,
       cand->cost = std::min(cand->cost, result.cost);
       cand->wcost = std::min(cand->wcost, result.wcost);
       cand->attributes |= (result.attributes | additional_attributes);
-      if (!result.inner_segment_boundary.empty()) {
-        cand->inner_segment_boundary = result.inner_segment_boundary;
+      if (current_seg_idx < result.inner_segment_boundary.size()) {
+        cand->inner_segment_boundary = {
+            result.inner_segment_boundary[current_seg_idx]};
       }
     } else {
       Candidate* cand = (pos == 0) ? segment->push_front_candidate()
@@ -632,7 +634,10 @@ void Converter::ApplyResultToSegments(const prediction::Result& result,
       cand->cost = result.cost;
       cand->attributes = (result.attributes | additional_attributes);
       cand->consumed_key_size = result.consumed_key_size;
-      cand->inner_segment_boundary = result.inner_segment_boundary;
+      if (current_seg_idx < result.inner_segment_boundary.size()) {
+        cand->inner_segment_boundary = {
+            result.inner_segment_boundary[current_seg_idx]};
+      }
     }
   }
 }

@@ -3745,10 +3745,19 @@ TEST_F(ConverterTest, PopulatePredictionResultsToSegmentsMultiSegment) {
     EXPECT_EQ(segments.conversion_segments_size(), 3);
     EXPECT_EQ(segments.conversion_segment(0).key(), "ここでは");
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "ここでは");
+    EXPECT_EQ(
+        segments.conversion_segment(0).candidate(0).inner_segment_boundary,
+        BuildInnerSegmentBoundary({{12, 12, 9, 9}}, "ここでは", "ここでは"));
     EXPECT_EQ(segments.conversion_segment(1).key(), "きものを");
     EXPECT_EQ(segments.conversion_segment(1).candidate(0).value, "着物を");
+    EXPECT_EQ(
+        segments.conversion_segment(1).candidate(0).inner_segment_boundary,
+        BuildInnerSegmentBoundary({{12, 9, 9, 6}}, "きものを", "着物を"));
     EXPECT_EQ(segments.conversion_segment(2).key(), "ぬぐ");
     EXPECT_EQ(segments.conversion_segment(2).candidate(0).value, "脱ぐ");
+    EXPECT_EQ(
+        segments.conversion_segment(2).candidate(0).inner_segment_boundary,
+        BuildInnerSegmentBoundary({{6, 6, 6, 6}}, "ぬぐ", "脱ぐ"));
   }
 
   {
