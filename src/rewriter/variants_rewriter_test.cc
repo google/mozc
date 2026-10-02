@@ -1341,6 +1341,31 @@ TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
 
     seg->clear_candidates();
   }
+
+  // Case 11: Candidate whose inner_segment_boundary has a stale byte length
+  // (e.g. "2日" (4 bytes) normalized to "２日" (6 bytes) without updating
+  // inner_segment_boundary). VariantsRewriter must ignore the inconsistent
+  // boundary rather than slicing "日" in the middle of its UTF-8 sequence.
+  {
+    manager->SetCharacterForm("0", Config::FULL_WIDTH);
+
+    converter::Candidate* top = seg->add_candidate();
+    top->key = "ふつか";
+    top->value = "２日";
+    top->content_key = "ふつか";
+    top->content_value = "２日";
+    top->attributes |= (converter::Attribute::REALTIME_CONVERSION |
+                        converter::Attribute::NO_VARIANTS_EXPANSION);
+    top->inner_segment_boundary =
+        converter::BuildInnerSegmentBoundary({{9, 4, 9, 4}}, "ふつか", "2日");
+
+    EXPECT_FALSE(rewriter->Rewrite(request, &segments));
+    ASSERT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "２日");
+    EXPECT_EQ(seg->candidate(0).content_value, "２日");
+
+    seg->clear_candidates();
+  }
 }
 
 }  // namespace

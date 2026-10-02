@@ -219,9 +219,7 @@ class InnerSegments {
   Iterator end() const { return Iterator("", "", {}); }
 
   // size() returns the number of segments. Zero segment is only allowed when
-  // both key and value are empty. Note that end() - begin() is not
-  // always the same as size(), as actual size can only be computed by
-  // iterating all lengths. When inner segment boundary is not defined,
+  // both key and value are empty. When inner segment boundary is not defined,
   // the segment size is 1.
   size_t size() const {
     if (begin_.data_.key_.empty() && begin_.data_.value_.empty()) {
@@ -301,11 +299,14 @@ class InnerSegments {
   // Constructor for the structure only with key/value.
   InnerSegments(absl::string_view key, absl::string_view value,
                 InnerSegmentBoundarySpan inner_segment_boundary)
-      : begin_(key, value, inner_segment_boundary) {}
+      : begin_(key, value,
+               IsValidInnerSegmentBoundary(key, value, inner_segment_boundary)
+                   ? inner_segment_boundary
+                   : InnerSegmentBoundarySpan{}) {}
 
   // Constructor for the structure with content_key/value.
-  // When inner_segment_boundary is empty, generates the placeholder
-  // inner_segment_boundary from content_key/value.
+  // When inner_segment_boundary is empty or inconsistent with key/value,
+  // generates the placeholder inner_segment_boundary from content_key/value.
   InnerSegments(absl::string_view key, absl::string_view value,
                 absl::string_view content_key, absl::string_view content_value,
                 InnerSegmentBoundarySpan inner_segment_boundary)
@@ -327,20 +328,60 @@ class InnerSegments {
   }
 
  private:
+  static bool IsValidUtf8Boundary(absl::string_view str, size_t offset) {
+    return offset <= str.size() &&
+           (offset == str.size() ||
+            (static_cast<uint8_t>(str[offset]) & 0xc0) != 0x80);
+  }
+
+  static bool IsValidInnerSegmentBoundary(
+      absl::string_view key, absl::string_view value,
+      InnerSegmentBoundarySpan inner_segment_boundary) {
+    if (inner_segment_boundary.empty()) {
+      return false;
+    }
+    size_t key_offset = 0;
+    size_t value_offset = 0;
+    for (const uint32_t encoded : inner_segment_boundary) {
+      const internal::LengthData data = DecodeLengths(encoded);
+      if (data.key_len == 0 || data.value_len == 0 ||
+          data.content_key_len == 0 || data.content_value_len == 0 ||
+          data.content_key_len > data.key_len ||
+          data.content_value_len > data.value_len) {
+        return false;
+      }
+      if (!IsValidUtf8Boundary(key, key_offset + data.content_key_len) ||
+          !IsValidUtf8Boundary(key, key_offset + data.key_len) ||
+          !IsValidUtf8Boundary(value, value_offset + data.content_value_len) ||
+          !IsValidUtf8Boundary(value, value_offset + data.value_len)) {
+        return false;
+      }
+      key_offset += data.key_len;
+      value_offset += data.value_len;
+    }
+    return key_offset == key.size() && value_offset == value.size();
+  }
+
   InnerSegmentBoundarySpan fix_inner_segment_boundary(
       absl::string_view key, absl::string_view value,
       absl::string_view content_key, absl::string_view content_value,
       InnerSegmentBoundarySpan inner_segment_boundary) {
-    if (inner_segment_boundary.empty()) {
-      if (std::optional<uint32_t> encoded =
-              EncodeLengths(key.size(), value.size(), content_key.size(),
-                            content_value.size());
-          encoded.has_value()) {
-        boundary_storage_[0] = encoded.value();
-        return boundary_storage_;
-      }
+    if (IsValidInnerSegmentBoundary(key, value, inner_segment_boundary)) {
+      return inner_segment_boundary;
     }
-    return inner_segment_boundary;
+    const size_t content_key_len = IsValidUtf8Boundary(key, content_key.size())
+                                       ? content_key.size()
+                                       : key.size();
+    const size_t content_value_len =
+        IsValidUtf8Boundary(value, content_value.size()) ? content_value.size()
+                                                         : value.size();
+    if (std::optional<uint32_t> encoded = EncodeLengths(
+            key.size(), value.size(), content_key_len, content_value_len);
+        encoded.has_value()) {
+      boundary_storage_[0] = encoded.value();
+      return boundary_storage_;
+    }
+    return {};
   }
 
   // boundary info to store different key and content_key with

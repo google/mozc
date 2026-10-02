@@ -163,7 +163,8 @@ TEST(InnerSegmentBoundary, InnerSegmentIteratorEmpty) {
 }
 
 TEST(InnerSegment, InnerSegmentIteratorInvalid) {
-  // Invalid boundary.
+  // Invalid boundary (total key length mismatches key.size()): ignored and
+  // handled as a single segment.
   {
     const InnerSegmentBoundary boundary =
         BuildInnerSegmentBoundary({{2, 3, 2, 3}}, "ab", "ABC");
@@ -175,18 +176,14 @@ TEST(InnerSegment, InnerSegmentIteratorInvalid) {
     const auto [keys, values, content_keys, content_values, functional_keys,
                 functional_values] = GetSegments(inner_segments);
 
-    ASSERT_EQ(keys.size(), 2);
-    EXPECT_EQ(keys[0], "ab");
-    EXPECT_EQ(keys[1], "c");
+    ASSERT_EQ(keys.size(), 1);
+    EXPECT_EQ(keys[0], "abc");
     EXPECT_EQ(values[0], "ABC");
-    EXPECT_EQ(values[1], "");
-    EXPECT_EQ(content_keys[0], "ab");
-    EXPECT_EQ(content_keys[1], "c");
+    EXPECT_EQ(content_keys[0], "abc");
     EXPECT_EQ(content_values[0], "ABC");
-    EXPECT_EQ(content_values[1], "");
   }
 
-  // Boundary info is not enough. Remained parts are handled as one segment.
+  // Boundary info is not enough: ignored and handled as a single segment.
   {
     const InnerSegmentBoundary boundary =
         BuildInnerSegmentBoundary({{1, 1, 1, 1}}, "a", "A");
@@ -197,44 +194,72 @@ TEST(InnerSegment, InnerSegmentIteratorInvalid) {
     const auto [keys, values, content_keys, content_values, functional_keys,
                 functional_values] = GetSegments(inner_segments);
 
-    ASSERT_EQ(keys.size(), 2);
-    EXPECT_EQ(keys[0], "a");
-    EXPECT_EQ(keys[1], "bc");
-    EXPECT_EQ(values[0], "A");
-    EXPECT_EQ(values[1], "BC");
-    EXPECT_EQ(content_keys[0], "a");
-    EXPECT_EQ(content_keys[1], "bc");
-    EXPECT_EQ(content_values[0], "A");
-    EXPECT_EQ(content_values[1], "BC");
+    ASSERT_EQ(keys.size(), 1);
+    EXPECT_EQ(keys[0], "abc");
+    EXPECT_EQ(values[0], "ABC");
+    EXPECT_EQ(content_keys[0], "abc");
+    EXPECT_EQ(content_values[0], "ABC");
   }
 
-  // Too many boundaries. Ignores the remained info.
+  // Too many boundaries: ignored and handled as a single segment.
   {
     const InnerSegmentBoundary boundary = BuildInnerSegmentBoundary(
         {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}},
         "aaaaa", "AAAAA");
 
     const InnerSegments inner_segments("abc", "ABC", boundary);
-    // size() checks inner_segment_boundary.size(), so no the same as
-    // the actual size.
-    EXPECT_EQ(inner_segments.size(), 5);
+    EXPECT_EQ(inner_segments.size(), 1);
 
     const auto [keys, values, content_keys, content_values, functional_keys,
                 functional_values] = GetSegments(inner_segments);
 
-    ASSERT_EQ(keys.size(), 3);
-    EXPECT_EQ(keys[0], "a");
-    EXPECT_EQ(keys[1], "b");
-    EXPECT_EQ(keys[2], "c");
-    EXPECT_EQ(values[0], "A");
-    EXPECT_EQ(values[1], "B");
-    EXPECT_EQ(values[2], "C");
-    EXPECT_EQ(content_keys[0], "a");
-    EXPECT_EQ(content_keys[1], "b");
-    EXPECT_EQ(content_keys[2], "c");
-    EXPECT_EQ(content_values[0], "A");
-    EXPECT_EQ(content_values[1], "B");
-    EXPECT_EQ(content_values[2], "C");
+    ASSERT_EQ(keys.size(), 1);
+    EXPECT_EQ(keys[0], "abc");
+    EXPECT_EQ(values[0], "ABC");
+    EXPECT_EQ(content_keys[0], "abc");
+    EXPECT_EQ(content_values[0], "ABC");
+  }
+
+  // Stale boundary from half-width "2日" (4 bytes) applied to full-width "２日"
+  // (6 bytes): ignored instead of slicing in the middle of a UTF-8 character.
+  {
+    const InnerSegmentBoundary stale_boundary =
+        BuildInnerSegmentBoundary({{9, 4, 9, 4}}, "ふつか", "2日");
+    ASSERT_EQ(stale_boundary.size(), 1);
+
+    const InnerSegments inner_segments("ふつか", "２日", "ふつか", "２日",
+                                       stale_boundary);
+    EXPECT_EQ(inner_segments.size(), 1);
+
+    const auto [keys, values, content_keys, content_values, functional_keys,
+                functional_values] = GetSegments(inner_segments);
+
+    ASSERT_EQ(keys.size(), 1);
+    EXPECT_EQ(keys[0], "ふつか");
+    EXPECT_EQ(values[0], "２日");
+    EXPECT_EQ(content_keys[0], "ふつか");
+    EXPECT_EQ(content_values[0], "２日");
+  }
+
+  // Boundary whose total byte length matches key/value, but slices in the
+  // middle of a multi-byte UTF-8 character (at byte 2 of "２日"): ignored.
+  {
+    const InnerSegmentBoundary mid_utf8_boundary = BuildInnerSegmentBoundary(
+        {{3, 2, 3, 2}, {6, 4, 6, 4}}, "ふつか", "２日");
+    ASSERT_EQ(mid_utf8_boundary.size(), 2);
+
+    const InnerSegments inner_segments("ふつか", "２日", "ふつか", "２日",
+                                       mid_utf8_boundary);
+    EXPECT_EQ(inner_segments.size(), 1);
+
+    const auto [keys, values, content_keys, content_values, functional_keys,
+                functional_values] = GetSegments(inner_segments);
+
+    ASSERT_EQ(keys.size(), 1);
+    EXPECT_EQ(keys[0], "ふつか");
+    EXPECT_EQ(values[0], "２日");
+    EXPECT_EQ(content_keys[0], "ふつか");
+    EXPECT_EQ(content_values[0], "２日");
   }
 
   // empty key/value.
