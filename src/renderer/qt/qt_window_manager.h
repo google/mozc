@@ -41,12 +41,17 @@
 namespace mozc {
 namespace renderer {
 
+// Item delegate of the candidate table, which draws the decorations that cannot
+// be expressed by the background brush of the items.
+//
 // The gradient needs to be drawn by the delegate rather than set as the items'
 // background brush, because gradient QBrush coordinate mapping is not reliable
 // in the QTableWidget cell-background path.
-class FooterBackgroundDelegate : public QStyledItemDelegate {
+// This delegate also draws the infolist marker of the candidate rows and the
+// frame of the focused row.
+class CandidateTableDelegate : public QStyledItemDelegate {
  public:
-  explicit FooterBackgroundDelegate(QObject* parent = nullptr)
+  explicit CandidateTableDelegate(QObject* parent = nullptr)
       : QStyledItemDelegate(parent) {}
 
   void SetGradientColors(const QColor& top, const QColor& bottom) {
@@ -59,6 +64,17 @@ class FooterBackgroundDelegate : public QStyledItemDelegate {
     separator_colors_ = std::move(colors);
   }
 
+  // The color of the frame that surrounds the focused candidate row.
+  void SetFocusedBorderColor(const QColor& color) {
+    focused_border_color_ = color;
+  }
+
+  // The color of the marker that indicates that an infolist entry is available
+  // for the candidate.
+  void SetInfolistMarkerColor(const QColor& color) {
+    infolist_marker_color_ = color;
+  }
+
   void paint(QPainter* painter, const QStyleOptionViewItem& option,
              const QModelIndex& index) const override;
 
@@ -66,6 +82,8 @@ class FooterBackgroundDelegate : public QStyledItemDelegate {
   QColor top_;
   QColor bottom_;
   QList<QColor> separator_colors_;
+  QColor focused_border_color_;
+  QColor infolist_marker_color_;
 };
 
 class QtWindowManager {
@@ -126,10 +144,10 @@ class QtWindowManager {
   QTableWidget *candidates_ = nullptr;
   QTableWidget *infolist_ = nullptr;
 
-  // Does not have the ownership. `footer_delegate_`, `vscroll_bar_` and
+  // Does not have the ownership. `candidate_delegate_`, `vscroll_bar_` and
   // `vscroll_indicator_` are child QObjects of `candidates_`, which is
   // responsible for destroying them.
-  FooterBackgroundDelegate* footer_delegate_ = nullptr;
+  CandidateTableDelegate* candidate_delegate_ = nullptr;
   QWidget* vscroll_bar_ = nullptr;
   QWidget* vscroll_indicator_ = nullptr;
 
