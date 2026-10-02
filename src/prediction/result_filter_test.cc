@@ -37,7 +37,11 @@
 #include "absl/algorithm/container.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/connector.h"
 #include "prediction/result.h"
+#include "prediction/suggestion_filter.h"
+#include "request/conversion_request.h"
+#include "storage/existence_filter.h"
 #include "testing/gunit.h"
 
 namespace mozc::prediction::filter {
@@ -121,8 +125,9 @@ TEST(ResultFilterTest, SelectSuggestionFilterStrategies) {
 
   constexpr uint32_t kSkipFilter = ResultFilter::kSkipFilter;
   constexpr uint32_t kByValue = ResultFilter::kFilterByValue;
-  constexpr uint32_t kByHistAndValue =
-      ResultFilter::kFilterByValue | ResultFilter::kFilterByHistoryAndValue;
+  constexpr uint32_t kByHistAndValue = ResultFilter::kFilterByValue |
+                                       ResultFilter::kFilterByHistoryAndValue |
+                                       ResultFilter::kFilterByNwp;
 
   struct {
     const Result result;
@@ -156,6 +161,30 @@ TEST(ResultFilterTest, SelectSuggestionFilterStrategies) {
                   test_case.result, test_case.request_key,
                   test_case.history_value, test_case.include_exact_key));
   }
+}
+
+TEST(ResultFilterTest, ShouldRemoveWithNwpSuggestionFilter) {
+  storage::ExistenceFilterBuilder builder =
+      storage::ExistenceFilterBuilder::CreateOptimal(1024, 1);
+  // Entries in SuggestionFilter are stored in lowercase.
+  builder.Insert("<nwp>京都");
+  const SuggestionFilter suggestion_filter(builder.Build());
+  const Connector connector;
+
+  // "<NWP>京都" is suppressed during NWP, while still allowed during normal
+  // conversion when the user explicitly types the reading.
+  const Result history = {.key = "ひがし", .value = "東"};
+  const ConversionRequest nwp_req =
+      ConversionRequestBuilder().SetHistoryResult(history).Build();
+  ResultFilter nwp_filter(nwp_req, connector, suggestion_filter);
+  EXPECT_TRUE(nwp_filter.ShouldRemove({.key = "", .value = "京都"}, 0));
+  EXPECT_FALSE(nwp_filter.ShouldRemove({.key = "", .value = "東京"}, 0));
+
+  const ConversionRequest conv_req =
+      ConversionRequestBuilder().SetKey("きょうと").Build();
+  ResultFilter conv_filter(conv_req, connector, suggestion_filter);
+  EXPECT_FALSE(
+      conv_filter.ShouldRemove({.key = "きょうと", .value = "京都"}, 0));
 }
 
 }  // namespace

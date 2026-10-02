@@ -46,10 +46,10 @@ namespace mozc::prediction::filter {
 
 class ResultFilter {
  public:
-  ResultFilter(
-      const ConversionRequest& request,
-      const Connector& connector ABSL_ATTRIBUTE_LIFETIME_BOUND,
-      const SuggestionFilter& suggestion_filter ABSL_ATTRIBUTE_LIFETIME_BOUND);
+  ResultFilter(const ConversionRequest& request,
+               const Connector& connector ABSL_ATTRIBUTE_LIFETIME_BOUND,
+               const SuggestionFilter& suggestion_filter
+                   ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
   bool ShouldRemove(const Result& result, int added_num);
 
@@ -60,6 +60,8 @@ class ResultFilter {
     kFilterByValue = 1,
     // Applied against the concatenation of history value and result's value
     kFilterByHistoryAndValue = 2,
+    // Applied against "<NWP>" + result's value
+    kFilterByNwp = 4,
   };
 
   // Select how to apply the suggestion filter against `result`. Returns a

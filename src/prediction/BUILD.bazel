@@ -322,6 +322,10 @@ mozc_cc_test(
     deps = [
         ":result",
         ":result_filter",
+        ":suggestion_filter",
+        "//converter:connector",
+        "//request:conversion_request",
+        "//storage:existence_filter",
         "//testing:gunit",
         "//testing:gunit_main",
         "@com_google_absl//absl/algorithm:container",
