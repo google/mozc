@@ -145,8 +145,7 @@ class UserPosMock : public UserPos {
   //  verb (-ing form) | 220 | 220
   std::vector<UserPos::Token> GetTokens(
       absl::string_view key, absl::string_view value,
-      user_dictionary::UserDictionary::PosType pos_type,
-      absl::string_view locale) const override {
+      user_dictionary::UserDictionary::PosType pos_type) const override {
     std::vector<UserPos::Token> tokens;
     if (key.empty() || value.empty()) {
       return tokens;
@@ -166,11 +165,6 @@ class UserPosMock : public UserPos {
   }
 
   std::vector<std::string> GetPosList() const override { return {"名詞"}; }
-  int GetPosListDefaultIndex() const override { return 0; }
-
-  std::optional<uint16_t> GetPosIds(absl::string_view pos) const override {
-    return std::nullopt;
-  }
 
   static constexpr user_dictionary::UserDictionary::PosType kNoun =
       user_dictionary::UserDictionary::NOUN;
@@ -983,18 +977,11 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
   EXPECT_EQ(token.cost, expected_cost);
   EXPECT_EQ(token.attributes, Token::USER_DICTIONARY);
 
-  user_token.add_attribute(UserPos::Token::NON_JA_LOCALE);
-  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
-                                               UserDictionary::PREFIX, &token);
-  EXPECT_EQ(token.cost, 10000);
-
-  user_token.attributes = 0;
   user_token.set_pos_type(user_dictionary::UserDictionary::ABBREVIATION);
   dic->PopulateTokenFromUserPosTokenForTesting(user_token,
                                                UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, 200);
 
-  user_token.attributes = 0;
   user_token.set_pos_type(user_dictionary::UserDictionary::SUGGESTION_ONLY);
   dic->PopulateTokenFromUserPosTokenForTesting(
       user_token, UserDictionary::UserDictionary::PREFIX, &token);
@@ -1002,14 +989,12 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
   EXPECT_EQ(token.rid, pos_matcher.GetUnknownId());
   EXPECT_EQ(token.cost, expected_cost);
 
-  user_token.attributes = 0;
   user_token.set_pos_type(user_dictionary::UserDictionary::NO_POS);
   dic->PopulateTokenFromUserPosTokenForTesting(
       user_token, UserDictionary::PREDICTIVE, &token);
   // NO_POS id is set via user_pos.def.
   EXPECT_EQ(token.cost, expected_cost);
 
-  user_token.attributes = 0;
   user_token.set_pos_type(user_dictionary::UserDictionary::NO_POS);
 
   user_token.key = "a";  // one char

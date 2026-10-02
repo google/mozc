@@ -123,10 +123,12 @@ message UserDictionary {
     optional PosType pos = 5 [default = NOUN];
 
     // In multilingual settings, Gboard's personal dictionary will feed entries
-    // with locale information. We can change the behavior (filter or demote)
+    // with locale information.
     // The locale is usually formatted in BCP47.
     // In TSV format, the locale is encoded in the POS field as `pos:locale`
     // "名詞:ja".
+    // Note: The core conversion engine (UserDictionary) does not read or use
+    // this field (`NON_JA_LOCALE` was never wired up in UserDictionary).
     optional string locale = 12 [default = ""];
 
     reserved 10;  // deprecated removed

@@ -93,8 +93,6 @@ constexpr size_t kDefaultTotalBytesLimit = 512 << 20;
 // +---------------------------------------+
 // | id (uint16_t, 2 bytes)                |
 // +---------------------------------------+
-// | attributes (uint8_t, 1 byte)          |
-// +---------------------------------------+
 // | raw_pos_type (uint8_t, 1 byte)        |
 // +---------------------------------------+
 // | key_len (uint16_t, 2 bytes)           |
@@ -109,7 +107,7 @@ constexpr size_t kDefaultTotalBytesLimit = 512 << 20;
 // +---------------------------------------+
 class UserDictionary::TokensIndex {
  public:
-  static constexpr size_t kTokenHeaderSize = 8;
+  static constexpr size_t kTokenHeaderSize = 7;
 
   // Lightweight zero-copy view over a serialized token entry.
   class Token {
@@ -119,13 +117,12 @@ class UserDictionary::TokensIndex {
     }
 
     uint16_t id() const { return LoadUnaligned<uint16_t>(data_.data()); }
-    uint8_t attributes() const { return static_cast<uint8_t>(data_[2]); }
-    uint8_t raw_pos_type() const { return static_cast<uint8_t>(data_[3]); }
+    uint8_t raw_pos_type() const { return static_cast<uint8_t>(data_[2]); }
     uint16_t key_len() const {
-      return LoadUnaligned<uint16_t>(data_.data() + 4);
+      return LoadUnaligned<uint16_t>(data_.data() + 3);
     }
     uint16_t value_len() const {
-      return LoadUnaligned<uint16_t>(data_.data() + 6);
+      return LoadUnaligned<uint16_t>(data_.data() + 5);
     }
 
     absl::string_view key() const {
@@ -140,9 +137,6 @@ class UserDictionary::TokensIndex {
       return absl::string_view(data_.data() + offset, data_.size() - offset);
     }
 
-    bool has_attribute(UserPos::Token::Attribute attr) const {
-      return attributes() & attr;
-    }
     user_dictionary::UserDictionary::PosType pos_type() const {
       return static_cast<::mozc::user_dictionary::UserDictionary::PosType>(
           raw_pos_type());
@@ -198,14 +192,9 @@ class UserDictionary::TokensIndex {
     }
 
     // * Overwrites costs.
-    // Locale is not Japanese.
-    if (user_pos_token.has_attribute(UserPos::Token::NON_JA_LOCALE)) {
-      token->cost = 10000;
-    } else {
-      token->cost =
-          UserPos::GetCostFromPosType(user_pos_token.pos_type(), cost_penalty_);
-      DCHECK_GT(token->cost, 0);
-    }
+    token->cost =
+        UserPos::GetCostFromPosType(user_pos_token.pos_type(), cost_penalty_);
+    DCHECK_GT(token->cost, 0);
 
     // The treatment for the words with default POS (NO_POS).
     // Shorter keys have more penalty so that they are not shown in the context.
@@ -330,11 +319,10 @@ class UserDictionary::TokensIndex {
                     '\0');
     char* ptr = buf.data();
     StoreUnaligned<uint16_t>(token.id, ptr);
-    ptr[2] = static_cast<char>(token.attributes);
-    ptr[3] = static_cast<char>(token.raw_pos_type);
-    StoreUnaligned<uint16_t>(static_cast<uint16_t>(token.key.size()), ptr + 4);
+    ptr[2] = static_cast<char>(token.raw_pos_type);
+    StoreUnaligned<uint16_t>(static_cast<uint16_t>(token.key.size()), ptr + 3);
     StoreUnaligned<uint16_t>(static_cast<uint16_t>(token.value.size()),
-                             ptr + 6);
+                             ptr + 5);
     ptr += kTokenHeaderSize;
     std::memcpy(ptr, token.key.data(), token.key.size());
     ptr += token.key.size();

@@ -78,12 +78,7 @@ void UserPos::InitPosList() {
     if (!seen.insert(token.pos_index).second) {
       continue;
     }
-    const absl::string_view pos = string_array_[token.pos_index];
-    if (pos == "名詞") {
-      // "名詞" is the default POS.
-      pos_list_default_index_ = pos_list_.size();
-    }
-    pos_list_.push_back(std::string(pos));
+    pos_list_.push_back(std::string(string_array_[token.pos_index]));
   }
   pos_list_.shrink_to_fit();
 
@@ -123,8 +118,7 @@ std::optional<uint16_t> UserPos::GetPosIds(absl::string_view pos) const {
 
 std::vector<UserPos::Token> UserPos::GetTokens(
     absl::string_view key, absl::string_view value,
-    user_dictionary::UserDictionary::PosType pos_type,
-    absl::string_view locale) const {
+    user_dictionary::UserDictionary::PosType pos_type) const {
   if (key.empty() || value.empty() ||
       !user_dictionary::UserDictionary::PosType_IsValid(pos_type)) {
     return {};
@@ -137,13 +131,6 @@ std::vector<UserPos::Token> UserPos::GetTokens(
 
   std::vector<Token> tokens(token_array_index.size());
 
-  const bool is_non_ja_locale = !locale.empty() && !locale.starts_with("ja");
-
-  uint8_t attributes = 0;
-  if (is_non_ja_locale) {
-    attributes |= UserPos::Token::NON_JA_LOCALE;
-  }
-
   const TokenArrayData first = GetTokenArrayData(token_array_index.front());
   auto dest = tokens.begin();
 
@@ -151,7 +138,6 @@ std::vector<UserPos::Token> UserPos::GetTokens(
     strings::Assign(dest->key, key);
     strings::Assign(dest->value, value);
     dest->id = first.conjugation_id;
-    dest->attributes = attributes;
     dest->set_pos_type(pos_type);
   } else {
     // expand all other forms
@@ -175,7 +161,6 @@ std::vector<UserPos::Token> UserPos::GetTokens(
       dest->key = absl::StrCat(key_stem, key_suffix);
       dest->value = absl::StrCat(value_stem, value_suffix);
       dest->id = src.conjugation_id;
-      dest->attributes = attributes;
       dest->set_pos_type(pos_type);
       ++dest;
     }
