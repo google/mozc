@@ -141,5 +141,64 @@ TEST(ConnectorTest, BrokenData) {
   }
 }
 
+TEST(ConnectorTest, GetTransitionCost_OneByteCost) {
+  // A 2x2 connection matrix with 1-byte costs (resolution 64) in the format
+  // described in connector.cc:
+  //   rid 0: lid 0 is the mode value 100, lid 1 is the invalid cost.
+  //   rid 1: lid 0 is 10 * 64 = 640, lid 1 is the mode value 200.
+  alignas(uint32_t) static constexpr uint8_t kData[] = {
+      0xAB, 0xCD,              // magic
+      0x40, 0x00,              // resolution = 64
+      0x02, 0x00, 0x02, 0x00,  // rsize = 2, lsize = 2
+      0x64, 0x00, 0xC8, 0x00,  // mode values: 100, 200
+      // rid 0
+      0x04, 0x00, 0x04, 0x00,  // compact_bits_size = 4, values_size = 4
+      0x01, 0x00, 0x00, 0x00,  // chunk bits: chunk 0 has a value
+      0x02, 0x00, 0x00, 0x00,  // compact bits: lid 1 has a value
+      0xFF, 0x00, 0x00, 0x00,  // values: 255 = invalid cost
+      // rid 1
+      0x04, 0x00, 0x04, 0x00,  // compact_bits_size = 4, values_size = 4
+      0x01, 0x00, 0x00, 0x00,  // chunk bits: chunk 0 has a value
+      0x01, 0x00, 0x00, 0x00,  // compact bits: lid 0 has a value
+      0x0A, 0x00, 0x00, 0x00,  // values: 10, i.e. 640 with resolution 64
+  };
+  absl::StatusOr<Connector> connector = Connector::Create(
+      absl::string_view(reinterpret_cast<const char*>(kData), sizeof(kData)));
+  ASSERT_OK(connector);
+  EXPECT_EQ(connector->GetResolution(), 64);
+  EXPECT_EQ(connector->GetTransitionCost(0, 1), Connector::kInvalidCost);
+  EXPECT_EQ(connector->GetTransitionCost(1, 0), 640);
+  EXPECT_EQ(connector->GetTransitionCost(1, 1), 200);
+}
+
+TEST(ConnectorTest, GetTransitionCost_TwoByteCost) {
+  // The same 2x2 connection matrix as above with 2-byte costs (resolution 1):
+  //   rid 0: lid 0 is the mode value 100, lid 1 is the invalid cost.
+  //   rid 1: lid 0 is 640, lid 1 is the mode value 200.
+  alignas(uint32_t) static constexpr uint8_t kData[] = {
+      0xAB, 0xCD,              // magic
+      0x01, 0x00,              // resolution = 1
+      0x02, 0x00, 0x02, 0x00,  // rsize = 2, lsize = 2
+      0x64, 0x00, 0xC8, 0x00,  // mode values: 100, 200
+      // rid 0
+      0x04, 0x00, 0x04, 0x00,  // compact_bits_size = 4, values_size = 4
+      0x01, 0x00, 0x00, 0x00,  // chunk bits: chunk 0 has a value
+      0x02, 0x00, 0x00, 0x00,  // compact bits: lid 1 has a value
+      0x30, 0x75, 0x00, 0x00,  // values: 30000 = invalid cost
+      // rid 1
+      0x04, 0x00, 0x04, 0x00,  // compact_bits_size = 4, values_size = 4
+      0x01, 0x00, 0x00, 0x00,  // chunk bits: chunk 0 has a value
+      0x01, 0x00, 0x00, 0x00,  // compact bits: lid 0 has a value
+      0x80, 0x02, 0x00, 0x00,  // values: 640
+  };
+  absl::StatusOr<Connector> connector = Connector::Create(
+      absl::string_view(reinterpret_cast<const char*>(kData), sizeof(kData)));
+  ASSERT_OK(connector);
+  EXPECT_EQ(connector->GetResolution(), 1);
+  EXPECT_EQ(connector->GetTransitionCost(0, 1), Connector::kInvalidCost);
+  EXPECT_EQ(connector->GetTransitionCost(1, 0), 640);
+  EXPECT_EQ(connector->GetTransitionCost(1, 1), 200);
+}
+
 }  // namespace
 }  // namespace mozc

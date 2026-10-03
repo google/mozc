@@ -305,6 +305,11 @@ int Connector::LookupCost(uint16_t rid, uint16_t lid) const {
   if (!value.has_value()) {
     return default_cost_[rid];
   }
+  // kInvalidCost is stored as is regardless of the resolution, so it must not
+  // be scaled.
+  if (*value == kInvalidCost) {
+    return kInvalidCost;
+  }
   return *value * resolution_;
 }
 
