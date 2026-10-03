@@ -62,6 +62,8 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include <memory>
+
 #include "base/util.h"
 #include "base/win32/wide_char.h"
 
@@ -174,6 +176,44 @@ absl::Status StripWritePreventingAttributesIfExists(
               "Cannot drop the write-preventing file attributes of %s: %s",
               filename, s.message()));
     }
+  }
+  return absl::OkStatus();
+}
+
+// Renames |from| to |to| with POSIX semantics. Unlike MoveFileExW(), this
+// succeeds even if |to| is being read by other handles as long as they were
+// opened with FILE_SHARE_DELETE (see InputFileStream). Those handles keep
+// referring to the old file as on POSIX. Fails if the volume does not support
+// POSIX semantics (e.g. FAT32 and older versions of ReFS) or if |from| and |to|
+// are on different volumes.
+absl::Status RenameWithPosixSemantics(const std::wstring& from,
+                                      const std::wstring& to) {
+  wil::unique_hfile handle(
+      ::CreateFileW(from.c_str(), DELETE,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                    nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
+  if (!handle) {
+    return Win32ErrorToStatus(::GetLastError(), "CreateFileW failed");
+  }
+  // FILE_RENAME_INFO ends with a flexible array member for the file name.
+  const size_t filename_bytes = to.size() * sizeof(wchar_t);
+  const size_t buffer_size =
+      offsetof(FILE_RENAME_INFO, FileName) + filename_bytes + sizeof(wchar_t);
+  auto buffer = std::make_unique<std::byte[]>(buffer_size);
+  auto* info = reinterpret_cast<FILE_RENAME_INFO*>(buffer.get());
+  // While we do not do so here, you can check FILE_SUPPORTS_POSIX_UNLINK_RENAME
+  // flag to determine whether FILE_RENAME_FLAG_POSIX_SEMANTICS is supported or
+  // not if necessary.
+  info->Flags =
+      FILE_RENAME_FLAG_REPLACE_IF_EXISTS | FILE_RENAME_FLAG_POSIX_SEMANTICS;
+  info->RootDirectory = nullptr;
+  info->FileNameLength = static_cast<DWORD>(filename_bytes);
+  // Copies the file name including the terminating null character.
+  std::memcpy(info->FileName, to.c_str(), filename_bytes + sizeof(wchar_t));
+  if (!::SetFileInformationByHandle(handle.get(), FileRenameInfoEx, info,
+                                    static_cast<DWORD>(buffer_size))) {
+    return Win32ErrorToStatus(::GetLastError(),
+                              "SetFileInformationByHandle failed");
   }
   return absl::OkStatus();
 }
@@ -484,10 +524,17 @@ absl::Status FileUtil::AtomicRename(absl::string_view from,
         absl::StrFormat("StripWritePreventingAttributesIfExists failed: %s",
                         s.message()));
   }
-  if (!::MoveFileExW(pf_from.c_str(), pf_to.c_str(),
-                     MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)) {
-    const DWORD move_file_ex_error = ::GetLastError();
-    return Win32ErrorToStatus(move_file_ex_error, "MoveFileExW failed");
+  // Prefers POSIX semantics so that the rename succeeds even while |to| is
+  // being read, e.g. by the user dictionary reloader thread. Falls back to
+  // MoveFileExW(), which also supports moves across volumes.
+  if (absl::Status s = RenameWithPosixSemantics(pf_from, pf_to); !s.ok()) {
+    if (!::MoveFileExW(pf_from.c_str(), pf_to.c_str(),
+                       MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)) {
+      const DWORD move_file_ex_error = ::GetLastError();
+      return Win32ErrorToStatus(
+          move_file_ex_error,
+          absl::StrCat("MoveFileExW failed (", s.message(), ")"));
+    }
   }
   if (absl::Status s = SetFileAttributes(pf_to, *original_attributes);
       !s.ok()) {

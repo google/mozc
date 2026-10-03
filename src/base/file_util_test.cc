@@ -30,11 +30,13 @@
 #include "base/file_util.h"
 
 #include <ios>
+#include <iterator>
 #include <string>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "base/file/temp_dir.h"
+#include "base/file_stream.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -383,6 +385,47 @@ TEST(FileUtilTest, AtomicRename) {
     ::SetFileAttributesW(wto.c_str(), FILE_ATTRIBUTE_NORMAL);
   }
 #endif  // _WIN32
+}
+
+TEST(FileUtilTest, AtomicRenameWhileReading) {
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string from =
+      FileUtil::JoinPath(temp_dir.path(), "atomic_rename_test_from");
+  const std::string to =
+      FileUtil::JoinPath(temp_dir.path(), "atomic_rename_test_to");
+  CreateTestFile(from, "new");
+  CreateTestFile(to, "old");
+
+  // Replaces |to| while it is opened for reading, e.g. by the user dictionary
+  // reloader running in another thread.
+  InputFileStream ifs(to);
+  ASSERT_TRUE(ifs);
+  EXPECT_OK(FileUtil::AtomicRename(from, to));
+  EXPECT_FALSE(FileUtil::FileExists(from).ok());
+
+  // The existing stream keeps reading the old content.
+  const std::string old_content(std::istreambuf_iterator<char>(ifs), {});
+  EXPECT_EQ(old_content, "old");
+  ifs.close();
+
+  absl::StatusOr<std::string> new_content = FileUtil::GetContents(to);
+  ASSERT_OK(new_content);
+  EXPECT_EQ(*new_content, "new");
+}
+
+TEST(FileUtilTest, UnlinkWhileReading) {
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename =
+      FileUtil::JoinPath(temp_dir.path(), "unlink_while_reading_test");
+  CreateTestFile(filename, "test");
+
+  InputFileStream ifs(filename);
+  ASSERT_TRUE(ifs);
+  EXPECT_OK(FileUtil::Unlink(filename));
+
+  // The existing stream can still read the content.
+  const std::string content(std::istreambuf_iterator<char>(ifs), {});
+  EXPECT_EQ(content, "test");
 }
 
 TEST(FileUtilTest, CreateHardLink) {
