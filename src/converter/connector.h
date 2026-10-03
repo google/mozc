@@ -70,9 +70,7 @@ class Connector final {
 
 class Connector::Row final {
  public:
-  Row()
-      : chunk_bits_index_(sizeof(uint32_t)),
-        compact_bits_index_(sizeof(uint32_t)) {}
+  Row() = default;
 
   void Init(const uint8_t* chunk_bits, size_t chunk_bits_size,
             const uint8_t* compact_bits, size_t compact_bits_size,
