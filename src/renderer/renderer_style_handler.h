@@ -38,10 +38,21 @@ namespace renderer {
 // this is pure static class
 class RendererStyleHandler {
  public:
+  // Color theme of the candidate window. kDark mirrors the system dark-mode
+  // preference (e.g. XDG Desktop Portal `org.freedesktop.appearance`
+  // color-scheme on Linux).
+  enum class ColorTheme {
+    kLight,
+    kDark,
+  };
+
   RendererStyleHandler() = delete;
 
-  // return current Style
+  // Returns the style for the light theme.
   static void GetRendererStyle(RendererStyle* style);
+
+  // Returns the style for the specified color theme.
+  static void GetRendererStyle(RendererStyle* style, ColorTheme theme);
 };
 
 }  // namespace renderer

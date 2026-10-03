@@ -95,6 +95,10 @@ class QtWindowManager {
 
   void Initialize();
 
+  // Switches the candidate/infolist windows between the light and dark color
+  // themes and repaints the currently visible window, if any.
+  void SetDarkMode(bool dark);
+
   void HideAllWindows();
   void ShowAllWindows();
   void UpdateLayout(const commands::RendererCommand &command);
