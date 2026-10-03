@@ -301,6 +301,26 @@ void QtWindowManager::UpdateVScrollBar(
   vscroll_bar_->raise();
 }
 
+void QtWindowManager::SetDarkMode(bool dark) {
+  RendererStyleHandler::GetRendererStyle(
+      &style_, dark ? RendererStyleHandler::ColorTheme::kDark
+                    : RendererStyleHandler::ColorTheme::kLight);
+  ApplyStyleToWidgets();
+
+  // The table cells still hold the brushes of the previous theme, and they
+  // survive HideAllWindows(). Reset prev_command_ so that the next
+  // UpdateLayout() call takes the full FillCandidateWindow() path instead of
+  // the incremental-highlight path of UpdateCandidateWindow(), even when the
+  // same candidates are rendered again.
+  const commands::RendererCommand last_command = prev_command_;
+  prev_command_.Clear();
+
+  // Repaint the currently visible candidate window with the new colors.
+  if (candidates_ != nullptr && candidates_->isVisible()) {
+    UpdateLayout(last_command);
+  }
+}
+
 void QtWindowManager::HideAllWindows() {
   candidates_->hide();
   infolist_->hide();

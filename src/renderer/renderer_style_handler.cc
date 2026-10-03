@@ -42,6 +42,8 @@ namespace renderer {
 namespace {
 // absl::string_view kStyleTextProto is defined in renderer_style.inc.
 #include "renderer/renderer_style.inc"
+// absl::string_view kStyleDarkTextProto is defined in renderer_style_dark.inc.
+#include "renderer/renderer_style_dark.inc"
 
 void SetRgbaColor(RendererStyle::RGBAColor* color, double r, double g, double b,
                   double a = 1.0) {
@@ -53,7 +55,14 @@ void SetRgbaColor(RendererStyle::RGBAColor* color, double r, double g, double b,
 }  // namespace
 
 void RendererStyleHandler::GetRendererStyle(RendererStyle* style) {
-  CHECK(mozc::protobuf::TextFormat::ParseFromString(kStyleTextProto, style));
+  GetRendererStyle(style, ColorTheme::kLight);
+}
+
+void RendererStyleHandler::GetRendererStyle(RendererStyle* style,
+                                            ColorTheme theme) {
+  const absl::string_view style_text_proto =
+      theme == ColorTheme::kDark ? kStyleDarkTextProto : kStyleTextProto;
+  CHECK(mozc::protobuf::TextFormat::ParseFromString(style_text_proto, style));
 
   if (!style->candidate_style().has_background_color()) {
     SetRgbaColor(style->mutable_candidate_style()->mutable_background_color(),
