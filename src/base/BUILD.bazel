@@ -259,7 +259,9 @@ mozc_cc_library(
     deps = [
         "//base/strings:pfchar",
         "@com_google_absl//absl/strings:string_view",
-    ],
+    ] + mozc_select(
+        windows = ["@com_microsoft_wil//:wil"],
+    ),
 )
 
 mozc_cc_library(
@@ -458,6 +460,7 @@ mozc_cc_test(
     srcs = ["file_util_test.cc"],
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
+        ":file_stream",
         ":file_util",
         ":util",
         "//base/file:temp_dir",

@@ -750,13 +750,6 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   }
 }
 
-#ifndef _WIN32
-// On Windows, `storage.Save()` uses `MoveFileExW(...,
-// MOVEFILE_REPLACE_EXISTING)`, which fails with `ERROR_ACCESS_DENIED` if the
-// background reloader thread simultaneously holds an open `InputFileStream`
-// handle to the destination file. On POSIX platforms, `rename(2)` atomically
-// updates the directory entry to a new inode without conflicting with open read
-// descriptors.
 TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
   TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   const std::string filename =
@@ -769,7 +762,7 @@ TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
   for (int i = 0; i < kNumUpdates; ++i) {
     UserDictionaryStorage storage(filename);
     if (i > 0) {
-      EXPECT_OK(storage.Load());
+      ASSERT_OK(storage.Load());
     }
     EXPECT_TRUE(storage.Lock());
     EXPECT_OK(storage.CreateDictionary(absl::StrCat("dic_", i)));
@@ -782,7 +775,7 @@ TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
       entry->set_value(absl::StrFormat("value_%d_%d", i, j));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
-    EXPECT_OK(storage.Save());
+    ASSERT_OK(storage.Save());
     EXPECT_TRUE(storage.UnLock());
 
     // Trigger Reload() immediately without waiting for the previous reload to
@@ -796,7 +789,6 @@ TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
     EXPECT_FALSE(LookupExact(absl::StrFormat("key_%d_0", i), *dic).empty());
   }
 }
-#endif  // !_WIN32
 
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   std::unique_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
