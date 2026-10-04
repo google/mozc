@@ -234,7 +234,7 @@ CandidateWindow::CandidateWindow()
 CandidateWindow::~CandidateWindow() = default;
 
 void CandidateWindow::UpdateDpiDependentResources() {
-  GetScaledRendererStyle(&style_, dpi_);
+  style_ = GetScaledRendererStyle(dpi_);
   const double scale_factor = GetDPIScalingFactor(dpi_);
   double image_scale_factor = 1.0;
   if (scale_factor < 1.125) {

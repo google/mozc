@@ -45,9 +45,8 @@ double GetDPIScalingFactor(uint32_t dpi);
 // coordinates. Falls back to USER_DEFAULT_SCREEN_DPI on failure.
 uint32_t GetDpiForPoint(int x, int y);
 
-// Populates |style| with the default RendererStyle, scaled for |dpi|.
-void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style,
-                            uint32_t dpi);
+// Returns the default RendererStyle, scaled for |dpi|.
+::mozc::renderer::RendererStyle GetScaledRendererStyle(uint32_t dpi);
 
 }  // namespace win32
 }  // namespace renderer

@@ -142,9 +142,8 @@ void CandidateTableDelegate::paint(QPainter* painter,
   }
 }
 
-QtWindowManager::QtWindowManager() {
-  RendererStyleHandler::GetRendererStyle(&style_);
-}
+QtWindowManager::QtWindowManager()
+    : style_(RendererStyleHandler::GetRendererStyle()) {}
 
 void QtWindowManager::OnClicked(int row, int column) {
   DLOG(INFO) << "OnClicked: (" << row << ", " << column << ")";

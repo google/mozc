@@ -34,19 +34,14 @@
 
 #include "protocol/candidate_window.pb.h"
 #include "protocol/renderer_command.pb.h"
-
-namespace mozc {
-namespace renderer {
-class RendererStyle;
-}  // namespace mozc::renderer
-}  // namespace mozc
+#include "protocol/renderer_style.pb.h"
 
 // InfolistView is an NSView subclass to draw the infolist window
 // according to the current candidates.
 @interface InfolistView : NSView {
  @private
   mozc::commands::CandidateWindow candidate_window_;
-  const mozc::renderer::RendererStyle *style_;
+  mozc::renderer::RendererStyle style_;
   // The row which has focused background.
   int focusedRow_;
 }

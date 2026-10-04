@@ -105,7 +105,7 @@ using mozc::renderer::mac::MacViewUtil;
 }
 
 - (void)initializeDefaultStyle {
-  RendererStyleHandler::GetRendererStyle(&style_);
+  style_ = RendererStyleHandler::GetRendererStyle();
 
   const std::string &logo_file_name = style_.logo_file_name();
   logoImage_ = [NSImage imageNamed:[NSString stringWithUTF8String:logo_file_name.c_str()]];

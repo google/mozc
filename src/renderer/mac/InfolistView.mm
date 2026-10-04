@@ -63,15 +63,7 @@ using mozc::renderer::mac::MacViewUtil;
 - (id)initWithFrame:(NSRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    RendererStyle *style = new (std::nothrow) RendererStyle;
-    if (style) {
-      RendererStyleHandler::GetRendererStyle(style);
-    }
-    style_ = style;
-  }
-
-  if (!style_) {
-    self = nil;
+    style_ = RendererStyleHandler::GetRendererStyle();
   }
   return self;
 }
@@ -86,7 +78,7 @@ using mozc::renderer::mac::MacViewUtil;
 
 #pragma mark drawing
 - (CGFloat)drawRow:(int)row ypos:(CGFloat)ypos draw_flag:(bool)draw_flag {
-  const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
+  const RendererStyle::InfolistStyle &infostyle = style_.infolist_style();
   const InformationList &usages = candidate_window_.usages();
   const RendererStyle::TextStyle &title_style = infostyle.title_style();
   const RendererStyle::TextStyle &desc_style = infostyle.description_style();
@@ -162,7 +154,7 @@ using mozc::renderer::mac::MacViewUtil;
     return NSMakeSize(0, 0);
   }
 
-  const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
+  const RendererStyle::InfolistStyle &infostyle = style_.infolist_style();
   const InformationList &usages = candidate_window_.usages();
 
   int ypos = infostyle.window_border();
