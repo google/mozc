@@ -2340,8 +2340,8 @@ TEST_F(EngineConverterTest, SuggestFillIncognitoCandidateWordsEmptySegments) {
   // Normal suggestion succeeds, but the incognito suggestion fails to produce
   // any candidates.  In this case |incognito_segments_| is left empty even
   // though the request asks to fill incognito candidate words.
-  // FillIncognitoCandidateWords must handle the empty container without
-  // accessing out-of-bounds segments.
+  // FillOutput must not access out-of-bounds segments, and must not materialize
+  // the field either, so has_incognito_candidate_words() stays false.
   EXPECT_CALL(*mock_converter,
               StartPrediction(IsIncognitoConversionRequest(false), _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
