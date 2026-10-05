@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <deque>
 #include <functional>
 #include <iterator>
@@ -6645,11 +6646,16 @@ TEST_F(UserHistoryPredictorTest, CharacterFormNormalization) {
     const ConversionRequest convreq =
         SetUpInputForConversion("すうじ", &composer_, &segments_proxy);
     segments_proxy.AddCandidate(0, "０１２３");
+    segments_proxy.PushBackInnerSegmentBoundary(
+        0, 0, strlen("すう"), strlen("０１"), strlen("すう"), strlen("０１"));
+    segments_proxy.PushBackInnerSegmentBoundary(
+        0, 0, strlen("じ"), strlen("２３"), strlen("じ"), strlen("２３"));
     predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   // 2. When CharacterFormManager preferences are set to HALF_WIDTH,
-  // UserHistoryPredictor must dynamically normalize the suggestion to "0123".
+  // UserHistoryPredictor must dynamically normalize the suggestion/conversion
+  // to "0123" and update inner_segment_boundary when populated.
   {
     char_form_manager->SetCharacterForm("0", config::Config::HALF_WIDTH);
     SegmentsProxy segments_proxy;
@@ -6658,11 +6664,22 @@ TEST_F(UserHistoryPredictorTest, CharacterFormNormalization) {
     const std::vector<Result> results = predictor->Predict(convreq);
     ASSERT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "0123");
+
+    const ConversionRequest conv_req =
+        SetUpInputForConversion("すうじ", &composer_, &segments_proxy);
+    const std::vector<Result> convert_results = predictor->Convert(conv_req);
+    ASSERT_FALSE(convert_results.empty());
+    EXPECT_EQ(convert_results[0].value, "0123");
+    EXPECT_EQ(convert_results[0].inner_segment_boundary,
+              converter::BuildInnerSegmentBoundary(
+                  {{strlen("すう"), strlen("01"), strlen("すう"), strlen("01")},
+                   {strlen("じ"), strlen("23"), strlen("じ"), strlen("23")}},
+                  "すうじ", "0123"));
   }
 
   // 3. When CharacterFormManager preferences are set to FULL_WIDTH,
-  // UserHistoryPredictor must dynamically normalize the suggestion to
-  // "０１２３".
+  // UserHistoryPredictor must dynamically normalize the suggestion/conversion
+  // to "０１２３" and update inner_segment_boundary when populated.
   {
     char_form_manager->SetCharacterForm("0", config::Config::FULL_WIDTH);
     SegmentsProxy segments_proxy;
@@ -6671,6 +6688,18 @@ TEST_F(UserHistoryPredictorTest, CharacterFormNormalization) {
     const std::vector<Result> results = predictor->Predict(convreq);
     ASSERT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "０１２３");
+
+    const ConversionRequest conv_req =
+        SetUpInputForConversion("すうじ", &composer_, &segments_proxy);
+    const std::vector<Result> convert_results = predictor->Convert(conv_req);
+    ASSERT_FALSE(convert_results.empty());
+    EXPECT_EQ(convert_results[0].value, "０１２３");
+    EXPECT_EQ(
+        convert_results[0].inner_segment_boundary,
+        converter::BuildInnerSegmentBoundary(
+            {{strlen("すう"), strlen("０１"), strlen("すう"), strlen("０１")},
+             {strlen("じ"), strlen("２３"), strlen("じ"), strlen("２３")}},
+            "すうじ", "０１２３"));
   }
 
   // 4. Committing a half-width candidate updates CharacterFormManager

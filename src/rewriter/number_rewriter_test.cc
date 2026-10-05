@@ -1529,4 +1529,110 @@ TEST_F(NumberRewriterTest, UpdateCandidateClearsStaleInnerSegmentBoundary) {
   EXPECT_EQ(seg->candidate(2).value, "2から");
 }
 
+TEST_F(NumberRewriterTest, RememberNumberStyleForCompoundAndKanjiNumbers) {
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  auto* manager = config::CharacterFormManager::GetCharacterFormManager();
+  manager->ClearHistory();
+
+  Segments segments;
+  Segment* seg = segments.push_back_segment();
+  seg->set_key("123から");
+  seg->set_segment_type(Segment::FIXED_VALUE);
+
+  converter::Candidate* cand = seg->add_candidate();
+  cand->key = "123から";
+  cand->content_key = "123";
+  cand->value = "123から";
+  cand->content_value = "123";
+  cand->lid = pos_matcher_.GetNumberId();
+  cand->rid = pos_matcher_.GetNumberId();
+  cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
+
+  rewriter->Finish(default_request_, segments);
+  {
+    const auto stored = manager->GetLastNumberStyle();
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->form, config::Config::HALF_WIDTH);
+    EXPECT_EQ(stored->style, NumberUtil::NumberString::DEFAULT_STYLE);
+  }
+
+  // Number + counter where content_value includes the counter ("2日") has
+  // mixed character form and non-number script type; it should not overwrite
+  // LastNumberStyle with FULL_WIDTH.
+  cand->key = "2か";
+  cand->content_key = "2か";
+  cand->value = "2日";
+  cand->content_value = "2日";
+  rewriter->Finish(default_request_, segments);
+  {
+    const auto stored = manager->GetLastNumberStyle();
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->form, config::Config::HALF_WIDTH);
+    EXPECT_EQ(stored->style, NumberUtil::NumberString::DEFAULT_STYLE);
+  }
+
+  // Unstyled Kanji number ("二") with DEFAULT_STYLE should not overwrite
+  // LastNumberStyle with {FULL_WIDTH, DEFAULT_STYLE}.
+  cand->key = "に";
+  cand->content_key = "に";
+  cand->value = "二";
+  cand->content_value = "二";
+  rewriter->Finish(default_request_, segments);
+  {
+    const auto stored = manager->GetLastNumberStyle();
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->form, config::Config::HALF_WIDTH);
+    EXPECT_EQ(stored->style, NumberUtil::NumberString::DEFAULT_STYLE);
+  }
+
+  // Phonetic Kanji number ("に" -> "二") with NUMBER_KANJI style (set by
+  // SetNumberInfoToExistingCandidates during Rewrite) should not overwrite
+  // LastNumberStyle either.
+  cand->key = "に";
+  cand->content_key = "に";
+  cand->value = "二";
+  cand->content_value = "二";
+  cand->style = NumberUtil::NumberString::NUMBER_KANJI;
+  rewriter->Finish(default_request_, segments);
+  {
+    const auto stored = manager->GetLastNumberStyle();
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->form, config::Config::HALF_WIDTH);
+    EXPECT_EQ(stored->style, NumberUtil::NumberString::DEFAULT_STYLE);
+  }
+
+  // Digit key converted to NUMBER_ARABIC_AND_KANJI_HALFWIDTH ("10000" -> "1万")
+  // has mixed character form (UNKNOWN_FORM), but should still be recorded.
+  cand->key = "10000";
+  cand->content_key = "10000";
+  cand->value = "1万";
+  cand->content_value = "1万";
+  cand->style = NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH;
+  rewriter->Finish(default_request_, segments);
+  {
+    const auto stored = manager->GetLastNumberStyle();
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->style,
+              NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH);
+  }
+
+  // When LastNumberStyle is {FULL_WIDTH, DEFAULT_STYLE}, rewriting a number
+  // candidate with a functional suffix ("123から") should rerank "１２３から"
+  // to the top based on content_value.
+  manager->SetLastNumberStyle(
+      {config::Config::FULL_WIDTH, NumberUtil::NumberString::DEFAULT_STYLE});
+  Segments suffix_segments;
+  Segment* suffix_seg = suffix_segments.push_back_segment();
+  suffix_seg->set_key("123から");
+  converter::Candidate* suffix_cand = suffix_seg->add_candidate();
+  suffix_cand->key = "123から";
+  suffix_cand->content_key = "123";
+  suffix_cand->value = "123から";
+  suffix_cand->content_value = "123";
+  suffix_cand->lid = pos_matcher_.GetNumberId();
+  suffix_cand->rid = pos_matcher_.GetNumberId();
+  EXPECT_TRUE(rewriter->Rewrite(default_request_, &suffix_segments));
+  EXPECT_EQ(suffix_seg->candidate(0).value, "１２３から");
+}
+
 }  // namespace mozc

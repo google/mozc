@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
 
@@ -2119,6 +2120,61 @@ TEST_F(UserSegmentHistoryRewriterTest, Revert) {
     candidate->content_key = "abc";
     const ConversionRequest convreq = CreateConversionRequest();
     EXPECT_FALSE(rewriter->Rewrite(convreq, &segments));
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest,
+       NormalizeCandidateUpdatesInnerSegmentBoundary) {
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  rewriter->Clear();
+
+  const ConversionRequest convreq = CreateConversionRequest();
+
+  // Learn "2日" for "ふつか".
+  {
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("ふつか");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+    candidate->key = "ふつか";
+    candidate->content_key = "ふつか";
+    candidate->value = "2日";
+    candidate->content_value = "2日";
+    segments.mutable_segment(0)->move_candidate(1, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        converter::Attribute::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(convreq, segments);
+  }
+
+  // Set number character form preference to FULL_WIDTH and rewrite a segment
+  // where "2日" has an inner_segment_boundary for 4 bytes.
+  SetNumberForm(Config::FULL_WIDTH);
+  {
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("ふつか");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+    candidate->key = "ふつか";
+    candidate->content_key = "ふつか";
+    candidate->value = "2日";
+    candidate->content_value = "2日";
+    candidate->inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+        {{strlen("ふつか"), strlen("2日"), strlen("ふつか"), strlen("2日")}},
+        candidate->key, candidate->value);
+
+    EXPECT_TRUE(rewriter->Rewrite(convreq, &segments));
+    const converter::Candidate& top = segments.segment(0).candidate(0);
+    EXPECT_EQ(top.value, "２日");
+    EXPECT_EQ(top.content_value, "２日");
+    EXPECT_EQ(top.inner_segment_boundary,
+              converter::BuildInnerSegmentBoundary(
+                  {{strlen("ふつか"), strlen("２日"), strlen("ふつか"),
+                    strlen("２日")}},
+                  "ふつか", "２日"));
   }
 }
 

@@ -757,8 +757,10 @@ void NumberRewriter::RerankCandidates(
     if (itr->style != style) {
       continue;
     }
+    const absl::string_view content =
+        itr->content_value.empty() ? itr->value : itr->content_value;
     if (style == NumberUtil::NumberString::DEFAULT_STYLE &&
-        ((Util::GetFormType(itr->value) == Util::HALF_WIDTH) !=
+        ((Util::GetFormType(content) == Util::HALF_WIDTH) !=
          (form == config::Config::HALF_WIDTH))) {
       continue;
     }
@@ -803,7 +805,23 @@ void NumberRewriter::Finish(const ConversionRequest& request,
 
 void NumberRewriter::RememberNumberStyle(
     const converter::Candidate& candidate) {
-  const Util::FormType form = Util::GetFormType(candidate.value);
+  const absl::string_view content = candidate.content_value.empty()
+                                        ? candidate.value
+                                        : candidate.content_value;
+  const Util::FormType form = Util::GetFormType(content);
+  if (candidate.style == NumberUtil::NumberString::DEFAULT_STYLE) {
+    if (Util::GetScriptType(content) != Util::NUMBER ||
+        (form != Util::HALF_WIDTH && form != Util::FULL_WIDTH)) {
+      return;
+    }
+  } else {
+    const absl::string_view key =
+        candidate.content_key.empty() ? candidate.key : candidate.content_key;
+    if (Util::GetScriptType(content) != Util::NUMBER &&
+        Util::GetScriptType(key) != Util::NUMBER) {
+      return;
+    }
+  }
   CharacterFormManager::NumberFormStyle entry = {
       form == Util::HALF_WIDTH ? config::Config::HALF_WIDTH
                                : config::Config::FULL_WIDTH,

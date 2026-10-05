@@ -56,6 +56,7 @@
 #include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/connector.h"
+#include "converter/inner_segment.h"
 #include "converter/segmenter.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
@@ -458,7 +459,11 @@ DictionaryPredictor::AggregateTypingCorrectedResultsForMixedConversion(
     // Appends the result with TYPING_CORRECTION attribute.
     for (Result& result : corrected_results) {
       PopulateTypeCorrectedQuery(query, &result);
-      result.value = manager->ConvertConversionString(result.value);
+      converter::RewriteCandidateValues(
+          [manager](absl::string_view s) {
+            return manager->ConvertConversionString(s);
+          },
+          &result);
       results.emplace_back(std::move(result));
     }
   }

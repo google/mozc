@@ -37,12 +37,14 @@
 #include <iterator>
 #include <limits>
 #include <optional>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 #include "absl/container/fixed_array.h"
 #include "absl/log/check.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -472,6 +474,37 @@ inline InnerSegmentBoundary BuildInnerSegmentBoundary(
     builder.Add(key_len, value_len, content_key_len, content_value_len);
   }
   return builder.Build(key, value);
+}
+
+// Rewrites `target->value` (and `target->content_value` if present) using `fn`,
+// and rebuilds `target->inner_segment_boundary` when populated so the encoded
+// byte lengths stay consistent with the rewritten values.
+// `T` can be `converter::Candidate` or `prediction::Result`.
+template <typename T, typename Fn>
+void RewriteCandidateValues(Fn&& fn, T* target) {
+  if (target->inner_segment_boundary.empty()) {
+    target->value = fn(target->value);
+  } else {
+    std::string new_value;
+    InnerSegmentBoundaryBuilder boundary_builder;
+    for (const auto& iter : target->inner_segments()) {
+      const std::string inner_value = fn(iter.GetValue());
+      const std::string inner_content_value =
+          (iter.GetValue() == iter.GetContentValue())
+              ? inner_value
+              : fn(iter.GetContentValue());
+      absl::StrAppend(&new_value, inner_value);
+      boundary_builder.Add(iter.GetKey().size(), inner_value.size(),
+                           iter.GetContentKey().size(),
+                           inner_content_value.size());
+    }
+    target->value = std::move(new_value);
+    target->inner_segment_boundary =
+        boundary_builder.Build(target->key, target->value);
+  }
+  if constexpr (requires { target->content_value; }) {
+    target->content_value = fn(target->content_value);
+  }
 }
 
 }  // namespace converter

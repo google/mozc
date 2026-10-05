@@ -55,6 +55,7 @@
 #include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -407,10 +408,12 @@ bool UserSegmentHistoryRewriter::SortCandidates(
         DCHECK(new_candidate);
 
         *new_candidate = *candidate;  // copy candidate
-        new_candidate->value = normalized_value;
-        CharacterFormManager::GetCharacterFormManager()
-            ->ConvertConversionString(candidate->content_value,
-                                      &(new_candidate->content_value));
+        const auto* manager = CharacterFormManager::GetCharacterFormManager();
+        converter::RewriteCandidateValues(
+            [manager](absl::string_view s) {
+              return manager->ConvertConversionString(s);
+            },
+            new_candidate);
         // Update description so it matches candidate's current value.
         // This fix addresses Bug #3493644.
         // (Wrong character width annotation after learning alphabet)

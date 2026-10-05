@@ -1914,8 +1914,13 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     //    UserHistoryPredictor, NumberRewriter, and VariantsRewriter perform
     //    fragmented, localized normalization.
     if (Util::GetScriptType(result.value) == Util::NUMBER) {
-      result.value = config::CharacterFormManager::GetCharacterFormManager()
-                         ->ConvertConversionString(result.value);
+      const auto* manager =
+          config::CharacterFormManager::GetCharacterFormManager();
+      converter::RewriteCandidateValues(
+          [manager](absl::string_view s) {
+            return manager->ConvertConversionString(s);
+          },
+          &result);
     }
 
     MaybeRewritePrefixSpace(request, result);

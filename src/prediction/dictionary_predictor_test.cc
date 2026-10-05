@@ -54,6 +54,7 @@
 #include "composer/composer.h"
 #include "composer/query.h"
 #include "composer/table.h"
+#include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/attribute.h"
 #include "converter/connector.h"
@@ -3363,6 +3364,41 @@ TEST_F(DictionaryPredictorTest,
 
   EXPECT_EQ(results[0].key, expected[0].correction);
   EXPECT_EQ(results[0].value, "よろしく！");  // default is full width.
+
+  // Verify that inner_segment_boundary is also updated when the character form
+  // normalization changes the byte length of `value` (e.g. "2日" -> "２日").
+  config::CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
+      "0", config::Config::FULL_WIDTH);
+  expected = {TypeCorrectedQuery{"ふつか", TypeCorrectedQuery::CORRECTION}};
+  auto mock2 = std::make_unique<engine::MockSupplementalModel>();
+  EXPECT_CALL(*mock2, CorrectComposition(_)).WillOnce(Return(expected));
+  data_and_predictor = CreatePredictorWithMockData(
+      nullptr /* suffix_dictionary */, std::move(mock2));
+  EXPECT_CALL(*data_and_predictor->mutable_realtime_decoder(), Decode(_))
+      .WillOnce([](const ConversionRequest& req) {
+        Result result;
+        result.key = req.key();
+        result.value = "2日";
+        result.attributes = REALTIME;
+        result.inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+            {{result.key.size(), result.value.size(), result.key.size(),
+              result.value.size()}},
+            result.key, result.value);
+        return std::vector<Result>{result};
+      });
+  const std::vector<Result> results2 =
+      data_and_predictor->predictor_peer()
+          .AggregateTypingCorrectedResultsForMixedConversion(
+              CreatePredictionConversionRequest("ふつか"));
+  ASSERT_EQ(results2.size(), 1);
+  EXPECT_EQ(results2[0].value, "２日");
+  EXPECT_EQ(
+      results2[0].inner_segment_boundary,
+      converter::BuildInnerSegmentBoundary({{strlen("ふつか"), strlen("２日"),
+                                             strlen("ふつか"), strlen("２日")}},
+                                           "ふつか", "２日"));
+  config::CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
+  config::CharacterFormManager::GetCharacterFormManager()->ClearHistory();
 }
 
 TEST_F(DictionaryPredictorTest,

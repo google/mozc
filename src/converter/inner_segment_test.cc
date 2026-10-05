@@ -463,5 +463,59 @@ TEST(InnerSegments, GetPrefixKeyAndValue) {
   }
 }
 
+TEST(InnerSegments, RewriteCandidateValues) {
+  struct DummyResult {
+    std::string key;
+    std::string value;
+    InnerSegmentBoundary inner_segment_boundary;
+    InnerSegments inner_segments() const {
+      return InnerSegments(key, value, inner_segment_boundary);
+    }
+  };
+
+  struct DummyCandidate {
+    std::string key;
+    std::string value;
+    std::string content_key;
+    std::string content_value;
+    InnerSegmentBoundary inner_segment_boundary;
+    InnerSegments inner_segments() const {
+      return InnerSegments(key, value, content_key, content_value,
+                           inner_segment_boundary);
+    }
+  };
+
+  // Without inner_segment_boundary.
+  {
+    DummyResult result{
+        .key = "key",
+        .value = "val",
+    };
+    RewriteCandidateValues(
+        [](absl::string_view s) { return absl::StrCat(s, "!"); }, &result);
+    EXPECT_EQ(result.value, "val!");
+    EXPECT_TRUE(result.inner_segment_boundary.empty());
+  }
+
+  // With inner_segment_boundary and content_value.
+  {
+    DummyCandidate candidate{
+        .key = "k1k2f",
+        .value = "v1v2f",
+        .content_key = "k1k2",
+        .content_value = "v1v2",
+        .inner_segment_boundary = BuildInnerSegmentBoundary(
+            {{2, 2, 2, 2}, {3, 3, 2, 2}}, "k1k2f", "v1v2f"),
+    };
+    RewriteCandidateValues(
+        [](absl::string_view s) { return absl::StrCat(s, s); }, &candidate);
+    EXPECT_EQ(candidate.value, "v1v1v2fv2f");
+    EXPECT_EQ(candidate.content_value, "v1v2v1v2");
+    EXPECT_EQ(candidate.inner_segment_boundary,
+              BuildInnerSegmentBoundary({{2, 4, 2, 4}, {3, 6, 2, 4}}, "k1k2f",
+                                        "v1v1v2fv2f"));
+  }
+}
+
 }  // namespace converter
 }  // namespace mozc
