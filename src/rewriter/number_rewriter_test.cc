@@ -1379,6 +1379,27 @@ TEST_F(NumberRewriterTest, NumberStyleLearningExplicitHalfWidth) {
       PrepareNumberSegments("1234", "1234", 0, pos_matcher_);
   EXPECT_TRUE(rewriter->Rewrite(request, &new_segments));
   EXPECT_EQ(new_segments.conversion_segment(0).candidate(0).value, "1,234");
+
+  // Commit full-width Arabic+Kanji candidate: "１万"
+  seg->set_key("10000");
+  candidate->value = "１万";
+  candidate->content_value = "１万";
+  candidate->content_key = "10000";
+  candidate->style =
+      NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH;
+  rewriter->Finish(request, segments);
+
+  // Next time 10000 is converted, half-width Arabic+Kanji "1万" is reranked to
+  // top due to explicit HALF_WIDTH rule. Short number 123 falls back to "123".
+  Segments kanji_segments =
+      PrepareNumberSegments("10000", "10000", 0, pos_matcher_);
+  EXPECT_TRUE(rewriter->Rewrite(request, &kanji_segments));
+  EXPECT_EQ(kanji_segments.conversion_segment(0).candidate(0).value, "1万");
+
+  Segments short_segments =
+      PrepareNumberSegments("123", "123", 0, pos_matcher_);
+  EXPECT_TRUE(rewriter->Rewrite(request, &short_segments));
+  EXPECT_EQ(short_segments.conversion_segment(0).candidate(0).value, "123");
 }
 
 TEST_F(NumberRewriterTest, NumberStyleLearningExplicitFullWidth) {
@@ -1414,6 +1435,28 @@ TEST_F(NumberRewriterTest, NumberStyleLearningExplicitFullWidth) {
   EXPECT_TRUE(rewriter->Rewrite(request, &new_segments));
   EXPECT_EQ(new_segments.conversion_segment(0).candidate(0).value,
             "１，２３４");
+
+  // Commit half-width Arabic+Kanji candidate: "1万"
+  seg->set_key("10000");
+  candidate->value = "1万";
+  candidate->content_value = "1万";
+  candidate->content_key = "10000";
+  candidate->style =
+      NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH;
+  rewriter->Finish(request, segments);
+
+  // Next time 10000 is converted, full-width Arabic+Kanji "１万" is reranked to
+  // top due to explicit FULL_WIDTH rule. Short number 123 falls back to
+  // "１２３".
+  Segments kanji_segments =
+      PrepareNumberSegments("10000", "10000", 0, pos_matcher_);
+  EXPECT_TRUE(rewriter->Rewrite(request, &kanji_segments));
+  EXPECT_EQ(kanji_segments.conversion_segment(0).candidate(0).value, "１万");
+
+  Segments short_segments =
+      PrepareNumberSegments("123", "123", 0, pos_matcher_);
+  EXPECT_TRUE(rewriter->Rewrite(request, &short_segments));
+  EXPECT_EQ(short_segments.conversion_segment(0).candidate(0).value, "１２３");
 }
 
 TEST_F(NumberRewriterTest, RewriteTopCandidateForSuggestion) {
@@ -1602,7 +1645,8 @@ TEST_F(NumberRewriterTest, RememberNumberStyleForCompoundAndKanjiNumbers) {
   }
 
   // Digit key converted to NUMBER_ARABIC_AND_KANJI_HALFWIDTH ("10000" -> "1万")
-  // has mixed character form (UNKNOWN_FORM), but should still be recorded.
+  // has mixed character form (UNKNOWN_FORM), but should still be recorded with
+  // HALF_WIDTH form.
   cand->key = "10000";
   cand->content_key = "10000";
   cand->value = "1万";
@@ -1612,6 +1656,7 @@ TEST_F(NumberRewriterTest, RememberNumberStyleForCompoundAndKanjiNumbers) {
   {
     const auto stored = manager->GetLastNumberStyle();
     ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->form, config::Config::HALF_WIDTH);
     EXPECT_EQ(stored->style,
               NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH);
   }
@@ -1633,6 +1678,139 @@ TEST_F(NumberRewriterTest, RememberNumberStyleForCompoundAndKanjiNumbers) {
   suffix_cand->rid = pos_matcher_.GetNumberId();
   EXPECT_TRUE(rewriter->Rewrite(default_request_, &suffix_segments));
   EXPECT_EQ(suffix_seg->candidate(0).value, "１２３から");
+}
+
+TEST_F(NumberRewriterTest, RerankShortNumbersAfterSeparatedOrArabicKanjiStyle) {
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  auto* manager = config::CharacterFormManager::GetCharacterFormManager();
+  manager->ClearHistory();
+
+  // Commit "１，２３４" (NUMBER_SEPARATED_ARABIC_FULLWIDTH).
+  {
+    Segments segments;
+    Segment* seg = segments.push_back_segment();
+    seg->set_key("1234");
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    converter::Candidate* cand = seg->add_candidate();
+    cand->key = "1234";
+    cand->content_key = "1234";
+    cand->value = "１，２３４";
+    cand->content_value = "１，２３４";
+    cand->lid = pos_matcher_.GetNumberId();
+    cand->rid = pos_matcher_.GetNumberId();
+    cand->style = NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
+    rewriter->Finish(default_request_, segments);
+  }
+
+  // Next 3-digit number ("123") has no comma-separated candidate; it should
+  // fall back to full-width DEFAULT_STYLE ("１２３").
+  {
+    Segments segments = PrepareNumberSegments("123", "123", 0, pos_matcher_);
+    EXPECT_TRUE(rewriter->Rewrite(default_request_, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "１２３");
+  }
+
+  // Commit "1,234" (NUMBER_SEPARATED_ARABIC_HALFWIDTH).
+  {
+    Segments segments;
+    Segment* seg = segments.push_back_segment();
+    seg->set_key("1234");
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    converter::Candidate* cand = seg->add_candidate();
+    cand->key = "1234";
+    cand->content_key = "1234";
+    cand->value = "1,234";
+    cand->content_value = "1,234";
+    cand->lid = pos_matcher_.GetNumberId();
+    cand->rid = pos_matcher_.GetNumberId();
+    cand->style = NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+    rewriter->Finish(default_request_, segments);
+  }
+
+  // Next 3-digit number ("123") should fall back to half-width DEFAULT_STYLE
+  // ("123").
+  {
+    Segments segments = PrepareNumberSegments("123", "123", 0, pos_matcher_);
+    EXPECT_TRUE(rewriter->Rewrite(default_request_, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "123");
+  }
+
+  // Commit "１万" (NUMBER_ARABIC_AND_KANJI_FULLWIDTH).
+  {
+    Segments segments;
+    Segment* seg = segments.push_back_segment();
+    seg->set_key("10000");
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    converter::Candidate* cand = seg->add_candidate();
+    cand->key = "10000";
+    cand->content_key = "10000";
+    cand->value = "１万";
+    cand->content_value = "１万";
+    cand->lid = pos_matcher_.GetNumberId();
+    cand->rid = pos_matcher_.GetNumberId();
+    cand->style = NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH;
+    rewriter->Finish(default_request_, segments);
+  }
+
+  // Next 3-digit number ("123") should fall back to full-width DEFAULT_STYLE
+  // ("１２３").
+  {
+    Segments segments = PrepareNumberSegments("123", "123", 0, pos_matcher_);
+    EXPECT_TRUE(rewriter->Rewrite(default_request_, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "１２３");
+  }
+
+  // Commit "1万" (NUMBER_ARABIC_AND_KANJI_HALFWIDTH).
+  {
+    Segments segments;
+    Segment* seg = segments.push_back_segment();
+    seg->set_key("10000");
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    converter::Candidate* cand = seg->add_candidate();
+    cand->key = "10000";
+    cand->content_key = "10000";
+    cand->value = "1万";
+    cand->content_value = "1万";
+    cand->lid = pos_matcher_.GetNumberId();
+    cand->rid = pos_matcher_.GetNumberId();
+    cand->style = NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH;
+    rewriter->Finish(default_request_, segments);
+  }
+
+  // Next 3-digit number ("123") should fall back to half-width DEFAULT_STYLE
+  // ("123").
+  {
+    Segments segments = PrepareNumberSegments("123", "123", 0, pos_matcher_);
+    EXPECT_TRUE(rewriter->Rewrite(default_request_, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "123");
+  }
+
+  // Commit "①" (NUMBER_CIRCLED).
+  {
+    Segments segments;
+    Segment* seg = segments.push_back_segment();
+    seg->set_key("1");
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    converter::Candidate* cand = seg->add_candidate();
+    cand->key = "1";
+    cand->content_key = "1";
+    cand->value = "①";
+    cand->content_value = "①";
+    cand->lid = pos_matcher_.GetNumberId();
+    cand->rid = pos_matcher_.GetNumberId();
+    cand->style = NumberUtil::NumberString::NUMBER_CIRCLED;
+    rewriter->Finish(default_request_, segments);
+  }
+
+  // Next 3-digit number ("100") has no circled candidate; RerankCandidates
+  // should not attach NO_VARIANTS_EXPANSION to the top candidate so
+  // VariantsRewriter can normalize its character form.
+  {
+    Segments segments = PrepareNumberSegments("100", "100", 0, pos_matcher_);
+    EXPECT_TRUE(rewriter->Rewrite(default_request_, &segments));
+    EXPECT_FALSE(segments.conversion_segment(0).candidate(0).attributes &
+                 converter::Attribute::NO_VARIANTS_EXPANSION);
+  }
 }
 
 }  // namespace mozc

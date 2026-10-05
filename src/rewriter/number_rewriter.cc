@@ -738,7 +738,7 @@ void NumberRewriter::RerankCandidates(
   config::Config::CharacterForm form = stored_entry->form;
 
   // If an explicit character form rule (HALF_WIDTH or FULL_WIDTH) is configured
-  // for numbers, adapt form and separated style accordingly.
+  // for numbers, adapt form and width-dependent styles accordingly.
   const config::Config::CharacterForm config_form =
       GetConfiguredNumberCharacterForm(request);
   if (config_form == config::Config::HALF_WIDTH ||
@@ -749,23 +749,45 @@ void NumberRewriter::RerankCandidates(
       style = (config_form == config::Config::HALF_WIDTH)
                   ? NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH
                   : NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
+    } else if (
+        style == NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH ||
+        style == NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH) {
+      style = (config_form == config::Config::HALF_WIDTH)
+                  ? NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH
+                  : NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH;
     }
   }
 
-  auto top_number_entry = candidates.begin();
-  for (auto itr = candidates.begin(); itr != candidates.end(); ++itr) {
-    if (itr->style != style) {
-      continue;
+  auto find_candidate = [&](NumberUtil::NumberString::Style target_style) {
+    for (auto itr = candidates.begin(); itr != candidates.end(); ++itr) {
+      if (itr->style != target_style) {
+        continue;
+      }
+      const absl::string_view content =
+          itr->content_value.empty() ? itr->value : itr->content_value;
+      if (target_style == NumberUtil::NumberString::DEFAULT_STYLE &&
+          ((Util::GetFormType(content) == Util::HALF_WIDTH) !=
+           (form == config::Config::HALF_WIDTH))) {
+        continue;
+      }
+      return itr;
     }
-    const absl::string_view content =
-        itr->content_value.empty() ? itr->value : itr->content_value;
-    if (style == NumberUtil::NumberString::DEFAULT_STYLE &&
-        ((Util::GetFormType(content) == Util::HALF_WIDTH) !=
-         (form == config::Config::HALF_WIDTH))) {
-      continue;
-    }
-    top_number_entry = itr;
-    break;
+    return candidates.end();
+  };
+
+  auto top_number_entry = find_candidate(style);
+  // Short numbers (e.g., "123") do not have distinct separated or Arabic+Kanji
+  // candidates because their surfaces match the plain DEFAULT_STYLE candidates.
+  // Fall back to DEFAULT_STYLE with the stored character form.
+  if (top_number_entry == candidates.end() &&
+      (style == NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH ||
+       style == NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH ||
+       style == NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH ||
+       style == NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH)) {
+    top_number_entry = find_candidate(NumberUtil::NumberString::DEFAULT_STYLE);
+  }
+  if (top_number_entry == candidates.end()) {
+    return;
   }
 
   // Rerank `top_number_entry` to top.
@@ -822,9 +844,12 @@ void NumberRewriter::RememberNumberStyle(
       return;
     }
   }
+  const bool is_half_width =
+      form == Util::HALF_WIDTH ||
+      candidate.style ==
+          NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH;
   CharacterFormManager::NumberFormStyle entry = {
-      form == Util::HALF_WIDTH ? config::Config::HALF_WIDTH
-                               : config::Config::FULL_WIDTH,
+      is_half_width ? config::Config::HALF_WIDTH : config::Config::FULL_WIDTH,
       candidate.style};
   CharacterFormManager::GetCharacterFormManager()->SetLastNumberStyle(entry);
 }
