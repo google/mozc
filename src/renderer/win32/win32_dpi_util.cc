@@ -65,25 +65,24 @@ uint32_t GetDpiForPoint(int x, int y) {
   return dpi_x;
 }
 
-void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style,
-                            uint32_t dpi) {
+::mozc::renderer::RendererStyle GetScaledRendererStyle(uint32_t dpi) {
   const double scale_factor = GetDPIScalingFactor(dpi);
 
-  RendererStyleHandler::GetRendererStyle(style);
+  RendererStyle style = RendererStyleHandler::GetRendererStyle();
 
-  // style->window_border is non-scalable.
-  style->set_scrollbar_width(style->scrollbar_width() * scale_factor);
-  style->set_row_rect_padding(style->row_rect_padding() * scale_factor);
+  // style.window_border is non-scalable.
+  style.set_scrollbar_width(style.scrollbar_width() * scale_factor);
+  style.set_row_rect_padding(style.row_rect_padding() * scale_factor);
 
-  ScaleTextStyle(style->mutable_shortcut_style(), scale_factor);
-  ScaleTextStyle(style->mutable_gap1_style(), scale_factor);
-  ScaleTextStyle(style->mutable_candidate_style(), scale_factor);
-  ScaleTextStyle(style->mutable_description_style(), scale_factor);
+  ScaleTextStyle(style.mutable_shortcut_style(), scale_factor);
+  ScaleTextStyle(style.mutable_gap1_style(), scale_factor);
+  ScaleTextStyle(style.mutable_candidate_style(), scale_factor);
+  ScaleTextStyle(style.mutable_description_style(), scale_factor);
 
-  ScaleTextStyle(style->mutable_footer_style(), scale_factor);
-  ScaleTextStyle(style->mutable_footer_sub_label_style(), scale_factor);
+  ScaleTextStyle(style.mutable_footer_style(), scale_factor);
+  ScaleTextStyle(style.mutable_footer_sub_label_style(), scale_factor);
 
-  RendererStyle::InfolistStyle* info_style = style->mutable_infolist_style();
+  RendererStyle::InfolistStyle* info_style = style.mutable_infolist_style();
   // info_style->window_border and info_style->caption_padding are non-scalable.
   info_style->set_caption_height(info_style->caption_height() * scale_factor);
   info_style->set_row_rect_padding(info_style->row_rect_padding() *
@@ -93,6 +92,7 @@ void GetScaledRendererStyle(::mozc::renderer::RendererStyle* style,
   ScaleTextStyle(info_style->mutable_caption_style(), scale_factor);
   ScaleTextStyle(info_style->mutable_title_style(), scale_factor);
   ScaleTextStyle(info_style->mutable_description_style(), scale_factor);
+  return style;
 }
 
 }  // namespace win32

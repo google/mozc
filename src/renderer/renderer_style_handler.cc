@@ -52,19 +52,21 @@ void SetRgbaColor(RendererStyle::RGBAColor* color, double r, double g, double b,
 }
 }  // namespace
 
-void RendererStyleHandler::GetRendererStyle(RendererStyle* style) {
-  CHECK(mozc::protobuf::TextFormat::ParseFromString(kStyleTextProto, style));
+RendererStyle RendererStyleHandler::GetRendererStyle() {
+  RendererStyle style;
+  CHECK(mozc::protobuf::TextFormat::ParseFromString(kStyleTextProto, &style));
 
-  if (!style->candidate_style().has_background_color()) {
-    SetRgbaColor(style->mutable_candidate_style()->mutable_background_color(),
+  if (!style.candidate_style().has_background_color()) {
+    SetRgbaColor(style.mutable_candidate_style()->mutable_background_color(),
                  255, 255, 255);
   }
 
-  protobuf_util::SanitizeMessageStrings(*style, [](absl::string_view src) {
+  protobuf_util::SanitizeMessageStrings(style, [](absl::string_view src) {
     // Limit the length of the string to 100 bytes and remove ill-formed
     // UTF-8 sequences and ASCII control characters.
     return TextNormalizer::SanitizeText(src, 100);
   });
+  return style;
 }
 
 }  // namespace renderer

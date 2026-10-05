@@ -36,8 +36,7 @@ namespace mozc {
 namespace renderer {
 
 TEST(RendererStyleHandlerTest, GetRendererStyle) {
-  RendererStyle style;
-  RendererStyleHandler::GetRendererStyle(&style);
+  const RendererStyle style = RendererStyleHandler::GetRendererStyle();
   EXPECT_TRUE(style.has_window_border());
   EXPECT_TRUE(style.has_infolist_style());
   EXPECT_TRUE(style.infolist_style().has_focused_border_color());

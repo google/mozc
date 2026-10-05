@@ -40,8 +40,8 @@ class RendererStyleHandler {
  public:
   RendererStyleHandler() = delete;
 
-  // return current Style
-  static void GetRendererStyle(RendererStyle* style);
+  // Returns the current style.
+  static RendererStyle GetRendererStyle();
 };
 
 }  // namespace renderer

@@ -85,7 +85,7 @@ InfolistWindow::InfolistWindow()
       style_(new RendererStyle),
       metrics_changed_(false),
       visible_(false) {
-  GetScaledRendererStyle(style_.get(), dpi_);
+  *style_ = GetScaledRendererStyle(dpi_);
 }
 
 InfolistWindow::~InfolistWindow() {}
@@ -95,7 +95,7 @@ void InfolistWindow::UpdateDpi(uint32_t dpi) {
     return;
   }
   dpi_ = dpi;
-  GetScaledRendererStyle(style_.get(), dpi_);
+  *style_ = GetScaledRendererStyle(dpi_);
   text_renderer_->OnDpiChanged(dpi_);
 }
 

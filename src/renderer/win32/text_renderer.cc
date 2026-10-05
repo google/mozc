@@ -72,8 +72,7 @@ COLORREF ToColorRef(const RendererStyle::RGBAColor& color) {
 }
 
 COLORREF GetTextColor(TextRenderer::FONT_TYPE type, uint32_t dpi) {
-  RendererStyle style;
-  GetScaledRendererStyle(&style, dpi);
+  const RendererStyle style = GetScaledRendererStyle(dpi);
   const RendererStyle::InfolistStyle& infostyle = style.infolist_style();
 
   switch (type) {
@@ -129,8 +128,7 @@ LOGFONT GetLogFont(TextRenderer::FONT_TYPE type, uint32_t dpi) {
 
   // TODO(horo): Not only infolist fonts but also candidate fonts
   //             should be created from RendererStyle
-  RendererStyle style;
-  GetScaledRendererStyle(&style, dpi);
+  const RendererStyle style = GetScaledRendererStyle(dpi);
   const auto& infostyle = style.infolist_style();
   switch (type) {
     case TextRenderer::FONTSET_INFOLIST_CAPTION: {
