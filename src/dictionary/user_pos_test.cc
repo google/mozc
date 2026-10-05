@@ -164,17 +164,66 @@ TEST_F(UserPosTest, GetStringPosType) {
 }
 
 TEST_F(UserPosTest, GetCostFromPosTypeWithPenalty) {
-  // When cost is explicitly defined (> 0) in user_pos.def, cost + cost_penalty
-  // is returned. NOUN cost is 2500. With penalty 346: 2500 + 346 = 2846.
+  // NOUN base cost is 2500 (kStandardCost). With penalty 346: 2500 + 346 =
+  // 2846.
   EXPECT_EQ(
       UserPos::GetCostFromPosType(user_dictionary::UserDictionary::NOUN, 346),
       2846);
+
+  // ABBREVIATION always returns 200 regardless of cost_penalty.
+  EXPECT_EQ(UserPos::GetCostFromPosType(
+                user_dictionary::UserDictionary::ABBREVIATION, 0),
+            200);
+  EXPECT_EQ(UserPos::GetCostFromPosType(
+                user_dictionary::UserDictionary::ABBREVIATION, 346),
+            200);
+  EXPECT_EQ(UserPos::GetCostFromPosType(
+                user_dictionary::UserDictionary::ABBREVIATION, 2500),
+            200);
+  EXPECT_EQ(UserPos::GetCostFromPosType(
+                user_dictionary::UserDictionary::ABBREVIATION, 4605),
+            200);
 
   // When cost is 0 in user_pos.def (e.g. verbs/adjectives), default cost 5000
   // is returned without penalty.
   EXPECT_EQ(UserPos::GetCostFromPosType(
                 user_dictionary::UserDictionary::WA_GROUP1_VERB, 346),
             5000);
+
+  // Lower base-cost POS types (e.g. SYMBOL = 500, PERSONAL_NAME = 1500)
+  // gradually phase out their discount as cost_penalty approaches 2500.
+  EXPECT_EQ(
+      UserPos::GetCostFromPosType(user_dictionary::UserDictionary::SYMBOL, 0),
+      500);
+  // At penalty = 1250 (half of 2500), effective_base_cost = 500 + 2000 / 2 =
+  // 1500, total = 1500 + 1250 = 2750.
+  EXPECT_EQ(UserPos::GetCostFromPosType(user_dictionary::UserDictionary::SYMBOL,
+                                        1250),
+            2750);
+  // At penalty = 2500, all non-zero POS types (except ABBREVIATION) converge
+  // to 5000.
+  EXPECT_EQ(UserPos::GetCostFromPosType(user_dictionary::UserDictionary::SYMBOL,
+                                        2500),
+            5000);
+  EXPECT_EQ(UserPos::GetCostFromPosType(
+                user_dictionary::UserDictionary::PERSONAL_NAME, 2500),
+            5000);
+  EXPECT_EQ(
+      UserPos::GetCostFromPosType(
+          user_dictionary::UserDictionary::SENTENCE_ENDING_PARTICLE, 2500),
+      5000);
+  EXPECT_EQ(
+      UserPos::GetCostFromPosType(user_dictionary::UserDictionary::NOUN, 2500),
+      5000);
+
+  // Above penalty = 2500 (e.g. N = 10,000 -> penalty = 4605), all scale as
+  // 2500 + cost_penalty = 7105.
+  EXPECT_EQ(UserPos::GetCostFromPosType(user_dictionary::UserDictionary::SYMBOL,
+                                        4605),
+            7105);
+  EXPECT_EQ(
+      UserPos::GetCostFromPosType(user_dictionary::UserDictionary::NOUN, 4605),
+      7105);
 }
 
 TEST_F(UserPosTest, PosTypeRoundTrip) {

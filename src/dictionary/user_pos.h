@@ -120,12 +120,13 @@ class UserPos {
   static absl::string_view GetStringPosType(
       user_dictionary::UserDictionary::PosType pos_type);
 
-  // Returns the cost of PosType. If cost is explicitly defined in user_pos.def
-  // (> 0), returns cost + cost_penalty. If cost is 0 in user_pos.def (e.g.
-  // verbs/adjectives), default cost (5000) is returned without applying
-  // cost_penalty.
-  // The default cost of 5000 is already penalized, so we don't want to add
-  // an extra penalty.
+  // Returns the cost of PosType.
+  // - ABBREVIATION always returns its base cost (200) without cost_penalty.
+  // - If cost is 0 in user_pos.def (e.g. verbs/adjectives), default cost (5000)
+  //   is returned without applying cost_penalty.
+  // - For other POS types (cost > 0), gradually phases out the per-POS discount
+  //   (2500 - cost) as cost_penalty approaches 2500, and scales as
+  //   2500 + cost_penalty for larger penalties.
   static uint16_t GetCostFromPosType(
       user_dictionary::UserDictionary::PosType pos_type, int cost_penalty = 0);
 

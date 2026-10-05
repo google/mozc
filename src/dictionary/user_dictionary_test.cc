@@ -1052,6 +1052,40 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosTokenWithEntryPenalty) {
   dic->PopulateTokenFromUserPosTokenForTesting(user_token,
                                                UserDictionary::PREFIX, &token);
   EXPECT_EQ(token.cost, 5000);
+
+  // ABBREVIATION always uses fixed cost (200) without penalty.
+  user_token.set_pos_type(user_dictionary::UserDictionary::ABBREVIATION);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
+  EXPECT_EQ(token.cost, 200);
+
+  // At N = 148, cost_penalty is static_cast<int>(500 * log(149)) = 2501 >=
+  // 2500, so the per-POS discount is fully phased out and all standard POS
+  // types scale as 2500 + cost_penalty.
+  for (int i = 10; i < 148; ++i) {
+    user_dictionary::UserDictionary::Entry* entry = user_dic->add_entries();
+    entry->set_key(absl::StrCat("key", i));
+    entry->set_value(absl::StrCat("value", i));
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
+  }
+  dic->Load(storage);
+
+  const int penalty_148 = static_cast<int>(500.0 * std::log(149.0));  // 2501
+  for (const user_dictionary::UserDictionary::PosType pos_type : {
+           user_dictionary::UserDictionary::NOUN,
+           user_dictionary::UserDictionary::PERSONAL_NAME,
+           user_dictionary::UserDictionary::SYMBOL,
+       }) {
+    user_token.set_pos_type(pos_type);
+    dic->PopulateTokenFromUserPosTokenForTesting(
+        user_token, UserDictionary::PREFIX, &token);
+    EXPECT_EQ(token.cost, 2500 + penalty_148);
+  }
+
+  user_token.set_pos_type(user_dictionary::UserDictionary::ABBREVIATION);
+  dic->PopulateTokenFromUserPosTokenForTesting(user_token,
+                                               UserDictionary::PREFIX, &token);
+  EXPECT_EQ(token.cost, 200);
 }
 
 TEST_F(UserDictionaryTest, LoadFromStreamTest) {
