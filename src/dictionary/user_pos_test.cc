@@ -190,16 +190,16 @@ TEST_F(UserPosTest, GetCostFromPosTypeWithPenalty) {
                 user_dictionary::UserDictionary::WA_GROUP1_VERB, 346),
             5000);
 
-  // Lower base-cost POS types (e.g. SYMBOL = 500, PERSONAL_NAME = 1500)
+  // Lower base-cost POS types (e.g. SYMBOL = 2000, PERSONAL_NAME = 1500)
   // gradually phase out their discount as cost_penalty approaches 2500.
   EXPECT_EQ(
       UserPos::GetCostFromPosType(user_dictionary::UserDictionary::SYMBOL, 0),
-      500);
-  // At penalty = 1250 (half of 2500), effective_base_cost = 500 + 2000 / 2 =
-  // 1500, total = 1500 + 1250 = 2750.
+      2000);
+  // At penalty = 1250 (half of 2500), effective_base_cost = 2000 + 500 / 2 =
+  // 2250, total = 2250 + 1250 = 3500.
   EXPECT_EQ(UserPos::GetCostFromPosType(user_dictionary::UserDictionary::SYMBOL,
                                         1250),
-            2750);
+            3500);
   // At penalty = 2500, all non-zero POS types (except ABBREVIATION) converge
   // to 5000.
   EXPECT_EQ(UserPos::GetCostFromPosType(user_dictionary::UserDictionary::SYMBOL,

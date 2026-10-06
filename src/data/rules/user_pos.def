@@ -41,8 +41,8 @@
 名詞形動	ADJECTIVE_VERBAL_NOUN	*	名詞,形容動詞語幹,*,*,*,*	1500
 数	NUMBER	*	名詞,数,アラビア数字	1000
 アルファベット	ALPHABET	*	記号,アルファベット,*,*,*,*	2500
-記号	SYMBOL	*	記号,一般,*,*,*,*	500
-顔文字	EMOTICON	*	記号,一般,*,*,*,*	500
+記号	SYMBOL	*	記号,一般,*,*,*,*	2000
+顔文字	EMOTICON	*	記号,一般,*,*,*,*	2000
 副詞	ADVERB	*	副詞,一般,*,*,*,*	1500
 連体詞	PRENOUN_ADJECTIVAL	*	連体詞,*,*,*,*,*	1000
 接続詞	CONJUNCTION	*	接続詞,*,*,*,*,*	1000
@@ -70,5 +70,5 @@
 形容詞	ADJECTIVE	形容詞・アウオ段	形容詞,自立,*,*,形容詞・アウオ段,<cform>,*	0
 終助詞	SENTENCE_ENDING_PARTICLE	*	助詞,終助詞,*,*,*,*,ね	100
 句読点	PUNCTUATION	*	記号,読点,*,*,*,*	500
-独立語	FREE_STANDING_WORD	*	記号,一般,*,*,*,*	500
+独立語	FREE_STANDING_WORD	*	記号,一般,*,*,*,*	2000
 抑制単語	SUPPRESSION_WORD	*	記号,一般,*,*,*,*	1000
