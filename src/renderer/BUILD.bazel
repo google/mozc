@@ -241,10 +241,20 @@ mozc_embed_file(
     var_name = "kStyleTextProto",
 )
 
+mozc_embed_file(
+    name = "renderer_style_dark_data",
+    srcs = ["renderer_style_dark.textproto"],
+    out = "renderer_style_dark.inc",
+    as_string_view = True,
+    skip_until = "# proto-file:",
+    var_name = "kStyleDarkTextProto",
+)
+
 mozc_cc_library(
     name = "renderer_style_handler",
     srcs = [
         "renderer_style_handler.cc",
+        ":renderer_style_dark_data",
         ":renderer_style_data",
     ],
     hdrs = ["renderer_style_handler.h"],

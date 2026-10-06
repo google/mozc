@@ -37,6 +37,7 @@
 #include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"
+#include "renderer/renderer_style_handler.h"
 
 namespace mozc {
 namespace renderer {
@@ -95,6 +96,11 @@ class QtWindowManager {
 
   void Initialize();
 
+  // Switches the candidate/infolist windows to the given color theme and
+  // repaints the currently visible window, if any. No-op if the theme is
+  // unchanged.
+  void SetColorTheme(RendererStyleHandler::ColorTheme theme);
+
   void HideAllWindows();
   void ShowAllWindows();
   void UpdateLayout(const commands::RendererCommand &command);
@@ -151,6 +157,8 @@ class QtWindowManager {
   QWidget* vscroll_bar_ = nullptr;
   QWidget* vscroll_indicator_ = nullptr;
 
+  RendererStyleHandler::ColorTheme color_theme_ =
+      RendererStyleHandler::ColorTheme::kLight;
   RendererStyle style_;
   commands::RendererCommand prev_command_;
   client::SendCommandInterface *send_command_interface_ = nullptr;
