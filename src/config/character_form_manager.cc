@@ -336,19 +336,56 @@ void CharacterFormManagerImpl::ClearHistory() {
   }
 }
 
-// TODO(taku): need to chunk str
 void CharacterFormManagerImpl::GuessAndSetCharacterForm(
     const absl::string_view str) {
-  const Util::FormType form = Util::GetFormType(str);
-  if (form == Util::FULL_WIDTH) {
-    SetCharacterForm(str, Config::FULL_WIDTH);
-    return;
-  }
+  Util::ScriptType prev_type = Util::UNKNOWN_SCRIPT;
+  absl::string_view chunk;
+  auto flush_chunk = [&](absl::string_view target, Util::ScriptType type) {
+    if (target.empty()) {
+      return;
+    }
+    // Ignore symbol chunks embedded in a larger string (e.g. ',' in "1,000")
+    // so they do not overwrite symbol group preferences, while still learning
+    // when the entire committed string is a symbol (e.g. "[").
+    if (type == Util::UNKNOWN_SCRIPT && target.size() != str.size()) {
+      return;
+    }
+    const Util::FormType form = Util::GetFormType(target);
+    if (form == Util::FULL_WIDTH) {
+      SetCharacterForm(target, Config::FULL_WIDTH);
+    } else if (form == Util::HALF_WIDTH) {
+      SetCharacterForm(target, Config::HALF_WIDTH);
+    }
+  };
 
-  if (form == Util::HALF_WIDTH) {
-    SetCharacterForm(str, Config::HALF_WIDTH);
-    return;
+  const Utf8AsChars32 chars(str);
+  for (auto it = chars.begin(); it != chars.end(); ++it) {
+    if (!it.ok()) {
+      flush_chunk(chunk, prev_type);
+      chunk = absl::string_view();
+      prev_type = Util::UNKNOWN_SCRIPT;
+      continue;
+    }
+    Util::ScriptType type = Util::GetScriptType(*it);
+    if (*it == U'・') {
+      // Treat full-width middle dot as UNKNOWN_SCRIPT (matching
+      // GetNormalizedCharacter("・")) so embedded middle dots (e.g. in
+      // "東京・大阪" or "ｱ・ｲ") are ignored like other symbols.
+      type = Util::UNKNOWN_SCRIPT;
+    }
+    if (!chunk.empty() && type != prev_type) {
+      flush_chunk(chunk, prev_type);
+      chunk = it.view();
+    } else if (chunk.empty()) {
+      chunk = it.view();
+    } else {
+      chunk = absl::string_view(
+          chunk.data(), static_cast<size_t>(it.view().data() +
+                                            it.view().size() - chunk.data()));
+    }
+    prev_type = type;
   }
+  flush_chunk(chunk, prev_type);
 }
 
 void CharacterFormManagerImpl::SetCharacterForm(const absl::string_view str,

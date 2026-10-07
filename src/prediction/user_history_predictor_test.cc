@@ -6726,6 +6726,50 @@ TEST_F(UserHistoryPredictorTest, CharacterFormNormalization) {
     EXPECT_EQ(results[0].value, "0123");
   }
 
+  // 5. User dictionary and NO_VARIANTS_EXPANSION results (including subsequent
+  // predictions from user history) should not overwrite CharacterFormManager
+  // preferences.
+  {
+    char_form_manager->SetCharacterForm("A", config::Config::FULL_WIDTH);
+    char_form_manager->SetCharacterForm("0", config::Config::FULL_WIDTH);
+
+    SegmentsProxy segments_proxy;
+    const ConversionRequest convreq =
+        SetUpInputForConversion("ぐーぐる", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "Google");
+    segments_proxy.MutableCandidate(0, 0)->attributes =
+        converter::Attribute::REALTIME_CONVERSION |
+        converter::Attribute::USER_DICTIONARY;
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+    EXPECT_EQ(char_form_manager->GetConversionCharacterForm("A"),
+              config::Config::FULL_WIDTH);
+
+    // Committing "Google" when predicted from user history (which carries
+    // USER_HISTORY_PREDICTION | NO_VARIANTS_EXPANSION without USER_DICTIONARY)
+    // must also preserve the FULL_WIDTH preference.
+    segments_proxy.Clear();
+    const ConversionRequest pred_req =
+        SetUpInputForPrediction("ぐー", &composer_, &segments_proxy);
+    const std::vector<Result> history_results = predictor->Predict(pred_req);
+    ASSERT_FALSE(history_results.empty());
+    EXPECT_EQ(history_results[0].value, "Google");
+    predictor->Finish(pred_req, absl::MakeSpan(history_results).subspan(0, 1),
+                      kRevertId);
+    EXPECT_EQ(char_form_manager->GetConversionCharacterForm("A"),
+              config::Config::FULL_WIDTH);
+
+    segments_proxy.Clear();
+    const ConversionRequest date_req =
+        SetUpInputForConversion("きょう", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "2026/10/04");
+    segments_proxy.MutableCandidate(0, 0)->attributes =
+        converter::Attribute::NO_VARIANTS_EXPANSION;
+    predictor->Finish(date_req, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    EXPECT_EQ(char_form_manager->GetConversionCharacterForm("0"),
+              config::Config::FULL_WIDTH);
+  }
+
   // Restore CharacterFormManager default state.
   char_form_manager->SetDefaultRule();
   char_form_manager->ClearHistory();

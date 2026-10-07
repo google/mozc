@@ -553,6 +553,90 @@ TEST_F(CharacterFormManagerTest, NumberStyle) {
   }
 }
 
+TEST_F(CharacterFormManagerTest, GuessAndSetCharacterForm) {
+  CharacterFormManager* manager =
+      CharacterFormManager::GetCharacterFormManager();
+  manager->ClearHistory();
+
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::FULL_WIDTH);
+
+  manager->GuessAndSetCharacterForm("123");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
+
+  manager->GuessAndSetCharacterForm("１２３");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::FULL_WIDTH);
+
+  // Mixed-script number + Kanji counter.
+  manager->GuessAndSetCharacterForm("2日");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
+
+  manager->GuessAndSetCharacterForm("２日");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::FULL_WIDTH);
+
+  // Hiragana + number + Hiragana.
+  manager->GuessAndSetCharacterForm("あと3つ");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
+
+  // Decimal and comma-separated numbers.
+  manager->GuessAndSetCharacterForm("３．１４");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::FULL_WIDTH);
+
+  manager->GuessAndSetCharacterForm("3.14");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
+
+  // Full-width number with half-width period (e.g., when number and period
+  // rules have different widths).
+  manager->GuessAndSetCharacterForm("３.１４");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::FULL_WIDTH);
+
+  manager->GuessAndSetCharacterForm("1.項目");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
+
+  manager->GuessAndSetCharacterForm("１.項目");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::FULL_WIDTH);
+
+  manager->GuessAndSetCharacterForm("１，０００");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::FULL_WIDTH);
+
+  manager->GuessAndSetCharacterForm("1,000");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
+
+  // Katakana with prolonged sound mark.
+  manager->AddConversionRule("カタカナ", config::Config::LAST_FORM);
+  manager->GuessAndSetCharacterForm("ｲﾝﾀｰﾈｯﾄ");
+  EXPECT_EQ(manager->GetConversionCharacterForm("カタカナ"),
+            config::Config::HALF_WIDTH);
+
+  manager->GuessAndSetCharacterForm("インターネット");
+  EXPECT_EQ(manager->GetConversionCharacterForm("カタカナ"),
+            config::Config::FULL_WIDTH);
+
+  // Embedded full-width middle dot should not overwrite symbol rule or prevent
+  // learning half-width katakana.
+  manager->AddConversionRule("・「」", config::Config::LAST_FORM);
+  manager->SetCharacterForm("「", config::Config::HALF_WIDTH);
+  manager->GuessAndSetCharacterForm("東京・大阪");
+  EXPECT_EQ(manager->GetConversionCharacterForm("「"),
+            config::Config::HALF_WIDTH);
+
+  manager->GuessAndSetCharacterForm("ｱ・ｲ");
+  EXPECT_EQ(manager->GetConversionCharacterForm("カタカナ"),
+            config::Config::HALF_WIDTH);
+}
+
 }  // namespace
 }  // namespace config
 }  // namespace mozc

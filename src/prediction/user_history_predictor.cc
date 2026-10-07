@@ -2147,19 +2147,18 @@ void UserHistoryPredictor::Finish(const ConversionRequest& request,
 
   // Update character form preferences based on committed results
   // (b/554421471).
-  // TODO(taku): This is also a workaround for the fact that
-  // `VariantsRewriter::Finish` skips character form learning for any candidate
-  // with `Attribute::NO_VARIANTS_EXPANSION`. Because all user history
-  // candidates carry this attribute, selecting and committing a user history
-  // entry was previously ignored by VariantsRewriter, failing to update
-  // CharacterFormManager.
-  // In the future redesign, VariantsRewriter::Finish should unconditionally
-  // learn character forms from committed results regardless of
-  // NO_VARIANTS_EXPANSION, allowing this block to be removed.
+  // TODO(taku): Only learn from candidates that have undergone variant
+  // expansion (i.e. do not carry `Attribute::NO_VARIANTS_EXPANSION`, including
+  // top suggestion candidates where `VariantsRewriter` cleared the attribute
+  // upon expanding full/half-width variants). In the future redesign, unify
+  // character form learning inside `VariantsRewriter::Finish` so this block can
+  // be removed.
   auto* char_form_manager =
       config::CharacterFormManager::GetCharacterFormManager();
   for (const Result& result : results) {
-    if (result.attributes & converter::Attribute::NO_HISTORY_LEARNING) {
+    if (result.attributes & (converter::Attribute::NO_HISTORY_LEARNING |
+                             converter::Attribute::NO_VARIANTS_EXPANSION |
+                             converter::Attribute::USER_DICTIONARY)) {
       continue;
     }
     // Trailing ASCII whitespace might be present in result.value (e.g.

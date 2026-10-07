@@ -34,6 +34,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
@@ -52,6 +53,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -1059,6 +1061,78 @@ TEST_F(VariantsRewriterTest, Finish) {
   cand->description = std::string(VariantsRewriter::kFullWidth);
   rewriter->Finish(request, segments);
   EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
+
+  // Half-width number expression without description (mixed-form: half-width
+  // digit + full-width kanji).
+  cand->value = "3時";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
+  cand->description.clear();
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
+
+  // Separated Arabic and Arabic+Kanji numbers with NO_VARIANTS_EXPANSION (e.g.,
+  // reranked by NumberRewriter).
+  cand->value = "１，２３４";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
+  cand->attributes = converter::Attribute::NO_VARIANTS_EXPANSION;
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
+
+  cand->value = "1,234";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+  cand->attributes = converter::Attribute::NO_VARIANTS_EXPANSION;
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
+
+  cand->value = "１万";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH;
+  cand->attributes = converter::Attribute::NO_VARIANTS_EXPANSION;
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
+
+  cand->value = "1万";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH;
+  cand->attributes = converter::Attribute::NO_VARIANTS_EXPANSION;
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
+
+  // Realtime conversion candidate expanded by RewriteTopCandidateForSuggestion
+  // (NO_VARIANTS_EXPANSION cleared).
+  manager->SetCharacterForm("0", Config::FULL_WIDTH);
+  cand->value = "2日";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
+  cand->attributes = converter::Attribute::REALTIME_CONVERSION |
+                     converter::Attribute::NO_EXTRA_DESCRIPTION;
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
+
+  // Unexpanded realtime conversion candidate (still has NO_VARIANTS_EXPANSION,
+  // e.g. 2nd realtime candidate or fallback after NumberRewriter Kanji
+  // insertion) should not update character form.
+  manager->SetCharacterForm("0", Config::FULL_WIDTH);
+  cand->value = "石の上にも3年";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
+  cand->attributes = converter::Attribute::REALTIME_CONVERSION |
+                     converter::Attribute::NO_VARIANTS_EXPANSION;
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
+
+  // User dictionary candidate should not update character form.
+  manager->SetCharacterForm("A", Config::FULL_WIDTH);
+  cand->value = "Google";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
+  cand->attributes = converter::Attribute::REALTIME_CONVERSION |
+                     converter::Attribute::USER_DICTIONARY;
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("A"), Config::FULL_WIDTH);
 }
 
 TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
@@ -1102,9 +1176,15 @@ TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
                 converter::Attribute::REALTIME_CONVERSION);
     EXPECT_TRUE(seg->candidate(0).attributes &
                 converter::Attribute::NO_EXTRA_DESCRIPTION);
+    EXPECT_FALSE(seg->candidate(0).attributes &
+                 converter::Attribute::NO_VARIANTS_EXPANSION);
     EXPECT_EQ(seg->candidate(1).value, "123");
     EXPECT_EQ(seg->candidate(1).content_value, "123");
+    EXPECT_FALSE(seg->candidate(1).attributes &
+                 converter::Attribute::NO_VARIANTS_EXPANSION);
     EXPECT_EQ(seg->candidate(2).value, "456");
+    EXPECT_TRUE(seg->candidate(2).attributes &
+                converter::Attribute::NO_VARIANTS_EXPANSION);
 
     seg->clear_candidates();
   }
@@ -1337,7 +1417,13 @@ TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     ASSERT_EQ(seg->candidates_size(), 2);
     EXPECT_EQ(seg->candidate(0).value, "ｗｉｋｉｐｅｄｉａを三年使う");
+    // NO_VARIANTS_EXPANSION is cleared on the in-place updated candidate so
+    // that VariantsRewriter::Finish() can learn its character form.
+    EXPECT_FALSE(seg->candidate(0).attributes &
+                 converter::Attribute::NO_VARIANTS_EXPANSION);
     EXPECT_EQ(seg->candidate(1).value, "wikipediaを3年使う");
+    EXPECT_TRUE(seg->candidate(1).attributes &
+                converter::Attribute::NO_VARIANTS_EXPANSION);
 
     seg->clear_candidates();
   }

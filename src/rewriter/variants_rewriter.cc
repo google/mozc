@@ -475,11 +475,22 @@ bool VariantsRewriter::RewriteTopCandidateForSuggestion(Segment* seg) const {
   if (!(top_candidate->attributes & Attribute::NO_EXTRA_DESCRIPTION)) {
     target = seg->insert_candidate(0);
     *target = seg->candidate(1);
+    Candidate* fallback = seg->mutable_candidate(1);
+    SetDescriptionForCandidate(pos_matcher_, fallback);
+    // Clear NO_VARIANTS_EXPANSION so that Finish() can learn the character form
+    // when the fallback variant is committed. It has NO_EXTRA_DESCRIPTION, so
+    // RewriteSegment() will not re-expand it.
+    fallback->attributes &= ~Attribute::NO_VARIANTS_EXPANSION;
   }
   target->value = std::move(primary_value);
   target->inner_segment_boundary = std::move(primary_inner_segment_boundary);
   std::tie(target->content_key, target->content_value) =
       target->inner_segments().GetMergedContentKeyAndValue();
+  // Clear NO_VARIANTS_EXPANSION so that Finish() can learn the character form
+  // when the primary variant is committed, including when `target` is updated
+  // in-place. It has NO_EXTRA_DESCRIPTION, so RewriteSegment() will not
+  // re-expand it.
+  target->attributes &= ~Attribute::NO_VARIANTS_EXPANSION;
   target->attributes |= Attribute::NO_EXTRA_DESCRIPTION;
   return true;
 }
@@ -630,29 +641,31 @@ void VariantsRewriter::Finish(const ConversionRequest& request,
     }
 
     const Candidate& candidate = segment.candidate(0);
-    if (candidate.attributes & Attribute::NO_VARIANTS_EXPANSION) {
-      continue;
-    }
-
     switch (candidate.style) {
       case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
-        // treat NUMBER_SEPARATED_ARABIC as half_width num
+      case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH:
+        // treat as half_width num
         CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
             "0", config::Config::HALF_WIDTH);
         continue;
       case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
-        // treat NUMBER_SEPARATED_WIDE_ARABIC as full_width num
+      case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH:
+        // treat as full_width num
         CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
             "0", config::Config::FULL_WIDTH);
         continue;
       default:
         break;
     }
-    // Special handling for number compounds like 3時.  Note:
-    // GuessAndSetCharacterForm() below this if-block cannot guess the
-    // character form for number compounds.  Since this module adds
-    // annotation in the description for character width, using it is
-    // more reliable than guessing from |candidate.value|.
+
+    if (candidate.attributes &
+        (Attribute::NO_VARIANTS_EXPANSION | Attribute::USER_DICTIONARY)) {
+      continue;
+    }
+    // Special handling for number compounds like 3時 that have a character
+    // width annotation in the description.  Otherwise,
+    // GuessAndSetCharacterForm() below guesses the character form per script
+    // chunk from |candidate.value|.
     if (Util::GetFirstScriptType(candidate.value) == Util::NUMBER) {
       if (absl::StrContains(candidate.description, kHalfWidth)) {
         CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
