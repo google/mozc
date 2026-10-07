@@ -122,17 +122,15 @@ bool Engine::Wait() { return converter_ && converter_->Wait(); }
 bool Engine::ReloadAndWait() { return Reload() && Wait(); }
 
 bool Engine::ClearUserHistory() {
-  if (!converter_) {
-    return false;
+  if (converter_) {
+    converter_->rewriter().Clear();
   }
-  converter_->rewriter().Clear();
-  return converter_->predictor().ClearAllHistory();
+  return true;
 }
 
-// TODO(b/567921560): Remove ClearUserPrediction and ClearUnusedUserPrediction
-// (and the corresponding CLEAR_USER_PREDICTION / CLEAR_UNUSED_USER_PREDICTION
-// commands) once all callers are migrated to ClearUserHistory.
-bool Engine::ClearUserPrediction() { return ClearUserHistory(); }
+bool Engine::ClearUserPrediction() {
+  return converter_ && converter_->predictor().ClearAllHistory();
+}
 
 bool Engine::ClearUnusedUserPrediction() {
   return converter_ && converter_->predictor().ClearUnusedHistory();
