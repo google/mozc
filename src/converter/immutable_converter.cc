@@ -109,7 +109,7 @@ class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
       return TRAVERSE_NEXT_KEY;
     }
     Node* node = NewNodeFromToken(std::move(token));
-    node->key.assign(original_lookup_key_.data() + pos_, offset);
+    node->key.assign(original_lookup_key_, pos_, offset);
     node->wcost += KeyCorrector::GetCorrectedCostPenalty(node->key);
     AppendToResult(node);
     return TRAVERSE_CONTINUE;
