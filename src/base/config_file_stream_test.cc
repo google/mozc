@@ -71,7 +71,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
     ASSERT_NE(nullptr, ifs.get());
     auto buf = std::make_unique<char[]>(kData.size() + 1);
     ifs->read(buf.get(), kData.size());
-    buf.get()[kData.size()] = '\0';
+    buf[kData.size()] = '\0';
     EXPECT_EQ(buf.get(), kData);
     EXPECT_TRUE(IsEof(ifs.get()));
   }
