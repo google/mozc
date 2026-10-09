@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/number_util.h"
+#include "prediction/user_history_predictor.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -635,6 +636,45 @@ TEST_F(CharacterFormManagerTest, GuessAndSetCharacterForm) {
   manager->GuessAndSetCharacterForm("ｱ・ｲ");
   EXPECT_EQ(manager->GetConversionCharacterForm("カタカナ"),
             config::Config::HALF_WIDTH);
+}
+
+TEST_F(CharacterFormManagerTest, StorageSerializationTest) {
+  CharacterFormManager* manager =
+      CharacterFormManager::GetCharacterFormManager();
+  manager->ClearHistory();
+  EXPECT_FALSE(manager->IsStorageDirty());
+
+  manager->SetCharacterForm("012", config::Config::HALF_WIDTH);
+  manager->SetCharacterForm("[", config::Config::HALF_WIDTH);
+  const CharacterFormManager::NumberFormStyle number_style = {
+      config::Config::HALF_WIDTH, NumberUtil::NumberString::NUMBER_KANJI};
+  manager->SetLastNumberStyle(number_style);
+  EXPECT_TRUE(manager->IsStorageDirty());
+
+  user_history_predictor::UserHistory history;
+  manager->SaveStorage(&history);
+  EXPECT_FALSE(manager->IsStorageDirty());
+
+  manager->ClearHistory();
+  EXPECT_EQ(manager->GetConversionCharacterForm("012"),
+            config::Config::FULL_WIDTH);
+  EXPECT_EQ(manager->GetConversionCharacterForm("["),
+            config::Config::FULL_WIDTH);
+  EXPECT_EQ(manager->GetLastNumberStyle(), std::nullopt);
+
+  manager->LoadStorage(history);
+  EXPECT_FALSE(manager->IsStorageDirty());
+  EXPECT_EQ(manager->GetConversionCharacterForm("012"),
+            config::Config::HALF_WIDTH);
+  EXPECT_EQ(manager->GetConversionCharacterForm("["),
+            config::Config::HALF_WIDTH);
+  EXPECT_EQ(manager->GetConversionCharacterForm("]"),
+            config::Config::HALF_WIDTH);
+  const std::optional<const CharacterFormManager::NumberFormStyle>
+      loaded_style = manager->GetLastNumberStyle();
+  ASSERT_NE(loaded_style, std::nullopt);
+  EXPECT_EQ(loaded_style->form, number_style.form);
+  EXPECT_EQ(loaded_style->style, number_style.style);
 }
 
 }  // namespace

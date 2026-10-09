@@ -50,6 +50,9 @@ proto_library(
 
 cc_proto_library(
     name = "user_history_predictor_cc_proto",
+    visibility = [
+        "//config:__pkg__",
+    ],
     deps = [":user_history_predictor_proto"],
 )
 
@@ -81,6 +84,7 @@ mozc_cc_library(
         "//base:hash",
         "//base:thread",
         "//base:util",
+        "//config:character_form_manager",
         "//storage:encrypted_string_storage",
         "//storage:lru_cache",
         "@com_google_absl//absl/algorithm:container",
@@ -106,8 +110,11 @@ mozc_cc_test(
     deps = [
         ":user_history_storage",
         "//base:file_util",
+        "//base:number_util",
         "//base:thread",
         "//base/file:temp_dir",
+        "//config:character_form_manager",
+        "//protocol:config_cc_proto",
         "//storage:encrypted_string_storage",
         "//testing:gunit_main",
         "//testing:mozctest",

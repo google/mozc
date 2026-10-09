@@ -39,14 +39,14 @@
 #include <vector>
 
 #include "absl/base/no_destructor.h"
+#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "absl/types/span.h"
-#include "base/bits.h"
-#include "base/config_file_stream.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
 #include "base/strings/japanese.h"
@@ -54,18 +54,108 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "config/config_handler.h"
+#include "prediction/user_history_predictor.pb.h"
 #include "protocol/config.pb.h"
-#include "storage/lru_storage.h"
 
 namespace mozc {
 namespace config {
 namespace {
 
-using ::mozc::storage::LruStorage;
+using CharacterFormHistory =
+    ::mozc::user_history_predictor::UserHistory::CharacterFormHistory;
 
-constexpr uint32_t kLruSize = 128;           // enough?
-constexpr uint32_t kSeedValue = 0x7fe1fed1;  // random seed value for storage
-constexpr char kFileName[] = "user://cform.db";
+// Thread-safe in-memory storage for character forms and number style,
+// persisted via UserHistoryStorage.
+class CharacterFormStorage {
+ public:
+  CharacterFormStorage() = default;
+  CharacterFormStorage(const CharacterFormStorage&) = delete;
+  CharacterFormStorage& operator=(const CharacterFormStorage&) = delete;
+
+  Config::CharacterForm GetCharacterForm(char16_t ucs2) const {
+    absl::MutexLock lock(mutex_);
+    const auto& map = proto_.character_form_map();
+    const auto it = map.find(ucs2);
+    if (it == map.end() || !Config::CharacterForm_IsValid(it->second)) {
+      return Config::FULL_WIDTH;  // Return default setting
+    }
+    return static_cast<Config::CharacterForm>(it->second);
+  }
+
+  void SetCharacterForm(absl::Span<const char16_t> ucs2_list,
+                        Config::CharacterForm form) {
+    absl::MutexLock lock(mutex_);
+    auto* map = proto_.mutable_character_form_map();
+    for (const char16_t ucs2 : ucs2_list) {
+      auto [it, inserted] = map->try_emplace(ucs2, static_cast<uint32_t>(form));
+      if (!inserted) {
+        if (it->second == static_cast<uint32_t>(form)) {
+          continue;
+        }
+        it->second = static_cast<uint32_t>(form);
+      }
+      dirty_ = true;
+    }
+  }
+
+  std::optional<const CharacterFormManager::NumberFormStyle> GetNumberStyle()
+      const {
+    absl::MutexLock lock(mutex_);
+    if (!proto_.has_last_number_form() || !proto_.has_last_number_style() ||
+        !Config::CharacterForm_IsValid(proto_.last_number_form())) {
+      return std::nullopt;
+    }
+    return CharacterFormManager::NumberFormStyle{
+        static_cast<Config::CharacterForm>(proto_.last_number_form()),
+        static_cast<NumberUtil::NumberString::Style>(
+            proto_.last_number_style())};
+  }
+
+  void SetNumberStyle(const CharacterFormManager::NumberFormStyle& form_style) {
+    absl::MutexLock lock(mutex_);
+    if (proto_.has_last_number_form() && proto_.has_last_number_style() &&
+        proto_.last_number_form() == static_cast<uint32_t>(form_style.form) &&
+        proto_.last_number_style() == static_cast<uint32_t>(form_style.style)) {
+      return;
+    }
+    proto_.set_last_number_form(static_cast<uint32_t>(form_style.form));
+    proto_.set_last_number_style(static_cast<uint32_t>(form_style.style));
+    dirty_ = true;
+  }
+
+  void Clear() {
+    absl::MutexLock lock(mutex_);
+    proto_.Clear();
+    dirty_ = false;
+  }
+
+  bool IsDirty() const {
+    absl::MutexLock lock(mutex_);
+    return dirty_;
+  }
+
+  void Load(const user_history_predictor::UserHistory& history) {
+    absl::MutexLock lock(mutex_);
+    proto_ = history.character_form_history();
+    dirty_ = false;
+  }
+
+  void Save(user_history_predictor::UserHistory* history) {
+    DCHECK(history);
+    absl::MutexLock lock(mutex_);
+    if (proto_.ByteSizeLong() > 0) {
+      *history->mutable_character_form_history() = proto_;
+    } else {
+      history->clear_character_form_history();
+    }
+    dirty_ = false;
+  }
+
+ private:
+  mutable absl::Mutex mutex_;
+  CharacterFormHistory proto_ ABSL_GUARDED_BY(mutex_);
+  bool dirty_ ABSL_GUARDED_BY(mutex_) = false;
+};
 
 class CharacterFormManagerImpl {
  public:
@@ -98,7 +188,7 @@ class CharacterFormManagerImpl {
   // Call Clear() first if you want to set rule from scratch
   void AddRule(absl::string_view key, Config::CharacterForm form);
 
-  void set_storage(LruStorage* storage) { storage_ = storage; }
+  void set_storage(CharacterFormStorage* storage) { storage_ = storage; }
 
   void set_require_consistent_conversion(bool val) {
     require_consistent_conversion_ = val;
@@ -123,7 +213,7 @@ class CharacterFormManagerImpl {
   void ConvertStringAlternative(absl::string_view str,
                                 std::string* output) const;
 
-  LruStorage* storage_;
+  CharacterFormStorage* storage_;
 
   // store the setting of a character
   absl::flat_hash_map<char16_t, Config::CharacterForm> conversion_table_;
@@ -191,63 +281,6 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
 
     set_require_consistent_conversion(true);
   }
-};
-
-// A class to handle storage entries for number style.
-class NumberStyleManager {
- public:
-  NumberStyleManager()
-      : key_(reinterpret_cast<const char*>(&kKey), sizeof(char16_t)),
-        storage_(nullptr) {}
-
-  void SetNumberStyle(const CharacterFormManager::NumberFormStyle& form_style) {
-    const NumberStyleEntry entry(form_style);
-    storage_->Insert(key_, reinterpret_cast<const char*>(&entry));
-  }
-
-  std::optional<const CharacterFormManager::NumberFormStyle> GetNumberStyle()
-      const {
-    const char* value = storage_->Lookup(key_);
-    if (value == nullptr) {
-      return std::nullopt;
-    }
-    const NumberStyleEntry* entry =
-        reinterpret_cast<const NumberStyleEntry*>(value);
-    CharacterFormManager::NumberFormStyle form_style{entry->form(),
-                                                     entry->style()};
-    return form_style;
-  }
-
-  void set_storage(LruStorage* storage) { storage_ = storage; }
-
- private:
-  // Entry should fit value_size (sizeof uint32_t) of the storage.
-  class NumberStyleEntry {
-   public:
-    explicit NumberStyleEntry(
-        const CharacterFormManager::NumberFormStyle& form_style)
-        : form_(form_style.form), style_(form_style.style) {}
-
-    NumberUtil::NumberString::Style style() const {
-      return static_cast<NumberUtil::NumberString::Style>(style_);
-    }
-
-    Config::CharacterForm form() const {
-      return static_cast<Config::CharacterForm>(form_);
-    }
-
-   private:
-    [[maybe_unused]] uint32_t reversed_ : 26;
-    uint32_t form_ : 2;
-    uint32_t style_ : 4;
-  };
-
-  // Note that "N" will not be returned by GetNormalizedCharacter().
-  static constexpr char16_t kKey = 0x004E;  // "N"
-  const absl::string_view key_;
-
-  // This class does not have the ownership of `storage_`.
-  LruStorage* storage_;
 };
 
 // Returns canonical/normalized UCS2 character for given string.
@@ -411,14 +444,7 @@ Config::CharacterForm CharacterFormManagerImpl::GetCharacterFormFromStorage(
   if (storage_ == nullptr) {
     return Config::FULL_WIDTH;  // Return default setting
   }
-  const absl::string_view key(reinterpret_cast<const char*>(&ucs2),
-                              sizeof(ucs2));
-  const char* value = storage_->Lookup(key);
-  if (value == nullptr) {
-    return Config::FULL_WIDTH;  // Return default setting
-  }
-  const uint32_t ivalue = LoadUnaligned<uint32_t>(value);
-  return static_cast<Config::CharacterForm>(ivalue);
+  return storage_->GetCharacterForm(ucs2);
 }
 
 void CharacterFormManagerImpl::SaveCharacterFormToStorage(
@@ -431,31 +457,14 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
     return;
   }
 
-  const absl::string_view key(reinterpret_cast<const char*>(&ucs2),
-                              sizeof(ucs2));
-  const char* value = storage_->Lookup(key);
-  if (value != nullptr && static_cast<Config::CharacterForm>(*value) == form) {
-    return;
-  }
-
-  // Do cast since CharacterForm may not be 32 bit
-  const uint32_t iform = static_cast<uint32_t>(form);
-
   const auto iter = group_table_.find(ucs2);
   if (iter == group_table_.end()) {
-    storage_->Insert(key, reinterpret_cast<const char*>(&iform));
+    storage_->SetCharacterForm(absl::MakeConstSpan(&ucs2, 1), form);
   } else {
     // Update values in the same group.
-    absl::Span<const char16_t> group = iter->second;
-    for (size_t i = 0; i < group.size(); ++i) {
-      const char16_t group_ucs2 = group[i];
-      const absl::string_view group_key(
-          reinterpret_cast<const char*>(&group_ucs2), sizeof(group_ucs2));
-      storage_->Insert(group_key, reinterpret_cast<const char*>(&iform));
-    }
+    storage_->SetCharacterForm(iter->second, form);
   }
-  MOZC_VLOG(2) << static_cast<uint16_t>(ucs2) << " is stored to " << kFileName
-               << " as " << form;
+  MOZC_VLOG(2) << static_cast<uint16_t>(ucs2) << " is stored as " << form;
 }
 
 void CharacterFormManagerImpl::ConvertString(const absl::string_view str,
@@ -631,30 +640,20 @@ class CharacterFormManager::Data {
 
   CharacterFormManagerImpl* GetPreeditManager() { return preedit_.get(); }
   CharacterFormManagerImpl* GetConversionManager() { return conversion_.get(); }
-  NumberStyleManager* GetNumberStyleManager() { return number_style_.get(); }
+  CharacterFormStorage* GetStorage() { return storage_.get(); }
 
  private:
   std::unique_ptr<PreeditCharacterFormManagerImpl> preedit_;
   std::unique_ptr<ConversionCharacterFormManagerImpl> conversion_;
-  std::unique_ptr<NumberStyleManager> number_style_;
-  std::unique_ptr<LruStorage> storage_;
+  std::unique_ptr<CharacterFormStorage> storage_;
 };
 
 CharacterFormManager::Data::Data() {
-  const std::string filename = ConfigFileStream::GetFileName(kFileName);
-  const uint32_t key_type = 0;
-  storage_ = LruStorage::Create(filename.c_str(), sizeof(key_type), kLruSize,
-                                kSeedValue);
-  if (!storage_) {
-    LOG(ERROR) << "cannot open " << filename;
-    storage_ = std::make_unique<LruStorage>();
-  }
+  storage_ = std::make_unique<CharacterFormStorage>();
   preedit_ = std::make_unique<PreeditCharacterFormManagerImpl>();
   conversion_ = std::make_unique<ConversionCharacterFormManagerImpl>();
-  number_style_ = std::make_unique<NumberStyleManager>();
   preedit_->set_storage(storage_.get());
   conversion_->set_storage(storage_.get());
-  number_style_->set_storage(storage_.get());
 }
 
 CharacterFormManager* CharacterFormManager::GetCharacterFormManager() {
@@ -736,6 +735,20 @@ void CharacterFormManager::ClearHistory() {
   data_->GetConversionManager()->ClearHistory();
 }
 
+void CharacterFormManager::LoadStorage(
+    const user_history_predictor::UserHistory& history) {
+  data_->GetStorage()->Load(history);
+}
+
+void CharacterFormManager::SaveStorage(
+    user_history_predictor::UserHistory* history) {
+  data_->GetStorage()->Save(history);
+}
+
+bool CharacterFormManager::IsStorageDirty() const {
+  return data_->GetStorage()->IsDirty();
+}
+
 void CharacterFormManager::Clear() {
   MOZC_VLOG(1) << "CharacterFormManager::Clear() is called";
   data_->GetConversionManager()->Clear();
@@ -758,12 +771,12 @@ void CharacterFormManager::GuessAndSetCharacterForm(
 
 void CharacterFormManager::SetLastNumberStyle(
     const NumberFormStyle& form_style) {
-  data_->GetNumberStyleManager()->SetNumberStyle(form_style);
+  data_->GetStorage()->SetNumberStyle(form_style);
 }
 
 std::optional<const CharacterFormManager::NumberFormStyle>
 CharacterFormManager::GetLastNumberStyle() const {
-  return data_->GetNumberStyleManager()->GetNumberStyle();
+  return data_->GetStorage()->GetNumberStyle();
 }
 
 void CharacterFormManager::AddPreeditRule(const absl::string_view input,

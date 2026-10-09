@@ -30,6 +30,7 @@
 #include "prediction/user_history_storage.h"
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -38,7 +39,10 @@
 #include "absl/strings/string_view.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
+#include "base/number_util.h"
 #include "base/thread.h"
+#include "config/character_form_manager.h"
+#include "protocol/config.pb.h"
 #include "storage/encrypted_string_storage.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -420,6 +424,58 @@ TEST_F(UserHistoryStorageTest, UserHistoryStorageContainingInvalidEntries) {
       });
 
   EXPECT_EQ(valid_num, 1);
+}
+
+TEST_F(UserHistoryStorageTest, CharacterFormStorageTest) {
+  const TempFile file = testing::MakeTempFileOrDie();
+  auto* manager = config::CharacterFormManager::GetCharacterFormManager();
+  manager->SetDefaultRule();
+  manager->ClearHistory();
+
+  {
+    UserHistoryStorage storage(file.path());
+    storage.Wait();
+
+    manager->SetCharacterForm("012", config::Config::HALF_WIDTH);
+    manager->SetCharacterForm("ABC", config::Config::HALF_WIDTH);
+    manager->SetLastNumberStyle(
+        {config::Config::HALF_WIDTH, NumberUtil::NumberString::NUMBER_CIRCLED});
+    EXPECT_TRUE(manager->IsStorageDirty());
+
+    // Even when `storage` has no prediction entries, Save() persists
+    // CharacterFormManager state.
+    EXPECT_TRUE(storage.Save());
+    EXPECT_FALSE(manager->IsStorageDirty());
+  }
+
+  EXPECT_OK(FileUtil::FileExists(file.path()));
+
+  // Reset in-memory state and reload from disk via UserHistoryStorage.
+  manager->ClearHistory();
+  EXPECT_EQ(manager->GetConversionCharacterForm("012"),
+            config::Config::FULL_WIDTH);
+  EXPECT_EQ(manager->GetLastNumberStyle(), std::nullopt);
+
+  {
+    UserHistoryStorage storage(file.path());
+    storage.Wait();
+
+    EXPECT_EQ(manager->GetConversionCharacterForm("012"),
+              config::Config::HALF_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm("ABC"),
+              config::Config::HALF_WIDTH);
+    const auto number_style = manager->GetLastNumberStyle();
+    ASSERT_TRUE(number_style.has_value());
+    EXPECT_EQ(number_style->form, config::Config::HALF_WIDTH);
+    EXPECT_EQ(number_style->style, NumberUtil::NumberString::NUMBER_CIRCLED);
+
+    // Clearing UserHistoryStorage also clears CharacterFormManager history.
+    storage.Clear();
+    EXPECT_EQ(manager->GetConversionCharacterForm("012"),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetLastNumberStyle(), std::nullopt);
+    EXPECT_FALSE(FileUtil::FileExists(file.path()).ok());
+  }
 }
 
 }  // namespace mozc::prediction

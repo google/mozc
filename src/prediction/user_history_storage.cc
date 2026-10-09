@@ -51,6 +51,7 @@
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/util.h"
+#include "config/character_form_manager.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
@@ -109,7 +110,9 @@ bool UserHistoryStorage::IsSyncerInCriticalSection() const {
 }
 
 void UserHistoryStorage::AsyncSave() {
-  if (needs_sync_ && !IsSyncerRunning()) {
+  if ((needs_sync_ || config::CharacterFormManager::GetCharacterFormManager()
+                          ->IsStorageDirty()) &&
+      !IsSyncerRunning()) {
     task_manager_.Schedule([this] { Save(); });
   }
 }
@@ -123,6 +126,7 @@ void UserHistoryStorage::AsyncLoad() {
 void UserHistoryStorage::Clear() {
   auto lock = AcquireUniqueLock();
   dic_ = std::make_unique<DicCache>(kLruCacheSize);
+  config::CharacterFormManager::GetCharacterFormManager()->ClearHistory();
   needs_sync_ = true;
   Save();
 }
@@ -184,11 +188,15 @@ bool UserHistoryStorage::Load(user_history_predictor::UserHistory&& proto) {
     dic_->Insert(fp, std::move(entry));
   }
 
+  config::CharacterFormManager::GetCharacterFormManager()->LoadStorage(proto);
+
   return true;
 }
 
 bool UserHistoryStorage::Save() {
-  if (!needs_sync_) {
+  auto* character_form_manager =
+      config::CharacterFormManager::GetCharacterFormManager();
+  if (!needs_sync_ && !character_form_manager->IsStorageDirty()) {
     return true;
   }
 
@@ -205,6 +213,8 @@ bool UserHistoryStorage::Save() {
       }
       *proto.add_entries() = elm.value;
     }
+
+    character_form_manager->SaveStorage(&proto);
   }
 
   // Reverse the contents to keep the LRU order when loading.
@@ -220,6 +230,7 @@ bool UserHistoryStorage::Save() {
   // storing empty file causes an error.
   if (output.empty()) {
     FileUtil::UnlinkIfExists(filename()).IgnoreError();
+    needs_sync_ = false;
     return true;
   }
 

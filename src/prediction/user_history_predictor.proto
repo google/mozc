@@ -91,4 +91,13 @@ message UserHistory {
   }
 
   repeated Entry entries = 6;
+
+  // Character form and number style history (migrated from cform.db).
+  message CharacterFormHistory {
+    // Key: normalized UCS2 codepoint (char16_t), Value: Config::CharacterForm.
+    map<uint32, uint32> character_form_map = 1;
+    optional uint32 last_number_form = 2;   // Config::CharacterForm
+    optional uint32 last_number_style = 3;  // NumberUtil::NumberString::Style
+  }
+  optional CharacterFormHistory character_form_history = 7;
 }
