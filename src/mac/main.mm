@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
 #import <InputMethodKit/InputMethodKit.h>
@@ -43,12 +44,55 @@
 #include "base/run_level.h"
 #include "client/client.h"
 
+ABSL_FLAG(bool, register_input_source, false,
+          "Register and enable the input source in the system, then exit.");
+
+namespace {
+
+// Registers the input source bundle with the Text Input Services (TIS)
+// and enables the bundle, which automatically enables all default input modes
+// (Hiragana, Katakana, Roman, etc.) defined in Info.plist, then selects the
+// bundle so that the primary input mode (Hiragana) is active.
+// This is intended to be called by the postflight installer script so that
+// the input source appears enabled in the system and menu bar after login.
+void RegisterInputSource() {
+  NSBundle *bundle = [NSBundle mainBundle];
+  CFURLRef bundleURL = (__bridge CFURLRef)[bundle bundleURL];
+  if (bundleURL != nullptr) {
+    TISRegisterInputSource(bundleURL);
+  }
+
+  NSString *bundleID = [bundle bundleIdentifier];
+  if (bundleID == nil) {
+    return;
+  }
+
+  NSArray *sourceList = CFBridgingRelease(TISCreateInputSourceList(nullptr, true));
+  for (id object in sourceList) {
+    TISInputSourceRef inputSource = (__bridge TISInputSourceRef)object;
+    NSString *sourceID =
+        (__bridge NSString *)TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID);
+    if ([sourceID isEqualToString:bundleID]) {
+      TISEnableInputSource(inputSource);
+      TISSelectInputSource(inputSource);
+      break;
+    }
+  }
+}
+
+}  // namespace
+
 int main(int argc, char *argv[]) {
+  mozc::InitMozc(argv[0], &argc, &argv);
+
+  if (absl::GetFlag(FLAGS_register_input_source)) {
+    RegisterInputSource();
+    return 0;
+  }
+
   if (!mozc::RunLevel::IsValidClientRunLevel()) {
     return -1;
   }
-
-  mozc::InitMozc(argv[0], &argc, &argv);
 
   // Initialize imkServer
   NSBundle *bundle = [NSBundle mainBundle];
