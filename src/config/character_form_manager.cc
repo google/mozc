@@ -325,6 +325,57 @@ char16_t GetNormalizedCharacter(const absl::string_view str) {
   return ucs2;
 }
 
+struct CharToken {
+  char32_t cp;
+  absl::string_view view;
+  Util::ScriptType type;
+  Util::FormType form;
+};
+
+// Tokenizes |str| into unicode character tokens with their script type and form
+// type.
+//
+// Contextual adjustment:
+// Periods ('.', '．') and commas (',', '，') surrounded by numeric digits (e.g.
+// '.' in "3.14" or ',' in "1,000") are reclassified as Util::NUMBER.
+// Only '.' and ',' are reclassified because they represent internal decimal
+// and thousands separators forming a single numeric entity. Other separators
+// like '/' (dates: "2026/10/07") and ':' (times: "12:30") are not reclassified
+// because they separate distinct numeric components, and are guarded against
+// mixed-width artifacts by the run-based consistency check below.
+// Reclassified separators adopt GetCharacterForm("0") so they follow the
+// number rule instead of their own symbol group rule.
+std::vector<CharToken> TokenizeStringForConversion(absl::string_view str) {
+  std::vector<CharToken> tokens;
+  const Utf8AsChars32 chars(str);
+  for (auto it = chars.begin(); it != chars.end(); ++it) {
+    if (!it.ok()) {
+      continue;
+    }
+    tokens.push_back(
+        {*it, it.view(), Util::GetScriptType(*it), Util::GetFormType(*it)});
+  }
+  for (size_t i = 1; i + 1 < tokens.size(); ++i) {
+    if ((tokens[i].cp == '.' || tokens[i].cp == U'．' || tokens[i].cp == ',' ||
+         tokens[i].cp == U'，') &&
+        tokens[i - 1].type == Util::NUMBER &&
+        tokens[i + 1].type == Util::NUMBER) {
+      tokens[i].type = Util::NUMBER;
+    }
+  }
+  return tokens;
+}
+
+// Returns true if the token acts as a delimiter between separate
+// variable-width runs (e.g. kanji, hiragana, katakana, or fixed full-width
+// Japanese punctuation/brackets in "Tシャツ", "3時", "「Tシャツ」", or
+// "100。").
+bool IsVariableWidthRunDelimiter(const CharToken& token) {
+  return token.type == Util::KANJI || token.type == Util::HIRAGANA ||
+         token.type == Util::KATAKANA ||
+         Util::IsFullWidthSymbolInHalfWidthKatakana(token.view);
+}
+
 std::string ConvertToAlternative(std::string input, Util::FormType form,
                                  Util::ScriptType type) {
   switch (form) {
@@ -475,41 +526,57 @@ void CharacterFormManagerImpl::ConvertString(const absl::string_view str,
 bool CharacterFormManagerImpl::TryConvertStringWithPreference(
     const absl::string_view str, std::string* output) const {
   DCHECK(output);
-  Config::CharacterForm target_form = Config::NO_CONVERSION;
+  const std::vector<CharToken> tokens = TokenizeStringForConversion(str);
+  if (tokens.empty()) {
+    return true;
+  }
+
+  Config::CharacterForm run_target_form = Config::NO_CONVERSION;
   Config::CharacterForm prev_form = Config::NO_CONVERSION;
   Util::ScriptType prev_type = Util::UNKNOWN_SCRIPT;
   bool ret = true;
 
   std::string buf;
-  const Utf8AsChars32 chars(str);
-  for (auto it = chars.begin(); it != chars.end(); ++it) {
-    if (!it.ok()) {
-      continue;
-    }
-    const Util::ScriptType type = Util::GetScriptType(*it);
+  for (size_t i = 0; i < tokens.size(); ++i) {
+    const auto& token = tokens[i];
+    const Util::ScriptType type = token.type;
+
     // Cache previous ScriptType to reduce to call GetCharacterForm()
     Config::CharacterForm form = prev_form;
-    if ((type == Util::UNKNOWN_SCRIPT) ||
-        (type == Util::KATAKANA && prev_type != Util::KATAKANA) ||
-        (type == Util::NUMBER && prev_type != Util::NUMBER) ||
-        (type == Util::ALPHABET && prev_type != Util::ALPHABET)) {
-      form = GetCharacterForm(it.view());
+    if (type == Util::NUMBER) {
+      if (prev_type != Util::NUMBER) {
+        form = GetCharacterForm("0");
+      }
+    } else if (type == Util::UNKNOWN_SCRIPT) {
+      form = GetCharacterForm(token.view);
+    } else if (type == Util::KATAKANA && prev_type != Util::KATAKANA) {
+      form = GetCharacterForm(token.view);
+    } else if (type == Util::ALPHABET && prev_type != Util::ALPHABET) {
+      form = GetCharacterForm(token.view);
     } else if (type == Util::KANJI || type == Util::HIRAGANA) {
       form = Config::NO_CONVERSION;
     }
 
-    // Cache previous Form to reduce to call ConvertToFullWidthOrHalf
-    if (it != chars.begin() && prev_form != form) {
+    // Cache previous Form to reduce to call ConvertWidth
+    if (i > 0 && prev_form != form) {
       *output += CharacterFormManager::ConvertWidth(std::move(buf), prev_form);
       buf.clear();
     }
 
-    if (target_form == Config::NO_CONVERSION) {
-      target_form = form;
-    } else if (form != Config::NO_CONVERSION && form != target_form) {
-      ret = false;
+    if (IsVariableWidthRunDelimiter(token)) {
+      // Delimiters (kanji, hiragana, katakana, and fixed Japanese punctuation/
+      // brackets) delimit separate variable-width runs, allowing e.g. "Tシャツ"
+      // or "3時" to convert consistently without being blocked by mixed
+      // scripts.
+      run_target_form = Config::NO_CONVERSION;
+    } else {
+      if (run_target_form == Config::NO_CONVERSION) {
+        run_target_form = form;
+      } else if (form != Config::NO_CONVERSION && form != run_target_form) {
+        ret = false;
+      }
     }
-    absl::StrAppend(&buf, it.view());
+    absl::StrAppend(&buf, token.view);
     prev_type = type;
     prev_form = form;
   }
@@ -524,32 +591,36 @@ bool CharacterFormManagerImpl::TryConvertStringWithPreference(
 void CharacterFormManagerImpl::ConvertStringAlternative(
     const absl::string_view str, std::string* output) const {
   DCHECK(output);
+  const std::vector<CharToken> tokens = TokenizeStringForConversion(str);
+  if (tokens.empty()) {
+    return;
+  }
+
   Util::FormType prev_form = Util::UNKNOWN_FORM;
   Util::ScriptType prev_type = Util::UNKNOWN_SCRIPT;
 
   std::string buf;
-  const Utf8AsChars32 chars(str);
-  for (auto it = chars.begin(); it != chars.end(); ++it) {
-    const Util::ScriptType type = Util::GetScriptType(*it);
-    // Cache previous ScriptType to reduce to call GetFormType()
-    Util::FormType form = prev_form;
+  for (size_t i = 0; i < tokens.size(); ++i) {
+    const auto& token = tokens[i];
+    const Util::ScriptType type = token.type;
 
+    Util::FormType form = prev_form;
     if ((type == Util::UNKNOWN_SCRIPT) ||
         (type == Util::KATAKANA && prev_type != Util::KATAKANA) ||
         (type == Util::NUMBER && prev_type != Util::NUMBER) ||
         (type == Util::ALPHABET && prev_type != Util::ALPHABET)) {
-      form = Util::GetFormType(*it);
+      form = token.form;
     } else if (type == Util::KANJI || type == Util::HIRAGANA) {
       form = Util::UNKNOWN_FORM;
     }
 
-    // Cache previous Form to reduce to call ConvertToFullWidthOrHalf
-    if (it != chars.begin() && prev_form != form) {
+    // Flush when form or script type changes.
+    if (i > 0 && (prev_form != form || prev_type != type)) {
       *output += ConvertToAlternative(std::move(buf), prev_form, prev_type);
       buf.clear();
     }
 
-    absl::StrAppend(&buf, it.view());
+    absl::StrAppend(&buf, token.view);
     prev_type = type;
     prev_form = form;
   }
@@ -562,12 +633,10 @@ void CharacterFormManagerImpl::ConvertStringAlternative(
 bool CharacterFormManagerImpl::ConvertStringWithAlternative(
     const absl::string_view str, std::string* output,
     std::string* alternative_output) const {
-  // If require_consistent_conversion_ is true,
-  // do not convert to inconsistent form string.
   DCHECK(output);
   output->clear();
-  if (!TryConvertStringWithPreference(str, output) &&
-      require_consistent_conversion_) {
+  const bool is_consistent = TryConvertStringWithPreference(str, output);
+  if (!is_consistent && require_consistent_conversion_) {
     strings::Assign(*output, str);
   }
 

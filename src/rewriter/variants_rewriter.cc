@@ -115,6 +115,41 @@ bool HasCharacterFormDescription(const absl::string_view value) {
   return IsConvertibleToHalfWidthForm(value);
 }
 
+// Determines the form (FULL_WIDTH / HALF_WIDTH) based on the variable-width
+// scripts (alphabet, number, symbol, and half-width katakana) in |value|,
+// ignoring fixed scripts like kanji, hiragana, and full-width katakana.
+Util::FormType GetVariableWidthFormType(const absl::string_view value) {
+  Util::FormType result_form = Util::UNKNOWN_FORM;
+  const Utf8AsChars32 chars(value);
+  for (auto it = chars.begin(); it != chars.end(); ++it) {
+    if (!it.ok()) {
+      continue;
+    }
+    const char32_t c = *it;
+    const Util::ScriptType script = Util::GetScriptType(c);
+    if (script == Util::KANJI || script == Util::HIRAGANA) {
+      continue;
+    }
+    const Util::FormType form = Util::GetFormType(c);
+    if (script == Util::KATAKANA && form == Util::FULL_WIDTH) {
+      continue;
+    }
+    if (script == Util::UNKNOWN_SCRIPT && form == Util::FULL_WIDTH &&
+        !IsConvertibleToHalfWidthForm(it.view())) {
+      continue;
+    }
+    if (form == Util::UNKNOWN_FORM) {
+      continue;
+    }
+    if (result_form == Util::UNKNOWN_FORM) {
+      result_form = form;
+    } else if (result_form != form) {
+      return Util::UNKNOWN_FORM;
+    }
+  }
+  return result_form;
+}
+
 // Returns NumberString::Style corresponding to the given form
 NumberUtil::NumberString::Style GetStyle(
     const NumberUtil::NumberString::Style original_style,
@@ -207,6 +242,14 @@ std::string VariantsRewriter::GetDescription(const PosMatcher pos_matcher,
       case Util::UNKNOWN_SCRIPT:  // mixed character
         if (HasCharacterFormDescription(candidate.value)) {
           description_type |= FULL_HALF_WIDTH;
+        } else if (GetVariableWidthFormType(candidate.value) !=
+                   Util::UNKNOWN_FORM) {
+          // Follow the same policy as pure NUMBER/ALPHABET: suppress [半] on
+          // standalone candidates (clearing FULL_HALF_WIDTH while setting
+          // FULL_WIDTH), but retain explicit HALF_WIDTH when alternative
+          // candidates are generated in RewriteSegment().
+          description_type &= ~FULL_HALF_WIDTH;
+          description_type |= FULL_WIDTH;
         } else {
           description_type &= ~FULL_HALF_WIDTH;
         }
@@ -224,7 +267,7 @@ std::string VariantsRewriter::GetDescription(const PosMatcher pos_matcher,
     character_form_message = absl::string_view();
   }
 
-  const Util::FormType form = Util::GetFormType(candidate.value);
+  const Util::FormType form = GetVariableWidthFormType(candidate.value);
   // full/half char description
   if (description_type & FULL_HALF_WIDTH) {
     switch (form) {
