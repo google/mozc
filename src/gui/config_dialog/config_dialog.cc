@@ -220,10 +220,6 @@ ConfigDialog::ConfigDialog()
                    this, SLOT(clicked(QAbstractButton*)));
   QObject::connect(clearUserHistoryButton, SIGNAL(clicked()), this,
                    SLOT(ClearUserHistory()));
-  QObject::connect(clearUserPredictionButton, SIGNAL(clicked()), this,
-                   SLOT(ClearUserPrediction()));
-  QObject::connect(clearUnusedUserPredictionButton, SIGNAL(clicked()), this,
-                   SLOT(ClearUnusedUserPrediction()));
   QObject::connect(editUserDictionaryButton, SIGNAL(clicked()), this,
                    SLOT(EditUserDictionary()));
   QObject::connect(editKeymapButton, SIGNAL(clicked()), this,
@@ -702,27 +698,6 @@ void ConfigDialog::clicked(QAbstractButton* button) {
 void ConfigDialog::ClearUserHistory() {
   if (QMessageBox::Ok !=
       QMessageBox::question(
-          this, windowTitle(),
-          tr("Do you want to clear personalization data? "
-             "Input history is not reset with this operation. "
-             "Please open \"suggestion\" tab to remove input history data."),
-          QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
-    return;
-  }
-
-  client_->CheckVersionOrRestartServer();
-
-  if (!client_->ClearUserHistory()) {
-    QMessageBox::critical(this, windowTitle(),
-                          tr("%1 Converter is not running. "
-                             "Settings were not saved.")
-                              .arg(GuiUtil::ProductName()));
-  }
-}
-
-void ConfigDialog::ClearUserPrediction() {
-  if (QMessageBox::Ok !=
-      QMessageBox::question(
           this, windowTitle(), tr("Do you want to clear all history data?"),
           QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
     return;
@@ -730,29 +705,11 @@ void ConfigDialog::ClearUserPrediction() {
 
   client_->CheckVersionOrRestartServer();
 
-  if (!client_->ClearUserPrediction()) {
-    QMessageBox::critical(
-        this, windowTitle(),
-        tr("%1 Converter is not running. Settings were not saved.")
-            .arg(GuiUtil::ProductName()));
-  }
-}
-
-void ConfigDialog::ClearUnusedUserPrediction() {
-  if (QMessageBox::Ok !=
-      QMessageBox::question(
-          this, windowTitle(), tr("Do you want to clear unused history data?"),
-          QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
-    return;
-  }
-
-  client_->CheckVersionOrRestartServer();
-
-  if (!client_->ClearUnusedUserPrediction()) {
-    QMessageBox::critical(
-        this, windowTitle(),
-        tr("%1 Converter is not running. Operation was not executed.")
-            .arg(GuiUtil::ProductName()));
+  if (!client_->ClearUserHistory() || !client_->ClearUserPrediction()) {
+    QMessageBox::critical(this, windowTitle(),
+                          tr("%1 Converter is not running. "
+                             "Settings were not saved.")
+                              .arg(GuiUtil::ProductName()));
   }
 }
 
