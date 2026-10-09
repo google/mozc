@@ -1,6 +1,6 @@
 --- cc/private/toolchain/windows_cc_configure.bzl
 +++ cc/private/toolchain/windows_cc_configure.bzl
-@@ -920,11 +920,13 @@ def configure_windows_toolchain(repository_ctx):
+@@ -924,11 +924,13 @@ def configure_windows_toolchain(repository_ctx):
 
      template_vars = dict()
      msvc_vars_x64 = _get_msvc_vars(repository_ctx, paths, "x64")
