@@ -1303,7 +1303,12 @@ void EngineConverter::FillOutput(const composer::Composer& composer,
   // All candidate words
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     FillAllCandidateWords(output->mutable_all_candidate_words());
-    if (request_->fill_incognito_candidate_words()) {
+    // The bounds check must happen before mutable_incognito_candidate_words()
+    // so that the field is not materialized (and hence
+    // has_incognito_candidate_words() stays false) when the incognito
+    // prediction produced no segments.
+    if (request_->fill_incognito_candidate_words() &&
+        segment_index_ < incognito_segments_.conversion_segments_size()) {
       FillIncognitoCandidateWords(output->mutable_incognito_candidate_words());
     }
   }
@@ -1807,6 +1812,11 @@ void EngineConverter::FillAllCandidateWords(
 
 void EngineConverter::FillIncognitoCandidateWords(
     commands::CandidateList* candidates) const {
+  // |incognito_segments_| can be empty when the incognito prediction failed
+  // to produce suggestions (e.g. no user history in incognito mode).  The
+  // caller (FillOutput) checks the size before materializing the output field,
+  // so this precondition is guaranteed to hold here.
+  DCHECK_LT(segment_index_, incognito_segments_.conversion_segments_size());
   const Segment& segment =
       incognito_segments_.conversion_segment(segment_index_);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
