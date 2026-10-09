@@ -35,7 +35,13 @@
 
 #include <QApplication>
 #include <QMetaType>
+#include <QtGlobal>
 #include <string>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QGuiApplication>
+#include <QStyleHints>
+#endif  // QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
@@ -45,6 +51,7 @@
 #include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/qt/qt_ipc_thread.h"
+#include "renderer/renderer_style_handler.h"
 
 #ifndef NDEBUG
 #include "config/config_handler.h"
@@ -67,6 +74,14 @@ std::string GetServiceName() {
   }
   return name;
 }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+RendererStyleHandler::ColorTheme ToColorTheme(Qt::ColorScheme scheme) {
+  return scheme == Qt::ColorScheme::Dark
+             ? RendererStyleHandler::ColorTheme::kDark
+             : RendererStyleHandler::ColorTheme::kLight;
+}
+#endif  // QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 }  // namespace
 
 QtServer::QtServer() {
@@ -107,9 +122,23 @@ int QtServer::StartServer(int argc, char** argv) {
   notifier.Notify();
 
   renderer_.Initialize();
+  InitColorThemeWatcher();
   connect(&ipc_thread_, &QtIpcThread::EmitUpdated, this, &QtServer::Update);
   ipc_thread_.start();
   return app.exec();
+}
+
+void QtServer::InitColorThemeWatcher() {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+  // Qt 6.5+ exposes the system dark-theme preference through QStyleHints backed
+  // by the platform APIs such as XDG Desktop Portal color-scheme setting.
+  const QStyleHints* hints = QGuiApplication::styleHints();
+  renderer_.SetColorTheme(ToColorTheme(hints->colorScheme()));
+  connect(hints, &QStyleHints::colorSchemeChanged, this,
+          [this](Qt::ColorScheme scheme) {
+            renderer_.SetColorTheme(ToColorTheme(scheme));
+          });
+#endif  // QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 }
 
 bool QtServer::ExecCommandInternal(const commands::RendererCommand& command) {

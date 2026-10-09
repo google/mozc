@@ -63,6 +63,10 @@ class QtServer : public QObject {
   // of AsyncExecCommand()
   bool ExecCommandInternal(const commands::RendererCommand& command);
 
+  // Reads the initial system color-scheme and subscribes to live changes via
+  // QStyleHints. Requires Qt 6.5+; no-op on older Qt versions.
+  void InitColorThemeWatcher();
+
   QtWindowManager renderer_;
 
  private:

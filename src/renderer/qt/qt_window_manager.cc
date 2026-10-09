@@ -143,7 +143,7 @@ void CandidateTableDelegate::paint(QPainter* painter,
 }
 
 QtWindowManager::QtWindowManager()
-    : style_(RendererStyleHandler::GetRendererStyle()) {}
+    : style_(RendererStyleHandler::GetRendererStyle(color_theme_)) {}
 
 void QtWindowManager::OnClicked(int row, int column) {
   DLOG(INFO) << "OnClicked: (" << row << ", " << column << ")";
@@ -298,6 +298,28 @@ void QtWindowManager::UpdateVScrollBar(
                                   rounded_height);
   vscroll_bar_->show();
   vscroll_bar_->raise();
+}
+
+void QtWindowManager::SetColorTheme(RendererStyleHandler::ColorTheme theme) {
+  if (theme == color_theme_) {
+    return;
+  }
+  color_theme_ = theme;
+  style_ = RendererStyleHandler::GetRendererStyle(color_theme_);
+  ApplyStyleToWidgets();
+
+  // The table cells still hold the brushes of the previous theme, and they
+  // survive HideAllWindows(). Reset prev_command_ so that the next
+  // UpdateLayout() call takes the full FillCandidateWindow() path instead of
+  // the incremental-highlight path of UpdateCandidateWindow(), even when the
+  // same candidates are rendered again.
+  const commands::RendererCommand last_command = prev_command_;
+  prev_command_.Clear();
+
+  // Repaint the currently visible candidate window with the new colors.
+  if (candidates_ != nullptr && candidates_->isVisible()) {
+    UpdateLayout(last_command);
+  }
 }
 
 void QtWindowManager::HideAllWindows() {
