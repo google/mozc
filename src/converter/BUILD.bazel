@@ -321,6 +321,24 @@ mozc_cc_test(
     ],
 )
 
+mozc_cc_test(
+    name = "connector_benchmark_test",
+    size = "small",
+    srcs = ["connector_benchmark_test.cc"],
+    data = ["//data_manager/testing:mozc_dataset_for_testing@connection"],
+    tags = ["manual"],
+    deps = [
+        ":connector",
+        "//base:bits",
+        "//base:mmap",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
 mozc_cc_library(
     name = "nbest_generator",
     srcs = [
