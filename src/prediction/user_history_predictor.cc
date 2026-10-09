@@ -2144,29 +2144,6 @@ void UserHistoryPredictor::Finish(const ConversionRequest& request,
     revert_entries.result = results.front();
     revert_cache_.Insert(revert_id, std::move(revert_entries));
   }
-
-  // Update character form preferences based on committed results
-  // (b/554421471).
-  // TODO(taku): Only learn from candidates that have undergone variant
-  // expansion (i.e. do not carry `Attribute::NO_VARIANTS_EXPANSION`, including
-  // top suggestion candidates where `VariantsRewriter` cleared the attribute
-  // upon expanding full/half-width variants). In the future redesign, unify
-  // character form learning inside `VariantsRewriter::Finish` so this block can
-  // be removed.
-  auto* char_form_manager =
-      config::CharacterFormManager::GetCharacterFormManager();
-  for (const Result& result : results) {
-    if (result.attributes & (converter::Attribute::NO_HISTORY_LEARNING |
-                             converter::Attribute::NO_VARIANTS_EXPANSION |
-                             converter::Attribute::USER_DICTIONARY)) {
-      continue;
-    }
-    // Trailing ASCII whitespace might be present in result.value (e.g.
-    // alphanumeric keyboard layout commits). Strip it so script type and form
-    // can be properly recognized.
-    char_form_manager->GuessAndSetCharacterForm(
-        absl::StripTrailingAsciiWhitespace(result.value));
-  }
 }
 
 UserHistoryPredictor::SegmentsForLearning

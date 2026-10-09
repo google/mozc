@@ -52,6 +52,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "request/options.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -290,6 +291,23 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     EXPECT_EQ(absl::StrCat(VariantsRewriter::kFullWidth, " ",
                            VariantsRewriter::kAlphabet),
               candidate.description);
+  }
+  {
+    // Ensure SetDescriptionForCandidate rebuilds description even when the
+    // candidate already carries NO_EXTRA_DESCRIPTION (e.g. when called from
+    // UserSegmentHistoryRewriter after candidate copying; b/3493644).
+    converter::Candidate candidate;
+    candidate.value = "ＦｕｌｌＡＳＣＩＩ";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "fullascii";
+    candidate.attributes = converter::Attribute::NO_EXTRA_DESCRIPTION;
+    candidate.description = "";
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
+    EXPECT_EQ(absl::StrCat(VariantsRewriter::kFullWidth, " ",
+                           VariantsRewriter::kAlphabet),
+              candidate.description);
+    EXPECT_TRUE(candidate.attributes &
+                converter::Attribute::NO_EXTRA_DESCRIPTION);
   }
   {
     converter::Candidate candidate;
@@ -1133,6 +1151,58 @@ TEST_F(VariantsRewriterTest, Finish) {
                      converter::Attribute::USER_DICTIONARY;
   rewriter->Finish(request, segments);
   EXPECT_EQ(manager->GetConversionCharacterForm("A"), Config::FULL_WIDTH);
+
+  // Incognito mode must not update character form (b/566072209).
+  manager->SetCharacterForm("0", Config::FULL_WIDTH);
+  cand->value = "123";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
+  cand->attributes = 0;
+  {
+    ConversionOptions incognito_options;
+    incognito_options.incognito_mode = true;
+    const ConversionRequest incognito_req =
+        ConversionRequestBuilder().SetOptions(incognito_options).Build();
+    rewriter->Finish(incognito_req, segments);
+    EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
+  }
+
+  // Desktop suggestion commit (mixed_conversion = false, request_type =
+  // SUGGESTION) must update character form for committed FIXED_VALUE segments.
+  {
+    commands::Request desktop_req;
+    desktop_req.set_mixed_conversion(false);
+    const ConversionRequest suggestion_commit_req =
+        ConversionRequestBuilder()
+            .SetRequest(desktop_req)
+            .SetRequestType(ConversionRequest::SUGGESTION)
+            .Build();
+    rewriter->Finish(suggestion_commit_req, segments);
+    EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
+  }
+
+  // Trailing ASCII whitespace in candidate.value should be stripped before
+  // learning.
+  manager->SetCharacterForm("A", Config::FULL_WIDTH);
+  cand->value = "abc ";
+  cand->content_value = cand->value;
+  cand->attributes = 0;
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("A"), Config::HALF_WIDTH);
+
+  // Guard test: ensure Finish() continues to learn character form only from
+  // the committed candidate at index 0, even when unselected n-best candidates
+  // (index > 0) of the opposite character form are present in the segment.
+  manager->SetCharacterForm("0", Config::FULL_WIDTH);
+  cand->value = "１２３";
+  cand->content_value = cand->value;
+  cand->attributes = 0;
+  converter::Candidate* unselected_cand = segment->add_candidate();
+  unselected_cand->value = "123";
+  unselected_cand->content_value = unselected_cand->value;
+  unselected_cand->attributes = 0;
+  rewriter->Finish(request, segments);
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
 }
 
 TEST_F(VariantsRewriterTest, RewriteTopCandidateForMixedConversionTest) {

@@ -657,6 +657,7 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
+        "//request:options",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/log:check",

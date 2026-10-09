@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -622,13 +623,13 @@ bool VariantsRewriter::GenerateAlternatives(
 
 void VariantsRewriter::Finish(const ConversionRequest& request,
                               const Segments& segments) {
+  if (request.incognito_mode()) {
+    MOZC_VLOG(2) << "incognito mode";
+    return;
+  }
   if (request.config().history_learning_level() !=
       config::Config::DEFAULT_HISTORY) {
     MOZC_VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
-    return;
-  }
-  if (!request.request().mixed_conversion() &&
-      request.request_type() != ConversionRequest::CONVERSION) {
     return;
   }
 
@@ -679,7 +680,7 @@ void VariantsRewriter::Finish(const ConversionRequest& request,
       }
     }
     CharacterFormManager::GetCharacterFormManager()->GuessAndSetCharacterForm(
-        candidate.value);
+        absl::StripTrailingAsciiWhitespace(candidate.value));
   }
 }
 

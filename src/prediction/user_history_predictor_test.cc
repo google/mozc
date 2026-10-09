@@ -6702,28 +6702,23 @@ TEST_F(UserHistoryPredictorTest, CharacterFormNormalization) {
             "すうじ", "０１２３"));
   }
 
-  // 4. Committing a half-width candidate updates CharacterFormManager
-  // preferences via GuessAndSetCharacterForm in Finish().
+  // 4. UserHistoryPredictor::Finish() does not modify CharacterFormManager
+  // preferences (character form learning is handled solely by
+  // VariantsRewriter::Finish()), preventing unselected n-best candidates in
+  // `results` from overwriting the user's selected character form.
   {
-    char_form_manager->SetCharacterForm("0", config::Config::LAST_FORM);
+    char_form_manager->SetCharacterForm("0", config::Config::FULL_WIDTH);
     SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
         SetUpInputForConversion("べつのきー", &composer_, &segments_proxy);
+    // Simulate a 1-segment commit where index 0 is full-width "９９９" and
+    // index 1 (unselected n-best) is half-width "999".
+    segments_proxy.AddCandidate(0, "９９９");
     segments_proxy.AddCandidate(0, "999");
     predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
 
-    // After committing half-width "999", LAST_FORM preference should be
-    // HALF_WIDTH.
     EXPECT_EQ(char_form_manager->GetConversionCharacterForm("0"),
-              config::Config::HALF_WIDTH);
-
-    // And suggestion for "すう" should now normalize to "0123".
-    segments_proxy.Clear();
-    const ConversionRequest convreq_pred =
-        SetUpInputForPrediction("すう", &composer_, &segments_proxy);
-    const std::vector<Result> results = predictor->Predict(convreq_pred);
-    ASSERT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "0123");
+              config::Config::FULL_WIDTH);
   }
 
   // 5. User dictionary and NO_VARIANTS_EXPANSION results (including subsequent
