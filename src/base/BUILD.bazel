@@ -458,7 +458,9 @@ mozc_cc_test(
     srcs = ["file_util_test.cc"],
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
+        ":file_stream",
         ":file_util",
+        ":thread",
         ":util",
         "//base/file:temp_dir",
         "//testing:gunit_main",
@@ -467,6 +469,7 @@ mozc_cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
     ] + mozc_select(
         windows = ["//base/win32:wide_char"],
     ),

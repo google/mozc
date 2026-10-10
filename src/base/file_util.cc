@@ -484,10 +484,27 @@ absl::Status FileUtil::AtomicRename(absl::string_view from,
         absl::StrFormat("StripWritePreventingAttributesIfExists failed: %s",
                         s.message()));
   }
-  if (!::MoveFileExW(pf_from.c_str(), pf_to.c_str(),
-                     MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)) {
+  // MoveFileExW fails with ERROR_ACCESS_DENIED or ERROR_SHARING_VIOLATION while
+  // |to| is open by someone else, e.g. the user dictionary reloader running in
+  // another thread or an antivirus software scanning the file. As such handles
+  // are usually short-lived, retry several times before giving up.
+  // Retry counts and intervals are based on Chromium's ImportantFileWriter.
+  // https://github.com/chromium/chromium/blob/db776c333e0157636be44892c14e6e45bbe9b96e/base/files/important_file_writer.cc#L50-
+L61
+  constexpr int kMaxRetries = 5;
+  constexpr DWORD kRetryIntervalMsec = 100;
+  for (int retry = 0;; ++retry) {
+    if (::MoveFileExW(pf_from.c_str(), pf_to.c_str(),
+                      MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)) {
+      break;
+    }
     const DWORD move_file_ex_error = ::GetLastError();
-    return Win32ErrorToStatus(move_file_ex_error, "MoveFileExW failed");
+    const bool retriable = move_file_ex_error == ERROR_ACCESS_DENIED ||
+                           move_file_ex_error == ERROR_SHARING_VIOLATION;
+    if (!retriable || retry >= kMaxRetries) {
+      return Win32ErrorToStatus(move_file_ex_error, "MoveFileExW failed");
+    }
+    ::Sleep(kRetryIntervalMsec);
   }
   if (absl::Status s = SetFileAttributes(pf_to, *original_attributes);
       !s.ok()) {
