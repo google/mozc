@@ -113,6 +113,11 @@ class TipInputModeManager : public TipInputModeManagerImpl {
   Action OnChangeConversionMode(DWORD new_conversion_mode);
   Action OnChangeInputScope(absl::Span<const InputScope> input_scopes);
 
+  // Returns true if the current input scopes contain IS_PRIVATE, i.e. the
+  // focused input field expects the IME not to update any personalized data
+  // with the user's input (e.g. a field in a browser's private browsing mode).
+  bool HasPrivateInputScope() const;
+
   // Returns an IME open/close state that is visible from the Mozc session.
   bool GetEffectiveOpenClose() const;
   // Returns an IME open/close state that is visible from TSF.
