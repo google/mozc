@@ -190,6 +190,13 @@ class IbusEngineWrapper {
 
   void GetContentType(uint* purpose, uint* hints);
 
+  // Returns true if the current input context has IBUS_INPUT_HINT_PRIVATE, i.e.
+  // the focused input field expects the IME not to update any personalized data
+  // with the user's input (e.g. a field in a browser's private browsing mode).
+  // Always returns false when built against IBus < 1.5.26, where
+  // IBUS_INPUT_HINT_PRIVATE is not available.
+  bool HasPrivateInputHint();
+
   void CommitText(absl::string_view text);
 
   void UpdatePreeditTextWithMode(IbusTextWrapper* text, int cursor);

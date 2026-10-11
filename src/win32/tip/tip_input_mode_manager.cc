@@ -35,6 +35,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/types/span.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
@@ -282,6 +283,10 @@ TipInputModeManager::Action TipInputModeManager::OnChangeInputScope(
     return kUpdateUI;
   }
   return kDoNothing;
+}
+
+bool TipInputModeManager::HasPrivateInputScope() const {
+  return absl::c_contains(input_scope_, IS_PRIVATE);
 }
 
 bool TipInputModeManager::GetEffectiveOpenClose() const {

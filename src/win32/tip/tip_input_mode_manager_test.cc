@@ -316,6 +316,32 @@ TEST(TipInputModeManagerTest, InputScopeOnSetFocus_GitHubIssue826) {
             commands::HIRAGANA);
 }
 
+TEST(TipInputModeManagerTest, HasPrivateInputScope) {
+  TipInputModeManager input_mode_manager(GetThreadLocalMode());
+
+  // Initialize (Off + Hiragana)
+  input_mode_manager.OnInitialize(false, kNativeHiragana);
+  EXPECT_FALSE(input_mode_manager.HasPrivateInputScope());
+
+  // SetFocus with IS_PRIVATE (e.g. a field in private browsing mode).
+  // IS_PRIVATE should not affect the open/close mode.
+  std::vector<InputScope> input_scope_private = {IS_DEFAULT, IS_PRIVATE};
+  input_mode_manager.OnSetFocus(false, kNativeHiragana, input_scope_private);
+  EXPECT_TRUE(input_mode_manager.HasPrivateInputScope());
+  EXPECT_FALSE(input_mode_manager.GetEffectiveOpenClose());
+  EXPECT_EQ(input_mode_manager.GetEffectiveConversionMode(),
+            commands::HIRAGANA);
+
+  // InputScope change to a normal field.
+  std::vector<InputScope> input_scope_default = {IS_DEFAULT};
+  input_mode_manager.OnChangeInputScope(input_scope_default);
+  EXPECT_FALSE(input_mode_manager.HasPrivateInputScope());
+
+  // InputScope change back to a private field.
+  input_mode_manager.OnChangeInputScope(input_scope_private);
+  EXPECT_TRUE(input_mode_manager.HasPrivateInputScope());
+}
+
 }  // namespace
 }  // namespace tsf
 }  // namespace win32
