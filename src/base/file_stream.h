@@ -47,12 +47,16 @@ class InputFileStream : public std::ifstream {
   InputFileStream() = default;
   explicit InputFileStream(absl::string_view filename,
                            std::ios_base::openmode mode = std::ios_base::in);
+  ~InputFileStream() override;
 
   // Opens the specified file.
   // This function is a wrapper function for the ifstream::open() function
   // to change the encoding of the specified file name from UTF-8 to its native
   // one before calling the ifstream::open() function. This method automatically
   // converts the UTF-8 filename into a platform specific encoding.
+  // On Windows, the file is opened with FILE_SHARE_DELETE so that it can be
+  // deleted or replaced by FileUtil::AtomicRename() while it is being read, as
+  // on POSIX.
   void open(absl::string_view filename,
             std::ios_base::openmode mode = std::ios_base::in);
 
