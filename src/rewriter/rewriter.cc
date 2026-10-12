@@ -160,6 +160,11 @@ Rewriter::Rewriter(const engine::Modules& modules) {
   AddRewriter(make_unique_from_tuples<SymbolRewriter>(
       data_manager.GetSymbolRewriterData()));
   AddRewriter(std::make_unique<UnicodeRewriter>());
+  if (absl::GetFlag(FLAGS_use_history_rewriter)) {
+    AddRewriter(
+        std::make_unique<UserSegmentHistoryRewriter>(pos_matcher, pos_group));
+  }
+
   AddRewriter(std::make_unique<VariantsRewriter>(pos_matcher));
   AddRewriter(std::make_unique<ZipcodeRewriter>(pos_matcher));
   AddRewriter(std::make_unique<DiceRewriter>());
@@ -167,8 +172,6 @@ Rewriter::Rewriter(const engine::Modules& modules) {
 
   if (absl::GetFlag(FLAGS_use_history_rewriter)) {
     AddRewriter(std::make_unique<UserBoundaryHistoryRewriter>());
-    AddRewriter(
-        std::make_unique<UserSegmentHistoryRewriter>(pos_matcher, pos_group));
   }
 
 #ifdef MOZC_DATE_REWRITER

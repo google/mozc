@@ -39,20 +39,19 @@
 #include <string>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/container/btree_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
-#include "base/number_util.h"
+#include "base/strings/japanese.h"
 #include "base/util.h"
 #include "base/vlog.h"
-#include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/inner_segment.h"
@@ -62,14 +61,11 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "rewriter/variants_rewriter.h"
 #include "storage/lru_storage.h"
-#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace {
 
-using ::mozc::config::CharacterFormManager;
 using ::mozc::config::Config;
 using ::mozc::dictionary::PosGroup;
 using ::mozc::dictionary::PosMatcher;
@@ -179,6 +175,10 @@ class FeatureKey {
   const size_t index_;
 };
 
+inline std::string NormalizeValue(absl::string_view value) {
+  return japanese::FullWidthAsciiToHalfWidthAscii(value);
+}
+
 // Feature "Left Right"
 std::string FeatureKey::LeftRight(absl::string_view base_key,
                                   absl::string_view base_value) const {
@@ -188,8 +188,10 @@ std::string FeatureKey::LeftRight(absl::string_view base_key,
   const int j1 = GetDefaultCandidateIndex(segments_.segment(index_ - 1));
   const int j2 = GetDefaultCandidateIndex(segments_.segment(index_ + 1));
   return StrJoinWithTabs(
-      "LR", base_key, segments_.segment(index_ - 1).candidate(j1).value,
-      base_value, segments_.segment(index_ + 1).candidate(j2).value);
+      "LR", base_key,
+      NormalizeValue(segments_.segment(index_ - 1).candidate(j1).value),
+      NormalizeValue(base_value),
+      NormalizeValue(segments_.segment(index_ + 1).candidate(j2).value));
 }
 
 // Feature "Left Left"
@@ -201,8 +203,10 @@ std::string FeatureKey::LeftLeft(absl::string_view base_key,
   const int j1 = GetDefaultCandidateIndex(segments_.segment(index_ - 2));
   const int j2 = GetDefaultCandidateIndex(segments_.segment(index_ - 1));
   return StrJoinWithTabs(
-      "LL", base_key, segments_.segment(index_ - 2).candidate(j1).value,
-      segments_.segment(index_ - 1).candidate(j2).value, base_value);
+      "LL", base_key,
+      NormalizeValue(segments_.segment(index_ - 2).candidate(j1).value),
+      NormalizeValue(segments_.segment(index_ - 1).candidate(j2).value),
+      NormalizeValue(base_value));
 }
 
 // Feature "Right Right"
@@ -213,9 +217,10 @@ std::string FeatureKey::RightRight(absl::string_view base_key,
   }
   const int j1 = GetDefaultCandidateIndex(segments_.segment(index_ + 1));
   const int j2 = GetDefaultCandidateIndex(segments_.segment(index_ + 2));
-  return StrJoinWithTabs("RR", base_key, base_value,
-                         segments_.segment(index_ + 1).candidate(j1).value,
-                         segments_.segment(index_ + 2).candidate(j2).value);
+  return StrJoinWithTabs(
+      "RR", base_key, NormalizeValue(base_value),
+      NormalizeValue(segments_.segment(index_ + 1).candidate(j1).value),
+      NormalizeValue(segments_.segment(index_ + 2).candidate(j2).value));
 }
 
 // Feature "Left"
@@ -225,9 +230,10 @@ std::string FeatureKey::Left(absl::string_view base_key,
     return "";
   }
   const int j = GetDefaultCandidateIndex(segments_.segment(index_ - 1));
-  return StrJoinWithTabs("L", base_key,
-                         segments_.segment(index_ - 1).candidate(j).value,
-                         base_value);
+  return StrJoinWithTabs(
+      "L", base_key,
+      NormalizeValue(segments_.segment(index_ - 1).candidate(j).value),
+      NormalizeValue(base_value));
 }
 
 // Feature "Right"
@@ -237,14 +243,15 @@ std::string FeatureKey::Right(absl::string_view base_key,
     return "";
   }
   const int j = GetDefaultCandidateIndex(segments_.segment(index_ + 1));
-  return StrJoinWithTabs("R", base_key, base_value,
-                         segments_.segment(index_ + 1).candidate(j).value);
+  return StrJoinWithTabs(
+      "R", base_key, NormalizeValue(base_value),
+      NormalizeValue(segments_.segment(index_ + 1).candidate(j).value));
 }
 
 // Feature "Current"
 std::string FeatureKey::Current(absl::string_view base_key,
                                 absl::string_view base_value) const {
-  return StrJoinWithTabs("C", base_key, base_value);
+  return StrJoinWithTabs("C", base_key, NormalizeValue(base_value));
 }
 
 // Feature "Single"
@@ -253,7 +260,7 @@ std::string FeatureKey::Single(absl::string_view base_key,
   if (segments_.conversion_segments_size() != 1) {
     return "";
   }
-  return StrJoinWithTabs("S", base_key, base_value);
+  return StrJoinWithTabs("S", base_key, NormalizeValue(base_value));
 }
 
 // Feature "Left Number"
@@ -268,7 +275,7 @@ std::string FeatureKey::LeftNumber(absl::string_view base_key,
   if (pos_matcher_.IsNumber(candidate.rid) ||
       pos_matcher_.IsKanjiNumber(candidate.rid) ||
       Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    return StrJoinWithTabs("LN", base_key, base_value);
+    return StrJoinWithTabs("LN", base_key, NormalizeValue(base_value));
   }
   return "";
 }
@@ -285,7 +292,7 @@ std::string FeatureKey::RightNumber(absl::string_view base_key,
   if (pos_matcher_.IsNumber(candidate.lid) ||
       pos_matcher_.IsKanjiNumber(candidate.lid) ||
       Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    return StrJoinWithTabs("RN", base_key, base_value);
+    return StrJoinWithTabs("RN", base_key, NormalizeValue(base_value));
   }
   return "";
 }
@@ -302,25 +309,6 @@ bool IsNumberSegment(const Segment& segment) {
     }
   }
   return is_number;
-}
-
-// NormalizeCandidate using config
-void NormalizeCandidate(const Segment* segment, int n,
-                        std::string* normalized_value) {
-  const converter::Candidate& candidate = segment->candidate(n);
-
-  // use "AS IS"
-  if (candidate.attributes & converter::Attribute::NO_VARIANTS_EXPANSION) {
-    *normalized_value = candidate.value;
-    return;
-  }
-
-  std::string result = candidate.value;
-  if (candidate.style == NumberUtil::NumberString::DEFAULT_STYLE) {
-    CharacterFormManager::GetCharacterFormManager()->ConvertConversionString(
-        candidate.value, &result);
-  }
-  *normalized_value = result;
 }
 
 // Gets the candidate index which has same value as given candidate.
@@ -356,12 +344,12 @@ bool IsT13NCandidate(const converter::Candidate& cand) {
 bool UserSegmentHistoryRewriter::SortCandidates(
     absl::Span<const ScoreCandidate> sorted_scores, Segment* segment) const {
   const uint32_t top_score = sorted_scores[0].score;
-  const size_t size = std::min(sorted_scores.size(), kMaxRerankSize);
   constexpr uint32_t kScoreGap = 20;  // TODO(taku): no justification
   absl::btree_set<std::string> seen;
 
   size_t next_pos = 0;
-  for (size_t n = 0; n < size; ++n) {
+  for (size_t n = 0; n < sorted_scores.size() && next_pos < kMaxRerankSize;
+       ++n) {
     // Move candidates when the score is close to the top score.
     if (kScoreGap < (top_score - sorted_scores[n].score)) {
       break;
@@ -375,60 +363,13 @@ bool UserSegmentHistoryRewriter::SortCandidates(
       return false;
     }
 
-    // We check character form here. If user prefers "half-width",
-    // Mozc always provides half-width even when user input
-    // full-width before.
-    std::string normalized_value;
-    NormalizeCandidate(segment, old_position, &normalized_value);
-
-    if (normalized_value != candidate->value) {
-      const converter::Candidate* normalized_cand = nullptr;
-      int pos = segment->candidates_size();
-      for (size_t l = 0; l < segment->candidates_size(); ++l) {
-        if (segment->candidate(l).value == normalized_value) {
-          normalized_cand = &segment->candidate(l);
-          pos = l;
-          break;
-        }
-      }
-
-      if (normalized_cand != nullptr) {
-        if (seen.find(normalized_value) == seen.end()) {
-          DCHECK(pos != segment->candidates_size());
-          segment->move_candidate(pos, next_pos);
-          ++next_pos;
-          seen.insert(normalized_value);
-        }
-      } else {
-        // If default character form is different and
-        // is not found in the candidates, make a new
-        // candidate and push it to the top.
-        converter::Candidate* new_candidate =
-            segment->insert_candidate(next_pos);
-        DCHECK(new_candidate);
-
-        *new_candidate = *candidate;  // copy candidate
-        const auto* manager = CharacterFormManager::GetCharacterFormManager();
-        converter::RewriteCandidateValues(
-            [manager](absl::string_view s) {
-              return manager->ConvertConversionString(s);
-            },
-            new_candidate);
-        // Update description so it matches candidate's current value.
-        // This fix addresses Bug #3493644.
-        // (Wrong character width annotation after learning alphabet)
-        new_candidate->description.clear();
-        VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_,
-                                                     new_candidate);
-        ++next_pos;
-        seen.insert(normalized_value);
-      }
-    } else {
-      if (seen.find(candidate->value) == seen.end()) {
-        segment->move_candidate(old_position, next_pos);
-        ++next_pos;
-        seen.insert(candidate->value);
-      }
+    const std::string seen_key =
+        (candidate->attributes & converter::Attribute::NO_VARIANTS_EXPANSION)
+            ? candidate->value
+            : NormalizeValue(candidate->value);
+    if (seen.insert(seen_key).second) {
+      segment->move_candidate(old_position, next_pos);
+      ++next_pos;
     }
   }
   return true;
@@ -863,15 +804,14 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest& request,
 
     // for each all candidates expanded
     std::vector<ScoreCandidate> scores;
-    for (size_t l = 0;
-         l < segment->candidates_size() + segment->meta_candidates_size();
-         ++l) {
-      int j = static_cast<int>(l);
-      if (j >= static_cast<int>(segment->candidates_size())) {
-        j -= static_cast<int>(segment->candidates_size() +
-                              transliteration::NUM_T13N_TYPES);
+    for (size_t l = 0; l < segment->candidates_size(); ++l) {
+      const Score score = GetScore(request, *segments, i, l);
+      if (score.score > 0) {
+        scores.emplace_back(score, &segment->candidate(l));
       }
-
+    }
+    for (size_t k = 0; k < segment->meta_candidates_size(); ++k) {
+      const int j = -static_cast<int>(k) - 1;
       const Score score = GetScore(request, *segments, i, j);
       if (score.score > 0) {
         scores.emplace_back(score, &segment->candidate(j));
@@ -882,8 +822,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest& request,
       continue;
     }
 
-    std::stable_sort(scores.begin(), scores.end(),
-                     std::greater<ScoreCandidate>());
+    absl::c_stable_sort(scores, std::greater<ScoreCandidate>());
     modified |= SortCandidates(scores, segment);
     if (!(segment->candidate(0).attributes &
           converter::Attribute::BEST_CANDIDATE)) {

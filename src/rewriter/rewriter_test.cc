@@ -30,19 +30,29 @@
 #include "rewriter/rewriter.h"
 
 #include <cstddef>
+#include <cstring>
 #include <memory>
 #include <string>
+#include <utility>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/log/check.h"
+#include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/modules.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+
+ABSL_DECLARE_FLAG(bool, use_history_rewriter);
 
 namespace mozc {
 namespace {
@@ -63,10 +73,17 @@ size_t CommandCandidatesSize(const Segment& segment) {
 class RewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    modules_ =
-        engine::Modules::Create(std::make_unique<testing::MockDataManager>())
-            .value();
+    auto modules =
+        engine::Modules::Create(std::make_unique<testing::MockDataManager>());
+    CHECK_OK(modules);
+    modules_ = *std::move(modules);
     rewriter_ = std::make_unique<Rewriter>(*modules_);
+  }
+
+  void TearDown() override {
+    auto* manager = config::CharacterFormManager::GetCharacterFormManager();
+    manager->SetDefaultRule();
+    manager->ClearHistory();
   }
 
   const RewriterInterface* GetRewriter() const { return rewriter_.get(); }
@@ -135,6 +152,172 @@ TEST_F(RewriterTest, EmoticonsAboveSymbols) {
   EXPECT_NE(emoticon_index, -1);
   EXPECT_NE(symbol_index, -1);
   EXPECT_LT(emoticon_index, symbol_index);
+}
+
+TEST_F(RewriterTest, UserSegmentHistoryAndVariantsRewriterIntegration) {
+  const absl::FlagSaver flag_saver;
+  absl::SetFlag(&FLAGS_use_history_rewriter, true);
+  rewriter_ = std::make_unique<Rewriter>(*modules_);
+
+  auto* manager = config::CharacterFormManager::GetCharacterFormManager();
+  manager->SetDefaultRule();
+  manager->ClearHistory();
+  manager->AddConversionRule("0", config::Config::FULL_WIDTH);
+
+  const ConversionRequest request;
+
+  Segments segments;
+  Segment* seg = segments.push_back_segment();
+  seg->set_key("ふつか");
+
+  // Step 1: Learn "2日" (half-width '2') for "ふつか".
+  {
+    converter::Candidate* c0 = seg->add_candidate();
+    c0->key = "ふつか";
+    c0->content_key = "ふつか";
+    c0->value = "二日";
+    c0->content_value = "二日";
+
+    converter::Candidate* c1 = seg->add_candidate();
+    c1->key = "ふつか";
+    c1->content_key = "ふつか";
+    c1->value = "2日";
+    c1->content_value = "2日";
+
+    seg->move_candidate(1, 0);
+    seg->mutable_candidate(0)->attributes |= converter::Attribute::RERANKED;
+    seg->set_segment_type(Segment::FIXED_VALUE);
+
+    rewriter_->Finish(request, segments);
+  }
+
+  // Step 2: Rewrite "ふつか".
+  // USHR promotes "2日", and VariantsRewriter immediately normalizes it to
+  // "２日" according to user preference, updates inner_segment_boundary, and
+  // expands alternatives.
+  {
+    segments.Clear();
+    seg = segments.push_back_segment();
+    seg->set_key("ふつか");
+
+    converter::Candidate* c0 = seg->add_candidate();
+    c0->key = "ふつか";
+    c0->content_key = "ふつか";
+    c0->value = "二日";
+    c0->content_value = "二日";
+
+    converter::Candidate* c1 = seg->add_candidate();
+    c1->key = "ふつか";
+    c1->content_key = "ふつか";
+    c1->value = "2日";
+    c1->content_value = "2日";
+    c1->inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+        {{strlen("ふつか"), strlen("2日"), strlen("ふつか"), strlen("2日")}},
+        c1->key, c1->value);
+
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+    ASSERT_GT(seg->candidates_size(), 0);
+    const converter::Candidate& top = seg->candidate(0);
+    EXPECT_EQ(top.value, "２日");
+    EXPECT_EQ(top.content_value, "２日");
+    EXPECT_EQ(top.inner_segment_boundary,
+              converter::BuildInnerSegmentBoundary(
+                  {{strlen("ふつか"), strlen("２日"), strlen("ふつか"),
+                    strlen("２日")}},
+                  "ふつか", "２日"));
+  }
+}
+
+TEST_F(RewriterTest, ZipcodeCandidatesDescription) {
+  const ConversionRequest request;
+  Segments segments;
+  Segment* seg = segments.push_back_segment();
+  seg->set_key("107-0052");
+  converter::Candidate* candidate = seg->add_candidate();
+  candidate->key = "107-0052";
+  candidate->content_key = "107-0052";
+  candidate->value = "東京都港区赤坂";
+  candidate->content_value = "東京都港区赤坂";
+  candidate->lid = modules_->GetPosMatcher().GetZipcodeId();
+  candidate->rid = modules_->GetPosMatcher().GetZipcodeId();
+
+  EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
+  bool found_zipcode_candidate = false;
+  for (size_t i = 0; i < seg->candidates_size(); ++i) {
+    if (seg->candidate(i).description == "郵便番号と住所") {
+      found_zipcode_candidate = true;
+      break;
+    }
+  }
+  EXPECT_TRUE(found_zipcode_candidate);
+}
+
+TEST_F(RewriterTest, PreservesNoVariantsExpansionThroughPipeline) {
+  const absl::FlagSaver flag_saver;
+  absl::SetFlag(&FLAGS_use_history_rewriter, true);
+  rewriter_ = std::make_unique<Rewriter>(*modules_);
+
+  auto* manager = config::CharacterFormManager::GetCharacterFormManager();
+  manager->SetDefaultRule();
+  manager->ClearHistory();
+  // Set default rule for alphabet to FULL_WIDTH.
+  manager->AddConversionRule("A", config::Config::FULL_WIDTH);
+
+  const ConversionRequest request;
+  Segments segments;
+  Segment* seg = segments.push_back_segment();
+  seg->set_key("ぐーぐる");
+
+  // Step 1: Learn "Google" with NO_VARIANTS_EXPANSION.
+  {
+    converter::Candidate* c0 = seg->add_candidate();
+    c0->key = "ぐーぐる";
+    c0->content_key = "ぐーぐる";
+    c0->value = "グーグル";
+    c0->content_value = "グーグル";
+
+    converter::Candidate* c1 = seg->add_candidate();
+    c1->key = "ぐーぐる";
+    c1->content_key = "ぐーぐる";
+    c1->value = "Google";
+    c1->content_value = "Google";
+    c1->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+
+    seg->move_candidate(1, 0);
+    seg->mutable_candidate(0)->attributes |= converter::Attribute::RERANKED;
+    seg->set_segment_type(Segment::FIXED_VALUE);
+
+    rewriter_->Finish(request, segments);
+  }
+
+  // Step 2: Rewrite "ぐーぐる".
+  // Even though alphabet preference is FULL_WIDTH, promoted "Google" must
+  // retain NO_VARIANTS_EXPANSION and NOT be converted to full-width
+  // "Ｇｏｏｇｌｅ".
+  {
+    segments.Clear();
+    seg = segments.push_back_segment();
+    seg->set_key("ぐーぐる");
+
+    converter::Candidate* c0 = seg->add_candidate();
+    c0->key = "ぐーぐる";
+    c0->content_key = "ぐーぐる";
+    c0->value = "グーグル";
+    c0->content_value = "グーグル";
+
+    converter::Candidate* c1 = seg->add_candidate();
+    c1->key = "ぐーぐる";
+    c1->content_key = "ぐーぐる";
+    c1->value = "Google";
+    c1->content_value = "Google";
+    c1->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+    ASSERT_GT(seg->candidates_size(), 0);
+    const converter::Candidate& top = seg->candidate(0);
+    EXPECT_EQ(top.value, "Google");
+    EXPECT_TRUE(top.attributes & converter::Attribute::NO_VARIANTS_EXPANSION);
+  }
 }
 
 }  // namespace mozc

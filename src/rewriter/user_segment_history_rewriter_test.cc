@@ -60,11 +60,11 @@
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
 #include "rewriter/number_rewriter.h"
-#include "rewriter/variants_rewriter.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "testing/test_peer.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 
@@ -1894,11 +1894,34 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
   Clock::SetClockForUnitTest(nullptr);
 }
 
-TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
+TEST_F(UserSegmentHistoryRewriterTest, PromotionWithWidthInvariantKey) {
   Segments segments;
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
 
+  // Step 1: Learn half-width "abc".
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("abc");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+    candidate->value = "abc";
+    candidate->content_value = "abc";
+    candidate->content_key = "abc";
+    candidate->description = "[半] アルファベット";
+    segments.mutable_segment(0)->move_candidate(1, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        converter::Attribute::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(convreq, segments);
+  }
+
+  // Step 2: Rewrite with full-width "ａｂｃ".
+  // USHR promotes the full-width candidate based on half-width learning,
+  // without altering candidate form or description (deferred to
+  // VariantsRewriter).
   {
     const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
@@ -1910,6 +1933,31 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     candidate->content_value = "ａｂｃ";
     candidate->content_key = "abc";
     candidate->description = "[全] アルファベット";
+    rewriter->Rewrite(convreq, &segments);
+    EXPECT_EQ(segments.segment(0).candidate(0).content_value, "ａｂｃ");
+    EXPECT_EQ(segments.segment(0).candidate(0).description,
+              "[全] アルファベット");
+    rewriter->Finish(convreq, segments);
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest,
+       MetaCandidatesTransliterationDeduplication) {
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+
+  // Step 1: Learn half-width "aiu" for "あいう".
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("あいう");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+    candidate->value = "aiu";
+    candidate->content_value = "aiu";
+    candidate->content_key = "あいう";
     segments.mutable_segment(0)->move_candidate(1, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         converter::Attribute::RERANKED;
@@ -1917,24 +1965,85 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     rewriter->Finish(convreq, segments);
   }
 
+  // Step 2: Rewrite "あいう" with meta candidates containing both half-width
+  // and full-width transliterations.
   {
     const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     InitSegments(&segments, 1, 2);
-    segments.mutable_segment(0)->set_key("abc");
+    Segment* seg = segments.mutable_segment(0);
+    seg->set_key("あいう");
+    seg->mutable_candidate(0)->value = "あいう";
+    seg->mutable_candidate(0)->content_value = "あいう";
+    seg->mutable_candidate(1)->value = "アイウ";
+    seg->mutable_candidate(1)->content_value = "アイウ";
+
+    for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
+      converter::Candidate* mc = seg->add_meta_candidate();
+      mc->key = "あいう";
+      mc->content_key = "あいう";
+    }
+    seg->mutable_meta_candidate(transliteration::HALF_ASCII)->value = "aiu";
+    seg->mutable_meta_candidate(transliteration::HALF_ASCII)->content_value =
+        "aiu";
+    seg->mutable_meta_candidate(transliteration::FULL_ASCII)->value = "ａｉｕ";
+    seg->mutable_meta_candidate(transliteration::FULL_ASCII)->content_value =
+        "ａｉｕ";
+
+    rewriter->Rewrite(convreq, &segments);
+
+    // Only one ASCII transliteration candidate ("aiu") should be promoted to
+    // index 0, and not duplicated with "ａｉｕ".
+    EXPECT_EQ(seg->candidates_size(), 3);
+    EXPECT_EQ(seg->candidate(0).value, "aiu");
+    EXPECT_NE(seg->candidate(1).value, "ａｉｕ");
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, PreserveNoVariantsExpansionOnPromotion) {
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+
+  // Step 1: Learn "Google" with NO_VARIANTS_EXPANSION (e.g. from
+  // EnglishVariantsRewriter).
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("ぐーぐる");
     converter::Candidate* candidate =
         segments.mutable_segment(0)->mutable_candidate(1);
-    candidate->value = "ａｂｃ";
-    candidate->content_value = "ａｂｃ";
-    candidate->content_key = "abc";
-    candidate->description = "[全]アルファベット";
-    candidate->content_key = "abc";
-    rewriter->Rewrite(convreq, &segments);
-    EXPECT_EQ(segments.segment(0).candidate(0).content_value, "abc");
-    // "アルファベット"
-    EXPECT_EQ(VariantsRewriter::kAlphabet,
-              segments.segment(0).candidate(0).description);
+    candidate->value = "Google";
+    candidate->content_value = "Google";
+    candidate->content_key = "ぐーぐる";
+    candidate->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+    segments.mutable_segment(0)->move_candidate(1, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        converter::Attribute::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter->Finish(convreq, segments);
+  }
+
+  // Step 2: Rewrite "ぐーぐる".
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    Segment* seg = segments.mutable_segment(0);
+    seg->set_key("ぐーぐる");
+    seg->mutable_candidate(0)->value = "グーグル";
+    seg->mutable_candidate(0)->content_value = "グーグル";
+    seg->mutable_candidate(1)->value = "Google";
+    seg->mutable_candidate(1)->content_value = "Google";
+    seg->mutable_candidate(1)->attributes |=
+        converter::Attribute::NO_VARIANTS_EXPANSION;
+
+    rewriter->Rewrite(convreq, &segments);
+
+    EXPECT_EQ(seg->candidate(0).value, "Google");
+    EXPECT_TRUE(seg->candidate(0).attributes &
+                converter::Attribute::NO_VARIANTS_EXPANSION);
   }
 }
 
@@ -2124,7 +2233,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Revert) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest,
-       NormalizeCandidateUpdatesInnerSegmentBoundary) {
+       WidthInvariantHistoryMatchingPreservesInnerSegmentBoundary) {
   Segments segments;
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -2132,7 +2241,7 @@ TEST_F(UserSegmentHistoryRewriterTest,
 
   const ConversionRequest convreq = CreateConversionRequest();
 
-  // Learn "2日" for "ふつか".
+  // Learn "２日" (full-width) for "ふつか".
   {
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("ふつか");
@@ -2140,8 +2249,8 @@ TEST_F(UserSegmentHistoryRewriterTest,
         segments.mutable_segment(0)->mutable_candidate(1);
     candidate->key = "ふつか";
     candidate->content_key = "ふつか";
-    candidate->value = "2日";
-    candidate->content_value = "2日";
+    candidate->value = "２日";
+    candidate->content_value = "２日";
     segments.mutable_segment(0)->move_candidate(1, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         converter::Attribute::RERANKED;
@@ -2149,9 +2258,9 @@ TEST_F(UserSegmentHistoryRewriterTest,
     rewriter->Finish(convreq, segments);
   }
 
-  // Set number character form preference to FULL_WIDTH and rewrite a segment
-  // where "2日" has an inner_segment_boundary for 4 bytes.
-  SetNumberForm(Config::FULL_WIDTH);
+  // Rewrite a segment where "2日" (half-width) has an inner_segment_boundary.
+  // USHR matches width-invariantly and promotes "2日" to top, without modifying
+  // its value or boundary (normalization is deferred to VariantsRewriter).
   {
     segments.Clear();
     InitSegments(&segments, 1, 2);
@@ -2168,13 +2277,13 @@ TEST_F(UserSegmentHistoryRewriterTest,
 
     EXPECT_TRUE(rewriter->Rewrite(convreq, &segments));
     const converter::Candidate& top = segments.segment(0).candidate(0);
-    EXPECT_EQ(top.value, "２日");
-    EXPECT_EQ(top.content_value, "２日");
+    EXPECT_EQ(top.value, "2日");
+    EXPECT_EQ(top.content_value, "2日");
     EXPECT_EQ(top.inner_segment_boundary,
               converter::BuildInnerSegmentBoundary(
-                  {{strlen("ふつか"), strlen("２日"), strlen("ふつか"),
-                    strlen("２日")}},
-                  "ふつか", "２日"));
+                  {{strlen("ふつか"), strlen("2日"), strlen("ふつか"),
+                    strlen("2日")}},
+                  "ふつか", "2日"));
   }
 }
 
