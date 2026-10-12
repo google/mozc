@@ -142,6 +142,7 @@ mozc_cc_test(
         ":existence_filter",
         "//base:hash",
         "//testing:gunit_main",
+        "//third_party/gloop/util/gtl:c_memcpy",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status:statusor",
