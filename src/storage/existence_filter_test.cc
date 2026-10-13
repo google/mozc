@@ -35,12 +35,12 @@
 #include <string>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "third_party/gloop/util/gtl/c_memcpy.h"
 #include "base/hash.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -68,7 +68,7 @@ void CheckValues(const ExistenceFilter& filter, int m, int n) {
 
 std::vector<uint32_t> StringToAlignedBuffer(const absl::string_view str) {
   std::vector<uint32_t> aligned_buf(str.size() / sizeof(uint32_t));
-  gtl::c_memcpy(aligned_buf, str);
+  absl::c_copy(str, reinterpret_cast<char*>(aligned_buf.data()));
   return aligned_buf;
 }
 
