@@ -461,7 +461,6 @@ genrule(
         # Common files for all build types.
         macos = [
             ":activate_pane",
-            ":dev_confirm_pane",
             ":mozc_macos",
             ":uninstaller_macos",
         ],

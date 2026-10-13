@@ -167,20 +167,22 @@ def TweakForProductbuild(
       ),
   ]
 
-  # For the dev channel, add the dev confirm section to the installer.
   if is_dev_channel:
-    renames += [('DevConfirmPane.bundle', 'Plugins/')]
+    if os.path.exists('distribution.xml'):
+      with open('distribution.xml', 'r', encoding='utf-8') as f:
+        content = f.read()
+      content = content.replace(
+          '<!--DEV_LICENSE-->',
+          '<license file="agreement.html" mime-type="text/html"/>',
+      )
+      with open('distribution.xml', 'w', encoding='utf-8') as f:
+        f.write(content)
   else:
-    shutil.rmtree('DevConfirmPane.bundle')
-    # Remove the dev confirm section from InstallerSections.plist
-    contents = []
-    with open('InstallerSections.plist', 'r') as f:
-      for line in f:
-        if 'DevConfirmPane' in line:
-          continue
-        contents.append(line)
-    with open('InstallerSections.plist', 'w') as f:
-      f.write(''.join(contents))
+    # Remove agreement.html from Resources for non-dev channels.
+    for lang in ['en.lproj', 'ja.lproj']:
+      path = os.path.join('Resources', lang, 'agreement.html')
+      if os.path.exists(path):
+        os.remove(path)
 
   for src, dst in renames:
     if dst.endswith('/'):
