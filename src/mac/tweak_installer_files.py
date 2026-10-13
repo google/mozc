@@ -153,8 +153,6 @@ def TweakForProductbuild(
       (f'Uninstall{name}.app', f'root/Applications/{folder}/'),
       (f'{name}.app', 'root/Library/Input Methods/'),
       ('LaunchAgents', 'root/Library/'),
-      ('ActivatePane.bundle', 'Plugins/'),
-      ('InstallerSections.plist', 'Plugins/'),
       ('postflight.sh', 'scripts/postinstall'),
       ('preflight.sh', 'scripts/preinstall'),
       (

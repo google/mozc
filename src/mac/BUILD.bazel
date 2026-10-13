@@ -31,7 +31,6 @@ load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
     "mozc_macos_application",
-    "mozc_macos_bundle",
     "mozc_objc_library",
     "mozc_objc_test",
     "mozc_py_binary",
@@ -305,60 +304,6 @@ genrule(
 )
 
 mozc_objc_library(
-    name = "activate_pane_lib",
-    srcs = ["ActivatePane/ActivatePane.mm"],
-    hdrs = ["ActivatePane/ActivatePane.h"],
-    data = ["ActivatePane/ActivatePane.xib"],
-    sdk_frameworks = [
-        "Carbon",
-        "Cocoa",
-        "Foundation",
-        "InstallerPlugins",
-    ],
-    tags = ["manual"],
-)
-
-mozc_macos_bundle(
-    name = "activate_pane",
-    bundle_name = "ActivatePane",
-    infoplists = ["ActivatePane/Info.plist"],
-    strings = [
-        "ActivatePane/English.lproj/InfoPlist.strings",
-        "ActivatePane/English.lproj/Localizable.strings",
-        "ActivatePane/Japanese.lproj/InfoPlist.strings",
-        "ActivatePane/Japanese.lproj/Localizable.strings",
-    ],
-    deps = ["activate_pane_lib"],
-)
-
-mozc_objc_library(
-    name = "dev_confirm_pane_lib",
-    srcs = ["DevConfirmPane/DevConfirmPane.mm"],
-    hdrs = ["DevConfirmPane/DevConfirmPane.h"],
-    data = ["DevConfirmPane/DevConfirmPane.xib"],
-    sdk_frameworks = [
-        "Carbon",
-        "Cocoa",
-        "Foundation",
-        "InstallerPlugins",
-    ],
-    tags = ["manual"],
-)
-
-mozc_macos_bundle(
-    name = "dev_confirm_pane",
-    bundle_name = "DevConfirmPane",
-    infoplists = ["DevConfirmPane/Info.plist"],
-    strings = [
-        "DevConfirmPane/English.lproj/InfoPlist.strings",
-        "DevConfirmPane/English.lproj/Localizable.strings",
-        "DevConfirmPane/Japanese.lproj/InfoPlist.strings",
-        "DevConfirmPane/Japanese.lproj/Localizable.strings",
-    ],
-    deps = ["dev_confirm_pane_lib"],
-)
-
-mozc_objc_library(
     name = "uninstaller_main_lib",
     srcs = [
         "Uninstaller/DialogsController.mm",
@@ -460,7 +405,6 @@ genrule(
     ] + mozc_select(
         # Common files for all build types.
         macos = [
-            ":activate_pane",
             ":mozc_macos",
             ":uninstaller_macos",
         ],
@@ -468,20 +412,17 @@ genrule(
         # Files per build type.
         macos = [
             "//mac/installer:distribution.xml",
-            "//mac/installer:InstallerSections.plist",
             "//mac/installer:launch_agents",
             "//mac/installer:resources",
         ],
         oss_macos = [
             "//mac/installer:distribution.xml",
-            "//mac/installer:InstallerSections.plist",
             "//mac/installer:launch_agents",
             "//mac/installer:resources",
         ],
         prod_macos = [
             "@google_updater//:GoogleUpdater.pkg",
             "//mac/installer:distribution.xml",
-            "//mac/installer:InstallerSections.plist",
             "//mac/installer:launch_agents",
             "//mac/installer:resources",
         ],

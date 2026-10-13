@@ -719,17 +719,6 @@
 					<key>LIST_TITLE_KEY</key>
 					<string>InstallerSectionTitle</string>
 				</dict>
-				<dict>
-					<key>ICPRESENTATION_CHAPTER_VIEW_CONTROLLER_CLASS</key>
-					<string>ICPresentationViewInstallerPluginController</string>
-					<key>ICPRESENTATION_CHAPTER_VIEW_CONTROLLER_INSTALLERPLUGIN_PATH</key>
-					<dict>
-						<key>PATH</key>
-						<string>${BUILD_DIR}/ActivatePane.bundle</string>
-						<key>PATH_TYPE</key>
-						<integer>0</integer>
-					</dict>
-				</dict>
 			</array>
 			<key>INTRODUCTION</key>
 			<dict>

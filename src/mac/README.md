@@ -8,10 +8,6 @@ It contains
 *   Uninstaller
 *   Interface classes for macOS IMF (i.e. the subclass of `IMKInputController`).
 
-## ActivatePane / DevConfirmPane
-
-Modules used in the installer.
-
 ## English.lproj / Japanese.lproj
 
 Localized strings used for the menu bar.
