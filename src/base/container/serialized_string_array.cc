@@ -35,6 +35,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
@@ -133,8 +134,8 @@ absl::string_view SerializeToBufferImpl(absl::Span<const T> strs,
     // Copy string buffer at the calculated offset.  Guarantee that the buffer
     // is null-terminated.
     char* dest = reinterpret_cast<char*>(buffer->get()) + offsets[i];
-    memcpy(dest, strs[i].data(), strs[i].size());
-    dest[strs[i].size()] = '\0';
+    char* end = absl::c_copy(strs[i], dest);
+    *end = '\0';
   }
 
   return absl::string_view(reinterpret_cast<const char*>(buffer->get()),

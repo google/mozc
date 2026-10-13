@@ -323,12 +323,10 @@ class UserDictionary::TokensIndex {
     StoreUnaligned<uint16_t>(static_cast<uint16_t>(token.value.size()),
                              ptr + 5);
     ptr += kTokenHeaderSize;
-    std::memcpy(ptr, token.key.data(), token.key.size());
-    ptr += token.key.size();
-    std::memcpy(ptr, token.value.data(), token.value.size());
-    ptr += token.value.size();
+    ptr = absl::c_copy(token.key, ptr);
+    ptr = absl::c_copy(token.value, ptr);
     if (!comment.empty()) {
-      std::memcpy(ptr, comment.data(), comment.size());
+      absl::c_copy(comment, ptr);
     }
     return buf;
   }
