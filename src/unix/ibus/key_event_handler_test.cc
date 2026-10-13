@@ -188,6 +188,19 @@ TEST_F(KeyEventHandlerTest, GetKeyEvent) {
                                        true, &key));
   }
 
+  {  // Handle Mod3 (Level 5 Shift / Bone layout) and Mod5 (AltGr)
+     // https://github.com/google/mozc/issues/1590
+    key.Clear();
+    EXPECT_TRUE(handler_->GetKeyEvent(IBUS_minus, '-', IBUS_MOD3_MASK,
+                                      config::Config::ROMAN, true, &key));
+    EXPECT_EQ(key.key_code(), '-');
+
+    key.Clear();
+    EXPECT_TRUE(handler_->GetKeyEvent(IBUS_at, '@', IBUS_MOD5_MASK,
+                                      config::Config::ROMAN, true, &key));
+    EXPECT_EQ(key.key_code(), '@');
+  }
+
   // This test fails in current implementation.
   // TODO(hsumita): Enables it.
   /*

@@ -65,12 +65,14 @@ bool KeyEventHandler::GetKeyEvent(uint keyval, uint keycode, uint modifiers,
   // Ignore key events with modifiers, except for the below;
   // - Alt (Mod1) - Mozc uses Alt for shortcuts
   // - NumLock (Mod2) - NumLock shouldn't impact shortcuts
+  // - Level 5 Shift (Mod3) / Level 3 Shift (Mod5, AltGr) - used for typing
+  //   characters/symbols (e.g. Bone/Neo2 layouts, European layouts).
   // This is needed for handling shortcuts such as Super (Mod4) + Space,
   // IBus's default for switching input methods.
   // https://github.com/google/mozc/issues/853
+  // https://github.com/google/mozc/issues/1590
   constexpr uint kExtraModMask =
-      IBUS_MOD3_MASK | IBUS_MOD4_MASK | IBUS_MOD5_MASK |
-      IBUS_SUPER_MASK | IBUS_HYPER_MASK | IBUS_META_MASK;
+      IBUS_MOD4_MASK | IBUS_SUPER_MASK | IBUS_HYPER_MASK | IBUS_META_MASK;
   if (modifiers & kExtraModMask) {
     return false;
   }
