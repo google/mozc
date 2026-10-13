@@ -34,10 +34,12 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/container/btree_set.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
+#include "base/strings/strip.h"
 #include "base/util.h"
 #include "converter/attribute.h"
 #include "converter/node_list_builder.h"
@@ -95,6 +97,40 @@ bool IsNoisyNumberToken(absl::string_view key, size_t original_key_len,
     return true;
   }
   return Util::CharsLen(value_suffix) >= 3;
+}
+
+bool IsStandaloneParenthesizedWeekday(absl::string_view text) {
+  text = strings::StripWhitespace(text);
+  constexpr absl::string_view kParenthesizedWeekdays[] = {
+      "(月)",   "(火)",   "(水)",   "(木)",   "(金)",   "(土)",   "(日)",
+      "（月）", "（火）", "（水）", "（木）", "（金）", "（土）", "（日）",
+  };
+  return absl::c_contains(kParenthesizedWeekdays, text);
+}
+
+bool IsRedundantForWeekdayPrediction(absl::string_view text) {
+  text = strings::StripWhitespace(text);
+  constexpr absl::string_view kRedundantWeekdayCandidates[] = {
+      "(",      "（",     "()",     "（）",   "(月)",   "(火)",   "(水)",
+      "(木)",   "(金)",   "(土)",   "(日)",   "（月）", "（火）", "（水）",
+      "（木）", "（金）", "（土）", "（日）", "月曜",   "火曜",   "水曜",
+      "木曜",   "金曜",   "土曜",   "日曜",   "月曜日", "火曜日", "水曜日",
+      "木曜日", "金曜日", "土曜日", "日曜日",
+  };
+  return absl::c_contains(kRedundantWeekdayCandidates, text);
+}
+
+bool EndsWithWeekdayExpression(absl::string_view text) {
+  text = strings::StripTrailingWhitespace(text);
+  constexpr absl::string_view kWeekdaySuffixes[] = {
+      "(月)",   "(火)",   "(水)",   "(木)",   "(金)",   "(土)",   "(日)",
+      "（月）", "（火）", "（水）", "（木）", "（金）", "（土）", "（日）",
+      "月曜",   "火曜",   "水曜",   "木曜",   "金曜",   "土曜",   "日曜",
+      "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", "日曜日",
+  };
+  return absl::c_any_of(kWeekdaySuffixes, [text](absl::string_view suffix) {
+    return text.ends_with(suffix);
+  });
 }
 
 ResultsSizeAdjuster::ResultsSizeAdjuster(const ConversionRequest& request,

@@ -62,6 +62,7 @@
 #include "absl/time/time.h"
 #include "absl/types/span.h"
 #include "base/clock.h"
+#include "base/date_util.h"
 #include "base/japanese_util.h"
 #include "base/number_util.h"
 #include "base/strings/unicode.h"
@@ -147,10 +148,6 @@ constexpr DateRewriter::DateData kDateData[] = {
     // Date and time rewrites.
     {"にちじ", "日時", "現在の日時", 0, DATE_AND_CURRENT_TIME},
     {"なう", "ナウ", "現在の日時", 0, DATE_AND_CURRENT_TIME}};
-
-// Absl::Weekday starts from Monday, while std::tm.tm_wday starts from Sunday.
-constexpr absl::string_view kWeekDayString[] = {"月", "火", "水", "木",
-                                                "金", "土", "日"};
 
 constexpr absl::string_view kDateDescription = "日付";
 constexpr absl::string_view kTimeDescription = "時刻";
@@ -930,8 +927,8 @@ std::vector<std::string> GetConversions(
         results.push_back(
             absl::StrFormat("%s年%d月%d日", era[0], cm.month(), cm.day()));
       }
-      const int weekday = static_cast<int>(absl::GetWeekday(cm));
-      results.push_back(absl::StrFormat("%s曜日", kWeekDayString[weekday]));
+      results.push_back(absl::StrFormat(
+          "%s曜日", date_util::GetShortWeekdayString(absl::GetWeekday(cm))));
       break;
     }
 

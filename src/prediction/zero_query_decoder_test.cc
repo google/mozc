@@ -29,16 +29,22 @@
 
 #include "prediction/zero_query_decoder.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/civil_time.h"
+#include "absl/time/time.h"
+#include "base/clock_mock.h"
 #include "base/container/serialized_string_array.h"
+#include "converter/attribute.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
@@ -65,6 +71,11 @@ class ZeroQueryDecoderTestPeer {
                                           results);
   }
 
+  bool AggregateWeekdayZeroQuery(const ConversionRequest& request,
+                                 std::vector<Result>* results) const {
+    return decoder_.AggregateWeekdayZeroQuery(request, results);
+  }
+
  private:
   const ZeroQueryDecoder& decoder_;
 };
@@ -88,6 +99,15 @@ class ZeroQueryDecoderTest : public ::testing::Test {
     result.key = std::string(key);
     result.value = std::string(value);
     return result;
+  }
+
+  // Essentially the same logic as converter::EncodeLengths in
+  // converter/inner_segment.h.
+  static uint32_t EncodeBoundary(uint8_t key_len, uint8_t value_len) {
+    return static_cast<uint32_t>(key_len) |
+           (static_cast<uint32_t>(value_len) << 8) |
+           (static_cast<uint32_t>(key_len) << 16) |
+           (static_cast<uint32_t>(value_len) << 24);
   }
 
   const PosMatcher& pos_matcher() const { return modules_->GetPosMatcher(); }
@@ -318,6 +338,331 @@ TEST_F(ZeroQueryDecoderTest, GetZeroQueryCandidates) {
     EXPECT_EQ(results.size(), test_case.expected_candidates.size());
     for (size_t i = 0; i < test_case.expected_candidates.size(); ++i) {
       EXPECT_EQ(results[i].value, test_case.expected_candidates[i]);
+    }
+  }
+}
+
+TEST_F(ZeroQueryDecoderTest, WeekdayZeroQuerySuggestion) {
+  // Set clock to Wednesday, September 16, 2026 12:00:00 UTC.
+  const ScopedClockMock clock(absl::FromCivil(
+      absl::CivilSecond(2026, 9, 16, 12, 0, 0), absl::UTCTimeZone()));
+
+  commands::Request request_proto;
+  request_proto.set_zero_query_suggestion(true);
+
+  // 1. Default (disabled): should not emit day-of-week candidates.
+  {
+    const Result history = CreateHistoryResult("9/16", "9/16");
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetHistoryResult(history)
+                                          .SetRequest(request_proto)
+                                          .Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+    for (const Result& r : results) {
+      EXPECT_NE(r.value, " (水)");
+    }
+  }
+
+  // 2. Enabled via DecoderExperimentParams.
+  request_proto.mutable_decoder_experiment_params()
+      ->set_enable_weekday_zero_query_prediction(true);
+
+  const struct TestCase {
+    absl::string_view input;
+    bool use_preceding_text;
+    absl::string_view expected_value;
+    absl::string_view expected_key;
+  } kTestCases[] = {
+      {"9/16", false, " (水)", "すい"},
+      {"9/16", true, " (水)", "すい"},
+      {"9/17", false, " (木)", "もく"},
+      {"09/16", true, " (水)", "すい"},
+      {"2026/09/16", false, " (水)", "すい"},
+      {"9月16日", false, " (水)", "すい"},
+      {"2026年9月16日", true, " (水)", "すい"},
+      {"予定は９／１６", true, " (水)", "すい"},
+      {"明日は９月１７日", true, " (木)", "もく"},
+  };
+
+  for (const auto& tc : kTestCases) {
+    ConversionRequestBuilder builder;
+    builder.SetRequest(request_proto);
+    commands::Context context;
+    Result history;
+    if (tc.use_preceding_text) {
+      context.set_preceding_text(tc.input);
+      builder.SetContext(context);
+    } else {
+      history = CreateHistoryResult(tc.input, tc.input);
+      builder.SetHistoryResult(history);
+    }
+    const ConversionRequest request = builder.Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+
+    ASSERT_GE(results.size(), 1) << "Input: " << tc.input;
+    EXPECT_EQ(results[0].value, tc.expected_value) << "Input: " << tc.input;
+    EXPECT_EQ(results[0].key, tc.expected_key) << "Input: " << tc.input;
+    EXPECT_EQ(results[0].lid, 0) << "Input: " << tc.input;
+    EXPECT_EQ(results[0].rid, 0) << "Input: " << tc.input;
+    EXPECT_EQ(results[0].wcost, -500) << "Input: " << tc.input;
+    EXPECT_TRUE(results[0].attributes & converter::Attribute::DISABLE_RESCORING)
+        << "Input: " << tc.input;
+    EXPECT_TRUE(results[0].attributes & converter::Attribute::NO_LEARNING)
+        << "Input: " << tc.input;
+    for (size_t i = 1; i < results.size(); ++i) {
+      EXPECT_FALSE(results[i].value.starts_with(" （"))
+          << "Redundant full-width weekday candidate: " << results[i].value;
+      EXPECT_FALSE(results[i].value.ends_with("曜日"))
+          << "Redundant full-name weekday candidate: " << results[i].value;
+      EXPECT_NE(results[i].value, "(");
+      EXPECT_NE(results[i].value, " (");
+      EXPECT_NE(results[i].value, "（");
+      EXPECT_NE(results[i].value, " （");
+    }
+  }
+}
+
+TEST_F(ZeroQueryDecoderTest,
+       WeekdayZeroQueryNotRepeatedAfterCommittingWeekday) {
+  const ScopedClockMock clock(absl::FromCivil(
+      absl::CivilSecond(2026, 9, 16, 12, 0, 0), absl::UTCTimeZone()));
+
+  commands::Request request_proto;
+  request_proto.set_zero_query_suggestion(true);
+  request_proto.mutable_decoder_experiment_params()
+      ->set_enable_weekday_zero_query_prediction(true);
+
+  // Case 1: `preceding_text` is still "9/16" (not yet updated by client during
+  // Session::CommitCandidate), while `history_result` contains " (水)".
+  {
+    commands::Context context;
+    context.set_preceding_text("9/16");
+    const Result history = CreateHistoryResult("すい", " (水)");
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetContext(context)
+                                          .SetHistoryResult(history)
+                                          .SetRequest(request_proto)
+                                          .Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+    for (const Result& r : results) {
+      EXPECT_NE(r.value, " (水)");
+    }
+  }
+
+  // Case 2: `preceding_text` is still "9/16", while `history_result` contains
+  // concatenated segments "9/16 (水)".
+  {
+    commands::Context context;
+    context.set_preceding_text("9/16");
+    const Result history = CreateHistoryResult("9/16すい", "9/16 (水)");
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetContext(context)
+                                          .SetHistoryResult(history)
+                                          .SetRequest(request_proto)
+                                          .Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+    for (const Result& r : results) {
+      EXPECT_NE(r.value, " (水)");
+    }
+  }
+
+  // Case 3: `preceding_text` has been updated to "9/16 (水)" with empty
+  // `history_result`.
+  {
+    commands::Context context;
+    context.set_preceding_text("9/16 (水)");
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetContext(context)
+                                          .SetRequest(request_proto)
+                                          .Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+    for (const Result& r : results) {
+      EXPECT_NE(r.value, " (水)");
+    }
+  }
+}
+
+TEST_F(ZeroQueryDecoderTest,
+       WeekdayZeroQueryWithSplitCommitAndMultiSegmentHistory) {
+  const ScopedClockMock clock(absl::FromCivil(
+      absl::CivilSecond(2026, 9, 16, 12, 0, 0), absl::UTCTimeZone()));
+
+  commands::Request request_proto;
+  request_proto.set_zero_query_suggestion(true);
+  request_proto.mutable_decoder_experiment_params()
+      ->set_enable_weekday_zero_query_prediction(true);
+
+  // Case 1: `preceding_text` is "9/16" and `history_result` is "16" (e.g.,
+  // after HistoryReconstructor extracts the trailing number token, or when
+  // `preceding_text` already includes the last committed segment).
+  {
+    commands::Context context;
+    context.set_preceding_text("9/16");
+    const Result history = CreateHistoryResult("16", "16");
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetContext(context)
+                                          .SetHistoryResult(history)
+                                          .SetRequest(request_proto)
+                                          .Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+    ASSERT_GE(results.size(), 1);
+    EXPECT_EQ(results[0].value, " (水)");
+    EXPECT_EQ(results[0].key, "すい");
+  }
+
+  // Case 2: Multi-segment history where Segment 0 = "9" and Segment 1 = "16",
+  // and "/" was committed directly to the editor (`preceding_text` = "9/").
+  {
+    commands::Context context;
+    context.set_preceding_text("9/");
+    Result history = CreateHistoryResult("916", "916");
+    history.inner_segment_boundary.push_back(EncodeBoundary(1, 1));
+    history.inner_segment_boundary.push_back(EncodeBoundary(2, 2));
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetContext(context)
+                                          .SetHistoryResult(history)
+                                          .SetRequest(request_proto)
+                                          .Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+    ASSERT_GE(results.size(), 1);
+    EXPECT_EQ(results[0].value, " (水)");
+    EXPECT_EQ(results[0].key, "すい");
+  }
+
+  // Case 3: Multi-segment history where Segment 0 = "9月" and Segment 1 =
+  // "16日" (`last_history_value` = "16日", `full_history_value` = "9月16日").
+  {
+    Result history = CreateHistoryResult("9がつ16にち", "9月16日");
+    history.inner_segment_boundary.push_back(EncodeBoundary(7, 4));
+    history.inner_segment_boundary.push_back(EncodeBoundary(8, 5));
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetHistoryResult(history)
+                                          .SetRequest(request_proto)
+                                          .Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+    ASSERT_GE(results.size(), 1);
+    EXPECT_EQ(results[0].value, " (水)");
+    EXPECT_EQ(results[0].key, "すい");
+  }
+}
+
+TEST_F(ZeroQueryDecoderTest,
+       WeekdayZeroQueryFiltersRedundantOpenParenthesesAndWeekdays) {
+  const ScopedClockMock clock(absl::FromCivil(
+      absl::CivilSecond(2026, 9, 16, 12, 0, 0), absl::UTCTimeZone()));
+
+  commands::Request request_proto;
+  request_proto.set_zero_query_suggestion(true);
+  request_proto.mutable_decoder_experiment_params()
+      ->set_enable_weekday_zero_query_prediction(true);
+
+  const Result history = CreateHistoryResult("9/16", "9/16");
+  const ConversionRequest request = ConversionRequestBuilder()
+                                        .SetHistoryResult(history)
+                                        .SetRequest(request_proto)
+                                        .Build();
+
+  std::vector<Result> results;
+  auto add_candidate = [&](absl::string_view val) {
+    Result r;
+    r.value = std::string(val);
+    results.push_back(std::move(r));
+  };
+  // Redundant candidates that might be predicted by SupplementalModel.
+  add_candidate("(");
+  add_candidate(" (");
+  add_candidate("（");
+  add_candidate(" （");
+  add_candidate("()");
+  add_candidate("（）");
+  add_candidate(" (金)");
+  add_candidate("（水）");
+  add_candidate("水曜日");
+  // Valid non-redundant candidate.
+  add_candidate("の");
+
+  ZeroQueryDecoderTestPeer peer(*decoder_);
+  EXPECT_TRUE(peer.AggregateWeekdayZeroQuery(request, &results));
+
+  ASSERT_EQ(results.size(), 2);
+  EXPECT_EQ(results[0].value, "の");
+  EXPECT_EQ(results[1].value, " (水)");
+}
+
+TEST_F(ZeroQueryDecoderTest, WeekdayZeroQuerySlidingWindowAndValidation) {
+  commands::Request request_proto;
+  request_proto.set_zero_query_suggestion(true);
+  request_proto.mutable_decoder_experiment_params()
+      ->set_enable_weekday_zero_query_prediction(true);
+
+  // 1. Sliding window forward rollover: typed in late December 2026 -> Jan 2027
+  {
+    const ScopedClockMock clock(absl::FromCivil(
+        absl::CivilSecond(2026, 12, 20, 12, 0, 0), absl::UTCTimeZone()));
+    commands::Context context;
+    // Jan 10, 2027 is Sunday ("日"). (Jan 10, 2026 was Saturday).
+    context.set_preceding_text("1/10");
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetContext(context)
+                                          .SetRequest(request_proto)
+                                          .Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+    ASSERT_GE(results.size(), 1);
+    EXPECT_EQ(results[0].value, " (日)");
+    EXPECT_EQ(results[0].key, "にち");
+  }
+
+  // 2. Sliding window backward rollover: typed in early January 2026 -> Dec
+  // 2025
+  {
+    const ScopedClockMock clock(absl::FromCivil(
+        absl::CivilSecond(2026, 1, 5, 12, 0, 0), absl::UTCTimeZone()));
+    commands::Context context;
+    // Dec 28, 2025 is Sunday ("日"). (Dec 28, 2026 is Monday).
+    context.set_preceding_text("12/28");
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetContext(context)
+                                          .SetRequest(request_proto)
+                                          .Build();
+    const std::vector<Result> results = decoder_->Decode(request);
+    ASSERT_GE(results.size(), 1);
+    EXPECT_EQ(results[0].value, " (日)");
+    EXPECT_EQ(results[0].key, "にち");
+  }
+
+  // 3. Leap year validation: 2028/2/29 is valid (Tuesday), 2026/2/29 is invalid
+  {
+    const ScopedClockMock clock(absl::FromCivil(
+        absl::CivilSecond(2026, 9, 16, 12, 0, 0), absl::UTCTimeZone()));
+    {
+      commands::Context context;
+      context.set_preceding_text("2028/2/29");
+      const ConversionRequest request = ConversionRequestBuilder()
+                                            .SetContext(context)
+                                            .SetRequest(request_proto)
+                                            .Build();
+      const std::vector<Result> results = decoder_->Decode(request);
+      ASSERT_GE(results.size(), 1);
+      EXPECT_EQ(results[0].value, " (火)");
+      EXPECT_EQ(results[0].key, "か");
+    }
+
+    const absl::string_view kInvalidInputs[] = {
+        "2/30", "2026/2/29", "13/1", "0/10", "192.168.1/24", "1/2/3",
+    };
+    for (const absl::string_view invalid_input : kInvalidInputs) {
+      commands::Context context;
+      context.set_preceding_text(invalid_input);
+      const ConversionRequest request = ConversionRequestBuilder()
+                                            .SetContext(context)
+                                            .SetRequest(request_proto)
+                                            .Build();
+      const std::vector<Result> results = decoder_->Decode(request);
+      for (const Result& r : results) {
+        EXPECT_FALSE(r.value.starts_with(" ("))
+            << "Unexpected date candidate for invalid input: " << invalid_input
+            << " -> " << r.value;
+      }
     }
   }
 }

@@ -41,10 +41,13 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/civil_time.h"
 #include "absl/types/span.h"
+#include "base/date_util.h"
 #include "base/japanese_util.h"
 #include "base/number_util.h"
 #include "base/util.h"
+#include "converter/attribute.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
@@ -54,7 +57,6 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_util.h"
-#include "transliteration/transliteration.h"
 
 namespace mozc::prediction {
 namespace {
@@ -162,14 +164,18 @@ std::vector<Result> ZeroQueryDecoder::Decode(
   // 1. Supplemental model.
   modules_.GetSupplementalModel().Predict(request, results);
 
-  // 2. Zero query number dictionary(data / zero_query / zero_query_number.def)
+  // 2. Zero query weekday prediction.
+  // "9/16" -> " (水)"
+  AggregateWeekdayZeroQuery(request, &results);
+
+  // 3. Zero query number dictionary(data / zero_query / zero_query_number.def)
   // "30" -> "年"
-  // TOOD(taku): Consider to aggregate other candidates.
+  // TODO(taku): Consider to aggregate other candidates.
   if (AggregateNumberZeroQuery(request, &results)) {
     return results;
   }
 
-  // 3. Zero query dictionary (data/zero_query/zero_query.def)
+  // 4. Zero query dictionary (data/zero_query/zero_query.def)
   // "あけまして" -> "おめでとうございます”
   constexpr uint16_t kId = 0;  // EOS
   GetZeroQueryCandidatesForKey(request, history_value, zero_query_dict_, kId,
@@ -182,7 +188,7 @@ std::vector<Result> ZeroQueryDecoder::Decode(
                                  &results);
   }
 
-  // 4. English decoder.
+  // 5. English decoder.
   modules_.GetSupplementalModel().DecodeEnglish(request, results);
 
   // We do not want zero query results from suffix dictionary for Latin
@@ -199,7 +205,7 @@ std::vector<Result> ZeroQueryDecoder::Decode(
     return results;
   }
 
-  // 5. Zero query suffix dictionary.
+  // 6. Zero query suffix dictionary.
   //    "東京" -> "は"
   if (results.empty() || !IsZeroQuerySuffixPredictionDisabled(request) ||
       request_util::IsHandwriting(request)) {
@@ -222,6 +228,109 @@ std::vector<Result> ZeroQueryDecoder::Decode(
   }
 
   return results;
+}
+
+bool ZeroQueryDecoder::AggregateWeekdayZeroQuery(
+    const ConversionRequest& request, std::vector<Result>* results) const {
+  DCHECK(results);
+  if (!request.request()
+           .decoder_experiment_params()
+           .enable_weekday_zero_query_prediction()) {
+    return false;
+  }
+
+  const absl::string_view last_history_value =
+      request.converter_history_value(1);
+  const absl::string_view full_history_value =
+      request.converter_history_value(-1);
+  const absl::string_view preceding_text = request.context().preceding_text();
+
+  // If the committed history or surrounding context already ends with a
+  // weekday expression (e.g., immediately after selecting " (水)" following
+  // "9/16"), suppress weekday prediction and remove any redundant weekday or
+  // open-parenthesis candidates from `results` so that weekday candidates are
+  // not suggested repeatedly.
+  if (EndsWithWeekdayExpression(last_history_value) ||
+      EndsWithWeekdayExpression(full_history_value) ||
+      (last_history_value.empty() &&
+       EndsWithWeekdayExpression(preceding_text))) {
+    results->erase(
+        std::remove_if(results->begin(), results->end(),
+                       [](const Result& r) {
+                         return IsRedundantForWeekdayPrediction(r.value);
+                       }),
+        results->end());
+    return false;
+  }
+
+  std::optional<absl::Weekday> weekday_opt;
+  if (last_history_value.empty()) {
+    weekday_opt = date_util::GetWeekdayFromTrailingDate(preceding_text);
+  } else {
+    weekday_opt = date_util::GetWeekdayFromTrailingDate(last_history_value);
+    if (!weekday_opt.has_value() && full_history_value != last_history_value) {
+      weekday_opt = date_util::GetWeekdayFromTrailingDate(full_history_value);
+    }
+    if (!weekday_opt.has_value() && !preceding_text.empty() &&
+        !EndsWithWeekdayExpression(preceding_text)) {
+      // On keyboards where '/' is committed directly to the editor while
+      // digits go through Mozc composition (e.g., Gboard's ?123 digit
+      // keyboard), typing "9/16" clears converter history on "9/" (because
+      // HistoryReconstructor rejects '/') and leaves `preceding_text` = "9/"
+      // and `last_history_value` = "16". Alternatively, if HistoryReconstructor
+      // ran on "9/16", `preceding_text` is "9/16" and `last_history_value` is
+      // "16".
+      if (preceding_text.ends_with(last_history_value)) {
+        weekday_opt = date_util::GetWeekdayFromTrailingDate(preceding_text);
+      } else {
+        weekday_opt = date_util::GetWeekdayFromTrailingDate(
+            absl::StrCat(preceding_text, last_history_value));
+      }
+    }
+  }
+  if (!weekday_opt.has_value()) {
+    return false;
+  }
+
+  // Remove any hallucinated weekday or redundant open-parenthesis candidates
+  // generated by statistical language models (N-gram / neural LM) prior to
+  // date zero-query decoding.
+  results->erase(
+      std::remove_if(results->begin(), results->end(),
+                     [](const Result& r) {
+                       return IsRedundantForWeekdayPrediction(r.value);
+                     }),
+      results->end());
+
+  const absl::string_view short_wd =
+      date_util::GetShortWeekdayString(*weekday_opt);
+  const absl::string_view short_wd_reading =
+      date_util::GetShortWeekdayReading(*weekday_opt);
+  if (short_wd.empty() || short_wd_reading.empty()) {
+    return false;
+  }
+
+  // Assign BOS/EOS POS (0) like general zero-query dictionary candidates and a
+  // lower wcost so that the day-of-week candidate consistently ranks first
+  // after both slash dates ("9/16") and Kanji dates ("9月16日"). Also set
+  // DISABLE_RESCORING so that neural LM rescoring does not overwrite this
+  // deterministic candidate's cost or demote it below general suffixes, and
+  // NO_LEARNING so dynamic date-to-weekday pairs are not persisted in user
+  // history.
+  constexpr int kWeekdayWcost = -500;
+  constexpr uint16_t kEosId = 0;
+  Result result;
+  result.SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
+  result.attributes |= converter::Attribute::NO_LEARNING |
+                       converter::Attribute::DISABLE_RESCORING;
+  result.key = std::string(short_wd_reading);
+  result.value = absl::StrCat(" (", short_wd, ")");
+  result.wcost = kWeekdayWcost;
+  result.lid = kEosId;
+  result.rid = kEosId;
+  results->emplace_back(std::move(result));
+
+  return true;
 }
 
 // Returns true if we add zero query result.

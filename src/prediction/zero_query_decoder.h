@@ -62,6 +62,8 @@ namespace mozc::prediction {
 //  4. Email domain completion:
 //     - History / Preceding text: "user@" -> Candidates: "gmail.com",
 //     "google.com"
+//  5. Weekday zero-query prediction:
+//     - History / Preceding text: "9/16" -> Candidate: " (水)"
 class ZeroQueryDecoder {
  public:
   explicit ZeroQueryDecoder(const engine::Modules& modules);
@@ -70,6 +72,10 @@ class ZeroQueryDecoder {
   std::vector<Result> Decode(const ConversionRequest& request) const;
 
  private:
+  // Returns true if we add weekday zero query results.
+  bool AggregateWeekdayZeroQuery(const ConversionRequest& request,
+                                 std::vector<Result>* results) const;
+
   // Returns true if we add zero query result.
   bool AggregateNumberZeroQuery(const ConversionRequest& request,
                                 std::vector<Result>* results) const;

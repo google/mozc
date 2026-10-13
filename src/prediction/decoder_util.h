@@ -56,6 +56,21 @@ size_t GetCandidateCutoffThreshold(ConversionRequest::RequestType request_type);
 bool IsNoisyNumberToken(absl::string_view key, size_t original_key_len,
                         const dictionary::Token& token);
 
+// Returns true if `text` (ignoring leading/trailing halfwidth/fullwidth
+// whitespace) is a standalone parenthesized weekday expression such as "(水)"
+// or "（水）".
+bool IsStandaloneParenthesizedWeekday(absl::string_view text);
+
+// Returns true if `text` (ignoring leading/trailing halfwidth/fullwidth
+// whitespace) is a redundant open parenthesis or standalone weekday expression
+// that should be suppressed when weekday zero-query prediction is active.
+bool IsRedundantForWeekdayPrediction(absl::string_view text);
+
+// Returns true if `text` (ignoring trailing halfwidth/fullwidth whitespace)
+// ends with a Japanese weekday expression (e.g., "(水)", "（水）", "水曜",
+// "水曜日").
+bool EndsWithWeekdayExpression(absl::string_view text);
+
 // RAII class to adjust the result size to be `cutoff_threshold`.
 class ResultsSizeAdjuster {
  public:

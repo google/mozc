@@ -153,5 +153,27 @@ TEST(DecoderUtilTest, PredictiveLookupCallback) {
   EXPECT_GT(results[0].wcost, 1000);  // Spatial cost penalty added
 }
 
+TEST(DecoderUtilTest, WeekdayHelpers) {
+  EXPECT_TRUE(IsStandaloneParenthesizedWeekday("(水)"));
+  EXPECT_TRUE(IsStandaloneParenthesizedWeekday(" (水) "));
+  EXPECT_TRUE(IsStandaloneParenthesizedWeekday("　（日）　"));
+  EXPECT_FALSE(IsStandaloneParenthesizedWeekday("水曜日"));
+  EXPECT_FALSE(IsStandaloneParenthesizedWeekday("9/16 (水)"));
+
+  EXPECT_TRUE(IsRedundantForWeekdayPrediction("("));
+  EXPECT_TRUE(IsRedundantForWeekdayPrediction(" （ "));
+  EXPECT_TRUE(IsRedundantForWeekdayPrediction("()"));
+  EXPECT_TRUE(IsRedundantForWeekdayPrediction(" (水)"));
+  EXPECT_TRUE(IsRedundantForWeekdayPrediction("水曜"));
+  EXPECT_TRUE(IsRedundantForWeekdayPrediction("水曜日"));
+  EXPECT_FALSE(IsRedundantForWeekdayPrediction("には"));
+
+  EXPECT_TRUE(EndsWithWeekdayExpression("9/16 (水)"));
+  EXPECT_TRUE(EndsWithWeekdayExpression("9月16日（水） "));
+  EXPECT_TRUE(EndsWithWeekdayExpression("水曜日　"));
+  EXPECT_FALSE(EndsWithWeekdayExpression("9/16"));
+  EXPECT_FALSE(EndsWithWeekdayExpression("9月16日"));
+}
+
 }  // namespace
 }  // namespace mozc::prediction

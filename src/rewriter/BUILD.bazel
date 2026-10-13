@@ -231,6 +231,7 @@ mozc_cc_library(
     deps = [
         ":rewriter_interface",
         "//base:clock",
+        "//base:date_util",
         "//base:japanese_util",
         "//base:number_util",
         "//base:util",

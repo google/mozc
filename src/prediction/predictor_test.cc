@@ -650,4 +650,43 @@ TEST_F(MixedDecodingPredictorTest, MixCandidatesWithWeakUserHistoryTest) {
   }
 }
 
+TEST_F(MixedDecodingPredictorTest,
+       MixCandidatesFiltersStandaloneWeekdayFromUserHistory) {
+  auto predictor = std::make_unique<Predictor>(
+      *modules_, std::make_unique<NullPredictor>(true),
+      std::make_unique<NullPredictor>(true));
+  PredictorTestPeer peer(*predictor);
+
+  request_->mutable_decoder_experiment_params()
+      ->set_enable_weekday_zero_query_prediction(true);
+  composer_->Reset();
+  context_.set_preceding_text("9/16 (水)");
+  const ConversionRequest convreq =
+      CreateConversionRequest(ConversionRequest::PREDICTION);
+  ASSERT_TRUE(convreq.IsZeroQuerySuggestion());
+
+  std::vector<Result> history_results(2);
+  history_results[0].key = "すい";
+  history_results[0].value = " (水)";
+  history_results[0].attributes |=
+      converter::Attribute::USER_HISTORY_PREDICTION;
+  history_results[1].key = "の";
+  history_results[1].value = "の";
+  history_results[1].attributes |=
+      converter::Attribute::USER_HISTORY_PREDICTION;
+
+  std::vector<Result> dictionary_results(2);
+  dictionary_results[0].key = "すい";
+  dictionary_results[0].value = " (水)";
+  dictionary_results[1].key = "に";
+  dictionary_results[1].value = "に";
+
+  std::vector<Result> results = peer.MixCandidates(
+      convreq, std::move(history_results), std::move(dictionary_results));
+
+  ASSERT_EQ(results.size(), 2);
+  EXPECT_EQ(results[0].value, "の");
+  EXPECT_EQ(results[1].value, "に");
+}
+
 }  // namespace mozc::prediction
