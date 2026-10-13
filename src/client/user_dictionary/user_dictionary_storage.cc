@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/user_dictionary_storage.h"
+#include "client/user_dictionary/user_dictionary_storage.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -44,7 +44,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "base/config_file_stream.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/process_mutex.h"
@@ -70,16 +69,13 @@ constexpr size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 constexpr size_t kMaxDictionarySize = 100;
 constexpr size_t kMaxEntrySize = 1000000;
 
-// Default filename of user dictionary.
-constexpr absl::string_view kUserDictionaryFile = "user://user_dictionary.db";
-
 }  // namespace
 
 using user_dictionary::ExtendedErrorCode;
 
 // static
 std::string UserDictionaryStorage::GetDefaultUserDictionaryFileName() {
-  return ConfigFileStream::GetFileName(kUserDictionaryFile);
+  return user_dictionary::GetUserDictionaryFileName();
 }
 
 UserDictionaryStorage::UserDictionaryStorage()
@@ -225,7 +221,7 @@ absl::Status UserDictionaryStorage::ExportDictionary(
     return ToStatus(ExtendedErrorCode::UNKNOWN_DICTIONARY_ID);
   }
 
-  OutputFileStream ofs(absl::StrCat(filename));
+  OutputFileStream ofs(filename);
   if (!ofs) {
     return absl::PermissionDeniedError(
         absl::StrCat("Cannot open export file: ", filename));

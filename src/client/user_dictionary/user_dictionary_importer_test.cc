@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/user_dictionary_importer.h"
+#include "client/user_dictionary/user_dictionary_importer.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -36,7 +36,7 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "dictionary/user_dictionary_storage.h"
+#include "client/user_dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"

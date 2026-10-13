@@ -58,8 +58,8 @@
 //   AddEntry(). Clients of the class can import an external
 //   dictionary file using the two member functions.
 
-#ifndef MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
-#define MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
+#ifndef MOZC_CLIENT_USER_DICTIONARY_USER_DICTIONARY_STORAGE_H_
+#define MOZC_CLIENT_USER_DICTIONARY_USER_DICTIONARY_STORAGE_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -188,4 +188,4 @@ class UserDictionaryStorage {
 
 }  // namespace mozc
 
-#endif  // MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
+#endif  // MOZC_CLIENT_USER_DICTIONARY_USER_DICTIONARY_STORAGE_H_

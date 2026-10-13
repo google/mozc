@@ -37,7 +37,7 @@
 
 #include <QDialog>
 
-#include "dictionary/user_dictionary_importer.h"
+#include "client/user_dictionary/user_dictionary_importer.h"
 #include "gui/dictionary_tool/ui_import_dialog.h"
 
 namespace mozc {

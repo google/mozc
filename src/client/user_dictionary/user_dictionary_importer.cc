@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/user_dictionary_importer.h"
+#include "client/user_dictionary/user_dictionary_importer.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -38,7 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/algorithm/container.h"
 #include "absl/base/attributes.h"
 #include "absl/base/no_destructor.h"
 #include "absl/container/flat_hash_map.h"
@@ -53,14 +52,13 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
-#include "absl/types/span.h"
 #include "base/japanese_util.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
-#include "dictionary/user_dictionary_storage.h"
+#include "client/user_dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
@@ -452,7 +450,7 @@ EncodingType GuessEncodingType(absl::string_view str) {
 }
 
 EncodingType GuessFileEncodingType(absl::string_view filename) {
-  absl::StatusOr<Mmap> mmap = Mmap::Map(std::string(filename), Mmap::READ_ONLY);
+  absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_ONLY);
   if (!mmap.ok()) {
     LOG(ERROR) << "cannot open: " << filename << ": " << mmap.status();
     return NUM_ENCODINGS;

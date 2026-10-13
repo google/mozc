@@ -31,7 +31,6 @@
 
 #include <QMessageBox>
 #include <QtGui>
-#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -42,8 +41,8 @@
 #include "absl/time/time.h"
 #include "base/const.h"
 #include "client/client.h"
+#include "client/user_dictionary/user_dictionary_storage.h"
 #include "data_manager/pos_list_provider.h"
-#include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 #include "gui/base/util.h"

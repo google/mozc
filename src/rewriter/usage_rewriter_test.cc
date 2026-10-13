@@ -34,7 +34,6 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
-#include "base/container/serialized_string_array.h"
 #include "base/container/tuple.h"
 #include "config/config_handler.h"
 #include "converter/candidate.h"
@@ -42,14 +41,12 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_dictionary.h"
-#include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_pos.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "testing/test_peer.h"
@@ -59,8 +56,6 @@ namespace {
 
 using dictionary::UserDictionary;
 using dictionary::UserPos;
-using ::testing::_;
-using ::testing::SetArgPointee;
 
 void AddCandidate(const absl::string_view key, const absl::string_view value,
                   const absl::string_view content_key,
@@ -335,17 +330,16 @@ TEST_F(UsageRewriterTest, GetKanjiPrefixAndOneHiragana) {
 TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
   // Load mock data
   {
-    UserDictionaryStorage storage("");
-    UserDictionaryStorage::UserDictionary* dic =
-        storage.GetProto().add_dictionaries();
+    user_dictionary::UserDictionaryStorage storage;
+    user_dictionary::UserDictionary* dic = storage.add_dictionaries();
 
-    UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
+    user_dictionary::UserDictionary::Entry* entry = dic->add_entries();
     entry->set_key("うま");
     entry->set_value("アルパカ");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
     entry->set_comment("アルパカコメント");
 
-    user_dictionary_.Load(storage.GetProto());
+    user_dictionary_.Load(storage);
   }
 
   // Emulates the conversion of key="うま".

@@ -126,10 +126,11 @@ absl::Status ValidateEntry(const user_dictionary::UserDictionary::Entry& entry);
 // methods. Return true if the entry is changed.
 bool SanitizeEntry(user_dictionary::UserDictionary::Entry* entry);
 
-
-
 // Returns the error status of the validity for the given dictionary name.
 absl::Status ValidateDictionaryName(absl::string_view dictionary_name);
+
+// Returns the file name of UserDictionary.
+std::string GetUserDictionaryFileName();
 
 }  // namespace user_dictionary
 }  // namespace mozc

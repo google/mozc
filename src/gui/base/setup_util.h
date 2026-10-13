@@ -33,7 +33,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "dictionary/user_dictionary_storage.h"
+#include "client/user_dictionary/user_dictionary_storage.h"
 
 namespace mozc {
 namespace gui {

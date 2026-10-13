@@ -30,7 +30,7 @@
 #ifndef MOZC_GUI_BASE_MSIME_USER_DICTIONARY_IMPORTER_H_
 #define MOZC_GUI_BASE_MSIME_USER_DICTIONARY_IMPORTER_H_
 
-#include "dictionary/user_dictionary_importer.h"
+#include "client/user_dictionary/user_dictionary_importer.h"
 
 namespace mozc {
 namespace gui {

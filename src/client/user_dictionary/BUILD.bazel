@@ -1,0 +1,138 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//:build_defs.bzl",
+    "mozc_cc_library",
+    "mozc_cc_test",
+)
+
+package(default_visibility = ["//visibility:private"])
+
+mozc_cc_library(
+    name = "user_dictionary_storage",
+    srcs = ["user_dictionary_storage.cc"],
+    hdrs = ["user_dictionary_storage.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//gui:__subpackages__",
+        "//rewriter:__pkg__",
+    ],
+    deps = [
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:process_mutex",
+        "//base/protobuf:coded_stream",
+        "//base/protobuf:zero_copy_stream_impl",
+        "//dictionary:user_dictionary_util",
+        "//dictionary:user_pos",
+        "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+mozc_cc_test(
+    name = "user_dictionary_storage_test",
+    size = "small",
+    srcs = ["user_dictionary_storage_test.cc"],
+    deps = [
+        ":user_dictionary_importer",
+        ":user_dictionary_storage",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:mmap",
+        "//base:random",
+        "//base:system_util",
+        "//base/file:temp_dir",
+        "//dictionary:user_dictionary_util",
+        "//protocol:user_dictionary_storage_cc_proto",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "//testing:testing_util",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "user_dictionary_importer",
+    srcs = ["user_dictionary_importer.cc"],
+    hdrs = ["user_dictionary_importer.h"],
+    textual_hdrs = ["//dictionary:pos_map"],
+    visibility = [
+        "//:__subpackages__",
+        "//gui:__subpackages__",
+    ],
+    deps = [
+        ":user_dictionary_storage",
+        "//base:hash",
+        "//base:japanese_util",
+        "//base:mmap",
+        "//base:number_util",
+        "//base:util",
+        "//base:vlog",
+        "//base/strings:assign",
+        "//base/strings:unicode",
+        "//dictionary:user_dictionary_util",
+        "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/hash",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "user_dictionary_importer_test",
+    size = "small",
+    srcs = ["user_dictionary_importer_test.cc"],
+    deps = [
+        ":user_dictionary_importer",
+        ":user_dictionary_storage",
+        "//dictionary:user_dictionary_util",
+        "//protocol:user_dictionary_storage_cc_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)

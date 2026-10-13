@@ -32,13 +32,13 @@
 #include <cstdint>
 #include <memory>
 
-#include "dictionary/user_dictionary_storage.h"
+#include "client/user_dictionary/user_dictionary_storage.h"
 
 #ifdef _WIN32
 #include <algorithm>
 
 #include "absl/log/log.h"
-#include "dictionary/user_dictionary_importer.h"
+#include "client/user_dictionary/user_dictionary_importer.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
 #include "win32/base/imm_util.h"

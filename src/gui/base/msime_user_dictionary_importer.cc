@@ -29,7 +29,7 @@
 
 #include "gui/base/msime_user_dictionary_importer.h"
 
-#include "dictionary/user_dictionary_importer.h"
+#include "client/user_dictionary/user_dictionary_importer.h"
 
 #ifdef _WIN32
 // clang-format off

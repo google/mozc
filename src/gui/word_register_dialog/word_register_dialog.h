@@ -35,8 +35,8 @@
 #include <QtGui>
 #include <memory>
 
+#include "client/user_dictionary/user_dictionary_storage.h"
 #include "data_manager/pos_list_provider.h"
-#include "dictionary/user_dictionary_storage.h"
 #include "gui/word_register_dialog/ui_word_register_dialog.h"
 
 namespace mozc {

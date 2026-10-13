@@ -69,7 +69,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -414,7 +413,7 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
                                PosMatcher pos_matcher)
     : UserDictionary::UserDictionary(
           std::move(user_pos), std::move(pos_matcher),
-          UserDictionaryStorage::GetDefaultUserDictionaryFileName()) {}
+          user_dictionary::GetUserDictionaryFileName()) {}
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
                                PosMatcher pos_matcher, std::string filename)

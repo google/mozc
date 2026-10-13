@@ -38,9 +38,10 @@
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "base/config_file_stream.h"
 #include "base/strings/japanese.h"
-#include "base/text_normalizer.h"
 #include "base/strings/unicode.h"
+#include "base/text_normalizer.h"
 #include "base/vlog.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
@@ -51,6 +52,7 @@ namespace {
 // Maximum string length in UserDictionaryEntry's field
 constexpr size_t kMaxStringSize = 300;
 constexpr absl::string_view kInvalidChars = "\n\r\t";
+constexpr absl::string_view kUserDictionaryFile = "user://user_dictionary.db";
 
 bool InternalValidateNormalizedReading(const absl::string_view reading) {
   auto InRange = [](const char32_t c, const char32_t lo, const char32_t hi) {
@@ -188,6 +190,10 @@ absl::Status ValidateDictionaryName(const absl::string_view dictionary_name) {
   }
 
   return absl::OkStatus();
+}
+
+std::string GetUserDictionaryFileName() {
+  return ConfigFileStream::GetFileName(kUserDictionaryFile);
 }
 
 }  // namespace user_dictionary

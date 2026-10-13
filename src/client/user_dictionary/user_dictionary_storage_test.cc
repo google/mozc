@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/user_dictionary_storage.h"
+#include "client/user_dictionary/user_dictionary_storage.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -45,7 +45,7 @@
 #include "base/mmap.h"
 #include "base/random.h"
 #include "base/system_util.h"
-#include "dictionary/user_dictionary_importer.h"
+#include "client/user_dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"
@@ -105,10 +105,8 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   const size_t dict_size = storage.GetProto().dictionaries_size();
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
-    absl::StatusOr<uint64_t> s =
-        storage.CreateDictionary(absl::StrCat("test", i));
-    EXPECT_OK(s);
-    id[i] = s.value();
+    ASSERT_OK_AND_ASSIGN(id[i],
+                         storage.CreateDictionary(absl::StrCat("test", i)));
     EXPECT_EQ(storage.GetProto().dictionaries_size(), i + 1 + dict_size);
   }
 
@@ -161,7 +159,8 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
     storage.GetProto().Clear();
     std::vector<uint64_t> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
-      ids[i] = storage.CreateDictionary(absl::StrCat("test", i)).value();
+      ASSERT_OK_AND_ASSIGN(ids[i],
+                           storage.CreateDictionary(absl::StrCat("test", i)));
     }
 
     std::vector<uint64_t> alive;
@@ -183,7 +182,7 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
 
 TEST_F(UserDictionaryStorageTest, ExportTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  const uint64_t id = storage.CreateDictionary("test").value();
+  ASSERT_OK_AND_ASSIGN(const uint64_t id, storage.CreateDictionary("test"));
 
   UserDictionaryStorage::UserDictionary* dic = storage.GetUserDictionary(id);
   EXPECT_TRUE(dic);
@@ -278,12 +277,12 @@ TEST_F(UserDictionaryStorageTest, GetUserDictionaryIdTest) {
 
   constexpr size_t kDictionariesSize = 3;
   uint64_t id[kDictionariesSize];
-  id[0] = storage.CreateDictionary("testA").value();
-  id[1] = storage.CreateDictionary("testB").value();
+  ASSERT_OK_AND_ASSIGN(id[0], storage.CreateDictionary("testA"));
+  ASSERT_OK_AND_ASSIGN(id[1], storage.CreateDictionary("testB"));
 
   uint64_t ret_id[kDictionariesSize];
-  ret_id[0] = storage.GetUserDictionaryId("testA").value();
-  ret_id[1] = storage.GetUserDictionaryId("testB").value();
+  ASSERT_OK_AND_ASSIGN(ret_id[0], storage.GetUserDictionaryId("testA"));
+  ASSERT_OK_AND_ASSIGN(ret_id[1], storage.GetUserDictionaryId("testB"));
   EXPECT_NOT_OK(storage.GetUserDictionaryId("testC"));
 
   EXPECT_EQ(ret_id[0], id[0]);
@@ -350,7 +349,8 @@ TEST_F(UserDictionaryStorageTest, CreateDictionary) {
             ExtendedErrorCode::DICTIONARY_SIZE_LIMIT_EXCEEDED);
 
   storage.GetProto().Clear();
-  auto dictionary_id = storage.CreateDictionary("new dictionary").value();
+  ASSERT_OK_AND_ASSIGN(auto dictionary_id,
+                       storage.CreateDictionary("new dictionary"));
 
   EXPECT_PROTO_PEQ(
       "dictionaries <\n"
