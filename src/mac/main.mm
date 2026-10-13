@@ -72,11 +72,21 @@ void RegisterInputSource() {
     TISInputSourceRef inputSource = (__bridge TISInputSourceRef)object;
     NSString *sourceID =
         (__bridge NSString *)TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID);
-    if ([sourceID isEqualToString:bundleID]) {
-      TISEnableInputSource(inputSource);
-      TISSelectInputSource(inputSource);
-      break;
+    if (![sourceID isEqualToString:bundleID]) {
+      continue;
     }
+
+    CFBooleanRef isEnabled =
+        (CFBooleanRef)TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceIsEnabled);
+    if (isEnabled != nullptr && CFBooleanGetValue(isEnabled)) {
+      // The input source is already enabled. Skip enabling and selecting to
+      // avoid prompting the user or resetting their active input source.
+      return;
+    }
+
+    TISEnableInputSource(inputSource);
+    TISSelectInputSource(inputSource);
+    break;
   }
 }
 
