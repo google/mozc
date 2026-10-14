@@ -435,6 +435,54 @@ TEST_F(ConverterTest, ConvertTest) {
   }
 }
 
+// Confirm that user dictionary words with alphabet keys are generated
+// after an alphabet history segment (Issue #1598).
+TEST_F(ConverterTest, UserDictionaryAlphabetKeyAfterAlphabetHistory) {
+  const std::vector<UserDefinedEntry> user_entries = {
+      {"tyksk", "着席", user_dictionary::UserDictionary::NOUN},
+      {"tz", "地図", user_dictionary::UserDictionary::NOUN},
+      {"tz", "徳泉", user_dictionary::UserDictionary::NOUN},
+  };
+  std::unique_ptr<Converter> converter =
+      CreateConverterWithUserDefinedEntries(user_entries, STUB_PREDICTOR);
+  ASSERT_NE(converter, nullptr);
+
+  Segments segments;
+  // Scenario 1: Commit an alphabet word, then convert an alphabet-keyed user
+  // word.
+  {
+    ConversionRequest convreq = ConvReq("test", ConversionRequest::CONVERSION);
+    EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_TRUE(converter->CommitSegmentValue(&segments, 0, 0));
+    converter->FinishConversion(convreq, &segments);
+  }
+  {
+    ConversionRequest convreq = ConvReq("tyksk", ConversionRequest::CONVERSION);
+    EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(FindCandidateByValue("着席", segments.conversion_segment(0)));
+    converter->CancelConversion(&segments);
+  }
+
+  // Scenario 2: Commit an alphabet-keyed user word, then convert another.
+  segments.Clear();
+  {
+    ConversionRequest convreq = ConvReq("tz", ConversionRequest::CONVERSION);
+    EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+    const int index =
+        GetCandidateIndexByValue("地図", segments.conversion_segment(0));
+    ASSERT_NE(index, -1);
+    EXPECT_TRUE(converter->CommitSegmentValue(&segments, 0, index));
+    converter->FinishConversion(convreq, &segments);
+  }
+  {
+    ConversionRequest convreq = ConvReq("tz", ConversionRequest::CONVERSION);
+    EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(FindCandidateByValue("徳泉", segments.conversion_segment(0)));
+  }
+}
+
 namespace {
 std::string ContextAwareConvert(absl::string_view first_key,
                                 absl::string_view first_value,

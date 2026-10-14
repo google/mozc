@@ -577,10 +577,10 @@ NBestGenerator<TConnector>::BoundaryCheck(const Node& lnode, const Node& rnode,
     return VALID;
   }
 
-  // We don't want to connect alphabet keys.
+  // We don't want to connect alphabet keys within a segment.
   // If "eupho" is not in the dictionary, "eupho" as an as-is fallback is
   // expected rather than "EUpho" (EU + pho).
-  if (IsBetweenAlphabetKeys(lnode, rnode)) {
+  if (!is_edge && IsBetweenAlphabetKeys(lnode, rnode)) {
     return INVALID;
   }
 

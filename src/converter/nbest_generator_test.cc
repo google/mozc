@@ -452,6 +452,60 @@ TEST_F(NBestGeneratorTest, NoAlphabetsConnection3Nodes) {
   }
 }
 
+TEST_F(NBestGeneratorTest, AlphabetsConnectionAcrossSegmentBoundary) {
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
+  ImmutableConverterTestPeer converter =
+      data_and_converter->GetConverterTestPeer();
+
+  Segments segments;
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_segment_type(Segment::HISTORY);
+    segment->set_key("eu");
+    Candidate* candidate = segment->add_candidate();
+    candidate->key = "eu";
+    candidate->value = "EU";
+  }
+  {
+    Segment* segment = segments.add_segment();
+    segment->set_segment_type(Segment::FREE);
+    segment->set_key("pho");
+  }
+
+  Lattice lattice;
+  lattice.SetKey("pho");
+  const ConversionRequest request = ConvReq(ConversionRequest::CONVERSION);
+  converter.MakeLattice(request.options(), &segments, &lattice);
+
+  const std::vector<uint16_t> group = converter.MakeGroup(segments);
+  converter.Viterbi(request.options(), segments, &lattice);
+
+  std::unique_ptr<NBestGenerator<CachingConnector<true>>> nbest_generator =
+      data_and_converter->CreateNBestGenerator(lattice, request);
+
+  // Skip HIS_NODE(s) to find the begin_node for the conversion segment.
+  const Node* begin_node = lattice.bos_node();
+  for (const Node* node = lattice.bos_node()->next;
+       node->next != nullptr && node->node_type == Node::HIS_NODE;
+       node = node->next) {
+    begin_node = node;
+  }
+
+  constexpr bool kSingleSegment = false;
+  const Node* end_node = GetEndNode(request, converter, segments, *begin_node,
+                                    group, kSingleSegment);
+  nbest_generator->Reset(
+      *begin_node, *end_node,
+      {NBestGenerator<CachingConnector<true>>::STRICT,
+       NBestGenerator<CachingConnector<true>>::CANDIDATE_MODE_NONE});
+  Segment result_segment;
+  nbest_generator->SetCandidates(request.options(), "", 10, result_segment);
+  // Connection between "eu" and "pho" across the segment boundary should be
+  // allowed even though both keys end/start with alphabets.
+  ASSERT_GE(result_segment.candidates_size(), 1);
+  EXPECT_EQ(result_segment.candidate(0).value, "pho");
+}
+
 TEST_F(NBestGeneratorTest, ParticleOmissionBonusTest) {
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
   ImmutableConverterTestPeer converter =
