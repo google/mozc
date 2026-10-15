@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   auto table = std::make_shared<mozc::composer::Table>();
-  table->LoadFromFile(absl::GetFlag(FLAGS_table).c_str());
+  table->LoadFromFile(absl::GetFlag(FLAGS_table));
 
   mozc::composer::Composition composition(table);
 

@@ -856,7 +856,7 @@ TEST_F(TableTest, LoadFromString) {
       "yy\t[Y]\ty\tNewChunk NoTransliteration DirectInput EndChunk\n"
       "#\t[#]\n";  // This line starts with '#' but should be a rule.
   Table table;
-  table.LoadFromString(std::string(kRule));
+  table.LoadFromString(kRule);
 
   const Entry* entry = nullptr;
   // Test for "a\t[A]\n"  -- 2 entry rule
