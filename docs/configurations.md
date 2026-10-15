@@ -8,7 +8,7 @@ future.
 The conversion from "きょう" returns the current date in some formats like
 "2021年10月1日" and "2021-10-01".
 
-You can add an extra format by adding entries of "DATA_FORMAT" and
+You can add an extra format by adding entries of "DATE_FORMAT" and
 "DATETIME_FORMAT" to the user dictionary.
 
 | Reading         | Word                                     | Category |
@@ -18,19 +18,19 @@ You can add an extra format by adding entries of "DATA_FORMAT" and
 | DATETIME_FORMAT | {YEAR}{MONTH}{DATE}{HOUR}{MINUTE}        | 名詞     |
 
 DATETIME_FORMAT is used for the conversion from "にちじ" or "なう". It supports
-{YEAR}, {MONTH}, {DATE} too. On the other hand, DATE_FOMAT does not support
-{HOME} and {MINUTE}. They are replaced with "00".
+{YEAR}, {MONTH}, {DATE} too. On the other hand, DATE_FORMAT does not support
+{HOUR} and {MINUTE}. They are replaced with "00".
 
 Any category is OK so far.
 
-| key      | value                |
-| -------- | -------------------- |
-| {YEAR}   | 4 digits year (2021) |
-| {MONTH}  | 2 digits month (10)  |
-| {DATE}   | 2 digits date (01)   |
-| {HOUR}   | 2 digits date (23)   |
-| {MINUTE} | 2 digits date (59)   |
-| {{}      | single { character   |
+key      | value
+-------- | --------------------
+{YEAR}   | 4 digits year (2021)
+{MONTH}  | 2 digits month (10)
+{DATE}   | 2 digits date (01)
+{HOUR}   | 2 digits hour (23)
+{MINUTE} | 2 digits minute (59)
+{{}      | single { character
 
 ## Keymap (shortcut keys)
 
@@ -282,6 +282,7 @@ mozc_renderer {
 ```
 
 Then restart IBus as follows for your change to take effect.
+
 ```
 ibus restart
 ```
@@ -309,6 +310,7 @@ found in `$XDG_CURRENT_DESKTOP` environment variable, Mozc's candidate window
 will be used.
 
 Restart IBus as follows for your change to take effect.
+
 ```
 ibus restart
 ```
