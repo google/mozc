@@ -34,7 +34,11 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "base/file/temp_dir.h"
+#include "base/file_stream.h"
+#include "base/thread.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -383,6 +387,34 @@ TEST(FileUtilTest, AtomicRename) {
     ::SetFileAttributesW(wto.c_str(), FILE_ATTRIBUTE_NORMAL);
   }
 #endif  // _WIN32
+}
+
+TEST(FileUtilTest, AtomicRenameWhileReading) {
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string from =
+      FileUtil::JoinPath(temp_dir.path(), "atomic_rename_test_from");
+  const std::string to =
+      FileUtil::JoinPath(temp_dir.path(), "atomic_rename_test_to");
+  CreateTestFile(from, "new");
+  CreateTestFile(to, "old");
+
+  // Keeps |to| open for a while in another thread, e.g. like the user
+  // dictionary reloader. On Windows, |to| cannot be replaced until it is
+  // closed.
+  InputFileStream ifs(to);
+  ASSERT_TRUE(ifs);
+  Thread reader([&ifs] {
+    absl::SleepFor(absl::Milliseconds(50));
+    ifs.close();
+  });
+
+  EXPECT_OK(FileUtil::AtomicRename(from, to));
+  reader.Join();
+  EXPECT_FALSE(FileUtil::FileExists(from).ok());
+
+  absl::StatusOr<std::string> content = FileUtil::GetContents(to);
+  ASSERT_OK(content);
+  EXPECT_EQ(*content, "new");
 }
 
 TEST(FileUtilTest, CreateHardLink) {

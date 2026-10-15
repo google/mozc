@@ -46,8 +46,6 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
 #include "base/container/tuple.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
@@ -728,13 +726,6 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   }
 }
 
-// On Windows, `FileUtil::AtomicRename` uses `MoveFileExW(...,
-// MOVEFILE_REPLACE_EXISTING)`, which fails with `ERROR_ACCESS_DENIED` if the
-// background reloader thread simultaneously holds an open `InputFileStream`
-// handle to the destination file. On POSIX platforms, `rename(2)` atomically
-// updates the directory entry to a new inode without conflicting with open read
-// descriptors. If `AtomicRename` fails on Windows, retry after sleeping 100
-// milliseconds to wait for the reloader thread to finish.
 TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
   TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   const std::string filename =
@@ -757,15 +748,7 @@ TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
 
     const std::string tmp_filename = absl::StrCat(filename, ".tmp");
     EXPECT_OK(FileUtil::SetContents(tmp_filename, storage.SerializeAsString()));
-    absl::Status rename_status;
-    for (int retry = 0; retry < 10; ++retry) {
-      rename_status = FileUtil::AtomicRename(tmp_filename, filename);
-      if (rename_status.ok()) {
-        break;
-      }
-      absl::SleepFor(absl::Milliseconds(100));
-    }
-    EXPECT_OK(rename_status);
+    EXPECT_OK(FileUtil::AtomicRename(tmp_filename, filename));
 
     // Trigger Reload() immediately without waiting for the previous reload to
     // finish.
