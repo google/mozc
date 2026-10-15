@@ -130,6 +130,20 @@ mozc_cc_test(
     ],
 )
 
+mozc_cc_test(
+    name = "bit_vector_based_array_benchmark_test",
+    size = "small",
+    srcs = ["bit_vector_based_array_benchmark_test.cc"],
+    tags = ["manual"],
+    deps = [
+        ":bit_vector_based_array",
+        ":bit_vector_based_array_builder",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
 mozc_cc_library(
     name = "simple_succinct_bit_vector_index",
     srcs = ["simple_succinct_bit_vector_index.cc"],
