@@ -1935,6 +1935,100 @@ TEST_F(DictionaryPredictorTest, MaybeGetPreviousTopResultTest) {
     EXPECT_FALSE(predictor_peer.MaybeGetPreviousTopResult(
         init_top, create_request("しが")));
   }
+
+  // No insertion happens for zero-query suggestion or right after zero-query
+  // suggestion, or when key length does not increase.
+  {
+    params->set_candidate_consistency_cost_max_diff(2000);
+
+    EXPECT_FALSE(predictor_peer.MaybeGetPreviousTopResult(
+        pre_top, create_request("しがこう")));
+
+    // Same request key length -> not inserted.
+    EXPECT_FALSE(predictor_peer.MaybeGetPreviousTopResult(
+        cur_top, create_request("しがこう")));
+
+    // Zero-query suggestion -> not inserted and resets state.
+    Result nwp_top =
+        CreateResult4("", "高原", prediction::SUPPLEMENTAL_MODEL, Token::NONE);
+    nwp_top.cost = 500;
+    EXPECT_FALSE(
+        predictor_peer.MaybeGetPreviousTopResult(nwp_top, create_request("")));
+    EXPECT_FALSE(
+        predictor_peer.MaybeGetPreviousTopResult(pre_top, create_request("")));
+    EXPECT_FALSE(
+        predictor_peer.MaybeGetPreviousTopResult(nwp_top, create_request("")));
+
+    // First input after zero-query suggestion -> not inserted.
+    EXPECT_FALSE(predictor_peer.MaybeGetPreviousTopResult(
+        cur_top, create_request("しがこうげ")));
+  }
+
+  // RerankAndFilterResults skips removed candidates and deduplicates
+  // prev_top_result.
+  {
+    params->set_candidate_consistency_cost_max_diff(2000);
+
+    std::vector<Result> results1 = {pre_top};
+    results1 = predictor_peer.RerankAndFilterResults(create_request("しがこう"),
+                                                     results1);
+    ASSERT_EQ(results1.size(), 1);
+    EXPECT_EQ(results1[0].value, "志賀高原");
+
+    Result removed_top =
+        CreateResult4("しが", "滋賀", prediction::BIGRAM, Token::NONE);
+    removed_top.cost = 1;
+    removed_top.removed = true;
+
+    std::vector<Result> results2 = {removed_top, cur_top, pre_top};
+    results2 = predictor_peer.RerankAndFilterResults(
+        create_request("しがこうげ"), results2);
+    ASSERT_EQ(results2.size(), 2);
+    EXPECT_EQ(results2[0].value, "志賀高原");
+    EXPECT_EQ(results2[1].value, "子が原");
+  }
+
+  // When all candidates are filtered out, prev_top state is not updated.
+  // The stale prev_top is promoted only when it is still consistent with the
+  // current top key (prefix match), and never for an unrelated key.
+  {
+    params->set_candidate_consistency_cost_max_diff(2000);
+
+    // "しがこう" -> 志賀高原 (しがこうげん) is stored as prev_top.
+    std::vector<Result> results1 = {pre_top};
+    results1 = predictor_peer.RerankAndFilterResults(create_request("しがこう"),
+                                                     results1);
+    ASSERT_EQ(results1.size(), 1);
+    EXPECT_EQ(results1[0].value, "志賀高原");
+
+    // "しがこうげ" -> every candidate is removed. No state update happens.
+    Result removed_top = cur_top;
+    removed_top.removed = true;
+    std::vector<Result> results2 = {removed_top};
+    results2 = predictor_peer.RerankAndFilterResults(
+        create_request("しがこうげ"), results2);
+    EXPECT_TRUE(results2.empty());
+
+    // "しがこうげん" -> 志賀高原 is still promoted since its key starts with
+    // the current top key "しがこうげ".
+    std::vector<Result> results3 = {cur_top};
+    results3 = predictor_peer.RerankAndFilterResults(
+        create_request("しがこうげん"), results3);
+    ASSERT_EQ(results3.size(), 2);
+    EXPECT_EQ(results3[0].value, "志賀高原");
+    EXPECT_EQ(results3[1].value, "子が原");
+
+    // "あいうえおかきく" (longer key) -> the stale 志賀高原 is never promoted
+    // for an unrelated key.
+    Result other_top =
+        CreateResult4("あいう", "愛鵜", prediction::UNIGRAM, Token::NONE);
+    other_top.cost = 500;
+    std::vector<Result> results4 = {other_top};
+    results4 = predictor_peer.RerankAndFilterResults(
+        create_request("あいうえおかきく"), results4);
+    ASSERT_EQ(results4.size(), 1);
+    EXPECT_EQ(results4[0].value, "愛鵜");
+  }
 }
 
 TEST_F(DictionaryPredictorTest, FilterNwpSuffixCandidates) {

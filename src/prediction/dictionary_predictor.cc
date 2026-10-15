@@ -618,7 +618,6 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
     }
   }
 
-  std::shared_ptr<Result> prev_top_result;
   std::vector<Result> final_results;
 
   for (size_t i = 0; i < results.size(); ++i) {
@@ -632,15 +631,16 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
       break;
     }
 
-    if (i == 0) {
-      prev_top_result = MaybeGetPreviousTopResult(result, request);
-      if (prev_top_result != nullptr) {
-        final_results.emplace_back(*prev_top_result);
-      }
-    }
-
     if (filter.ShouldRemove(result, final_results.size())) {
       continue;
+    }
+
+    if (final_results.empty()) {
+      const std::shared_ptr<Result> prev_top =
+          MaybeGetPreviousTopResult(result, request);
+      if (prev_top && !filter.ShouldRemove(*prev_top, final_results.size())) {
+        final_results.emplace_back(*prev_top);
+      }
     }
 
     if ((result.attributes & Attribute::PARTIALLY_KEY_CONSUMED) &&
@@ -1123,14 +1123,17 @@ std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
       cur_top_key_length);  // returns the old value.
 
   // Insert condition.
-  // 1. prev key length < current key length (incrementally character is added)
+  // 1. 0 < prev key length < current key length (incrementally character is
+  //    added)
   // 2. cost diff is less than max_diff.
-  // 3. current key is shorter than previous key.
+  // 3. current key is non-empty and shorter than previous key.
   // 4. current key is the prefix of previous key.
   // 5. current result is not a partial suggestion.
-  if (prev_top_result && cur_top_key_length >= prev_top_key_length &&
-      std::abs(current_top_result.cost - prev_top_result->cost) < max_diff &&
+  if (prev_top_result && 0 < prev_top_key_length &&
+      prev_top_key_length < cur_top_key_length &&
+      !current_top_result.key.empty() &&
       current_top_result.key.size() < prev_top_result->key.size() &&
+      std::abs(current_top_result.cost - prev_top_result->cost) < max_diff &&
       !(current_top_result.attributes & Attribute::PARTIALLY_KEY_CONSUMED) &&
       prev_top_result->key.starts_with(current_top_result.key)) {
     // Do not need to remember the previous key as `prev_top_result` is still
