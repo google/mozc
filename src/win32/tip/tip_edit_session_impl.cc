@@ -627,7 +627,8 @@ HRESULT TipEditSessionImpl::OnCompositionTerminated(
   if (private_context == nullptr) {
     return E_FAIL;
   }
-  if (!private_context->GetClient()->SendCommand(command, &output)) {
+  if (!private_context->GetClient()->SendCommandWithContext(
+          command, CreateMozcContext(text_service), &output)) {
     return E_FAIL;
   }
   const HRESULT result = DoEditSessionAfterComposition(text_service, context,
@@ -650,6 +651,17 @@ void TipEditSessionImpl::UpdateUI(TipTextService* text_service,
                                   ITfContext* context,
                                   TfEditCookie read_cookie) {
   TipUiHandler::Update(text_service, context, read_cookie);
+}
+
+commands::Context TipEditSessionImpl::CreateMozcContext(
+    TipTextService* text_service) {
+  commands::Context mozc_context;
+  TipThreadContext* thread_context = text_service->GetThreadContext();
+  mozc_context.set_revision(thread_context->GetFocusRevision());
+  if (thread_context->GetInputModeManager()->HasPrivateInputScope()) {
+    mozc_context.set_no_personalized_learning(true);
+  }
+  return mozc_context;
 }
 
 }  // namespace tsf

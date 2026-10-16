@@ -645,7 +645,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest& request,
     return;
   }
 
-  if (request.config().history_learning_level() != Config::DEFAULT_HISTORY) {
+  if (request.effective_history_learning_level() != Config::DEFAULT_HISTORY) {
     MOZC_VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
     return;
   }
@@ -761,7 +761,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest& request,
     return false;
   }
 
-  if (request.config().history_learning_level() == Config::NO_HISTORY) {
+  if (request.effective_history_learning_level() == Config::NO_HISTORY) {
     MOZC_VLOG(2) << "history_learning_level is NO_HISTORY";
     return false;
   }
