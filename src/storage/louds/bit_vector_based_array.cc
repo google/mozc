@@ -69,11 +69,13 @@ void BitVectorBasedArray::Close() {
 
 const char *BitVectorBasedArray::Get(size_t index, size_t *length) const {
   DCHECK(length);
-  const int bit_index = index_.Select0(index + 1);
-  const int data_index =
-      base_length_ * index + step_length_ * index_.Rank1(bit_index);
+  const size_t bit_index = index_.Select0(index + 1);
+  // Exactly index 0-bits precede bit_index, so bit_index - index 1-bits do.
+  const size_t num_preceding_steps = bit_index - index;
+  const size_t data_index =
+      base_length_ * index + step_length_ * num_preceding_steps;
   // Linear search.
-  int i = bit_index + 1;
+  size_t i = bit_index + 1;
   while (index_.Get(i)) {
     ++i;
   }
