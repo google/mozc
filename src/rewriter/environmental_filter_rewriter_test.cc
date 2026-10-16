@@ -127,6 +127,11 @@ constexpr EmojiData kTestEmojiList[] = {
     {"🛘", EmojiVersion::E17_0},  // 1F6D8 LANDSLIDE
     {"🫍", EmojiVersion::E17_0},  // 1FACD ORCA
     {"🫯", EmojiVersion::E17_0},  // 1FAEF FIGHT_CLOUD
+
+    // Emoji 18.0 Example
+    {"🛙", EmojiVersion::E18_0},  // 1F6D9 LIGHTHOUSE
+    {"🫌", EmojiVersion::E18_0},  // 1FACC MONARCH_BUTTERFLY
+    {"🫝", EmojiVersion::E18_0},  // 1FADD PICKLE
 };
 
 // This data manager overrides GetEmojiRewriterData() to return the above test
@@ -326,6 +331,36 @@ TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterE160Test) {
 
     segments.Clear();
     AddSegment("えもじ", {"🪏", "🫆", "🫟"}, &segments);
+
+    EXPECT_FALSE(rewriter_.Rewrite(conversion_request, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
+  }
+}
+
+TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterE180Test) {
+  // Emoji 18.0 characters are filtered by default.
+  {
+    Segments segments;
+    const ConversionRequest request;
+
+    segments.Clear();
+    AddSegment("えもじ", {"🛙", "🫌", "🫝"}, &segments);
+
+    EXPECT_TRUE(rewriter_.Rewrite(request, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
+  }
+
+  // Emoji 18.0 characters are added when they are renderable.
+  {
+    commands::Request request;
+    request.add_additional_renderable_character_groups(
+        commands::Request::EMOJI_18_0);
+    Segments segments;
+    const ConversionRequest conversion_request =
+        ConversionRequestBuilder().SetRequest(request).Build();
+
+    segments.Clear();
+    AddSegment("えもじ", {"🛙", "🫌", "🫝"}, &segments);
 
     EXPECT_FALSE(rewriter_.Rewrite(conversion_request, &segments));
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
