@@ -37,9 +37,6 @@ namespace mozc::win32::tsf {
 class TipLangBarCallback : public IUnknown {
  public:
   enum ItemId {
-    // Cancel something for general purpose
-    kCancel = 1,
-
     // For input mode selection
     kDirect = 10,
     kHiragana = 11,
