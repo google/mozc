@@ -76,9 +76,6 @@ class Predictor : public PredictorInterface {
   // Clears all history data of UserHistoryPredictor.
   bool ClearAllHistory() override;
 
-  // Clears unused history data of UserHistoryPredictor.
-  bool ClearUnusedHistory() override;
-
   // Clears a specific user history data of UserHistoryPredictor.
   bool ClearHistoryEntry(absl::string_view key,
                          absl::string_view value) override;

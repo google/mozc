@@ -378,9 +378,6 @@ bool IosEngine::ClearUserHistory(commands::Command* command) {
     return false;
   }
 
-  // No need to call CLEAR_UNUSED_USER_PREDICTION.
-  // The above CLEAR_USER_PREDICTION deletes unused prediction entries too.
-
   return true;
 }
 

@@ -352,22 +352,6 @@ bool UserHistoryPredictor::ClearAllHistory() {
   return true;
 }
 
-bool UserHistoryPredictor::ClearUnusedHistory() {
-  std::vector<uint64_t> keys;
-
-  storage_.ForEach([&](uint64_t fp, const Entry& entry) {
-    if (entry.suggestion_freq() == 0) {
-      keys.push_back(fp);
-    }
-    return true;
-  });
-
-  storage_.Erase(keys);
-  storage_.AsyncSave();
-
-  return true;
-}
-
 // Erases all the next_entries whose entry_fp field equals |fp|.
 void UserHistoryPredictor::EraseNextEntries(uint64_t fp, Entry& entry) {
   auto& next_fps = *entry.mutable_next_entry_fps();

@@ -1090,8 +1090,8 @@ message Input {
     // clear user prediction data
     CLEAR_USER_PREDICTION = 12;
 
-    // clear unused prediction
-    CLEAR_UNUSED_USER_PREDICTION = 16;
+    reserved 16;
+    reserved "CLEAR_UNUSED_USER_PREDICTION";
 
     // clean up sessions
     // shutdwon if session is empty and

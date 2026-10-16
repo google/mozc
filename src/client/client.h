@@ -133,7 +133,6 @@ class Client : public ClientInterface {
 
   bool ClearUserHistory() override;
   bool ClearUserPrediction() override;
-  bool ClearUnusedUserPrediction() override;
   bool Shutdown() override;
   bool SyncData() override;
   bool Reload() override;

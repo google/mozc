@@ -95,7 +95,6 @@ class SessionHandler {
   bool SyncData(commands::Command* command);
   bool ClearUserHistory(commands::Command* command);
   bool ClearUserPrediction(commands::Command* command);
-  bool ClearUnusedUserPrediction(commands::Command* command);
   bool Shutdown(commands::Command* command);
   // Reloads all the sessions.
   // Before that, UpdateSessions() is called to update them.

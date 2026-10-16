@@ -437,15 +437,6 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
     EXPECT_TRUE(handler.EvalCommand(&command));
     EXPECT_EQ(command.output().id(), session_id);
   }
-
-  {
-    commands::Command command;
-    commands::Input* input = command.mutable_input();
-    input->set_id(session_id);
-    input->set_type(commands::Input::CLEAR_UNUSED_USER_PREDICTION);
-    EXPECT_TRUE(handler.EvalCommand(&command));
-    EXPECT_EQ(command.output().id(), session_id);
-  }
 }
 
 TEST_F(SessionHandlerTest, ElapsedTimeTest) {

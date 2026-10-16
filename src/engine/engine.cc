@@ -138,10 +138,6 @@ bool Engine::ClearUserPrediction() {
   return converter_ && converter_->predictor().ClearAllHistory();
 }
 
-bool Engine::ClearUnusedUserPrediction() {
-  return converter_ && converter_->predictor().ClearUnusedHistory();
-}
-
 bool Engine::AddUserHistory(absl::string_view key, absl::string_view value) {
   return converter_ && converter_->AddUserHistory(key, value);
 }

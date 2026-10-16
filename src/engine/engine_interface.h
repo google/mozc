@@ -85,9 +85,6 @@ class EngineInterface {
   // Clears user prediction data.
   virtual bool ClearUserPrediction() { return true; }
 
-  // Clears unused user prediction data.
-  virtual bool ClearUnusedUserPrediction() { return true; }
-
   // Adds key/value to user history data. `key` can be empty.
   virtual bool AddUserHistory(absl::string_view key, absl::string_view value) {
     return true;

@@ -56,25 +56,24 @@ class ClientMock : public client::ClientInterface {
   MOCK_METHOD(bool, EnsureSession, (), (override));
   MOCK_METHOD(bool, CheckVersionOrRestartServer, (), (override));
   MOCK_METHOD(bool, SendKeyWithContext,
-              (const commands::KeyEvent &argument,
-               const commands::Context &context, commands::Output *output),
+              (const commands::KeyEvent& argument,
+               const commands::Context& context, commands::Output* output),
               (override));
   MOCK_METHOD(bool, TestSendKeyWithContext,
-              (const commands::KeyEvent &argument,
-               const commands::Context &context, commands::Output *output),
+              (const commands::KeyEvent& argument,
+               const commands::Context& context, commands::Output* output),
               (override));
   MOCK_METHOD(bool, SendCommandWithContext,
-              (const commands::SessionCommand &argument,
-               const commands::Context &context, commands::Output *output),
+              (const commands::SessionCommand& argument,
+               const commands::Context& context, commands::Output* output),
               (override));
 
-  MOCK_METHOD(bool, IsDirectModeCommand, (const commands::KeyEvent &key),
+  MOCK_METHOD(bool, IsDirectModeCommand, (const commands::KeyEvent& key),
               (const, override));
   MOCK_METHOD(bool, GetConfig, (config::Config * config), (override));
-  MOCK_METHOD(bool, SetConfig, (const config::Config &config), (override));
+  MOCK_METHOD(bool, SetConfig, (const config::Config& config), (override));
   MOCK_METHOD(bool, ClearUserHistory, (), (override));
   MOCK_METHOD(bool, ClearUserPrediction, (), (override));
-  MOCK_METHOD(bool, ClearUnusedUserPrediction, (), (override));
   MOCK_METHOD(bool, Shutdown, (), (override));
   MOCK_METHOD(bool, SyncData, (), (override));
   MOCK_METHOD(bool, Reload, (), (override));
@@ -86,11 +85,11 @@ class ClientMock : public client::ClientInterface {
   MOCK_METHOD(void, set_timeout, (absl::Duration timeout), (override));
   MOCK_METHOD(void, set_suppress_error_dialog, (bool suppress), (override));
   MOCK_METHOD(void, set_client_capability,
-              (const commands::Capability &capability), (override));
+              (const commands::Capability& capability), (override));
   MOCK_METHOD(bool, LaunchTool,
               (absl::string_view mode, absl::string_view extra_arg),
               (override));
-  MOCK_METHOD(bool, LaunchToolWithProtoBuf, (const commands::Output &output),
+  MOCK_METHOD(bool, LaunchToolWithProtoBuf, (const commands::Output& output),
               (override));
   MOCK_METHOD(bool, OpenBrowser, (absl::string_view url), (override));
 };

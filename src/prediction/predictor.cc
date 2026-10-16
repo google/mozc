@@ -166,10 +166,6 @@ bool Predictor::ClearAllHistory() {
   return user_history_predictor_->ClearAllHistory();
 }
 
-bool Predictor::ClearUnusedHistory() {
-  return user_history_predictor_->ClearUnusedHistory();
-}
-
 bool Predictor::ClearHistoryEntry(absl::string_view key,
                                   absl::string_view value) {
   return user_history_predictor_->ClearHistoryEntry(key, value);
@@ -334,8 +330,7 @@ std::vector<Result> Predictor::MixCandidates(
         request.converter_history_value(1);
     const absl::string_view full_history_value =
         request.converter_history_value(-1);
-    const absl::string_view preceding_text =
-        request.context().preceding_text();
+    const absl::string_view preceding_text = request.context().preceding_text();
     if (EndsWithWeekdayExpression(last_history_value) ||
         EndsWithWeekdayExpression(full_history_value) ||
         (last_history_value.empty() &&

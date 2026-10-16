@@ -157,7 +157,6 @@ class ClientInterface {
   // Clear history data
   virtual bool ClearUserHistory() = 0;
   virtual bool ClearUserPrediction() = 0;
-  virtual bool ClearUnusedUserPrediction() = 0;
 
   // Shutdonw server
   virtual bool Shutdown() = 0;

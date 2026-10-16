@@ -255,12 +255,6 @@ bool SessionHandler::ClearUserPrediction(commands::Command* command) {
   return true;
 }
 
-bool SessionHandler::ClearUnusedUserPrediction(commands::Command* command) {
-  MOZC_VLOG(1) << "Clearing unused user prediction";
-  engine_->ClearUnusedUserPrediction();
-  return true;
-}
-
 bool SessionHandler::AddUserHistory(commands::Command* command) {
   const auto& user_history_data = command->input().user_history_data();
   return engine_->AddUserHistory(user_history_data.key(),
@@ -339,9 +333,6 @@ bool SessionHandler::EvalCommand(commands::Command* command) {
       break;
     case commands::Input::CLEAR_USER_PREDICTION:
       eval_succeeded = ClearUserPrediction(command);
-      break;
-    case commands::Input::CLEAR_UNUSED_USER_PREDICTION:
-      eval_succeeded = ClearUnusedUserPrediction(command);
       break;
     case commands::Input::GET_CONFIG:
       eval_succeeded = GetConfig(command);

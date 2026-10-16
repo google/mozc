@@ -1222,62 +1222,6 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
   }
 }
 
-TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
-  std::vector<Result> results;
-
-  constexpr absl::string_view kKey = "わたしのなまえはなかのです";
-  constexpr absl::string_view kValue = "私の名前は中野です";
-
-  {
-    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
-    predictor->Wait();
-
-    SegmentsProxy segments_proxy;
-    const ConversionRequest convreq =
-        SetUpInputForSuggestion(kKey, &composer_, &segments_proxy);
-    segments_proxy.AddCandidate(0, kValue);
-
-    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
-
-    predictor->Sync();
-    predictor->Wait();
-  }
-
-  {
-    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
-    UserHistoryPredictorTestPeer predictor_peer(*predictor);
-    predictor->Wait();
-    SegmentsProxy segments_proxy;
-
-    const ConversionRequest convreq =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "私の名前は中野です");
-
-    // Generates unused entry.
-    auto entry = predictor_peer.storage_().MutableLookup(kKey, kValue);
-    ASSERT_TRUE(entry);
-    // Implementing Revert at zero frequency is a valid and
-    // consistent way to implement redo.
-    entry->set_suggestion_freq(0);  // set unused.
-  }
-
-  {
-    UserHistoryPredictor* predictor = GetUserHistoryPredictor();
-    predictor->ClearUnusedHistory();
-    predictor->Wait();
-
-    SegmentsProxy segments_proxy;
-    const ConversionRequest convreq =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
-
-    // No suggestion after clear unused history.
-    results = predictor->Predict(convreq);
-    EXPECT_TRUE(results.empty());
-  }
-}
-
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
   UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
   ScopedClockMock clock(absl::FromUnixSeconds(1));

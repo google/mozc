@@ -256,8 +256,8 @@ void Client::PlaybackHistory() {
   }
 }
 
-void Client::PushHistory(const commands::Input &input,
-                         const commands::Output &output) {
+void Client::PushHistory(const commands::Input& input,
+                         const commands::Output& output) {
   if (!output.has_consumed() || !output.consumed()) {
     // Do not remember unconsumed input.
     return;
@@ -305,16 +305,16 @@ void Client::ResetHistory() {
 #endif  // __APPLE__
 }
 
-void Client::GetHistoryInputs(std::vector<commands::Input> *result) const {
+void Client::GetHistoryInputs(std::vector<commands::Input>* result) const {
   result->clear();
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
     result->push_back(history_inputs_[i]);
   }
 }
 
-bool Client::SendKeyWithContext(const commands::KeyEvent &key,
-                                const commands::Context &context,
-                                commands::Output *output) {
+bool Client::SendKeyWithContext(const commands::KeyEvent& key,
+                                const commands::Context& context,
+                                commands::Output* output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_KEY);
   *input.mutable_key() = key;
@@ -325,9 +325,9 @@ bool Client::SendKeyWithContext(const commands::KeyEvent &key,
   return EnsureCallCommand(&input, output);
 }
 
-bool Client::TestSendKeyWithContext(const commands::KeyEvent &key,
-                                    const commands::Context &context,
-                                    commands::Output *output) {
+bool Client::TestSendKeyWithContext(const commands::KeyEvent& key,
+                                    const commands::Context& context,
+                                    commands::Output* output) {
   commands::Input input;
   input.set_type(commands::Input::TEST_SEND_KEY);
   // If the pointer of |context| is not the default_instance, update the data.
@@ -338,9 +338,9 @@ bool Client::TestSendKeyWithContext(const commands::KeyEvent &key,
   return EnsureCallCommand(&input, output);
 }
 
-bool Client::SendCommandWithContext(const commands::SessionCommand &command,
-                                    const commands::Context &context,
-                                    commands::Output *output) {
+bool Client::SendCommandWithContext(const commands::SessionCommand& command,
+                                    const commands::Context& context,
+                                    commands::Output* output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_COMMAND);
   *input.mutable_command() = command;
@@ -366,8 +366,8 @@ bool Client::CheckVersionOrRestartServer() {
   return true;
 }
 
-bool Client::EnsureCallCommand(commands::Input *input,
-                               commands::Output *output) {
+bool Client::EnsureCallCommand(commands::Input* input,
+                               commands::Output* output) {
   if (!EnsureSession()) {
     LOG(ERROR) << "EnsureSession failed";
     return false;
@@ -435,7 +435,7 @@ void Client::set_suppress_error_dialog(bool suppress) {
   server_launcher_->set_suppress_error_dialog(suppress);
 }
 
-void Client::set_client_capability(const commands::Capability &capability) {
+void Client::set_client_capability(const commands::Capability& capability) {
   client_capability_ = capability;
 }
 
@@ -446,7 +446,7 @@ bool Client::CreateSession() {
 
   *input.mutable_capability() = client_capability_;
 
-  commands::ApplicationInfo *info = input.mutable_application_info();
+  commands::ApplicationInfo* info = input.mutable_application_info();
   DCHECK(info);
 
 #ifdef _WIN32
@@ -492,11 +492,11 @@ bool Client::DeleteSession() {
   return true;
 }
 
-bool Client::IsDirectModeCommand(const commands::KeyEvent &key) const {
+bool Client::IsDirectModeCommand(const commands::KeyEvent& key) const {
   return KeyInfoUtil::ContainsKey(direct_mode_keys_, key);
 }
 
-bool Client::GetConfig(config::Config *config) {
+bool Client::GetConfig(config::Config* config) {
   commands::Input input;
   InitInput(&input);
   input.set_type(commands::Input::GET_CONFIG);
@@ -515,7 +515,7 @@ bool Client::GetConfig(config::Config *config) {
   return true;
 }
 
-bool Client::SetConfig(const config::Config &config) {
+bool Client::SetConfig(const config::Config& config) {
   commands::Input input;
   InitInput(&input);
   input.set_type(commands::Input::SET_CONFIG);
@@ -536,10 +536,6 @@ bool Client::ClearUserHistory() {
 
 bool Client::ClearUserPrediction() {
   return CallCommand(commands::Input::CLEAR_USER_PREDICTION);
-}
-
-bool Client::ClearUnusedUserPrediction() {
-  return CallCommand(commands::Input::CLEAR_UNUSED_USER_PREDICTION);
 }
 
 bool Client::Shutdown() {
@@ -610,8 +606,8 @@ bool Client::CallCommand(commands::Input::CommandType type) {
   return Call(input, &output);
 }
 
-bool Client::CallAndCheckVersion(const commands::Input &input,
-                                 commands::Output *output) {
+bool Client::CallAndCheckVersion(const commands::Input& input,
+                                 commands::Output* output) {
   if (!Call(input, output)) {
     if (server_protocol_version_ != IPC_PROTOCOL_VERSION) {
       LOG(ERROR) << "version mismatch: " << server_protocol_version_ << " "
@@ -624,7 +620,7 @@ bool Client::CallAndCheckVersion(const commands::Input &input,
   return true;
 }
 
-bool Client::Call(const commands::Input &input, commands::Output *output) {
+bool Client::Call(const commands::Input& input, commands::Output* output) {
   MOZC_VLOG(2) << "commands::Input: " << std::endl << input;
 
   // don't repeat Call() if the status is either
@@ -727,15 +723,15 @@ void Client::OnFatal(ServerLauncherInterface::ServerErrorType type) {
   }
 }
 
-void Client::InitInput(commands::Input *input) const {
+void Client::InitInput(commands::Input* input) const {
   input->set_id(id_);
   if (preferences_ != nullptr) {
     *input->mutable_config() = *preferences_;
   }
 }
 
-bool Client::CheckVersionOrRestartServerInternal(const commands::Input &input,
-                                                 commands::Output *output) {
+bool Client::CheckVersionOrRestartServerInternal(const commands::Input& input,
+                                                 commands::Output* output) {
   for (int trial = 0; trial < 2; ++trial) {
     const bool call_result = Call(input, output);
 
@@ -815,8 +811,8 @@ void Client::Reset() {
   server_process_id_ = 0;
 }
 
-bool Client::TranslateProtoBufToMozcToolArg(const commands::Output &output,
-                                            std::string *mode) {
+bool Client::TranslateProtoBufToMozcToolArg(const commands::Output& output,
+                                            std::string* mode) {
   if (!output.has_launch_tool_mode() || mode == nullptr) {
     return false;
   }
@@ -841,7 +837,7 @@ bool Client::TranslateProtoBufToMozcToolArg(const commands::Output &output,
   return true;
 }
 
-bool Client::LaunchToolWithProtoBuf(const commands::Output &output) {
+bool Client::LaunchToolWithProtoBuf(const commands::Output& output) {
   std::string mode;
   if (!TranslateProtoBufToMozcToolArg(output, &mode)) {
     return false;
@@ -926,7 +922,7 @@ bool Client::OpenBrowser(absl::string_view url) {
 
 namespace {
 
-ClientFactoryInterface *g_client_factory = nullptr;
+ClientFactoryInterface* g_client_factory = nullptr;
 
 }  // namespace
 
@@ -938,7 +934,7 @@ std::unique_ptr<ClientInterface> ClientFactory::NewClient() {
   }
 }
 
-void ClientFactory::SetClientFactory(ClientFactoryInterface *client_factory) {
+void ClientFactory::SetClientFactory(ClientFactoryInterface* client_factory) {
   g_client_factory = client_factory;
 }
 }  // namespace client

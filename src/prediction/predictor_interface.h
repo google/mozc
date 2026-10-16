@@ -76,9 +76,6 @@ class PredictorInterface {
   // Clears all history data of UserHistoryPredictor.
   virtual bool ClearAllHistory() { return true; }
 
-  // Clears unused history data of UserHistoryPredictor.
-  virtual bool ClearUnusedHistory() { return true; }
-
   // Clears a specific history data of UserHistoryPredictor.
   virtual bool ClearHistoryEntry(absl::string_view key,
                                  absl::string_view value) {

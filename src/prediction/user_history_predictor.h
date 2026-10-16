@@ -92,9 +92,6 @@ class UserHistoryPredictor : public PredictorInterface {
   // Clears LRU data.
   bool ClearAllHistory() override;
 
-  // Clears unused data.
-  bool ClearUnusedHistory() override;
-
   // Clears a specific history entry.
   bool ClearHistoryEntry(absl::string_view key,
                          absl::string_view value) override;
