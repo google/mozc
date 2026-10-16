@@ -58,6 +58,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "re2/re2.h"
 
 namespace mozc {
 namespace quality_regression {
@@ -374,11 +375,14 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     i += segment.candidate(0).effective_converted_segment_count();
   }
 
-  if (command == kConversionMatch) {
-    return (actual_value->find(expected_value) != std::string::npos);
-  }
-  if (command == kConversionNotMatch) {
-    return (actual_value->find(expected_value) == std::string::npos);
+  if (command == kConversionMatch || command == kConversionNotMatch) {
+    const RE2 regex(expected_value);
+    if (!regex.ok()) {
+      return absl::InvalidArgumentError(
+          absl::StrCat("Invalid regex: ", expected_value));
+    }
+    const bool matched = RE2::FullMatch(*actual_value, regex);
+    return (command == kConversionMatch) ? matched : !matched;
   }
 
   const int32_t actual_rank = GetRank(expected_value, segments, 0);

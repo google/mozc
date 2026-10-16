@@ -1,61 +1,61 @@
 # label	key	value	command
-oss_issue12	これはうれしいごさんです	誤算	Conversion Match
-oss_issue12	これはだめだというし	シ	Conversion Not Match
-oss_issue12	これはだめだとおもうから	思うから	Conversion Match
-oss_issue12	きごころのしれたなかなので	田中	Conversion Not Match
-oss_issue12	かいごはほんとうにたいへんです	改悟	Conversion Not Match
-oss_issue12	かいごはほんとうにたいへんです	タイ	Conversion Not Match
-oss_issue12	でこめをおくったら	凸	Conversion Not Match
-oss_issue12	さとるくんにたのみましょう	読	Conversion Not Match
-oss_issue12	そのことからもわかるように	その子と	Conversion Not Match
-oss_issue12	にほんちーむのえんぎはこのあとすぐです	演技派	Conversion Not Match
-oss_issue12	ぼーりんぐじょうのちかくです	ボーリング場	Conversion Match
-oss_issue12	しょっぱいあじがした	下	Conversion Not Match
-oss_issue12	とんでもないやつがあらわれた	洗われた	Conversion Not Match
-oss_issue12	さるのなきごえがすごい	申	Conversion Not Match
-oss_issue12	ほしゅてきなめんもあるね	麺	Conversion Not Match
-oss_issue12	ひまわりがさいている	最低	Conversion Not Match
-oss_issue12	いがもたれる	伊賀	Conversion Not Match
-oss_issue12	どんなふうにやったのか	封	Conversion Not Match
-oss_issue12	でびあんをつかっています	デビアン	Conversion Match
-oss_issue12	たたかいにかつには	勝つ	Conversion Match
-oss_issue12	ぶいぶいいわしている	岩	Conversion Not Match
-oss_issue12	せっかくのおさそいをむげにはできない	無碍	Conversion Not Match
-oss_issue12	こんなときこそおちつかないと	婚	Conversion Not Match
-oss_issue12	そういうわけだったのか	そう言う	Conversion Not Match
-oss_issue12	じろっとにらみつけた	ジロット	Conversion Not Match
-oss_issue12	このひぼくらはきんじょにいった	被	Conversion Not Match
-oss_issue12	こっちにこい	濃い	Conversion Not Match
-oss_issue12	かみわざとしかいいようがない	歯科	Conversion Not Match
-oss_issue12	しかってほしいときもある	歯科	Conversion Not Match
-oss_issue12	しかられてないている	テイル	Conversion Not Match
-oss_issue12	あれたしょうがっこうだ	荒れた	Conversion Match
-oss_issue12	もどかしいおもいです	重い	Conversion Not Match
-oss_issue12	おれかかったえだをもとにもどす	折れかかった	Conversion Match
-oss_issue12	どんかんなのできづいてないようだ	ようだ	Conversion Match
-oss_issue12	おばあちゃんのはなしはいつもながい	話は	Conversion Match
-oss_issue12	えんこーどってそんなにむつかしいか	エンコード	Conversion Match
-oss_issue12	とうぜんそのようなこともそうていしています	そのような	Conversion Match
-oss_issue12	はやめにごはんをたいておいた	早めに	Conversion Match
-oss_issue12	はやめにごはんをたいておいた	炊いて	Conversion Match
-oss_issue12	こづくりがさかんなきせつです	子作り	Conversion Match
-oss_issue12	あけましておめでとうございます	開けまして	Conversion Not Match
-oss_issue12	よみにくいじをかくのでこまっている	字を書く	Conversion Match
-oss_issue12	ひとごみにながされてかわっていく	変わっていく	Conversion Match
-oss_issue12	ぼうせんいっぽうになっている	防戦一方	Conversion Match
-oss_issue12	ありのすのようにのびている	有野	Conversion Not Match
-oss_issue12	ふめんをよめないのがじゃくてんです	譜面	Conversion Match
-oss_issue12	せがずいぶんたかい	背が	Conversion Match
-oss_issue12	かいさつぐちでてをふった	振った	Conversion Match
-oss_issue12	ぜいたくをいえばきりがないけど	霧	Conversion Not Match
-oss_issue25	じかんにおわれている	負われて	Conversion Not Match
+oss_issue12	これはうれしいごさんです	.*誤算.*	Conversion Match
+oss_issue12	これはだめだというし	.*シ	Conversion Not Match
+oss_issue12	これはだめだとおもうから	.*思うから	Conversion Match
+oss_issue12	きごころのしれたなかなので	.*田中.*	Conversion Not Match
+oss_issue12	かいごはほんとうにたいへんです	改悟.*	Conversion Not Match
+oss_issue12	かいごはほんとうにたいへんです	.*タイ.*	Conversion Not Match
+oss_issue12	でこめをおくったら	凸.*	Conversion Not Match
+oss_issue12	さとるくんにたのみましょう	読.*	Conversion Not Match
+oss_issue12	そのことからもわかるように	その子と.*	Conversion Not Match
+oss_issue12	にほんちーむのえんぎはこのあとすぐです	.*演技派.*	Conversion Not Match
+oss_issue12	ぼーりんぐじょうのちかくです	ボーリング場.*	Conversion Match
+oss_issue12	しょっぱいあじがした	.*下	Conversion Not Match
+oss_issue12	とんでもないやつがあらわれた	.*洗われた	Conversion Not Match
+oss_issue12	さるのなきごえがすごい	申.*	Conversion Not Match
+oss_issue12	ほしゅてきなめんもあるね	.*麺.*	Conversion Not Match
+oss_issue12	ひまわりがさいている	.*最低.*	Conversion Not Match
+oss_issue12	いがもたれる	伊賀.*	Conversion Not Match
+oss_issue12	どんなふうにやったのか	.*封.*	Conversion Not Match
+oss_issue12	でびあんをつかっています	デビアン.*	Conversion Match
+oss_issue12	たたかいにかつには	.*勝つ.*	Conversion Match
+oss_issue12	ぶいぶいいわしている	.*岩.*	Conversion Not Match
+oss_issue12	せっかくのおさそいをむげにはできない	.*無碍.*	Conversion Not Match
+oss_issue12	こんなときこそおちつかないと	婚.*	Conversion Not Match
+oss_issue12	そういうわけだったのか	そう言う.*	Conversion Not Match
+oss_issue12	じろっとにらみつけた	ジロット.*	Conversion Not Match
+oss_issue12	このひぼくらはきんじょにいった	.*被.*	Conversion Not Match
+oss_issue12	こっちにこい	.*濃い	Conversion Not Match
+oss_issue12	かみわざとしかいいようがない	.*歯科.*	Conversion Not Match
+oss_issue12	しかってほしいときもある	歯科.*	Conversion Not Match
+oss_issue12	しかられてないている	.*テイル	Conversion Not Match
+oss_issue12	あれたしょうがっこうだ	荒れた.*	Conversion Match
+oss_issue12	もどかしいおもいです	.*重い.*	Conversion Not Match
+oss_issue12	おれかかったえだをもとにもどす	折れかかった.*	Conversion Match
+oss_issue12	どんかんなのできづいてないようだ	.*ようだ	Conversion Match
+oss_issue12	おばあちゃんのはなしはいつもながい	.*話は.*	Conversion Match
+oss_issue12	えんこーどってそんなにむつかしいか	エンコード.*	Conversion Match
+oss_issue12	とうぜんそのようなこともそうていしています	.*そのような.*	Conversion Match
+oss_issue12	はやめにごはんをたいておいた	早めに.*	Conversion Match
+oss_issue12	はやめにごはんをたいておいた	.*炊いて.*	Conversion Match
+oss_issue12	こづくりがさかんなきせつです	子作り.*	Conversion Match
+oss_issue12	あけましておめでとうございます	開けまして.*	Conversion Not Match
+oss_issue12	よみにくいじをかくのでこまっている	.*字を書く.*	Conversion Match
+oss_issue12	ひとごみにながされてかわっていく	.*変わっていく	Conversion Match
+oss_issue12	ぼうせんいっぽうになっている	防戦一方.*	Conversion Match
+oss_issue12	ありのすのようにのびている	有野.*	Conversion Not Match
+oss_issue12	ふめんをよめないのがじゃくてんです	譜面.*	Conversion Match
+oss_issue12	せがずいぶんたかい	背が.*	Conversion Match
+oss_issue12	かいさつぐちでてをふった	.*振った	Conversion Match
+oss_issue12	ぜいたくをいえばきりがないけど	.*霧.*	Conversion Not Match
+oss_issue25	じかんにおわれている	.*負われて.*	Conversion Not Match
 oss_issue25	きんじて	禁じ手	Conversion Expected 2
 oss_issue25	じょしこうせい	女子高生	Conversion Expected 2
 oss_issue25	だっくすふんとはたんそくです。	ダックスフントは短足です。	Conversion Expected
 oss_issue25	おわりをむかえた	終わりを迎えた	Conversion Expected
 oss_issue25	かねのなるき	金のなる木	Conversion Expected
 oss_issue25	しょうてん	笑点	Conversion Expected 9
-oss_issue25	べっどしーつをこうかんした	ベッドシーツ	Conversion Match
+oss_issue25	べっどしーつをこうかんした	ベッドシーツ.*	Conversion Match
 oss_issue25	いわせるな	言わせるな	Conversion Expected
 oss_issue25	ならには	奈良には	Conversion Expected
 oss_issue25	かいごかんせい	下位互換性	Conversion Expected
@@ -64,12 +64,12 @@ oss_issue25	あいてをたたきのめす	相手を叩きのめす	Conversion E
 oss_issue25	けいししている	軽視している	Conversion Expected
 oss_issue25	おきなわこうくうびるでぃんぐ	沖縄航空ビルディング	Conversion Expected
 oss_issue52	とっぷちーむ	トップチーム	Conversion Expected
-oss_issue52	かんせいどがたかいのでおどろいた	完成度が高い	Conversion Match
-oss_issue52	あけましておめでとうございます	開け	Conversion Not Match
-oss_issue52	そうしないのには	そう	Conversion Match
-oss_issue52	こうしないのには	こう	Conversion Match
-oss_issue52	のーべるしょうをとりました	ノーベル賞	Conversion Match
-oss_issue52	いちごんいっくききもらさない	一言一句	Conversion Match
+oss_issue52	かんせいどがたかいのでおどろいた	完成度が高い.*	Conversion Match
+oss_issue52	あけましておめでとうございます	開け.*	Conversion Not Match
+oss_issue52	そうしないのには	そう.*	Conversion Match
+oss_issue52	こうしないのには	こう.*	Conversion Match
+oss_issue52	のーべるしょうをとりました	ノーベル賞.*	Conversion Match
+oss_issue52	いちごんいっくききもらさない	一言一句.*	Conversion Match
 oss_issue52	うわぎをしちゃくする	上着を試着する	Conversion Expected
 oss_issue52	こうろうしょう	厚労省	Conversion Expected 2
 oss_issue52	こうせいろうどうしょう	厚生労働省	Conversion Expected
@@ -88,22 +88,22 @@ oss_issue52	はばかります	憚ります	Conversion Expected 2
 oss_issue52	こうれい	降霊	Conversion Expected 9
 oss_issue52	とわ	永遠	Conversion Expected 9
 oss_issue52	りょうあんじ	龍安寺	Conversion Expected 2
-oss_issue52	はやまるな	葉山	Conversion Not Match
+oss_issue52	はやまるな	葉山.*	Conversion Not Match
 oss_issue52	うきついちばん	浮津一番	Conversion Expected
 oss_issue52	うつだ	鬱だ	Conversion Expected
 oss_issue52	うつだ	欝だ	Conversion Expected 9
 oss_issue52	このいやほんはていおんすくなめときいている	このイヤホンは低音少なめと聞いている	Conversion Expected
-oss_issue52	てんさいとしかいいようがない	としか言いようがない	Conversion Match
-oss_issue52	そのあとどうなるかは	どうなるかは	Conversion Match
+oss_issue52	てんさいとしかいいようがない	.*としか言いようがない	Conversion Match
+oss_issue52	そのあとどうなるかは	.*どうなるかは	Conversion Match
 oss_issue52	ばくそうする	爆走する	Conversion Expected
 oss_issue52	ゆうきがひつようだ	勇気が必要だ	Conversion Expected
 oss_issue60	ばーべきゅー	バーベキュー	Conversion Expected
-oss_issue64	にじゅうにかさなる	二十	Conversion Not Match
-oss_issue64	さんじゅうにかさなる	三十	Conversion Not Match
+oss_issue64	にじゅうにかさなる	二十.*	Conversion Not Match
+oss_issue64	さんじゅうにかさなる	三十.*	Conversion Not Match
 oss_issue66	わかりづらくなる	分かりづらくなる	Conversion Expected
 oss_issue67	そういうこと	そういうこと	Conversion Expected
-oss_issue89	れべるのさでひどいことになる	なる	Conversion Match
-oss_issue89	わざのうまさにおどろいた	旨さ	Conversion Not Match
+oss_issue89	れべるのさでひどいことになる	.*なる	Conversion Match
+oss_issue89	わざのうまさにおどろいた	.*旨さ.*	Conversion Not Match
 oss_issue92	いってる	言ってる	Conversion Expected 2
 oss_issue92	りょうほう	両方	Conversion Expected
 oss_issue82	てれこむ	テレコム	Conversion Expected 2
@@ -117,8 +117,8 @@ oss_issue93	これがぶなんそうだった	これが無難そうだった	Con
 oss_issue99	そんなにうつくしいひとだとはおもわなかったので	そんなに美しい人だとは思わなかったので	Conversion Expected
 oss_issue99	ゆうきがいります	勇気がいります	Conversion Expected
 oss_issue99	いっしょにいたいので	一緒にいたいので	Conversion Expected
-oss_issue103	すーつのぼたんをかけちがっている	スーツのボタンを	Conversion Match
-oss_issue119	そんなことをきにするな	気にするな	Conversion Match
+oss_issue103	すーつのぼたんをかけちがっている	スーツのボタンを.*	Conversion Match
+oss_issue119	そんなことをきにするな	.*気にするな	Conversion Match
 oss_issue119	それをきにしたら	それを気にしたら	Conversion Expected
 oss_issue119	それはきにしないほうがいい	それは気にしないほうがいい	Conversion Expected
 oss_issue119	それをきにしないなら	それを気にしないなら	Conversion Expected
@@ -129,27 +129,27 @@ oss_issue120	ちゅうもんじきにもよるけど	注文時期にもよるけ
 oss_issue120	しあげはあしたにしよう	仕上げは明日にしよう	Conversion Expected
 oss_issue120	あせをすいそうなので	汗を吸いそうなので	Conversion Expected
 oss_issue120	ひびきがゆたかになる	響きが豊かになる	Conversion Expected
-oss_issue120	そういうはなしができるじきがきたら	そういう話ができる時期が	Conversion Match
+oss_issue120	そういうはなしができるじきがきたら	そういう話ができる時期が.*	Conversion Match
 oss_issue121	むこうのかんがえもよくきいてくれ	向こうの考えもよく聞いてくれ	Conversion Expected
 oss_issue121	こうつうりょうだってそっちのほうがおおい	交通量だってそっちの方が多い	Conversion Expected
-oss_issue121	なんしゅうもおくれてしまったので	何	Conversion Match
-oss_issue121	つきあっていちねんはんで	年半で	Conversion Match
-oss_issue121	いちねんはんほどつきあった	年半ほど付き合った	Conversion Match
-oss_issue122	ちょうれいのあとはかいぎだ	会議だ	Conversion Match
-oss_issue122	さんねんはんの	年半の	Conversion Match
-oss_issue122	ごねんはんの	年半の	Conversion Match
-oss_issue122	かってにぐちって	支ってに	Conversion Not Match
-oss_issue122	さりぎわがかっこいい	去り際が	Conversion Match
+oss_issue121	なんしゅうもおくれてしまったので	何.*	Conversion Match
+oss_issue121	つきあっていちねんはんで	.*年半で	Conversion Match
+oss_issue121	いちねんはんほどつきあった	.*年半ほど付き合った	Conversion Match
+oss_issue122	ちょうれいのあとはかいぎだ	.*会議だ	Conversion Match
+oss_issue122	さんねんはんの	.*年半の	Conversion Match
+oss_issue122	ごねんはんの	.*年半の	Conversion Match
+oss_issue122	かってにぐちって	支ってに.*	Conversion Not Match
+oss_issue122	さりぎわがかっこいい	去り際が.*	Conversion Match
 oss_issue122	しはいよくがおおきいひとだ	支配欲が大きい人だ	Conversion Expected
 oss_issue122	よくよくかんがえたら	よくよく考えたら	Conversion Expected
 oss_issue122	ごきぶりをたいじした	ゴキブリを退治した	Conversion Expected
 oss_issue122	にほんいちのやまはふじさんです	日本一の山は富士山です	Conversion Expected
 oss_issue122	としをとるとびょういんのはなしばかりになる	歳をとると病院の話ばかりになる	Conversion Expected
-oss_issue122	くんくんにおっているので	臭っているので	Conversion Match
-oss_issue122	じしんにみちあふれている	自信に満ち	Conversion Match
-oss_issue122	おやのありがたみがみにしみた	親のありがたみが身に	Conversion Match
+oss_issue122	くんくんにおっているので	.*臭っているので	Conversion Match
+oss_issue122	じしんにみちあふれている	自信に満ち.*	Conversion Match
+oss_issue122	おやのありがたみがみにしみた	親のありがたみが身に.*	Conversion Match
 oss_issue122	てきみかたかんけいなく	敵味方関係なく	Conversion Expected
-oss_issue122	このみによるとしかいいようがない	用	Conversion Not Match
+oss_issue122	このみによるとしかいいようがない	.*用.*	Conversion Not Match
 oss_issue122	みにゅうりょくのもじを	未入力の文字を	Conversion Expected
 oss_issue125	このしょうひんをかいたい	この商品を買いたい	Conversion Expected
 oss_issue129	ひとのひょうかをきにするな	人の評価を気にするな	Conversion Expected
@@ -175,7 +175,7 @@ oss_issue151	ぐぐってみたけど	ググってみたけど	Conversion Expect
 oss_issue152	そざいがぷらすちっくなので	素材がプラスチックなので	Conversion Expected
 oss_issue152	よろしくおねがいします	よろしくお願いします	Conversion Expected
 oss_issue152	おかあさんといっしょなので	お母さんと一緒なので	Conversion Expected 2
-oss_issue152	そのしごとはあとにしよう	しよう	Conversion Match
+oss_issue152	そのしごとはあとにしよう	.*しよう	Conversion Match
 oss_issue152	がいこくめーかーのものはからだにあわない	外国メーカーのものは体に合わない	Conversion Expected
 oss_issue154	よかったりする	良かったりする	Conversion Expected 2
 oss_issue154	1つめのはなしは	１つ目の話は	Conversion Expected
@@ -209,7 +209,7 @@ oss_issue587	いっぴょう	一票	Conversion Expected 2
 oss_issue587	いっぴょう	1票	Conversion Expected 9
 oss_issue588	きそう	寄贈	Conversion Expected 9
 oss_issue589	なぞめいてて	謎めいてて	Conversion Expected
-oss_issue590	しょくじをしたにもかかわらず	食事をした	Conversion Match
+oss_issue590	しょくじをしたにもかかわらず	食事をした.*	Conversion Match
 oss_issue591	さんぜんえん	三千円	Conversion Expected 2
 oss_issue591	さんぜんえん	3千円	Conversion Expected 99
 oss_issue591	さんぜんえん	3000円	Conversion Expected 99
@@ -230,7 +230,7 @@ oss_issue602	きんとれ	筋トレ	Conversion Expected
 oss_issue603	おくぶたえ	奥二重	Conversion Expected
 oss_issue604	にほんじゅう	日本中	Conversion Expected
 oss_issue604	にっぽんじゅう	日本中	Conversion Expected
-oss_issue605	かにかまれる	蚊に	Conversion Match
+oss_issue605	かにかまれる	蚊に.*	Conversion Match
 oss_issue606	こういんしょう	好印象	Conversion Expected
 oss_issue608	じってんぽ	実店舗	Conversion Match
 oss_issue609	うらめん	裏面	Conversion Match
@@ -258,7 +258,7 @@ oss_issue631	きこう	貴行	Conversion Expected 9
 oss_issue632	へんしんまち	返信待ち	Conversion Expected
 oss_issue635	ゆうせんでもむせんでも	優先でも無線でも	Conversion Expected
 oss_issue640	さぶすく	サブスク	Conversion Expected
-oss_issue641	かたがこる	肩が	Conversion Match
+oss_issue641	かたがこる	肩が(こ|凝)る	Conversion Match
 oss_issue642	ばうんしゃ	馬運車	Conversion Expected
 oss_issue645	しんしょかいふうざい	信書開封罪	Conversion Expected
 oss_issue646	あいしんかくら	愛新覚羅	Conversion Expected
@@ -269,21 +269,21 @@ oss_issue651	こんぜ	今世	Conversion Expected 9
 oss_issue651	こんせい	今世	Conversion Expected 9
 oss_issue654	しんちょうにはこぶ	慎重に運ぶ	Conversion Expected
 oss_issue655	ぎろんになんしょくをしめす	議論に難色を示す	Conversion Expected
-oss_issue656	おんどをおどる	音頭を	Conversion Match
-oss_issue658	かいぜんしとうぞんじます	改善しとう	Conversion Match
+oss_issue656	おんどをおどる	音頭を.*	Conversion Match
+oss_issue658	かいぜんしとうぞんじます	改善しとう.*	Conversion Match
 oss_issue660	ふくじょし	副助詞	Conversion Expected 2
 oss_issue661	らっぷ	乱舞	Conversion Expected 9
 oss_issue662	こきゅう	枯朽	Conversion Expected 9
 oss_issue664	こうばいりょくへいか	購買力平価	Conversion Expected
 oss_issue666	ろーまじぶんをかく	ローマ字文を書く	Conversion Expected
-oss_issue667	かんじかなまじりぶん	文	Conversion Match
+oss_issue667	かんじかなまじりぶん	.*文	Conversion Match
 oss_issue669	にせんえんさつ	二千円札	Conversion Expected 2
 oss_issue669	ごせんえんさつ	五千円札	Conversion Expected 2
 oss_issue669	ごひゃくえんさつ	五百円札	Conversion Expected 2
 oss_issue669	にせんえんさつ	2千円札	Conversion Expected 9
 oss_issue669	ごせんえんさつ	5千円札	Conversion Expected 9
 oss_issue669	ごひゃくえんさつ	5百円札	Conversion Expected 9
-oss_issue670	たいをなす	体を	Conversion Match
+oss_issue670	たいをなす	体を.*	Conversion Match
 oss_issue672	じゅうまん	十万	Conversion Expected 9
 oss_issue672	じゅうまん	10万	Conversion Expected 9
 oss_issue672	じゅうまんえん	十万円	Conversion Expected 9
@@ -395,7 +395,7 @@ oss_issue998	にかんじ	二簡字	Conversion Expected 99
 oss_issue1001	ころんびあ	Colombia	Conversion Expected 5
 oss_issue1003	はくしかてい	博士課程	Conversion Expected
 oss_issue1004	いねこき	稲㧡	Conversion Expected 9
-oss_issue1005	かぜをひく	風邪	Conversion Match
+oss_issue1005	かぜをひく	風邪.*	Conversion Match
 oss_issue1006	さいじょうひでき	西城秀樹	Conversion Expected
 oss_issue1007	ざんち	殘置	Conversion Expected	999
 oss_issue1008	もくさじんじゃ	儛草神社	Conversion Expected

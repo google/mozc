@@ -1031,6 +1031,7 @@ mozc_cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
+        "@re2",
     ],
 )
 
@@ -1088,6 +1089,19 @@ mozc_cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+mozc_cc_test(
+    name = "quality_regression_util_test",
+    size = "small",
+    srcs = ["quality_regression_util_test.cc"],
+    deps = [
+        ":converter_mock",
+        ":quality_regression_util",
+        ":segments",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
