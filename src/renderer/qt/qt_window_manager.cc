@@ -498,7 +498,20 @@ void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
   table->clear();
   table->setRowCount(cands_size + 1);  // +1 is for footer.
   table->setColumnCount(4);
-  table->setColumnWidth(0, kColumn0Width);  // shortcut
+  // The shortcut column is shown only when at least one candidate has a
+  // shortcut, following the Windows renderer; e.g. candidates have no
+  // shortcut in the suggestion mode.
+  bool has_shortcut = false;
+  for (const commands::CandidateWindow::Candidate& candidate :
+       candidate_window.candidate()) {
+    if (candidate.has_annotation() &&
+        !candidate.annotation().shortcut().empty()) {
+      has_shortcut = true;
+      break;
+    }
+  }
+  const int column0_width = has_shortcut ? kColumn0Width : 0;
+  table->setColumnWidth(0, column0_width);  // shortcut
   table->setColumnWidth(3, kColumn3Width);  // infolist indicator
 
   int max_width1 = 0;
@@ -589,7 +602,7 @@ void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
     // Make sure the window is wide enough to show the whole label.
     const int label_width = GetItemWidth(*label_item);
     if (index_guide.empty()) {
-      const int deficit = label_width - (kColumn0Width + max_width1 +
+      const int deficit = label_width - (column0_width + max_width1 +
                                          max_width2 + kColumn3Width);
       max_width1 += std::max(deficit, 0);
     } else {
@@ -607,7 +620,7 @@ void FillCandidateWindow(const commands::CandidateWindow& candidate_window,
   // Resize
   table->setColumnWidth(1, max_width1);
   table->setColumnWidth(2, max_width2);
-  int width = kColumn0Width + max_width1 + max_width2 + kColumn3Width;
+  int width = column0_width + max_width1 + max_width2 + kColumn3Width;
   // Reserve the width of the vertical scroll bar when the candidate list
   // consists of more than one page; see QtWindowManager::UpdateVScrollBar().
   if (static_cast<int>(cands_size) < candidate_window.size()) {
@@ -683,7 +696,16 @@ Point QtWindowManager::GetWindowPosition(
   const Rect preedit_rect = virtual_rect.GetRect();
   const Point win_pos = Point(preedit_rect.Left(), preedit_rect.Bottom());
   const Rect monitor_rect = virtual_rect.GetMonitorRect();
-  const Point offset_to_column1(kColumn0Width, 0);
+  // Align the left edge of the candidate value text with the preedit, as the
+  // Windows renderer does. The text is drawn at: window border + shortcut
+  // column width (zero when no candidate has a shortcut) + the text margin
+  // of the item view (see QStyledItemDelegate).
+  const int text_margin =
+      candidates_->style()->pixelMetric(QStyle::PM_FocusFrameHMargin, nullptr,
+                                        candidates_) +
+      1;
+  const Point offset_to_column1(
+      candidates_->frameWidth() + candidates_->columnWidth(0) + text_margin, 0);
 
   const Rect adjusted_win_geometry =
       WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
