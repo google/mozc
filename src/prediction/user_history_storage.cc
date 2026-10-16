@@ -124,6 +124,9 @@ void UserHistoryStorage::AsyncLoad() {
 }
 
 void UserHistoryStorage::Clear() {
+  canceled_ = true;
+  Wait();
+  canceled_ = false;
   auto lock = AcquireUniqueLock();
   dic_ = std::make_unique<DicCache>(kLruCacheSize);
   config::CharacterFormManager::GetCharacterFormManager()->ClearHistory();

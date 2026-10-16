@@ -478,4 +478,35 @@ TEST_F(UserHistoryStorageTest, CharacterFormStorageTest) {
   }
 }
 
+TEST_F(UserHistoryStorageTest, ClearWhileAsyncLoadAndSaveTest) {
+  const TempFile file = testing::MakeTempFileOrDie();
+  UserHistoryStorage storage(file.path());
+  storage.Wait();
+
+  for (int i = 0; i < 1000; ++i) {
+    storage.Insert(MakeEntry(i));
+  }
+  EXPECT_TRUE(storage.Save());
+  EXPECT_OK(FileUtil::FileExists(file.path()));
+
+  // Clear() while AsyncLoad() is in flight must wait for the background task
+  // and leave both memory and disk cleared.
+  storage.AsyncLoad();
+  storage.Clear();
+  storage.Wait();
+  EXPECT_TRUE(storage.IsEmpty());
+  EXPECT_FALSE(FileUtil::FileExists(file.path()).ok());
+
+  // Clear() while AsyncSave() is in flight must wait for the background task
+  // and not allow the old snapshot to be written back to disk.
+  for (int i = 0; i < 1000; ++i) {
+    storage.Insert(MakeEntry(i));
+  }
+  storage.AsyncSave();
+  storage.Clear();
+  storage.Wait();
+  EXPECT_TRUE(storage.IsEmpty());
+  EXPECT_FALSE(FileUtil::FileExists(file.path()).ok());
+}
+
 }  // namespace mozc::prediction
