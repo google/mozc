@@ -49,6 +49,23 @@ namespace engine {
 namespace {
 
 class SupplementalModelForTesting : public engine::SupplementalModelInterface {
+ public:
+  bool LoadAsync(const EngineReloadRequest& request) override {
+    ++load_async_count_;
+    last_request_ = request;
+    return true;
+  }
+
+  void ClearOldModels() override { ++clear_old_models_count_; }
+
+  int load_async_count() const { return load_async_count_; }
+  int clear_old_models_count() const { return clear_old_models_count_; }
+  const EngineReloadRequest& last_request() const { return last_request_; }
+
+ private:
+  int load_async_count_ = 0;
+  int clear_old_models_count_ = 0;
+  EngineReloadRequest last_request_;
 };
 
 constexpr absl::string_view kMockMagicNumber = "MOCK";
@@ -179,6 +196,36 @@ TEST_F(EngineTest, RollbackDataTest) {
 
   // DataVersion comes from the first request (i.e. mock_request_).
   EXPECT_EQ(engine_->GetDataVersion(), mock_version_);
+}
+
+TEST_F(EngineTest, SupplementalModelReloadTest) {
+  // Requests sent while converter_ is nullptr are deferred, keeping the latest.
+  EXPECT_TRUE(engine_->SendSupplementalModelReloadRequest(mock_request_));
+  EXPECT_TRUE(engine_->SendSupplementalModelReloadRequest(oss_request_));
+  engine_->ClearOldSupplementalModels();
+
+  auto supplemental_model = std::make_unique<SupplementalModelForTesting>();
+  const SupplementalModelForTesting* supplemental_model_ptr =
+      supplemental_model.get();
+  std::unique_ptr<Modules> modules =
+      engine::ModulesPresetBuilder()
+          .PresetSupplementalModel(std::move(supplemental_model))
+          .Build(std::make_unique<testing::MockDataManager>())
+          .value();
+  CHECK_OK(engine_->ReloadModules(std::move(modules)));
+
+  // The pending latest request is loaded upon converter_ initialization.
+  EXPECT_EQ(supplemental_model_ptr->load_async_count(), 1);
+  EXPECT_EQ(supplemental_model_ptr->last_request().file_path(),
+            oss_request_.file_path());
+
+  // Subsequent requests after converter_ is initialized are loaded immediately.
+  EXPECT_TRUE(engine_->SendSupplementalModelReloadRequest(mock_request_));
+  EXPECT_EQ(supplemental_model_ptr->load_async_count(), 2);
+  EXPECT_EQ(supplemental_model_ptr->last_request().file_path(),
+            mock_request_.file_path());
+  engine_->ClearOldSupplementalModels();
+  EXPECT_EQ(supplemental_model_ptr->clear_old_models_count(), 1);
 }
 }  // namespace engine
 }  // namespace mozc

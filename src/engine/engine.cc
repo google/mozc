@@ -30,6 +30,7 @@
 #include "engine/engine.h"
 
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/log/check.h"
@@ -109,6 +110,11 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules) {
   }
 
   converter_ = std::move(converter);
+  if (pending_supplemental_model_request_.has_value()) {
+    converter_->modules().GetSupplementalModel().LoadAsync(
+        *pending_supplemental_model_request_);
+    pending_supplemental_model_request_.reset();
+  }
 
   return absl::OkStatus();
 }
@@ -173,6 +179,8 @@ bool Engine::SendSupplementalModelReloadRequest(
     const EngineReloadRequest& request) {
   if (converter_) {
     converter_->modules().GetSupplementalModel().LoadAsync(request);
+  } else {
+    pending_supplemental_model_request_ = request;
   }
   return true;
 }
