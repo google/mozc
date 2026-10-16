@@ -677,3 +677,5 @@ OK:	くすりのむ	薬飲む	Prediction Expected 2	薬飲む	3.34.6239
 OK:	あたまいたい	頭遺体	Prediction Expected 2	頭痛い	3.34.6239
 OK:	ねつでた	熱出た	Prediction Expected 2	熱出た	3.34.6239
 FAILED:	かぎしめる	鍵占める	Prediction Expected 2	鍵閉める	3.34.6239
+FAILED:	こてでかーるする	コテデカールする	Conversion Expected	コテでカールする	3.34.6239
+FAILED:	ちょいのり	チョイノリ	Conversion Expected	ちょい乗り	3.34.6239

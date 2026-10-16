@@ -177,3 +177,5 @@ regression	くすりのむ	薬飲む	Prediction Expected	2
 regression	あたまいたい	頭痛い	Prediction Expected	2
 regression	ねつでた	熱出た	Prediction Expected	2
 regression	かぎしめる	鍵閉める	Prediction Expected	2
+regression	こてでかーるする	コテでカールする	Conversion Expected
+regression	ちょいのり	ちょい乗り	Conversion Expected
