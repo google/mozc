@@ -96,7 +96,7 @@ bool IsValidReading(const absl::string_view reading) {
 std::string NormalizeReading(const absl::string_view input) {
   std::string tmp1 = japanese::FullWidthAsciiToHalfWidthAscii(input);
   std::string tmp2 = japanese::HalfWidthKatakanaToFullWidthKatakana(tmp1);
-  return japanese::KatakanaToHiragana(tmp2);
+  return japanese::NormalizeVoicedSoundMark(japanese::KatakanaToHiragana(tmp2));
 }
 
 absl::Status ValidateEntry(

@@ -104,9 +104,6 @@ std::string HalfWidthToFullWidth(const absl::string_view input) {
       HalfWidthAsciiToFullWidthAscii(input));
 }
 
-// TODO(tabata): Add another function to split voice mark
-// of some UNICODE only characters (required to display
-// and commit for old clients)
 std::string NormalizeVoicedSoundMark(const absl::string_view input) {
   return ConvertUsingDoubleArray(internal::normalize_voiced_sound_da,
                                  internal::normalize_voiced_sound_table, input);

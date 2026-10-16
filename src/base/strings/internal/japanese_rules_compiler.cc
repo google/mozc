@@ -68,8 +68,8 @@ namespace {
 
 // files = "file_name1:name1,file_name2,name2 ... "
 // Load Suikyo Format
-static void Compile(const std::string &files,
-                    const std::string &header_filename) {
+static void Compile(const std::string& files,
+                    const std::string& header_filename) {
   OutputFileStream ofs(header_filename);
   CHECK(ofs.good());
 
@@ -94,8 +94,8 @@ namespace mozc::japanese::internal {
   CHECK_GE(rules.size(), 1);
 
   for (size_t i = 0; i < rules.size(); ++i) {
-    const std::string &filename = rules[i].first;
-    const std::string &name = rules[i].second;
+    const std::string& filename = rules[i].first;
+    const std::string& name = rules[i].second;
     InputFileStream ifs(filename);
     CHECK(ifs.good());
     std::string line, output;
@@ -104,8 +104,8 @@ namespace mozc::japanese::internal {
       std::vector<std::string> col =
           absl::StrSplit(line, '\t', absl::SkipEmpty());
       CHECK_GE(col.size(), 2) << "format error: " << line;
-      const std::string &key = col[0];
-      const std::string &value = col[1];
+      const std::string& key = col[0];
+      const std::string& value = col[1];
       size_t rewind_len = 0;
       if (col.size() > 2) {
         rewind_len = col[2].size();
@@ -118,23 +118,22 @@ namespace mozc::japanese::internal {
       output += static_cast<uint8_t>(rewind_len);
     }
     std::sort(dic.begin(), dic.end());
-    std::vector<char *> ary;
-    std::vector<int> values;
+    std::vector<char*> ary;
+    std::vector<int16_t> values;
     for (size_t k = 0; k < dic.size(); ++k) {
-      ary.push_back(const_cast<char *>(dic[k].first.c_str()));
+      ary.push_back(const_cast<char*>(dic[k].first.c_str()));
       values.push_back(dic[k].second);
     }
 
-    Darts::DoubleArray da;
-    const int result = da.build(dic.size(), const_cast<const char **>(&ary[0]),
+    Darts::DoubleArrayImpl<char, unsigned char, int16_t, uint16_t> da;
+    const int result = da.build(dic.size(), const_cast<const char**>(&ary[0]),
                                 nullptr, &values[0]);
     CHECK_EQ(0, result);
 
     ofs << "const char " << name << "_table[] = \"" << absl::CHexEscape(output)
         << "\";" << std::endl;
 
-    const DoubleArray *array =
-        reinterpret_cast<const DoubleArray *>(da.array());
+    const DoubleArray* array = reinterpret_cast<const DoubleArray*>(da.array());
     ofs << "const DoubleArray " << name << "_da[] = {";
     for (size_t k = 0; k < da.size(); ++k) {
       if (k != 0) ofs << ",";
@@ -150,7 +149,7 @@ namespace mozc::japanese::internal {
 }  // namespace
 }  // namespace mozc::japanese::internal
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   mozc::japanese::internal::Compile(absl::GetFlag(FLAGS_input),
                                     absl::GetFlag(FLAGS_output));

@@ -130,9 +130,50 @@ TEST(JapaneseUtilTest, HiraganaToRomanji) {
 }
 
 TEST(JapaneseUtilTest, NormalizeVoicedSoundMark) {
-  const std::string input = "僕のう゛ぁいおりん";
-  std::string output = NormalizeVoicedSoundMark(input);
-  EXPECT_EQ(output, "僕のゔぁいおりん");
+  // Existing behavior
+  EXPECT_EQ(NormalizeVoicedSoundMark("僕のう゛ぁいおりん"), "僕のゔぁいおりん");
+
+  // Combining voiced sound mark (U+3099)
+  EXPECT_EQ(
+      NormalizeVoicedSoundMark("か\u3099き\u3099く\u3099け\u3099こ\u3099"),
+      "がぎぐげご");
+  EXPECT_EQ(
+      NormalizeVoicedSoundMark("さ\u3099し\u3099す\u3099せ\u3099そ\u3099"),
+      "ざじずぜぞ");
+  EXPECT_EQ(
+      NormalizeVoicedSoundMark("た\u3099ち\u3099つ\u3099て\u3099と\u3099"),
+      "だぢづでど");
+  EXPECT_EQ(
+      NormalizeVoicedSoundMark("は\u3099ひ\u3099ふ\u3099へ\u3099ほ\u3099"),
+      "ばびぶべぼ");
+  EXPECT_EQ(NormalizeVoicedSoundMark("う\u3099"), "ゔ");
+  EXPECT_EQ(NormalizeVoicedSoundMark("サ\u3099カナ"), "ザカナ");
+  EXPECT_EQ(NormalizeVoicedSoundMark("ｻ\u3099ｶﾅ"), "ザｶﾅ");
+
+  // Combining semi-voiced sound mark (U+309A)
+  EXPECT_EQ(
+      NormalizeVoicedSoundMark("は\u309Aひ\u309Aふ\u309Aへ\u309Aほ\u309A"),
+      "ぱぴぷぺぽ");
+  EXPECT_EQ(
+      NormalizeVoicedSoundMark("ハ\u309Aヒ\u309Aフ\u309Aヘ\u309Aホ\u309A"),
+      "パピプペポ");
+  EXPECT_EQ(NormalizeVoicedSoundMark("ﾊ\u309A"), "パ");
+
+  // Standalone fullwidth voiced/semi-voiced sound marks (U+309B, U+309C)
+  EXPECT_EQ(NormalizeVoicedSoundMark("サ゛カナ"), "ザカナ");
+  EXPECT_EQ(NormalizeVoicedSoundMark("さ゛かな"), "ざかな");
+  EXPECT_EQ(NormalizeVoicedSoundMark("は゜"), "ぱ");
+  EXPECT_EQ(NormalizeVoicedSoundMark("ハ゜"), "パ");
+
+  // Halfwidth voiced sound marks (U+FF9E, U+FF9F)
+  EXPECT_EQ(NormalizeVoicedSoundMark("サﾞカナ"), "ザカナ");
+  EXPECT_EQ(NormalizeVoicedSoundMark("ハﾟ"), "パ");
+
+  // Uncombined / invalid marks remain unchanged
+  EXPECT_EQ(NormalizeVoicedSoundMark("あ゛"), "あ゛");
+  EXPECT_EQ(NormalizeVoicedSoundMark("水雲"), "水雲");
+  EXPECT_EQ(NormalizeVoicedSoundMark("゛゜"), "゛゜");
+  EXPECT_EQ(NormalizeVoicedSoundMark("゙゚"), "゙゚");
 }
 
 TEST(JapaneseUtilTest, FullWidthAndHalfWidth) {

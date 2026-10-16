@@ -57,6 +57,13 @@ TEST(UserDictionaryUtilTest, TestIsValidReading) {
   // KATAKANA-HIRAGANA VOICED/SEMI-VOICED SOUND MARK (u309B, u309C)
   EXPECT_TRUE(IsValidReading("゛゜"));
 
+  // Readings with combining / separated voiced marks following base kana.
+  EXPECT_TRUE(IsValidReading("ｻ\u3099ｶﾅ"));
+  EXPECT_TRUE(IsValidReading("サ\u3099カナ"));
+  EXPECT_TRUE(IsValidReading("さ\u3099かな"));
+  EXPECT_TRUE(IsValidReading("サ゛カナ"));
+  EXPECT_TRUE(IsValidReading("さ゛かな"));
+
   EXPECT_FALSE(IsValidReading("𠮷"));
   EXPECT_FALSE(IsValidReading("😁"));
   EXPECT_FALSE(IsValidReading("ヷ"));
@@ -69,6 +76,13 @@ TEST(UserDictionaryUtilTest, TestNormalizeReading) {
   EXPECT_EQ(NormalizeReading("ｱｲｳｬ"), "あいうゃ");
   EXPECT_EQ(NormalizeReading("ＡＢａｂ０１＠＆＝｜"), "ABab01@&=|");
   EXPECT_EQ(NormalizeReading("｡｢｣､･"), "。「」、・");
+  EXPECT_EQ(NormalizeReading("ｻ\u3099ｶﾅ"), "ざかな");
+  EXPECT_EQ(NormalizeReading("サ\u3099カナ"), "ざかな");
+  EXPECT_EQ(NormalizeReading("さ\u3099かな"), "ざかな");
+  EXPECT_EQ(NormalizeReading("サ゛カナ"), "ざかな");
+  EXPECT_EQ(NormalizeReading("さ゛かな"), "ざかな");
+  EXPECT_EQ(NormalizeReading("ｻﾞｶﾅ"), "ざかな");
+  EXPECT_EQ(NormalizeReading("は゜"), "ぱ");
 }
 
 struct UserDictionaryEntryData {

@@ -662,6 +662,18 @@ TEST_F(UserDictionaryTest, TestKeyNormalization) {
     entry->set_value("Gboard");
     entry->set_pos(user_dictionary::UserDictionary::NO_POS);
 
+    // Combining voiced sound mark and separate voiced sound mark will be
+    // normalized to precomposed hiragana.
+    entry = dic->add_entries();
+    entry->set_key("ｻ\u3099ｶﾅ");
+    entry->set_value("青青");
+    entry->set_pos(user_dictionary::UserDictionary::NO_POS);
+
+    entry = dic->add_entries();
+    entry->set_key("サ゛カナ");
+    entry->set_value("魚");
+    entry->set_pos(user_dictionary::UserDictionary::NO_POS);
+
     user_dic->Load(storage);
   }
 
@@ -678,6 +690,10 @@ TEST_F(UserDictionaryTest, TestKeyNormalization) {
 
   EXPECT_EQ(LookupExact("じーぼーど", *user_dic).size(), 1);
   EXPECT_EQ(LookupExact("ジーボード", *user_dic).size(), 0);
+
+  EXPECT_EQ(LookupExact("ざかな", *user_dic).size(), 2);
+  EXPECT_EQ(LookupExact("ｻ\u3099ｶﾅ", *user_dic).size(), 0);
+  EXPECT_EQ(LookupExact("サ゛カナ", *user_dic).size(), 0);
 }
 
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
