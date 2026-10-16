@@ -29,10 +29,10 @@
 
 MAJOR = 3
 
-MINOR = 34
+MINOR = 35
 
 # BUILD number used for the OSS version.
-BUILD_OSS = 6345
+BUILD_OSS = 6354
 
 # Number to be increased. This value may be replaced by other tools.
 BUILD = BUILD_OSS
