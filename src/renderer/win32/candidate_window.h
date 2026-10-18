@@ -107,7 +107,8 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   // UpdateLayout.
   void UpdateDpi(uint32_t dpi);
 
-  void UpdateLayout(const commands::CandidateWindow& candidate_window);
+  void UpdateLayout(const commands::CandidateWindow& candidate_window,
+                    bool vertical_writing = false);
   void SetSendCommandInterface(
       client::SendCommandInterface* send_command_interface);
 
@@ -119,6 +120,10 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
 
  private:
   void DoPaint(HDC dc);
+  Rect ToClientRect(const Rect& logical_rect) const;
+  TextRenderer* LayoutTextRenderer() const;
+  bool vertical_writing_ = false;
+  std::unique_ptr<TextRenderer> vertical_text_renderer_;
 
   void DrawCells(HDC dc);
   void DrawVScrollBar(HDC dc);

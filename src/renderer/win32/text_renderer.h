@@ -80,6 +80,11 @@ class TextRenderer {
   // Returns an instance of TextRenderer.
   static std::unique_ptr<TextRenderer> Create(uint32_t dpi);
 
+  // Returns nullptr if DirectWrite is unavailable. Measurements use logical
+  // inline/block coordinates (advance, line width); rendering uses screen
+  // coordinates. This lets the candidate table share its horizontal layout.
+  static std::unique_ptr<TextRenderer> CreateVertical(uint32_t dpi);
+
   // Updates font cache.
   virtual void OnThemeChanged() = 0;
 

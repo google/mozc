@@ -242,9 +242,11 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
   main_window_->UpdateDpi(target_dpi);
   infolist_window_->UpdateDpi(target_dpi);
 
+  const bool vertical = LayoutManager::GetWritingDirection(app_info) ==
+                        LayoutManager::VERTICAL_WRITING;
   if (candidate_changed &&
       (candidate_window.display_type() == commands::MAIN)) {
-    main_window_->UpdateLayout(candidate_window);
+    main_window_->UpdateLayout(candidate_window, vertical);
   }
   const Size main_window_size = main_window_->GetLayoutSize();
 
@@ -261,7 +263,8 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
   // We prefer the left position of candidate strings is aligned to
   // that of preedit.
   const Point main_window_zero_point(
-      main_window_->GetCandidateColumnInClientCord().Left(), 0);
+      vertical ? 0 : main_window_->GetCandidateColumnInClientCord().Left(),
+      vertical ? main_window_->GetCandidateColumnInClientCord().Top() : 0);
 
   Rect main_window_rect;
   {
@@ -269,8 +272,6 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
     // makes most of users happy.
     const CRect rect(candidate_layout.exclude_region());
     const Rect preedit_rect(rect.left, rect.top, rect.Width(), rect.Height());
-    const bool vertical = (LayoutManager::GetWritingDirection(app_info) ==
-                           LayoutManager::VERTICAL_WRITING);
     // Sometimes |target_point| is set to the top-left of the exclusion area
     // but WindowUtil does not support this case yet.
     // As a workaround, use |preedit_rect.Bottom()| for y-coordinate of the
@@ -280,6 +281,9 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
     Point new_target_point = target_point;
     if (!vertical) {
       new_target_point.y = preedit_rect.Bottom();
+    } else {
+      // WindowUtil's vertical path does not apply the candidate text offset.
+      new_target_point.y -= main_window_zero_point.y;
     }
     main_window_rect =
         WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
@@ -353,7 +357,8 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
         candidate_window.sub_candidate_window();
 
     if (candidate_changed) {
-      cascading_window_->UpdateLayout(sub_candidate_window);
+      cascading_window_->UpdateDpi(target_dpi);
+      cascading_window_->UpdateLayout(sub_candidate_window, vertical);
     }
 
     // Put the cascading window right to the selected row of this candidate
@@ -362,7 +367,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
     const Rect selected_row_with_window_border(
         Point(main_window_rect.Left(), selected_row.Top()),
         Size(main_window_rect.Right() - main_window_rect.Left(),
-             selected_row.Top() - selected_row.Bottom()));
+             selected_row.Height()));
 
     // We prefer the top of client area of the cascading window is
     // aligned to the top of selected candidate in the candidate window.
