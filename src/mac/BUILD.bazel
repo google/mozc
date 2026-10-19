@@ -30,6 +30,8 @@
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
+    "mozc_cc_library",
+    "mozc_cc_test",
     "mozc_macos_application",
     "mozc_objc_library",
     "mozc_objc_test",
@@ -51,6 +53,23 @@ load(
 )
 
 package(default_visibility = ["//visibility:private"])
+
+mozc_cc_library(
+    name = "vertical_keymap",
+    hdrs = ["vertical_keymap.h"],
+    deps = ["//protocol:commands_cc_proto"],
+)
+
+# Pure protocol logic: also runnable on Windows and Linux without AppKit.
+mozc_cc_test(
+    name = "vertical_keymap_test",
+    srcs = ["vertical_keymap_test.cc"],
+    deps = [
+        ":vertical_keymap",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+    ],
+)
 
 # BUILD_TYPE_SELECT is treated as a function, but not a string. This cannot be a value of join().
 # `--define CHANNEL=(dev|stable)` is the command line option to select a channel.
@@ -170,6 +189,7 @@ mozc_objc_library(
         ":common",
         ":keycode_map",
         ":renderer_receiver",
+        ":vertical_keymap",
         "//base:const",
         "//base:process",
         "//base:util",
