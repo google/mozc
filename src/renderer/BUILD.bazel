@@ -33,6 +33,7 @@ load(
     "mozc_cc_test",
     "mozc_macos_application",
     "mozc_objc_library",
+    "mozc_objc_test",
     "mozc_select",
 )
 load(
@@ -46,6 +47,39 @@ load(
 )
 
 package(default_visibility = ["//visibility:private"])
+
+mozc_cc_library(
+    name = "vertical_layout",
+    hdrs = ["vertical_layout.h"],
+    visibility = ["//renderer:__subpackages__"],
+    deps = ["//base:coordinates"],
+)
+
+mozc_cc_test(
+    name = "vertical_layout_test",
+    srcs = ["vertical_layout_test.cc"],
+    deps = [
+        ":vertical_layout",
+        "//base:coordinates",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_objc_test(
+    name = "vertical_candidate_view_test_macos",
+    size = "small",
+    srcs = ["mac/vertical_candidate_view_test.mm"],
+    sdk_frameworks = ["Cocoa"],
+    deps = [
+        ":mozc_renderer_lib_macos",
+        ":table_layout",
+        "//base:coordinates",
+        "//client:client_interface",
+        "//protocol:candidate_window_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main_objc",
+    ],
+)
 
 mozc_cc_library(
     name = "renderer_client",
@@ -341,6 +375,7 @@ mozc_objc_library(
         ":renderer_server",
         ":renderer_style_handler",
         ":table_layout",
+        ":vertical_layout",
         ":window_util",
         "//base:const",
         "//base:coordinates",
