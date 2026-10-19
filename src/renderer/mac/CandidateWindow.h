@@ -32,6 +32,7 @@
 
 #import <Carbon/Carbon.h>
 
+#include "base/coordinates.h"
 #include "renderer/mac/RendererBaseWindow.h"
 
 namespace mozc {
@@ -55,7 +56,9 @@ class CandidateWindow : public RendererBaseWindow {
   virtual ~CandidateWindow();
   void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
-  void SetCandidateWindow(const commands::CandidateWindow &candidate_window);
+  void SetCandidateWindow(const commands::CandidateWindow &candidate_window,
+                          bool vertical_writing = false);
+  Rect GetClientRect(const Rect &logical_rect) const;
   const renderer::TableLayout *GetTableLayout() const;
 
  private:

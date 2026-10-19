@@ -29,13 +29,15 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include "base/coordinates.h"
+
 #include "protocol/candidate_window.pb.h"
 #include "protocol/renderer_command.pb.h"
 
 namespace mozc {
 namespace client {
 class SendCommandInterface;
-}  // namespace mozc::client
+}  // namespace client
 
 namespace renderer {
 class TableLayout;
@@ -59,6 +61,11 @@ enum ColumnType {
 
 // setCandidateWindow: sets the candidate window to be rendered.
 - (void)setCandidateWindow:(const mozc::commands::CandidateWindow *)candidate_window;
+
+- (void)setVerticalWriting:(BOOL)vertical;
+
+// Converts logical table rectangles to the view's actual coordinate system.
+- (mozc::Rect)clientRect:(mozc::Rect)rect;
 
 // setController: sets the reference of MozcImkInputController.
 // It will be used when mouse clicks.  It doesn't take ownerships of

@@ -64,7 +64,12 @@ const mozc::renderer::TableLayout* CandidateWindow::GetTableLayout() const {
   return [candidate_view tableLayout];
 }
 
-void CandidateWindow::SetCandidateWindow(const commands::CandidateWindow& candidate_window) {
+Rect CandidateWindow::GetClientRect(const Rect& logical_rect) const {
+  return [(CandidateView*)view_ clientRect:logical_rect];
+}
+
+void CandidateWindow::SetCandidateWindow(const commands::CandidateWindow& candidate_window,
+                                         bool vertical_writing) {
   DLOG(INFO) << "CandidateWindow::SetCandidateWindow";
   if (candidate_window.candidate_size() == 0) {
     return;
@@ -74,6 +79,7 @@ void CandidateWindow::SetCandidateWindow(const commands::CandidateWindow& candid
     InitWindow();
   }
   CandidateView* candidate_view = (CandidateView*)view_;
+  [candidate_view setVerticalWriting:vertical_writing];
   [candidate_view setCandidateWindow:&candidate_window];
   [candidate_view setNeedsDisplay:YES];
   NSSize size = [candidate_view updateLayout];
