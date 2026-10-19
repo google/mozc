@@ -94,7 +94,10 @@ NSSize MacViewUtil::TextSize(NSAttributedString *text, bool vertical) {
   }
   NSTextView *view = VerticalTextView(text);
   const NSRect used = VerticalTextBounds(view);
-  return NSMakeSize(std::ceil(used.size.width), std::ceil(used.size.height));
+  // TextKit lays out in container coordinates even for vertical glyph forms.
+  // Its layoutOrientation contract requires the drawing coordinate system to
+  // be rotated; swap the measured axes to match that transform.
+  return NSMakeSize(std::ceil(used.size.height), std::ceil(used.size.width));
 }
 
 void MacViewUtil::DrawText(NSAttributedString *text, NSRect rect, bool vertical) {
@@ -111,9 +114,11 @@ void MacViewUtil::DrawText(NSAttributedString *text, NSRect rect, bool vertical)
   const NSRange glyphs = [manager glyphRangeForTextContainer:[view textContainer]];
   [NSGraphicsContext saveGraphicsState];
   NSRectClip(rect);
-  [manager drawGlyphsForGlyphRange:glyphs
-                           atPoint:NSMakePoint(rect.origin.x - used.origin.x,
-                                               rect.origin.y - used.origin.y)];
+  NSAffineTransform *transform = [NSAffineTransform transform];
+  [transform translateXBy:NSMaxX(rect) yBy:NSMinY(rect)];
+  [transform rotateByDegrees:90];
+  [transform concat];
+  [manager drawGlyphsForGlyphRange:glyphs atPoint:NSMakePoint(-used.origin.x, -used.origin.y)];
   [NSGraphicsContext restoreGraphicsState];
 }
 
