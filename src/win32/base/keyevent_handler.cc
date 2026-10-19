@@ -761,6 +761,33 @@ KeyEventHandlerResult KeyEventHandler::HandleKey(
   }
 
   // We will send this message to the server.
+  // Rotate only unmodified arrows, after checking activation and key-up.
+  // Keep the physical key for modifier tracking and application passthrough.
+  if (behavior.use_vertical_arrow_keys) {
+    bool has_modifier = false;
+    for (const auto modifier : key->modifier_keys()) {
+      has_modifier |= modifier != KeyEvent::CAPS;
+    }
+    if (!has_modifier) {
+      switch (key->special_key()) {
+        case KeyEvent::LEFT:
+          key->set_special_key(KeyEvent::DOWN);  // Next candidate, to the left.
+          break;
+        case KeyEvent::RIGHT:
+          key->set_special_key(
+              KeyEvent::UP);  // Previous candidate, to the right.
+          break;
+        case KeyEvent::UP:
+          key->set_special_key(KeyEvent::LEFT);  // Previous segment, above.
+          break;
+        case KeyEvent::DOWN:
+          key->set_special_key(KeyEvent::RIGHT);  // Next segment, below.
+          break;
+        default:
+          break;
+      }
+    }
+  }
   result.succeeded = true;
   result.should_be_eaten = true;
   result.should_be_sent_to_server = true;
