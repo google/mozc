@@ -244,6 +244,7 @@ mozc_cc_test(
         ":supplemental_model_interface",
         "//data_manager",
         "//data_manager/testing:mock_data_manager",
+        "//prediction:user_history_storage",
         "//protocol:engine_builder_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",

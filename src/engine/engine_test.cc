@@ -39,7 +39,9 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
+#include "prediction/user_history_storage.h"
 #include "protocol/engine_builder.pb.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -73,7 +75,7 @@ constexpr absl::string_view kOssMagicNumber = "\xEFMOZC\x0D\x0A";
 constexpr int kMiddlePriority = 50;
 }  // namespace
 
-class EngineTest : public ::testing::Test {
+class EngineTest : public testing::TestWithTempUserProfile {
  protected:
   EngineTest() {
     const std::string mock_path =
@@ -227,5 +229,54 @@ TEST_F(EngineTest, SupplementalModelReloadTest) {
   engine_->ClearOldSupplementalModels();
   EXPECT_EQ(supplemental_model_ptr->clear_old_models_count(), 1);
 }
+
+#ifndef _WIN32
+// EncryptedStringStorage::Save() uses CryptProtectData on Windows, which fails
+// with ERROR_ACCESS_DENIED on headless test VMs without a user profile.
+TEST_F(EngineTest, ReloadModulesSyncsUserHistoryStorageTest) {
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<Modules> initial_modules,
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>()));
+  ASSERT_OK(engine_->ReloadModules(std::move(initial_modules)));
+
+  EXPECT_TRUE(engine_->AddUserHistory("てすと", "テスト"));
+  EXPECT_TRUE(engine_->Sync());
+  EXPECT_TRUE(engine_->Wait());
+  EXPECT_FALSE(
+      engine_->GetModulesForTesting().GetUserHistoryStorage().IsEmpty());
+
+  // Simulate DataLoader building a new Modules instance in the background while
+  // the user history file still exists on disk.
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<Modules> prebuilt_modules,
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>()));
+  prebuilt_modules->GetUserHistoryStorage().Wait();
+  EXPECT_FALSE(prebuilt_modules->GetUserHistoryStorage().IsEmpty());
+
+  // Clear user prediction on the active engine before ReloadModules swaps in
+  // the prebuilt Modules instance.
+  EXPECT_TRUE(engine_->ClearUserPrediction());
+  EXPECT_TRUE(
+      engine_->GetModulesForTesting().GetUserHistoryStorage().IsEmpty());
+
+  ASSERT_OK(engine_->ReloadModules(std::move(prebuilt_modules)));
+  EXPECT_TRUE(
+      engine_->GetModulesForTesting().GetUserHistoryStorage().IsEmpty());
+
+  // Conversely, if new user history is added to the active engine after
+  // another Modules instance was prebuilt, ReloadModules must flush the old
+  // converter's storage and reload it into the new Modules instance.
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<Modules> empty_prebuilt_modules,
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>()));
+  empty_prebuilt_modules->GetUserHistoryStorage().Wait();
+  EXPECT_TRUE(empty_prebuilt_modules->GetUserHistoryStorage().IsEmpty());
+
+  EXPECT_TRUE(engine_->AddUserHistory("あたらしい", "新しい"));
+  ASSERT_OK(engine_->ReloadModules(std::move(empty_prebuilt_modules)));
+  EXPECT_FALSE(
+      engine_->GetModulesForTesting().GetUserHistoryStorage().IsEmpty());
+}
+#endif  // !_WIN32
 }  // namespace engine
 }  // namespace mozc

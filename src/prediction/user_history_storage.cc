@@ -139,12 +139,18 @@ bool UserHistoryStorage::Load() {
 
   std::string input;
   if (!storage.Load(&input)) {
+    auto lock = AcquireUniqueLock();
+    dic_->Clear();
+    needs_sync_ = false;
     LOG(ERROR) << "Can't load user history data.";
     return false;
   }
 
   user_history_predictor::UserHistory proto;
   if (!proto.ParseFromString(input)) {
+    auto lock = AcquireUniqueLock();
+    dic_->Clear();
+    needs_sync_ = false;
     LOG(ERROR) << "ParseFromString failed. message looks broken";
     return false;
   }

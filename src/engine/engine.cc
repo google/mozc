@@ -81,8 +81,15 @@ std::unique_ptr<Engine> Engine::CreateEngine() {
 Engine::Engine() : minimal_converter_(CreateMinimalConverter()) {}
 
 absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules) {
+  absl::Status status = Init(std::move(modules));
+  if (!status.ok()) {
+    return status;
+  }
+  // Reloads the new converter after `Init()` destroys the old converter (which
+  // flushes any pending user history to disk) so the new converter picks up the
+  // latest on-disk state.
   ReloadAndWait();
-  return Init(std::move(modules));
+  return absl::OkStatus();
 }
 
 absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules) {
