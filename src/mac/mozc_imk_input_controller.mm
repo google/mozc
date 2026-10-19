@@ -922,14 +922,16 @@ bool IsVerticalText(NSDictionary *attributes) {
     return NO;
   }
 
-  const bool converting = rendererCommand_.output().preedit().has_highlighted_position();
-  if (converting && [event type] == NSEventTypeKeyDown &&
+  const auto &preedit = rendererCommand_.output().preedit();
+  const bool composing = preedit.segment_size() != 0;
+  if (composing && [event type] == NSEventTypeKeyDown &&
       (keyEvent.special_key() == KeyEvent::LEFT || keyEvent.special_key() == KeyEvent::RIGHT ||
        keyEvent.special_key() == KeyEvent::UP || keyEvent.special_key() == KeyEvent::DOWN)) {
     NSRect ignoredRect = NSZeroRect;
-    const NSUInteger position = rendererCommand_.output().preedit().highlighted_position();
+    const NSUInteger position =
+        preedit.has_highlighted_position() ? preedit.highlighted_position() : preedit.cursor();
     const bool vertical = IsVerticalText(ClientTextAttributes(sender, position, &ignoredRect));
-    mozc::mac::RotateConversionArrows(vertical, converting, &keyEvent);
+    mozc::mac::RotateConversionArrows(vertical, composing, &keyEvent);
   }
 
   // Send the key event to the server actually

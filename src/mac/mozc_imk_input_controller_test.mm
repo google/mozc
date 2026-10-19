@@ -528,6 +528,7 @@ TEST_F(MozcImkInputControllerTest, ConversionArrowsUseCurrentClientOrientation) 
   controller_.mode = commands::HIRAGANA;
   commands::Output conversion;
   conversion.mutable_preedit()->set_highlighted_position(0);
+  conversion.mutable_preedit()->add_segment()->set_value("入力");
   [controller_ updateCandidates:&conversion];
   [NSObject cancelPreviousPerformRequestsWithTarget:controller_];
   const unsigned short arrows[] = {kVK_LeftArrow, kVK_RightArrow, kVK_UpArrow, kVK_DownArrow};
@@ -557,6 +558,22 @@ TEST_F(MozcImkInputControllerTest, ConversionArrowsUseCurrentClientOrientation) 
     SendKeyEvent(kVK_LeftArrow, controller_, mock_client_);
     EXPECT_EQ(actual.special_key(), commands::KeyEvent::LEFT);
   }
+}
+
+TEST_F(MozcImkInputControllerTest, FirstLeftArrowStartsVerticalCandidateSelection) {
+  controller_.mode = commands::HIRAGANA;
+  commands::Output composition;
+  composition.mutable_preedit()->add_segment()->set_value("にゅうりょく");
+  composition.mutable_preedit()->set_cursor(6);
+  ASSERT_FALSE(composition.preedit().has_highlighted_position());
+  [controller_ updateCandidates:&composition];
+  [NSObject cancelPreviousPerformRequestsWithTarget:controller_];
+  mock_client_.expectedAttributes = @{@"IMKTextOrientation" : @0};
+  commands::KeyEvent actual;
+  EXPECT_CALL(*mock_mozc_client_, SendKeyWithContext(_, _, NotNull()))
+      .WillOnce(DoAll(SaveArg<0>(&actual), Return(false)));
+  SendKeyEvent(kVK_LeftArrow, controller_, mock_client_);
+  EXPECT_EQ(actual.special_key(), commands::KeyEvent::DOWN);
 }
 
 TEST_F(MozcImkInputControllerTest, OpenLink) {
