@@ -103,8 +103,10 @@ bool UseVerticalArrowKeys(TipTextService* text_service, ITfContext* context,
                           const commands::Output& output, const VirtualKey& vk,
                           bool open, bool is_key_down,
                           const KeyboardStatus& keyboard_status) {
+  // Include unconverted preedit: the first physical Left must act as Down
+  // and start candidate selection, before a highlighted segment exists.
   if (!open || !is_key_down || !output.has_preedit() ||
-      !output.preedit().has_highlighted_position() ||
+      output.preedit().segment_size() == 0 ||
       keyboard_status.IsPressed(VK_SHIFT) ||
       keyboard_status.IsPressed(VK_CONTROL) ||
       keyboard_status.IsPressed(VK_MENU)) {
