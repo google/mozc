@@ -792,4 +792,36 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
   EXPECT_EQ(handler.GetDataVersion(), mock_version_);
 }
 
+TEST_F(SessionHandlerTest, AddUserHistory) {
+  auto engine = std::make_unique<MockEngine>();
+  EXPECT_CALL(*engine, AddUserHistory("とうきょう", "東京"))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*engine, Reload()).WillRepeatedly(Return(true));
+
+  SessionHandler handler(std::move(engine));
+
+  commands::Command add_command;
+  add_command.mutable_input()->set_type(commands::Input::ADD_USER_HISTORY);
+  add_command.mutable_input()->mutable_user_history_data()->set_key(
+      "とうきょう");
+  add_command.mutable_input()->mutable_user_history_data()->set_value("東京");
+  EXPECT_TRUE(handler.EvalCommand(&add_command));
+  EXPECT_EQ(add_command.output().error_code(),
+            commands::Output::SESSION_SUCCESS);
+
+  // When history_learning_level is NO_HISTORY, AddUserHistory is rejected.
+  commands::Command config_command;
+  config_command.mutable_input()->set_type(commands::Input::SET_CONFIG);
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  config.set_history_learning_level(config::Config::NO_HISTORY);
+  *config_command.mutable_input()->mutable_config() = config;
+  EXPECT_TRUE(handler.EvalCommand(&config_command));
+
+  add_command.mutable_output()->Clear();
+  EXPECT_TRUE(handler.EvalCommand(&add_command));
+  EXPECT_EQ(add_command.output().error_code(),
+            commands::Output::SESSION_FAILURE);
+}
+
 }  // namespace mozc

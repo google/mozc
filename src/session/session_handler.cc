@@ -256,6 +256,11 @@ bool SessionHandler::ClearUserPrediction(commands::Command* command) {
 }
 
 bool SessionHandler::AddUserHistory(commands::Command* command) {
+  if (config_->incognito_mode() ||
+      config_->history_learning_level() != config::Config::DEFAULT_HISTORY ||
+      !config_->use_history_suggest()) {
+    return false;
+  }
   const auto& user_history_data = command->input().user_history_data();
   return engine_->AddUserHistory(user_history_data.key(),
                                  user_history_data.value());
