@@ -179,3 +179,4 @@ regression	ねつでた	熱出た	Prediction Expected	2
 regression	かぎしめる	鍵閉める	Prediction Expected	2
 regression	こてでかーるする	コテでカールする	Conversion Expected
 regression	ちょいのり	ちょい乗り	Conversion Expected
+regression	どらいぶするー	ドライブスルー	Conversion Expected
