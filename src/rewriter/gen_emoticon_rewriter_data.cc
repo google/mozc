@@ -98,8 +98,6 @@ std::map<std::string, TokenList> ReadEmoticonTsv(absl::string_view path) {
     CHECK_GE(field_list.size(), 2) << "Format error: " << line;
     LOG_IF(WARNING, field_list.size() > 3) << "Ignore extra columns: " << line;
 
-    std::string replaced =
-        absl::StrReplaceAll(field_list[1], {{"　", " "}});  // Full-width space
     KeyList key_list = absl::StrSplit(field_list[1], ' ', absl::SkipEmpty());
 
     for (const auto& key : key_list) {
