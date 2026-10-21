@@ -107,6 +107,7 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        "//bazel/win32:advapi32",
         "//bazel/win32:shcore",
         "//bazel/win32:user32",
         "//protocol:renderer_cc_proto",

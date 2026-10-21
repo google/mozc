@@ -39,6 +39,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -424,7 +425,14 @@ void CandidateWindow::DoPaint(HDC dc) {
   DrawFrame(dc);
 }
 
-void CandidateWindow::OnSettingChange(UINT uFlags, LPCTSTR /*lpszSection*/) {
+void CandidateWindow::OnSettingChange(UINT uFlags, LPCTSTR lpszSection) {
+  // Windows broadcasts "ImmersiveColorSet" when the light/dark mode changes.
+  if (lpszSection != nullptr &&
+      std::wstring_view(lpszSection) == L"ImmersiveColorSet") {
+    UpdateDpiDependentResources();
+    metrics_changed_ = true;
+    return;
+  }
   // Since TextRenderer uses dialog font to render,
   // we monitor font-related parameters to know when the font style is changed.
   switch (uFlags) {

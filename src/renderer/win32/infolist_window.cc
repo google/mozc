@@ -37,6 +37,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 #include "base/coordinates.h"
 #include "base/vlog.h"
@@ -250,6 +251,12 @@ Size InfolistWindow::DoPaintRow(HDC dc, int row, int ypos) {
       ypos + title_rect.size.height + infostyle.row_rect_padding() +
           desc_rect.size.height + infostyle.row_rect_padding());
 
+  // Use the candidate background so that the dark theme is applied too.
+  const RendererStyle::RGBAColor& background =
+      style_->candidate_style().background_color();
+  const COLORREF default_background_color =
+      RGB(background.r(), background.g(), background.b());
+
   if (usages.has_focused_index() && (row == usages.focused_index())) {
     const CRect selected_rect(
         infostyle.window_border(), ypos,
@@ -272,7 +279,7 @@ Size InfolistWindow::DoPaintRow(HDC dc, int row, int ypos) {
                         title_style.background_color().g(),
                         title_style.background_color().b()));
     } else {
-      FillSolidRect(dc, &title_back_crect, RGB(255, 255, 255));
+      FillSolidRect(dc, &title_back_crect, default_background_color);
     }
     if (desc_style.has_background_color()) {
       FillSolidRect(dc, &desc_back_crect,
@@ -280,7 +287,7 @@ Size InfolistWindow::DoPaintRow(HDC dc, int row, int ypos) {
                         title_style.background_color().g(),
                         title_style.background_color().b()));
     } else {
-      FillSolidRect(dc, &desc_back_crect, RGB(255, 255, 255));
+      FillSolidRect(dc, &desc_back_crect, default_background_color);
     }
   }
 
@@ -291,7 +298,14 @@ Size InfolistWindow::DoPaintRow(HDC dc, int row, int ypos) {
   return Size(0, row_height);
 }
 
-void InfolistWindow::OnSettingChange(UINT uFlags, LPCTSTR /*lpszSection*/) {
+void InfolistWindow::OnSettingChange(UINT uFlags, LPCTSTR lpszSection) {
+  // Windows broadcasts "ImmersiveColorSet" when the light/dark mode changes.
+  if (lpszSection != nullptr &&
+      std::wstring_view(lpszSection) == L"ImmersiveColorSet") {
+    *style_ = GetScaledRendererStyle(dpi_);
+    metrics_changed_ = true;
+    return;
+  }
   // Since TextRenderer uses dialog font to render,
   // we monitor font-related parameters to know when the font style is changed.
   switch (uFlags) {

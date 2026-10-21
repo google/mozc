@@ -48,6 +48,22 @@ void ScaleTextStyle(RendererStyle::TextStyle* text_style, double scale_factor) {
   text_style->set_right_padding(text_style->right_padding() * scale_factor);
 }
 
+RendererStyleHandler::ColorTheme GetSystemColorTheme() {
+  // Windows exposes the "app mode" (light/dark) setting in this registry value.
+  // 0 means dark mode. The value may be missing on older Windows.
+  DWORD apps_use_light_theme = 1;
+  DWORD size = sizeof(apps_use_light_theme);
+  const LSTATUS result = ::RegGetValueW(
+      HKEY_CURRENT_USER,
+      L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+      L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &apps_use_light_theme,
+      &size);
+  if (result == ERROR_SUCCESS && apps_use_light_theme == 0) {
+    return RendererStyleHandler::ColorTheme::kDark;
+  }
+  return RendererStyleHandler::ColorTheme::kLight;
+}
+
 }  // namespace
 
 double GetDPIScalingFactor(uint32_t dpi) {
@@ -68,7 +84,8 @@ uint32_t GetDpiForPoint(int x, int y) {
 ::mozc::renderer::RendererStyle GetScaledRendererStyle(uint32_t dpi) {
   const double scale_factor = GetDPIScalingFactor(dpi);
 
-  RendererStyle style = RendererStyleHandler::GetRendererStyle();
+  RendererStyle style =
+      RendererStyleHandler::GetRendererStyle(GetSystemColorTheme());
 
   // style.window_border is non-scalable.
   style.set_scrollbar_width(style.scrollbar_width() * scale_factor);

@@ -66,6 +66,10 @@ bzl_library(
 )
 
 mozc_win32_lib(
+    name = "advapi32",
+)
+
+mozc_win32_lib(
     name = "aux_ulib",
 )
 
