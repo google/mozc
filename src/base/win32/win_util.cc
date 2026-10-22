@@ -48,6 +48,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "absl/base/call_once.h"
 #include "absl/base/no_destructor.h"
@@ -592,6 +593,18 @@ const std::optional<std::string>& WinUtil::GetLocalAppDataPath() {
         return std::nullopt;
       }());
   return *dir;
+}
+
+extern "C" NTSYSAPI NTSTATUS NTAPI RtlGetVersion(PRTL_OSVERSIONINFOW);
+
+std::pair<int, int> WinUtil::GetOSVersion() {
+  RTL_OSVERSIONINFOW rovi = {0};
+  rovi.dwOSVersionInfoSize = sizeof(rovi);
+  if (RtlGetVersion(&rovi) != 0) {
+    return std::make_pair(0, 0);
+  }
+  return std::make_pair(static_cast<int>(rovi.dwMajorVersion),
+                        static_cast<int>(rovi.dwBuildNumber));
 }
 
 bool WinUtil::ShellExecuteInSystemDir(const wchar_t* verb, const wchar_t* file,

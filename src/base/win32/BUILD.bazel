@@ -35,6 +35,7 @@ load(
     "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
+    "mozc_cc_win32_library",
 )
 
 package(default_visibility = ["//:__subpackages__"])
@@ -187,6 +188,30 @@ mozc_cc_library(
     ],
 )
 
+mozc_cc_win32_library(
+    name = "ntdll_dll",
+    srcs = [
+        "ntdll_dll.cc",
+    ],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    win_def_file = "ntdll_dll.def",
+    deps = [
+        "@com_google_absl//absl/log:check",
+    ],
+)
+
+mozc_cc_test(
+    name = "ntdll_dll_test",
+    srcs = ["ntdll_dll_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":ntdll_dll",
+        "//testing:gunit_main",
+    ],
+)
+
 mozc_cc_library(
     name = "win_util",
     srcs = ["win_util.cc"],
@@ -194,6 +219,7 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":ntdll_dll",
         ":wide_char",
         "//base:vlog",
         "//bazel/win32:aux_ulib",

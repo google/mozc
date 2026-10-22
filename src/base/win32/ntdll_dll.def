@@ -1,0 +1,4 @@
+LIBRARY ntdll.dll
+
+EXPORTS
+        RtlGetVersion

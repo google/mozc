@@ -35,6 +35,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "base/system_util.h"
 #include "testing/gmock.h"
@@ -209,6 +210,12 @@ TEST(WinUtilTest, GetProcessInitialNtPath) {
   EXPECT_TRUE(
       WinUtil::GetProcessInitialNtPath(::GetCurrentProcessId(), &nt_path));
   EXPECT_THAT(nt_path, LooksLikeNtPath());
+}
+
+TEST(WinUtilTest, GetOSVersion) {
+  const std::pair<int, int> version = WinUtil::GetOSVersion();
+  EXPECT_GT(version.first, 0);
+  EXPECT_GT(version.second, 0);
 }
 
 }  // namespace
