@@ -45,6 +45,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/number_util.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
@@ -298,9 +299,8 @@ void DictionaryDecoder::AggregateBigram(const ConversionRequest& request,
   adjuster.AdjustSize();
 
   const Util::ScriptType history_ctype = Util::GetScriptType(history_value);
-  const int history_value_size = Util::CharsLen(history_value);
-  const Util::ScriptType last_history_ctype = Util::GetScriptType(
-      Util::Utf8SubString(history_value, history_value_size - 1, 1));
+  const Util::ScriptType last_history_ctype =
+      Util::GetScriptType(strings::Utf8SubstringFromEnd(history_value, 1));
   for (Result& result : adjuster.GetAddedResults()) {
     CheckBigramResult(*find_history_token, history_ctype, last_history_ctype,
                       request, &result);

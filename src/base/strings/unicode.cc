@@ -122,5 +122,22 @@ absl::string_view Utf8Substring(absl::string_view sv, const size_t pos,
   return usv.Substring(usv.begin(), last);
 }
 
+absl::string_view Utf8SubstringFromEnd(absl::string_view sv, size_t count) {
+  if (count == 0) {
+    return sv.substr(sv.size());
+  }
+  const char* const begin = sv.data();
+  const char* ptr = begin + sv.size();
+  while (ptr > begin) {
+    --ptr;
+    if ((static_cast<uint8_t>(*ptr) & 0xc0) != 0x80) {
+      if (--count == 0) {
+        return absl::string_view(ptr, sv.data() + sv.size() - ptr);
+      }
+    }
+  }
+  return sv;
+}
+
 }  // namespace strings
 }  // namespace mozc

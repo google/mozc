@@ -150,6 +150,13 @@ inline std::string Char32ToUtf8(const char32_t cp) {
 absl::string_view Utf8Substring(absl::string_view sv, size_t pos);
 absl::string_view Utf8Substring(absl::string_view sv, size_t pos, size_t count);
 
+// Returns a substring of the last `count` Unicode characters in the UTF-8
+// string `sv`. If `count` exceeds the total number of Unicode characters in
+// `sv`, the entire `sv` is returned. If `count` is 0, an empty string_view at
+// the end of `sv` is returned.
+// Complexity: linear to the number of bytes in the trailing `count` characters.
+absl::string_view Utf8SubstringFromEnd(absl::string_view sv, size_t count);
+
 }  // namespace strings
 
 // Represents both a UTF-8 string and its decoded result.

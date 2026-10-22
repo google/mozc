@@ -191,6 +191,24 @@ TEST(UnicodeTest, Utf8Substring) {
   EXPECT_EQ(Utf8Substring("\xF0\x80\x80\xAF", 1, 2), "\x80\x80");
 }
 
+TEST(UnicodeTest, Utf8SubstringFromEnd) {
+  EXPECT_EQ(Utf8SubstringFromEnd("", 0), "");
+  EXPECT_EQ(Utf8SubstringFromEnd("", 1), "");
+  EXPECT_EQ(Utf8SubstringFromEnd("Mozc", 0), "");
+  EXPECT_EQ(Utf8SubstringFromEnd("Mozc", 1), "c");
+  EXPECT_EQ(Utf8SubstringFromEnd("Mozc", 2), "zc");
+  EXPECT_EQ(Utf8SubstringFromEnd("Mozc", 4), "Mozc");
+  EXPECT_EQ(Utf8SubstringFromEnd("Mozc", 10), "Mozc");
+  EXPECT_EQ(Utf8SubstringFromEnd("あいうえお", 0), "");
+  EXPECT_EQ(Utf8SubstringFromEnd("あいうえお", 1), "お");
+  EXPECT_EQ(Utf8SubstringFromEnd("あいうえお", 2), "えお");
+  EXPECT_EQ(Utf8SubstringFromEnd("あいうえお", 5), "あいうえお");
+  EXPECT_EQ(Utf8SubstringFromEnd("あいうえお", 10), "あいうえお");
+  EXPECT_EQ(Utf8SubstringFromEnd("五十音ABC", 4), "音ABC");
+  EXPECT_EQ(Utf8SubstringFromEnd("😀😁😂", 1), "😂");
+  EXPECT_EQ(Utf8SubstringFromEnd("😀😁😂", 2), "😁😂");
+}
+
 struct Utf8AsCharsTestParam {
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const Utf8AsCharsTestParam& param) {

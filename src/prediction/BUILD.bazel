@@ -737,6 +737,7 @@ mozc_cc_library(
         ":result_filter",
         "//base:number_util",
         "//base:util",
+        "//base/strings:unicode",
         "//converter:attribute",
         "//converter:node_list_builder",
         "//dictionary:dictionary_interface",
