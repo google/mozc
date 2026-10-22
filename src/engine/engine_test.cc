@@ -60,13 +60,17 @@ class SupplementalModelForTesting : public engine::SupplementalModelInterface {
 
   void ClearOldModels() override { ++clear_old_models_count_; }
 
+  void ClearCache() override { ++clear_cache_count_; }
+
   int load_async_count() const { return load_async_count_; }
   int clear_old_models_count() const { return clear_old_models_count_; }
+  int clear_cache_count() const { return clear_cache_count_; }
   const EngineReloadRequest& last_request() const { return last_request_; }
 
  private:
   int load_async_count_ = 0;
   int clear_old_models_count_ = 0;
+  int clear_cache_count_ = 0;
   EngineReloadRequest last_request_;
 };
 
@@ -228,6 +232,9 @@ TEST_F(EngineTest, SupplementalModelReloadTest) {
             mock_request_.file_path());
   engine_->ClearOldSupplementalModels();
   EXPECT_EQ(supplemental_model_ptr->clear_old_models_count(), 1);
+  EXPECT_EQ(supplemental_model_ptr->clear_cache_count(), 0);
+  EXPECT_TRUE(engine_->Sync());
+  EXPECT_EQ(supplemental_model_ptr->clear_cache_count(), 1);
 }
 
 #ifndef _WIN32

@@ -61,6 +61,10 @@ class SupplementalModelInterface {
   // Destroys old models that were replaced during reload.
   virtual void ClearOldModels() {}
 
+  // Clears internal caches in supplemental models.
+  // This method is thread-safe.
+  virtual void ClearCache() {}
+
   // Returns true if supplemental model is available.
   // Useful to run intensive operations before using supplemental model.
   //

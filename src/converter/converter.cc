@@ -951,7 +951,10 @@ bool Converter::Reload() {
   return rewriter().Reload() && predictor().Reload();
 }
 
-bool Converter::Sync() { return rewriter().Sync() && predictor().Sync(); }
+bool Converter::Sync() {
+  modules().GetSupplementalModel().ClearCache();
+  return rewriter().Sync() && predictor().Sync();
+}
 
 bool Converter::Wait() {
   modules().GetUserDictionary().WaitForReloader();
