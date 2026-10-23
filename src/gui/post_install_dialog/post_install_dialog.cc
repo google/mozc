@@ -30,7 +30,9 @@
 #include "gui/post_install_dialog/post_install_dialog.h"
 
 #include <QtGui>
+#include <cstdint>
 
+#include "base/port.h"
 #include "base/run_level.h"
 #include "gui/base/setup_util.h"
 #include "gui/base/util.h"
@@ -73,31 +75,29 @@ void PostInstallDialog::OnOk() {
 void PostInstallDialog::reject() { done(QDialog::Rejected); }
 
 void PostInstallDialog::ApplySettings() {
-#ifdef _WIN32
-  uint32_t flags = SetupUtil::NONE;
-  if (setAsDefaultCheckBox->isChecked()) {
-    flags |= SetupUtil::IME_DEFAULT;
+  if constexpr (port::IsWindows()) {
+    uint32_t flags = SetupUtil::NONE;
+    if (setAsDefaultCheckBox->isChecked()) {
+      flags |= SetupUtil::IME_DEFAULT;
+    }
+    if (IMEHotKeyDisabledCheckBox->isEnabled() &&
+        IMEHotKeyDisabledCheckBox->isChecked()) {
+      flags |= SetupUtil::DISABLE_HOTKEY;
+    }
+    if (migrateDefaultIMEUserDictionaryCheckBox->isChecked() &&
+        migrateDefaultIMEUserDictionaryCheckBox->isVisible()) {
+      flags |= SetupUtil::IMPORT_MSIME_DICTIONARY;
+    }
+    setuputil_->SetDefaultProperty(flags);
   }
-  if (IMEHotKeyDisabledCheckBox->isEnabled() &&
-      IMEHotKeyDisabledCheckBox->isChecked()) {
-    flags |= SetupUtil::DISABLE_HOTKEY;
-  }
-  if (migrateDefaultIMEUserDictionaryCheckBox->isChecked() &&
-      migrateDefaultIMEUserDictionaryCheckBox->isVisible()) {
-    flags |= SetupUtil::IMPORT_MSIME_DICTIONARY;
-  }
-  setuputil_->SetDefaultProperty(flags);
-#else   // _WIN32
-  // not supported on Mac and Linux
-#endif  // _WIN32
 }
 
 void PostInstallDialog::OnsetAsDefaultCheckBoxToggled(int state) {
-#ifdef _WIN32
-  // IMEHotKey is only activated when setAsDefaultCheckBox is checked.
-  IMEHotKeyDisabledCheckBox->setChecked(state);
-  IMEHotKeyDisabledCheckBox->setEnabled(static_cast<bool>(state));
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    // IMEHotKey is only activated when setAsDefaultCheckBox is checked.
+    IMEHotKeyDisabledCheckBox->setChecked(state);
+    IMEHotKeyDisabledCheckBox->setEnabled(static_cast<bool>(state));
+  }
 }
 
 }  // namespace gui

@@ -35,6 +35,7 @@
 #include <string>
 
 #include "base/file_util.h"
+#include "base/port.h"
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
@@ -106,13 +107,11 @@ AboutDialog::AboutDialog(QWidget *parent)
 
   // change font size for product name
   QFont font = label->font();
-#ifdef _WIN32
-  font.setPointSize(22);
-#endif  // _WIN32
-
-#ifdef __APPLE__
-  font.setPointSize(26);
-#endif  // __APPLE__
+  if constexpr (port::IsWindows()) {
+    font.setPointSize(22);
+  } else if constexpr (port::IsAppleBase()) {
+    font.setPointSize(26);
+  }
 
   label->setFont(font);
 

@@ -54,6 +54,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/file_stream.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "client/client.h"
@@ -281,11 +282,8 @@ CreateTextLineIterator(user_dictionary::EncodingType encoding_type,
   if (encoding_type == user_dictionary::NUM_ENCODINGS) {
     LOG(ERROR) << "GuessFileEncodingType() returns UNKNOWN encoding.";
     // set default encoding
-#ifdef _WIN32
-    encoding_type = user_dictionary::SHIFT_JIS;
-#else   // _WIN32
-    encoding_type = user_dictionary::UTF16;
-#endif  // _WIN32
+    encoding_type =
+        port::IsWindows() ? user_dictionary::SHIFT_JIS : user_dictionary::UTF16;
   }
 
   MOZC_VLOG(1) << "Setting Encoding to: " << static_cast<int>(encoding_type);
@@ -1553,11 +1551,11 @@ bool DictionaryTool::IsWritableToExport(const QString& file_name) {
     QFileInfo dir_info(file_info.dir().absolutePath());
     // This preprocessor conditional is a workaround for a problem
     // that export fails on Windows.
-#ifdef _WIN32
-    return dir_info.isExecutable();
-#else   // _WIN32
-    return dir_info.isExecutable() && dir_info.isWritable();
-#endif  // _WIN32
+    if constexpr (port::IsWindows()) {
+      return dir_info.isExecutable();
+    } else {
+      return dir_info.isExecutable() && dir_info.isWritable();
+    }
   }
 }
 

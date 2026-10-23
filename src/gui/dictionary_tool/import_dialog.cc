@@ -32,6 +32,7 @@
 #include <QFileDialog>
 #include <QtGui>
 
+#include "base/port.h"
 #include "client/user_dictionary/user_dictionary_importer.h"
 #include "gui/base/util.h"
 
@@ -44,28 +45,28 @@ ImportDialog::ImportDialog(QWidget* parent)
               Qt::WindowTitleHint | Qt::WindowSystemMenuHint) {
   setupUi(this);
 
-#ifdef __APPLE__
-  layout()->setContentsMargins(8, 12, 8, 8);
-#endif  // __APPLE__
+  if constexpr (port::IsAppleBase()) {
+    layout()->setContentsMargins(8, 12, 8, 8);
+  }
 
   // Initialize combo boxes for lists of IMEs and character encodings.
   ime_combobox_->addItem(tr("Auto detection"),
                          static_cast<int>(user_dictionary::IME_AUTO_DETECT));
   ime_combobox_->addItem(tr("Google"), static_cast<int>(user_dictionary::MOZC));
 
-#ifdef _WIN32
-  ime_combobox_->addItem(tr("Microsoft IME"),
-                         static_cast<int>(user_dictionary::MSIME));
-  ime_combobox_->addItem(tr("ATOK"), static_cast<int>(user_dictionary::ATOK));
-  ime_combobox_->addItem(tr("Kotoeri"),
-                         static_cast<int>(user_dictionary::KOTOERI));
-#else   // _WIN32
-  ime_combobox_->addItem(tr("Kotoeri"),
-                         static_cast<int>(user_dictionary::KOTOERI));
-  ime_combobox_->addItem(tr("ATOK"), static_cast<int>(user_dictionary::ATOK));
-  ime_combobox_->addItem(tr("Microsoft IME"),
-                         static_cast<int>(user_dictionary::MSIME));
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    ime_combobox_->addItem(tr("Microsoft IME"),
+                           static_cast<int>(user_dictionary::MSIME));
+    ime_combobox_->addItem(tr("ATOK"), static_cast<int>(user_dictionary::ATOK));
+    ime_combobox_->addItem(tr("Kotoeri"),
+                           static_cast<int>(user_dictionary::KOTOERI));
+  } else {
+    ime_combobox_->addItem(tr("Kotoeri"),
+                           static_cast<int>(user_dictionary::KOTOERI));
+    ime_combobox_->addItem(tr("ATOK"), static_cast<int>(user_dictionary::ATOK));
+    ime_combobox_->addItem(tr("Microsoft IME"),
+                           static_cast<int>(user_dictionary::MSIME));
+  }
 
   encoding_combobox_->addItem(
       tr("Auto detection"),
