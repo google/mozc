@@ -44,6 +44,7 @@ mozc_cc_library(
     deps = [
         "//base:config_file_stream",
         "//base:util",
+        "//client:character_renderability",
         "//config:config_handler",
         "//data_manager",
         "//engine",
@@ -70,6 +71,7 @@ mozc_cc_test(
         "//base:file_stream",
         "//base:system_util",
         "//base/file:temp_dir",
+        "//client:character_renderability",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",

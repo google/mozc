@@ -36,6 +36,7 @@
 #include "base/file/temp_dir.h"
 #include "base/file_stream.h"
 #include "base/system_util.h"
+#include "client/character_renderability.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -102,6 +103,18 @@ TEST(IosEngineTest, ImportUserDictionary) {
   EXPECT_EQ(empty_storage.dictionaries_size(), 0);
 
   EXPECT_TRUE(engine.DeleteSession(&command));
+}
+
+TEST(IosEngineTest, SetMobileRequest_RenderableCharacterGroups) {
+  const std::string data_file_path = testing::GetSourceFileOrDie(
+      {"data_manager", "testing", "mock_mozc.data"});
+  IosEngine engine(data_file_path);
+
+  commands::Command command;
+  EXPECT_TRUE(engine.SetMobileRequest("12KEYS", &command));
+  EXPECT_EQ(
+      command.input().request().additional_renderable_character_groups_size(),
+      client::CharacterRenderability::GetSupportedGroups().size());
 }
 
 }  // namespace

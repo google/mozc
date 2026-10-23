@@ -238,6 +238,9 @@ class Client : public ClientInterface {
   // copy the history inputs to |result|.
   void GetHistoryInputs(std::vector<commands::Input>* result) const;
 
+  // Initializes `request_` with platform default settings like emoji support.
+  void InitDefaultRequest();
+
   uint64_t id_;
   IPCClientFactoryInterface* client_factory_;
   std::unique_ptr<ServerLauncherInterface> server_launcher_;

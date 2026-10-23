@@ -44,6 +44,7 @@
 #include "base/number_util.h"
 #include "base/strings/assign.h"
 #include "base/version.h"
+#include "client/character_renderability.h"
 #include "client/client_interface.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
@@ -864,6 +865,18 @@ TEST_F(ClientTest, TranslateProtoBufToMozcToolArgTest) {
   output.set_launch_tool_mode(commands::Output::WORD_REGISTER_DIALOG);
   EXPECT_TRUE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
   EXPECT_EQ(mode, "word_register_dialog");
+}
+
+TEST_F(ClientTest, DefaultRequestHasRenderableCharacterGroupsTest) {
+  const int mock_id = 1;
+  EXPECT_TRUE(SetupConnection(mock_id));
+  EXPECT_TRUE(client_->EnsureSession());
+
+  commands::Input input;
+  GetGeneratedInput(&input);
+  EXPECT_TRUE(input.has_request());
+  EXPECT_EQ(input.request().additional_renderable_character_groups_size(),
+            CharacterRenderability::GetSupportedGroups().size());
 }
 
 TEST_F(ClientTest, InitRequestForSvsJapaneseTest) {

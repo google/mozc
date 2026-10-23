@@ -30,6 +30,7 @@
 #include <TargetConditionals.h>
 
 #include <string>
+#include <utility>
 
 #import "base/mac/mac_util.h"
 
@@ -43,6 +44,11 @@ TEST(MacUtil, GetSerialNumber) {
   // In this scenario, serial numbers should not be empty.
   EXPECT_FALSE(serial1.empty());
   EXPECT_EQ(serial1, serial2);
+}
+
+TEST(MacUtil, GetOSVersion) {
+  const std::pair<int, int> version = MacUtil::GetOSVersion();
+  EXPECT_GT(version.first, 0);
 }
 
 #if TARGET_OS_OSX

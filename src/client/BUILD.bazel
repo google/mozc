@@ -57,6 +57,27 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
+    name = "character_renderability",
+    srcs = ["character_renderability.cc"],
+    hdrs = ["character_renderability.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//visibility:public",
+    ],
+    deps = [
+        "//base:port",
+        "//protocol:commands_cc_proto",
+    ] + mozc_select(
+        apple = [
+            "//base/mac:mac_util",
+        ],
+        windows = [
+            "//base/win32:win_util",
+        ],
+    ),
+)
+
+mozc_cc_library(
     name = "client",
     srcs = [
         "client.cc",
@@ -78,6 +99,7 @@ mozc_cc_library(
         "//win32:__subpackages__",
     ],
     deps = [
+        ":character_renderability",
         ":client_interface",
         "//base:const",
         "//base:file_stream",
@@ -116,6 +138,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["client_test.cc"],
     deps = [
+        ":character_renderability",
         ":client",
         ":client_interface",
         "//base:number_util",
@@ -133,6 +156,18 @@ mozc_cc_test(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "character_renderability_test",
+    size = "small",
+    srcs = ["character_renderability_test.cc"],
+    deps = [
+        ":character_renderability",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
     ],
 )
 

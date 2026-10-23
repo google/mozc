@@ -34,6 +34,7 @@
 #include <TargetConditionals.h>
 
 #include <string>
+#include <utility>
 
 #include "absl/strings/string_view.h"
 
@@ -57,6 +58,9 @@ class MacUtil {
 
   // Returns OS version string like, "Version 10.x (Build xXxxx)".
   static std::string GetOSVersionString();
+
+  // Returns OS major and minor version numbers.
+  static std::pair<int, int> GetOSVersion();
 
   // Returns server directory using OS-specific API.
   static std::string GetServerDirectory();

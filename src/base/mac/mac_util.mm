@@ -33,6 +33,7 @@
 #include <TargetConditionals.h>
 
 #include <string>
+#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -164,6 +165,14 @@ std::string MacUtil::GetOSVersionString() {
         cStringUsingEncoding:NSUTF8StringEncoding]);
   }
   return version;
+}
+
+std::pair<int, int> MacUtil::GetOSVersion() {
+  @autoreleasepool {
+    NSOperatingSystemVersion os_version = [[NSProcessInfo processInfo] operatingSystemVersion];
+    return std::make_pair(static_cast<int>(os_version.majorVersion),
+                          static_cast<int>(os_version.minorVersion));
+  }
 }
 
 std::string MacUtil::GetServerDirectory() { return kServerDirectory; }

@@ -43,6 +43,7 @@
 #include "absl/synchronization/mutex.h"
 #include "base/config_file_stream.h"
 #include "base/util.h"
+#include "client/character_renderability.h"
 #include "config/config_handler.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
@@ -94,6 +95,10 @@ void InitMobileRequest(commands::Request::SpecialRomanjiTable table_type,
   request->set_language_aware_input(
       commands::Request::LANGUAGE_AWARE_SUGGESTION);
   request->set_space_on_alphanumeric(commands::Request::COMMIT);
+  for (const commands::Request::AdditionalRenderableCharacterGroup group :
+       client::CharacterRenderability::GetSupportedGroups()) {
+    request->add_additional_renderable_character_groups(group);
+  }
 }
 
 }  // namespace
