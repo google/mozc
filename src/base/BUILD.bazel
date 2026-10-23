@@ -698,6 +698,7 @@ mozc_cc_library(
     deps = [
         ":file_stream",
         ":file_util",
+        ":port",
         ":system_util",
         "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/container:flat_hash_map",

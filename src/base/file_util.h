@@ -116,10 +116,13 @@ class FileUtil {
   // Returns true if the directory exists.
   static absl::Status DirectoryExists(absl::string_view dirname);
 
-#ifdef _WIN32
   // Adds file attributes to the file to hide it.
   // FILE_ATTRIBUTE_NORMAL will be removed.
+  // On non-Windows platforms, this is a placeholder stub and always returns
+  // true.
   static bool HideFile(absl::string_view filename);
+
+#ifdef _WIN32
   static bool HideFileWithExtraAttributes(absl::string_view filename,
                                           DWORD extra_attributes);
 #endif  // _WIN32

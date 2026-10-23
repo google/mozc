@@ -188,6 +188,8 @@ TEST(FileUtilTest, HideFile) {
                 FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_ARCHIVE |
                 FILE_ATTRIBUTE_TEMPORARY);
 }
+#else   // _WIN32
+TEST(FileUtilTest, HideFile) { EXPECT_TRUE(FileUtil::HideFile("testfile")); }
 #endif  // _WIN32
 
 TEST(FileUtilTest, IsEqualFile) {

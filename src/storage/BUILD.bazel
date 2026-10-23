@@ -160,6 +160,7 @@ mozc_cc_library(
         "//base:file_stream",
         "//base:file_util",
         "//base:mmap",
+        "//base:port",
         "//base:random",
         "//base:vlog",
         "@com_google_absl//absl/log",

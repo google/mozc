@@ -371,6 +371,8 @@ bool FileUtil::HideFileWithExtraAttributes(absl::string_view filename,
   }
   return s.ok();
 }
+#else   // _WIN32
+bool FileUtil::HideFile(absl::string_view filename) { return true; }
 #endif  // _WIN32
 
 absl::Status FileUtil::CopyFile(absl::string_view from, absl::string_view to) {

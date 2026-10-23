@@ -43,12 +43,9 @@
 #include "base/file_util.h"
 #include "base/mmap.h"
 #include "base/password_manager.h"
+#include "base/port.h"
 #include "base/random.h"
 #include "base/vlog.h"
-
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
 
 namespace mozc {
 namespace storage {
@@ -155,12 +152,11 @@ bool EncryptedStringStorage::Save(absl::string_view input) const {
     return false;
   }
 
-#ifdef _WIN32
-  if (!FileUtil::HideFile(filename_)) {
-    LOG(ERROR) << "Cannot make hidden: " << filename_ << " "
-               << ::GetLastError();
+  if constexpr (port::IsWindows()) {
+    if (!FileUtil::HideFile(filename_)) {
+      LOG(ERROR) << "Cannot make hidden: " << filename_;
+    }
   }
-#endif  // _WIN32
 
   return true;
 }

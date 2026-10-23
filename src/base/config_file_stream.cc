@@ -38,10 +38,6 @@
 #include <string>
 #include <utility>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include "absl/base/no_destructor.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
@@ -52,6 +48,7 @@
 #include "absl/strings/strip.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/port.h"
 #include "base/system_util.h"
 
 #ifdef _WIN32
@@ -191,19 +188,18 @@ bool ConfigFileStream::AtomicUpdate(absl::string_view filename,
     return false;
   }
 
-#ifdef _WIN32
-  // If file name doesn't end with ".db", the file
-  // is more likely a temporary file.
-  if (!real_filename.ends_with(".db")) {
-    // TODO(yukawa): Provide a way to
-    // integrate ::SetFileAttributesTransacted with
-    // AtomicRename.
-    if (!FileUtil::HideFile(real_filename)) {
-      LOG(ERROR) << "Cannot make hidden: " << real_filename << " "
-                 << ::GetLastError();
+  if constexpr (port::IsWindows()) {
+    // If file name doesn't end with ".db", the file
+    // is more likely a temporary file.
+    if (!real_filename.ends_with(".db")) {
+      // TODO(yukawa): Provide a way to
+      // integrate ::SetFileAttributesTransacted with
+      // AtomicRename.
+      if (!FileUtil::HideFile(real_filename)) {
+        LOG(ERROR) << "Cannot make hidden: " << real_filename;
+      }
     }
   }
-#endif  // _WIN32
   return true;
 }
 
