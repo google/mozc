@@ -4400,5 +4400,66 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuffixSkipWithoutHistory) {
   EXPECT_FALSE(FindCandidateByValue(results, "以下"));
 }
 
+TEST_F(DictionaryPredictorTest,
+       MergeTypingCorrectionIntoSpellingCorrectionOnMobile) {
+  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
+  const DictionaryPredictor& predictor = data_and_predictor->predictor();
+  request_test_util::FillMobileRequest(request_.get());
+
+  MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
+  EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("びっくばん", "ビックバン", 7800, prediction::UNIGRAM,
+                        Token::NONE),
+          CreateResult5("びっくばん", "ビッグバン", 8200, prediction::UNIGRAM,
+                        Token::SPELLING_CORRECTION),
+          CreateResult5("びっぐばん", "ビッグバン", 7000,
+                        prediction::REALTIME | prediction::TYPING_CORRECTION,
+                        Token::NONE),
+          CreateResult5("びっぐばん", "ビッグバン", 7000,
+                        prediction::UNIGRAM | prediction::TYPING_CORRECTION,
+                        Token::NONE),
+          CreateResult5("びっぐまん", "ビッグマン", 9000,
+                        prediction::UNIGRAM | prediction::TYPING_CORRECTION,
+                        Token::NONE),
+      }));
+
+  const ConversionRequest convreq =
+      CreateConversionRequest(ConversionRequest::PREDICTION, "びっくばん");
+  const std::vector<Result> results = predictor.Predict(convreq);
+  ASSERT_EQ(results.size(), 3);
+  EXPECT_EQ(results[0].key, "びっくばん");
+  EXPECT_EQ(results[0].value, "ビッグバン");
+  EXPECT_EQ(results[0].cost, 7000);
+  EXPECT_TRUE(results[0].attributes & Attribute::SPELLING_CORRECTION);
+  EXPECT_FALSE(results[0].attributes & Attribute::TYPING_CORRECTION);
+  EXPECT_EQ(results[1].key, "びっくばん");
+  EXPECT_EQ(results[1].value, "ビックバン");
+  EXPECT_EQ(results[2].key, "びっぐまん");
+  EXPECT_EQ(results[2].value, "ビッグマン");
+
+  // When SPELLING_CORRECTION itself was also reached via key expansion / typing
+  // correction (e.g., input "あほかど" -> "あぼがど"), it should NOT absorb the
+  // direct typing-corrected candidate ("あぼかど").
+  EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5(
+              "あぼがど", "アボカド", 8500,
+              prediction::UNIGRAM | Attribute::KEY_EXPANDED_IN_DICTIONARY,
+              Token::SPELLING_CORRECTION),
+          CreateResult5(
+              "あぼかど", "アボカド", 7200,
+              prediction::UNIGRAM | Attribute::KEY_EXPANDED_IN_DICTIONARY,
+              Token::NONE),
+      }));
+  const ConversionRequest convreq2 =
+      CreateConversionRequest(ConversionRequest::PREDICTION, "あほかど");
+  const std::vector<Result> results2 = predictor.Predict(convreq2);
+  ASSERT_EQ(results2.size(), 1);
+  EXPECT_EQ(results2[0].key, "あぼかど");
+  EXPECT_EQ(results2[0].value, "アボカド");
+  EXPECT_FALSE(results2[0].attributes & Attribute::SPELLING_CORRECTION);
+}
+
 }  // namespace
 }  // namespace mozc::prediction
