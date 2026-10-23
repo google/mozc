@@ -206,6 +206,7 @@ mozc_cc_library(
     deps = [
         "//base:const",
         "//base:hash",
+        "//base:port",
         "//base:system_util",
         "//base:vlog",
         "@com_google_absl//absl/log",

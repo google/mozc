@@ -38,6 +38,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "base/init_mozc.h"
+#include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
@@ -109,20 +110,20 @@ int MozcServer::Run() {
       return -1;
     }
 
-#if defined(_WIN32)
-    // On Windows, ShutdownSessionCallback is not called intentionally in order
-    // to avoid crashes oritinates from it. See b/2696087.
-    g_session_server->Loop();
-#else   // defined(_WIN32)
-    // Create a new thread.
-    // We can't call Loop() as Loop() doesn't make a thread.
-    // We have to make a thread here so that ShutdownSessionCallback()
-    // is called properly.
-    g_session_server->LoopAndReturn();
+    if constexpr (port::IsWindows()) {
+      // On Windows, ShutdownSessionCallback is not called intentionally in
+      // order to avoid crashes oritinates from it. See b/2696087.
+      g_session_server->Loop();
+    } else {
+      // Create a new thread.
+      // We can't call Loop() as Loop() doesn't make a thread.
+      // We have to make a thread here so that ShutdownSessionCallback()
+      // is called properly.
+      g_session_server->LoopAndReturn();
 
-    // Wait until the session server thread finishes.
-    g_session_server->Wait();
-#endif  // defined(_WIN32)
+      // Wait until the session server thread finishes.
+      g_session_server->Wait();
+    }
   }
 
   return 0;

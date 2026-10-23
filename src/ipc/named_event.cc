@@ -42,6 +42,7 @@
 #include "absl/time/time.h"
 #include "base/const.h"
 #include "base/hash.h"
+#include "base/port.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 
@@ -84,22 +85,22 @@ std::string NamedEventUtil::GetEventPath(absl::string_view name) {
   name = name.empty() ? "nullptr" : name;
   std::string event_name = absl::StrCat(
       kEventPathPrefix, SystemUtil::GetUserSidAsString(), ".", name);
-#ifdef _WIN32
-  return event_name;
-#else   // _WIN32
-  // To maximize mozc portability, (especially on BSD including OSX),
-  // makes the length of path name shorter than 14byte.
-  // Please see the following man page for detail:
-  // http://www.freebsd.org/cgi/man.cgi?query=sem_open&manpath=FreeBSD+7.0-RELEASE
-  // "This implementation places strict requirements on the value of name: it
-  //  must begin with a slash (`/'), contain no other slash characters, and be
-  //  equal to or less than 13 characters in length not including the
-  //  terminating null character."
-  constexpr size_t kEventPathLength = 13;
-  std::string buf = absl::StrFormat("/%x", CityFingerprint(event_name));
-  buf.erase(std::min(kEventPathLength, buf.size()));
-  return buf;
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    return event_name;
+  } else {
+    // To maximize mozc portability, (especially on BSD including OSX),
+    // makes the length of path name shorter than 14byte.
+    // Please see the following man page for detail:
+    // http://www.freebsd.org/cgi/man.cgi?query=sem_open&manpath=FreeBSD+7.0-RELEASE
+    // "This implementation places strict requirements on the value of name: it
+    //  must begin with a slash (`/'), contain no other slash characters, and be
+    //  equal to or less than 13 characters in length not including the
+    //  terminating null character."
+    constexpr size_t kEventPathLength = 13;
+    std::string buf = absl::StrFormat("/%x", CityFingerprint(event_name));
+    buf.erase(std::min(kEventPathLength, buf.size()));
+    return buf;
+  }
 }
 
 #ifdef _WIN32

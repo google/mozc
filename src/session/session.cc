@@ -44,6 +44,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/key_event_util.h"
@@ -226,21 +227,20 @@ std::unique_ptr<ImeContext> Session::CreateContext(
   auto context = std::make_unique<ImeContext>(engine.CreateEngineConverter());
   context->set_create_time(Clock::GetAbslTime());
 
-#ifdef _WIN32
-  // On Windows session is started with direct mode.
-  // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
-  context->set_state(ImeContext::DIRECT);
-#else   // _WIN32
-  context->set_state(ImeContext::PRECOMPOSITION);
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    // On Windows session is started with direct mode.
+    // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
+    context->set_state(ImeContext::DIRECT);
+  } else {
+    context->set_state(ImeContext::PRECOMPOSITION);
+  }
 
   // TODO(team): Remove #if based behavior change for cascading window.
   // Tests for session layer (session_handler_scenario_test, etc) can be
   // unstable.
-#if (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE) || defined(__linux__) || \
-    defined(__wasm__)
-  context->mutable_converter()->set_use_cascading_window(false);
-#endif  // TARGET_OS_IPHONE || __linux__ || __wasm__
+  if constexpr (port::IsIos() || port::IsLinuxBase() || port::IsWasm()) {
+    context->mutable_converter()->set_use_cascading_window(false);
+  }
 
   return context;
 }
@@ -1009,15 +1009,14 @@ void Session::UpdatePreferences(commands::Command* command) {
         config.selection_shortcut());
   }
 
-#if (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE) || defined(__linux__) || \
-    defined(__wasm__)
-  context_->mutable_converter()->set_use_cascading_window(false);
-#else   // TARGET_OS_IPHONE || __linux__ || __wasm__
-  if (config.has_use_cascading_window()) {
-    context_->mutable_converter()->set_use_cascading_window(
-        config.use_cascading_window());
+  if constexpr (port::IsIos() || port::IsLinuxBase() || port::IsWasm()) {
+    context_->mutable_converter()->set_use_cascading_window(false);
+  } else {
+    if (config.has_use_cascading_window()) {
+      context_->mutable_converter()->set_use_cascading_window(
+          config.use_cascading_window());
+    }
   }
-#endif  // TARGET_OS_IPHONE || __linux__ || __wasm__
 }
 
 bool Session::IMEOn(commands::Command* command) {

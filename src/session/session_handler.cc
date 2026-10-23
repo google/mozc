@@ -45,6 +45,7 @@
 #include "absl/random/random.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
+#include "base/port.h"
 #include "base/stopwatch.h"
 #include "base/version.h"
 #include "base/vlog.h"
@@ -108,16 +109,17 @@ bool IsApplicationAlive(const session::Session* session) {
   // Here, we want to kill the session only when the target thread/process
   // are terminated with 100% probability. Otherwise, it's better to do
   // nothing to prevent any side effects.
-#ifdef _WIN32
-  if (info.has_thread_id()) {
-    return Process::IsThreadAlive(static_cast<size_t>(info.thread_id()), true);
+  if constexpr (port::IsWindows()) {
+    if (info.has_thread_id()) {
+      return Process::IsThreadAlive(static_cast<size_t>(info.thread_id()),
+                                    true);
+    }
+  } else {
+    if (info.has_process_id()) {
+      return Process::IsProcessAlive(static_cast<size_t>(info.process_id()),
+                                     true);
+    }
   }
-#else   // _WIN32
-  if (info.has_process_id()) {
-    return Process::IsProcessAlive(static_cast<size_t>(info.process_id()),
-                                   true);
-  }
-#endif  // _WIN32
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   return true;
 }

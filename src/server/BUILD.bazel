@@ -98,6 +98,7 @@ mozc_cc_library(
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # mozc_server.cc
     deps = [
         "//base:init_mozc",
+        "//base:port",
         "//base:process_mutex",
         "//base:run_level",
         "//base:system_util",
