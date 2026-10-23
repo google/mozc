@@ -114,6 +114,7 @@ mozc_cc_library(
     deps = [
         ":renderer_interface",
         "//base:const",
+        "//base:port",
         "//base:random",
         "//base:system_util",
         "//base:vlog",

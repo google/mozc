@@ -50,6 +50,7 @@
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
 #include "base/hash.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "prediction/user_history_predictor.pb.h"
@@ -70,11 +71,8 @@ constexpr absl::string_view kDelimiter = "\t";
 constexpr size_t kLruCacheSize = 10000;
 
 // File name for the history
-#ifdef _WIN32
-constexpr absl::string_view kFileName = "user://history.db";
-#else   // _WIN32
-constexpr absl::string_view kFileName = "user://.history.db";
-#endif  // _WIN32
+constexpr absl::string_view kFileName =
+    port::IsWindows() ? "user://history.db" : "user://.history.db";
 }  // namespace
 
 UserHistoryStorage::UserHistoryStorage(absl::string_view filename)

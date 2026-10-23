@@ -1292,6 +1292,7 @@ mozc_cc_test(
     deps = [
         ":emoji_rewriter",
         ":environmental_filter_rewriter",
+        "//base:port",
         "//base:text_normalizer",
         "//base:util",
         "//base/container:serialized_string_array",

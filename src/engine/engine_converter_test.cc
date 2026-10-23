@@ -48,6 +48,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -3045,18 +3046,19 @@ TEST_F(EngineConverterTest, Issue1981020) {
       .WillOnce(SaveArgPointee<1>(&segments));
   converter.CommitPreedit(*composer_, Context::default_instance());
 
-#ifdef _WIN32
-  // "～～～～" U+FF5E * 4
-  const std::string fullwidth_tilde_ff5e = "～～～～";
-  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
-            fullwidth_tilde_ff5e);
-  EXPECT_EQ(segments.conversion_segment(0).candidate(0).content_value,
-            fullwidth_tilde_ff5e);
-#else   // _WIN32
-  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, wave_dash_301c);
-  EXPECT_EQ(segments.conversion_segment(0).candidate(0).content_value,
-            wave_dash_301c);
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    // "～～～～" U+FF5E * 4
+    const std::string fullwidth_tilde_ff5e = "～～～～";
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
+              fullwidth_tilde_ff5e);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).content_value,
+              fullwidth_tilde_ff5e);
+  } else {
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
+              wave_dash_301c);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).content_value,
+              wave_dash_301c);
+  }
 }
 
 TEST_F(EngineConverterTest, Issue2029557) {

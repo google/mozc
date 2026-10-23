@@ -39,6 +39,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "base/port.h"
 #include "base/vlog.h"
 #include "engine/engine_factory.h"
 #include "ipc/ipc.h"
@@ -48,14 +49,10 @@
 
 namespace {
 
-#ifdef _WIN32
 // On Windows, multiple processes can create named pipe objects whose names are
 // the same. To reduce the potential risk of DOS, we limit the maximum number
 // of pipe instances to 1 here.
-constexpr int kNumConnections = 1;
-#else   // _WIN32
-constexpr int kNumConnections = 10;
-#endif  // _WIN32
+constexpr int kNumConnections = mozc::port::IsWindows() ? 1 : 10;
 
 constexpr absl::Duration kTimeOut = absl::Milliseconds(5000);
 constexpr char kSessionName[] = "session";

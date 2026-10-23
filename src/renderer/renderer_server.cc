@@ -37,6 +37,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "base/port.h"
 #include "base/random.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
@@ -61,11 +62,10 @@ namespace mozc {
 namespace renderer {
 
 namespace {
-#ifdef _WIN32
-constexpr int kNumConnections = 1;
-#else   // _WIN32
-constexpr int kNumConnections = 10;
-#endif  // _WIN32
+// On Windows, multiple processes can create named pipe objects whose names are
+// the same. To reduce the potential risk of DOS, we limit the maximum number
+// of pipe instances to 1 here.
+constexpr int kNumConnections = port::IsWindows() ? 1 : 10;
 constexpr absl::Duration kIPCServerTimeOut = absl::Milliseconds(1000);
 constexpr char kServiceName[] = "renderer";
 

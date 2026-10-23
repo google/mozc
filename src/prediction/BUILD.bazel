@@ -82,6 +82,7 @@ mozc_cc_library(
         "//base:config_file_stream",
         "//base:file_util",
         "//base:hash",
+        "//base:port",
         "//base:thread",
         "//base:util",
         "//config:character_form_manager",

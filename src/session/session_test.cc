@@ -43,6 +43,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "base/port.h"
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
 #include "base/vlog.h"
@@ -529,23 +530,23 @@ class SessionTest : public testing::TestWithTempUserProfile {
   // Though the method name asserts "ToPrecomposition",
   // this method doesn't change session's state.
   void InitSessionToPrecomposition(Session* session) {
-#ifdef _WIN32
-    // Session is created with direct mode on Windows
-    // Direct status
-    commands::Command command;
-    session->IMEOn(&command);
-#endif  // _WIN32
+    if constexpr (port::IsWindows()) {
+      // Session is created with direct mode on Windows
+      // Direct status
+      commands::Command command;
+      session->IMEOn(&command);
+    }
     InitSessionWithRequest(session, commands::Request::default_instance());
   }
 
   void InitSessionToPrecomposition(Session* session,
                                    const commands::Request& request) {
-#ifdef _WIN32
-    // Session is created with direct mode on Windows
-    // Direct status
-    commands::Command command;
-    session->IMEOn(&command);
-#endif  // _WIN32
+    if constexpr (port::IsWindows()) {
+      // Session is created with direct mode on Windows
+      // Direct status
+      commands::Command command;
+      session->IMEOn(&command);
+    }
     InitSessionWithRequest(session, request);
   }
 
@@ -2129,11 +2130,11 @@ TEST_F(SessionTest, UpdatePreferences) {
   const size_t cascading_cand_size =
       command.output().candidate_window().candidate_size();
 
-#if defined(__linux__) || defined(__wasm__)
-  EXPECT_EQ(cascading_cand_size, no_cascading_cand_size);
-#else   // __linux__ || __wasm__
-  EXPECT_GT(no_cascading_cand_size, cascading_cand_size);
-#endif  // __linux__ || __wasm__
+  if constexpr (port::IsLinuxBase() || port::IsWasm()) {
+    EXPECT_EQ(cascading_cand_size, no_cascading_cand_size);
+  } else {
+    EXPECT_GT(no_cascading_cand_size, cascading_cand_size);
+  }
 
   command.Clear();
   session.ConvertCancel(&command);
@@ -2310,23 +2311,23 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(output.all_candidate_words().focused_index(), 0);
     EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
-#if defined(__linux__) || defined(__wasm__)
-    // Cascading window is not supported on Linux, so the size of
-    // candidate words is different from other platform.
-    // TODO(komatsu): Modify the client for Linux to explicitly change
-    // the preference rather than relying on the exceptional default value.
-    // [ "あいうえお", "アイウエオ",
-    //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
-    //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
-    //   "ｱｲｳｴｵ" (t13n) ]
-    EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
-#else   // __linux__ || __wasm__
-    // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
-    //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
-    //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
-    //   "ｱｲｳｴｵ" (t13n) ]
-    EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
-#endif  // __linux__ || __wasm__
+    if constexpr (port::IsLinuxBase() || port::IsWasm()) {
+      // Cascading window is not supported on Linux, so the size of
+      // candidate words is different from other platform.
+      // TODO(komatsu): Modify the client for Linux to explicitly change
+      // the preference rather than relying on the exceptional default value.
+      // [ "あいうえお", "アイウエオ",
+      //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
+      //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
+      //   "ｱｲｳｴｵ" (t13n) ]
+      EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
+    } else {
+      // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
+      //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
+      //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
+      //   "ｱｲｳｴｵ" (t13n) ]
+      EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
+    }
   }
 
   command.Clear();
@@ -2338,23 +2339,23 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(output.all_candidate_words().focused_index(), 1);
     EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
-#if defined(__linux__) || defined(__wasm__)
-    // Cascading window is not supported on Linux, so the size of
-    // candidate words is different from other platform.
-    // TODO(komatsu): Modify the client for Linux to explicitly change
-    // the preference rather than relying on the exceptional default value.
-    // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
-    //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
-    //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
-    //   "ｱｲｳｴｵ" (t13n) ]
-    EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
-#else   // __linux__ || __wasm__
-    // [ "あいうえお", "アイウエオ",
-    //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
-    //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
-    //   "ｱｲｳｴｵ" (t13n) ]
-    EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
-#endif  // __linux__ || __wasm__
+    if constexpr (port::IsLinuxBase() || port::IsWasm()) {
+      // Cascading window is not supported on Linux, so the size of
+      // candidate words is different from other platform.
+      // TODO(komatsu): Modify the client for Linux to explicitly change
+      // the preference rather than relying on the exceptional default value.
+      // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
+      //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
+      //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
+      //   "ｱｲｳｴｵ" (t13n) ]
+      EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
+    } else {
+      // [ "あいうえお", "アイウエオ",
+      //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
+      //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
+      //   "ｱｲｳｴｵ" (t13n) ]
+      EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
+    }
   }
 }
 
@@ -7897,24 +7898,25 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   SendKey("k", &session, &command);
   ASSERT_TRUE(command.output().has_candidate_window());
   int id = 0;
-#if defined(_WIN32) || defined(__APPLE__)
-  // meta candidates are in cascading window
-  EXPECT_FALSE(
-      FindCandidateID(command.output().candidate_window(), "TOK", &id));
-#else   // _WIN32, __APPLE__
-  EXPECT_TRUE(FindCandidateID(command.output().candidate_window(), "TOK", &id));
-  EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
-      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
-  EXPECT_CALL(*converter, FinishConversion(_, _))
-      .WillOnce(SetArgPointee<1>(Segments()));
-  SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
-  command.mutable_input()->mutable_command()->set_id(id);
-  session.SendCommand(&command);
-  EXPECT_TRUE(command.output().consumed());
-  EXPECT_RESULT("TOK", command);
-  EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_EQ(command.output().preedit().cursor(), 0);
-#endif  // _WIN32, __APPLE__
+  if constexpr (port::IsWindows() || port::IsAppleBase()) {
+    // meta candidates are in cascading window
+    EXPECT_FALSE(
+        FindCandidateID(command.output().candidate_window(), "TOK", &id));
+  } else {
+    EXPECT_TRUE(
+        FindCandidateID(command.output().candidate_window(), "TOK", &id));
+    EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
+    EXPECT_CALL(*converter, FinishConversion(_, _))
+        .WillOnce(SetArgPointee<1>(Segments()));
+    SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
+    command.mutable_input()->mutable_command()->set_id(id);
+    session.SendCommand(&command);
+    EXPECT_TRUE(command.output().consumed());
+    EXPECT_RESULT("TOK", command);
+    EXPECT_FALSE(command.output().has_preedit());
+    EXPECT_EQ(command.output().preedit().cursor(), 0);
+  }
 }
 
 TEST_F(SessionTest, RequestConvertReverse) {
