@@ -30,6 +30,7 @@
 #include "rewriter/rewriter.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -317,6 +318,99 @@ TEST_F(RewriterTest, PreservesNoVariantsExpansionThroughPipeline) {
     const converter::Candidate& top = seg->candidate(0);
     EXPECT_EQ(top.value, "Google");
     EXPECT_TRUE(top.attributes & converter::Attribute::NO_VARIANTS_EXPANSION);
+  }
+}
+
+TEST_F(RewriterTest, PhoneticNumberAndCompoundCharacterFormIntegration) {
+  const absl::FlagSaver flag_saver;
+  absl::SetFlag(&FLAGS_use_history_rewriter, true);
+  rewriter_ = std::make_unique<Rewriter>(*modules_);
+
+  auto* manager = config::CharacterFormManager::GetCharacterFormManager();
+  manager->SetDefaultRule();
+  manager->ClearHistory();
+
+  const ConversionRequest request;
+  const uint16_t number_id = modules_->GetPosMatcher().GetNumberId();
+  auto add_candidate = [&](Segment* seg, const std::string& key,
+                           const std::string& value, bool is_number) {
+    converter::Candidate* c = seg->add_candidate();
+    c->key = key;
+    c->content_key = key;
+    c->value = value;
+    c->content_value = value;
+    if (is_number) {
+      c->lid = number_id;
+      c->rid = number_id;
+    }
+  };
+
+  // Step 1: Convert "さんびゃく" and commit "３００" (full-width Arabic).
+  {
+    Segments segments;
+    Segment* seg = segments.push_back_segment();
+    seg->set_key("さんびゃく");
+    add_candidate(seg, "さんびゃく", "300", /*is_number=*/true);
+
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+    int full_width_idx = -1;
+    for (size_t i = 0; i < seg->candidates_size(); ++i) {
+      if (seg->candidate(i).value == "３００") {
+        full_width_idx = i;
+        break;
+      }
+    }
+    ASSERT_NE(full_width_idx, -1);
+    seg->move_candidate(full_width_idx, 0);
+    seg->mutable_candidate(0)->attributes |= converter::Attribute::RERANKED;
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    rewriter_->Finish(request, segments);
+  }
+
+  // Step 2: Convert "ふつか" and commit "2日" (half-width '2' in a compound).
+  // This updates "0" to HALF_WIDTH and synchronizes LastNumberStyle.
+  {
+    Segments segments;
+    Segment* seg = segments.push_back_segment();
+    seg->set_key("ふつか");
+    add_candidate(seg, "ふつか", "二日", /*is_number=*/false);
+    add_candidate(seg, "ふつか", "2日", /*is_number=*/false);
+
+    seg->move_candidate(1, 0);
+    seg->mutable_candidate(0)->attributes |= converter::Attribute::RERANKED;
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    rewriter_->Finish(request, segments);
+  }
+
+  // Step 3: Convert "さんびゃく" again.
+  // USHR promotes the learned Arabic number candidate, and VariantsRewriter
+  // orders "300" (half-width) at index 0 and "３００" at index 1 according to
+  // the latest HALF_WIDTH preference learned from "2日".
+  {
+    Segments segments;
+    Segment* seg = segments.push_back_segment();
+    seg->set_key("さんびゃく");
+    add_candidate(seg, "さんびゃく", "300", /*is_number=*/true);
+
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+    ASSERT_GE(seg->candidates_size(), 3);
+    EXPECT_EQ(seg->candidate(0).value, "300");
+    EXPECT_EQ(seg->candidate(1).value, "３００");
+    EXPECT_EQ(seg->candidate(2).value, "三百");
+  }
+
+  // Step 4: Convert standalone digit key "456".
+  // Because "2日" synchronized LastNumberStyle to HALF_WIDTH, "456" is at
+  // index 0.
+  {
+    Segments segments;
+    Segment* seg = segments.push_back_segment();
+    seg->set_key("456");
+    add_candidate(seg, "456", "456", /*is_number=*/true);
+
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+    ASSERT_GE(seg->candidates_size(), 2);
+    EXPECT_EQ(seg->candidate(0).value, "456");
   }
 }
 

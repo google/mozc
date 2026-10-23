@@ -29,6 +29,7 @@
 
 #include "config/character_form_manager.h"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 
@@ -852,6 +853,108 @@ TEST_F(CharacterFormManagerTest, StorageSerializationTest) {
   ASSERT_NE(loaded_style, std::nullopt);
   EXPECT_EQ(loaded_style->form, number_style.form);
   EXPECT_EQ(loaded_style->style, number_style.style);
+}
+
+TEST_F(CharacterFormManagerTest, SyncNumberCharacterFormAndLastNumberStyle) {
+  CharacterFormManager* manager =
+      CharacterFormManager::GetCharacterFormManager();
+  manager->SetDefaultRule();
+  manager->ClearHistory();
+
+  auto expect_last_number_style =
+      [&](config::Config::CharacterForm expected_form,
+          NumberUtil::NumberString::Style expected_style) {
+        const auto style = manager->GetLastNumberStyle();
+        ASSERT_TRUE(style.has_value());
+        EXPECT_EQ(style->form, expected_form);
+        EXPECT_EQ(style->style, expected_style);
+      };
+
+  // Before LastNumberStyle is set, updating "0" does not initialize
+  // LastNumberStyle.
+  manager->SetCharacterForm("0", config::Config::HALF_WIDTH);
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
+  EXPECT_EQ(manager->GetLastNumberStyle(), std::nullopt);
+
+  // Setting LastNumberStyle also updates the conversion character form of "0".
+  manager->SetLastNumberStyle(
+      {config::Config::FULL_WIDTH,
+       NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH});
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::FULL_WIDTH);
+
+  // Updating "0" via GuessAndSetCharacterForm (e.g. committing "2日") updates
+  // LastNumberStyle's form and adapts width-dependent style.
+  manager->GuessAndSetCharacterForm("2日");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
+  expect_last_number_style(
+      config::Config::HALF_WIDTH,
+      NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH);
+
+  // Updating "0" back to FULL_WIDTH (e.g. committing "３時") adapts
+  // NUMBER_SEPARATED_ARABIC_HALFWIDTH -> NUMBER_SEPARATED_ARABIC_FULLWIDTH.
+  manager->GuessAndSetCharacterForm("３時");
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::FULL_WIDTH);
+  expect_last_number_style(
+      config::Config::FULL_WIDTH,
+      NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH);
+
+  // Same for NUMBER_ARABIC_AND_KANJI_FULLWIDTH <-> HALFWIDTH.
+  manager->SetLastNumberStyle(
+      {config::Config::FULL_WIDTH,
+       NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH});
+  manager->SetCharacterForm("0", config::Config::HALF_WIDTH);
+  expect_last_number_style(
+      config::Config::HALF_WIDTH,
+      NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH);
+  manager->SetCharacterForm("0", config::Config::FULL_WIDTH);
+  expect_last_number_style(
+      config::Config::FULL_WIDTH,
+      NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH);
+
+  // Width-independent styles (e.g. NUMBER_CIRCLED) keep their style when "0"
+  // width is updated.
+  manager->SetLastNumberStyle(
+      {config::Config::HALF_WIDTH, NumberUtil::NumberString::NUMBER_CIRCLED});
+  manager->GuessAndSetCharacterForm("３時");
+  expect_last_number_style(config::Config::FULL_WIDTH,
+                           NumberUtil::NumberString::NUMBER_CIRCLED);
+
+  // Re-setting the same character form or NumberFormStyle is a no-op and does
+  // not mark storage dirty.
+  user_history_predictor::UserHistory saved_history;
+  manager->SaveStorage(&saved_history);
+  EXPECT_FALSE(manager->IsStorageDirty());
+  manager->SetCharacterForm("0", config::Config::FULL_WIDTH);
+  EXPECT_FALSE(manager->IsStorageDirty());
+  manager->SetLastNumberStyle(
+      {config::Config::FULL_WIDTH, NumberUtil::NumberString::NUMBER_CIRCLED});
+  EXPECT_FALSE(manager->IsStorageDirty());
+  manager->SetLastNumberStyle(
+      {config::Config::FULL_WIDTH, NumberUtil::NumberString::DEFAULT_STYLE});
+  EXPECT_TRUE(manager->IsStorageDirty());
+  manager->SaveStorage(&saved_history);
+  EXPECT_FALSE(manager->IsStorageDirty());
+  manager->SetLastNumberStyle(
+      {config::Config::HALF_WIDTH, NumberUtil::NumberString::DEFAULT_STYLE});
+  EXPECT_TRUE(manager->IsStorageDirty());
+
+  // Legacy UserHistory compatibility: if a loaded history has last_number_form
+  // set without 0x0030 in character_form_map, GetConversionCharacterForm("0")
+  // falls back to last_number_form.
+  manager->ClearHistory();
+  user_history_predictor::UserHistory legacy_history;
+  legacy_history.mutable_character_form_history()->set_last_number_form(
+      static_cast<uint32_t>(config::Config::HALF_WIDTH));
+  legacy_history.mutable_character_form_history()->set_last_number_style(
+      static_cast<uint32_t>(NumberUtil::NumberString::DEFAULT_STYLE));
+  manager->LoadStorage(legacy_history);
+  EXPECT_FALSE(manager->IsStorageDirty());
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
 }
 
 }  // namespace

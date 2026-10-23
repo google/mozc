@@ -893,6 +893,11 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
 // converter::Attribute::USER_DICTIONARY bit in the base candidate.
 TEST_F(NumberRewriterTest, PreserveUserDictionaryAttribute) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  // Even when LastNumberStyle is set to another style/width, a user dictionary
+  // entry ("8823") must not be overwritten by RerankCandidates.
+  config::CharacterFormManager::GetCharacterFormManager()->SetLastNumberStyle(
+      {config::Config::FULL_WIDTH,
+       NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH});
   {
     Segments segments;
     {
@@ -914,6 +919,7 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttribute) {
     bool base_candidate_found = false;
     {
       const Segment& segment = segments.segment(0);
+      EXPECT_EQ(segment.candidate(0).value, "8823");
       for (size_t i = 0; i < segment.candidates_size(); ++i) {
         const converter::Candidate& candidate = segment.candidate(i);
         if (candidate.value == "8823" &&
@@ -1810,6 +1816,85 @@ TEST_F(NumberRewriterTest, RerankShortNumbersAfterSeparatedOrArabicKanjiStyle) {
     EXPECT_TRUE(rewriter->Rewrite(default_request_, &segments));
     EXPECT_FALSE(segments.conversion_segment(0).candidate(0).attributes &
                  converter::Attribute::NO_VARIANTS_EXPANSION);
+  }
+}
+
+TEST_F(NumberRewriterTest, DoNotRerankKanjiFirstCandidates) {
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  auto* manager = config::CharacterFormManager::GetCharacterFormManager();
+  manager->SetDefaultRule();
+  manager->ClearHistory();
+  manager->SetLastNumberStyle(
+      {config::Config::HALF_WIDTH, NumberUtil::NumberString::DEFAULT_STYLE});
+
+  Segments segments =
+      PrepareNumberSegments("さんびゃく", "三百", 0, pos_matcher_);
+  Segment* seg = segments.mutable_conversion_segment(0);
+  converter::Candidate* c1 = seg->add_candidate();
+  c1->key = "さんびゃく";
+  c1->content_key = "さんびゃく";
+  c1->value = "300";
+  c1->content_value = "300";
+  c1->lid = pos_matcher_.GetNumberId();
+  c1->rid = pos_matcher_.GetNumberId();
+
+  EXPECT_TRUE(rewriter->Rewrite(default_request_, &segments));
+  ASSERT_GE(seg->candidates_size(), 3);
+  EXPECT_EQ(seg->candidate(0).value, "三百");
+  for (size_t i = 0; i < seg->candidates_size(); ++i) {
+    if (seg->candidate(i).style == NumberUtil::NumberString::DEFAULT_STYLE) {
+      EXPECT_FALSE(seg->candidate(i).attributes &
+                   converter::Attribute::NO_VARIANTS_EXPANSION)
+          << "Candidate " << i << " (" << seg->candidate(i).value
+          << ") should not have NO_VARIANTS_EXPANSION";
+    }
+  }
+}
+
+TEST_F(NumberRewriterTest, PreserveNumberCharacterFormOnNonArabicStyleCommit) {
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  auto* manager = config::CharacterFormManager::GetCharacterFormManager();
+  manager->SetDefaultRule();
+  manager->ClearHistory();
+
+  auto commit_styled_candidate = [&](absl::string_view key,
+                                     absl::string_view value,
+                                     NumberUtil::NumberString::Style style) {
+    Segments segments = PrepareNumberSegments(key, value, 0, pos_matcher_);
+    Segment* seg = segments.mutable_conversion_segment(0);
+    seg->set_segment_type(Segment::FIXED_VALUE);
+    seg->mutable_candidate(0)->style = style;
+    rewriter->Finish(default_request_, segments);
+  };
+
+  manager->SetLastNumberStyle(
+      {config::Config::HALF_WIDTH, NumberUtil::NumberString::DEFAULT_STYLE});
+  EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+            config::Config::HALF_WIDTH);
+
+  // Committing "①" (NUMBER_CIRCLED) records style = NUMBER_CIRCLED while
+  // preserving the HALF_WIDTH preference for Arabic digits ("0").
+  commit_styled_candidate("1", "①", NumberUtil::NumberString::NUMBER_CIRCLED);
+  {
+    const auto stored = manager->GetLastNumberStyle();
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->form, config::Config::HALF_WIDTH);
+    EXPECT_EQ(stored->style, NumberUtil::NumberString::NUMBER_CIRCLED);
+    EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+              config::Config::HALF_WIDTH);
+  }
+
+  // Committing "0xf" (NUMBER_HEX) when "0" is FULL_WIDTH preserves FULL_WIDTH.
+  manager->SetLastNumberStyle(
+      {config::Config::FULL_WIDTH, NumberUtil::NumberString::DEFAULT_STYLE});
+  commit_styled_candidate("15", "0xf", NumberUtil::NumberString::NUMBER_HEX);
+  {
+    const auto stored = manager->GetLastNumberStyle();
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->form, config::Config::FULL_WIDTH);
+    EXPECT_EQ(stored->style, NumberUtil::NumberString::NUMBER_HEX);
+    EXPECT_EQ(manager->GetConversionCharacterForm("0"),
+              config::Config::FULL_WIDTH);
   }
 }
 

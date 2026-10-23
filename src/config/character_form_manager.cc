@@ -64,6 +64,34 @@ namespace {
 using CharacterFormHistory =
     ::mozc::user_history_predictor::UserHistory::CharacterFormHistory;
 
+// Canonical UCS-2 character used as the storage key for the NUMBER group ('0').
+constexpr char16_t kNormalizedNumberChar = u'0';  // 0x0030
+
+// Maps width-dependent number styles (e.g., NUMBER_SEPARATED_ARABIC_* and
+// NUMBER_ARABIC_AND_KANJI_*, which encode half-width/full-width directly in the
+// Style enum) to match `form` when `form` is HALF_WIDTH or FULL_WIDTH.
+// Width-independent styles (such as DEFAULT_STYLE, NUMBER_KANJI, or
+// NUMBER_CIRCLED) are returned unchanged.
+NumberUtil::NumberString::Style AdaptNumberStyleToForm(
+    NumberUtil::NumberString::Style style, Config::CharacterForm form) {
+  DCHECK(form == Config::HALF_WIDTH || form == Config::FULL_WIDTH);
+  const bool is_half_width = (form == Config::HALF_WIDTH);
+  switch (style) {
+    case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
+    case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
+      return is_half_width
+                 ? NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH
+                 : NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
+    case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH:
+    case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH:
+      return is_half_width
+                 ? NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH
+                 : NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH;
+    default:
+      return style;
+  }
+}
+
 // Thread-safe in-memory storage for character forms and number style,
 // persisted via UserHistoryStorage.
 class CharacterFormStorage {
@@ -77,6 +105,10 @@ class CharacterFormStorage {
     const auto& map = proto_.character_form_map();
     const auto it = map.find(ucs2);
     if (it == map.end() || !Config::CharacterForm_IsValid(it->second)) {
+      if (ucs2 == kNormalizedNumberChar && proto_.has_last_number_form() &&
+          Config::CharacterForm_IsValid(proto_.last_number_form())) {
+        return static_cast<Config::CharacterForm>(proto_.last_number_form());
+      }
       return Config::FULL_WIDTH;  // Return default setting
     }
     return static_cast<Config::CharacterForm>(it->second);
@@ -86,15 +118,21 @@ class CharacterFormStorage {
                         Config::CharacterForm form) {
     absl::MutexLock lock(mutex_);
     auto* map = proto_.mutable_character_form_map();
+    const uint32_t form_value = static_cast<uint32_t>(form);
     for (const char16_t ucs2 : ucs2_list) {
-      auto [it, inserted] = map->try_emplace(ucs2, static_cast<uint32_t>(form));
-      if (!inserted) {
-        if (it->second == static_cast<uint32_t>(form)) {
-          continue;
-        }
-        it->second = static_cast<uint32_t>(form);
+      auto [it, inserted] = map->try_emplace(ucs2, form_value);
+      if (inserted || it->second != form_value) {
+        it->second = form_value;
+        dirty_ = true;
       }
-      dirty_ = true;
+      if (ucs2 == kNormalizedNumberChar && proto_.has_last_number_form() &&
+          proto_.has_last_number_style()) {
+        SetNumberStyleLocked(
+            {form, AdaptNumberStyleToForm(
+                       static_cast<NumberUtil::NumberString::Style>(
+                           proto_.last_number_style()),
+                       form)});
+      }
     }
   }
 
@@ -113,14 +151,7 @@ class CharacterFormStorage {
 
   void SetNumberStyle(const CharacterFormManager::NumberFormStyle& form_style) {
     absl::MutexLock lock(mutex_);
-    if (proto_.has_last_number_form() && proto_.has_last_number_style() &&
-        proto_.last_number_form() == static_cast<uint32_t>(form_style.form) &&
-        proto_.last_number_style() == static_cast<uint32_t>(form_style.style)) {
-      return;
-    }
-    proto_.set_last_number_form(static_cast<uint32_t>(form_style.form));
-    proto_.set_last_number_style(static_cast<uint32_t>(form_style.style));
-    dirty_ = true;
+    SetNumberStyleLocked(form_style);
   }
 
   void Clear() {
@@ -152,6 +183,21 @@ class CharacterFormStorage {
   }
 
  private:
+  void SetNumberStyleLocked(
+      const CharacterFormManager::NumberFormStyle& form_style)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+    const uint32_t form = static_cast<uint32_t>(form_style.form);
+    const uint32_t style = static_cast<uint32_t>(form_style.style);
+    if (proto_.has_last_number_form() && proto_.has_last_number_style() &&
+        proto_.last_number_form() == form &&
+        proto_.last_number_style() == style) {
+      return;
+    }
+    proto_.set_last_number_form(form);
+    proto_.set_last_number_style(style);
+    dirty_ = true;
+  }
+
   mutable absl::Mutex mutex_;
   CharacterFormHistory proto_ ABSL_GUARDED_BY(mutex_);
   bool dirty_ ABSL_GUARDED_BY(mutex_) = false;
@@ -299,7 +345,7 @@ char16_t GetNormalizedCharacter(const absl::string_view str) {
       ucs2 = 0x30A2;  // return "ア"
       break;
     case Util::NUMBER:
-      ucs2 = 0x0030;  // return "0"
+      ucs2 = kNormalizedNumberChar;  // return "0"
       break;
     case Util::ALPHABET:
       ucs2 = 0x0041;  // return "A"
@@ -840,6 +886,10 @@ void CharacterFormManager::GuessAndSetCharacterForm(
 
 void CharacterFormManager::SetLastNumberStyle(
     const NumberFormStyle& form_style) {
+  if (form_style.form == Config::HALF_WIDTH ||
+      form_style.form == Config::FULL_WIDTH) {
+    data_->GetConversionManager()->SetCharacterForm("0", form_style.form);
+  }
   data_->GetStorage()->SetNumberStyle(form_style);
 }
 
