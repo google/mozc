@@ -383,9 +383,14 @@ void PropertyHandler::UpdateCompositionModeIcon(
 }
 
 void PropertyHandler::SetCompositionMode(
-    commands::CompositionMode composition_mode) {
+    IbusEngineWrapper* engine, commands::CompositionMode composition_mode) {
   commands::SessionCommand command;
   commands::Output output;
+
+  commands::Context context;
+  if (engine->HasPrivateInputHint()) {
+    context.set_no_personalized_learning(true);
+  }
 
   // In the case of Mozc, there are two state values of IME, IMEOn/IMEOff and
   // composition_mode. However in IBus we can only control composition mode, not
@@ -396,11 +401,11 @@ void PropertyHandler::SetCompositionMode(
   if (is_activated_ && composition_mode == kImeOffCompositionMode) {
     command.set_type(commands::SessionCommand::TURN_OFF_IME);
     command.set_composition_mode(original_composition_mode_);
-    client_->SendCommand(command, &output);
+    client_->SendCommandWithContext(command, context, &output);
   } else {
     command.set_type(commands::SessionCommand::SWITCH_COMPOSITION_MODE);
     command.set_composition_mode(composition_mode);
-    client_->SendCommand(command, &output);
+    client_->SendCommandWithContext(command, context, &output);
   }
   DCHECK(output.has_status());
   original_composition_mode_ = output.status().mode();
@@ -455,7 +460,7 @@ void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper* engine,
       if (!entry) {
         continue;
       }
-      SetCompositionMode(entry->composition_mode);
+      SetCompositionMode(engine, entry->composition_mode);
       UpdateCompositionModeIcon(engine, entry->composition_mode);
       break;
     }
