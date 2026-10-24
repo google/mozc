@@ -1,6 +1,6 @@
 --- cc/private/toolchain/windows_cc_toolchain_config.bzl
 +++ cc/private/toolchain/windows_cc_toolchain_config.bzl
-@@ -100,7 +100,7 @@ all_link_actions = [
+@@ -103,7 +103,7 @@ lto_index_actions = [
  ]
 
  def _use_msvc_toolchain(ctx):
