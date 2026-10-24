@@ -49,6 +49,10 @@ namespace {
 const int kHideWindowDelay = 500;  // msec
 const int kWindowMargin = 10;      // pixel
 
+bool IsVerticalWriting(const RendererCommand &command) {
+  return command.application_info().composition_target().vertical_writing();
+}
+
 // In Cocoa's coordinate system the origin point is left-bottom and the Y-axis
 // points up. But in Mozc's coordinate system the Y-axis points down. So we use
 // OriginPointInCocoaCoord and RectInMozcCoord to convert the coordinate system.
@@ -147,12 +151,14 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
     return true;
   }
 
-  candidate_window_->SetCandidateWindow(command_.output().candidate_window());
+  const bool vertical = IsVerticalWriting(command_);
+  candidate_window_->SetCandidateWindow(command_.output().candidate_window(), vertical);
 
   bool cascading_visible = false;
   if (command_.output().has_candidate_window() &&
       command_.output().candidate_window().has_sub_candidate_window()) {
-    cascading_window_->SetCandidateWindow(command_.output().candidate_window().sub_candidate_window());
+    cascading_window_->SetCandidateWindow(
+        command_.output().candidate_window().sub_candidate_window(), vertical);
     cascading_visible = true;
   }
 
@@ -211,10 +217,9 @@ void CandidateController::AlignWindows() {
                                       command_.preedit_rectangle().top() - GetBaseScreenHeight()),
                           preedit_size);
 
-  // This is a hacky way to check vertical writing.
-  // TODO(komatsu): We should use the return value of attributesForCharacterIndex
-  // in MozcImkInputController as a proper way.
-  const bool is_vertical = (preedit_size.height < preedit_size.width);
+  // Use the client's explicit orientation. A wide caret rectangle alone is not
+  // evidence of vertical writing (for example, with large fonts or selections).
+  const bool is_vertical = IsVerticalWriting(command_);
 
   // Expand the rect size to make a margin to the candidate window.
   if (is_vertical) {
@@ -233,10 +238,15 @@ void CandidateController::AlignWindows() {
   // the top-left position of the window because we want to show the
   // window just below of the preedit.
   const TableLayout *candidate_layout = candidate_window_->GetTableLayout();
-  const mozc::Point candidate_zero_point(
-      candidate_layout->GetColumnRect(kColumnCandidate).Left(), 0);
+  const int candidate_start = candidate_layout->GetColumnRect(kColumnCandidate).Left();
+  const mozc::Point candidate_zero_point =
+      is_vertical ? mozc::Point(0, 0) : mozc::Point(candidate_start, 0);
 
-  const mozc::Point target_point(preedit_rect.Left(), preedit_rect.Bottom());
+  const mozc::Point target_point =
+      // The vertical placement helper adds the preedit width and does not
+      // apply zero_point_offset. Align the candidate text's start here.
+      is_vertical ? mozc::Point(preedit_rect.Left(), preedit_rect.Top() - candidate_start)
+                  : mozc::Point(preedit_rect.Left(), preedit_rect.Bottom());
   const mozc::Rect candidate_rect = WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
       target_point, preedit_rect, candidate_window_->GetWindowSize(), candidate_zero_point,
       display_rect, is_vertical);
@@ -259,18 +269,27 @@ void CandidateController::AlignWindows() {
   // 1. starting position is at the focused row
   const commands::CandidateWindow &candidate_window = command_.output().candidate_window();
   const int focused_row = candidate_window.focused_index() - candidate_window.candidate(0).index();
-  mozc::Rect focused_rect = candidate_layout->GetRowRect(focused_row);
+  if (!candidate_window.has_focused_index() || focused_row < 0 ||
+      focused_row >= candidate_window.candidate_size()) {
+    return;
+  }
+  mozc::Rect focused_rect =
+      candidate_window_->GetClientRect(candidate_layout->GetRowRect(focused_row));
   // move the focused_rect to the monitor's coordinates
   focused_rect.origin.x += candidate_rect.origin.x;
   focused_rect.origin.y += candidate_rect.origin.y;
   // focused_rect doesn't have the width for scroll bar
-  focused_rect.size.width += candidate_layout->GetVScrollBarRect().Width();
+  if (is_vertical) {
+    focused_rect.size.height += candidate_layout->GetVScrollBarRect().Width();
+  } else {
+    focused_rect.size.width += candidate_layout->GetVScrollBarRect().Width();
+  }
 
   const mozc::Rect cascading_rect = WindowUtil::GetWindowRectForCascadingWindow(
       focused_rect, cascading_window_->GetWindowSize(), mozc::Point(0, 0), display_rect);
   cascading_window_->MoveWindow(OriginPointInCocoaCoord(cascading_rect));
 }
 
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc

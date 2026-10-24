@@ -29,6 +29,7 @@
 
 #import "mac/mozc_imk_input_controller.h"
 
+#import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
 
@@ -97,6 +98,7 @@
 @property(readwrite, assign) NSRect expectedCursor;
 @property(readwrite) NSDictionary *expectedAttributes;
 @property(readwrite, assign) NSRange expectedRange;
+@property(readwrite, assign) BOOL throwsAttributes;
 @property(readonly) std::string selectedMode;
 @property(readonly) NSString *insertedText;
 @property(readonly) NSString *overriddenLayout;
@@ -131,6 +133,9 @@
 
 - (NSDictionary *)attributesForCharacterIndex:(int)index lineHeightRectangle:(NSRect *)rect {
   counters_["attributesForCharacterIndex:lineHeightRectangle:"]++;
+  if (self.throwsAttributes) {
+    @throw [NSException exceptionWithName:@"UnsupportedAttributes" reason:nil userInfo:nil];
+  }
   *rect = expectedCursor;
   return expectedAttributes;
 }
@@ -470,8 +475,8 @@ TEST_F(MozcImkInputControllerTest, UpdateCandidates) {
   [controller_ updateCandidates:&output];
   // Run the runloop so "delayedUpdateCandidates" can be called
   [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
-  // Does not change: not call again
-  EXPECT_EQ([mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"], 1);
+  // Refresh orientation while retaining the stable popup position.
+  EXPECT_EQ([mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"], 2);
   EXPECT_EQ(mock_renderer_->counter_ExecCommand(), 3);
   EXPECT_TRUE(rendererCommand.visible());
   // Does not change the position
@@ -483,9 +488,92 @@ TEST_F(MozcImkInputControllerTest, UpdateCandidates) {
   // Run the runloop so "delayedUpdateCandidates" can be called
   [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   // Does not change: not call again
-  EXPECT_EQ([mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"], 1);
+  EXPECT_EQ([mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"], 2);
   EXPECT_EQ(mock_renderer_->counter_ExecCommand(), 4);
   EXPECT_FALSE(rendererCommand.visible());
+}
+
+TEST_F(MozcImkInputControllerTest, WritingDirectionRefreshesWhilePopupIsVisible) {
+  commands::Output output;
+  auto *window = output.mutable_candidate_window();
+  window->set_size(1);
+  window->set_focused_index(0);
+  auto *candidate = window->add_candidate();
+  candidate->set_index(0);
+  candidate->set_value("候補");
+  mock_client_.expectedCursor = NSMakeRect(50, 50, 12, 1);
+  mock_client_.expectedAttributes =
+      @{@"IMKTextOrientation" : @0,
+        @"IMKBaseline" : [NSValue valueWithPoint:NSMakePoint(50, 718)]};
+  [controller_ updateCandidates:&output];
+  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+  EXPECT_TRUE(
+      controller_.rendererCommand.application_info().composition_target().vertical_writing());
+  mock_client_.expectedAttributes =
+      @{@"IMKTextOrientation" : @1,
+        @"IMKBaseline" : [NSValue valueWithPoint:NSMakePoint(60, 718)]};
+  [controller_ updateCandidates:&output];
+  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+  EXPECT_FALSE(
+      controller_.rendererCommand.application_info().composition_target().vertical_writing());
+  EXPECT_EQ(controller_.rendererCommand.preedit_rectangle().left(), 60);
+  mock_client_.throwsAttributes = YES;
+  [controller_ updateCandidates:&output];
+  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+  EXPECT_FALSE(
+      controller_.rendererCommand.application_info().composition_target().vertical_writing());
+}
+
+TEST_F(MozcImkInputControllerTest, ConversionArrowsUseCurrentClientOrientation) {
+  controller_.mode = commands::HIRAGANA;
+  commands::Output conversion;
+  conversion.mutable_preedit()->set_highlighted_position(0);
+  conversion.mutable_preedit()->add_segment()->set_value("入力");
+  [controller_ updateCandidates:&conversion];
+  [NSObject cancelPreviousPerformRequestsWithTarget:controller_];
+  const unsigned short arrows[] = {kVK_LeftArrow, kVK_RightArrow, kVK_UpArrow, kVK_DownArrow};
+  const commands::KeyEvent::SpecialKey horizontal[] = {
+      commands::KeyEvent::LEFT, commands::KeyEvent::RIGHT, commands::KeyEvent::UP,
+      commands::KeyEvent::DOWN};
+  const commands::KeyEvent::SpecialKey vertical[] = {
+      commands::KeyEvent::DOWN, commands::KeyEvent::UP, commands::KeyEvent::LEFT,
+      commands::KeyEvent::RIGHT};
+  for (int orientation = 0; orientation <= 1; ++orientation) {
+    mock_client_.expectedAttributes = @{@"IMKTextOrientation" : @(orientation)};
+    for (int i = 0; i < 4; ++i) {
+      commands::KeyEvent actual;
+      EXPECT_CALL(*mock_mozc_client_, SendKeyWithContext(_, _, NotNull()))
+          .WillOnce(DoAll(SaveArg<0>(&actual), Return(false)));
+      SendKeyEvent(arrows[i], controller_, mock_client_);
+      EXPECT_EQ(actual.special_key(), orientation == 0 ? vertical[i] : horizontal[i]);
+    }
+  }
+  // Missing/throwing attribute access must preserve the physical key.
+  for (BOOL throws : {NO, YES}) {
+    mock_client_.expectedAttributes = @{};
+    mock_client_.throwsAttributes = throws;
+    commands::KeyEvent actual;
+    EXPECT_CALL(*mock_mozc_client_, SendKeyWithContext(_, _, NotNull()))
+        .WillOnce(DoAll(SaveArg<0>(&actual), Return(false)));
+    SendKeyEvent(kVK_LeftArrow, controller_, mock_client_);
+    EXPECT_EQ(actual.special_key(), commands::KeyEvent::LEFT);
+  }
+}
+
+TEST_F(MozcImkInputControllerTest, FirstLeftArrowStartsVerticalCandidateSelection) {
+  controller_.mode = commands::HIRAGANA;
+  commands::Output composition;
+  composition.mutable_preedit()->add_segment()->set_value("にゅうりょく");
+  composition.mutable_preedit()->set_cursor(6);
+  ASSERT_FALSE(composition.preedit().has_highlighted_position());
+  [controller_ updateCandidates:&composition];
+  [NSObject cancelPreviousPerformRequestsWithTarget:controller_];
+  mock_client_.expectedAttributes = @{@"IMKTextOrientation" : @0};
+  commands::KeyEvent actual;
+  EXPECT_CALL(*mock_mozc_client_, SendKeyWithContext(_, _, NotNull()))
+      .WillOnce(DoAll(SaveArg<0>(&actual), Return(false)));
+  SendKeyEvent(kVK_LeftArrow, controller_, mock_client_);
+  EXPECT_EQ(actual.special_key(), commands::KeyEvent::DOWN);
 }
 
 TEST_F(MozcImkInputControllerTest, OpenLink) {

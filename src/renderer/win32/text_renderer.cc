@@ -34,6 +34,7 @@
 #include <atltypes.h>
 #include <d2d1.h>
 #include <dwrite.h>
+#include <dwrite_2.h>
 #include <objbase.h>
 #include <wil/com.h>
 #include <wil/resource.h>
@@ -276,15 +277,18 @@ class DirectWriteTextRenderer : public TextRenderer {
   DirectWriteTextRenderer(
       wil::com_ptr_nothrow<ID2D1Factory> d2d2_factory,
       wil::com_ptr_nothrow<IDWriteFactory> dwrite_factory,
-      wil::com_ptr_nothrow<IDWriteGdiInterop> dwrite_interop, uint32_t dpi)
+      wil::com_ptr_nothrow<IDWriteGdiInterop> dwrite_interop, uint32_t dpi,
+      bool vertical)
       : d2d2_factory_(std::move(d2d2_factory)),
         dwrite_factory_(std::move(dwrite_factory)),
         dwrite_interop_(std::move(dwrite_interop)),
+        vertical_(vertical),
         dpi_(dpi) {
     OnThemeChanged();
   }
 
-  static std::unique_ptr<DirectWriteTextRenderer> Create(uint32_t dpi) {
+  static std::unique_ptr<DirectWriteTextRenderer> Create(
+      uint32_t dpi, bool vertical = false) {
     HRESULT hr = S_OK;
     wil::com_ptr_nothrow<ID2D1Factory> d2d_factory;
     hr = ::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
@@ -305,9 +309,9 @@ class DirectWriteTextRenderer : public TextRenderer {
     if (FAILED(hr)) {
       return nullptr;
     }
-    return std::make_unique<DirectWriteTextRenderer>(std::move(d2d_factory),
-                                                     std::move(dwrite_factory),
-                                                     std::move(interop), dpi);
+    return std::make_unique<DirectWriteTextRenderer>(
+        std::move(d2d_factory), std::move(dwrite_factory), std::move(interop),
+        dpi, vertical);
   }
 
  private:
@@ -429,10 +433,23 @@ class DirectWriteTextRenderer : public TextRenderer {
           static_cast<float>(item.rect.Right()),
           static_cast<float>(item.rect.Bottom()),
       };
-      dc_render_target_->DrawText(
-          item.text.data(), item.text.size(),
-          render_info_[font_type].format_to_render.get(), render_rect,
-          brush.get(), option);
+      if (vertical_) {
+        wil::com_ptr_nothrow<IDWriteTextLayout> layout;
+        hr = dwrite_factory_->CreateTextLayout(
+            item.text.data(), item.text.size(),
+            render_info_[font_type].format_to_render.get(), item.rect.Width(),
+            item.rect.Height(), layout.put());
+        if (SUCCEEDED(hr)) {
+          dc_render_target_->DrawTextLayout(
+              D2D1::Point2F(render_rect.left, render_rect.top), layout.get(),
+              brush.get(), option);
+        }
+      } else {
+        dc_render_target_->DrawText(
+            item.text.data(), item.text.size(),
+            render_info_[font_type].format_to_render.get(), render_rect,
+            brush.get(), option);
+      }
     }
     return dc_render_target_->EndDraw();
   }
@@ -452,6 +469,10 @@ class DirectWriteTextRenderer : public TextRenderer {
     hr = layout->GetMetrics(&metrix);
     if (FAILED(hr)) {
       return Size();
+    }
+    if (vertical_) {
+      return Size(ceilf(metrix.height),
+                  ceilf(metrix.widthIncludingTrailingWhitespace));
     }
     return Size(ceilf(metrix.widthIncludingTrailingWhitespace),
                 ceilf(metrix.height));
@@ -519,6 +540,20 @@ class DirectWriteTextRenderer : public TextRenderer {
     hr = dwrite_factory_->CreateTextFormat(
         family_name.c_str(), nullptr, font->GetWeight(), font->GetStyle(),
         font->GetStretch(), font_size, locale_name, format.put());
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    if (vertical_) {
+      format->SetReadingDirection(DWRITE_READING_DIRECTION_TOP_TO_BOTTOM);
+      format->SetFlowDirection(DWRITE_FLOW_DIRECTION_RIGHT_TO_LEFT);
+      format->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+      wil::com_ptr_nothrow<IDWriteTextFormat1> vertical_format;
+      if (SUCCEEDED(
+              format->QueryInterface(IID_PPV_ARGS(vertical_format.put())))) {
+        vertical_format->SetVerticalGlyphOrientation(
+            DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT);
+      }
+    }
     return format;
   }
 
@@ -538,10 +573,16 @@ class DirectWriteTextRenderer : public TextRenderer {
   mutable wil::com_ptr_nothrow<ID2D1DCRenderTarget> dc_render_target_;
   wil::com_ptr_nothrow<IDWriteGdiInterop> dwrite_interop_;
   std::vector<RenderInfo> render_info_;
+  const bool vertical_;
   uint32_t dpi_;
 };
 
 }  // namespace
+
+// static
+std::unique_ptr<TextRenderer> TextRenderer::CreateVertical(uint32_t dpi) {
+  return DirectWriteTextRenderer::Create(dpi, true);
+}
 
 // static
 std::unique_ptr<TextRenderer> TextRenderer::Create(uint32_t dpi) {

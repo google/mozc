@@ -289,6 +289,135 @@ class KeyEventHandlerTest : public testing::TestWithTempUserProfile {
   mozc::config::Config default_config_;
 };
 
+TEST_F(KeyEventHandlerTest, VerticalConversionArrows) {
+  struct Arrow {
+    UINT vk;
+    commands::KeyEvent::SpecialKey horizontal;
+    commands::KeyEvent::SpecialKey vertical;
+  };
+  constexpr Arrow kArrows[] = {
+      {VK_LEFT, commands::KeyEvent::LEFT, commands::KeyEvent::DOWN},
+      {VK_RIGHT, commands::KeyEvent::RIGHT, commands::KeyEvent::UP},
+      {VK_UP, commands::KeyEvent::UP, commands::KeyEvent::LEFT},
+      {VK_DOWN, commands::KeyEvent::DOWN, commands::KeyEvent::RIGHT},
+  };
+  // Test the exact protocol sent by both TSF callbacks, including switching
+  // back to horizontal navigation on the same client.
+  for (const auto& arrow : kArrows) {
+    for (const bool test_key : {true, false}) {
+      Output response;
+      response.set_consumed(true);
+      MockState mock(response);
+      KeyboardMock keyboard(false);
+      InputState initial_state;
+      initial_state.open = true;
+      initial_state.logical_conversion_mode =
+          IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN;
+      initial_state.visible_conversion_mode =
+          initial_state.logical_conversion_mode;
+      InputBehavior behavior;
+      for (const bool vertical : {true, false}) {
+        behavior.use_vertical_arrow_keys = vertical;
+        KeyboardStatus status;
+        status.SetState(arrow.vk, kPressed);
+        InputState next_state;
+        Output output;
+        const VirtualKey vk = VirtualKey::FromVirtualKey(arrow.vk);
+        const auto result =
+            test_key
+                ? KeyEventHandler::ImeProcessKey(
+                      vk, 0, true, status, behavior, initial_state, Context(),
+                      mock.mutable_client(), &keyboard, &next_state, &output)
+                : KeyEventHandler::ImeToAsciiEx(
+                      vk, 0, true, status, behavior, initial_state, Context(),
+                      mock.mutable_client(), &keyboard, &next_state, &output);
+        ASSERT_TRUE(result.succeeded);
+        EXPECT_TRUE(result.should_be_eaten);
+        ASSERT_TRUE(result.should_be_sent_to_server);
+        EXPECT_EQ(next_state.last_down_key.virtual_key(), arrow.vk);
+        commands::Input request;
+        ASSERT_TRUE(mock.GetGeneratedRequest(&request));
+        EXPECT_EQ(request.type(), test_key ? commands::Input::TEST_SEND_KEY
+                                           : commands::Input::SEND_KEY);
+        EXPECT_EQ(request.key().special_key(),
+                  vertical ? arrow.vertical : arrow.horizontal);
+        EXPECT_EQ(request.key().modifier_keys_size(), 0);
+      }
+    }
+  }
+}
+
+TEST_F(KeyEventHandlerTest, VerticalArrowsPreserveModifiedKeysAndPaging) {
+  KeyboardMock keyboard(false);
+  InputState state;
+  state.open = true;
+  state.logical_conversion_mode =
+      IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN;
+  state.visible_conversion_mode = state.logical_conversion_mode;
+  InputBehavior behavior;
+  behavior.use_vertical_arrow_keys = true;
+  for (const UINT modifier : {VK_SHIFT, VK_CONTROL, VK_MENU}) {
+    for (const UINT arrow : {VK_LEFT, VK_RIGHT, VK_UP, VK_DOWN}) {
+      KeyboardStatus status;
+      status.SetState(arrow, kPressed);
+      status.SetState(modifier, kPressed);
+      commands::KeyEvent actual;
+      ASSERT_TRUE(TestableKeyEventHandler::HandleKey(
+                      VirtualKey::FromVirtualKey(arrow), 0, true, status,
+                      behavior, state, &keyboard, &actual)
+                      .succeeded);
+      behavior.use_vertical_arrow_keys = false;
+      commands::KeyEvent expected;
+      ASSERT_TRUE(TestableKeyEventHandler::HandleKey(
+                      VirtualKey::FromVirtualKey(arrow), 0, true, status,
+                      behavior, state, &keyboard, &expected)
+                      .succeeded);
+      EXPECT_EQ(actual.SerializeAsString(), expected.SerializeAsString());
+      behavior.use_vertical_arrow_keys = true;
+    }
+  }
+  for (const UINT vk : {VK_PRIOR, VK_NEXT, VK_SPACE, VK_RETURN}) {
+    KeyboardStatus status;
+    commands::KeyEvent actual;
+    ASSERT_TRUE(TestableKeyEventHandler::HandleKey(
+                    VirtualKey::FromVirtualKey(vk), 0, true, status, behavior,
+                    state, &keyboard, &actual)
+                    .succeeded);
+    behavior.use_vertical_arrow_keys = false;
+    commands::KeyEvent expected;
+    ASSERT_TRUE(TestableKeyEventHandler::HandleKey(
+                    VirtualKey::FromVirtualKey(vk), 0, true, status, behavior,
+                    state, &keyboard, &expected)
+                    .succeeded);
+    EXPECT_EQ(actual.SerializeAsString(), expected.SerializeAsString());
+    behavior.use_vertical_arrow_keys = true;
+  }
+}
+
+TEST_F(KeyEventHandlerTest, VerticalArrowsDoNotConsumeKeyUpOrInactiveIme) {
+  KeyboardMock keyboard(false);
+  InputState state;
+  InputBehavior behavior;
+  behavior.use_vertical_arrow_keys = true;
+  for (const UINT vk : {VK_LEFT, VK_RIGHT, VK_UP, VK_DOWN}) {
+    for (const bool open : {false, true}) {
+      state.open = open;
+      for (const bool down : {false, true}) {
+        if (open && down) {
+          continue;
+        }
+        commands::KeyEvent key;
+        const auto result = TestableKeyEventHandler::HandleKey(
+            VirtualKey::FromVirtualKey(vk), 0, down, KeyboardStatus(), behavior,
+            state, &keyboard, &key);
+        ASSERT_TRUE(result.succeeded);
+        EXPECT_FALSE(result.should_be_eaten);
+        EXPECT_FALSE(result.should_be_sent_to_server);
+      }
+    }
+  }
+}
+
 TEST_F(KeyEventHandlerTest, HankakuZenkakuTest) {
   constexpr bool kKanaLocked = false;
 

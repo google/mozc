@@ -308,6 +308,24 @@ mozc_cc_library(
 )
 
 mozc_cc_test(
+    name = "vertical_candidate_window_test",
+    srcs = ["vertical_candidate_window_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":candidate_window",
+        ":text_renderer",
+        "//base:coordinates",
+        "//bazel/win32:gdi32",
+        "//client:client_interface",
+        "//protocol:candidate_window_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+        "@com_microsoft_wil//:wil",
+    ],
+)
+
+mozc_cc_test(
     name = "win32_renderer_util_test",
     srcs = ["win32_renderer_util_test.cc"],
     tags = MOZC_TAGS.WIN_ONLY,

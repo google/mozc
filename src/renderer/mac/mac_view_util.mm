@@ -28,12 +28,99 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "renderer/mac/mac_view_util.h"
+#include <cmath>
 #include "base/coordinates.h"
 #include "protocol/renderer_style.pb.h"
 
 namespace mozc {
 namespace renderer {
 namespace mac {
+
+namespace {
+// Keep measurement and painting on the same TextKit 1 layout path. The view
+// exists only as a layout-orientation provider; it is never attached to a window.
+NSTextView *VerticalTextView(NSAttributedString *text) {
+  // Candidate strings are immutable. Reuse their native layouts for measuring
+  // and drawing; keep the cache bounded across changing candidate pages.
+  static NSCache<NSAttributedString *, NSTextView *> *cache = [] {
+    NSCache<NSAttributedString *, NSTextView *> *result = [[NSCache alloc] init];
+    [result setCountLimit:128];
+    return result;
+  }();
+  NSTextView *cached = [cache objectForKey:text];
+  if (cached) {
+    return cached;
+  }
+  const NSSize containerSize = NSMakeSize(1000000, 1000000);
+  NSTextView *view = [[NSTextView alloc]
+      initWithFrame:NSMakeRect(0, 0, containerSize.width, containerSize.height)];
+  // Accessing layoutManager selects the TextKit 1 compatibility path on newer
+  // AppKit versions before configuring vertical layout.
+  (void)[view layoutManager];
+  [view setLayoutOrientation:NSTextLayoutOrientationVertical];
+  [view setTextContainerInset:NSZeroSize];
+  [view setHorizontallyResizable:NO];
+  [view setVerticallyResizable:NO];
+  NSTextContainer *container = [view textContainer];
+  [container setWidthTracksTextView:NO];
+  [container setHeightTracksTextView:NO];
+  [container setContainerSize:containerSize];
+  [container setLineFragmentPadding:0];
+  NSMutableAttributedString *verticalText = [text mutableCopy];
+  [verticalText addAttribute:NSVerticalGlyphFormAttributeName
+                       value:@1
+                       range:NSMakeRange(0, [verticalText length])];
+  [[view textStorage] setAttributedString:verticalText];
+  [[view layoutManager] ensureLayoutForTextContainer:container];
+  [cache setObject:view forKey:[text copy]];
+  return view;
+}
+
+NSRect VerticalTextBounds(NSTextView *view) {
+  NSLayoutManager *manager = [view layoutManager];
+  NSTextContainer *container = [view textContainer];
+  const NSRange glyphs = [manager glyphRangeForTextContainer:container];
+  return NSUnionRect([manager usedRectForTextContainer:container],
+                     [manager boundingRectForGlyphRange:glyphs inTextContainer:container]);
+}
+}  // namespace
+
+NSSize MacViewUtil::TextSize(NSAttributedString *text, bool vertical) {
+  if (!vertical) {
+    return [text size];
+  }
+  if ([text length] == 0) {
+    return NSZeroSize;
+  }
+  NSTextView *view = VerticalTextView(text);
+  const NSRect used = VerticalTextBounds(view);
+  // TextKit lays out in container coordinates even for vertical glyph forms.
+  // Its layoutOrientation contract requires the drawing coordinate system to
+  // be rotated; swap the measured axes to match that transform.
+  return NSMakeSize(std::ceil(used.size.height), std::ceil(used.size.width));
+}
+
+void MacViewUtil::DrawText(NSAttributedString *text, NSRect rect, bool vertical) {
+  if ([text length] == 0) {
+    return;
+  }
+  if (!vertical) {
+    [text drawAtPoint:rect.origin];
+    return;
+  }
+  NSTextView *view = VerticalTextView(text);
+  NSLayoutManager *manager = [view layoutManager];
+  const NSRect used = VerticalTextBounds(view);
+  const NSRange glyphs = [manager glyphRangeForTextContainer:[view textContainer]];
+  [NSGraphicsContext saveGraphicsState];
+  NSRectClip(rect);
+  NSAffineTransform *transform = [NSAffineTransform transform];
+  [transform translateXBy:NSMaxX(rect) yBy:NSMinY(rect)];
+  [transform rotateByDegrees:90];
+  [transform concat];
+  [manager drawGlyphsForGlyphRange:glyphs atPoint:NSMakePoint(-used.origin.x, -used.origin.y)];
+  [NSGraphicsContext restoreGraphicsState];
+}
 
 NSPoint MacViewUtil::ToNSPoint(const mozc::Point &point) { return NSMakePoint(point.x, point.y); }
 
@@ -87,6 +174,6 @@ NSAttributedString *MacViewUtil::ToNSAttributedString(const std::string &str,
   }
   return [[NSAttributedString alloc] initWithString:nsstr attributes:attr];
 }
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc

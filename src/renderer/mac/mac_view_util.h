@@ -44,12 +44,10 @@ namespace mac {
 // this is pure static class
 class MacViewUtil {
  public:
-  static NSColor *ToNSColor(
-      const mozc::renderer::RendererStyle::RGBAColor &color);
+  static NSColor *ToNSColor(const mozc::renderer::RendererStyle::RGBAColor &color);
 
   static NSAttributedString *ToNSAttributedString(
-      const std::string &str,
-      const mozc::renderer::RendererStyle::TextStyle &style);
+      const std::string &str, const mozc::renderer::RendererStyle::TextStyle &style);
 
   static NSPoint ToNSPoint(const mozc::Point &point);
 
@@ -63,8 +61,11 @@ class MacViewUtil {
 
   static mozc::Rect ToRect(const NSRect &nsrect);
 
-  static NSSize applyTheme(const NSSize &size,
-                           const RendererStyle::TextStyle &style);
+  static NSSize applyTheme(const NSSize &size, const RendererStyle::TextStyle &style);
+
+  // AppKit supplies glyph shaping, fallback fonts and vertical punctuation.
+  static NSSize TextSize(NSAttributedString *text, bool vertical);
+  static void DrawText(NSAttributedString *text, NSRect rect, bool vertical);
 
   // Do not allow instantiation
  private:
@@ -72,8 +73,8 @@ class MacViewUtil {
   virtual ~MacViewUtil() {}
 };
 
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc
 
 #endif  // MOZC_RENDERER_MAC_MAC_VIEW_UTIL_H_

@@ -48,6 +48,7 @@
 
 #import "mac/KeyCodeMap.h"
 #import "mac/renderer_receiver.h"
+#include "mac/vertical_keymap.h"
 
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
@@ -175,6 +176,25 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   // Disables the surrounding text feature for the following application
   // because calling attributedSubstringFromRange to it is very heavy.
   return bundle_id != "com.evernote.Evernote";
+}
+
+NSDictionary *ClientTextAttributes(id client, NSUInteger position, NSRect *rect) {
+  if (![client respondsToSelector:@selector(attributesForCharacterIndex:lineHeightRectangle:)]) {
+    return nil;
+  }
+  @try {
+    id attributes = [client attributesForCharacterIndex:position lineHeightRectangle:rect];
+    return [attributes isKindOfClass:[NSDictionary class]] ? attributes : nil;
+  } @catch (NSException *exception) {
+    LOG(WARNING) << "Cannot read input client attributes: " << [[exception name] UTF8String];
+    return nil;
+  }
+}
+
+bool IsVerticalText(NSDictionary *attributes) {
+  // A missing attribute must not be treated as zero (vertical writing).
+  id orientation = attributes[@"IMKTextOrientation"];
+  return [orientation isKindOfClass:[NSNumber class]] && [orientation intValue] == 0;
 }
 }  // namespace
 
@@ -739,50 +759,34 @@ bool CanSurroundingText(absl::string_view bundle_id) {
     return;
   }
 
-  // The candidate window position is not recalculated if the
-  // candidate already appears on the screen.  Therefore, if a user
-  // moves client application window by mouse, candidate window won't
-  // follow the move of window.  This is done because:
-  //  - some applications like Emacs or Google Chrome don't return the
-  //    cursor position correctly.  The candidate window moves
-  //    frequently with those application, which irritates users.
-  //  - Kotoeri does this too.
-  if (rendererCommand_.visible()) {
-    // Call ExecCommand anyway to update other information like candidate words.
-    mozcRenderer_->ExecCommand(rendererCommand_);
-    return;
-  }
-
-  rendererCommand_.set_visible(true);
-
   NSRect preeditRect = NSZeroRect;
   const int32_t position = rendererCommand_.output().candidate_window().position();
-  // Some applications throws error when we call attributesForCharacterIndex.
-  DLOG(INFO) << "attributesForCharacterIndex: " << position;
-  @try {
-    NSDictionary *clientData = [[self client] attributesForCharacterIndex:position
-                                                      lineHeightRectangle:&preeditRect];
+  NSDictionary *clientData = ClientTextAttributes([self client], position, &preeditRect);
+  const bool vertical = IsVerticalText(clientData);
+  const bool wasVertical =
+      rendererCommand_.application_info().composition_target().vertical_writing();
+  rendererCommand_.mutable_application_info()->mutable_composition_target()->set_vertical_writing(
+      vertical);
 
-    // IMKBaseline: Left-bottom of the composition.
-    NSPoint baseline = [clientData[@"IMKBaseline"] pointValue];
-    // IMKTextOrientation: 0: vertical writing, 1: horizontal writing.
-    // IMKLineHeight: Height of the composition (in horizontal writing).
-    // NSFont: Font information of the composition.
-    // IMKLineAscent: Not sure. A float number. (e.g. 9.240234)
-
-    const int right_offset = preeditRect.size.width;
-    const int top_offset = -preeditRect.size.height;
-
-    RendererCommand::Rectangle *rect = rendererCommand_.mutable_preedit_rectangle();
-    rect->set_left(baseline.x);
-    rect->set_right(baseline.x + right_offset);
-    rect->set_top(baseline.y + top_offset);
-    rect->set_bottom(baseline.y);
-
-  } @catch (NSException *exception) {
-    LOG(ERROR) << "Exception from [" << clientBundle_ << "] " << [[exception name] UTF8String]
-               << "," << [[exception reason] UTF8String];
+  // Keep the existing stable popup position when only candidates change. Read
+  // orientation on each delayed update so changing writing mode is reflected
+  // even while the popup is visible. Reposition only on first show/mode change.
+  if (!rendererCommand_.visible() || vertical != wasVertical) {
+    NSValue *baselineValue = clientData[@"IMKBaseline"];
+    if ([baselineValue isKindOfClass:[NSValue class]]) {
+      @try {
+        const NSPoint baseline = [baselineValue pointValue];
+        RendererCommand::Rectangle *rect = rendererCommand_.mutable_preedit_rectangle();
+        rect->set_left(baseline.x);
+        rect->set_right(baseline.x + preeditRect.size.width);
+        rect->set_top(baseline.y - preeditRect.size.height);
+        rect->set_bottom(baseline.y);
+      } @catch (NSException *exception) {
+        LOG(WARNING) << "Cannot read input client baseline: " << [[exception name] UTF8String];
+      }
+    }
   }
+  rendererCommand_.set_visible(true);
 
   mozcRenderer_->ExecCommand(rendererCommand_);
 }
@@ -916,6 +920,18 @@ bool CanSurroundingText(absl::string_view bundle_id) {
       return YES;
     }
     return NO;
+  }
+
+  const auto &preedit = rendererCommand_.output().preedit();
+  const bool composing = preedit.segment_size() != 0;
+  if (composing && [event type] == NSEventTypeKeyDown &&
+      (keyEvent.special_key() == KeyEvent::LEFT || keyEvent.special_key() == KeyEvent::RIGHT ||
+       keyEvent.special_key() == KeyEvent::UP || keyEvent.special_key() == KeyEvent::DOWN)) {
+    NSRect ignoredRect = NSZeroRect;
+    const NSUInteger position =
+        preedit.has_highlighted_position() ? preedit.highlighted_position() : preedit.cursor();
+    const bool vertical = IsVerticalText(ClientTextAttributes(sender, position, &ignoredRect));
+    mozc::mac::RotateConversionArrows(vertical, composing, &keyEvent);
   }
 
   // Send the key event to the server actually

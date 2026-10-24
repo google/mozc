@@ -42,18 +42,19 @@
 #include "renderer/mac/mac_view_util.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
+#include "renderer/vertical_layout.h"
 
 using mozc::client::SendCommandInterface;
 using mozc::commands::CandidateWindow;
 using mozc::commands::Output;
 using mozc::commands::SessionCommand;
-using mozc::renderer::RendererStyleHandler;
 using mozc::renderer::ColumnType;
-using mozc::renderer::kColumnShortcut;
-using mozc::renderer::kColumnGap1;
 using mozc::renderer::kColumnCandidate;
 using mozc::renderer::kColumnDescription;
+using mozc::renderer::kColumnGap1;
+using mozc::renderer::kColumnShortcut;
 using mozc::renderer::kNumberOfColumns;
+using mozc::renderer::RendererStyleHandler;
 using mozc::renderer::TableLayout;
 using mozc::renderer::mac::MacViewUtil;
 
@@ -73,11 +74,14 @@ using mozc::renderer::mac::MacViewUtil;
 
 // Draw scroll bar
 - (void)drawVScrollBar;
+- (NSSize)logicalTextSize:(NSAttributedString *)text;
+- (void)drawText:(NSAttributedString *)text inRect:(NSRect)rect;
 @end
 
 @implementation CandidateView {
   const NSImage *logoImage_;
   int columnMinimumWidth_;
+  BOOL verticalWriting_;
 
   mozc::commands::CandidateWindow candidate_window_;
   mozc::renderer::TableLayout tableLayout_;
@@ -128,8 +132,8 @@ using mozc::renderer::mac::MacViewUtil;
   NSString *nsstr = [NSString stringWithUTF8String:min_width_string.c_str()];
   NSDictionary *attr = [NSDictionary dictionaryWithObject:[NSFont messageFontOfSize:14]
                                                    forKey:NSFontAttributeName];
-  const NSAttributedString *defaultMessage = [[NSAttributedString alloc] initWithString:nsstr
-                                                                             attributes:attr];
+  NSAttributedString *defaultMessage = [[NSAttributedString alloc] initWithString:nsstr
+                                                                       attributes:attr];
   columnMinimumWidth_ = [defaultMessage size].width;
 
   // default line width is specified as 1.0 *pt*, but we want to draw
@@ -140,6 +144,38 @@ using mozc::renderer::mac::MacViewUtil;
 
 - (void)setCandidateWindow:(const CandidateWindow *)candidate_window {
   candidate_window_ = *candidate_window;
+}
+
+- (void)setVerticalWriting:(BOOL)vertical {
+  verticalWriting_ = vertical;
+}
+
+- (mozc::Rect)clientRect:(mozc::Rect)rect {
+  return verticalWriting_
+             ? mozc::renderer::VerticalClientRect(rect, tableLayout_.GetTotalSize().height)
+             : rect;
+}
+
+// TableLayout remains a logical horizontal table. TextKit returns physical
+// vertical glyph bounds, so exchange their axes before adding logical padding.
+- (NSSize)logicalTextSize:(NSAttributedString *)text {
+  const NSSize physical = MacViewUtil::TextSize(text, verticalWriting_);
+  return verticalWriting_ ? NSMakeSize(physical.height, physical.width) : physical;
+}
+
+- (void)drawText:(NSAttributedString *)text inRect:(NSRect)rect {
+  const NSSize size = MacViewUtil::TextSize(text, verticalWriting_);
+  const NSRect physical = MacViewUtil::ToNSRect([self clientRect:MacViewUtil::ToRect(rect)]);
+  NSRect textRect;
+  if (verticalWriting_) {
+    textRect = NSMakeRect(physical.origin.x + (physical.size.width - size.width) / 2,
+                          physical.origin.y, size.width, size.height);
+  } else {
+    textRect =
+        NSMakeRect(physical.origin.x, physical.origin.y + (physical.size.height - size.height) / 2,
+                   size.width, size.height);
+  }
+  MacViewUtil::DrawText(text, textRect, verticalWriting_);
 }
 
 - (void)setSendCommandInterface:(SendCommandInterface *)command_sender {
@@ -181,24 +217,24 @@ using mozc::renderer::mac::MacViewUtil;
     const mozc::commands::Footer &footer = candidate_window_.footer();
 
     if (footer.has_label()) {
-      const NSAttributedString *footerLabel =
+      NSAttributedString *footerLabel =
           MacViewUtil::ToNSAttributedString(footer.label(), style_.footer_style());
       const NSSize footerLabelSize =
-          MacViewUtil::applyTheme([footerLabel size], style_.footer_style());
+          MacViewUtil::applyTheme([self logicalTextSize:footerLabel], style_.footer_style());
       footerSize.width += footerLabelSize.width;
       footerSize.height = std::max(footerSize.height, footerLabelSize.height);
     }
 
     if (footer.has_sub_label()) {
-      const NSAttributedString *footerSubLabel =
+      NSAttributedString *footerSubLabel =
           MacViewUtil::ToNSAttributedString(footer.sub_label(), style_.footer_sub_label_style());
-      const NSSize footerSubLabelSize =
-          MacViewUtil::applyTheme([footerSubLabel size], style_.footer_sub_label_style());
+      const NSSize footerSubLabelSize = MacViewUtil::applyTheme(
+          [self logicalTextSize:footerSubLabel], style_.footer_sub_label_style());
       footerSize.width += footerSubLabelSize.width;
       footerSize.height = std::max(footerSize.height, footerSubLabelSize.height);
     }
 
-    if (footer.logo_visible() && logoImage_) {
+    if (footer.logo_visible() && logoImage_ && !verticalWriting_) {
       const NSSize logoSize = [logoImage_ size];
       footerSize.width += logoSize.width;
       footerSize.height = std::max(footerSize.height, logoSize.height);
@@ -209,10 +245,10 @@ using mozc::renderer::mac::MacViewUtil;
       const int totalItems = candidate_window_.size();
       const NSString *footerIndex =
           [NSString stringWithFormat:@"%d/%d", focusedIndex + 1, totalItems];
-      const NSAttributedString *footerAttributedIndex =
+      NSAttributedString *footerAttributedIndex =
           MacViewUtil::ToNSAttributedString([footerIndex UTF8String], style_.footer_style());
-      const NSSize footerIndexSize =
-          MacViewUtil::applyTheme([footerAttributedIndex size], style_.footer_style());
+      const NSSize footerIndexSize = MacViewUtil::applyTheme(
+          [self logicalTextSize:footerAttributedIndex], style_.footer_style());
       footerSize.width += footerIndexSize.width;
       footerSize.height = std::max(footerSize.height, footerIndexSize.height);
     }
@@ -226,14 +262,13 @@ using mozc::renderer::mac::MacViewUtil;
     tableLayout_.SetVScrollBar(style_.scrollbar_width());
   }
 
-  const NSAttributedString *gap1 =
-      MacViewUtil::ToNSAttributedString(" ", style_.gap1_style());
-  tableLayout_.EnsureCellSize(kColumnGap1, MacViewUtil::ToSize([gap1 size]));
+  NSAttributedString *gap1 = MacViewUtil::ToNSAttributedString(" ", style_.gap1_style());
+  tableLayout_.EnsureCellSize(kColumnGap1, MacViewUtil::ToSize([self logicalTextSize:gap1]));
 
   NSMutableArray *newCache = [[NSMutableArray array] init];
   for (size_t i = 0; i < candidate_window_.candidate_size(); ++i) {
     const CandidateWindow::Candidate &candidate = candidate_window_.candidate(i);
-    const NSAttributedString *shortcut = MacViewUtil::ToNSAttributedString(
+    NSAttributedString *shortcut = MacViewUtil::ToNSAttributedString(
         candidate.annotation().shortcut(), style_.shortcut_style());
     std::string value = candidate.value();
     if (candidate.annotation().has_prefix()) {
@@ -246,23 +281,23 @@ using mozc::renderer::mac::MacViewUtil;
       value.append("  ");
     }
 
-    const NSAttributedString *candidateValue =
+    NSAttributedString *candidateValue =
         MacViewUtil::ToNSAttributedString(value, style_.candidate_style());
-    const NSAttributedString *description = MacViewUtil::ToNSAttributedString(
+    NSAttributedString *description = MacViewUtil::ToNSAttributedString(
         candidate.annotation().description(), style_.description_style());
     if ([shortcut length] > 0) {
       const NSSize shortcutSize =
-          MacViewUtil::applyTheme([shortcut size], style_.shortcut_style());
+          MacViewUtil::applyTheme([self logicalTextSize:shortcut], style_.shortcut_style());
       tableLayout_.EnsureCellSize(kColumnShortcut, MacViewUtil::ToSize(shortcutSize));
     }
     if ([candidateValue length] > 0) {
       const NSSize valueSize =
-          MacViewUtil::applyTheme([candidateValue size], style_.candidate_style());
+          MacViewUtil::applyTheme([self logicalTextSize:candidateValue], style_.candidate_style());
       tableLayout_.EnsureCellSize(kColumnCandidate, MacViewUtil::ToSize(valueSize));
     }
     if ([description length] > 0) {
       const NSSize descriptionSize =
-          MacViewUtil::applyTheme([description size], style_.description_style());
+          MacViewUtil::applyTheme([self logicalTextSize:description], style_.description_style());
       tableLayout_.EnsureCellSize(kColumnDescription, MacViewUtil::ToSize(descriptionSize));
     }
 
@@ -274,7 +309,9 @@ using mozc::renderer::mac::MacViewUtil;
 
   candidateStringsCache_ = newCache;
   tableLayout_.FreezeLayout();
-  return MacViewUtil::ToNSSize(tableLayout_.GetTotalSize());
+  const mozc::Size logical = tableLayout_.GetTotalSize();
+  return MacViewUtil::ToNSSize(verticalWriting_ ? mozc::renderer::VerticalClientSize(logical)
+                                                : logical);
 }
 
 - (void)drawRect:(NSRect)rect {
@@ -294,7 +331,9 @@ using mozc::renderer::mac::MacViewUtil;
 
   // Draw the window border at last
   [MacViewUtil::ToNSColor(style_.border_color()) set];
-  const mozc::Size windowSize = tableLayout_.GetTotalSize();
+  const mozc::Size logical = tableLayout_.GetTotalSize();
+  const mozc::Size windowSize =
+      verticalWriting_ ? mozc::renderer::VerticalClientSize(logical) : logical;
   [NSBezierPath strokeRect:NSMakeRect(0.5, 0.5, windowSize.width - 1, windowSize.height - 1)];
 }
 
@@ -303,7 +342,8 @@ using mozc::renderer::mac::MacViewUtil;
 - (void)drawRow:(int)row {
   if (row == focusedRow_) {
     // Draw focused background
-    NSRect focusedRect = MacViewUtil::ToNSRect(tableLayout_.GetRowRect(focusedRow_));
+    NSRect focusedRect =
+        MacViewUtil::ToNSRect([self clientRect:tableLayout_.GetRowRect(focusedRow_)]);
     [MacViewUtil::ToNSColor(style_.focused_background_color()) set];
     [NSBezierPath fillRect:focusedRect];
     [MacViewUtil::ToNSColor(style_.focused_border_color()) set];
@@ -326,7 +366,7 @@ using mozc::renderer::mac::MacViewUtil;
       if (cellRect.size.width > 0 && cellRect.size.height > 0 &&
           text_style.has_background_color()) {
         [MacViewUtil::ToNSColor(text_style.background_color()) set];
-        [NSBezierPath fillRect:MacViewUtil::ToNSRect(cellRect)];
+        [NSBezierPath fillRect:MacViewUtil::ToNSRect([self clientRect:cellRect])];
       }
     };
     drawBackground(kColumnShortcut, style_.shortcut_style());
@@ -337,14 +377,12 @@ using mozc::renderer::mac::MacViewUtil;
 
   NSArray<NSAttributedString *> *candidate = [candidateStringsCache_ objectAtIndex:row];
 
-  auto drawText = [&](ColumnType type,
-                      const mozc::renderer::RendererStyle::TextStyle& text_style) {
-    const NSAttributedString *text = [candidate objectAtIndex:type];
+  auto drawText = [&](ColumnType type, const mozc::renderer::RendererStyle::TextStyle &text_style) {
+    NSAttributedString *text = [candidate objectAtIndex:type];
     NSRect cellRect = MacViewUtil::ToNSRect(tableLayout_.GetCellRect(row, type));
-    NSPoint position = cellRect.origin;
-    position.x += text_style.left_padding();
-    position.y += (cellRect.size.height - [text size].height) / 2;
-    [text drawAtPoint:position];
+    cellRect.origin.x += text_style.left_padding();
+    cellRect.size.width -= text_style.left_padding() + text_style.right_padding();
+    [self drawText:text inRect:cellRect];
   };
 
   drawText(kColumnShortcut, style_.shortcut_style());
@@ -359,7 +397,7 @@ using mozc::renderer::mac::MacViewUtil;
     rect.size.width = 4.0;
     rect.origin.y += 2.0;
     rect.size.height -= 4.0;
-    [NSBezierPath fillRect:rect];
+    [NSBezierPath fillRect:MacViewUtil::ToNSRect([self clientRect:MacViewUtil::ToRect(rect)])];
   }
 }
 
@@ -376,7 +414,13 @@ using mozc::renderer::mac::MacViewUtil;
     const NSPoint fromPoint = NSMakePoint(footerRect.origin.x, footerRect.origin.y + 0.5);
     const NSPoint toPoint =
         NSMakePoint(footerRect.origin.x + footerRect.size.width, footerRect.origin.y + 0.5);
-    [NSBezierPath strokeLineFromPoint:fromPoint toPoint:toPoint];
+    if (verticalWriting_) {
+      const CGFloat height = tableLayout_.GetTotalSize().height;
+      [NSBezierPath strokeLineFromPoint:NSMakePoint(height - fromPoint.y, fromPoint.x)
+                                toPoint:NSMakePoint(height - toPoint.y, toPoint.x)];
+    } else {
+      [NSBezierPath strokeLineFromPoint:fromPoint toPoint:toPoint];
+    }
     footerRect.origin.y += 1;
   }
 
@@ -384,43 +428,50 @@ using mozc::renderer::mac::MacViewUtil;
   const NSGradient *footerBackground = [[NSGradient alloc]
       initWithStartingColor:MacViewUtil::ToNSColor(style_.footer_top_color())
                 endingColor:MacViewUtil::ToNSColor(style_.footer_bottom_color())];
-  [footerBackground drawInRect:footerRect angle:90.0];
+  [footerBackground
+      drawInRect:MacViewUtil::ToNSRect([self clientRect:MacViewUtil::ToRect(footerRect)])
+           angle:verticalWriting_ ? 0.0 : 90.0];
 
   // Draw logo
-  if (footer.logo_visible() && logoImage_) {
+  if (footer.logo_visible() && logoImage_ && !verticalWriting_) {
     const NSPoint logoPoint = footerRect.origin;
     const NSSize logoSize = logoImage_.size;
     const NSRect logoRect = NSMakeRect(logoPoint.x, logoPoint.y, logoSize.width, logoSize.height);
     [logoImage_ drawInRect:logoRect
-                    fromRect:NSZeroRect   // Draw the entire image
-                  operation:NSCompositingOperationSourceOver
-                    fraction:1.0  // Opacity
-              respectFlipped:YES
-                      hints:nil];
+                  fromRect:NSZeroRect  // Draw the entire image
+                 operation:NSCompositingOperationSourceOver
+                  fraction:1.0  // Opacity
+            respectFlipped:YES
+                     hints:nil];
     footerRect.origin.x += logoSize.width;
     footerRect.size.width -= logoSize.width;
   }
 
   // Draw label
   if (footer.has_label()) {
-    const NSAttributedString *footerLabel =
+    NSAttributedString *footerLabel =
         MacViewUtil::ToNSAttributedString(footer.label(), style_.footer_style());
     footerRect.origin.x += style_.footer_style().left_padding();
-    const NSSize labelSize = [footerLabel size];
-    NSPoint labelPosition = footerRect.origin;
-    labelPosition.y += (footerRect.size.height - labelSize.height) / 2;
-    [footerLabel drawAtPoint:labelPosition];
+    const NSSize labelSize = [self logicalTextSize:footerLabel];
+    [self drawText:footerLabel
+            inRect:NSMakeRect(footerRect.origin.x, footerRect.origin.y, labelSize.width,
+                              footerRect.size.height)];
+    if (verticalWriting_) {
+      footerRect.origin.x += labelSize.width + style_.footer_style().right_padding();
+      footerRect.size.width -= labelSize.width + style_.footer_style().left_padding() +
+                               style_.footer_style().right_padding();
+    }
   }
 
   // Draw sub_label
   if (footer.has_sub_label()) {
-    const NSAttributedString *footerSubLabel =
+    NSAttributedString *footerSubLabel =
         MacViewUtil::ToNSAttributedString(footer.sub_label(), style_.footer_sub_label_style());
     footerRect.origin.x += style_.footer_sub_label_style().left_padding();
-    const NSSize subLabelSize = [footerSubLabel size];
-    NSPoint subLabelPosition = footerRect.origin;
-    subLabelPosition.y += (footerRect.size.height - subLabelSize.height) / 2;
-    [footerSubLabel drawAtPoint:subLabelPosition];
+    const NSSize subLabelSize = [self logicalTextSize:footerSubLabel];
+    [self drawText:footerSubLabel
+            inRect:NSMakeRect(footerRect.origin.x, footerRect.origin.y, subLabelSize.width,
+                              footerRect.size.height)];
   }
 
   // Draw footer index (e.g. "10/120")
@@ -429,13 +480,19 @@ using mozc::renderer::mac::MacViewUtil;
         absl::StrFormat("%d/%d",
                         candidate_window_.focused_index() + 1,  // +1 to 1-origin from 0-origin.
                         candidate_window_.size());
-    const NSAttributedString *footerAttributedIndex =
+    NSAttributedString *footerAttributedIndex =
         MacViewUtil::ToNSAttributedString(footerIndex, style_.footer_style());
-    const NSSize footerSize = [footerAttributedIndex size];
+    const NSSize footerSize = [self logicalTextSize:footerAttributedIndex];
     NSPoint footerPosition = footerRect.origin;
     footerPosition.x = footerPosition.x + footerRect.size.width - footerSize.width -
-                        style_.footer_style().right_padding();
-    [footerAttributedIndex drawAtPoint:footerPosition];
+                       style_.footer_style().right_padding();
+    if (verticalWriting_) {
+      [self drawText:footerAttributedIndex
+              inRect:NSMakeRect(footerPosition.x, footerPosition.y, footerSize.width,
+                                footerRect.size.height)];
+    } else {
+      [footerAttributedIndex drawAtPoint:footerPosition];
+    }
   }
 }
 
@@ -450,12 +507,12 @@ using mozc::renderer::mac::MacViewUtil;
   const int endIndex = candidate_window_.candidate(candidate_window_.candidate_size() - 1).index();
 
   [MacViewUtil::ToNSColor(style_.scrollbar_background_color()) set];
-  [NSBezierPath fillRect:MacViewUtil::ToNSRect(vscrollRect)];
+  [NSBezierPath fillRect:MacViewUtil::ToNSRect([self clientRect:vscrollRect])];
 
   const mozc::Rect indicatorRect =
       tableLayout_.GetVScrollIndicatorRect(beginIndex, endIndex, candidatesTotal);
   [MacViewUtil::ToNSColor(style_.scrollbar_indicator_color()) set];
-  [NSBezierPath fillRect:MacViewUtil::ToNSRect(indicatorRect)];
+  [NSBezierPath fillRect:MacViewUtil::ToNSRect([self clientRect:indicatorRect])];
 }
 
 #pragma mark event handling callbacks
@@ -465,7 +522,7 @@ using mozc::renderer::mac::MacViewUtil;
                                                               fromView:nil]);
   int clickedRow = -1;
   for (int i = 0; i < tableLayout_.number_of_rows(); ++i) {
-    const mozc::Rect rowRect = tableLayout_.GetRowRect(i);
+    const mozc::Rect rowRect = [self clientRect:tableLayout_.GetRowRect(i)];
     if (rowRect.PtrInRect(localPos)) {
       clickedRow = i;
       break;
@@ -488,7 +545,7 @@ using mozc::renderer::mac::MacViewUtil;
     return;
   }
   for (int i = 0; i < tableLayout_.number_of_rows(); ++i) {
-    const mozc::Rect rowRect = tableLayout_.GetRowRect(i);
+    const mozc::Rect rowRect = [self clientRect:tableLayout_.GetRowRect(i)];
     if (rowRect.PtrInRect(localPos)) {
       SessionCommand command;
       command.set_type(SessionCommand::SELECT_CANDIDATE);

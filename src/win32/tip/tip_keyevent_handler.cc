@@ -36,9 +36,11 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "base/win32/com.h"
 #include "base/win32/wide_char.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
@@ -48,9 +50,11 @@
 #include "win32/base/keyboard.h"
 #include "win32/base/keyevent_handler.h"
 #include "win32/base/surrogate_pair_observer.h"
+#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
+#include "win32/tip/tip_range_util.h"
 #include "win32/tip/tip_status.h"
 #include "win32/tip/tip_surrounding_text.h"
 #include "win32/tip/tip_text_service.h"
@@ -69,6 +73,66 @@ using ::mozc::commands::SessionCommand;
 // http://msdn.microsoft.com/en-us/library/windows/apps/hh967425.aspx
 constexpr UINT kTouchKeyboardNextPage = 0xf003;
 constexpr UINT kTouchKeyboardPreviousPage = 0xf004;
+
+// Read the current application property on each arrow key, rather than cache
+// the renderer's asynchronously updated layout across writing-mode changes.
+class WritingDirectionReader final : public TipComImplements<ITfEditSession> {
+ public:
+  explicit WritingDirectionReader(wil::com_ptr_nothrow<ITfContext> context)
+      : context_(std::move(context)) {}
+
+  bool vertical_writing() const { return vertical_writing_; }
+
+ private:
+  STDMETHODIMP DoEditSession(TfEditCookie read_cookie) override {
+    wil::com_ptr_nothrow<ITfRange> selection;
+    const HRESULT hr = TipRangeUtil::GetDefaultSelection(
+        context_.get(), read_cookie, &selection, nullptr);
+    if (FAILED(hr) || !selection) {
+      return E_FAIL;
+    }
+    return TipRangeUtil::IsVerticalWriting(selection.get(), read_cookie,
+                                           &vertical_writing_);
+  }
+
+  wil::com_ptr_nothrow<ITfContext> context_;
+  bool vertical_writing_ = false;
+};
+
+bool UseVerticalArrowKeys(TipTextService* text_service, ITfContext* context,
+                          const commands::Output& output, const VirtualKey& vk,
+                          bool open, bool is_key_down,
+                          const KeyboardStatus& keyboard_status) {
+  // Include unconverted preedit: the first physical Left must act as Down
+  // and start candidate selection, before a highlighted segment exists.
+  if (!open || !is_key_down || !output.has_preedit() ||
+      output.preedit().segment_size() == 0 ||
+      keyboard_status.IsPressed(VK_SHIFT) ||
+      keyboard_status.IsPressed(VK_CONTROL) ||
+      keyboard_status.IsPressed(VK_MENU)) {
+    return false;
+  }
+  switch (vk.virtual_key()) {
+    case VK_LEFT:
+    case VK_RIGHT:
+    case VK_UP:
+    case VK_DOWN:
+      break;
+    default:
+      return false;
+  }
+
+  auto reader = MakeComPtr<WritingDirectionReader>(context);
+  if (!reader) {
+    return false;
+  }
+  HRESULT session_result = E_FAIL;
+  const HRESULT hr =
+      context->RequestEditSession(text_service->GetClientID(), reader.get(),
+                                  TF_ES_SYNC | TF_ES_READ, &session_result);
+  return SUCCEEDED(hr) && SUCCEEDED(session_result) &&
+         reader->vertical_writing();
+}
 
 // Unlike IMM32 Mozc which is marked as IME_PROP_ACCEPT_WIDE_VKEY,
 // TSF Mozc cannot always receive a VK_PACKET keyevent whose high word consists
@@ -238,6 +302,9 @@ HRESULT OnTestKey(TipTextService* text_service, ITfContext* context,
   // Make an immutable snapshot of |private_context->ime_behavior_|, which
   // cannot be substituted for by const reference.
   InputBehavior behavior = private_context->input_behavior();
+  behavior.use_vertical_arrow_keys = UseVerticalArrowKeys(
+      text_service, context, private_context->last_output(), vk, open,
+      is_key_down, keyboard_status);
   Context mozc_context;
   FillMozcContextCommon(text_service, context, &mozc_context);
 
@@ -407,6 +474,9 @@ HRESULT OnKey(TipTextService* text_service, ITfContext* context,
     ignore_this_keyevent = false;
   } else {
     InputBehavior behavior = private_context->input_behavior();
+    behavior.use_vertical_arrow_keys = UseVerticalArrowKeys(
+        text_service, context, private_context->last_output(), vk, open,
+        is_key_down, keyboard_status);
 
     // Update On/Off state a conversion mode.
     InputState ime_state;

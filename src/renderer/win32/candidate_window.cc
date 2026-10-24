@@ -71,7 +71,6 @@ enum COLUMN_TYPE {
   NUMBER_OF_COLUMNS,    // number of columns. (this item should be last)
 };
 
-
 // ------------------------------------------------------------------------
 // Utility functions
 // ------------------------------------------------------------------------
@@ -328,7 +327,7 @@ void CandidateWindow::HandleMouseEvent(UINT nFlags, const CPoint& point,
     const commands::CandidateWindow::Candidate& candidate =
         candidate_window_->candidate(i);
 
-    const CRect rect = ToCRect(table_layout_->GetRowRect(i));
+    const CRect rect = ToCRect(ToClientRect(table_layout_->GetRowRect(i)));
     if (rect.PtInRect(point)) {
       commands::SessionCommand command;
       if (close_candidatewindow) {
@@ -445,13 +444,24 @@ void CandidateWindow::OnSettingChange(UINT uFlags, LPCTSTR /*lpszSection*/) {
   }
 }
 
-void CandidateWindow::UpdateLayout(
-    const commands::CandidateWindow& candidates) {
+void CandidateWindow::UpdateLayout(const commands::CandidateWindow& candidates,
+                                   bool vertical_writing) {
+  if (vertical_writing && vertical_text_renderer_ == nullptr) {
+    vertical_text_renderer_ = TextRenderer::CreateVertical(dpi_);
+  }
+  // Retain the existing horizontal renderer if DirectWrite is unavailable.
+  vertical_writing_ = vertical_writing && vertical_text_renderer_ != nullptr;
+  if (vertical_text_renderer_ != nullptr) {
+    vertical_text_renderer_->OnDpiChanged(dpi_);
+  }
   *candidate_window_ = candidates;
 
   // If we detect any change of font parameters, update text renderer
   if (metrics_changed_) {
     text_renderer_->OnThemeChanged();
+    if (vertical_text_renderer_ != nullptr) {
+      vertical_text_renderer_->OnThemeChanged();
+    }
     metrics_changed_ = false;
   }
 
@@ -485,7 +495,7 @@ void CandidateWindow::UpdateLayout(
     if (candidate_window_->footer().has_label()) {
       const std::wstring footer_label =
           mozc::win32::Utf8ToWide(candidate_window_->footer().label());
-      const Size label_string_size = text_renderer_->MeasureString(
+      const Size label_string_size = LayoutTextRenderer()->MeasureString(
           TextRenderer::FONTSET_FOOTER_LABEL, L" " + footer_label + L" ");
       footer_size.width += label_string_size.width;
       footer_size.height =
@@ -496,9 +506,9 @@ void CandidateWindow::UpdateLayout(
       // TODO(yukawa): Refactor the layout system for the footer.
       const std::wstring footer_sub_label =
           mozc::win32::Utf8ToWide(candidate_window_->footer().sub_label());
-      const Size label_string_size =
-          text_renderer_->MeasureString(TextRenderer::FONTSET_FOOTER_SUBLABEL,
-                                        L" " + footer_sub_label + L" ");
+      const Size label_string_size = LayoutTextRenderer()->MeasureString(
+          TextRenderer::FONTSET_FOOTER_SUBLABEL,
+          L" " + footer_sub_label + L" ");
       footer_size.width += label_string_size.width;
       footer_size.height =
           std::max(footer_size.height, label_string_size.height);
@@ -508,7 +518,7 @@ void CandidateWindow::UpdateLayout(
     if (candidate_window_->footer().index_visible()) {
       const std::wstring index_guide_string =
           mozc::win32::Utf8ToWide(GetIndexGuideString(*candidate_window_));
-      const Size index_guide_size = text_renderer_->MeasureString(
+      const Size index_guide_size = LayoutTextRenderer()->MeasureString(
           TextRenderer::FONTSET_FOOTER_INDEX, index_guide_string);
       footer_size.width += index_guide_size.width;
       footer_size.height =
@@ -516,7 +526,7 @@ void CandidateWindow::UpdateLayout(
     }
 
     // Calculate the size to display a Footer logo.
-    if (footer_logo_.is_valid()) {
+    if (!vertical_writing_ && footer_logo_.is_valid()) {
       if (candidate_window_->footer().logo_visible()) {
         footer_size.width += footer_logo_display_size_.width;
         footer_size.height =
@@ -536,7 +546,7 @@ void CandidateWindow::UpdateLayout(
       // We use FONTSET_CANDIDATE for calculating the minimum width.
       const std::wstring minimum_width_as_wstring =
           mozc::win32::Utf8ToWide(style_.column_minimum_width_string());
-      const Size minimum_size = text_renderer_->MeasureString(
+      const Size minimum_size = LayoutTextRenderer()->MeasureString(
           TextRenderer::FONTSET_CANDIDATE, minimum_width_as_wstring.c_str());
       table_layout_->EnsureColumnsWidth(COLUMN_CANDIDATE, COLUMN_DESCRIPTION,
                                         minimum_size.width);
@@ -552,8 +562,8 @@ void CandidateWindow::UpdateLayout(
 
   // put a padding in COLUMN_GAP1.
   // the width is determined to be equal to the width of " ".
-  const Size gap1_size =
-      text_renderer_->MeasureString(TextRenderer::FONTSET_CANDIDATE, L" ");
+  const Size gap1_size = LayoutTextRenderer()->MeasureString(
+      TextRenderer::FONTSET_CANDIDATE, L" ");
   table_layout_->EnsureCellSize(COLUMN_GAP1, gap1_size);
 
   bool description_found = false;
@@ -574,8 +584,8 @@ void CandidateWindow::UpdateLayout(
       text.push_back(L' ');  // put a space for padding
       text.append(shortcut);
       text.push_back(L' ');  // put a space for padding
-      const Size rendering_size =
-          text_renderer_->MeasureString(TextRenderer::FONTSET_SHORTCUT, text);
+      const Size rendering_size = LayoutTextRenderer()->MeasureString(
+          TextRenderer::FONTSET_SHORTCUT, text);
       table_layout_->EnsureCellSize(COLUMN_SHORTCUT, rendering_size);
     }
 
@@ -583,8 +593,8 @@ void CandidateWindow::UpdateLayout(
       std::wstring text;
       text.append(candidate_string);
 
-      const Size rendering_size =
-          text_renderer_->MeasureString(TextRenderer::FONTSET_CANDIDATE, text);
+      const Size rendering_size = LayoutTextRenderer()->MeasureString(
+          TextRenderer::FONTSET_CANDIDATE, text);
       table_layout_->EnsureCellSize(COLUMN_CANDIDATE, rendering_size);
     }
 
@@ -592,7 +602,7 @@ void CandidateWindow::UpdateLayout(
       std::wstring text;
       text.append(description);
       text.push_back(L' ');  // put a space for padding
-      const Size rendering_size = text_renderer_->MeasureString(
+      const Size rendering_size = LayoutTextRenderer()->MeasureString(
           TextRenderer::FONTSET_DESCRIPTION, text);
       table_layout_->EnsureCellSize(COLUMN_DESCRIPTION, rendering_size);
 
@@ -603,11 +613,25 @@ void CandidateWindow::UpdateLayout(
   // Put a padding in COLUMN_GAP2.
   // We use wide padding if there is any description column.
   const wchar_t* gap2_string = (description_found ? L"   " : L" ");
-  const Size gap2_size = text_renderer_->MeasureString(
+  const Size gap2_size = LayoutTextRenderer()->MeasureString(
       TextRenderer::FONTSET_CANDIDATE, gap2_string);
   table_layout_->EnsureCellSize(COLUMN_GAP2, gap2_size);
 
   table_layout_->FreezeLayout();
+}
+
+TextRenderer* CandidateWindow::LayoutTextRenderer() const {
+  return vertical_writing_ ? vertical_text_renderer_.get()
+                           : text_renderer_.get();
+}
+
+Rect CandidateWindow::ToClientRect(const Rect& rect) const {
+  if (!vertical_writing_) {
+    return rect;
+  }
+  // Logical inline advances downward; logical rows advance right-to-left.
+  return Rect(table_layout_->GetTotalSize().height - rect.Bottom(), rect.Left(),
+              rect.Height(), rect.Width());
 }
 
 void CandidateWindow::SetSendCommandInterface(
@@ -618,7 +642,8 @@ void CandidateWindow::SetSendCommandInterface(
 Size CandidateWindow::GetLayoutSize() const {
   DCHECK(table_layout_->IsLayoutFrozen()) << "Table layout is not frozen.";
 
-  return table_layout_->GetTotalSize();
+  const Size size = table_layout_->GetTotalSize();
+  return vertical_writing_ ? Size(size.height, size.width) : size;
 }
 
 Rect CandidateWindow::GetSelectionRectInScreenCord() const {
@@ -628,7 +653,8 @@ Rect CandidateWindow::GetSelectionRectInScreenCord() const {
       focused_array_index < candidate_window_->candidate_size()) {
     (void)candidate_window_->candidate(focused_array_index);
 
-    CRect rect = ToCRect(table_layout_->GetRowRect(focused_array_index));
+    CRect rect =
+        ToCRect(ToClientRect(table_layout_->GetRowRect(focused_array_index)));
     ClientToScreen(&rect);
     return Rect(rect.left, rect.top, rect.Width(), rect.Height());
   }
@@ -639,14 +665,14 @@ Rect CandidateWindow::GetSelectionRectInScreenCord() const {
 Rect CandidateWindow::GetCandidateColumnInClientCord() const {
   DCHECK(table_layout_->IsLayoutFrozen()) << "Table layout is not frozen.";
 
-  return table_layout_->GetCellRect(0, COLUMN_CANDIDATE);
+  return ToClientRect(table_layout_->GetCellRect(0, COLUMN_CANDIDATE));
 }
 
 Rect CandidateWindow::GetFirstRowInClientCord() const {
   DCHECK(table_layout_->IsLayoutFrozen()) << "Table layout is not frozen.";
   DCHECK_GT(table_layout_->number_of_rows(), 0)
       << "number of rows should be positive";
-  return table_layout_->GetRowRect(0);
+  return ToClientRect(table_layout_->GetRowRect(0));
 }
 
 void CandidateWindow::DrawCells(HDC dc) {
@@ -668,10 +694,11 @@ void CandidateWindow::DrawCells(HDC dc) {
           candidate_window_->candidate(i);
       const std::wstring display_string =
           GetDisplayStringByColumn(candidate, column_type);
-      const Rect text_rect = table_layout_->GetCellRect(i, column_type);
+      const Rect text_rect =
+          ToClientRect(table_layout_->GetCellRect(i, column_type));
       display_list.push_back(TextRenderingInfo(display_string, text_rect));
     }
-    text_renderer_->RenderTextList(dc, display_list, font_type);
+    LayoutTextRenderer()->RenderTextList(dc, display_list, font_type);
   }
 }
 
@@ -685,14 +712,14 @@ void CandidateWindow::DrawVScrollBar(HDC dc) {
     const int end_index =
         candidate_window_->candidate(candidates_in_page - 1).index();
 
-    const CRect background_crect = ToCRect(vscroll_rect);
+    const CRect background_crect = ToCRect(ToClientRect(vscroll_rect));
     FillSolidRect(dc, &background_crect,
                   ToColorRef(style_.scrollbar_background_color()));
 
     const mozc::Rect& indicator_rect = table_layout_->GetVScrollIndicatorRect(
         begin_index, end_index, candidates_total);
 
-    const CRect indicator_crect = ToCRect(indicator_rect);
+    const CRect indicator_crect = ToCRect(ToClientRect(indicator_rect));
     FillSolidRect(dc, &indicator_crect,
                   ToColorRef(style_.scrollbar_indicator_color()));
   }
@@ -711,7 +738,8 @@ void CandidateWindow::DrawShortcutBackground(HDC dc) {
       const int width = shortcut_colmun_rect.Right() - row_rect.Left();
       shortcut_colmun_rect.origin.x = row_rect.Left();
       shortcut_colmun_rect.size.width = width;
-      const CRect shortcut_colmun_crect = ToCRect(shortcut_colmun_rect);
+      const CRect shortcut_colmun_crect =
+          ToCRect(ToClientRect(shortcut_colmun_rect));
       FillSolidRect(dc, &shortcut_colmun_crect,
                     ToColorRef(style_.shortcut_style().background_color()));
     }
@@ -721,6 +749,35 @@ void CandidateWindow::DrawShortcutBackground(HDC dc) {
 void CandidateWindow::DrawFooter(HDC dc) {
   const Rect& footer_rect = table_layout_->GetFooterRect();
   if (!candidate_window_->has_footer() || footer_rect.IsRectEmpty()) {
+    return;
+  }
+
+  if (vertical_writing_) {
+    const Rect rect = ToClientRect(footer_rect);
+    const CRect crect = ToCRect(rect);
+    FillSolidRect(dc, &crect, ToColorRef(style_.footer_top_color()));
+    const auto& footer = candidate_window_->footer();
+    std::wstring label;
+    auto font = TextRenderer::FONTSET_FOOTER_LABEL;
+    if (footer.has_label()) {
+      label = mozc::win32::Utf8ToWide(footer.label());
+    } else if (footer.has_sub_label()) {
+      label = mozc::win32::Utf8ToWide(footer.sub_label());
+      font = TextRenderer::FONTSET_FOOTER_SUBLABEL;
+    }
+    const std::wstring index =
+        mozc::win32::Utf8ToWide(GetIndexGuideString(*candidate_window_));
+    const Size index_size = LayoutTextRenderer()->MeasureString(
+        TextRenderer::FONTSET_FOOTER_INDEX, index);
+    const Rect index_rect(footer_rect.Right() - index_size.width,
+                          footer_rect.Top(), index_size.width,
+                          footer_rect.Height());
+    LayoutTextRenderer()->RenderText(dc, index, ToClientRect(index_rect),
+                                     TextRenderer::FONTSET_FOOTER_INDEX);
+    const Rect label_rect(footer_rect.Left(), footer_rect.Top(),
+                          footer_rect.Width() - index_size.width,
+                          footer_rect.Height());
+    LayoutTextRenderer()->RenderText(dc, label, ToClientRect(label_rect), font);
     return;
   }
 
@@ -796,7 +853,7 @@ void CandidateWindow::DrawFooter(HDC dc) {
   if (candidate_window_->footer().index_visible()) {
     const std::wstring index_guide_string =
         mozc::win32::Utf8ToWide(GetIndexGuideString(*candidate_window_));
-    const Size index_guide_size = text_renderer_->MeasureString(
+    const Size index_guide_size = LayoutTextRenderer()->MeasureString(
         TextRenderer::FONTSET_FOOTER_INDEX, index_guide_string);
     const Rect index_rect(footer_content_rect.Right() - index_guide_size.width,
                           footer_content_rect.Top(), index_guide_size.width,
@@ -836,7 +893,7 @@ void CandidateWindow::DrawSelectedRect(HDC dc) {
     (void)candidate_window_->candidate(focused_array_index);
 
     const CRect selected_rect =
-        ToCRect(table_layout_->GetRowRect(focused_array_index));
+        ToCRect(ToClientRect(table_layout_->GetRowRect(focused_array_index)));
     FillSolidRect(dc, &selected_rect,
                   ToColorRef(style_.focused_background_color()));
 
@@ -856,6 +913,8 @@ void CandidateWindow::DrawInformationIcon(HDC dc) {
       rect.right = rect.right - (2.0 * scale_factor);
       rect.top += (2.0 * scale_factor);
       rect.bottom -= (2.0 * scale_factor);
+      rect = ToCRect(
+          ToClientRect(Rect(rect.left, rect.top, rect.Width(), rect.Height())));
       FillSolidRect(dc, &rect, ToColorRef(style_.scrollbar_indicator_color()));
       ::SetDCBrushColor(dc, ToColorRef(style_.scrollbar_indicator_color()));
       ::FrameRect(dc, &rect, static_cast<HBRUSH>(::GetStockObject(DC_BRUSH)));
@@ -864,14 +923,14 @@ void CandidateWindow::DrawInformationIcon(HDC dc) {
 }
 
 void CandidateWindow::DrawBackground(HDC dc) {
-  const Rect client_rect(Point(0, 0), table_layout_->GetTotalSize());
+  const Rect client_rect(Point(0, 0), GetLayoutSize());
   const CRect client_crect = ToCRect(client_rect);
   FillSolidRect(dc, &client_crect,
                 ToColorRef(style_.candidate_style().background_color()));
 }
 
 void CandidateWindow::DrawFrame(HDC dc) {
-  const Rect client_rect(Point(0, 0), table_layout_->GetTotalSize());
+  const Rect client_rect(Point(0, 0), GetLayoutSize());
   const CRect client_crect = ToCRect(client_rect);
 
   // DC brush is available in Windows 2000 and later.

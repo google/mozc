@@ -59,6 +59,8 @@ struct InputBehavior {
   bool prefer_kana_input = false;
   bool use_mode_indicator = false;
   bool use_romaji_key_to_toggle_input_style = false;
+  // Set by TSF while composing or converting in a vertical-writing context.
+  bool use_vertical_arrow_keys = false;
   std::vector<KeyInformation> direct_mode_keys;
 };
 
