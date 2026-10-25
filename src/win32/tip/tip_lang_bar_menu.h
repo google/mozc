@@ -64,8 +64,6 @@ namespace tsf {
 #define IIDSTR_IMozcLangBarToggleItem "9ABF0C3B-4AC6-4DED-9EF6-97E728852CF3"
 #endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
-class TipBarCallback;
-
 enum TipLangBarItemFlags {
   kTipLangBarItemTypeDefault = 0,
   kTipLangBarItemTypeChecked = TF_LBMENUF_CHECKED,  // 0x1
@@ -80,8 +78,7 @@ struct TipLangBarMenuItem {
   int flags_;
   UINT item_id_;
   UINT text_id_;
-  UINT icon_id_for_non_theme_;
-  UINT icon_id_for_theme_;
+  UINT icon_id_;
 };
 
 // Represents the data possessed internally by a language bar menu item.
@@ -89,8 +86,7 @@ struct TipLangBarMenuData {
   int flags_;
   UINT item_id_;
   UINT text_id_;
-  UINT icon_id_for_non_theme_;
-  UINT icon_id_for_theme_;
+  UINT icon_id_;
   int length_;
   wchar_t text_[TF_LBI_DESC_MAXLEN];
 };
@@ -159,11 +155,6 @@ class TipLangBarButton : public TipComImplements<ITfLangBarItemButton,
   // Notifies the language bar of a change in a language bar item.
   STDMETHODIMP OnUpdate(DWORD update_flag);
 
-  // Returns true if a 32-bpp icon can be displayed as a context menu item on
-  // the LangBar.  See http://b/2260057 and http://b/2265755
-  // for details.
-  static bool CanContextMenuDisplay32bppIcon();
-
   virtual ~TipLangBarButton() = default;
 
  protected:
@@ -211,32 +202,6 @@ class TipLangBarButton : public TipComImplements<ITfLangBarItemButton,
   bool context_menu_enabled_;
 };
 
-// Represents the common operations for a button-menu item with an icon in the
-// language bar.
-class TipLangBarMenuButton final : public TipLangBarButton {
- public:
-  TipLangBarMenuButton(TipLangBarCallback* langbar_callback, const GUID& guid,
-                       bool show_in_tray);
-
-  STDMETHODIMP GetInfo(TF_LANGBARITEMINFO* item_info) override;
-
-  // A part of the ITfLangBarItemButton interface methods
-  STDMETHODIMP InitMenu(ITfMenu* menu) override;
-  STDMETHODIMP OnMenuSelect(UINT menu_id) override;
-  STDMETHODIMP GetIcon(HICON* icon) override;
-
-  // Initializes an ImeButtonMenu instance.
-  // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance, UINT string_id,
-               const TipLangBarMenuItem* menu, int count,
-               UINT menu_icon_id_for_non_theme, UINT menu_icon_id_for_theme);
-
- private:
-  // Represents the icon of the language bar menu.
-  UINT menu_icon_id_for_theme_;
-  UINT menu_icon_id_for_non_theme_;
-};
-
 // Represents the common operations for a toggle button-menu item in the
 // language bar.
 class TipLangBarToggleButton : public TipLangBarButton,
@@ -279,31 +244,6 @@ class TipLangBarToggleButton : public TipLangBarButton,
   bool disabled_;
   std::wstring description_for_enabled_;
   TipLangBarMenuData menu_data_for_disabled_;
-};
-
-// Represents the common operations for a button-menu item in the system
-// language bar.
-class TipSystemLangBarMenu : public TipComImplements<ITfSystemLangBarItemSink> {
- public:
-  TipSystemLangBarMenu(
-      wil::com_ptr_nothrow<TipLangBarCallback> lang_bar_callback,
-      const GUID& guid);
-
-  // The ITfLangBarSystemItem interface methods
-  STDMETHODIMP InitMenu(ITfMenu* menu) override;
-  STDMETHODIMP OnMenuSelect(UINT menu_id) override;
-
-  // Initializes an ImeButtonMenu instance.
-  // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance, const TipLangBarMenuItem* menu, int count);
-
- private:
-  // Save the TipLangBarCallback object that owns this menu to prevent the
-  // object from being deleted.
-  wil::com_ptr_nothrow<TipLangBarCallback> lang_bar_callback_;
-
-  // Represents the data possessed by the language bar menu.
-  TipLangBarMenuDataArray menu_data_;
 };
 
 }  // namespace tsf
