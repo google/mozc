@@ -6593,7 +6593,10 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // InputModeChange commands from direct mode are supported only for Windows
   // for now.
-#ifdef _WIN32
+  if constexpr (!port::IsWindows()) {
+    GTEST_SKIP() << "InputModeChange commands from direct mode are supported "
+                    "only for Windows.";
+  }
   config::Config config;
   constexpr absl::string_view kCustomKeymapTable =
       "status\tkey\tcommand\n"
@@ -6614,7 +6617,6 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   EXPECT_TRUE(SendKey("Hiragana", &session, &command));
   EXPECT_TRUE(SendKey("a", &session, &command));
   EXPECT_SINGLE_SEGMENT("あ", command);
-#endif  // _WIN32
 }
 
 TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
@@ -6746,7 +6748,10 @@ TEST_F(SessionTest, CompositionModeConsumed) {
 TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
   // This test is only for Windows, because InputModeHiragana bound
   // with Hiragana key is only supported on Windows yet.
-#ifdef _WIN32
+  if constexpr (!port::IsWindows()) {
+    GTEST_SKIP() << "InputModeHiragana bound with Hiragana key is only "
+                    "supported on Windows yet.";
+  }
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
@@ -6764,7 +6769,6 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
   commands::Command command;
   EXPECT_TRUE(TestSendKey("Hiragana", &session, &command));
   EXPECT_TRUE(command.output().consumed());
-#endif  // _WIN32
 }
 
 TEST_F(SessionTest, CompositionModeOutputHasComposition) {
