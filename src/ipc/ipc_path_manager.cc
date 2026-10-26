@@ -52,6 +52,7 @@
 #include "base/process_mutex.h"
 #include "base/random.h"
 #include "base/system_util.h"
+#include "base/unverified_sha1.h"
 #include "base/version.h"
 #include "base/vlog.h"
 #include "ipc/ipc.h"
@@ -75,7 +76,6 @@
 #include <wil/resource.h>
 
 #include "base/const.h"
-#include "base/unverified_sha1.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32
@@ -121,14 +121,15 @@ bool IsValidKey(absl::string_view name) {
 
 std::string CreateIPCKey() {
   // key is 128 bit
-#ifdef _WIN32
-  const std::string sid = SystemUtil::GetUserSidAsString();
-  const std::string buf = internal::UnverifiedSHA1::MakeDigest(sid);
-#else   // _WIN32
-  // get 128 bit key: Note that collision will happen.
-  Random random;
-  const std::string buf = random.ByteString(16);
-#endif  // _WIN32
+  std::string buf;
+  if constexpr (port::IsWindows()) {
+    const std::string sid = SystemUtil::GetUserSidAsString();
+    buf = internal::UnverifiedSHA1::MakeDigest(sid);
+  } else {
+    // get 128 bit key: Note that collision will happen.
+    Random random;
+    buf = random.ByteString(16);
+  }
 
   // escape
   std::string value;
