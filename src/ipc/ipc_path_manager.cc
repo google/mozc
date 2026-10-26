@@ -205,13 +205,8 @@ bool IPCPathManager::SavePathName() {
   ipc_path_info_.set_protocol_version(IPC_PROTOCOL_VERSION);
   ipc_path_info_.set_product_version(Version::GetMozcVersion());
 
-#ifdef _WIN32
-  ipc_path_info_.set_process_id(static_cast<uint32_t>(::GetCurrentProcessId()));
-  ipc_path_info_.set_thread_id(static_cast<uint32_t>(::GetCurrentThreadId()));
-#else   // _WIN32
-  ipc_path_info_.set_process_id(static_cast<uint32_t>(getpid()));
-  ipc_path_info_.set_thread_id(0);
-#endif  // _WIN32
+  ipc_path_info_.set_process_id(SystemUtil::GetProcessId());
+  ipc_path_info_.set_thread_id(SystemUtil::GetThreadIdForWindows());
 
   std::string buf;
   if (!ipc_path_info_.SerializeToString(&buf)) {

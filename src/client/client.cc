@@ -64,8 +64,6 @@
 
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
-#else  // _WIN32
-#include <unistd.h>
 #endif  // _WIN32
 
 #ifdef __APPLE__
@@ -465,13 +463,8 @@ bool Client::CreateSession() {
   commands::ApplicationInfo* info = input.mutable_application_info();
   DCHECK(info);
 
-#ifdef _WIN32
-  info->set_process_id(static_cast<uint32_t>(::GetCurrentProcessId()));
-  info->set_thread_id(static_cast<uint32_t>(::GetCurrentThreadId()));
-#else   // _WIN32
-  info->set_process_id(static_cast<uint32_t>(getpid()));
-  info->set_thread_id(0);
-#endif  // _WIN32
+  info->set_process_id(SystemUtil::GetProcessId());
+  info->set_thread_id(SystemUtil::GetThreadIdForWindows());
 
   commands::Output output;
   if (!CheckVersionOrRestartServerInternal(input, &output)) {

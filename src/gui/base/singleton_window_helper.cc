@@ -38,6 +38,7 @@
 #include "absl/strings/string_view.h"
 #include "base/file_stream.h"
 #include "base/process_mutex.h"
+#include "base/system_util.h"
 #include "ipc/window_info.pb.h"
 
 #ifdef _WIN32
@@ -47,8 +48,6 @@
 #include "base/util.h"
 #include "base/win32/wide_char.h"
 #include "gui/base/win_util.h"
-#else  // _WIN32
-#include <unistd.h>
 #endif  // _WIN32
 
 namespace mozc {
@@ -119,11 +118,7 @@ SingletonWindowHelper::SingletonWindowHelper(absl::string_view name) {
 
 bool SingletonWindowHelper::FindPreviousWindow() {
   ipc::WindowInfo window_info;
-#ifdef _WIN32
-  window_info.set_process_id(static_cast<uint32_t>(::GetCurrentProcessId()));
-#else   // _WIN32
-  window_info.set_process_id(static_cast<uint32_t>(getpid()));
-#endif  // _WIN32
+  window_info.set_process_id(SystemUtil::GetProcessId());
 
   std::string window_info_str;
   if (!window_info.SerializeToString(&window_info_str)) {

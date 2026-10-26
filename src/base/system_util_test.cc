@@ -103,6 +103,18 @@ TEST_F(SystemUtilTest, GetTotalPhysicalMemoryTest) {
   EXPECT_GT(SystemUtil::GetTotalPhysicalMemory(), 0);
 }
 
+TEST_F(SystemUtilTest, GetProcessId) {
+  EXPECT_GT(SystemUtil::GetProcessId(), 0);
+}
+
+TEST_F(SystemUtilTest, GetThreadIdForWindows) {
+#if defined(_WIN32)
+  EXPECT_GT(SystemUtil::GetThreadIdForWindows(), 0);
+#else   // _WIN32
+  EXPECT_EQ(SystemUtil::GetThreadIdForWindows(), 0);
+#endif  // _WIN32
+}
+
 #ifdef __ANDROID__
 TEST_F(SystemUtilTest, GetOSVersionStringTestForAndroid) {
   std::string result = SystemUtil::GetOSVersionString();

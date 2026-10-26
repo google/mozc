@@ -115,6 +115,14 @@ class SystemUtil {
   // disable IME in the current process/thread
   static void DisableIME();
 
+  // Returns the process ID of the current process.
+  static uint32_t GetProcessId();
+
+  // Returns the thread ID of the current thread on Windows.
+  // On other platforms, returns 0 because thread IDs cannot be inspected
+  // across process boundaries.
+  static uint32_t GetThreadIdForWindows();
+
   // retrieve total physical memory. returns 0 if any error occurs.
   static uint64_t GetTotalPhysicalMemory();
 

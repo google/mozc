@@ -637,6 +637,22 @@ void SystemUtil::DisableIME() {
 #endif  // _WIN32
 }
 
+uint32_t SystemUtil::GetProcessId() {
+#if defined(_WIN32)
+  return static_cast<uint32_t>(::GetCurrentProcessId());
+#else   // _WIN32
+  return static_cast<uint32_t>(::getpid());
+#endif  // _WIN32
+}
+
+uint32_t SystemUtil::GetThreadIdForWindows() {
+#if defined(_WIN32)
+  return static_cast<uint32_t>(::GetCurrentThreadId());
+#else   // _WIN32
+  return 0;
+#endif  // _WIN32
+}
+
 uint64_t SystemUtil::GetTotalPhysicalMemory() {
 #if defined(_WIN32)
   MEMORYSTATUSEX memory_status = {sizeof(MEMORYSTATUSEX)};
