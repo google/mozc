@@ -89,9 +89,9 @@ using ::mozc::converter::Attribute;
 // in LRU.
 constexpr size_t kMaxPrevValueTrial = 500;
 
-// Don't save key/value that are
-// longer than kMaxCandidateSize to avoid memory explosion
-constexpr size_t kMaxStringLength = 256;
+// Don't save key/value that are longer than kMaxStringLength to avoid memory
+// explosion. Matches the converter's max character length (1024 bytes).
+constexpr size_t kMaxStringLength = 1024;
 
 // Maximum size of next_entries
 constexpr size_t kMaxNextEntriesSize = 6;
@@ -382,6 +382,8 @@ bool UserHistoryPredictor::RemoveNgramChain(absl::string_view target_key,
     NOT_FOUND,
   };
 
+  constexpr size_t kMaxNgramChainDepth = 32;
+  absl::flat_hash_set<std::pair<uint64_t, size_t>> seen;
   std::vector<absl::string_view> key_ngrams, value_ngrams;
   key_ngrams.reserve(8);
   value_ngrams.reserve(8);
@@ -389,6 +391,25 @@ bool UserHistoryPredictor::RemoveNgramChain(absl::string_view target_key,
       remove_ngram_chain_internal =
           [&](Entry& entry, size_t key_ngrams_len,
               size_t value_ngrams_len) -> RemoveNgramChainResult {
+    if (key_ngrams.size() >= kMaxNgramChainDepth) {
+      return NOT_FOUND;
+    }
+
+    // Prune branches that do not match the prefix of remaining target
+    // key/value.
+    if (!target_key.substr(key_ngrams_len).starts_with(entry.key()) ||
+        !target_value.substr(value_ngrams_len).starts_with(entry.value())) {
+      return NOT_FOUND;
+    }
+
+    // Memoize visited state (entry fingerprint and key offset) to prevent
+    // redundant searches and cycles without needing to erase on backtracking.
+    const uint64_t current_fp =
+        UserHistoryStorage::Fingerprint(entry.key(), entry.value());
+    if (!seen.insert({current_fp, key_ngrams_len}).second) {
+      return NOT_FOUND;
+    }
+
     // Updates the lengths with the current entry node.
     key_ngrams_len += entry.key().size();
     value_ngrams_len += entry.value().size();

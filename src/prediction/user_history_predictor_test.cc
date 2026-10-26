@@ -6714,4 +6714,105 @@ TEST_F(UserHistoryPredictorTest, CharacterFormNormalization) {
   char_form_manager->ClearHistory();
 }
 
+// Tests that deleting a long history entry exceeding 256 bytes (up to 1024
+// bytes) succeeds because the whole sentence is stored in user history storage.
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryOnLongSentenceOver256Bytes) {
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  // Create a long sentence exceeding 256 bytes.
+  // 10 segments of 35 bytes each = 350 bytes (> 256 bytes, <= 1024 bytes).
+  SegmentsProxy segments_proxy;
+  std::string full_key;
+  std::string full_value;
+  for (int i = 0; i < 10; ++i) {
+    const std::string seg_key =
+        absl::StrFormat("きー%02dあいうえおかきくけ", i);
+    const std::string seg_val =
+        absl::StrFormat("値ー%02dアイウエオカキクケ", i);
+    segments_proxy.AddSegment(seg_key);
+    segments_proxy.AddCandidate(i, seg_val);
+    absl::StrAppend(&full_key, seg_key);
+    absl::StrAppend(&full_value, seg_val);
+  }
+  ASSERT_GT(full_key.size(), 256);
+  ASSERT_GT(full_value.size(), 256);
+  ASSERT_LE(full_key.size(), 1024);
+  ASSERT_LE(full_value.size(), 1024);
+
+  composer_.Reset();
+  composer_.SetPreeditTextForTestOnly(full_key);
+  const ConversionRequest convreq =
+      CreateConversionRequest(composer_, segments_proxy);
+  predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+
+  // User attempts to delete this candidate via Ctrl+Del.
+  EXPECT_TRUE(predictor->ClearHistoryEntry(full_key, full_value));
+}
+
+// Reproduces the issue where RemoveNgramChain exhibits exponential search /
+// hang / crash when the history graph contains a cycle and the target key is
+// long.
+TEST_F(UserHistoryPredictorTest,
+       RemoveNgramChainExponentialSearchOnLoopWithLongKey) {
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
+
+  // Set up a fully connected 3-node cycle:
+  // Every node connects to the other two nodes (2 branches per step).
+  UserHistoryPredictor::Entry* a = InsertEntry(predictor, "a", "A");
+  UserHistoryPredictor::Entry* b = InsertEntry(predictor, "b", "B");
+  UserHistoryPredictor::Entry* c = InsertEntry(predictor, "c", "C");
+
+  a->add_next_entry_fps(UserHistoryStorage::Fingerprint(*b));
+  a->add_next_entry_fps(UserHistoryStorage::Fingerprint(*c));
+  b->add_next_entry_fps(UserHistoryStorage::Fingerprint(*a));
+  b->add_next_entry_fps(UserHistoryStorage::Fingerprint(*c));
+  c->add_next_entry_fps(UserHistoryStorage::Fingerprint(*a));
+  c->add_next_entry_fps(UserHistoryStorage::Fingerprint(*b));
+
+  // Target key starts with "a" but diverges immediately.
+  // With 2 choices at every step, DFS without cycle detection and prefix checks
+  // explores 2^24 = 16,777,216 paths for length 25.
+  // This takes thousands of milliseconds instead of terminating in < 1ms,
+  // demonstrating the exponential blowup that causes hangs/crashes on long
+  // histories.
+  const std::string target_key = "a" + std::string(24, 'x');
+  const std::string target_value = "A" + std::string(24, 'x');
+
+  const absl::Time start = absl::Now();
+  EXPECT_FALSE(predictor_peer.RemoveNgramChain(target_key, target_value, *a));
+  const absl::Duration elapsed = absl::Now() - start;
+
+  // Generous threshold to detect exponential blowup while avoiding flakes
+  // under sanitizers/VM load.
+  EXPECT_LT(elapsed, absl::Seconds(1));
+}
+
+// Tests that RemoveNgramChain safely handles cycles where nodes have matching
+// prefixes without infinite recursion or duplicate traversal.
+TEST_F(UserHistoryPredictorTest,
+       RemoveNgramChainHandlesCycleWithMatchingPrefix) {
+  UserHistoryPredictor* predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
+
+  // Set up a mutual cycle between two distinct nodes matching "a" sequences:
+  // a ("aa", "AA") <--> b ("a", "A")
+  UserHistoryPredictor::Entry* a = InsertEntry(predictor, "aa", "AA");
+  UserHistoryPredictor::Entry* b = InsertEntry(predictor, "a", "A");
+  a->add_next_entry_fps(UserHistoryStorage::Fingerprint(*b));
+  b->add_next_entry_fps(UserHistoryStorage::Fingerprint(*a));
+
+  // Target key is a sequence of "a"s. Both "aa" and "a" match the prefix at
+  // every step, so prefix pruning alone does not stop the cycle.
+  // State memoization prevents re-exploring visited states and terminates.
+  const std::string target_key = std::string(10, 'a');
+  const std::string target_value = std::string(10, 'A');
+
+  const absl::Time start = absl::Now();
+  EXPECT_FALSE(predictor_peer.RemoveNgramChain(target_key, target_value, *a));
+  const absl::Duration elapsed = absl::Now() - start;
+
+  EXPECT_LT(elapsed, absl::Seconds(1));
+}
+
 }  // namespace mozc::prediction
