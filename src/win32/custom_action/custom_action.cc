@@ -343,7 +343,7 @@ UINT __stdcall FixupConfigFilePermission(MSIHANDLE msi_handle) {
   // Check the file permission of "config1.db" if exists to ensure that
   // "ALL APPLICATION PACKAGES" have read access to it.
   // See https://github.com/google/mozc/issues/1076 for details.
-  ::mozc::config::ConfigHandler::FixupFilePermission();
+  ::mozc::config::ConfigHandler::FixupFilePermissionForWindows();
 
   // Return always ERROR_SUCCESS regardless of the result, as not being able
   // to fixup the permission is not problematic enough to block installation

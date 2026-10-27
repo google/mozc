@@ -107,9 +107,10 @@ class ConfigFileStream {
   // Clear all memory:// files.  This is a utility method for testing.
   static void ClearOnMemoryFiles();
 
-#ifdef _WIN32
-  static void FixupFilePermission(absl::string_view filename);
-#endif  // _WIN32
+  // Checks the file permission of "config1.db" if it exists on Windows to
+  // ensure that "ALL APPLICATION PACKAGES" have read access to it.
+  // On other platforms, this is a no-op.
+  static void FixupFilePermissionForWindows(absl::string_view filename);
 
  private:
   // This function is deprecated. Use OpenReadText or OpenReadBinary instead.

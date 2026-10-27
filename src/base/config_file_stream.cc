@@ -221,10 +221,11 @@ std::string ConfigFileStream::GetFileName(absl::string_view filename) {
 
 void ConfigFileStream::ClearOnMemoryFiles() { GetOnMemoryFileMap()->clear(); }
 
-#ifdef _WIN32
 // Check the file permission of "config1.db" if exists to ensure that
 // "ALL APPLICATION PACKAGES" have read access to it.
-void ConfigFileStream::FixupFilePermission(absl::string_view filename) {
+void ConfigFileStream::FixupFilePermissionForWindows(
+    absl::string_view filename) {
+#if defined(_WIN32)
   const std::string path = ConfigFileStream::GetFileName(filename);
   if (path.empty()) {
     return;
@@ -235,7 +236,7 @@ void ConfigFileStream::FixupFilePermission(absl::string_view filename) {
         win32::Utf8ToWide(path),
         WinSandbox::AppContainerVisibilityType::kConfigFile);
   }
-}
 #endif  // _WIN32
+}
 
 }  // namespace mozc
