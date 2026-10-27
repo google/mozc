@@ -198,34 +198,42 @@ TEST_F(CorrectionRewriterTest, InsertOrPromoteCorrectionCandidateTest) {
   }
 
   {
-    // Corrected candidate already exists at index 1 (e.g., from typing
-    // correction with key "さいぜりやを" and multi-segment boundary): annotate
-    // in place, align key / content_key / content_value, and clear
-    // inner_segment_boundary without inserting a duplicate.
+    // Corrected candidate already exists at index 4 (> kInsertPosition = 3)
+    // from typing correction (with key "さいぜりやを" != error "さいぜりあ"):
+    // do not insert a duplicate, do not promote to kInsertPosition, and do not
+    // attach SPELLING_CORRECTION annotations.
     Segments segments;
     Segment* segment = AddSegment("さいぜりあを", &segments);
     AddCandidate("さいぜりあを", "サイゼリアを", "さいぜりあ", "サイゼリア",
+                 segment);
+    AddCandidate("さいぜりあを", "さいぜりあを", "さいぜりあ", "さいぜりあ",
+                 segment);
+    AddCandidate("さいぜりあを", "ｻｲｾﾞﾘｱを", "さいぜりあ", "ｻｲｾﾞﾘｱ", segment);
+    AddCandidate("さいぜりあを", "Saizeriyaを", "さいぜりあ", "Saizeriya",
                  segment);
     converter::Candidate* existing =
         AddCandidate("さいぜりやを", "サイゼリヤを", "さいぜりやを",
                      "サイゼリヤを", segment);
     existing->inner_segment_boundary.push_back(1);
-    EXPECT_TRUE(rewriter->Rewrite(ConvReq(config, request), &segments));
-    ASSERT_EQ(segments.conversion_segment(0).candidates_size(), 2);
+    EXPECT_FALSE(rewriter->Rewrite(ConvReq(config, request), &segments));
+    ASSERT_EQ(segments.conversion_segment(0).candidates_size(), 5);
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
               "サイゼリアを");
-    EXPECT_EQ(segments.conversion_segment(0).candidate(1).key, "さいぜりあを");
-    EXPECT_EQ(segments.conversion_segment(0).candidate(1).content_key,
-              "さいぜりあ");
-    EXPECT_EQ(segments.conversion_segment(0).candidate(1).value,
+    EXPECT_EQ(segments.conversion_segment(0).candidate(3).value, "Saizeriyaを");
+    EXPECT_EQ(segments.conversion_segment(0).candidate(4).key, "さいぜりやを");
+    EXPECT_EQ(segments.conversion_segment(0).candidate(4).content_key,
+              "さいぜりやを");
+    EXPECT_EQ(segments.conversion_segment(0).candidate(4).value,
               "サイゼリヤを");
-    EXPECT_EQ(segments.conversion_segment(0).candidate(1).content_value,
-              "サイゼリヤ");
-    EXPECT_TRUE(segments.conversion_segment(0)
-                    .candidate(1)
-                    .inner_segment_boundary.empty());
-    EXPECT_TRUE(segments.conversion_segment(0).candidate(1).attributes &
-                converter::Attribute::SPELLING_CORRECTION);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(4).content_value,
+              "サイゼリヤを");
+    EXPECT_FALSE(segments.conversion_segment(0)
+                     .candidate(4)
+                     .inner_segment_boundary.empty());
+    EXPECT_FALSE(segments.conversion_segment(0).candidate(4).attributes &
+                 converter::Attribute::SPELLING_CORRECTION);
+    EXPECT_TRUE(
+        segments.conversion_segment(0).candidate(4).display_value.empty());
   }
 
   {
@@ -325,6 +333,24 @@ TEST_F(CorrectionRewriterTest,
         rewrite("ふいんき", "雰囲気", commands::Request::PLAIN_TEXT);
     EXPECT_TRUE(candidate.description.empty());
     EXPECT_EQ(candidate.display_value, "雰囲気(ふんいき)");
+  }
+
+  {
+    // Even if SPELLING_CORRECTION is already set from the system dictionary,
+    // reading_correction.tsv entry still populates the reading correction
+    // display_value and preserves functional_value().
+    Segments segments;
+    Segment* segment = AddSegment("すくつを", &segments);
+    converter::Candidate* candidate =
+        AddCandidate("すくつを", "巣窟を", "すくつ", "巣窟", segment);
+    candidate->attributes |= converter::Attribute::SPELLING_CORRECTION;
+    commands::Request request;
+    request.set_display_value_capability(commands::Request::PLAIN_TEXT);
+    EXPECT_TRUE(rewriter->Rewrite(ConvReq(config, request), &segments));
+    EXPECT_TRUE(
+        segments.conversion_segment(0).candidate(0).description.empty());
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).display_value,
+              "巣(そう)窟を");
   }
 
   {

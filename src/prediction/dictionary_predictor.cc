@@ -998,32 +998,12 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
       if (i == j) {
         continue;
       }
-      Result& target_result = results[j];
-      if (target_result.attributes & Attribute::SPELLING_CORRECTION) {
+      const Result& target_result = results[j];
+      if (target_result.removed ||
+          (target_result.attributes & Attribute::SPELLING_CORRECTION)) {
         continue;
       }
-      // Merge typing-corrected candidates of the same value into a literal
-      // SPELLING_CORRECTION candidate to keep the SPELLING_CORRECTION attribute
-      // and original key for CorrectionRewriter.
-      constexpr uint32_t kTypingCorrectionAttributes =
-          Attribute::TYPING_CORRECTION | Attribute::KEY_EXPANDED_IN_DICTIONARY;
-      if (!(result.attributes & kTypingCorrectionAttributes) &&
-          (target_result.attributes & kTypingCorrectionAttributes) &&
-          !((result.attributes ^ target_result.attributes) &
-            Attribute::PARTIALLY_KEY_CONSUMED) &&
-          target_result.value == result.value) {
-        if (result.key == request.key() ||
-            request_key_len >
-                filter::GetMissSpelledPosition(result.key, result.value) + 1) {
-          result.cost = std::min(result.cost, target_result.cost);
-          target_result.removed = true;
-          MOZC_WORD_LOG(target_result,
-                        "Removed. Merged into SPELLING_CORRECTION.");
-        }
-        continue;
-      }
-      // Keep literal same-key candidates (e.g., "ビックバン") on mobile.
-      if (!is_mixed_conversion && target_result.key == result.key) {
+      if (target_result.key == result.key) {
         same_key_index.push_back(j);
       }
       if (target_result.value == result.value) {
@@ -1035,17 +1015,23 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
     if (!same_key_index.empty() && !same_value_index.empty()) {
       result.removed = true;
       MOZC_WORD_LOG(result, "Removed. same_(key|value)_index.");
-      for (const size_t k : same_key_index) {
-        results[k].removed = true;
-        MOZC_WORD_LOG(results[k], "Removed. same_(key|value)_index.");
+      // Keep literal same-key candidates (e.g., "ビックバン") on mobile.
+      if (!is_mixed_conversion) {
+        for (const size_t k : same_key_index) {
+          results[k].removed = true;
+          MOZC_WORD_LOG(results[k], "Removed. same_(key|value)_index.");
+        }
       }
     } else if (same_key_index.empty() && !same_value_index.empty()) {
       result.removed = true;
       MOZC_WORD_LOG(result, "Removed. same_value_index.");
     } else if (!same_key_index.empty() && same_value_index.empty()) {
-      for (const size_t k : same_key_index) {
-        results[k].removed = true;
-        MOZC_WORD_LOG(results[k], "Removed. same_key_index.");
+      // Keep literal same-key candidates (e.g., "ビックバン") on mobile.
+      if (!is_mixed_conversion) {
+        for (const size_t k : same_key_index) {
+          results[k].removed = true;
+          MOZC_WORD_LOG(results[k], "Removed. same_key_index.");
+        }
       }
       if (request_key_len <=
           filter::GetMissSpelledPosition(result.key, result.value)) {

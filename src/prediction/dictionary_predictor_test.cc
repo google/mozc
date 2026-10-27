@@ -850,6 +850,22 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
   const std::vector<Result> results = predictor.Predict(convreq);
 
   EXPECT_FALSE(FindCandidateByValue(results, "アボカド"));
+
+  // Also verify on mobile (mixed conversion) that predictive
+  // SPELLING_CORRECTION is removed before reaching the misspelled position.
+  request_test_util::FillMobileRequest(request_.get());
+  EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
+                        Token::SPELLING_CORRECTION),
+          CreateResult5("あぼがど", "アボガド", 500, prediction::UNIGRAM,
+                        Token::NONE),
+      }));
+  const ConversionRequest mobile_convreq =
+      CreateConversionRequest(ConversionRequest::PREDICTION, "あぼが");
+  const std::vector<Result> mobile_results = predictor.Predict(mobile_convreq);
+  EXPECT_FALSE(FindCandidateByValue(mobile_results, "アボカド"));
+  EXPECT_TRUE(FindCandidateByValue(mobile_results, "アボガド"));
 }
 
 TEST_F(DictionaryPredictorTest, MobileZeroQuery) {
@@ -4400,13 +4416,15 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuffixSkipWithoutHistory) {
   EXPECT_FALSE(FindCandidateByValue(results, "以下"));
 }
 
-TEST_F(DictionaryPredictorTest,
-       MergeTypingCorrectionIntoSpellingCorrectionOnMobile) {
+TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidatesOnMobile) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   const DictionaryPredictor& predictor = data_and_predictor->predictor();
   request_test_util::FillMobileRequest(request_.get());
 
   MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
+  // When typing correction generates the same value ("ビッグバン"), the
+  // SPELLING_CORRECTION candidate is removed so typing correction takes
+  // precedence, while literal same-key candidates ("ビックバン") are kept.
   EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("びっくばん", "ビックバン", 7800, prediction::UNIGRAM,
@@ -4428,37 +4446,60 @@ TEST_F(DictionaryPredictorTest,
       CreateConversionRequest(ConversionRequest::PREDICTION, "びっくばん");
   const std::vector<Result> results = predictor.Predict(convreq);
   ASSERT_EQ(results.size(), 3);
-  EXPECT_EQ(results[0].key, "びっくばん");
+  EXPECT_EQ(results[0].key, "びっぐばん");
   EXPECT_EQ(results[0].value, "ビッグバン");
   EXPECT_EQ(results[0].cost, 7000);
-  EXPECT_TRUE(results[0].attributes & Attribute::SPELLING_CORRECTION);
-  EXPECT_FALSE(results[0].attributes & Attribute::TYPING_CORRECTION);
+  EXPECT_FALSE(results[0].attributes & Attribute::SPELLING_CORRECTION);
+  EXPECT_TRUE(results[0].attributes & Attribute::TYPING_CORRECTION);
   EXPECT_EQ(results[1].key, "びっくばん");
   EXPECT_EQ(results[1].value, "ビックバン");
   EXPECT_EQ(results[2].key, "びっぐまん");
   EXPECT_EQ(results[2].value, "ビッグマン");
 
-  // When SPELLING_CORRECTION itself was also reached via key expansion / typing
-  // correction (e.g., input "あほかど" -> "あぼがど"), it should NOT absorb the
-  // direct typing-corrected candidate ("あぼかど").
+  // When typing correction does NOT generate the corrected candidate (e.g.,
+  // voiced-to-unvoiced "びっぐかめら" -> "ビックカメラ" or transposition
+  // "しゅみれーしょん" -> "シミュレーション"), both the literal candidate and
+  // the SPELLING_CORRECTION candidate are preserved on mobile (even if an
+  // already-removed candidate shares the same value).
+  Result removed_same_value = CreateResult5(
+      "びっくかめら", "ビックカメラ", 7000, prediction::UNIGRAM, Token::NONE);
+  removed_same_value.removed = true;
   EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
       .WillOnce(Return(std::vector<Result>{
-          CreateResult5(
-              "あぼがど", "アボカド", 8500,
-              prediction::UNIGRAM | Attribute::KEY_EXPANDED_IN_DICTIONARY,
-              Token::SPELLING_CORRECTION),
-          CreateResult5(
-              "あぼかど", "アボカド", 7200,
-              prediction::UNIGRAM | Attribute::KEY_EXPANDED_IN_DICTIONARY,
-              Token::NONE),
+          CreateResult5("びっぐかめら", "ビッグカメラ", 7500,
+                        prediction::UNIGRAM, Token::NONE),
+          CreateResult5("びっぐかめら", "ビックカメラ", 7814,
+                        prediction::UNIGRAM, Token::SPELLING_CORRECTION),
+          removed_same_value,
       }));
   const ConversionRequest convreq2 =
-      CreateConversionRequest(ConversionRequest::PREDICTION, "あほかど");
+      CreateConversionRequest(ConversionRequest::PREDICTION, "びっぐかめら");
   const std::vector<Result> results2 = predictor.Predict(convreq2);
-  ASSERT_EQ(results2.size(), 1);
-  EXPECT_EQ(results2[0].key, "あぼかど");
-  EXPECT_EQ(results2[0].value, "アボカド");
+  ASSERT_EQ(results2.size(), 2);
+  EXPECT_EQ(results2[0].key, "びっぐかめら");
+  EXPECT_EQ(results2[0].value, "ビッグカメラ");
   EXPECT_FALSE(results2[0].attributes & Attribute::SPELLING_CORRECTION);
+  EXPECT_EQ(results2[1].key, "びっぐかめら");
+  EXPECT_EQ(results2[1].value, "ビックカメラ");
+  EXPECT_TRUE(results2[1].attributes & Attribute::SPELLING_CORRECTION);
+
+  EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("しゅみれーしょん", "シュミレーション", 6015,
+                        prediction::UNIGRAM, Token::NONE),
+          CreateResult5("しゅみれーしょん", "シミュレーション", 6175,
+                        prediction::UNIGRAM, Token::SPELLING_CORRECTION),
+      }));
+  const ConversionRequest convreq3 = CreateConversionRequest(
+      ConversionRequest::PREDICTION, "しゅみれーしょん");
+  const std::vector<Result> results3 = predictor.Predict(convreq3);
+  ASSERT_EQ(results3.size(), 2);
+  EXPECT_EQ(results3[0].key, "しゅみれーしょん");
+  EXPECT_EQ(results3[0].value, "シュミレーション");
+  EXPECT_FALSE(results3[0].attributes & Attribute::SPELLING_CORRECTION);
+  EXPECT_EQ(results3[1].key, "しゅみれーしょん");
+  EXPECT_EQ(results3[1].value, "シミュレーション");
+  EXPECT_TRUE(results3[1].attributes & Attribute::SPELLING_CORRECTION);
 }
 
 }  // namespace

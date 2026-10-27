@@ -145,6 +145,9 @@ void CorrectionRewriter::SetCandidate(
         GetDisplayValueForKatakana(*candidate);
     if (!display_value.has_value() && !item.correction.empty()) {
       display_value = GetDisplayValueForReadingCorrection(item);
+      if (display_value.has_value()) {
+        absl::StrAppend(&*display_value, candidate->functional_value());
+      }
     }
 
     if (display_value.has_value()) {
@@ -221,6 +224,17 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
       // In this case, update the candidate description.
       const converter::Candidate& candidate = segment.candidate(j);
 
+      if (LookupCorrection(candidate.content_key, candidate.content_value,
+                           &results)) {
+        CHECK_GT(results.size(), 0);
+        // results.size() should be 1, but we don't check it here.
+        Candidate* mutable_candidate = segment.mutable_candidate(j);
+        DCHECK(mutable_candidate);
+        SetCandidate(results[0], capability, mutable_candidate);
+        modified = true;
+        continue;
+      }
+
       // Handles the spelling correction defined in the system dictionary.
       // mostly they are Katakana to Katakana correction.
       if (candidate.attributes & Attribute::SPELLING_CORRECTION) {
@@ -230,18 +244,6 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
         modified = true;
         continue;
       }
-
-      if (!LookupCorrection(candidate.content_key, candidate.content_value,
-                            &results)) {
-        continue;
-      }
-
-      CHECK_GT(results.size(), 0);
-      // results.size() should be 1, but we don't check it here.
-      Candidate* mutable_candidate = segment.mutable_candidate(j);
-      DCHECK(mutable_candidate);
-      SetCandidate(results[0], capability, mutable_candidate);
-      modified = true;
     }
 
     // Add correction candidates that have the same key as the top candidate.
@@ -265,9 +267,13 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
     // `segment`. Ensure each correction for `top_candidate.content_key` is
     // placed within `kInsertPosition` without duplicating an existing
     // candidate:
-    // - If it already exists in `segment`, annotate it if needed and promote it
-    //   to `kInsertPosition` when ranked lower.
-    // - If it is missing from `segment`, insert it at `kInsertPosition`.
+    // - If a SPELLING_CORRECTION candidate with the same value already exists
+    //   at a lower rank, promote it to `kInsertPosition`.
+    // - If a non-SPELLING_CORRECTION candidate with the same value already
+    //   exists (e.g., from typing correction), keep it as-is without
+    //   duplicating or adding SPELLING_CORRECTION annotations.
+    // - If no candidate with the same value exists in `segment`, insert a new
+    //   SPELLING_CORRECTION candidate at `kInsertPosition`.
     for (const ReadingCorrectionItem& result : results) {
       const std::string value =
           absl::StrCat(result.value, top_candidate.functional_value());
@@ -279,18 +285,9 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
         }
       }
       if (existing_index >= 0) {
-        Candidate* mutable_candidate =
-            segment.mutable_candidate(existing_index);
-        if (!(mutable_candidate->attributes & Attribute::SPELLING_CORRECTION)) {
-          mutable_candidate->key =
-              absl::StrCat(result.error, top_candidate.functional_key());
-          mutable_candidate->content_key = result.error;
-          mutable_candidate->content_value = result.value;
-          mutable_candidate->inner_segment_boundary.clear();
-          SetCandidate(result, capability, mutable_candidate);
-          modified = true;
-        }
-        if (existing_index > kInsertPosition) {
+        if ((segment.candidate(existing_index).attributes &
+             Attribute::SPELLING_CORRECTION) &&
+            existing_index > kInsertPosition) {
           segment.move_candidate(existing_index, kInsertPosition);
           modified = true;
         }

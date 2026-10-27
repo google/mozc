@@ -129,10 +129,12 @@ class DictionaryPredictor : public PredictorInterface {
   //
   // In mixed conversion (mobile):
   // - Do not add candidates to |same_key_index| so that literal candidates
-  //   (e.g., "ビックバン" for "びっくばん") remain selectable.
+  //   (e.g., "ビックバン" for "びっくばん", "ビッグカメラ" for "びっぐかめら")
+  //   remain selectable alongside corrected candidates.
   // - If a candidate with the same value comes from typing correction (e.g.,
-  //   "びっぐばん" => "ビッグバン"), merge its cost into the
-  //   SPELLING_CORRECTION candidate and remove the typing correction candidate.
+  //   "びっぐばん" => "ビッグバン"), it is added to |same_value_index| so that
+  //   the redundant SPELLING_CORRECTION candidate is removed and typing
+  //   correction takes precedence without SPELLING_CORRECTION annotations.
   static void RemoveMissSpelledCandidates(const ConversionRequest& request,
                                           absl::Span<Result> results);
 
