@@ -99,8 +99,14 @@ TEST(CalculatorTest, BasicTest) {
   // Expression must include at least one operator other than parentheses.
   VerifyRejection(calculator, "111=");
   VerifyRejection(calculator, "(5)=");
+  VerifyRejection(calculator, "{5}=");
+  VerifyRejection(calculator, "π=");
+  VerifyRejection(calculator, "pi=");
+  VerifyRejection(calculator, "2π=");
+  VerifyRejection(calculator, "2pi=");
   // Expression must include at least one number.
   VerifyRejection(calculator, "()=");
+  VerifyRejection(calculator, "{}=");
   // Expression with both heading and tailing '='s should be rejected.
   VerifyRejection(calculator, "=(0-0)=");
 
@@ -108,8 +114,10 @@ TEST(CalculatorTest, BasicTest) {
   VerifyCalculation(calculator, "38+2.5=", "40.5");
   VerifyCalculation(calculator, "5.5-21=", "-15.5");
   VerifyCalculation(calculator, "4*2.1=", "8.4");
+  VerifyCalculation(calculator, "4×2.1=", "8.4");
   VerifyCalculation(calculator, "8/2=", "4");
   VerifyCalculation(calculator, "15・3=", "5");
+  VerifyCalculation(calculator, "8÷2=", "4");
   VerifyCalculation(calculator, "100%6=", "4");
   VerifyCalculation(calculator, "2^10=", "1024");
   VerifyCalculation(calculator, "4*-2=", "-8");
@@ -126,10 +134,13 @@ TEST(CalculatorTest, BasicTest) {
   VerifyCalculation(calculator, "2＾ー2=", "0.25");
   VerifyCalculation(calculator, "13％3=", "1");
   VerifyCalculation(calculator, "（1+1）*2=", "4");
+  VerifyCalculation(calculator, "｛1+1｝*2=", "4");
 
   // Expressions with more than one operator.
   VerifyCalculation(calculator, "(1+2)-4=", "-1");
+  VerifyCalculation(calculator, "{1+2}-4=", "-1");
   VerifyCalculation(calculator, "5*(2+3)=", "25");
+  VerifyCalculation(calculator, "5×{2+3}=", "25");
   VerifyCalculation(calculator, "(70-((3+2)*4))%8=", "2");
 
   // Issue 3082576: 7472.4 - 7465.6 = 6.7999999999993 is not expected.
@@ -153,9 +164,20 @@ TEST(CalculatorTest, BasicTest) {
   VerifyCalculation(calculator, "cos(0)=", "1");
   VerifyCalculation(calculator, "abs(-4.5)=", "4.5");
   VerifyCalculation(calculator, "sqrt(16)=", "4");
+  VerifyCalculation(calculator, "√(16)=", "4");
+  VerifyCalculation(calculator, "√16=", "4");
+  VerifyCalculation(calculator, "√√16=", "2");
+  VerifyCalculation(calculator, "√(9+7)=", "4");
+  VerifyCalculation(calculator, "2×√9=", "6");
 
   // Complex function combinations, floating-point args.
   VerifyCalculation(calculator, "sin(3.141592653589793/2)=", "1");
+  VerifyCalculation(calculator, "sin(π/2)=", "1");
+  VerifyCalculation(calculator, "sin(pi/2)=", "1");
+  VerifyCalculation(calculator, "cos(π)=", "-1");
+  VerifyCalculation(calculator, "cos(pi)=", "-1");
+  VerifyCalculation(calculator, "2*π=", "6.2831853");
+  VerifyCalculation(calculator, "2*pi=", "6.2831853");
   VerifyCalculation(calculator, "log(2*50)=", "2");
   VerifyCalculation(calculator, "sqrt(abs(-16))=", "4");
   VerifyCalculation(calculator, "1+log(10)=", "2");
@@ -164,6 +186,8 @@ TEST(CalculatorTest, BasicTest) {
 
   // Negative test cases.
   VerifyRejection(calculator, "sqrt(-1)=");
+  VerifyRejection(calculator, "√(-1)=");
+  VerifyRejection(calculator, "√-1=");
   VerifyRejection(calculator, "log(1+)=");
   VerifyRejection(calculator, "sin(3=");
 }

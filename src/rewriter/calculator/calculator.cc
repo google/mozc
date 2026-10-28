@@ -32,6 +32,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
+#include <numbers>
 #include <optional>
 #include <string>
 #include <vector>
@@ -119,12 +120,21 @@ std::optional<double> ParsePrimary(ParserContext& ctx) {
     return val;
   }
 
+  if (ctx.tokens[ctx.pos].type == TokenType::FUNC_SQRT) {
+    ++ctx.pos;
+    std::optional<double> arg = ParsePrimary(ctx);
+    if (!arg.has_value() || *arg < 0.0) {
+      return std::nullopt;
+    }
+    return std::sqrt(*arg);
+  }
+
   // Handle mathematical functions (e.g. log, sin, cos)
   TokenType type = ctx.tokens[ctx.pos].type;
   if (type == TokenType::FUNC_LOG || type == TokenType::FUNC_LN ||
-      type == TokenType::FUNC_EXP || type == TokenType::FUNC_SQRT ||
-      type == TokenType::FUNC_SIN || type == TokenType::FUNC_COS ||
-      type == TokenType::FUNC_TAN || type == TokenType::FUNC_ABS) {
+      type == TokenType::FUNC_EXP || type == TokenType::FUNC_SIN ||
+      type == TokenType::FUNC_COS || type == TokenType::FUNC_TAN ||
+      type == TokenType::FUNC_ABS) {
     ++ctx.pos;
     // Require left parenthesis '('
     if (ctx.pos >= ctx.tokens.size() ||
@@ -149,11 +159,6 @@ std::optional<double> ParsePrimary(ParserContext& ctx) {
       return std::log(*arg);
     } else if (type == TokenType::FUNC_EXP) {
       return std::exp(*arg);
-    } else if (type == TokenType::FUNC_SQRT) {
-      if (*arg < 0.0) {
-        return std::nullopt;
-      }
-      return std::sqrt(*arg);
     } else if (type == TokenType::FUNC_SIN) {
       return std::sin(*arg);
     } else if (type == TokenType::FUNC_COS) {
@@ -303,16 +308,21 @@ Calculator::Calculator() {
   // typing '-' more than one time continuously.
   operator_map_["ー"] = TokenType::MINUS;
   operator_map_["*"] = TokenType::TIMES;
+  operator_map_["×"] = TokenType::TIMES;
   operator_map_["/"] = TokenType::DIVIDE;
   operator_map_["・"] = TokenType::DIVIDE;  // "･". Consider it as "/".
+  operator_map_["÷"] = TokenType::DIVIDE;
   operator_map_["%"] = TokenType::MOD;
   operator_map_["^"] = TokenType::POW;
   operator_map_["("] = TokenType::LP;
   operator_map_[")"] = TokenType::RP;
+  operator_map_["{"] = TokenType::LP;
+  operator_map_["}"] = TokenType::RP;
   operator_map_["log"] = TokenType::FUNC_LOG;
   operator_map_["ln"] = TokenType::FUNC_LN;
   operator_map_["exp"] = TokenType::FUNC_EXP;
   operator_map_["sqrt"] = TokenType::FUNC_SQRT;
+  operator_map_["√"] = TokenType::FUNC_SQRT;
   operator_map_["sin"] = TokenType::FUNC_SIN;
   operator_map_["cos"] = TokenType::FUNC_COS;
   operator_map_["tan"] = TokenType::FUNC_TAN;
@@ -370,6 +380,11 @@ std::optional<Calculator::TokenSequence> Calculator::Tokenize(
     }
 
     // Read value token
+    if (absl::ConsumePrefix(&rest, "π")) {
+      tokens.push_back({TokenType::INTEGER, std::numbers::pi});
+      ++num_value;
+      continue;
+    }
     size_t value_len = 0;
     while (value_len < rest.size() &&
            (absl::ascii_isdigit(rest[value_len]) ||
@@ -388,7 +403,7 @@ std::optional<Calculator::TokenSequence> Calculator::Tokenize(
       continue;
     }
 
-    // Read alphabetical function name token
+    // Read alphabetical function name or constant token
     if (absl::ascii_isalpha(rest.front())) {
       size_t func_len = 0;
       while (func_len < rest.size() && absl::ascii_isalpha(rest[func_len])) {
@@ -396,6 +411,12 @@ std::optional<Calculator::TokenSequence> Calculator::Tokenize(
       }
       std::string name(rest.data(), func_len);
       absl::AsciiStrToLower(&name);
+      if (name == "pi") {
+        tokens.push_back({TokenType::INTEGER, std::numbers::pi});
+        rest.remove_prefix(func_len);
+        ++num_value;
+        continue;
+      }
       const auto func_it = operator_map_.find(name);
       if (func_it != operator_map_.end()) {
         tokens.push_back({func_it->second, 0.0});

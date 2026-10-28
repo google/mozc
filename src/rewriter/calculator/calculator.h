@@ -45,18 +45,18 @@ class Calculator {
   // Represents the type of calculation token.
   enum class TokenType {
     PLUS = 1,   // "+"
-    MINUS,      // "-"
-    TIMES,      // "*"
-    DIVIDE,     // "/"
+    MINUS,      // "-", "ー"
+    TIMES,      // "*", "×"
+    DIVIDE,     // "/", "・", "÷"
     MOD,        // "%"
     POW,        // "^"
-    LP,         // "("
-    RP,         // ")"
-    INTEGER,    // Numbers (e.g. "123", "45.6")
+    LP,         // "(", "{"
+    RP,         // ")", "}"
+    INTEGER,    // Numbers (e.g. "123", "45.6", "π", "pi")
     FUNC_LOG,   // "log" (base 10)
     FUNC_LN,    // "ln" (natural logarithm)
     FUNC_EXP,   // "exp"
-    FUNC_SQRT,  // "sqrt"
+    FUNC_SQRT,  // "sqrt", "√"
     FUNC_SIN,   // "sin"
     FUNC_COS,   // "cos"
     FUNC_TAN,   // "tan"
