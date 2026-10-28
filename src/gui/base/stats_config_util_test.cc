@@ -29,6 +29,7 @@
 
 #include "gui/base/stats_config_util.h"
 
+#include "base/port.h"
 #include "testing/gunit.h"
 
 #ifdef __APPLE__
@@ -731,11 +732,12 @@ TEST_F(StatsConfigUtilTestMac, SetEnabledOverwritesPreviousValue) {
 #endif  // CHANNEL_DEV
 #endif  // TARGET_OS_OSX
 
-#ifdef __linux__
 TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
+  if constexpr (!port::IsLinuxBase()) {
+    GTEST_SKIP() << "Linux-specific test";
+  }
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
-#endif  // __linux__
 
 #else   // !GOOGLE_JAPANESE_INPUT_BUILD
 TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {

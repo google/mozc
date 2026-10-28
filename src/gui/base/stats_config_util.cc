@@ -36,15 +36,11 @@
 #include <shlobj.h>
 #include <time.h>
 #include <windows.h>
-#else  // _WIN32
-#include <pwd.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
 #endif  // _WIN32
 
 #ifdef __APPLE__
+#include <sys/stat.h>
+
 #include <cstdint>
 #include <fstream>
 #include <string>

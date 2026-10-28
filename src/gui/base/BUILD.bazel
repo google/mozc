@@ -230,6 +230,7 @@ mozc_cc_test(
     srcs = ["stats_config_util_test.cc"],
     deps = [
         ":stats_config_util",
+        "//base:port",
         "//testing:gunit_main",
     ] + mozc_select(
         macos = [
