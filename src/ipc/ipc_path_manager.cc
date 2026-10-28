@@ -78,11 +78,6 @@
 #include "base/const.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
-#else  // _WIN32
-// For stat system call
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 #endif  // _WIN32
 
 namespace mozc {
@@ -277,10 +272,10 @@ bool IPCPathManager::GetPathName(std::string *ipc_name) const {
   *ipc_name = kIPCPrefix;
 #endif  // _WIN32
 
-#ifdef __linux__
-  // On Linux, use abstract namespace which is independent of the file system.
-  (*ipc_name)[0] = '\0';
-#endif  // __linux__
+  if constexpr (port::IsLinuxBase()) {
+    // On Linux, use abstract namespace which is independent of the file system.
+    (*ipc_name)[0] = '\0';
+  }
 
   ipc_name->append(ipc_path_info_.key());
   ipc_name->append(".");
@@ -412,16 +407,16 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
     return true;
   }
 
-#ifdef __linux__
-  if (absl::StrCat(server_path, " (deleted)") == server_path_) {
-    LOG(WARNING) << server_path << " on disk is modified";
-    // If a user updates the server binary on disk during the server is running,
-    // "readlink /proc/<pid>/exe" returns a path with the " (deleted)" suffix.
-    // We allow the special case.
-    server_path_ = std::string(server_path);
-    return true;
+  if constexpr (port::IsLinuxBase()) {
+    if (absl::StrCat(server_path, " (deleted)") == server_path_) {
+      LOG(WARNING) << server_path << " on disk is modified";
+      // If a user updates the server binary on disk during the server is
+      // running, "readlink /proc/<pid>/exe" returns a path with the "
+      // (deleted)" suffix. We allow the special case.
+      server_path_ = std::string(server_path);
+      return true;
+    }
   }
-#endif  // __linux__
 
   return false;
 }
@@ -442,19 +437,21 @@ bool IPCPathManager::ShouldReload() const {
 }
 
 time_t IPCPathManager::GetIPCFileTimeStamp() const {
-#ifdef _WIN32
-  // In windows, we don't need to get the exact file timestamp, so
-  // just returns -1 at this time.
-  return static_cast<time_t>(-1);
-#else   // _WIN32
-  const std::string filename = GetIPCKeyFileName(name_);
-  struct stat filestat;
-  if (::stat(filename.c_str(), &filestat) == -1) {
-    MOZC_VLOG(2) << "stat(2) failed.  Skipping reload";
+  if constexpr (port::IsWindows()) {
+    // In windows, we don't need to get the exact file timestamp, so
+    // just returns -1 at this time.
     return static_cast<time_t>(-1);
+  } else {
+    const std::string filename = GetIPCKeyFileName(name_);
+    const absl::StatusOr<FileTimeStamp> mtime =
+        FileUtil::GetModificationTime(filename);
+    if (!mtime.ok()) {
+      MOZC_VLOG(2) << "GetModificationTime failed. Skipping reload: "
+                   << mtime.status();
+      return static_cast<time_t>(-1);
+    }
+    return static_cast<time_t>(*mtime);
   }
-  return filestat.st_mtime;
-#endif  // _WIN32
 }
 
 bool IPCPathManager::LoadPathNameInternal() {
