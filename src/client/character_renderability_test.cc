@@ -88,6 +88,13 @@ TEST(CharacterRenderabilityTest, WindowsVersions) {
     const std::vector<Request::AdditionalRenderableCharacterGroup> groups =
         CharacterRenderability::GetSupportedGroupsForWindows(26200);
     EXPECT_TRUE(absl::c_contains(groups, Request::EMOJI_16_0));
+    EXPECT_FALSE(absl::c_contains(groups, Request::EMOJI_17_0));
+  }
+
+  // Windows 11 26H2 (Build 26300)
+  {
+    const std::vector<Request::AdditionalRenderableCharacterGroup> groups =
+        CharacterRenderability::GetSupportedGroupsForWindows(26300);
     EXPECT_TRUE(absl::c_contains(groups, Request::EMOJI_17_0));
   }
 }

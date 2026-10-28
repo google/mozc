@@ -59,7 +59,8 @@ CharacterRenderability::GetSupportedGroupsForWindows(int build_number) {
   // - 22621 (Win 11 22H2): Emoji 14.0
   // - 22631 (Win 11 23H2): Emoji 15.0 (safe fallback for 22621.2070)
   // - 26100 (Win 11 24H2): Emoji 15.1 (safe fallback for 22621.3810)
-  // - 26200 (Win 11 25H2): Emoji 16.0, 17.0 (safe fallback for 26100 updates)
+  // - 26200 (Win 11 25H2): Emoji 16.0 (safe fallback for 26100 updates)
+  // - 26300 (Win 11 26H2): Emoji 17.0
   if (build_number >= 22000) {
     groups.push_back(commands::Request::EMOJI_12_1);
     groups.push_back(commands::Request::EMOJI_13_0);
@@ -76,6 +77,8 @@ CharacterRenderability::GetSupportedGroupsForWindows(int build_number) {
   }
   if (build_number >= 26200) {
     groups.push_back(commands::Request::EMOJI_16_0);
+  }
+  if (build_number >= 26300) {
     groups.push_back(commands::Request::EMOJI_17_0);
   }
   return groups;
