@@ -130,6 +130,7 @@ mozc_cc_test(
         ":ime_context",
         ":session",
         ":session_handler",
+        "//base:port",
         "//composer:key_parser",
         "//composer:table",
         "//config:config_handler",

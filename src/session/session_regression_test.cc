@@ -39,6 +39,7 @@
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
+#include "base/port.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
@@ -73,12 +74,12 @@ std::string GetComposition(const commands::Command& command) {
 }
 
 void InitSessionToPrecomposition(session::Session* session) {
-#ifdef _WIN32
-  // Session is created with direct mode on Windows
-  // Direct status
-  commands::Command command;
-  session->IMEOn(&command);
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    // Session is created with direct mode on Windows
+    // Direct status
+    commands::Command command;
+    session->IMEOn(&command);
+  }
 }
 
 }  // namespace
