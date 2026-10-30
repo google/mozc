@@ -88,11 +88,6 @@ class Modules {
     return *user_dictionary_;
   }
 
-  const dictionary::DictionaryInterface& GetSuffixDictionary() const {
-    DCHECK(suffix_dictionary_);
-    return *suffix_dictionary_;
-  }
-
   const dictionary::DictionaryInterface& GetDictionary() const {
     DCHECK(dictionary_);
     return *dictionary_;
@@ -142,7 +137,6 @@ class Modules {
   Connector connector_;
   std::unique_ptr<const Segmenter> segmenter_;
   std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary_;
-  std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary_;
   std::unique_ptr<dictionary::DictionaryInterface> dictionary_;
   std::unique_ptr<const dictionary::PosGroup> pos_group_;
   std::unique_ptr<prediction::UserHistoryStorage> user_history_storage_;
@@ -170,8 +164,6 @@ class ModulesPresetBuilder {
       std::unique_ptr<const dictionary::PosIdMap> pos_id_map);
   ModulesPresetBuilder& PresetUserDictionary(
       std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary);
-  ModulesPresetBuilder& PresetSuffixDictionary(
-      std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary);
   ModulesPresetBuilder& PresetDictionary(
       std::unique_ptr<dictionary::DictionaryInterface> dictionary);
   ModulesPresetBuilder& PresetSingleKanjiDictionary(

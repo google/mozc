@@ -50,7 +50,6 @@
 #include "dictionary/pos_id_map.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
-#include "dictionary/suffix_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
@@ -63,7 +62,6 @@
 using ::mozc::dictionary::DictionaryImpl;
 using ::mozc::dictionary::PosGroup;
 using ::mozc::dictionary::PosIdMap;
-using ::mozc::dictionary::SuffixDictionary;
 using ::mozc::dictionary::SystemDictionary;
 using ::mozc::dictionary::UserDictionary;
 using ::mozc::dictionary::UserPos;
@@ -131,12 +129,6 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
     RETURN_IF_NULL(dictionary_);
   }
 
-  if (!suffix_dictionary_) {
-    suffix_dictionary_ = make_unique_from_tuples<SuffixDictionary>(
-        data_manager_->GetSuffixDictionaryData());
-    RETURN_IF_NULL(suffix_dictionary_);
-  }
-
   if (!user_history_storage_) {
     user_history_storage_ = std::make_unique<prediction::UserHistoryStorage>();
     RETURN_IF_NULL(user_history_storage_);
@@ -196,7 +188,6 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   RETURN_IF_NULL(pos_id_map_);
   RETURN_IF_NULL(segmenter_);
   RETURN_IF_NULL(user_dictionary_);
-  RETURN_IF_NULL(suffix_dictionary_);
   RETURN_IF_NULL(pos_group_);
   RETURN_IF_NULL(single_kanji_dictionary_);
   RETURN_IF_NULL(user_history_storage_);
@@ -227,13 +218,6 @@ ModulesPresetBuilder& ModulesPresetBuilder::PresetUserDictionary(
     std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary) {
   DCHECK(modules_) << "Module is already initialized";
   modules_->user_dictionary_ = std::move(user_dictionary);
-  return *this;
-}
-
-ModulesPresetBuilder& ModulesPresetBuilder::PresetSuffixDictionary(
-    std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary) {
-  DCHECK(modules_) << "Module is already initialized";
-  modules_->suffix_dictionary_ = std::move(suffix_dictionary);
   return *this;
 }
 

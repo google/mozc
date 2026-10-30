@@ -55,8 +55,8 @@ struct Node {
     STARTS_WITH_PARTICLE = 1 << 4,   // User input starts with particle
     SPELLING_CORRECTION = 1 << 5,    // "Did you mean"
     // PARTIALY_KEY_CONSUMED is deleted.
-    SUFFIX_DICTIONARY = 1 << 8,  // Suffix dictionary
-    KEY_EXPANDED = 1 << 9,       // Keys are expanded.
+    // SUFFIX_DICTIONARY (1 << 8) is deleted.
+    KEY_EXPANDED = 1 << 9,  // Keys are expanded.
   };
 
   // prev and next are linking pointers to connect minimum cost path
@@ -130,9 +130,6 @@ struct Node {
     attributes = 0;
     if (token.attributes & dictionary::Token::SPELLING_CORRECTION) {
       attributes |= SPELLING_CORRECTION;
-    }
-    if (token.attributes & dictionary::Token::SUFFIX_DICTIONARY) {
-      attributes |= SUFFIX_DICTIONARY;
     }
     if (token.attributes & dictionary::Token::USER_DICTIONARY) {
       attributes |= USER_DICTIONARY;

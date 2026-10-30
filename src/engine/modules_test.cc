@@ -77,11 +77,6 @@ TEST(ModulesTest, PresetTest) {
   const dictionary::MockUserDictionary* user_dictionary_ptr =
       user_dictionary.get();
 
-  // SuffixDictionary
-  auto suffix_dictionary = std::make_unique<dictionary::MockDictionary>();
-  const dictionary::DictionaryInterface* suffix_dictionary_ptr =
-      suffix_dictionary.get();
-
   // Dictionary
   auto dictionary = std::make_unique<dictionary::MockDictionary>();
   const dictionary::DictionaryInterface* dictionary_ptr = dictionary.get();
@@ -92,14 +87,12 @@ TEST(ModulesTest, PresetTest) {
           .PresetPosMatcher(std::move(pos_matcher))
           .PresetPosIdMap(std::move(pos_id_map))
           .PresetUserDictionary(std::move(user_dictionary))
-          .PresetSuffixDictionary(std::move(suffix_dictionary))
           .PresetDictionary(std::move(dictionary))
           .Build(std::make_unique<testing::MockDataManager>()));
 
   EXPECT_EQ(&modules->GetPosMatcher(), pos_matcher_ptr);
   EXPECT_EQ(&modules->GetPosIdMap(), pos_id_map_ptr);
   EXPECT_EQ(&modules->GetUserDictionary(), user_dictionary_ptr);
-  EXPECT_EQ(&modules->GetSuffixDictionary(), suffix_dictionary_ptr);
   EXPECT_EQ(&modules->GetDictionary(), dictionary_ptr);
 }
 

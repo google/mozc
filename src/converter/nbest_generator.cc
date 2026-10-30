@@ -201,9 +201,6 @@ void NBestGenerator<TConnector>::MakeCandidate(
     if (node->attributes & Node::USER_DICTIONARY) {
       candidate.attributes |= Attribute::USER_DICTIONARY;
     }
-    if (node->attributes & Node::SUFFIX_DICTIONARY) {
-      candidate.attributes |= Attribute::SUFFIX_DICTIONARY;
-    }
     if (node->attributes & Node::KEY_EXPANDED) {
       candidate.attributes |= Attribute::KEY_EXPANDED_IN_DICTIONARY;
     }

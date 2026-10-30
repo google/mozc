@@ -115,24 +115,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "suffix_dictionary",
-    srcs = ["suffix_dictionary.cc"],
-    hdrs = ["suffix_dictionary.h"],
-    visibility = ["//engine:__pkg__"],
-    deps = [
-        ":dictionary_interface",
-        ":dictionary_token",
-        "//base:bits",
-        "//base/container:serialized_string_array",
-        "//request:conversion_request",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
-mozc_cc_library(
     name = "user_dictionary",
     srcs = [
         "user_dictionary.cc",
@@ -615,24 +597,6 @@ mozc_py_binary(
     ],
     deps = [
         "//build_tools:serialized_string_array_builder",
-    ],
-)
-
-mozc_cc_test(
-    name = "suffix_dictionary_test",
-    size = "small",
-    srcs = ["suffix_dictionary_test.cc"],
-    deps = [
-        ":dictionary_interface",
-        ":dictionary_mock",
-        ":dictionary_test_util",
-        ":dictionary_token",
-        ":suffix_dictionary",
-        "//base/container:tuple",
-        "//data_manager/testing:mock_data_manager",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
     ],
 )
 

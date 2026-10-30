@@ -50,9 +50,9 @@ struct Token {
     // values than LABEL_SIZE!! The attributes having less values than it are
     // tightly integrated with the system dictionary codec.
 
+    // SUFFIX_DICTIONARY (1 << 6) is deleted.
     // The following attribute is not stored in the system dictionary but is
     // added by dictionary modules when looking up from user dictionary.
-    SUFFIX_DICTIONARY = 1 << 6,
     USER_DICTIONARY = 1 << 7,
   };
 
