@@ -232,7 +232,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
   const Point target_point(candidate_layout.position().x,
                            candidate_layout.position().y);
 
-  // Sync both windows to the DPI of the monitor where the candidate window
+  // Sync all windows to the DPI of the monitor where the candidate window
   // is about to be placed. This makes their first-frame layout correct when
   // the target app is on a different-DPI monitor than where the windows were
   // last shown — WM_DPICHANGED would otherwise fire only during the
@@ -240,6 +240,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
   // the stale DPI.
   const uint32_t target_dpi = GetDpiForPoint(target_point.x, target_point.y);
   main_window_->UpdateDpi(target_dpi);
+  cascading_window_->UpdateDpi(target_dpi);
   infolist_window_->UpdateDpi(target_dpi);
 
   if (candidate_changed &&
