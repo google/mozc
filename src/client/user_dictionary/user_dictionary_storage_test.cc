@@ -43,6 +43,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/mmap.h"
+#include "base/port.h"
 #include "base/random.h"
 #include "base/system_util.h"
 #include "client/user_dictionary/user_dictionary_importer.h"
@@ -403,13 +404,10 @@ TEST_F(UserDictionaryStorageTest, Export) {
 
   // Make sure the exported format, especially that the pos is exported in
   // Japanese.
-#ifdef _WIN32
+  constexpr absl::string_view expected_newline =
+      port::IsWindows() ? "\r\n" : "\n";
   EXPECT_EQ(std::string(mapped_data->begin(), mapped_data->size()),
-            "key\tvalue\t名詞\tcomment\r\n");
-#else   // _WIN32
-  EXPECT_EQ(std::string(mapped_data->begin(), mapped_data->size()),
-            "key\tvalue\t名詞\tcomment\n");
-#endif  // _WIN32
+            absl::StrCat("key\tvalue\t名詞\tcomment", expected_newline));
 }
 
 }  // namespace
