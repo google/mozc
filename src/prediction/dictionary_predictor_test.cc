@@ -204,10 +204,9 @@ class MockDataAndPredictor {
         std::make_unique<DictionaryPredictorTestPeer>(*predictor_);
   }
 
-  // Initializes predictor with the given suffix_dictionary and
-  // supplemental_model using the real aggregation pipeline.
-  void Init(std::unique_ptr<DictionaryInterface> suffix_dictionary = nullptr,
-            std::unique_ptr<engine::SupplementalModelInterface>
+  // Initializes predictor with the given supplemental_model using the real
+  // aggregation pipeline.
+  void Init(std::unique_ptr<engine::SupplementalModelInterface>
                 supplemental_model = nullptr) {
     auto dictionary = std::make_unique<MockDictionary>();
     mock_dictionary_ = dictionary.get();
@@ -224,7 +223,6 @@ class MockDataAndPredictor {
         engine::ModulesPresetBuilder()
             .PresetDictionary(std::move(dictionary))
             .PresetSingleKanjiDictionary(std::move(single_kanji_dictionary))
-            .PresetSuffixDictionary(std::move(suffix_dictionary))    // nullable
             .PresetSupplementalModel(std::move(supplemental_model))  // nullable
             .Build(std::move(data_manager));
     CHECK_OK(modules_status.status());
@@ -441,18 +439,13 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   static std::unique_ptr<MockDataAndPredictor> CreatePredictorWithMockData(
-      std::unique_ptr<DictionaryInterface> suffix_dictionary,
-      std::unique_ptr<engine::SupplementalModelInterface> supplemental_model) {
+      std::unique_ptr<engine::SupplementalModelInterface> supplemental_model =
+          nullptr) {
     auto ret = std::make_unique<MockDataAndPredictor>();
-    ret->Init(std::move(suffix_dictionary), std::move(supplemental_model));
+    ret->Init(std::move(supplemental_model));
     AddWordsToMockDic(ret->mutable_dictionary());
     AddDefaultImplToMockRealtimeDecoder(ret->mutable_realtime_decoder());
     return ret;
-  }
-
-  static std::unique_ptr<MockDataAndPredictor> CreatePredictorWithMockData() {
-    return CreatePredictorWithMockData(/*suffix dictionary=*/nullptr,
-                                       /*supplemental_model=*/nullptr);
   }
 
   static void AddWordsToMockDic(MockDictionary* mock) {
@@ -3174,147 +3167,6 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   }
 }
 
-namespace {
-struct SimpleSuffixToken {
-  absl::string_view key;
-  absl::string_view value;
-};
-
-const SimpleSuffixToken kSuffixTokens[] = {{"いか", "以下"}};
-
-class TestSuffixDictionary : public DictionaryInterface {
- public:
-  TestSuffixDictionary() = default;
-  ~TestSuffixDictionary() override = default;
-
-  bool HasKey(absl::string_view value) const override { return false; }
-
-  bool HasValue(absl::string_view value) const override { return false; }
-
-  void LookupPredictive(absl::string_view key, const ConversionOptions& options,
-                        Callback* callback) const override {
-    Token token;
-    for (size_t i = 0; i < std::size(kSuffixTokens); ++i) {
-      const SimpleSuffixToken& suffix_token = kSuffixTokens[i];
-      if (!key.empty() && !suffix_token.key.starts_with(key)) {
-        continue;
-      }
-      switch (callback->OnKey(suffix_token.key)) {
-        case Callback::TRAVERSE_DONE:
-          return;
-        case Callback::TRAVERSE_NEXT_KEY:
-          continue;
-        case Callback::TRAVERSE_CULL:
-          LOG(FATAL) << "Culling is not supported.";
-          break;
-        default:
-          break;
-      }
-      token.key = suffix_token.key;
-      token.value = suffix_token.value;
-      token.cost = 1000;
-      token.lid = token.rid = 0;
-      if (callback->OnToken(token.key, token.key, token) ==
-          Callback::TRAVERSE_DONE) {
-        break;
-      }
-    }
-  }
-
-  void LookupPrefix(absl::string_view key, const ConversionOptions& options,
-                    Callback* callback) const override {}
-
-  void LookupExact(absl::string_view key, const ConversionOptions& options,
-                   Callback* callback) const override {}
-
-  void LookupReverse(absl::string_view str, const ConversionOptions& options,
-                     Callback* callback) const override {}
-};
-
-}  // namespace
-
-TEST_F(DictionaryPredictorTest, AggregateSuffixPrediction) {
-  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  data_and_predictor->Init(std::make_unique<TestSuffixDictionary>(), nullptr);
-
-  const DictionaryPredictorTestPeer& predictor_peer =
-      data_and_predictor->predictor_peer();
-
-  request_->set_zero_query_suggestion(true);
-
-  // history is "グーグル"
-  constexpr absl::string_view kHistoryKey = "ぐーぐる";
-  constexpr absl::string_view kHistoryValue = "グーグル";
-
-  // Since SuffixDictionary only returns for key "い", the result
-  // should be empty for "あ".
-  std::vector<Result> results;
-  InitHistory(kHistoryKey, kHistoryValue);
-  const ConversionRequest convreq1 = CreateSuggestionConversionRequest("あ");
-  predictor_peer.AggregateZeroQuery(convreq1, &results);
-  EXPECT_TRUE(results.empty());
-
-  // Candidates generated by AggregateSuffixPrediction from nonempty
-  // key should have SUFFIX type.
-  results.clear();
-  InitHistory(kHistoryKey, kHistoryValue);
-  composer_->Reset();
-  const ConversionRequest convreq2 = CreateSuggestionConversionRequest("い");
-  predictor_peer.AggregateZeroQuery(convreq2, &results);
-  EXPECT_FALSE(results.empty());
-  EXPECT_TRUE(GetMergedTypes(results) & SUFFIX);
-  for (const auto& result : results) {
-    EXPECT_EQ(result.GetPredictionTypesForTesting(), SUFFIX);
-  }
-}
-
-TEST_F(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction) {
-  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  data_and_predictor->Init(std::make_unique<TestSuffixDictionary>(), nullptr);
-
-  const DictionaryPredictorTestPeer& predictor_peer =
-      data_and_predictor->predictor_peer();
-  request_test_util::FillMobileRequest(request_.get());
-
-  // history is "グーグル"
-  constexpr absl::string_view kHistoryKey = "ぐーぐる";
-  constexpr absl::string_view kHistoryValue = "グーグル";
-
-  InitHistory(kHistoryKey, kHistoryValue);
-
-  {
-    std::vector<Result> results;
-
-    // Candidates generated by AggregateZeroQuerySuffixPrediction should
-    // have SUFFIX type.
-    const ConversionRequest convreq =
-        CreateSuggestionConversionRequest("", false /* init_composer */);
-    predictor_peer.AggregateZeroQuery(convreq, &results);
-    EXPECT_FALSE(results.empty());
-    for (size_t i = 0; i < results.size(); ++i) {
-      EXPECT_EQ(results[i].GetPredictionTypesForTesting(), SUFFIX);
-    }
-  }
-  {
-    // If the feature is disabled and `results` is nonempty, nothing should be
-    // generated.
-    request_->mutable_decoder_experiment_params()
-        ->set_disable_zero_query_suffix_prediction(true);
-    std::vector<Result> results = {Result()};
-    const ConversionRequest convreq = CreateSuggestionConversionRequest("");
-    predictor_peer.AggregateZeroQuery(convreq, &results);
-    EXPECT_EQ(results.size(), 1);
-  }
-  {
-    // Suffix entries should be aggregated for handwriting
-    request_->set_is_handwriting(true);
-    std::vector<Result> results = {Result()};
-    const ConversionRequest convreq = CreateSuggestionConversionRequest("");
-    predictor_peer.AggregateZeroQuery(convreq, &results);
-    EXPECT_FALSE(results.empty());
-  }
-}
-
 struct EnglishPredictionTestEntry {
   std::string name;
   transliteration::TransliterationType input_mode;
@@ -3422,8 +3274,7 @@ TEST_F(DictionaryPredictorTest, AggregateExtendedTypeCorrectingPrediction) {
   EXPECT_CALL(*mock, CorrectComposition(_)).WillOnce(Return(expected));
 
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
-      CreatePredictorWithMockData(/*suffix dictionary=*/nullptr,
-                                  std::move(mock));
+      CreatePredictorWithMockData(std::move(mock));
   const DictionaryPredictorTestPeer& predictor_peer =
       data_and_predictor->predictor_peer();
 
@@ -3457,8 +3308,7 @@ TEST_F(DictionaryPredictorTest,
   EXPECT_CALL(*mock, CorrectComposition(_)).WillOnce(Return(expected));
 
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
-      CreatePredictorWithMockData(nullptr /* suffix_dictionary */,
-                                  std::move(mock));
+      CreatePredictorWithMockData(std::move(mock));
   const DictionaryPredictorTestPeer& predictor_peer =
       data_and_predictor->predictor_peer();
 
@@ -3482,8 +3332,7 @@ TEST_F(DictionaryPredictorTest,
   expected = {TypeCorrectedQuery{"ふつか", TypeCorrectedQuery::CORRECTION}};
   auto mock2 = std::make_unique<engine::MockSupplementalModel>();
   EXPECT_CALL(*mock2, CorrectComposition(_)).WillOnce(Return(expected));
-  data_and_predictor = CreatePredictorWithMockData(
-      nullptr /* suffix_dictionary */, std::move(mock2));
+  data_and_predictor = CreatePredictorWithMockData(std::move(mock2));
   EXPECT_CALL(*data_and_predictor->mutable_realtime_decoder(), Decode(_))
       .WillOnce([](const ConversionRequest& req) {
         Result result;
@@ -3521,8 +3370,7 @@ TEST_F(DictionaryPredictorTest,
   EXPECT_CALL(*mock, CorrectComposition(_)).WillRepeatedly(Return(expected));
 
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
-      CreatePredictorWithMockData(nullptr /* suffix_dictionary */,
-                                  std::move(mock));
+      CreatePredictorWithMockData(std::move(mock));
   const DictionaryPredictorTestPeer& predictor_peer =
       data_and_predictor->predictor_peer();
 
@@ -3622,7 +3470,8 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest("", false /* init composer */);
     predictor_peer.AggregateZeroQuery(convreq, &results);
-    EXPECT_FALSE(results.empty());
+    EXPECT_EQ(results.empty(), !test_case.expected_result)
+        << test_case.history_value;
 
     bool found = false;
     for (auto it = results.begin(); it != results.end(); ++it) {
@@ -3708,7 +3557,8 @@ TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest("", false /* init_composer */);
     predictor_peer.AggregateZeroQuery(convreq, &results);
-    EXPECT_FALSE(results.empty());
+    EXPECT_EQ(results.empty(), test_case.expected_rank < 0)
+        << test_case.history_value;
 
     int rank = -1;
     for (size_t i = 0; i < results.size(); ++i) {
@@ -4384,36 +4234,6 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryWithPrecedingText) {
 
   // "@" -> "gmail.com" should be found in zero_query_dict_
   EXPECT_TRUE(FindCandidateByValue(results, "gmail.com"));
-}
-
-TEST_F(DictionaryPredictorTest, ZeroQuerySuffixSkipWithoutHistory) {
-  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  data_and_predictor->Init(std::make_unique<TestSuffixDictionary>(), nullptr);
-
-  const DictionaryPredictorTestPeer& predictor_peer =
-      data_and_predictor->predictor_peer();
-  request_test_util::FillMobileRequest(request_.get());
-
-  // rid == 0, so suffix dictionary should be skipped.
-  InitHistory("key", "value", 0);
-  request_->set_zero_query_suggestion(true);
-
-  commands::Context context;
-  context.set_preceding_text("東京");
-
-  ConversionRequest convreq = ConversionRequestBuilder()
-                                  .SetComposer(*composer_)
-                                  .SetRequest(*request_)
-                                  .SetConfig(*config_)
-                                  .SetContext(context)
-                                  .SetKey("")
-                                  .Build();
-
-  std::vector<Result> results;
-  predictor_peer.AggregateZeroQuery(convreq, &results);
-
-  // results should NOT have candidates from TestSuffixDictionary ("以下")
-  EXPECT_FALSE(FindCandidateByValue(results, "以下"));
 }
 
 TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidatesOnMobile) {

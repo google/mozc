@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "dictionary/dictionary_interface.h"
 #include "engine/modules.h"
 #include "prediction/result.h"
 #include "prediction/zero_query_dict.h"
@@ -45,7 +44,7 @@ namespace mozc::prediction {
 
 // Decoder specialized for zero-query predictions based on history context,
 // preceding text, number counter suffixes, emoticon/emoji dictionaries,
-// supplemental model, and suffix dictionary.
+// and supplemental model.
 //
 // Concrete Conversion Examples:
 //  1. Number counter suffixes:
@@ -93,10 +92,7 @@ class ZeroQueryDecoder {
   const engine::Modules& modules_;
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;
-  const dictionary::DictionaryInterface& suffix_dictionary_;
   uint16_t counter_suffix_word_id_ = 0;
-  uint16_t zip_code_id_ = 0;
-  uint16_t unknown_id_ = 0;
 };
 
 }  // namespace mozc::prediction

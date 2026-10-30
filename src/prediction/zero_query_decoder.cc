@@ -30,7 +30,6 @@
 #include "prediction/zero_query_decoder.h"
 
 #include <algorithm>
-#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -48,7 +47,6 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "converter/attribute.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
 #include "prediction/decoder_util.h"
@@ -56,19 +54,11 @@
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "request/request_util.h"
 
 namespace mozc::prediction {
 namespace {
 
-using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::Token;
-
-bool IsZeroQuerySuffixPredictionDisabled(const ConversionRequest& request) {
-  return request.request()
-      .decoder_experiment_params()
-      .disable_zero_query_suffix_prediction();
-}
 
 // Returns the normalized number history if `request` contains it.
 // Note:
@@ -98,48 +88,14 @@ bool IsEmailPrefix(absl::string_view str) {
   return str.ends_with('@') && mozc::Util::IsAscii(str);
 }
 
-class SuffixLookupCallback : public DictionaryInterface::Callback {
- public:
-  SuffixLookupCallback(PredictionTypes types, size_t limit, int zip_code_id,
-                       int unknown_id, std::vector<Result>* results)
-      : types_(types),
-        limit_(limit),
-        zip_code_id_(zip_code_id),
-        unknown_id_(unknown_id),
-        results_(results) {}
-
-  ResultType OnToken(absl::string_view key, absl::string_view expanded_new_key,
-                     Token token) override {
-    if (token.lid == zip_code_id_ || token.lid == unknown_id_) {
-      return TRAVERSE_CONTINUE;
-    }
-    Result result;
-    result.InitializeByTokenAndTypes(std::move(token), types_);
-    results_->emplace_back(std::move(result));
-    if (results_->size() >= limit_) {
-      return TRAVERSE_DONE;
-    }
-    return TRAVERSE_CONTINUE;
-  }
-
- private:
-  const PredictionTypes types_;
-  const size_t limit_;
-  const int zip_code_id_;
-  const int unknown_id_;
-  std::vector<Result>* results_;
-};
-
 }  // namespace
 
 ZeroQueryDecoder::ZeroQueryDecoder(const engine::Modules& modules)
     : modules_(modules),
       zero_query_dict_(modules.GetZeroQueryDict()),
       zero_query_number_dict_(modules.GetZeroQueryNumberDict()),
-      suffix_dictionary_(modules.GetSuffixDictionary()),
-      counter_suffix_word_id_(modules.GetPosMatcher().GetCounterSuffixWordId()),
-      zip_code_id_(modules.GetPosMatcher().GetZipcodeId()),
-      unknown_id_(modules.GetPosMatcher().GetUnknownId()) {}
+      counter_suffix_word_id_(
+          modules.GetPosMatcher().GetCounterSuffixWordId()) {}
 
 std::vector<Result> ZeroQueryDecoder::Decode(
     const ConversionRequest& request) const {
@@ -190,42 +146,6 @@ std::vector<Result> ZeroQueryDecoder::Decode(
 
   // 5. English decoder.
   modules_.GetSupplementalModel().DecodeEnglish(request, results);
-
-  // We do not want zero query results from suffix dictionary for Latin
-  // input mode. For example, we do not need "です", "。" just after "when".
-  if (request_util::IsLatinInputMode(request)) {
-    return results;
-  }
-
-  // We do not want zero query results from suffix dictionary if the request
-  // does not have the history POS information.
-  // (b/475682454): Context does not have POS information. Suffix dictionary
-  // may generate noisy predictions.
-  if (request.converter_history_rid() == 0) {
-    return results;
-  }
-
-  // 6. Zero query suffix dictionary.
-  //    "東京" -> "は"
-  if (results.empty() || !IsZeroQuerySuffixPredictionDisabled(request) ||
-      request_util::IsHandwriting(request)) {
-    // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
-    // all suffix entries.
-    const auto [base, expanded] = request.composer().GetQueriesForPrediction();
-    if (expanded.empty()) {
-      SuffixLookupCallback callback(SUFFIX, kPredictionMaxResultsSize,
-                                    zip_code_id_, unknown_id_, &results);
-      suffix_dictionary_.LookupPredictive(base, request.options(), &callback);
-    } else {
-      for (absl::string_view expanded_char : expanded) {
-        const std::string request_key = absl::StrCat(base, expanded_char);
-        SuffixLookupCallback callback(SUFFIX, kPredictionMaxResultsSize,
-                                      zip_code_id_, unknown_id_, &results);
-        suffix_dictionary_.LookupPredictive(request_key, request.options(),
-                                            &callback);
-      }
-    }
-  }
 
   return results;
 }
