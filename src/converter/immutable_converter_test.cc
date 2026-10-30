@@ -97,26 +97,11 @@ int GetCandidateIndexByValue(absl::string_view value, const Segment& segment) {
 
 class MockDataAndImmutableConverter {
  public:
-  // Initializes data and immutable converter with given dictionaries. If
-  // nullptr is passed, the default mock dictionary is used. This class owns the
-  // first argument dictionary but doesn't the second because the same
-  // dictionary may be passed to the arguments.
+  // Initializes data and immutable converter with the mock data manager.
   MockDataAndImmutableConverter() {
     modules_ =
         engine::Modules::Create(std::make_unique<testing::MockDataManager>())
             .value();
-    immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
-    CHECK(immutable_converter_);
-  }
-
-  MockDataAndImmutableConverter(
-      std::unique_ptr<DictionaryInterface> dictionary,
-      std::unique_ptr<DictionaryInterface> suffix_dictionary) {
-    modules_ = engine::ModulesPresetBuilder()
-                   .PresetDictionary(std::move(dictionary))
-                   .PresetSuffixDictionary(std::move(suffix_dictionary))
-                   .Build(std::make_unique<testing::MockDataManager>())
-                   .value();
     immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
     CHECK(immutable_converter_);
   }

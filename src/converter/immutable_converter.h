@@ -71,8 +71,8 @@ class ImmutableConverter : public ImmutableConverterInterface {
   friend class ImmutableConverterTestPeer;
 
   enum InsertCandidatesType {
-    MULTI_SEGMENTS,      // Normal conversion ("私の|名前は|中野です")
-    SINGLE_SEGMENT,      // Realtime conversion ("私の名前は中野です")
+    MULTI_SEGMENTS,  // Normal conversion ("私の|名前は|中野です")
+    SINGLE_SEGMENT,  // Realtime conversion ("私の名前は中野です")
     // Insert only first segment for n-best path
     // ここでは着物を脱ぐ
     // ここで履物を脱ぐ
@@ -180,7 +180,6 @@ class ImmutableConverter : public ImmutableConverterInterface {
                                      Segments* segments) const;
 
   const dictionary::DictionaryInterface& dictionary_;
-  const dictionary::DictionaryInterface& suffix_dictionary_;
   const dictionary::UserDictionaryInterface& user_dictionary_;
   const Connector& connector_;
   const Segmenter& segmenter_;

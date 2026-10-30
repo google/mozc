@@ -294,7 +294,6 @@ class FirstInnerSegmentCandidateChecker {
 
 ImmutableConverter::ImmutableConverter(const engine::Modules& modules)
     : dictionary_(modules.GetDictionary()),
-      suffix_dictionary_(modules.GetSuffixDictionary()),
       user_dictionary_(modules.GetUserDictionary()),
       connector_(modules.GetConnector()),
       segmenter_(modules.GetSegmenter()),
