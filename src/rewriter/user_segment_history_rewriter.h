@@ -52,6 +52,46 @@ namespace mozc {
 
 class UserSegmentHistoryRewriter : public RewriterInterface {
  public:
+  // Bit fields of `disable_user_segment_history_rewriter_mode` in
+  // DecoderExperimentParams. 0 keeps the current behavior. Each bit disables
+  // one feature group so that its contribution can be measured in ablation
+  // experiments. The gates are applied when the history is *referenced*
+  // (GetScore / SortCandidates / Rewrite) and not when it is learned, so the
+  // on-device storage stays identical across experiment arms and turning a
+  // bit off immediately restores the default behavior. The only exception is
+  // DISABLE_CLOSE_BRACKET_LEARNING, which is a learning-only feature.
+  enum Mode : int32_t {
+    DEFAULT_MODE = 0,
+    // Trigram features "LR", "LL", "RR".
+    DISABLE_TRIGRAM_FEATURES = 1 << 0,
+    // Bigram features "L", "R".
+    DISABLE_BIGRAM_FEATURES = 1 << 1,
+    // Single-segment feature "S".
+    DISABLE_SINGLE_FEATURE = 1 << 2,
+    // Context-free unigram feature "C".
+    DISABLE_UNIGRAM_FEATURE = 1 << 3,
+    // Number-adjacent features "LN", "RN". These are always looked up with
+    // content_key/content_value (existing behavior), so they are not affected
+    // by DISABLE_CONTENT_WORD_FEATURES.
+    DISABLE_NUMBER_FEATURES = 1 << 4,
+    // content_key/content_value variants of the features above except LN/RN.
+    DISABLE_CONTENT_WORD_FEATURES = 1 << 5,
+    // Learning the close bracket when an open bracket is committed. This is a
+    // learning-time gate: close bracket entries already in the storage keep
+    // working, and only new learning during the experiment differs. A
+    // reference-time gate is not used because it cannot distinguish entries
+    // learned this way from close brackets the user converted directly.
+    DISABLE_CLOSE_BRACKET_LEARNING = 1 << 6,
+    // Promotes only the top-scored candidate instead of up to kMaxRerankSize
+    // candidates whose scores are close to the top.
+    DISABLE_MULTI_CANDIDATE_RERANK = 1 << 7,
+    // Scoring of meta (transliteration) candidates.
+    DISABLE_META_CANDIDATE_SCORING = 1 << 8,
+    // Skips Rewrite() when the converter is called from the realtime decoder
+    // (used_in_predictor_realtime_conversion).
+    DISABLE_IN_REALTIME_DECODER = 1 << 9,
+  };
+
   UserSegmentHistoryRewriter(const dictionary::PosMatcher& pos_matcher,
                              const dictionary::PosGroup& pos_group);
 
@@ -110,10 +150,12 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
                               std::vector<std::string>& revert_entries);
 
   bool ShouldRewrite(const Segment& segment, size_t* max_candidates_size) const;
-  void InsertTriggerKey(const Segment& segment);
+  void InsertTriggerKey(const ConversionRequest& request,
+                        const Segment& segment);
   bool IsPunctuation(const Segment& seg,
                      const converter::Candidate& candidate) const;
-  bool SortCandidates(absl::Span<const ScoreCandidate> sorted_scores,
+  bool SortCandidates(const ConversionRequest& request,
+                      absl::Span<const ScoreCandidate> sorted_scores,
                       Segment* segment) const;
   Score Fetch(absl::string_view key, uint32_t weight) const;
   void Insert(absl::string_view key, bool force,

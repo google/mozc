@@ -34,6 +34,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/random/random.h"
@@ -2285,6 +2286,377 @@ TEST_F(UserSegmentHistoryRewriterTest,
                     strlen("2日")}},
                   "ふつか", "2日"));
   }
+}
+
+// ---------------------------------------------------------------------------
+// Ablation mode tests (disable_user_segment_history_rewriter_mode).
+// Each test learns with the default mode and verifies that the corresponding
+// DISABLE_* bit suppresses only the targeted feature group at reference time.
+// ---------------------------------------------------------------------------
+class UserSegmentHistoryRewriterModeTest
+    : public UserSegmentHistoryRewriterTest {
+ protected:
+  using Mode = UserSegmentHistoryRewriter::Mode;
+
+  ConversionRequest CreateConversionRequestWithMode(int32_t mode) const {
+    commands::Request request = *request_;
+    request.mutable_decoder_experiment_params()
+        ->set_disable_user_segment_history_rewriter_mode(mode);
+    return ConversionRequestBuilder()
+        .SetConfig(*config_)
+        .SetRequest(request)
+        .Build();
+  }
+
+  // Commits candidate `index` of `segment_index` in `size`-segment segments
+  // with the default mode.
+  void Learn(UserSegmentHistoryRewriter* rewriter, size_t size,
+             size_t segment_index, int index, bool context_sensitive = false) {
+    Segments segments;
+    const ConversionRequest convreq = CreateConversionRequest();
+    InitSegments(&segments, size);
+    segments.mutable_segment(segment_index)->move_candidate(index, 0);
+    segments.mutable_segment(segment_index)->mutable_candidate(0)->attributes |=
+        converter::Attribute::RERANKED;
+    if (context_sensitive) {
+      segments.mutable_segment(segment_index)
+          ->mutable_candidate(0)
+          ->attributes |= converter::Attribute::CONTEXT_SENSITIVE;
+    }
+    segments.mutable_segment(segment_index)
+        ->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(convreq, segments);
+  }
+
+  // Returns the top value of `segment_index` after Rewrite() with `mode`.
+  std::string TopValue(UserSegmentHistoryRewriter* rewriter, int32_t mode,
+                       size_t size, size_t segment_index) {
+    Segments segments;
+    InitSegments(&segments, size);
+    const ConversionRequest convreq = CreateConversionRequestWithMode(mode);
+    rewriter->Rewrite(convreq, &segments);
+    return segments.segment(segment_index).candidate(0).value;
+  }
+};
+
+TEST_F(UserSegmentHistoryRewriterModeTest, SingleAndUnigram) {
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  rewriter->Clear();
+
+  // 1-segment commit learns "S" and "C" (lid == rid == 0 is replaceable).
+  Learn(rewriter.get(), 1, 0, 2);
+
+  EXPECT_EQ(TopValue(rewriter.get(), Mode::DEFAULT_MODE, 1, 0), "candidate2");
+  // Either feature alone is sufficient to promote.
+  EXPECT_EQ(TopValue(rewriter.get(), Mode::DISABLE_SINGLE_FEATURE, 1, 0),
+            "candidate2");
+  EXPECT_EQ(TopValue(rewriter.get(), Mode::DISABLE_UNIGRAM_FEATURE, 1, 0),
+            "candidate2");
+  // Disabling both suppresses the promotion.
+  EXPECT_EQ(
+      TopValue(rewriter.get(),
+               Mode::DISABLE_SINGLE_FEATURE | Mode::DISABLE_UNIGRAM_FEATURE, 1,
+               0),
+      "candidate0");
+  // Unrelated bits do not affect the result.
+  EXPECT_EQ(
+      TopValue(rewriter.get(),
+               Mode::DISABLE_TRIGRAM_FEATURES | Mode::DISABLE_BIGRAM_FEATURES |
+                   Mode::DISABLE_NUMBER_FEATURES |
+                   Mode::DISABLE_CONTENT_WORD_FEATURES,
+               1, 0),
+      "candidate2");
+  // The mode does not change the storage: default mode still works.
+  EXPECT_EQ(TopValue(rewriter.get(), Mode::DEFAULT_MODE, 1, 0), "candidate2");
+}
+
+TEST_F(UserSegmentHistoryRewriterModeTest, Bigram) {
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  rewriter->Clear();
+
+  // 2-segment commit of segment 0 learns "R" (bigram) and "C" (unigram).
+  Learn(rewriter.get(), 2, 0, 2);
+
+  EXPECT_EQ(TopValue(rewriter.get(), Mode::DEFAULT_MODE, 2, 0), "candidate2");
+  EXPECT_EQ(TopValue(rewriter.get(), Mode::DISABLE_UNIGRAM_FEATURE, 2, 0),
+            "candidate2");
+  EXPECT_EQ(TopValue(rewriter.get(), Mode::DISABLE_BIGRAM_FEATURES, 2, 0),
+            "candidate2");
+  EXPECT_EQ(
+      TopValue(rewriter.get(),
+               Mode::DISABLE_BIGRAM_FEATURES | Mode::DISABLE_UNIGRAM_FEATURE, 2,
+               0),
+      "candidate0");
+  // Trigram bit is irrelevant for 2 segments.
+  EXPECT_EQ(
+      TopValue(rewriter.get(),
+               Mode::DISABLE_TRIGRAM_FEATURES | Mode::DISABLE_UNIGRAM_FEATURE,
+               2, 0),
+      "candidate2");
+}
+
+TEST_F(UserSegmentHistoryRewriterModeTest, Trigram) {
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  rewriter->Clear();
+
+  // 3-segment commit of the middle segment learns "LR" (trigram), "L", "R"
+  // (bigram) and "C" (unigram).
+  Learn(rewriter.get(), 3, 1, 2);
+
+  EXPECT_EQ(TopValue(rewriter.get(), Mode::DEFAULT_MODE, 3, 1), "candidate2");
+  const int32_t without_trigram =
+      Mode::DISABLE_BIGRAM_FEATURES | Mode::DISABLE_UNIGRAM_FEATURE;
+  EXPECT_EQ(TopValue(rewriter.get(), without_trigram, 3, 1), "candidate2");
+  EXPECT_EQ(TopValue(rewriter.get(),
+                     without_trigram | Mode::DISABLE_TRIGRAM_FEATURES, 3, 1),
+            "candidate0");
+}
+
+TEST_F(UserSegmentHistoryRewriterModeTest, Number) {
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  rewriter->Clear();
+
+  // Same setup as LeftRightNumber: "1234 | candidate2" with CONTEXT_SENSITIVE
+  // so that only "L" and "LN" are learned.
+  {
+    Segments segments;
+    const ConversionRequest convreq = CreateConversionRequest();
+    InitSegments(&segments, 2);
+    segments.mutable_segment(0)->mutable_candidate(0)->value = "1234";
+    segments.mutable_segment(1)->move_candidate(2, 0);
+    segments.mutable_segment(1)->mutable_candidate(0)->attributes |=
+        converter::Attribute::RERANKED |
+        converter::Attribute::CONTEXT_SENSITIVE;
+    segments.mutable_segment(1)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(convreq, segments);
+  }
+
+  auto top_value_with_number = [&](int32_t mode) {
+    Segments segments;
+    InitSegments(&segments, 2);
+    segments.mutable_segment(0)->mutable_candidate(0)->value = "5678";
+    const ConversionRequest convreq = CreateConversionRequestWithMode(mode);
+    rewriter->Rewrite(convreq, &segments);
+    return segments.segment(1).candidate(0).value;
+  };
+
+  // "L" does not match (1234 != 5678); "LN" matches.
+  EXPECT_EQ(top_value_with_number(Mode::DEFAULT_MODE), "candidate2");
+  EXPECT_EQ(top_value_with_number(Mode::DISABLE_BIGRAM_FEATURES), "candidate2");
+  EXPECT_EQ(top_value_with_number(Mode::DISABLE_NUMBER_FEATURES), "candidate0");
+}
+
+TEST_F(UserSegmentHistoryRewriterModeTest, ContentWord) {
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  rewriter->Clear();
+
+  // Same setup as ContentValueLearning: learn "candidate2:all" whose content
+  // value is "candidate2".
+  {
+    Segments segments;
+    const ConversionRequest convreq = CreateConversionRequest();
+    InitSegments(&segments, 1);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
+    segments.mutable_segment(0)->move_candidate(2, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        converter::Attribute::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(convreq, segments);
+  }
+
+  auto top_value_with_suffix = [&](int32_t mode, absl::string_view suffix) {
+    Segments segments;
+    InitSegments(&segments, 1);
+    if (!suffix.empty()) {
+      AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, suffix, 0);
+      AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, suffix, 0);
+    }
+    const ConversionRequest convreq = CreateConversionRequestWithMode(mode);
+    rewriter->Rewrite(convreq, &segments);
+    return segments.segment(0).candidate(0).value;
+  };
+
+  // Exact (all_key/all_value) match is not affected by the content-word bit.
+  EXPECT_EQ(top_value_with_suffix(Mode::DEFAULT_MODE, ":all"),
+            "candidate2:all");
+  EXPECT_EQ(top_value_with_suffix(Mode::DISABLE_CONTENT_WORD_FEATURES, ":all"),
+            "candidate2:all");
+  // Content-word-only match (different suffix) requires the content features.
+  EXPECT_EQ(top_value_with_suffix(Mode::DEFAULT_MODE, ":other"),
+            "candidate2:other");
+  EXPECT_EQ(
+      top_value_with_suffix(Mode::DISABLE_CONTENT_WORD_FEATURES, ":other"),
+      "candidate0:other");
+}
+
+TEST_F(UserSegmentHistoryRewriterModeTest, CloseBracketLearning) {
+  auto learn_open_bracket = [&](UserSegmentHistoryRewriter* rewriter,
+                                int32_t mode) {
+    Segments segments;
+    const ConversionRequest convreq = CreateConversionRequestWithMode(mode);
+    InitSegments(&segments, 1);
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->insert_candidate(2);
+    candidate->value = "(";
+    candidate->content_value = "(";
+    candidate->content_key = "(";
+    segments.mutable_segment(0)->move_candidate(2, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        converter::Attribute::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(convreq, segments);
+  };
+  auto top_value_for_close_bracket = [&](UserSegmentHistoryRewriter* rewriter) {
+    Segments segments;
+    const ConversionRequest convreq = CreateConversionRequest();
+    InitSegments(&segments, 1);
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->insert_candidate(2);
+    candidate->value = ")";
+    candidate->content_value = ")";
+    candidate->content_key = ")";
+    rewriter->Rewrite(convreq, &segments);
+    return segments.segment(0).candidate(0).value;
+  };
+
+  {
+    std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+        CreateUserSegmentHistoryRewriter());
+    rewriter->Clear();
+    learn_open_bracket(rewriter.get(), Mode::DEFAULT_MODE);
+    EXPECT_EQ(top_value_for_close_bracket(rewriter.get()), ")");
+  }
+  {
+    std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+        CreateUserSegmentHistoryRewriter());
+    rewriter->Clear();
+    learn_open_bracket(rewriter.get(), Mode::DISABLE_CLOSE_BRACKET_LEARNING);
+    EXPECT_EQ(top_value_for_close_bracket(rewriter.get()), "candidate0");
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterModeTest, MultiCandidateRerank) {
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  rewriter->Clear();
+
+  ClockMock clock(absl::UnixEpoch());
+  Clock::SetClockForUnitTest(&clock);
+
+  // Learn candidate2 and then candidate3 for the same key. Both have the same
+  // score ("S"), so both are promoted within kScoreGap by default.
+  Learn(rewriter.get(), 1, 0, 2);
+  clock.Advance(absl::Seconds(1));
+  Learn(rewriter.get(), 1, 0, 3);
+
+  {
+    Segments segments;
+    InitSegments(&segments, 1);
+    const ConversionRequest convreq =
+        CreateConversionRequestWithMode(Mode::DEFAULT_MODE);
+    rewriter->Rewrite(convreq, &segments);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate3");
+    EXPECT_EQ(segments.segment(0).candidate(1).value, "candidate2");
+  }
+  {
+    Segments segments;
+    InitSegments(&segments, 1);
+    const ConversionRequest convreq =
+        CreateConversionRequestWithMode(Mode::DISABLE_MULTI_CANDIDATE_RERANK);
+    rewriter->Rewrite(convreq, &segments);
+    // Only the top-scored candidate is promoted; candidate2 stays in place.
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate3");
+    EXPECT_EQ(segments.segment(0).candidate(1).value, "candidate0");
+    EXPECT_EQ(segments.segment(0).candidate(2).value, "candidate1");
+    EXPECT_EQ(segments.segment(0).candidate(3).value, "candidate2");
+  }
+
+  Clock::SetClockForUnitTest(nullptr);
+}
+
+TEST_F(UserSegmentHistoryRewriterModeTest, MetaCandidateScoring) {
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  rewriter->Clear();
+
+  // Same setup as MetaCandidatesTransliterationDeduplication.
+  {
+    const ConversionRequest convreq = CreateConversionRequest();
+    Segments segments;
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("あいう");
+    converter::Candidate* candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+    candidate->value = "aiu";
+    candidate->content_value = "aiu";
+    candidate->content_key = "あいう";
+    segments.mutable_segment(0)->move_candidate(1, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        converter::Attribute::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(convreq, segments);
+  }
+
+  auto top_value = [&](int32_t mode) {
+    Segments segments;
+    InitSegments(&segments, 1, 2);
+    Segment* seg = segments.mutable_segment(0);
+    seg->set_key("あいう");
+    seg->mutable_candidate(0)->value = "あいう";
+    seg->mutable_candidate(0)->content_value = "あいう";
+    seg->mutable_candidate(1)->value = "アイウ";
+    seg->mutable_candidate(1)->content_value = "アイウ";
+    for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
+      converter::Candidate* mc = seg->add_meta_candidate();
+      mc->key = "あいう";
+      mc->content_key = "あいう";
+    }
+    seg->mutable_meta_candidate(transliteration::HALF_ASCII)->value = "aiu";
+    seg->mutable_meta_candidate(transliteration::HALF_ASCII)->content_value =
+        "aiu";
+    const ConversionRequest convreq = CreateConversionRequestWithMode(mode);
+    rewriter->Rewrite(convreq, &segments);
+    return seg->candidate(0).value;
+  };
+
+  EXPECT_EQ(top_value(Mode::DEFAULT_MODE), "aiu");
+  EXPECT_EQ(top_value(Mode::DISABLE_META_CANDIDATE_SCORING), "あいう");
+}
+
+TEST_F(UserSegmentHistoryRewriterModeTest, InRealtimeDecoder) {
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  rewriter->Clear();
+
+  Learn(rewriter.get(), 1, 0, 2);
+
+  auto top_value = [&](int32_t mode, bool used_in_realtime) {
+    commands::Request request = *request_;
+    request.mutable_decoder_experiment_params()
+        ->set_disable_user_segment_history_rewriter_mode(mode);
+    ConversionRequest::Options options;
+    options.used_in_predictor_realtime_conversion = used_in_realtime;
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetConfig(*config_)
+                                          .SetRequest(request)
+                                          .SetOptions(std::move(options))
+                                          .Build();
+    Segments segments;
+    InitSegments(&segments, 1);
+    rewriter->Rewrite(convreq, &segments);
+    return segments.segment(0).candidate(0).value;
+  };
+
+  EXPECT_EQ(top_value(Mode::DEFAULT_MODE, false), "candidate2");
+  EXPECT_EQ(top_value(Mode::DEFAULT_MODE, true), "candidate2");
+  EXPECT_EQ(top_value(Mode::DISABLE_IN_REALTIME_DECODER, false), "candidate2");
+  EXPECT_EQ(top_value(Mode::DISABLE_IN_REALTIME_DECODER, true), "candidate0");
 }
 
 }  // namespace

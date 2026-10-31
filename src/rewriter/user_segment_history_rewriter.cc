@@ -339,16 +339,31 @@ bool IsT13NCandidate(const converter::Candidate& cand) {
   return (cand.lid == 0 && cand.rid == 0);
 }
 
+// Returns true if the ablation bit `mode` is set in the request.
+bool IsModeEnabled(const ConversionRequest& request,
+                   UserSegmentHistoryRewriter::Mode mode) {
+  return (request.request()
+              .decoder_experiment_params()
+              .disable_user_segment_history_rewriter_mode() &
+          mode) != 0;
+}
+
 }  // namespace
 
 bool UserSegmentHistoryRewriter::SortCandidates(
+    const ConversionRequest& request,
     absl::Span<const ScoreCandidate> sorted_scores, Segment* segment) const {
   const uint32_t top_score = sorted_scores[0].score;
   constexpr uint32_t kScoreGap = 20;  // TODO(taku): no justification
+  // When DISABLE_MULTI_CANDIDATE_RERANK is set, only the top-scored candidate
+  // is promoted.
+  const size_t max_rerank_size =
+      IsModeEnabled(request, DISABLE_MULTI_CANDIDATE_RERANK) ? 1
+                                                             : kMaxRerankSize;
   absl::btree_set<std::string> seen;
 
   size_t next_pos = 0;
-  for (size_t n = 0; n < sorted_scores.size() && next_pos < kMaxRerankSize;
+  for (size_t n = 0; n < sorted_scores.size() && next_pos < max_rerank_size;
        ++n) {
     // Move candidates when the score is close to the top score.
     if (kScoreGap < (top_score - sorted_scores[n].score)) {
@@ -414,45 +429,75 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
   const uint32_t unigram_weight = (segments_size == 1) ? 36 : 6;
   const uint32_t single_weight = (segments_size == 1) ? 90 : 15;
 
+  // Ablation gates. Each group is skipped at reference time only, so the
+  // storage content is independent of the mode.
+  const bool use_trigram = !IsModeEnabled(request, DISABLE_TRIGRAM_FEATURES);
+  const bool use_bigram = !IsModeEnabled(request, DISABLE_BIGRAM_FEATURES);
+  const bool use_single = !IsModeEnabled(request, DISABLE_SINGLE_FEATURE);
+  const bool use_unigram = !IsModeEnabled(request, DISABLE_UNIGRAM_FEATURE);
+  const bool use_number = !IsModeEnabled(request, DISABLE_NUMBER_FEATURES);
+  const bool use_content_word =
+      !IsModeEnabled(request, DISABLE_CONTENT_WORD_FEATURES);
+
   Score score = {0, 0};
   FeatureKey fkey(segments, *pos_matcher_, segment_index);
-  score.Update(Fetch(fkey.LeftRight(all_key, all_value), trigram_weight));
-  score.Update(Fetch(fkey.LeftLeft(all_key, all_value), trigram_weight));
-  score.Update(Fetch(fkey.RightRight(all_key, all_value), trigram_weight));
-  score.Update(Fetch(fkey.Left(all_key, all_value), bigram_weight));
-  score.Update(Fetch(fkey.Right(all_key, all_value), bigram_weight));
-  score.Update(Fetch(fkey.Single(all_key, all_value), single_weight));
-  score.Update(
-      Fetch(fkey.LeftNumber(content_key, content_value), bigram_number_weight));
-  score.Update(Fetch(fkey.RightNumber(content_key, content_value),
-                     bigram_number_weight));
+  if (use_trigram) {
+    score.Update(Fetch(fkey.LeftRight(all_key, all_value), trigram_weight));
+    score.Update(Fetch(fkey.LeftLeft(all_key, all_value), trigram_weight));
+    score.Update(Fetch(fkey.RightRight(all_key, all_value), trigram_weight));
+  }
+  if (use_bigram) {
+    score.Update(Fetch(fkey.Left(all_key, all_value), bigram_weight));
+    score.Update(Fetch(fkey.Right(all_key, all_value), bigram_weight));
+  }
+  if (use_single) {
+    score.Update(Fetch(fkey.Single(all_key, all_value), single_weight));
+  }
+  if (use_number) {
+    // Note: LN/RN are looked up with (content_key, content_value) even in this
+    // block (existing behavior), so they are controlled only by
+    // DISABLE_NUMBER_FEATURES, not by DISABLE_CONTENT_WORD_FEATURES.
+    score.Update(Fetch(fkey.LeftNumber(content_key, content_value),
+                       bigram_number_weight));
+    score.Update(Fetch(fkey.RightNumber(content_key, content_value),
+                       bigram_number_weight));
+  }
 
   const bool is_replaceable = Replaceable(request, top_candidate, candidate);
-  if (!context_sensitive && is_replaceable) {
+  if (use_unigram && !context_sensitive && is_replaceable) {
     score.Update(Fetch(fkey.Current(all_key, all_value), unigram_weight));
   }
 
-  if (!is_replaceable) {
+  if (!is_replaceable || !use_content_word) {
     return score;
   }
 
-  score.Update(
-      Fetch(fkey.LeftRight(content_key, content_value), trigram_weight / 2));
-  score.Update(
-      Fetch(fkey.LeftLeft(content_key, content_value), trigram_weight / 2));
-  score.Update(
-      Fetch(fkey.RightRight(content_key, content_value), trigram_weight / 2));
-  score.Update(Fetch(fkey.Left(content_key, content_value), bigram_weight / 2));
-  score.Update(
-      Fetch(fkey.Right(content_key, content_value), bigram_weight / 2));
-  score.Update(
-      Fetch(fkey.Single(content_key, content_value), single_weight / 2));
-  score.Update(Fetch(fkey.LeftNumber(content_key, content_value),
-                     bigram_number_weight / 2));
-  score.Update(Fetch(fkey.RightNumber(content_key, content_value),
-                     bigram_number_weight / 2));
+  if (use_trigram) {
+    score.Update(
+        Fetch(fkey.LeftRight(content_key, content_value), trigram_weight / 2));
+    score.Update(
+        Fetch(fkey.LeftLeft(content_key, content_value), trigram_weight / 2));
+    score.Update(
+        Fetch(fkey.RightRight(content_key, content_value), trigram_weight / 2));
+  }
+  if (use_bigram) {
+    score.Update(
+        Fetch(fkey.Left(content_key, content_value), bigram_weight / 2));
+    score.Update(
+        Fetch(fkey.Right(content_key, content_value), bigram_weight / 2));
+  }
+  if (use_single) {
+    score.Update(
+        Fetch(fkey.Single(content_key, content_value), single_weight / 2));
+  }
+  if (use_number) {
+    score.Update(Fetch(fkey.LeftNumber(content_key, content_value),
+                       bigram_number_weight / 2));
+    score.Update(Fetch(fkey.RightNumber(content_key, content_value),
+                       bigram_number_weight / 2));
+  }
 
-  if (!context_sensitive) {
+  if (use_unigram && !context_sensitive) {
     score.Update(
         Fetch(fkey.Current(content_key, content_value), unigram_weight / 2));
   }
@@ -547,6 +592,9 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   }
 
   // learn CloseBracket when OpenBracket is fixed.
+  if (IsModeEnabled(request, DISABLE_CLOSE_BRACKET_LEARNING)) {
+    return;
+  }
   absl::string_view close_bracket_key;
   absl::string_view close_bracket_value;
   if (Util::IsOpenBracket(content_key, &close_bracket_key) &&
@@ -667,7 +715,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest& request,
     if (IsNumberSegment(segment)) {
       continue;
     }
-    InsertTriggerKey(segment);
+    InsertTriggerKey(request, segment);
     RememberFirstCandidate(request, target_segments, i, revert_entries);
   }
 
@@ -726,7 +774,8 @@ bool UserSegmentHistoryRewriter::ShouldRewrite(
   return *max_candidates_size > 0;
 }
 
-void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment& segment) {
+void UserSegmentHistoryRewriter::InsertTriggerKey(
+    const ConversionRequest& request, const Segment& segment) {
   if (!(segment.candidate(0).attributes & converter::Attribute::RERANKED)) {
     MOZC_VLOG(2) << "InsertTriggerKey is skipped";
     return;
@@ -748,6 +797,9 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment& segment) {
                      reinterpret_cast<const char*>(&v));
   }
 
+  if (IsModeEnabled(request, DISABLE_CLOSE_BRACKET_LEARNING)) {
+    return;
+  }
   absl::string_view close_bracket_key;
   if (Util::IsOpenBracket(segment.key(), &close_bracket_key)) {
     const std::string key{close_bracket_key.data(), close_bracket_key.size()};
@@ -765,6 +817,15 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest& request,
     MOZC_VLOG(2) << "history_learning_level is NO_HISTORY";
     return false;
   }
+
+  if (request.options().used_in_predictor_realtime_conversion &&
+      IsModeEnabled(request, DISABLE_IN_REALTIME_DECODER)) {
+    MOZC_VLOG(2) << "disabled in realtime decoder";
+    return false;
+  }
+
+  const bool use_meta_candidates =
+      !IsModeEnabled(request, DISABLE_META_CANDIDATE_SCORING);
 
   // set BEST_CANDIDATE marker in advance
   for (Segment& segment : *segments) {
@@ -810,7 +871,8 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest& request,
         scores.emplace_back(score, &segment->candidate(l));
       }
     }
-    for (size_t k = 0; k < segment->meta_candidates_size(); ++k) {
+    for (size_t k = 0;
+         use_meta_candidates && k < segment->meta_candidates_size(); ++k) {
       const int j = -static_cast<int>(k) - 1;
       const Score score = GetScore(request, *segments, i, j);
       if (score.score > 0) {
@@ -823,7 +885,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest& request,
     }
 
     absl::c_stable_sort(scores, std::greater<ScoreCandidate>());
-    modified |= SortCandidates(scores, segment);
+    modified |= SortCandidates(request, scores, segment);
     if (!(segment->candidate(0).attributes &
           converter::Attribute::BEST_CANDIDATE)) {
       segment->mutable_candidate(0)->attributes |=
