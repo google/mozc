@@ -76,6 +76,10 @@ struct Entry {
   // For UNIT_AND_BIG_DIGIT and UNIT_AND_STOP_DECODING.
   // The key length for the first part.
   int consume_byte_len_of_first = 0;
+  // For STOP_DECODING. When the suffix ends the input, also emit the bare
+  // number preceding it as a partial-key candidate (e.g., "にせんち" -> "2").
+  // See kStopSuffixEntries in number_decoder_data.inc.
+  bool emits_bare_number_prefix = false;
 };
 
 // We decode the Japanese number reading using big_digit and small_digit.
@@ -121,33 +125,49 @@ struct State {
   // The digit number
   // 12万(=120000) → 6
   int digit_num = 0;
+  // Byte length of the prefix of |key| consumed so far.
   uint32_t consumed_key_byte_len = 0;
+  // True if decoding terminated at an explicit boundary: a stop-decoding
+  // suffix with |Entry::emits_bare_number_prefix| (e.g., "にせんち"),
+  // Type::UNIT_AND_STOP_DECODING (e.g., "にちょうめ"), or a consecutive unit
+  // number boundary (e.g., "にさんじゅう", "にいち"). When false, single-token
+  // partial-key bare number results are suppressed to avoid false splits at the
+  // beginning of ordinary words (e.g., "にかいて" -> *"2" + "かいて").
+  bool stopped_at_explicit_boundary = false;
 };
 
 }  // namespace number_decoder_internal
 
 struct NumberDecoderResult {
   NumberDecoderResult() = default;
-  NumberDecoderResult(uint32_t len, std::string c, int digit_num)
+  NumberDecoderResult(uint32_t len, std::string c, int digit_num,
+                      bool is_counter_suffix = false)
       : candidate(std::move(c)),
         consumed_key_byte_len(len),
-        digit_num(digit_num) {}
+        digit_num(digit_num),
+        is_counter_suffix(is_counter_suffix) {}
 
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const NumberDecoderResult& result) {
-    absl::Format(&sink, "(%d,\" %s\", %d)", result.consumed_key_byte_len,
-                 result.candidate, result.digit_num);
+    absl::Format(&sink, "(%d,\" %s\", %d, %v)", result.consumed_key_byte_len,
+                 result.candidate, result.digit_num, result.is_counter_suffix);
   }
 
   std::string candidate;
   uint32_t consumed_key_byte_len = 0;
   int digit_num = 0;  // 12万(=120000) → 6
+  // True if |candidate| includes a counter suffix or Wago numeral expression
+  // (e.g., "1枚", "ひとり" -> "1人"). Used to assign counter-suffix POS and
+  // word cost in NumberDecoder::Decode.
+  bool is_counter_suffix = false;
 };
 
 constexpr bool operator==(const NumberDecoderResult& lhs,
                           const NumberDecoderResult& rhs) {
-  return std::tie(lhs.consumed_key_byte_len, lhs.candidate, lhs.digit_num) ==
-         std::tie(rhs.consumed_key_byte_len, rhs.candidate, rhs.digit_num);
+  return std::tie(lhs.consumed_key_byte_len, lhs.candidate, lhs.digit_num,
+                  lhs.is_counter_suffix) ==
+         std::tie(rhs.consumed_key_byte_len, rhs.candidate, rhs.digit_num,
+                  rhs.is_counter_suffix);
 }
 
 std::ostream& operator<<(std::ostream& os, const NumberDecoderResult& r);
@@ -181,6 +201,7 @@ class NumberDecoder {
 
   const uint16_t kanji_number_id_;
   const uint16_t number_id_;
+  const uint16_t counter_suffix_word_id_;
 };
 
 }  // namespace mozc::prediction

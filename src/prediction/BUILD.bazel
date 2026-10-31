@@ -778,7 +778,10 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "number_decoder",
-    srcs = ["number_decoder.cc"],
+    srcs = [
+        "number_decoder.cc",
+        "number_decoder_data.inc",
+    ],
     hdrs = [
         "number_decoder.h",
     ],
