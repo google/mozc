@@ -593,6 +593,7 @@ mozc_cc_library(
     deps = [
         "//base:config_file_stream",
         "//base:file_stream",
+        "//base:port",
         "//base:util",
         "//base/container:flat_map",
         "//base/protobuf:repeated_field",

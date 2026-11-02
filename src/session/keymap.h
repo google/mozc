@@ -38,6 +38,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "base/port.h"
 #include "base/protobuf/repeated_field.h"
 #include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
@@ -324,11 +325,8 @@ class KeyMapManager {
   void RegisterConversionCommand(const std::string& command_string,
                                  ConversionState::Commands command);
 
-#if defined(__APPLE__)
-  static constexpr bool kCompositionModeXCommandSupported = false;
-#else   // __APPLE__
-  static constexpr bool kCompositionModeXCommandSupported = true;
-#endif  // __APPLE__
+  static constexpr bool kCompositionModeXCommandSupported =
+      !port::IsAppleBase();
 
   absl::flat_hash_map<std::string, DirectInputState::Commands>
       command_direct_map_;
