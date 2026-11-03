@@ -31,18 +31,11 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 IDI_IMM32                 ICON       "data/images/win/product_icon_langbar.ico"
 IDI_DIRECT                ICON       "data/images/win/ms_direct_input_a.ico"
 IDI_HIRAGANA              ICON       "data/images/win/ms_hiragana_a.ico"
-IDI_TOOL                  ICON       "data/images/win/tools_icon_a.ico"
-IDI_TOOL_NT               ICON       "data/images/win/tools_icon.ico"
-IDI_PROPERTY              ICON       "data/images/win/tools_properties_a.ico"
-IDI_PROPERTY_NT           ICON       "data/images/win/tools_properties.ico"
-IDI_DICTIONARY            ICON       "data/images/win/tools_dictionary_a.ico"
-IDI_DICTIONARY_NT         ICON       "data/images/win/tools_dictionary.ico"
 IDI_FULL_KATAKANA         ICON       "data/images/win/ms_katakana_a.ico"
 IDI_HALF_ALPHANUMERIC     ICON       "data/images/win/ms_alpha_half_a.ico"
 IDI_FULL_ALPHANUMERIC     ICON       "data/images/win/ms_alpha_a.ico"
 IDI_HALF_KATAKANA         ICON       "data/images/win/ms_katakana_half_a.ico"
 IDI_DISABLED              ICON       "data/images/win/ms_disabled_a.ico"
-IDI_DISABLED_NT           ICON       "data/images/win/ms_disabled.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -148,16 +141,13 @@ BEGIN
     IDS_IME_DISPLAYNAME     "Mozc"
     IDS_TEXTSERVICE_DISPLAYNAME_SYNONYM  "Mozc"
 #endif
-    IDS_INPUTMODE           "入力モード"
     IDS_WIN8_TRAY_ITEM      "右クリックで IME のオプションを表示します"
     IDS_DIRECT              "直接入力"
     IDS_HIRAGANA            "ひらがな"
-    IDS_TOOL                "ツール"
     IDS_PROPERTY            "プロパティ"
     IDS_DICTIONARY          "辞書ツール"
     IDS_WORD_REGISTER       "単語登録"
     IDS_HELP                "ヘルプ"
-    IDS_CANCEL              "キャンセル"
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
     IDS_ABOUT               "Google 日本語入力について"
 #else
@@ -191,16 +181,13 @@ BEGIN
     IDS_IME_DISPLAYNAME     "Mozc"
     IDS_TEXTSERVICE_DISPLAYNAME_SYNONYM  "Mozc"
 #endif
-    IDS_INPUTMODE           "Input Mode"
     IDS_WIN8_TRAY_ITEM      "Right click to show IME options"
     IDS_DIRECT              "Direct Input"
     IDS_HIRAGANA            "Hiragana"
-    IDS_TOOL                "Tools"
     IDS_PROPERTY            "Properties"
     IDS_DICTIONARY          "Dictionary Tool"
     IDS_WORD_REGISTER       "Add Word"
     IDS_HELP                "Help"
-    IDS_CANCEL              "Cancel"
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
     IDS_ABOUT               "About Google Japanese Input"
 #else
