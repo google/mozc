@@ -44,6 +44,7 @@
 #include "renderer/win32/candidate_window.h"
 #include "renderer/win32/indicator_window.h"
 #include "renderer/win32/infolist_window.h"
+#include "renderer/win32/text_renderer.h"
 #include "renderer/win32/win32_dpi_util.h"
 #include "renderer/win32/win32_renderer_util.h"
 #include "renderer/window_util.h"
@@ -59,11 +60,12 @@ const POINT kInvalidMousePosition = {-65535, -65535};
 
 }  // namespace
 
-WindowManager::WindowManager()
-    : main_window_(std::make_unique<CandidateWindow>()),
-      cascading_window_(std::make_unique<CandidateWindow>()),
+WindowManager::WindowManager(TextRenderer* text_renderer)
+    : text_renderer_(text_renderer),
+      main_window_(std::make_unique<CandidateWindow>(text_renderer)),
+      cascading_window_(std::make_unique<CandidateWindow>(text_renderer)),
       indicator_window_(std::make_unique<IndicatorWindow>()),
-      infolist_window_(std::make_unique<InfolistWindow>()),
+      infolist_window_(std::make_unique<InfolistWindow>(text_renderer)),
       layout_manager_(std::make_unique<LayoutManager>()),
       send_command_interface_(nullptr),
       last_position_(kInvalidMousePosition),
@@ -239,6 +241,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand& command) {
   // subsequent SetWindowPos, after the size has already been computed at
   // the stale DPI.
   const uint32_t target_dpi = GetDpiForPoint(target_point.x, target_point.y);
+  text_renderer_->OnDpiChanged(target_dpi);
   main_window_->UpdateDpi(target_dpi);
   cascading_window_->UpdateDpi(target_dpi);
   infolist_window_->UpdateDpi(target_dpi);

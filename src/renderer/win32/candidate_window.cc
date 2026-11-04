@@ -218,13 +218,13 @@ COLORREF ToColorRef(const RendererStyle::RGBAColor& color) {
 // CandidateWindow
 // ------------------------------------------------------------------------
 
-CandidateWindow::CandidateWindow()
+CandidateWindow::CandidateWindow(TextRenderer* text_renderer)
     : candidate_window_(std::make_unique<commands::CandidateWindow>()),
       footer_logo_display_size_(0, 0),
       send_command_interface_(nullptr),
       table_layout_(std::make_unique<TableLayout>()),
       dpi_(::GetDpiForSystem()),
-      text_renderer_(TextRenderer::Create(dpi_)),
+      text_renderer_(text_renderer),
       indicator_width_(0),
       metrics_changed_(false),
       mouse_moving_(true) {
@@ -279,7 +279,6 @@ void CandidateWindow::UpdateDpi(uint32_t dpi) {
   }
   dpi_ = dpi;
   UpdateDpiDependentResources();
-  text_renderer_->OnDpiChanged(dpi_);
 }
 
 void CandidateWindow::EnableOrDisableWindowForWorkaround() {
