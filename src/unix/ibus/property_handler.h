@@ -95,7 +95,8 @@ class PropertyHandler {
   void UpdateCompositionModeIcon(
       IbusEngineWrapper* engine,
       commands::CompositionMode new_composition_mode);
-  void SetCompositionMode(commands::CompositionMode composition_mode);
+  void SetCompositionMode(IbusEngineWrapper* engine,
+                          commands::CompositionMode composition_mode);
 
   IbusPropListWrapper prop_root_;
   IbusPropertyWrapper prop_composition_mode_;
