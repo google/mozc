@@ -209,6 +209,7 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":text_renderer",
         ":window_manager",
         "//base:vlog",
         "//protocol:renderer_cc_proto",
@@ -254,6 +255,7 @@ mozc_cc_library(
         ":candidate_window",
         ":indicator_window",
         ":infolist_window",
+        ":text_renderer",
         ":win32_dpi_util",
         ":win32_renderer_util",
         "//base:coordinates",
