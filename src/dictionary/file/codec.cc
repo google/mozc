@@ -121,8 +121,8 @@ void DictionaryFileCodec::WriteSection(const DictionaryFileSection& section,
 std::string DictionaryFileCodec::GetSectionName(absl::string_view name) const {
   MOZC_VLOG(1) << "seed\t" << seed_;
   const uint64_t name_fp = LegacyFingerprintWithSeed(name, seed_);
-  const std::string fp_string(reinterpret_cast<const char*>(&name_fp),
-                              sizeof(name_fp));
+  std::string fp_string;
+  AppendUnaligned<uint64_t>(name_fp, fp_string);
   if (MOZC_VLOG_IS_ON(1)) {
     MOZC_VLOG(1) << "Section name for " << name << ": "
                  << absl::CHexEscape(fp_string);

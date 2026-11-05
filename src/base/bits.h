@@ -32,6 +32,7 @@
 #ifndef MOZC_BASE_BITS_H_
 #define MOZC_BASE_BITS_H_
 
+#include <array>
 #include <bit>
 #include <concepts>
 #include <cstddef>
@@ -40,6 +41,7 @@
 #include <iterator>
 #include <memory>
 #include <new>
+#include <string>
 #include <type_traits>
 
 #include "absl/base/config.h"
@@ -163,6 +165,31 @@ inline Iterator StoreUnaligned(const T value, Iterator iter) {
   bits_internal::Advance<T>(iter);
   return iter;
 }
+
+// Appends a value of sizeof(T) to dest with the native byte order. Use this
+// function instead of reinterpret_cast to serialize a multi-byte type to a
+// string.
+//
+// The type of value must be exactly T. Implicit conversions are rejected at
+// compile time so that a value is never truncated silently. Use a braced
+// initializer for constants, which rejects out-of-range constants at compile
+// time, and narrow other values explicitly with an appropriate range check.
+//
+// Example:
+//
+//  std::string image;
+//  AppendUnaligned<uint32_t>(uint32_t{8}, image);
+template <typename T>
+  requires(std::integral<T>)
+inline void AppendUnaligned(const std::type_identity_t<T> value,
+                            std::string& dest) {
+  const auto bytes = std::bit_cast<std::array<char, sizeof(T)>>(value);
+  dest.append(bytes.data(), bytes.size());
+}
+
+template <typename T, typename U>
+  requires(!std::same_as<T, U>)
+void AppendUnaligned(U value, std::string& dest) = delete;
 
 // HostToNet changes the host byte order value to the network byte order.
 template <typename T>

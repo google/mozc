@@ -74,6 +74,7 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":bit_stream",
+        "//base:bits",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings:string_view",
     ],
@@ -114,6 +115,7 @@ mozc_cc_library(
     ],
     deps = [
         ":bit_stream",
+        "//base:bits",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings:string_view",
     ],
@@ -182,7 +184,6 @@ mozc_cc_library(
     srcs = ["bit_stream.cc"],
     hdrs = ["bit_stream.h"],
     deps = [
-        "@com_google_absl//absl/base",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings:string_view",
     ],
@@ -195,6 +196,5 @@ mozc_cc_test(
     deps = [
         ":bit_stream",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
     ],
 )

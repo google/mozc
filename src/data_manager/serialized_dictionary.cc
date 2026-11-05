@@ -142,22 +142,19 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
     std::string buf;
     for (const auto& kv : dic) {
       const uint32_t key_index = string_index[kv.first];
-      const size_t prev_size = buf.size();
-      buf.resize(buf.size() + kv.second.size() * kTokenByteLength);
-      auto iter = buf.begin() + prev_size;
       for (const auto& token_ptr : kv.second) {
         const uint32_t value_index = string_index[token_ptr->value];
         const uint32_t desc_index = string_index[token_ptr->description];
         const uint32_t adddesc_index =
             string_index[token_ptr->additional_description];
-        iter = StoreUnaligned<uint32_t>(key_index, iter);
-        iter = StoreUnaligned<uint32_t>(value_index, iter);
-        iter = StoreUnaligned<uint32_t>(desc_index, iter);
-        iter = StoreUnaligned<uint32_t>(adddesc_index, iter);
-        iter = StoreUnaligned<uint16_t>(token_ptr->lid, iter);
-        iter = StoreUnaligned<uint16_t>(token_ptr->rid, iter);
-        iter = StoreUnaligned<uint16_t>(token_ptr->cost, iter);
-        iter = StoreUnaligned<uint16_t>(static_cast<uint16_t>(0), iter);
+        AppendUnaligned<uint32_t>(key_index, buf);
+        AppendUnaligned<uint32_t>(value_index, buf);
+        AppendUnaligned<uint32_t>(desc_index, buf);
+        AppendUnaligned<uint32_t>(adddesc_index, buf);
+        AppendUnaligned<uint16_t>(token_ptr->lid, buf);
+        AppendUnaligned<uint16_t>(token_ptr->rid, buf);
+        AppendUnaligned<int16_t>(token_ptr->cost, buf);
+        AppendUnaligned<uint16_t>(uint16_t{0}, buf);
       }
     }
     *output_token_array_buf =

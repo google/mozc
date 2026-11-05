@@ -34,7 +34,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
 #include <ios>
 #include <istream>
 #include <limits>
@@ -313,21 +312,15 @@ class UserDictionary::TokensIndex {
                                     absl::string_view comment) {
     DCHECK_LE(token.key.size(), std::numeric_limits<uint16_t>::max());
     DCHECK_LE(token.value.size(), std::numeric_limits<uint16_t>::max());
-    std::string buf(kTokenHeaderSize + token.key.size() + token.value.size() +
-                        comment.size(),
-                    '\0');
-    char* ptr = buf.data();
-    StoreUnaligned<uint16_t>(token.id, ptr);
-    ptr[2] = static_cast<char>(token.raw_pos_type);
-    StoreUnaligned<uint16_t>(static_cast<uint16_t>(token.key.size()), ptr + 3);
-    StoreUnaligned<uint16_t>(static_cast<uint16_t>(token.value.size()),
-                             ptr + 5);
-    ptr += kTokenHeaderSize;
-    ptr = absl::c_copy(token.key, ptr);
-    ptr = absl::c_copy(token.value, ptr);
-    if (!comment.empty()) {
-      absl::c_copy(comment, ptr);
-    }
+    std::string buf;
+    buf.reserve(kTokenHeaderSize + token.key.size() + token.value.size() +
+                comment.size());
+    AppendUnaligned<uint16_t>(token.id, buf);
+    AppendUnaligned<uint8_t>(token.raw_pos_type, buf);
+    AppendUnaligned<uint16_t>(static_cast<uint16_t>(token.key.size()), buf);
+    AppendUnaligned<uint16_t>(static_cast<uint16_t>(token.value.size()), buf);
+    DCHECK_EQ(buf.size(), kTokenHeaderSize);
+    absl::StrAppend(&buf, token.key, token.value, comment);
     return buf;
   }
 
