@@ -30,12 +30,7 @@
 #include "storage/louds/bit_stream.h"
 
 #include <cstddef>
-#include <cstdint>
-#include <iterator>
-#include <limits>
-#include <string>
 
-#include "absl/base/casts.h"
 #include "absl/log/check.h"
 
 namespace mozc {
@@ -60,21 +55,6 @@ void BitStream::FillPadding32() {
   }
   num_bits_ = image_.length() * 8;
 }
-
-namespace internal {
-
-void PushInt32(size_t value, std::string &image) {
-  // Make sure the value is fit in the 32-bit value.
-  CHECK_LE(value, std::numeric_limits<uint32_t>::max());
-
-  // Output LSB to MSB.
-  image.push_back(absl::implicit_cast<char>(value & 0xFF));
-  image.push_back(absl::implicit_cast<char>((value >> 8) & 0xFF));
-  image.push_back(absl::implicit_cast<char>((value >> 16) & 0xFF));
-  image.push_back(absl::implicit_cast<char>((value >> 24) & 0xFF));
-}
-
-}  // namespace internal
 
 }  // namespace louds
 }  // namespace storage

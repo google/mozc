@@ -29,6 +29,7 @@
 
 #include "base/bits.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <string>
@@ -98,6 +99,34 @@ TEST(BitsTest, StoreAndLoadUnaligned) {
   EXPECT_EQ(StoreUnaligned<uint32_t>(123, array32), array32 + 1);
   EXPECT_THAT(array32, ElementsAre(123, 0));
 }
+
+TEST(BitsTest, AppendUnaligned) {
+  std::string image;
+  AppendUnaligned<uint32_t>(uint32_t{0}, image);
+  AppendUnaligned<uint32_t>(uint32_t{0xffffffff}, image);
+  EXPECT_THAT(image,
+              ElementsAre(0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff));
+
+  image.clear();
+  AppendUnaligned<uint32_t>(HostToLittle(uint32_t{0x12345678}), image);
+  AppendUnaligned<uint16_t>(HostToLittle(uint16_t{0xabcd}), image);
+  AppendUnaligned<uint8_t>(uint8_t{0x42}, image);
+  AppendUnaligned<uint64_t>(HostToLittle(uint64_t{0x0123456789abcdef}), image);
+  EXPECT_THAT(image, ElementsAre(0x78, 0x56, 0x34, 0x12, 0xcd, 0xab, 0x42, 0xef,
+                                 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01));
+}
+
+template <typename T, typename U>
+constexpr bool kCanAppendUnaligned =
+    requires(U value, std::string& dest) { AppendUnaligned<T>(value, dest); };
+
+static_assert(kCanAppendUnaligned<uint32_t, uint32_t>);
+static_assert(kCanAppendUnaligned<int8_t, int8_t>);
+// Implicit conversions are rejected, even when they are widening.
+static_assert(!kCanAppendUnaligned<uint32_t, size_t>);
+static_assert(!kCanAppendUnaligned<uint32_t, int>);
+static_assert(!kCanAppendUnaligned<uint32_t, uint16_t>);
+static_assert(!kCanAppendUnaligned<int8_t, int>);
 
 TEST(BitsTest, ByteSwap) {
   EXPECT_EQ(byteswap<uint8_t>(0x37), 0x37);

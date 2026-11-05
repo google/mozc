@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -38,14 +39,13 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "storage/louds/bit_stream.h"
 
 namespace mozc {
 namespace storage {
 namespace louds {
 namespace {
-
-using ::mozc::storage::louds::internal::PushInt32;
 
 // A pair of word and its original index in the (sorted) word_list_.
 class Entry {
@@ -60,6 +60,12 @@ class Entry {
   absl::string_view word_;
   size_t original_index_;
 };
+
+// The image stores sizes as 32-bit little-endian values.
+void AppendUint32(size_t value, std::string& image) {
+  CHECK(std::in_range<uint32_t>(value)) << value << " doesn't fit in uint32_t";
+  AppendUnaligned<uint32_t>(HostToLittle(static_cast<uint32_t>(value)), image);
+}
 
 }  // namespace
 
@@ -180,11 +186,11 @@ void LoudsTrieBuilder::Build() {
   terminal_stream.FillPadding32();
 
   // Output
-  PushInt32(trie_stream.ByteSize(), image_);
-  PushInt32(terminal_stream.ByteSize(), image_);
+  AppendUint32(trie_stream.ByteSize(), image_);
+  AppendUint32(terminal_stream.ByteSize(), image_);
   // The num bits of each character annotated to each edge.
-  PushInt32(8, image_);
-  PushInt32(edge_character.size(), image_);
+  AppendUint32(8, image_);
+  AppendUint32(edge_character.size(), image_);
 
   image_.append(trie_stream.image());
   image_.append(terminal_stream.image());
