@@ -34,7 +34,6 @@
 #include <climits>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -72,8 +71,6 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "request/options.h"
 
 namespace mozc {
@@ -1788,8 +1785,7 @@ bool ImmutableConverter::Convert(const ConversionOptions& options,
     // creating thread_local per thread has more performance penalty.
     // TODO(all): Re-evaluate this implementation if we run converter on
     // multi-threaded environment.
-    thread_local Lattice lattice;
-    return Convert(options, segments, &lattice);
+    return Convert(options, segments, &Lattice::GetThreadLocal());
   } else {
     Lattice lattice;
     return Convert(options, segments, &lattice);

@@ -86,4 +86,15 @@ TEST(LatticeTest, InsertTest) {
     EXPECT_EQ(lattice.end_nodes(3).size(), 2);
   }
 }
+
+TEST(LatticeTest, GetThreadLocalTest) {
+  Lattice& lattice1 = Lattice::GetThreadLocal();
+  Lattice& lattice2 = Lattice::GetThreadLocal();
+  EXPECT_EQ(&lattice1, &lattice2);
+
+  lattice1.SetKey("test");
+  EXPECT_TRUE(lattice1.has_lattice());
+  EXPECT_EQ(lattice1.key(), "test");
+}
+
 }  // namespace mozc

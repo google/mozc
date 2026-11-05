@@ -157,4 +157,9 @@ std::string Lattice::DebugString() const {
   return os.str();
 }
 
+Lattice& Lattice::GetThreadLocal() {
+  thread_local Lattice lattice;
+  return lattice;
+}
+
 }  // namespace mozc

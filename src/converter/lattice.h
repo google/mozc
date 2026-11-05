@@ -45,6 +45,10 @@ namespace mozc {
 
 class Lattice {
  public:
+  // Returns a thread-local Lattice instance for reuse on platforms where
+  // the converter runs persistently on the same thread.
+  static Lattice& GetThreadLocal();
+
   Lattice() : node_allocator_(std::make_unique<NodeAllocator>()) {}
 
   NodeAllocator* node_allocator() const { return node_allocator_.get(); }

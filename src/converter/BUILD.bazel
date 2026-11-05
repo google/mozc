@@ -534,8 +534,6 @@ mozc_cc_library(
         "//dictionary:pos_matcher",
         "//engine:modules",
         "//prediction:suggestion_filter",
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
         "//request:options",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/base:nullability",
