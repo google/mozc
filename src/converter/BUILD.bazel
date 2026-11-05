@@ -523,6 +523,7 @@ mozc_cc_library(
         ":segmenter",
         ":segments",
         "//base:japanese_util",
+        "//base:port",
         "//base:util",
         "//base:vlog",
         "//base/container:trie",

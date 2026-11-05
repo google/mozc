@@ -51,6 +51,7 @@
 #include "absl/types/span.h"
 #include "base/container/trie.h"
 #include "base/japanese_util.h"
+#include "base/port.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -1780,19 +1781,19 @@ bool ImmutableConverter::Convert(const ConversionOptions& options,
 
 bool ImmutableConverter::Convert(const ConversionOptions& options,
                                  Segments* segments) const {
-#if defined(__ANDROID__) || defined(_WIN32) || defined(__APPLE__)
-  // These platforms run the converter persistently on the same thread. Using
-  // thread_local allows the Lattice to be reused, which improves the
-  // performance. It's better not to use thread_local in general case as
-  // creating thread_local per thread has more performance penalty.
-  // TODO(all): Re-evaluate this implementation if we run converter on
-  // multi-threaded environment.
-  thread_local Lattice lattice;
-#else   // defined(__ANDROID__) || defined(_WIN32) || defined(__APPLE__)
-  Lattice lattice;
-#endif  // defined(__ANDROID__) || defined(_WIN32) || defined(__APPLE__)
-
-  return Convert(options, segments, &lattice);
+  if constexpr (port::IsAndroid() || port::IsWindows() || port::IsAppleBase()) {
+    // These platforms run the converter persistently on the same thread. Using
+    // thread_local allows the Lattice to be reused, which improves the
+    // performance. It's better not to use thread_local in general case as
+    // creating thread_local per thread has more performance penalty.
+    // TODO(all): Re-evaluate this implementation if we run converter on
+    // multi-threaded environment.
+    thread_local Lattice lattice;
+    return Convert(options, segments, &lattice);
+  } else {
+    Lattice lattice;
+    return Convert(options, segments, &lattice);
+  }
 }
 
 }  // namespace mozc
