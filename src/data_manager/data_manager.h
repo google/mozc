@@ -110,9 +110,6 @@ class DataManager {
 
   virtual absl::string_view GetCounterSuffixSortedArray() const;
 
-  // [key_array_data, value_array_data, token_array_data]
-  virtual std::array<absl::string_view, 3> GetSuffixDictionaryData() const;
-
   // [value_array_data, error_array_data, correction_array_data]
   virtual std::array<absl::string_view, 3> GetReadingCorrectionData() const;
 
@@ -199,9 +196,6 @@ class DataManager {
   absl::string_view segmenter_rtable_;
   absl::string_view segmenter_bitarray_;
   absl::string_view counter_suffix_data_;
-  absl::string_view suffix_key_array_data_;
-  absl::string_view suffix_value_array_data_;
-  absl::string_view suffix_token_array_data_;
   absl::string_view reading_correction_value_array_data_;
   absl::string_view reading_correction_error_array_data_;
   absl::string_view reading_correction_correction_array_data_;

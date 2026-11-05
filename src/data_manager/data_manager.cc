@@ -261,27 +261,6 @@ absl::Status DataManager::InitFromReader(const DataSetReader& reader) {
   if (!SerializedStringArray::VerifyData(counter_suffix_data_)) {
     return absl::NotFoundError("Counter suffix string array is broken");
   }
-  if (!reader.Get("suffix_key", &suffix_key_array_data_)) {
-    return absl::NotFoundError("Cannot find a suffix key array");
-  }
-  if (!reader.Get("suffix_value", &suffix_value_array_data_)) {
-    return absl::NotFoundError("Cannot find a suffix value array");
-  }
-  if (!reader.Get("suffix_token", &suffix_token_array_data_)) {
-    return absl::NotFoundError("Cannot find a suffix token array");
-  }
-  {
-    SerializedStringArray suffix_keys, suffix_values;
-    if (!suffix_keys.Init(suffix_key_array_data_) ||
-        !suffix_values.Init(suffix_value_array_data_) ||
-        suffix_keys.size() != suffix_values.size() ||
-        // Suffix token array is an array of triple (lid, rid, cost) of
-        // uint32_t, so it contains N = 3 * |suffix_keys.size()| uint32_t
-        // elements. Therefore, its byte length must be 4 * N bytes.
-        suffix_token_array_data_.size() != 4 * 3 * suffix_keys.size()) {
-      return absl::DataLossError("Suffix dictionary data is broken");
-    }
-  }
   if (!reader.Get("reading_correction_value",
                   &reading_correction_value_array_data_)) {
     return absl::NotFoundError("Cannot find reading correction value array");
@@ -515,11 +494,6 @@ DataManager::GetSegmenterData() const {
           MakeAlignedConstSpan<uint16_t>(segmenter_rtable_),
           MakeAlignedConstSpan<char>(segmenter_bitarray_),
           MakeAlignedConstSpan<uint16_t>(boundary_data_)};
-}
-
-std::array<absl::string_view, 3> DataManager::GetSuffixDictionaryData() const {
-  return {suffix_key_array_data_, suffix_value_array_data_,
-          suffix_token_array_data_};
 }
 
 std::array<absl::string_view, 3> DataManager::GetReadingCorrectionData() const {
