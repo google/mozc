@@ -47,6 +47,7 @@
 #include "base/const.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/port.h"
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -893,16 +894,16 @@ bool Client::LaunchTool(absl::string_view mode,
     return false;
   }
 
-#if defined(_WIN32) || defined(__linux__)
-  std::string arg = absl::StrCat("--mode=", mode);
-  if (!extra_arg.empty()) {
-    absl::StrAppend(&arg, " ", extra_arg);
+  if constexpr (port::IsWindows() || port::IsLinuxBase()) {
+    std::string arg = absl::StrCat("--mode=", mode);
+    if (!extra_arg.empty()) {
+      absl::StrAppend(&arg, " ", extra_arg);
+    }
+    if (!mozc::Process::SpawnMozcProcess(kMozcTool, arg)) {
+      LOG(ERROR) << "Cannot execute: " << kMozcTool << " " << arg;
+      return false;
+    }
   }
-  if (!mozc::Process::SpawnMozcProcess(kMozcTool, arg)) {
-    LOG(ERROR) << "Cannot execute: " << kMozcTool << " " << arg;
-    return false;
-  }
-#endif  // _WIN32 || __linux__
 
   // TODO(taku): move MacProcess inside SpawnMozcProcess.
   // TODO(taku): support extra_arg.

@@ -104,6 +104,7 @@ mozc_cc_library(
         "//base:const",
         "//base:file_stream",
         "//base:file_util",
+        "//base:port",
         "//base:process",
         "//base:run_level",
         "//base:system_util",
