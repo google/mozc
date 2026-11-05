@@ -230,7 +230,7 @@ OK:	きんとれ	筋トレ	Conversion Expected	筋トレ	2.28.4880
 OK:	おくぶたえ	奥二重	Conversion Expected	奥二重	2.28.4880
 OK:	にほんじゅう	日本中	Conversion Expected	日本中	2.28.4880
 OK:	にっぽんじゅう	日本中	Conversion Expected	日本中	2.28.4880
-FAILED:	かにかまれる	カニカマれる	Conversion Match	蚊に.*	2.28.4830
+FAILED:	かにかまれる	かに噛まれる	Conversion Match	蚊に.*	3.35.6354
 OK:	こういんしょう	好印象	Conversion Expected	好印象	2.29.5111
 OK:	じってんぽ	実店舗	Conversion Match	実店舗	2.28.4880
 OK:	うらめん	裏面	Conversion Match	裏面	2.28.4880
@@ -552,8 +552,8 @@ OK:	ごかい	誤解	Conversion Expected 99	5階	3.33.6089
 OK:	ごかい	誤解	Conversion Expected 99	誤解	3.33.6089
 OK:	ろくが	録画	Conversion Expected 99	6が	2.31.5810
 OK:	ろくが	録画	Conversion Expected 99	録画	2.31.5810
-FAILED:	ななちゃん	無無ちゃん	Conversion Expected 99	7チャン	2.31.5810
-OK:	ななちゃん	無無ちゃん	Conversion Expected 99	ナナちゃん	2.31.5810
+FAILED:	ななちゃん	ななちゃん	Conversion Expected 99	7チャン	3.35.6354
+OK:	ななちゃん	ななちゃん	Conversion Expected 99	ナナちゃん	3.35.6354
 FAILED:	はってん	発展	Conversion Expected 99	8点	2.31.5810
 OK:	はってん	発展	Conversion Expected 99	発展	2.31.5810
 FAILED:	きゅうしゅう	吸収	Conversion Expected 99	9週	2.31.5810
@@ -641,7 +641,7 @@ OK:	そとはしる	外走る	Prediction Expected 2	外走る	3.34.6239
 OK:	ふろでて	風呂出て	Prediction Expected 2	風呂出て	3.34.6239
 OK:	ふろはいる	風呂はいる	Prediction Expected 2	風呂入る	3.34.6239
 OK:	どこいく	どこ行く	Prediction Expected 2	どこ行く	3.34.6239
-FAILED:	なにたべる	何食べる	Prediction Expected 2	なに食べる	3.34.6239
+OK:	なにたべる	何食べる	Prediction Expected 2	なに食べる	3.35.6354
 OK:	いまかえる	今変える	Prediction Expected 2	今帰る	3.34.6239
 FAILED:	でんしゃまつ	電車末	Prediction Expected 2	電車待つ	3.34.6239
 OK:	ばすおくれる	バス遅れる	Prediction Expected 2	バス遅れる	3.34.6239
@@ -656,7 +656,7 @@ FAILED:	せきのく	関野区	Prediction Expected 2	席退く	3.34.6239
 FAILED:	せきどく	関戸区	Prediction Expected 2	席退く	3.34.6239
 OK:	びーるにがい	ビールに外	Prediction Expected 2	ビール苦い	3.34.6239
 OK:	じっかとおい	実家遠い	Prediction Expected 2	実家遠い	3.34.6239
-FAILED:	てきにくい	的にくい	Prediction Expected 2	敵憎い	3.34.6239
+FAILED:	てきにくい	てきにくい	Prediction Expected 2	敵憎い	3.35.6354
 FAILED:	こんびによる	コンビによる	Prediction Expected 2	コンビニ寄る	3.34.6239
 OK:	めがねかける	目金欠流	Prediction Expected 2	眼鏡かける	3.34.6239
 FAILED:	かささす	傘指す	Prediction Expected 2	傘さす	3.34.6239

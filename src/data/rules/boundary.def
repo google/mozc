@@ -65,6 +65,9 @@ SUFFIX 名詞,形容動詞語幹,            300
 
 PREFIX 名詞,非自立,副詞可能,*,*,*,際 1000
 PREFIX 名詞,非自立,副詞可能,*,*,*,度 2000
+# Demote bound-noun 内 (うちの -> 内の) and きり (きりの -> きりの vs 霧の) at bunsetsu head.
+PREFIX 名詞,非自立,副詞可能,*,*,*,内 2500
+PREFIX 名詞,非自立,副詞可能,*,*,*,きり 250
 # want to promote "件"
 PREFIX 名詞,接尾,地域,*,*,*,県       1500
 # user may input 123回 as 123|回
@@ -92,7 +95,7 @@ PREFIX 名詞,固有名詞,人名            800
 # Since ながる is not a natural expression, we can strongly demote it.
 # Otherwise this な appears with 方|に.
 PREFIX 助動詞,*,*,*,特殊・ダ,体言接続,だ           3000
-PREFIX 形容詞,自立,*,*,形容詞・アウオ段,ガル接続,ない 9000
+PREFIX 形容詞,自立,*,*,形容詞・アウオ段,ガル接続,(ない|無い) 9000
 
 PREFIX 名詞,数,漢数字,               150
 PREFIX 名詞,(数|固有名詞|副詞可能|代名詞|一般|サ変接続), 0
@@ -102,8 +105,8 @@ PREFIX (形容詞,自立|連体詞),   0
 
 SUFFIX 名詞,一般,*,*,*,*,*,気        500
 
-# おうち
-SUFFIX 名詞,非自立,副詞可能          1000
+# おうち, もの, こと, よう, ふう, etc.
+SUFFIX 名詞,非自立,          1000
 
 # 嘆じた
 PREFIX 助動詞,*,*,*,特殊・タ,基本形     3000
@@ -186,7 +189,54 @@ PREFIX 助詞,終助詞,*,*,*,*,ね	2000
 
 # Users wouldn't input words/phrases/sentences ending with 連用形 of いる.
 # For instance, かわいい to 河合(noun) + い(連用形 of いる).
-SUFFIX 動詞,自立,*,*,一段,連用形,いる  3000
+SUFFIX 動詞,*,*,*,一段,連用形,いる  3000
+
+# Moderate penalty for のみ heading a bunsetsu: allows のみとか/のみって while preventing
+# over-segmentation of の+身の回り -> のみの+周り and の+ミニゲーム -> のみに+ゲーム.
+PREFIX 助詞,副助詞,*,*,*,*,のみ 800
+
+# Allow split clause-connecting / negative auxiliary phrases (e.g. なら, だったん, まいと, ぬまま).
+PREFIX 助動詞,*,*,*,特殊・ダ,仮定形,だ 800
+PREFIX 助動詞,*,*,*,特殊・ダ,連用タ接続,だ 200
+PREFIX 助動詞,*,*,*,不変化型,基本形,まい 200
+PREFIX 助動詞,*,*,*,特殊・ヌ,基本形,ぬ 200
+
+# Allow colloquial / partial-clause endings with しまう (〜てしまい) and くる (〜てき)
+# without over-promoting standalone き or 〜すぎ/〜み/〜だし.
+SUFFIX 動詞,非自立,*,*,五段・ワ行促音便,連用形,しまう 200
+SUFFIX 動詞,非自立,*,*,カ変・クル,連用形,くる 1130
+
+# POS-level boundary cost overrides informed by offline evaluation.
+PREFIX 形容詞,非自立,*,*,*,連用タ接続,* 428
+PREFIX 名詞,非自立,形容動詞語幹,*,*,*,* 73
+PREFIX 動詞,接尾,*,*,*,連用形,* 746
+PREFIX 動詞,接尾,*,*,*,未然形,* 914
+PREFIX 動詞,接尾,*,*,*,未然ウ接続,* 1255
+PREFIX 動詞,接尾,*,*,*,基本形,* 1451
+PREFIX 助詞,(接続助詞|副詞化|並立助詞),*,*,*,*,* 1700
+PREFIX 助詞,副助詞／並立助詞／終助詞,*,*,*,*,* 1170
+PREFIX 助詞,副助詞,*,*,*,*,* 410
+PREFIX 助詞,係助詞,*,*,*,*,* 1620
+PREFIX 助動詞,*,*,*,*,連用形,* 77
+PREFIX 助動詞,*,*,*,*,文語基本形,* 1156
+PREFIX 助動詞,*,*,*,*,基本形,* 1310
+PREFIX 副詞,助詞類接続,*,*,*,*,* 44
+SUFFIX 接続詞,*,*,*,*,*,* 160
+SUFFIX 形容詞,自立,*,*,*,未然ウ接続,* 316
+SUFFIX 形容詞,自立,*,*,*,文語基本形,* 57
+SUFFIX 形容詞,自立,*,*,*,基本形,* 378
+SUFFIX 形容詞,自立,*,*,*,仮定形,* 261
+SUFFIX 動詞,非自立,*,*,*,未然形,* 660
+SUFFIX 動詞,非自立,*,*,*,未然ウ接続,* 217
+SUFFIX 動詞,自立,*,*,*,未然形,* 2268
+SUFFIX 動詞,自立,*,*,*,未然レル接続,* 2440
+SUFFIX 動詞,接尾,*,*,*,未然ウ接続,* 1674
+SUFFIX 助詞,終助詞,*,*,*,*,* 5
+SUFFIX 助詞,接続助詞,*,*,*,*,* 3
+SUFFIX 助詞,副助詞,*,*,*,*,* 46
+SUFFIX 助動詞,*,*,*,*,連用形,* 167
+SUFFIX 助動詞,*,*,*,*,仮定形,* 3
+SUFFIX 副詞,助詞類接続,*,*,*,*,* 428
 
 #####################################################
 # Automatic rules.
@@ -336,6 +386,14 @@ PREFIX	副詞,助詞類接続,*,*,*,*,*	12
 PREFIX	副詞,一般,*,*,*,*,*	11
 PREFIX	フィラー,*,*,*,*,*,*	113
 PREFIX	その他,間投,*,*,*,*,*	0
+# Fallback rules (median costs of matching POS groups above).
+PREFIX	形容詞,非自立,*,*,*,*,*	65
+PREFIX	形容詞,接尾,*,*,*,*,*	1106
+PREFIX	名詞,引用文字列,*,*,*,*,*	46
+PREFIX	名詞,接尾可能,*,*,*,*,*	46
+PREFIX	動詞,接尾,*,*,*,*,*	2346
+PREFIX	助詞,助詞連続,*,*,*,*,*	1482
+PREFIX	助動詞,*,*,*,*,*,*	1614
 
 # SUFFIX RULE
 SUFFIX	連体詞,*,*,*,*,*,*	51
@@ -476,3 +534,13 @@ SUFFIX	副詞,助詞類接続,*,*,*,*,*	163
 SUFFIX	副詞,一般,*,*,*,*,*	51
 SUFFIX	フィラー,*,*,*,*,*,*	206
 SUFFIX	その他,間投,*,*,*,*,*	549
+# Fallback rules (median costs of matching POS groups above).
+SUFFIX	形容詞,自立,*,*,*,*,*	289
+SUFFIX	形容詞,非自立,*,*,*,*,*	545
+SUFFIX	形容詞,接尾,*,*,*,*,*	486
+SUFFIX	名詞,引用文字列,*,*,*,*,*	498
+SUFFIX	動詞,自立,*,*,*,*,*	492
+SUFFIX	動詞,接尾,*,*,*,*,*	877
+SUFFIX	助詞,格助詞,*,*,*,*,*	51
+SUFFIX	助詞,助詞連続,*,*,*,*,*	52
+SUFFIX	助動詞,*,*,*,*,*,*	326
