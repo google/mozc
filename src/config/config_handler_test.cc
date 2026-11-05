@@ -46,6 +46,7 @@
 #include "base/clock_mock.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
+#include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "protocol/config.pb.h"
@@ -254,13 +255,13 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
 
   output.Clear();
   ConfigHandler::GetDefaultConfig(&output);
-#ifdef __APPLE__
-  EXPECT_EQ(output.session_keymap(), Config::KOTOERI);
-#elif defined(OS_CHROMEOS)  // __APPLE__
-  EXPECT_EQ(output.session_keymap(), Config::CHROMEOS);
-#else   // __APPLE__ || OS_CHROMEOS
-  EXPECT_EQ(output.session_keymap(), Config::MSIME);
-#endif  // __APPLE__ || OS_CHROMEOS
+  if constexpr (port::IsMacos()) {
+    EXPECT_EQ(output.session_keymap(), Config::KOTOERI);
+  } else if constexpr (port::IsChromeos()) {
+    EXPECT_EQ(output.session_keymap(), Config::CHROMEOS);
+  } else {
+    EXPECT_EQ(output.session_keymap(), Config::MSIME);
+  }
   EXPECT_EQ(output.character_form_rules_size(), 13);
 
   struct TestCase {
