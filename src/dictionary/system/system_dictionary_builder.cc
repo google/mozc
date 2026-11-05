@@ -74,6 +74,10 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
+// The max length of encoded keys and values that existing readers as of
+// ENGINE_VERSION 24 can restore. See SystemDictionaryBuilder::ReadTokens().
+constexpr size_t kMaxEncodedLengthForEngineVersion24 = 256;
+
 void WriteSectionToFile(const DictionaryFileSection& section,
                         absl::string_view filename) {
   if (absl::Status s =
@@ -220,6 +224,21 @@ SystemDictionaryBuilder::KeyInfoList SystemDictionaryBuilder::ReadTokens(
   for (const Token* token : tokens) {
     CHECK(!token->key.empty()) << "empty key string in input";
     CHECK(!token->value.empty()) << "empty value string in input";
+
+    // Readers that are already deployed may cause a stack buffer overflow when
+    // restoring strings longer than 256 bytes after encoding, although the
+    // dictionary format itself has no such limit. Keep rejecting such entries,
+    // as the data can be loaded by such readers (e.g. a downloaded data pack).
+    // These checks can be removed only after the reader is updated to remove
+    // the limit and ENGINE_VERSION in version.bzl is incremented, because
+    // DataManager refuses to load data whose ENGINE_VERSION does not match its
+    // own.
+    CHECK_LE(codec_->EncodeKey(token->key).size(),
+             kMaxEncodedLengthForEngineVersion24)
+        << "too long key string in input: " << token->key;
+    CHECK_LE(codec_->EncodeValue(token->value).size(),
+             kMaxEncodedLengthForEngineVersion24)
+        << "too long value string in input: " << token->value;
   }
 
   // Create KeyInfoList in two steps.
