@@ -28,17 +28,21 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import codecs
+"""Generates empty placeholders of the deprecated suffix dictionary data.
+
+The suffix dictionary is no longer used (b/579137069), but older Mozc binaries
+still require these entries in the data set. Writes empty serialized string
+arrays (4-byte zero size field) for keys and values, and an empty token array.
+"""
+
 import optparse
-import re
-import struct
 
 from build_tools import serialized_string_array_builder
 
 
 def _ParseOptions():
   parser = optparse.OptionParser()
-  parser.add_option('--input', dest='input', help='Input suffix file')
+  parser.add_option('--input', dest='input', help='Input suffix file (unused)')
   parser.add_option(
       '--output_key_array',
       dest='output_key_array',
@@ -60,49 +64,13 @@ def _ParseOptions():
 def main():
   opts = _ParseOptions()
 
-  # Remove noisy and unuseful words.
-  invalid_re = re.compile(r'^[→↓↑→─あいうえおぁぃぅぇぉつっょ]$')
+  # Write empty serialized string arrays for keys and values.
+  serialized_string_array_builder.SerializeToFile([], opts.output_key_array)
+  serialized_string_array_builder.SerializeToFile([], opts.output_value_array)
 
-  result = []
-  with codecs.open(opts.input, 'r', encoding='utf-8') as stream:
-    for line in stream:
-      line = line.rstrip('\r\n')
-      fields = line.split('\t')
-      key = fields[0]
-      lid = int(fields[1])
-      rid = int(fields[2])
-      cost = int(fields[3])
-      value = fields[4]
-
-      if invalid_re.match(value):
-        continue
-
-      if key == value:
-        value = ''
-
-      result.append((key, value, lid, rid, cost))
-
-  # Sort entries in ascending order of key.
-  result.sort(key=lambda e: e[0])
-
-  # Write keys to serialized string array.
-  serialized_string_array_builder.SerializeToFile(
-      list(entry[0] for entry in result), opts.output_key_array
-  )
-
-  # Write values to serialized string array.
-  serialized_string_array_builder.SerializeToFile(
-      list(entry[1] for entry in result), opts.output_value_array
-  )
-
-  # Write a sequence of (lid, rid, cost) to uint32_t array:
-  #   {lid[0], rid[0], cost[0], lid[1], rid[1], cost[1], ...}
-  # So the final array has 3 * len(result) elements.
+  # Write an empty token array.
   with open(opts.output_token_array, 'wb') as f:
-    for _, _, lid, rid, cost in result:
-      f.write(struct.pack('<I', lid))
-      f.write(struct.pack('<I', rid))
-      f.write(struct.pack('<I', cost))
+    pass
 
 
 if __name__ == '__main__':

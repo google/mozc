@@ -52,7 +52,6 @@ def mozc_dataset(
         single_kanji_src,
         sorting_map,
         special_pos,
-        suffix,
         suggestion_filter_src,
         symbol_ordering_rule,
         symbol_src,
@@ -85,7 +84,7 @@ def mozc_dataset(
       - segmenter_generator: C++ binary generating segmenter data files.
       - segmenter: Data files for segmenter.
       - counter_suffix: Counter suffix sorted array.
-      - suffix: Suffix dictionary data.
+      - suffix: Empty placeholder of the deprecated suffix dictionary data.
       - reading_correction: Reading correction arrays.
       - symbol: Symbol dictionary data.
       - usage: [Optional] Usage dictionary data.  Available only if usage_dict is
@@ -124,7 +123,6 @@ def mozc_dataset(
       single_kanji_src: single Kanji definition file.
       sorting_map: sorting amp file.
       special_pos: special POS definition file.
-      suffix: suffix dictionary file.
       suggestion_filter_src: suggestion filter data file.
       symbol_ordering_rule: symbol order definition file.
       symbol_src: symbol data file.
@@ -499,9 +497,13 @@ def mozc_dataset(
         tools = ["//rewriter:gen_counter_suffix_array"],
     )
 
+    # The suffix dictionary is deprecated. Older Mozc binaries
+    # still require these entries in the data set, so we emit empty
+    # placeholders: empty serialized string arrays (4-byte zero size field)
+    # for keys and values, and an empty token array.
+    # TODO(taku): Remove these entries once older binaries are gone.
     native.genrule(
         name = name + "@suffix",
-        srcs = [suffix],
         outs = [
             "suffix_key.data",
             "suffix_value.data",
@@ -509,7 +511,6 @@ def mozc_dataset(
         ],
         cmd = (
             "$(location //dictionary:gen_suffix_data) " +
-            "--input=$< " +
             "--output_key_array=$(@D)/suffix_key.data " +
             "--output_value_array=$(@D)/suffix_value.data " +
             "--output_token_array=$(@D)/suffix_token.data"

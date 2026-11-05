@@ -132,7 +132,6 @@ mozc_dataset(
     ),
     sorting_map = "//data/rules:sorting_map.tsv",
     special_pos = "//data/rules:special_pos.def",
-    suffix = "//data/test/dictionary:suffix.txt",
     suggestion_filter_src = (
         "//data/test/dictionary:suggestion_filter.txt"
     ),
