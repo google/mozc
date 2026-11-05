@@ -252,7 +252,7 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
     shutil.rmtree(top_dir)
 
   # The zip file should contain the 'installer' directory.
-  util.RunOrDie(['unzip', '-q', args.input, '-d', work_dir])
+  util.RunOrDie(['/usr/bin/ditto', '-x', '-k', args.input, work_dir])
 
   tweak_qt = not args.noqt
 

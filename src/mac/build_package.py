@@ -71,8 +71,8 @@ def main():
   output_path = os.path.abspath(args.output)
 
   with tempfile.TemporaryDirectory() as tmp_dir:
-    # Use the unzip command to extract symbolic links properly.
-    util.RunOrDie(['unzip', '-q', args.input, '-d', tmp_dir])
+    # Use /usr/bin/ditto to extract symbolic links properly.
+    util.RunOrDie(['/usr/bin/ditto', '-x', '-k', args.input, tmp_dir])
     os.chdir(os.path.join(tmp_dir, 'installer'))
 
     # Generate a component property list from the root directory, then clear
