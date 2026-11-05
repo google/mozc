@@ -42,6 +42,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
+#include "base/port.h"
 #include "base/strings/assign.h"
 #include "base/version.h"
 #include "client/character_renderability.h"
@@ -1087,19 +1088,19 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
   EXPECT_TRUE(client_->SendKey(key_event, &output));
   EXPECT_EQ(output.consumed(), mock_output.consumed());
   client_peer().GetHistoryInputs(&history);
-#ifdef __APPLE__
-  // history is reset, but initializer should be added because the last mode
-  // is not DIRECT.
-  // TODO(team): fix b/10250883 to remove this special treatment.
-  EXPECT_EQ(history.size(), 1);
-  // Implicit IMEOn key must be added. See b/2797557 and b/>10250883.
-  EXPECT_EQ(history[0].type(), commands::Input::SEND_KEY);
-  EXPECT_EQ(history[0].key().special_key(), commands::KeyEvent::ON);
-  EXPECT_EQ(history[0].key().mode(), commands::HIRAGANA);
-#else   // __APPLE__
-  // history is reset, but initializer is not required.
-  EXPECT_EQ(history.size(), 0);
-#endif  // __APPLE__
+  if constexpr (port::IsAppleBase()) {
+    // history is reset, but initializer should be added because the last mode
+    // is not DIRECT.
+    // TODO(team): fix b/10250883 to remove this special treatment.
+    EXPECT_EQ(history.size(), 1);
+    // Implicit IMEOn key must be added. See b/2797557 and b/10250883.
+    EXPECT_EQ(history[0].type(), commands::Input::SEND_KEY);
+    EXPECT_EQ(history[0].key().special_key(), commands::KeyEvent::ON);
+    EXPECT_EQ(history[0].key().mode(), commands::HIRAGANA);
+  } else {
+    // history is reset, but initializer is not required.
+    EXPECT_EQ(history.size(), 0);
+  }
 }
 
 // b/2797557
@@ -1234,17 +1235,17 @@ TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
   EXPECT_TRUE(client_->SendKey(key_event, &output));
   EXPECT_EQ(output.consumed(), mock_output.consumed());
   client_peer().GetHistoryInputs(&history);
-#ifdef __APPLE__
-  // history is reset, but initializer should be added.
-  // TODO(team): fix b/10250883 to remove this special treatment.
-  EXPECT_EQ(history.size(), 1);
-  EXPECT_EQ(history[0].type(), commands::Input::SEND_KEY);
-  EXPECT_EQ(history[0].key().special_key(), commands::KeyEvent::ON);
-  EXPECT_EQ(history[0].key().mode(), commands::FULL_KATAKANA);
-#else   // __APPLE__
-  // history is reset, but initializer is not required.
-  EXPECT_EQ(history.size(), 0);
-#endif  // __APPLE__
+  if constexpr (port::IsAppleBase()) {
+    // history is reset, but initializer should be added.
+    // TODO(team): fix b/10250883 to remove this special treatment.
+    EXPECT_EQ(history.size(), 1);
+    EXPECT_EQ(history[0].type(), commands::Input::SEND_KEY);
+    EXPECT_EQ(history[0].key().special_key(), commands::KeyEvent::ON);
+    EXPECT_EQ(history[0].key().mode(), commands::FULL_KATAKANA);
+  } else {
+    // history is reset, but initializer is not required.
+    EXPECT_EQ(history.size(), 0);
+  }
 }
 
 TEST_F(SessionPlaybackTest, ConsumedTest) {

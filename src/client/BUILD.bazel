@@ -143,6 +143,7 @@ mozc_cc_test(
         ":client",
         ":client_interface",
         "//base:number_util",
+        "//base:port",
         "//base:version",
         "//base/strings:assign",
         "//composer:key_parser",
