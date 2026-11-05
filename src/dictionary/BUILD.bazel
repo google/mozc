@@ -123,8 +123,11 @@ mozc_cc_library(
         "user_dictionary.h",
     ],
     visibility = [
-        "//:__subpackages__",
         "//converter:__pkg__",
+        "//engine:__pkg__",
+        "//gui/dictionary_tool:__pkg__",
+        "//gui/word_register_dialog:__pkg__",
+        "//rewriter:__pkg__",
     ],
     deps = [
         ":dictionary_interface",
@@ -190,8 +193,8 @@ mozc_cc_library(
     name = "user_dictionary_stub",
     hdrs = ["user_dictionary_stub.h"],
     visibility = [
-        "//:__subpackages__",
         "//converter:__pkg__",
+        "//engine:__pkg__",
     ],
     deps = [
         ":dictionary_interface",
@@ -242,7 +245,8 @@ mozc_cc_library(
     name = "pos_group",
     hdrs = ["pos_group.h"],
     visibility = [
-        "//:__subpackages__",
+        "//converter:__pkg__",
+        "//engine:__pkg__",
         "//rewriter:__pkg__",
     ],
     deps = ["@com_google_absl//absl/types:span"],
@@ -251,7 +255,6 @@ mozc_cc_library(
 mozc_py_binary(
     name = "gen_pos_map",
     srcs = ["gen_pos_map.py"],
-    visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//build_tools:code_generator_util",
     ],
@@ -279,7 +282,6 @@ run_binary(
 mozc_py_binary(
     name = "gen_pos_cost_map",
     srcs = ["gen_pos_cost_map.py"],
-    visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//build_tools:code_generator_util",
     ],
@@ -304,7 +306,10 @@ mozc_cc_library(
     srcs = ["user_dictionary_util.cc"],
     hdrs = ["user_dictionary_util.h"],
     visibility = [
-        "//:__subpackages__",
+        "//client/user_dictionary:__pkg__",
+        "//gui/base:__pkg__",
+        "//gui/dictionary_tool:__pkg__",
+        "//gui/word_register_dialog:__pkg__",
     ],
     deps = [
         "//base:config_file_stream",
@@ -623,8 +628,9 @@ mozc_cc_library(
     srcs = ["single_kanji_dictionary.cc"],
     hdrs = ["single_kanji_dictionary.h"],
     visibility = [
-        "//:__subpackages__",
+        "//engine:__pkg__",
         "//prediction:__pkg__",
+        "//rewriter:__pkg__",
     ],
     deps = [
         "//base:bits",
