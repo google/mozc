@@ -114,8 +114,10 @@ TEST_F(IPCPathManagerTest, IPCPathManagerBatchTest) {
 }
 
 TEST_F(IPCPathManagerTest, ReloadTest) {
-  // We have only mock implementations for Windows, so no test should be run.
-#ifndef _WIN32
+  if constexpr (port::IsWindows()) {
+    // We have only mock implementations for Windows, so no test should be run.
+    GTEST_SKIP();
+  }
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager("reload_test");
   IPCPathManagerTestPeer manager_peer(*manager);
 
@@ -132,7 +134,6 @@ TEST_F(IPCPathManagerTest, ReloadTest) {
       SystemUtil::GetUserProfileDirectory(), ".reload_test.ipc");
   ASSERT_OK(FileUtil::SetContents(filename, "foobar"));
   EXPECT_TRUE(manager_peer.ShouldReload());
-#endif  // _WIN32
 }
 
 TEST_F(IPCPathManagerTest, PathNameTest) {

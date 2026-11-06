@@ -34,9 +34,13 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <type_traits>
 
+#include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/port.h"
 #include "base/system_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -45,24 +49,23 @@ namespace mozc {
 namespace storage {
 
 namespace {
-#ifdef __ANDROID__
 // Mock the encryption/decryption for android.
 // For android, we use Java's library for encryption. However, we cannot use
 // them, because we cannot launch JVM from native tests on Android.
-class TestEncryptedStringStorage : public EncryptedStringStorage {
+class MockEncryptedStringStorage : public EncryptedStringStorage {
  public:
-  explicit TestEncryptedStringStorage(absl::string_view filename)
+  explicit MockEncryptedStringStorage(absl::string_view filename)
       : EncryptedStringStorage(filename) {}
 
  protected:
-  virtual bool Encrypt(absl::string_view salt, std::string* data) const {
+  bool Encrypt(absl::string_view salt, std::string* data) const override {
     salt_ = salt;
     original_data_ = *data;
     *data = "123456789012345678901234567890";
     return true;
   }
 
-  virtual bool Decrypt(absl::string_view salt, std::string* data) const {
+  bool Decrypt(absl::string_view salt, std::string* data) const override {
     if (salt_ != salt) {
       return false;
     }
@@ -74,9 +77,10 @@ class TestEncryptedStringStorage : public EncryptedStringStorage {
   mutable std::string salt_;
   mutable std::string original_data_;
 };
-#else   // __ANDROID__
-typedef EncryptedStringStorage TestEncryptedStringStorage;
-#endif  // __ANDROID__
+
+using TestEncryptedStringStorage =
+    std::conditional_t<port::IsAndroid(), MockEncryptedStringStorage,
+                       EncryptedStringStorage>;
 }  // namespace
 
 class EncryptedStringStorageTest : public testing::TestWithTempUserProfile {
@@ -102,10 +106,13 @@ TEST_F(EncryptedStringStorageTest, SaveAndLoad) {
   EXPECT_EQ(output, kData);
 }
 
-#ifndef __ANDROID__
-// Note: On Android, we cannot check the behavior of Encryption because
-// it depends on the JVM's behavior, which cannot be launched from native test.
 TEST_F(EncryptedStringStorageTest, Encrypt) {
+  if constexpr (port::IsAndroid()) {
+    // Note: On Android, we cannot check the behavior of Encryption because
+    // it depends on the JVM's behavior, which cannot be launched from native
+    // test.
+    GTEST_SKIP();
+  }
   const std::string original_data = "abcdefghijklmnopqrstuvwxyz";
   ASSERT_TRUE(storage_->Save(original_data));
 
@@ -126,7 +133,6 @@ TEST_F(EncryptedStringStorageTest, Encrypt) {
   EXPECT_LT(original_data.size(), result.size());
   EXPECT_TRUE(result.find(original_data) == std::string::npos);
 }
-#endif  // __ANDROID__
 
 }  // namespace storage
 }  // namespace mozc

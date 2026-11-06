@@ -35,6 +35,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "base/port.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/modules.h"
@@ -237,10 +238,13 @@ TEST_F(EngineTest, SupplementalModelReloadTest) {
   EXPECT_EQ(supplemental_model_ptr->clear_cache_count(), 1);
 }
 
-#ifndef _WIN32
-// EncryptedStringStorage::Save() uses CryptProtectData on Windows, which fails
-// with ERROR_ACCESS_DENIED on headless test VMs without a user profile.
 TEST_F(EngineTest, ReloadModulesSyncsUserHistoryStorageTest) {
+  if constexpr (port::IsWindows()) {
+    // EncryptedStringStorage::Save() uses CryptProtectData on Windows, which
+    // fails with ERROR_ACCESS_DENIED on headless test VMs without a user
+    // profile.
+    GTEST_SKIP();
+  }
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<Modules> initial_modules,
       engine::Modules::Create(std::make_unique<testing::MockDataManager>()));
@@ -284,6 +288,5 @@ TEST_F(EngineTest, ReloadModulesSyncsUserHistoryStorageTest) {
   EXPECT_FALSE(
       engine_->GetModulesForTesting().GetUserHistoryStorage().IsEmpty());
 }
-#endif  // !_WIN32
 }  // namespace engine
 }  // namespace mozc

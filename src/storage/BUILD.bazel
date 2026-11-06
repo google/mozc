@@ -182,8 +182,11 @@ mozc_cc_test(
         ":encrypted_string_storage",
         "//base:file_stream",
         "//base:file_util",
+        "//base:port",
         "//base:system_util",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )

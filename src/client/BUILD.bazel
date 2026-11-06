@@ -167,6 +167,7 @@ mozc_cc_test(
     srcs = ["character_renderability_test.cc"],
     deps = [
         ":character_renderability",
+        "//base:port",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/algorithm:container",

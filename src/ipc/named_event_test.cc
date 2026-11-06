@@ -39,6 +39,7 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
+#include "base/port.h"
 #include "base/thread.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -155,11 +156,12 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
 }
 
 TEST_F(NamedEventTest, NamedEventPathLengthTest) {
-#ifndef _WIN32
+  if constexpr (port::IsWindows()) {
+    GTEST_SKIP();
+  }
   const std::string name_path = NamedEventUtil::GetEventPath(kName);
   // length should be less than 14 not including terminating null.
   EXPECT_EQ(name_path.length(), 13);
-#endif  // _WIN32
 }
 
 }  // namespace

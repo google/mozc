@@ -222,10 +222,12 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
             default_incognito_mode);
 }
 
-#if !defined(__ANDROID__)
-// Temporarily disable this test because FileUtil::CopyFile fails on
-// Android for some reason.
 TEST_F(ConfigHandlerTest, LoadTestConfig) {
+  if constexpr (port::IsAndroid()) {
+    // Temporarily disable this test because FileUtil::CopyFile fails on
+    // Android for some reason.
+    GTEST_SKIP();
+  }
   // TODO(yukawa): Generate test data automatically so that we can keep
   //     the compatibility among variety of config files.
   // TODO(yukawa): Enumerate test data in the directory automatically.
@@ -248,7 +250,6 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     ConfigHandler::Reload();
   }
 }
-#endif  // !__ANDROID__
 
 TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   Config output;

@@ -229,6 +229,7 @@ mozc_cc_test(
     deps = [
         ":named_event",
         "//base:clock",
+        "//base:port",
         "//base:thread",
         "//testing:gunit_main",
         "//testing:mozctest",

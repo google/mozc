@@ -32,6 +32,7 @@
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 
@@ -227,8 +228,10 @@ TEST(CharacterRenderabilityTest, LinuxVersions) {
   EXPECT_FALSE(absl::c_contains(groups, Request::EMOJI_15_0));
 }
 
-#if defined(__linux__)
 TEST(CharacterRenderabilityTest, CurrentPlatformLinux) {
+  if constexpr (!port::IsLinux()) {
+    GTEST_SKIP();
+  }
   const std::vector<Request::AdditionalRenderableCharacterGroup> groups =
       CharacterRenderability::GetSupportedGroups();
   EXPECT_TRUE(absl::c_contains(groups, Request::EMOJI_12_1));
@@ -236,7 +239,6 @@ TEST(CharacterRenderabilityTest, CurrentPlatformLinux) {
   EXPECT_TRUE(absl::c_contains(groups, Request::EMOJI_13_1));
   EXPECT_TRUE(absl::c_contains(groups, Request::EMOJI_14_0));
 }
-#endif  // __linux__
 
 }  // namespace
 }  // namespace mozc::client
