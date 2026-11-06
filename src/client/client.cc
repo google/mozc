@@ -300,24 +300,24 @@ void Client::PushHistory(const commands::Input& input,
 // Clear the history and push IMEOn command for initialize session.
 void Client::ResetHistory() {
   history_inputs_.clear();
-#if defined(__APPLE__)
-  // On Mac, we should send ON key at the first of each input session
-  // excepting the very first session, because when the session is restored,
-  // its state is direct. On the first session, users should send ON key
-  // by themselves.
-  // On Windows, this is not required because now we can send IME On/Off
-  // state with the key event. See b/8601275
-  // Note that we are assuming that ResetHistory is called only when the
-  // client is ON.
-  // TODO(toshiyuki): Make sure that this assuming is reasonable or not.
-  if (last_mode_ != commands::DIRECT) {
-    commands::Input input;
-    input.set_type(commands::Input::SEND_KEY);
-    input.mutable_key()->set_special_key(commands::KeyEvent::ON);
-    input.mutable_key()->set_mode(last_mode_);
-    history_inputs_.push_back(input);
+  if constexpr (port::IsAppleBase()) {
+    // On Mac, we should send ON key at the first of each input session
+    // excepting the very first session, because when the session is restored,
+    // its state is direct. On the first session, users should send ON key
+    // by themselves.
+    // On Windows, this is not required because now we can send IME On/Off
+    // state with the key event. See b/8601275
+    // Note that we are assuming that ResetHistory is called only when the
+    // client is ON.
+    // TODO(toshiyuki): Make sure that this assuming is reasonable or not.
+    if (last_mode_ != commands::DIRECT) {
+      commands::Input input;
+      input.set_type(commands::Input::SEND_KEY);
+      input.mutable_key()->set_special_key(commands::KeyEvent::ON);
+      input.mutable_key()->set_mode(last_mode_);
+      history_inputs_.push_back(input);
+    }
   }
-#endif  // __APPLE__
 }
 
 void Client::GetHistoryInputs(std::vector<commands::Input>* result) const {
