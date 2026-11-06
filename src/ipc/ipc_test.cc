@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/port.h"
 #include "base/thread.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -52,12 +53,8 @@ namespace {
 // testing tool rut.py misunderstood that the file named
 // kServerAddress is a binary to be tested.
 constexpr char kServerAddress[] = "test_echo_server";
-#ifdef _WIN32
 // On windows, multiple-connections failed.
-constexpr int kNumThreads = 1;
-#else   // _WIN32
-constexpr int kNumThreads = 5;
-#endif  // _WIN32
+constexpr int kNumThreads = port::IsWindows() ? 1 : 5;
 constexpr int kNumRequests = 100;
 
 class EchoServer : public IPCServer {
