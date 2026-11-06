@@ -352,11 +352,11 @@ DictionaryTool::DictionaryTool(QWidget* parent)
   }
 
   // main window
-#ifndef __linux__
-  // For some reason setCentralWidget crashes the dictionary_tool on Linux
-  // TODO(taku): investigate the cause of the crashes
-  setCentralWidget(splitter_);
-#endif  // __linux__
+  if constexpr (!port::IsLinuxBase()) {
+    // For some reason setCentralWidget crashes the dictionary_tool on Linux
+    // TODO(taku): investigate the cause of the crashes
+    setCentralWidget(splitter_);
+  }
 
   setContextMenuPolicy(Qt::NoContextMenu);
 
@@ -373,15 +373,15 @@ DictionaryTool::DictionaryTool(QWidget* parent)
   toolbar_->addWidget(new_word_button_);
   toolbar_->addWidget(delete_word_button_);
 
-  // Cosmetic tweaks for Mac.
-#ifdef __APPLE__
-  dic_list_->setAttribute(Qt::WA_MacShowFocusRect, false);
-  dic_list_->setAutoFillBackground(true);
-  dic_list_->setFrameStyle(QFrame::NoFrame);
+  if constexpr (port::IsAppleBase()) {
+    // Cosmetic tweaks for Mac.
+    dic_list_->setAttribute(Qt::WA_MacShowFocusRect, false);
+    dic_list_->setAutoFillBackground(true);
+    dic_list_->setFrameStyle(QFrame::NoFrame);
 
-  dic_content_->setFrameStyle(QFrame::NoFrame);
-  dic_content_->setShowGrid(false);
-#endif  // __APPLE__
+    dic_content_->setFrameStyle(QFrame::NoFrame);
+    dic_content_->setShowGrid(false);
+  }
 
   dic_content_->setWordWrap(false);
   dic_content_->verticalHeader()->hide();
@@ -417,23 +417,23 @@ DictionaryTool::DictionaryTool(QWidget* parent)
                 << tr("Comment");
   dic_content_->setHorizontalHeaderLabels(header_labels);
 
-#ifdef __APPLE__
-  // This is a workaround for MacOSX.
-  // QKeysequence::Delete doesn't work on Mac,
-  // so we set the key sequence directly.
-  QShortcut* shortcut1 =
-      new QShortcut(QKeySequence(Qt::Key_Backspace), dic_content_);
-  // Qt::CTRL = Command key
-  // Command+Backspace = delete
-  QShortcut* shortcut2 =
-      new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Backspace), dic_content_);
-  connect(shortcut1, SIGNAL(activated()), this, SLOT(DeleteWord()));
-  connect(shortcut2, SIGNAL(activated()), this, SLOT(DeleteWord()));
-#else   // __APPLE__
-  QShortcut* shortcut =
-      new QShortcut(QKeySequence(QKeySequence::Delete), dic_content_);
-  connect(shortcut, SIGNAL(activated()), this, SLOT(DeleteWord()));
-#endif  // __APPLE__
+  if constexpr (port::IsAppleBase()) {
+    // This is a workaround for MacOSX.
+    // QKeysequence::Delete doesn't work on Mac,
+    // so we set the key sequence directly.
+    QShortcut* shortcut1 =
+        new QShortcut(QKeySequence(Qt::Key_Backspace), dic_content_);
+    // Qt::CTRL = Command key
+    // Command+Backspace = delete
+    QShortcut* shortcut2 =
+        new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Backspace), dic_content_);
+    connect(shortcut1, SIGNAL(activated()), this, SLOT(DeleteWord()));
+    connect(shortcut2, SIGNAL(activated()), this, SLOT(DeleteWord()));
+  } else {
+    QShortcut* shortcut =
+        new QShortcut(QKeySequence(QKeySequence::Delete), dic_content_);
+    connect(shortcut, SIGNAL(activated()), this, SLOT(DeleteWord()));
+  }
 
   dic_content_->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(dic_content_, SIGNAL(customContextMenuRequested(const QPoint&)), this,

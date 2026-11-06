@@ -36,6 +36,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "base/port.h"
 #include "config/config_handler.h"
 #include "gui/config_dialog/combobox_delegate.h"
 
@@ -110,11 +111,11 @@ CharacterFormEditor::CharacterFormEditor(QWidget *parent)
   setSelectionBehavior(QAbstractItemView::SelectItems);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
   verticalHeader()->hide();
-#ifdef __APPLE__
-  // grid is basically hidden in mac ui.
-  // Please take a look at iTunes.
-  setShowGrid(false);
-#endif  // __APPLE__
+  if constexpr (port::IsAppleBase()) {
+    // grid is basically hidden in mac ui.
+    // Please take a look at iTunes.
+    setShowGrid(false);
+  }
 }
 
 void CharacterFormEditor::Load(const config::Config &config) {
