@@ -189,6 +189,18 @@ mozc_cc_test(
     ],
 )
 
+mozc_cc_test(
+    name = "trie_benchmark_test",
+    size = "small",
+    srcs = ["trie_benchmark_test.cc"],
+    tags = ["manual"],
+    deps = [
+        ":trie",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
 mozc_cc_library(
     name = "flat_concurrent_cache",
     hdrs = ["flat_concurrent_cache.h"],
