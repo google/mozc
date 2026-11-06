@@ -621,6 +621,7 @@ mozc_cc_library(
         ":rewriter_interface",
         "//base:japanese_util",
         "//base:number_util",
+        "//base:port",
         "//base:util",
         "//base:vlog",
         "//base/strings:unicode",
