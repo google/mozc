@@ -35,6 +35,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "base/port.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/attribute.h"
@@ -774,14 +775,15 @@ TEST(EngineOutputTest, FillFooter) {
     if (i % 2 == 0) {
       ASSERT_TRUE(candidate_window.has_footer());
       ASSERT_TRUE(candidate_window.footer().has_label());
-#if defined(__APPLE__)
-      constexpr char kDeleteInstruction[] = "control+fn+deleteで履歴から削除";
-#elif defined(OS_CHROMEOS)
-      constexpr char kDeleteInstruction[] = "ctrl+alt+backspaceで履歴から削除";
-#else   // !__APPLE__ && !OS_CHROMEOS
-      constexpr char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
-#endif  // __APPLE__ || OS_CHROMEOS
-      EXPECT_EQ(candidate_window.footer().label(), kDeleteInstruction);
+      if constexpr (port::IsAppleBase()) {
+        EXPECT_EQ(candidate_window.footer().label(),
+                  "control+fn+deleteで履歴から削除");
+      } else if constexpr (port::IsChromeos()) {
+        EXPECT_EQ(candidate_window.footer().label(),
+                  "ctrl+alt+backspaceで履歴から削除");
+      } else {
+        EXPECT_EQ(candidate_window.footer().label(), "Ctrl+Delで履歴から削除");
+      }
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
     } else {
       EXPECT_FALSE(candidate_window.footer().has_label());
