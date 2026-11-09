@@ -84,7 +84,8 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   MESSAGE_HANDLER(WM_PRINTCLIENT, OnPrintClient)
   END_MSG_MAP()
 
-  CandidateWindow();
+  // Does not take ownership of |text_renderer|, which must outlive this window.
+  explicit CandidateWindow(TextRenderer* text_renderer);
   CandidateWindow(const CandidateWindow&) = delete;
   CandidateWindow& operator=(const CandidateWindow&) = delete;
   ~CandidateWindow();
@@ -101,10 +102,9 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
 
   void set_mouse_moving(bool moving);
 
-  // If |dpi| differs from the cached DPI, updates the cached DPI, refreshes
-  // DPI-dependent resources, and flags the text renderer for refresh on the
-  // next UpdateLayout. Idempotent — safe to call unconditionally before
-  // UpdateLayout.
+  // If |dpi| differs from the cached DPI, updates the cached DPI and refreshes
+  // DPI-dependent resources. Idempotent — safe to call unconditionally before
+  // UpdateLayout. The shared TextRenderer is updated by WindowManager.
   void UpdateDpi(uint32_t dpi);
 
   void UpdateLayout(const commands::CandidateWindow& candidate_window);
@@ -202,7 +202,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   client::SendCommandInterface* send_command_interface_;
   std::unique_ptr<TableLayout> table_layout_;
   uint32_t dpi_;
-  std::unique_ptr<TextRenderer> text_renderer_;
+  TextRenderer* text_renderer_;  // Not owned.
   int indicator_width_;
   bool metrics_changed_;
   bool mouse_moving_;
