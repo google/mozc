@@ -30,19 +30,28 @@
 #include "storage/louds/bit_vector_based_array_builder.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "storage/louds/bit_stream.h"
 
 namespace mozc {
 namespace storage {
 namespace louds {
+namespace {
 
-using ::mozc::storage::louds::internal::PushInt32;
+// The image stores sizes as 32-bit little-endian values.
+void AppendUint32(size_t value, std::string& image) {
+  CHECK(std::in_range<uint32_t>(value)) << value << " doesn't fit in uint32_t";
+  AppendUnaligned<uint32_t>(HostToLittle(static_cast<uint32_t>(value)), image);
+}
+
+}  // namespace
 
 void BitVectorBasedArrayBuilder::Add(std::string element) {
   CHECK(!built_);
@@ -92,10 +101,10 @@ void BitVectorBasedArrayBuilder::Build() {
   bit_stream.FillPadding32();
 
   // Output the image.
-  PushInt32(bit_stream.ByteSize(), image_);
-  PushInt32(base_length_, image_);
-  PushInt32(step_length_, image_);
-  PushInt32(0, image_);
+  AppendUint32(bit_stream.ByteSize(), image_);
+  AppendUint32(base_length_, image_);
+  AppendUint32(step_length_, image_);
+  AppendUint32(0, image_);
 
   image_.append(bit_stream.image());
   image_.append(data);

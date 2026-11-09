@@ -61,12 +61,6 @@ class BitStream {
   size_t num_bits_ = 0;
 };
 
-namespace internal {
-
-void PushInt32(size_t value, std::string& image);
-
-}  // namespace internal
-
 }  // namespace louds
 }  // namespace storage
 }  // namespace mozc
