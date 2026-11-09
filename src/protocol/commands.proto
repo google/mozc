@@ -591,8 +591,6 @@ message DecoderExperimentParams {
   // When zero, typing_correction is not used.
   optional int32 typing_correction_apply_user_history_size = 85 [default = 0];
 
-  optional bool disable_zero_query_suffix_prediction = 36 [default = false];
-
   // Changes the size of history with character coverage.
   optional int32 user_history_prediction_max_char_coverage = 82 [default = 0];
 
