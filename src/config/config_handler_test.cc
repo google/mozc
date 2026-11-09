@@ -112,23 +112,25 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_EQ(absl::StrCat(output), absl::StrCat(input));
   EXPECT_EQ(absl::StrCat(output2), absl::StrCat(input));
 
-#if defined(__ANDROID__) && defined(CHANNEL_DEV)
-  input.Clear();
-  EXPECT_FALSE(input.general_config().has_upload_usage_stats());
-  EXPECT_TRUE(ConfigHandler::SetConfig(input));
-  output = ConfigHandler::GetCopiedConfig();
-  EXPECT_TRUE(output.general_config().has_upload_usage_stats());
-  EXPECT_TRUE(output.general_config().upload_usage_stats());
+#ifdef CHANNEL_DEV
+  if constexpr (port::IsAndroid()) {
+    input.Clear();
+    EXPECT_FALSE(input.general_config().has_upload_usage_stats());
+    EXPECT_TRUE(ConfigHandler::SetConfig(input));
+    output = ConfigHandler::GetCopiedConfig();
+    EXPECT_TRUE(output.general_config().has_upload_usage_stats());
+    EXPECT_TRUE(output.general_config().upload_usage_stats());
 
-  input.Clear();
-  input.mutable_general_config()->set_upload_usage_stats(false);
-  EXPECT_TRUE(input.general_config().has_upload_usage_stats());
-  EXPECT_FALSE(input.general_config().upload_usage_stats());
-  EXPECT_TRUE(ConfigHandler::SetConfig(input));
-  output = ConfigHandler::GetCopiedConfig();
-  EXPECT_TRUE(output.general_config().has_upload_usage_stats());
-  EXPECT_TRUE(output.general_config().upload_usage_stats());
-#endif  // __ANDROID__ && CHANNEL_DEV
+    input.Clear();
+    input.mutable_general_config()->set_upload_usage_stats(false);
+    EXPECT_TRUE(input.general_config().has_upload_usage_stats());
+    EXPECT_FALSE(input.general_config().upload_usage_stats());
+    EXPECT_TRUE(ConfigHandler::SetConfig(input));
+    output = ConfigHandler::GetCopiedConfig();
+    EXPECT_TRUE(output.general_config().has_upload_usage_stats());
+    EXPECT_TRUE(output.general_config().upload_usage_stats());
+  }
+#endif  // CHANNEL_DEV
 }
 
 TEST_F(ConfigHandlerTest, SetMetadata) {
@@ -298,10 +300,12 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
               kTestCases[i].conversion_character_form);
   }
 
-#if defined(__ANDROID__) && defined(CHANNEL_DEV)
-  EXPECT_TRUE(output.general_config().has_upload_usage_stats());
-  EXPECT_TRUE(output.general_config().upload_usage_stats());
-#endif  // __ANDROID__ && CHANNEL_DEV
+#ifdef CHANNEL_DEV
+  if constexpr (port::IsAndroid()) {
+    EXPECT_TRUE(output.general_config().has_upload_usage_stats());
+    EXPECT_TRUE(output.general_config().upload_usage_stats());
+  }
+#endif  // CHANNEL_DEV
 }
 
 TEST_F(ConfigHandlerTest, DefaultConfig) {
