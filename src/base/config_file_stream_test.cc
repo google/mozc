@@ -36,6 +36,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/file_util.h"
+#include "base/port.h"
 #include "base/system_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -147,17 +148,11 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   ASSERT_OK(FileUtil::SetContents(test_file_path, kSourceTextData));
   ASSERT_OK(FileUtil::FileExists(test_file_path));
 
-#ifdef _WIN32
-#define TRAILING_CARRIAGE_RETURN ""
-#else  // _WIN32
-#define TRAILING_CARRIAGE_RETURN "\r"
-#endif  // _WIN32
-  const char* kExpectedLines[] = {
+  constexpr absl::string_view kExpectedLines[] = {
       "ab\rc",
-      "d" TRAILING_CARRIAGE_RETURN,
+      port::IsWindows() ? "d" : "d\r",
       "e",
   };
-#undef TRAILING_CARRIAGE_RETURN
 
   {
     std::unique_ptr<std::istream> ifs(

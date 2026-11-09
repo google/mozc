@@ -33,6 +33,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "base/port.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -48,11 +49,11 @@ TEST(TextNormalizerTest, NormalizeText) {
 
   // "〜" is U+301C
   output = TextNormalizer::NormalizeText("ぐ〜ぐる");
-#ifdef _WIN32
-  EXPECT_EQ(output, "ぐ～ぐる");  // "～" is U+FF5E
-#else                             // _WIN32
-  EXPECT_EQ(output, "ぐ〜ぐる");  // "〜" is U+301C
-#endif                            // _WIN32
+  if constexpr (port::IsWindows()) {
+    EXPECT_EQ(output, "ぐ～ぐる");  // "～" is U+FF5E
+  } else {
+    EXPECT_EQ(output, "ぐ〜ぐる");  // "〜" is U+301C
+  }
 
   // "〜" is U+301C
   output =
@@ -65,11 +66,11 @@ TEST(TextNormalizerTest, NormalizeText) {
 
   // "−" is U+2212
   output = TextNormalizer::NormalizeText("１−２−３");
-#ifdef _WIN32
-  EXPECT_EQ(output, "１－２－３");  // "－" is U+FF0D
-#else                               // _WIN32
-  EXPECT_EQ(output, "１−２−３");  // "−" is U+2212
-#endif                              // _WIN32
+  if constexpr (port::IsWindows()) {
+    EXPECT_EQ(output, "１－２－３");  // "－" is U+FF0D
+  } else {
+    EXPECT_EQ(output, "１−２−３");  // "−" is U+2212
+  }
 
   // "−" is U+2212
   output =

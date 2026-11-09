@@ -34,6 +34,7 @@
 #include "base/environ_mock.h"
 #include "base/file_util.h"
 #include "base/file_util_mock.h"
+#include "base/port.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -108,19 +109,20 @@ TEST_F(SystemUtilTest, GetProcessId) {
 }
 
 TEST_F(SystemUtilTest, GetThreadIdForWindows) {
-#if defined(_WIN32)
-  EXPECT_GT(SystemUtil::GetThreadIdForWindows(), 0);
-#else   // _WIN32
-  EXPECT_EQ(SystemUtil::GetThreadIdForWindows(), 0);
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    EXPECT_GT(SystemUtil::GetThreadIdForWindows(), 0);
+  } else {
+    EXPECT_EQ(SystemUtil::GetThreadIdForWindows(), 0);
+  }
 }
 
-#ifdef __ANDROID__
 TEST_F(SystemUtilTest, GetOSVersionStringTestForAndroid) {
+  if constexpr (!port::IsAndroid()) {
+    GTEST_SKIP();
+  }
   std::string result = SystemUtil::GetOSVersionString();
   // |result| must start with "Android ".
   EXPECT_TRUE(result.starts_with("Android "));
 }
-#endif  // __ANDROID__
 
 }  // namespace mozc

@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "base/port.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -183,10 +184,10 @@ TEST(NumberUtilTest, SafeStrToDouble) {
   EXPECT_DOUBLE_EQ(-1.7976931348623158e308, value);
 
   // It seems that the Android libc doesn't accept hex format, so disable it.
-#ifndef __ANDROID__
-  EXPECT_TRUE(NumberUtil::SafeStrToDouble("0x1234", &value));
-  EXPECT_EQ(value, static_cast<double>(0x1234));
-#endif  // __ANDROID__
+  if constexpr (!port::IsAndroid()) {
+    EXPECT_TRUE(NumberUtil::SafeStrToDouble("0x1234", &value));
+    EXPECT_EQ(value, static_cast<double>(0x1234));
+  }
 
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("1.0e309", &value));   // overflow
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("-1.0e309", &value));  // underflow

@@ -38,6 +38,7 @@
 #include "absl/time/time.h"
 #include "base/file/temp_dir.h"
 #include "base/file_stream.h"
+#include "base/port.h"
 #include "base/thread.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -78,14 +79,14 @@ TEST(FileUtilTest, CreateDirectory) {
   EXPECT_OK(FileUtil::CreateDirectory(dirpath));
   EXPECT_OK(FileUtil::DirectoryExists(dirpath));
 
-#if !defined(_WIN32)
-  // On Windows, CreateDirectory does not return OK if the directory already
-  // exists. See the implementation of CreateDirectory in file_util.cc.
-  // https://github.com/google/mozc/issues/1076
-  //
-  // Create the same directory again.
-  EXPECT_OK(FileUtil::CreateDirectory(dirpath));
-#endif  // !_WIN32
+  if constexpr (!port::IsWindows()) {
+    // On Windows, CreateDirectory does not return OK if the directory already
+    // exists. See the implementation of CreateDirectory in file_util.cc.
+    // https://github.com/google/mozc/issues/1076
+    //
+    // Create the same directory again.
+    EXPECT_OK(FileUtil::CreateDirectory(dirpath));
+  }
 
   // Delete the directory.
   ASSERT_OK(FileUtil::RemoveDirectory(dirpath));
@@ -504,29 +505,32 @@ TEST(FileUtilTest, Basename) {
 #undef SP
 
 TEST(FileUtilTest, NormalizeDirectorySeparator) {
-#ifdef _WIN32
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar"), "\\foo\\bar");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo\\bar"), "\\foo\\bar");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo/bar"), "\\foo\\bar");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar"), "\\foo\\bar");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar\\"),
-            "\\foo\\bar\\");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar/"), "\\foo\\bar\\");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator(""), "");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/"), "\\");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\"), "\\");
-#else   // _WIN32
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar"), "\\foo\\bar");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo\\bar"), "/foo\\bar");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo/bar"), "\\foo/bar");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar"), "/foo/bar");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar\\"),
-            "\\foo\\bar\\");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar/"), "/foo/bar/");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator(""), "");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/"), "/");
-  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\"), "\\");
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar"),
+              "\\foo\\bar");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo\\bar"), "\\foo\\bar");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo/bar"), "\\foo\\bar");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar"), "\\foo\\bar");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar\\"),
+              "\\foo\\bar\\");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar/"),
+              "\\foo\\bar\\");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator(""), "");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/"), "\\");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\"), "\\");
+  } else {
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar"),
+              "\\foo\\bar");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo\\bar"), "/foo\\bar");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo/bar"), "\\foo/bar");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar"), "/foo/bar");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar\\"),
+              "\\foo\\bar\\");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar/"), "/foo/bar/");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator(""), "");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/"), "/");
+    EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\"), "\\");
+  }
 }
 
 TEST(FileUtilTest, GetModificationTime) {
@@ -572,21 +576,21 @@ TEST(FileUtilTest, GetAndSetContents) {
   ASSERT_OK(FileUtil::SetContents(filename, "test\ntest\n", std::ios::out));
   content = FileUtil::GetContents(filename);
   EXPECT_OK(content);
-#ifdef _WIN32
-  EXPECT_EQ(*content, "test\r\ntest\r\n");
-#else   // _WIN32
-  EXPECT_EQ(*content, "test\ntest\n");
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    EXPECT_EQ(*content, "test\r\ntest\r\n");
+  } else {
+    EXPECT_EQ(*content, "test\ntest\n");
+  }
 
   // Text mode read.
   ASSERT_OK(FileUtil::SetContents(filename, "test\r\ntest\r\n"));
   content = FileUtil::GetContents(filename, std::ios::in);
   EXPECT_OK(content);
-#ifdef _WIN32
-  EXPECT_EQ(*content, "test\ntest\n");
-#else   // _WIN32
-  EXPECT_EQ(*content, "test\r\ntest\r\n");
-#endif  // _WIN32
+  if constexpr (port::IsWindows()) {
+    EXPECT_EQ(*content, "test\ntest\n");
+  } else {
+    EXPECT_EQ(*content, "test\r\ntest\r\n");
+  }
 }
 
 TEST(FileUtilTest, FileUnlinker) {
