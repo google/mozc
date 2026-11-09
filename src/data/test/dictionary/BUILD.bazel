@@ -36,7 +36,6 @@ exports_files([
     "dictionary.txt",
     "id.def",
     "reading_correction.tsv",
-    "suffix.txt",
     "suggestion_filter.txt",
 ])
 
@@ -50,6 +49,5 @@ filegroup(
     srcs = [
         ":connection_single_column.txt",
         ":dictionary.txt",
-        ":suffix.txt",
     ],
 )

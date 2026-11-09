@@ -46,7 +46,6 @@ exports_files(
         "collocation_suppression.txt",
         "connection_single_column.txt",
         "reading_correction.tsv",
-        "suffix.txt",
         "suggestion_filter.txt",
     ],
     visibility = ["//data_manager:__subpackages__"],
