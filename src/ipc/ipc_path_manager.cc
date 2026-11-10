@@ -32,9 +32,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <ctime>
 #include <ios>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -42,6 +42,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -217,7 +218,18 @@ bool IPCPathManager::SavePathName() {
 
   MOZC_VLOG(1) << "ServerIPCKey: " << ipc_path_info_.key();
 
-  last_modified_ = GetIPCFileTimeStamp();
+  if constexpr (!port::IsWindows()) {
+    // Best-effort, platform-dependent: set a precise timestamp for
+    // ShouldReload(), as the OS may record file timestamps with a coarse
+    // granularity.
+    if (absl::Status s =
+            FileUtil::MaybeSetPreciseModificationTime(GetIPCKeyFileName(name_));
+        !s.ok()) {
+      LOG(WARNING) << "Failed to update the modification time: " << s;
+    }
+    last_modified_ = GetIPCFileTimeStamp();
+  }
+
   return true;
 }
 
@@ -428,7 +440,11 @@ bool IPCPathManager::ShouldReload() const {
     return false;
   } else {
     absl::MutexLock l(mutex_);
-    time_t last_modified = GetIPCFileTimeStamp();
+    const std::optional<FileTimeStamp> last_modified = GetIPCFileTimeStamp();
+    // NOTE: Consecutive writes may share the same timestamp (e.g. Linux 6.12-),
+    // which is why SavePathName() calls
+    // FileUtil::MaybeSetPreciseModificationTime(). See its comment for the
+    // remaining limitations.
     if (last_modified == last_modified_) {
       return false;
     }
@@ -436,22 +452,16 @@ bool IPCPathManager::ShouldReload() const {
   }
 }
 
-time_t IPCPathManager::GetIPCFileTimeStamp() const {
-  if constexpr (port::IsWindows()) {
-    // In windows, we don't need to get the exact file timestamp, so
-    // just returns -1 at this time.
-    return static_cast<time_t>(-1);
-  } else {
-    const std::string filename = GetIPCKeyFileName(name_);
-    const absl::StatusOr<FileTimeStamp> mtime =
-        FileUtil::GetModificationTime(filename);
-    if (!mtime.ok()) {
-      MOZC_VLOG(2) << "GetModificationTime failed. Skipping reload: "
-                   << mtime.status();
-      return static_cast<time_t>(-1);
-    }
-    return static_cast<time_t>(*mtime);
+std::optional<FileTimeStamp> IPCPathManager::GetIPCFileTimeStamp() const {
+  const std::string filename = GetIPCKeyFileName(name_);
+  const absl::StatusOr<FileTimeStamp> mtime =
+      FileUtil::GetModificationTime(filename);
+  if (!mtime.ok()) {
+    MOZC_VLOG(2) << "GetModificationTime failed. Skipping reload: "
+                 << mtime.status();
+    return std::nullopt;
   }
+  return *mtime;
 }
 
 bool IPCPathManager::LoadPathNameInternal() {
@@ -529,7 +539,9 @@ bool IPCPathManager::LoadPathNameInternal() {
   MOZC_VLOG(1) << "ClientIPCKey: " << ipc_path_info_.key();
   MOZC_VLOG(1) << "ProtocolVersion: " << ipc_path_info_.protocol_version();
 
-  last_modified_ = GetIPCFileTimeStamp();
+  if constexpr (!port::IsWindows()) {
+    last_modified_ = GetIPCFileTimeStamp();
+  }
   return true;
 }
 }  // namespace mozc

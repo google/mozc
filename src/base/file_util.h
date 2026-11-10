@@ -177,6 +177,30 @@ class FileUtil {
   static absl::StatusOr<FileTimeStamp> GetModificationTime(
       absl::string_view filename);
 
+  // On Windows and Linux-based platforms, sets the modification time of
+  // `filename` to the current time obtained from the most precise clock
+  // available. Does nothing and returns OK on other platforms. Recommended when
+  // the file is later checked for updates by comparing timestamps.
+  //
+  // Consecutive writes may share the same modification time for two reasons:
+  //  1. The file system itself has a coarse timestamp resolution (e.g. 1 second
+  //     on HFS+). This function cannot help in this scenario.
+  //  2. The OS records file timestamps from a coarse time source for
+  //     performance reasons, even when the file system supports much finer
+  //     granularity (e.g. ~15.6 ms by default on Windows, or Linux kernel
+  //     before fine-grained timestamps is introduced in 6.13).
+  //
+  // This function is expected to mitigate the second scenario on Windows with
+  // Microsoft STL and Linux 6.12- with libstdc++/libc++. It is intentionally a
+  // no-op on macOS, as `file_time_type::clock::now()` on macOS only provides
+  // microsecond resolution, whereas macOS already sets file timestamps with
+  // nanosecond resolution.
+  //
+  // If timestamps alone turn out to be insufficient, callers may consider
+  // additional signals such as the file size and platform-specific file IDs.
+  static absl::Status MaybeSetPreciseModificationTime(
+      absl::string_view filename);
+
   // Returns the file path resolved from the given symbolic link.
   // This is a wrapper of std::filesystem::read_symlink.
   static absl::StatusOr<std::string> ReadSymlink(absl::string_view filename);

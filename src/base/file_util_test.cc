@@ -29,6 +29,7 @@
 
 #include "base/file_util.h"
 
+#include <array>
 #include <ios>
 #include <string>
 
@@ -550,6 +551,58 @@ TEST(FileUtilTest, GetModificationTime) {
       FileUtil::GetModificationTime(path);
   ASSERT_OK(time_stamp2);
   EXPECT_EQ(*time_stamp1, *time_stamp2);
+}
+
+// FileUtil::MaybeSetPreciseModificationTime() is a no-op on other platforms.
+constexpr bool kSetPreciseModificationTimeEnabled =
+    port::IsWindows() || port::IsLinuxBase();
+
+TEST(FileUtilTest, MaybeSetPreciseModificationTimeFailsForMissingFile) {
+  if constexpr (!kSetPreciseModificationTimeEnabled) {
+    GTEST_SKIP();
+  }
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  EXPECT_FALSE(FileUtil::MaybeSetPreciseModificationTime(
+                   FileUtil::JoinPath(temp_dir.path(), "not_existent_file"))
+                   .ok());
+}
+
+TEST(FileUtilTest, MaybeSetPreciseModificationTimeKeepsContent) {
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string path = FileUtil::JoinPath(temp_dir.path(), "testfile");
+  CreateTestFile(path, "content");
+
+  ASSERT_OK(FileUtil::MaybeSetPreciseModificationTime(path));
+  absl::StatusOr<std::string> content = FileUtil::GetContents(path);
+  ASSERT_OK(content);
+  EXPECT_EQ(*content, "content");
+}
+
+TEST(FileUtilTest, MaybeSetPreciseModificationTimeForConsecutiveFiles) {
+  if constexpr (!kSetPreciseModificationTimeEnabled) {
+    GTEST_SKIP();
+  }
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  constexpr size_t kNumFiles = 10;
+  const auto get_path = [&](size_t i) {
+    return FileUtil::JoinPath(temp_dir.path(), "testfile" + std::to_string(i));
+  };
+  for (size_t i = 0; i < kNumFiles; ++i) {
+    CreateTestFile(get_path(i), "content");
+  }
+  for (size_t i = 0; i < kNumFiles; ++i) {
+    ASSERT_OK(FileUtil::MaybeSetPreciseModificationTime(get_path(i)));
+  }
+  std::array<FileTimeStamp, kNumFiles> times = {};
+  for (size_t i = 0; i < kNumFiles; ++i) {
+    absl::StatusOr<FileTimeStamp> time =
+        FileUtil::GetModificationTime(get_path(i));
+    ASSERT_OK(time);
+    times[i] = *time;
+  }
+  for (size_t i = 1; i < kNumFiles; ++i) {
+    EXPECT_GT(times[i], times[i - 1]);
+  }
 }
 
 TEST(FileUtilTest, GetAndSetContents) {

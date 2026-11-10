@@ -602,6 +602,25 @@ absl::StatusOr<FileTimeStamp> FileUtil::GetModificationTime(
   return last_write_time.time_since_epoch().count();
 }
 
+absl::Status FileUtil::MaybeSetPreciseModificationTime(
+    absl::string_view filename) {
+  if constexpr (port::IsWindows() || port::IsLinuxBase()) {
+    // See the comment in the header file on why this is known to be useful for
+    // Windows and Linux-based platforms (kernel 6.12 and earlier).
+    const std::filesystem::path path = to_pfstring(filename);
+    std::error_code error_code;
+    // With Microsoft STL, the clock is based on GetSystemTimePreciseAsFileTime.
+    std::filesystem::last_write_time(
+        path, std::filesystem::file_time_type::clock::now(), error_code);
+    if (error_code) {
+      return absl::ErrnoToStatus(
+          error_code.value(), absl::StrCat("last_write_time failed: ", filename,
+                                           ": ", error_code.message()));
+    }
+  }
+  return absl::OkStatus();
+}
+
 absl::StatusOr<std::string> FileUtil::ReadSymlink(absl::string_view filename) {
   MAYBE_INVOKE_MOCK(ReadSymlink, filename);
 
