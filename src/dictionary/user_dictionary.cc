@@ -631,6 +631,11 @@ bool UserDictionary::Reload() {
     return true;
   }
 
+  // NOTE: Consecutive writes may share the same timestamp (e.g. ~15.6 ms
+  // granularity by default on Windows), which is why
+  // UserDictionaryStorage::Save() calls
+  // FileUtil::MaybeSetPreciseModificationTime(). See its comment for the
+  // remaining limitations.
   if (modified_at_.exchange(*modification_time) == *modification_time) {
     LOG(INFO) << "MaybeStartReload() didn't start reloading";
     return true;

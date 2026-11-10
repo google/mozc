@@ -186,6 +186,15 @@ absl::Status UserDictionaryStorage::Save() const {
     }
   }
 
+  // Best-effort, platform-dependent: set a precise timestamp for
+  // UserDictionary::Reload(), as the OS may record file timestamps with a
+  // coarse granularity (e.g. ~15.6 ms by default on Windows). Update
+  // `tmp_filename` as AtomicRename() preserves the timestamp.
+  if (absl::Status s = FileUtil::MaybeSetPreciseModificationTime(tmp_filename);
+      !s.ok()) {
+    LOG(WARNING) << "Failed to update the modification time: " << s;
+  }
+
   if (absl::Status s = FileUtil::AtomicRename(tmp_filename, filename_);
       !s.ok()) {
     std::string msg =

@@ -31,13 +31,14 @@
 #define MOZC_IPC_IPC_PATH_MANAGER_H_
 
 #include <cstdint>
-#include <ctime>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "base/file_util.h"
 #include "base/process_mutex.h"
 #include "ipc/ipc.pb.h"
 
@@ -53,8 +54,7 @@ class IPCPathManager {
   explicit IPCPathManager(std::string name)
       : ipc_path_info_(),
         name_(std::move(name)),
-        server_pid_(0),
-        last_modified_(-1) {}
+        server_pid_(0) {}
   virtual ~IPCPathManager() = default;
 
   // return singleton instance corresponding to "name"
@@ -121,8 +121,9 @@ class IPCPathManager {
 
   bool CreateNewPathNameUnlocked();
 
-  // Returns the last modified timestamp of the IPC file.
-  time_t GetIPCFileTimeStamp() const;
+  // Returns the last modified timestamp of the IPC file, or std::nullopt if it
+  // is not available. Unused on Windows.
+  std::optional<FileTimeStamp> GetIPCFileTimeStamp() const;
 
   std::unique_ptr<ProcessMutex> path_mutex_;  // lock ipc path file
   mutable absl::Mutex mutex_;                 // mutex for methods
@@ -130,7 +131,7 @@ class IPCPathManager {
   std::string name_;
   std::string server_path_;  // cache for server_path
   uint32_t server_pid_;      // cache for pid of server_path
-  time_t last_modified_;
+  std::optional<FileTimeStamp> last_modified_;  // Unused on Windows
 #ifdef _WIN32
   // std::less<> is a transparent comparator that's necessary to pass
   // absl::string_view to map::find(), etc.

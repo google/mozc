@@ -46,8 +46,6 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
 #include "base/container/tuple.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
@@ -764,12 +762,11 @@ TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
-    // Wait briefly so that the new file gets a distinct modification timestamp
-    // on Windows, where the filesystem timestamp resolution is ~15.6 ms.
-    absl::SleepFor(absl::Milliseconds(20));
-
     const std::string tmp_filename = absl::StrCat(filename, ".tmp");
     EXPECT_OK(FileUtil::SetContents(tmp_filename, storage.SerializeAsString()));
+    // Mimic UserDictionaryStorage::Save() so that each iteration gets a
+    // distinct modification time even within a coarse filesystem clock tick.
+    EXPECT_OK(FileUtil::MaybeSetPreciseModificationTime(tmp_filename));
     EXPECT_OK(FileUtil::AtomicRename(tmp_filename, filename));
 
     // Trigger Reload() immediately without waiting for the previous reload to
