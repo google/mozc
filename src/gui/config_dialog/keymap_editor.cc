@@ -51,6 +51,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/config_file_stream.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/key_parser.h"
@@ -88,10 +89,8 @@ constexpr char kReportBugCommand[] = "ReportBug";
 // Old command name
 constexpr char kEditInsertCommand[] = "EditInsert";
 
-#if defined(__APPLE__)
 constexpr char kIMEOnCommand[] = "IMEOn";
 constexpr char kIMEOffCommand[] = "IMEOff";
-#endif  // __APPLE__
 
 enum {
   NEW_INDEX = 0,
@@ -111,13 +110,13 @@ class KeyMapEditorDialog::KeyMapValidator {
     invisible_commands_.insert(kReportBugCommand);
     // Old command name.
     invisible_commands_.insert(kEditInsertCommand);
-#if defined(__APPLE__)
-    // On Mac, we cannot customize keybindings for IME ON/OFF
-    // So we do not show them.
-    // TODO(toshiyuki): remove them after implementing IME ON/OFF for Mac
-    invisible_commands_.insert(kIMEOnCommand);
-    invisible_commands_.insert(kIMEOffCommand);
-#endif  // __APPLE__
+    if constexpr (port::IsAppleBase()) {
+      // On Mac, we cannot customize keybindings for IME ON/OFF
+      // So we do not show them.
+      // TODO(toshiyuki): remove them after implementing IME ON/OFF for Mac
+      invisible_commands_.insert(kIMEOnCommand);
+      invisible_commands_.insert(kIMEOffCommand);
+    }
 
     invisible_modifiers_.insert(mozc::commands::KeyEvent::KEY_DOWN);
     invisible_modifiers_.insert(mozc::commands::KeyEvent::KEY_UP);
@@ -447,13 +446,13 @@ bool KeyMapEditorDialog::Update() {
   absl::StrAppend(keymap_table, invisible_keymap_table_);
 
   if (new_direct_mode_commands != direct_mode_commands_) {
-#if defined(_WIN32) || defined(__linux__)
-    QMessageBox::information(
-        this, windowTitle(),
-        tr("Changes of keymaps for direct input mode will apply only to "
-           "applications that are launched after making your "
-           "modifications."));
-#endif  // _WIN32 || __linux__
+    if constexpr (port::IsWindows() || port::IsLinuxBase()) {
+      QMessageBox::information(
+          this, windowTitle(),
+          tr("Changes of keymaps for direct input mode will apply only to "
+             "applications that are launched after making your "
+             "modifications."));
+    }
     direct_mode_commands_ = std::move(new_direct_mode_commands);
   }
 

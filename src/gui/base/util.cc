@@ -51,6 +51,8 @@
 #include <string>
 #include <utility>
 
+#include "base/port.h"
+
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #include "gui/base/window_title_modifier.h"
 #endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
@@ -96,9 +98,9 @@ std::unique_ptr<QApplication> GuiUtil::InitQt(int &argc, char *argv[]) {
 
   // QApplication takes argc as a reference.
   auto app = std::make_unique<QApplication>(argc, argv);
-#ifdef __APPLE__
-  app->setFont(QFont("Hiragino Sans"));
-#endif  // __APPLE__
+  if constexpr (port::IsAppleBase()) {
+    app->setFont(QFont("Hiragino Sans"));
+  }
 
   InstallEventFilter();
   InstallDefaultTranslator();

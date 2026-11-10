@@ -39,6 +39,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/container/flat_map.h"
+#include "base/port.h"
 #include "gui/base/util.h"
 
 #if defined(__ANDROID__) || defined(__wasm__)
@@ -217,12 +218,12 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
   }
 
   if (alt_pressed_) {
-#ifdef __APPLE__
-    results << QStringLiteral("Option");
-#else   // __APPLE__
-    // Do not support and show keybindings with alt for Windows
-    // results << "Alt";
-#endif  // __APPLE__
+    if constexpr (port::IsAppleBase()) {
+      results << QStringLiteral("Option");
+    } else {
+      // Do not support and show keybindings with alt for Windows
+      // results << "Alt";
+    }
   }
 
   const bool has_modifier = !results.isEmpty();
@@ -314,24 +315,14 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
   const int qt_key = key_event.key();
 
   // modifier keys
+  constexpr int kCtrlKey = port::IsAppleBase() ? Qt::Key_Meta : Qt::Key_Control;
   switch (qt_key) {
-#ifdef __APPLE__
-    case Qt::Key_Meta:
+    case kCtrlKey:
       ctrl_pressed_ = true;
       return Encode(result);
-    case Qt::Key_Alt:  // Option key
-                       //    case Qt::Key_Control:  Command key
-      alt_pressed_ = true;
-      return Encode(result);
-#else   // __APPLE__
-    case Qt::Key_Control:
-      ctrl_pressed_ = true;
-      return Encode(result);
-      //    case Qt::Key_Meta:  // Windows key
     case Qt::Key_Alt:
       alt_pressed_ = true;
       return Encode(result);
-#endif  // __APPLE__
     case Qt::Key_Shift:
       shift_pressed_ = true;
       return Encode(result);
@@ -356,32 +347,33 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
     modifier_non_required_key_ = QLatin1String(key->data(), key->size());
     return Encode(result);
   }
+#endif  // _WIN32
 
-#elif __linux__
-  // The XKB defines three types of logical key code: "xkb::Hiragana",
-  // "xkb::Katakana" and "xkb::Hiragana_Katakana".
-  // On most of Linux distributions, any key event against physical
-  // "ひらがな/カタカナ" key is likely to be mapped into
-  // "xkb::Hiragana_Katakana" regardless of the state of shift modifier. This
-  // means that you are likely to receive "Shift + xkb::Hiragana_Katakana"
-  // rather than "xkb::Katakana" when you physically press Shift +
-  // "ひらがな/カタカナ".
-  // On the other hand, Mozc protocol expects that Shift + "ひらがな/カタカナ"
-  // key event is always interpret as "{special_key: KeyEvent::KATAKANA}"
-  // without shift modifier. This is why we have the following special treatment
-  // against "shift + XK_Hiragana_Katakana". See b/6087341 for the background
-  // information.
-  // We use |key_event.modifiers()| instead of |shift_pressed_| because
-  // |shift_pressed_| is no longer valid in the following scenario.
-  //   1. Press "Shift"
-  //   2. Press "Hiragana/Katakana"  (shift_pressed_ == true)
-  //   3. Press "Hiragana/Katakana"  (shift_pressed_ == false)
-  const bool with_shift = (key_event.modifiers() & Qt::ShiftModifier) != 0;
-  if (with_shift && (qt_key == Qt::Key_Hiragana_Katakana)) {
-    modifier_non_required_key_ = QLatin1String("Katakana");
-    return Encode(result);
+  if constexpr (port::IsLinuxBase()) {
+    // The XKB defines three types of logical key code: "xkb::Hiragana",
+    // "xkb::Katakana" and "xkb::Hiragana_Katakana".
+    // On most of Linux distributions, any key event against physical
+    // "ひらがな/カタカナ" key is likely to be mapped into
+    // "xkb::Hiragana_Katakana" regardless of the state of shift modifier. This
+    // means that you are likely to receive "Shift + xkb::Hiragana_Katakana"
+    // rather than "xkb::Katakana" when you physically press Shift +
+    // "ひらがな/カタカナ".
+    // On the other hand, Mozc protocol expects that Shift + "ひらがな/カタカナ"
+    // key event is always interpret as "{special_key: KeyEvent::KATAKANA}"
+    // without shift modifier. This is why we have the following special
+    // treatment against "shift + XK_Hiragana_Katakana". See b/6087341 for the
+    // background information. We use |key_event.modifiers()| instead of
+    // |shift_pressed_| because |shift_pressed_| is no longer valid in the
+    // following scenario.
+    //   1. Press "Shift"
+    //   2. Press "Hiragana/Katakana"  (shift_pressed_ == true)
+    //   3. Press "Hiragana/Katakana"  (shift_pressed_ == false)
+    const bool with_shift = (key_event.modifiers() & Qt::ShiftModifier) != 0;
+    if (with_shift && (qt_key == Qt::Key_Hiragana_Katakana)) {
+      modifier_non_required_key_ = QLatin1String("Katakana");
+      return Encode(result);
+    }
   }
-#endif  // _WIN32, __linux__
 
   if (qt_key == Qt::Key_yen) {
     // Japanese Yen mark, treat it as backslash for compatibility
@@ -456,16 +448,16 @@ bool KeyBindingFilter::eventFilter(QObject *obj, QEvent *event) {
 KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
     : QDialog(parent), trigger_parent_(trigger_parent) {
   setupUi(this);
-#if defined(__linux__)
-  // Workaround for the issue https://github.com/google/mozc/issues/9
-  // Seems that even after clicking the button for the keybinding dialog,
-  // the edit is not raised. This might be a bug of setFocusProxy.
-  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
-                 Qt::Tool | Qt::WindowStaysOnTopHint);
-#else   // __linux__
-  setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
-                 Qt::Tool);
-#endif  // __linux__
+  if constexpr (port::IsLinuxBase()) {
+    // Workaround for the issue https://github.com/google/mozc/issues/9
+    // Seems that even after clicking the button for the keybinding dialog,
+    // the edit is not raised. This might be a bug of setFocusProxy.
+    setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                   Qt::Tool | Qt::WindowStaysOnTopHint);
+  } else {
+    setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
+                   Qt::Tool);
+  }
 
   QPushButton *ok_button =
       KeyBindingEditorbuttonBox->button(QDialogButtonBox::Ok);

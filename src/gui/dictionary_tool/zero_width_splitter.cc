@@ -32,13 +32,15 @@
 #include <QSplitter>
 #include <QtGui>
 
+#include "base/port.h"
+
 void ZeroWidthSplitterHandle::paintEvent(QPaintEvent *event) {
-#ifdef __APPLE__
-  QPainter painter(this);
-  QColor topColor(145, 145, 145);
-  painter.setPen(topColor);
-  painter.drawLine(0, 0, 0, height());
-#endif  // __APPLE__
+  if constexpr (mozc::port::IsAppleBase()) {
+    QPainter painter(this);
+    QColor topColor(145, 145, 145);
+    painter.setPen(topColor);
+    painter.drawLine(0, 0, 0, height());
+  }
 }
 
 QSize ZeroWidthSplitterHandle::sizeHint() const {

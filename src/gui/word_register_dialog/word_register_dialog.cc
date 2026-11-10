@@ -40,6 +40,7 @@
 #include "absl/status/status.h"
 #include "absl/time/time.h"
 #include "base/const.h"
+#include "base/port.h"
 #include "client/client.h"
 #include "client/user_dictionary/user_dictionary_storage.h"
 #include "data_manager/pos_list_provider.h"
@@ -119,10 +120,10 @@ WordRegisterDialog::WordRegisterDialog()
   WordlineEdit->setMaxLength(kMaxEditLength);
 
   if (!SetDefaultEntryFromEnvironmentVariable()) {
-#ifdef _WIN32
-    // On Windows, try to use clipboard as a fallback.
-    SetDefaultEntryFromClipboard();
-#endif  // _WIN32
+    if constexpr (port::IsWindows()) {
+      // On Windows, try to use clipboard as a fallback.
+      SetDefaultEntryFromClipboard();
+    }
   }
 
   client_->set_timeout(kSessionTimeout);
@@ -313,13 +314,13 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
     return SAVE_SUCCESS;
   }
 
-#ifndef __APPLE__
-  // Update server version if need be.
-  if (!client_->CheckVersionOrRestartServer()) {
-    LOG(ERROR) << "CheckVersionOrRestartServer failed";
-    return SAVE_SUCCESS;
+  if constexpr (!port::IsAppleBase()) {
+    // Update server version if need be.
+    if (!client_->CheckVersionOrRestartServer()) {
+      LOG(ERROR) << "CheckVersionOrRestartServer failed";
+      return SAVE_SUCCESS;
+    }
   }
-#endif  // __APPLE__
 
   if (!client_->Reload()) {
     LOG(ERROR) << "Reload command failed";
