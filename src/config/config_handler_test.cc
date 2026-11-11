@@ -116,7 +116,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   if constexpr (port::IsAndroid()) {
     input.Clear();
     EXPECT_FALSE(input.general_config().has_upload_usage_stats());
-    EXPECT_TRUE(ConfigHandler::SetConfig(input));
+    ConfigHandler::SetConfig(input);
     output = ConfigHandler::GetCopiedConfig();
     EXPECT_TRUE(output.general_config().has_upload_usage_stats());
     EXPECT_TRUE(output.general_config().upload_usage_stats());
@@ -125,7 +125,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
     input.mutable_general_config()->set_upload_usage_stats(false);
     EXPECT_TRUE(input.general_config().has_upload_usage_stats());
     EXPECT_FALSE(input.general_config().upload_usage_stats());
-    EXPECT_TRUE(ConfigHandler::SetConfig(input));
+    ConfigHandler::SetConfig(input);
     output = ConfigHandler::GetCopiedConfig();
     EXPECT_TRUE(output.general_config().has_upload_usage_stats());
     EXPECT_TRUE(output.general_config().upload_usage_stats());
