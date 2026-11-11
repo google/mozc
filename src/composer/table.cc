@@ -400,22 +400,6 @@ const Entry* absl_nullable Table::AddRuleWithAttributes(
   return entry_ptr;
 }
 
-void Table::DeleteRule(const absl::string_view input) {
-  // NOTE : If this method is called and an entry is deleted,
-  //     case_sensitive_ turns to be invalid
-  //     because it is not updated.
-  //     Currently updating logic is omitted because;
-  //     - Updating needs some complex implementation.
-  //     - This method is not used.
-  //     - This method has no tests.
-  //     - This method is private scope.
-  const Entry* old_entry;
-  if (entries_.LookUp(input, &old_entry)) {
-    DeleteEntry(old_entry);
-  }
-  entries_.DeleteEntry(input);
-}
-
 bool Table::LoadFromString(absl::string_view str) {
   struct viewbuf : std::streambuf {
     explicit viewbuf(absl::string_view sv) {

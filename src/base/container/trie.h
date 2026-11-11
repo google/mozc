@@ -33,202 +33,246 @@
 #define MOZC_BASE_CONTAINER_TRIE_H_
 
 #include <cstddef>
-#include <memory>
+#include <cstdint>
+#include <limits>
 #include <optional>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/container/inlined_vector.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 
 namespace mozc {
 
+// UTF-8 codepoint (`char32_t`) trie mapping string keys to values of type `T`.
+//
+// Nodes are stored in `nodes_` (`nodes_[0]` is the root when non-empty) and
+// reference children by `uint32_t` index rather than pointers. Keeping each
+// `absl::flat_hash_map<char32_t, uint32_t>` slot at 8 bytes enables Abseil's
+// inline Small Object Optimization (SOO) for nodes with 0 or 1 child, avoiding
+// per-node heap allocations.
 template <typename T>
 class Trie final {
  public:
-  // This needs to be public for GCC 9 with '-std=c++17'.
-  using SubTrie = absl::flat_hash_map<char32_t, std::unique_ptr<Trie<T>>>;
+  Trie() = default;
+  Trie(const Trie&) = default;
+  Trie& operator=(const Trie&) = default;
+  Trie(Trie&&) noexcept = default;
+  Trie& operator=(Trie&&) noexcept = default;
+  ~Trie() = default;
 
+  // Inserts or overwrites the entry for `key` with `data`. An empty `key`
+  // stores `data` at the root.
   template <typename U>
-  void AddEntry(absl::string_view key, U &&data) {
-    if (key.empty()) {
-      data_ = std::forward<U>(data);
-      return;
+  void AddEntry(absl::string_view key, U&& data) {
+    if (nodes_.empty()) {
+      nodes_.emplace_back();
     }
-    FindResult res = FindSubTrie(key);
-    if (res.trie == nullptr) {
-      auto t = std::make_unique<Trie>();
-      res.trie = t.get();
-      trie_[res.first_char] = std::move(t);
+    uint32_t index = 0;
+    char32_t first_char = 0;
+    absl::string_view rest;
+    while (!key.empty()) {
+      if (!Util::SplitFirstChar32(key, &first_char, &rest)) {
+        return;
+      }
+      DCHECK_LT(nodes_.size(), std::numeric_limits<uint32_t>::max());
+      const uint32_t new_index = static_cast<uint32_t>(nodes_.size());
+      auto [it, inserted] =
+          nodes_[index].children.try_emplace(first_char, new_index);
+      // Copy `it->second` before `emplace_back()` may reallocate `nodes_`.
+      index = it->second;
+      if (inserted) {
+        nodes_.emplace_back();
+      }
+      key = rest;
     }
-    res.trie->AddEntry(res.rest, std::forward<U>(data));
+    nodes_[index].data = std::forward<U>(data);
   }
 
-  bool DeleteEntry(absl::string_view key) {
-    if (key.empty()) {
-      if (trie_.empty()) {
-        return true;
-      }
-      data_.reset();
+  // Looks up the exact `key`. If found, copies its value to `*data` and returns
+  // true; otherwise leaves `*data` unchanged and returns false.
+  bool LookUp(absl::string_view key, T* data) const {
+    const Node* node = FindNode(key);
+    if (node == nullptr || !node->data.has_value()) {
       return false;
     }
-    if (const FindResult res = FindSubTrie(key);
-        res.trie != nullptr && res.trie->DeleteEntry(res.rest)) {
-      trie_.erase(res.first_char);
-      return trie_.empty();
-    }
-    return false;
+    *data = *node->data;
+    return true;
   }
 
-  bool LookUp(absl::string_view key, T *data) const {
-    if (key.empty()) {
-      if (!data_.has_value()) {
-        return false;
-      }
-      *data = *data_;
-      return true;
-    }
-    const FindResult res = FindSubTrie(key);
-    return res.trie != nullptr && res.trie->LookUp(res.rest, data);
-  }
-
-  // If key's prefix matches to trie with data, return true and set data
-  // For example, if a trie has data for 'abc', 'abd', and 'a';
-  //  - Return true for the key, 'abc'
-  //  -- Matches in exact
-  //  - Return true for the key, 'abcd'
-  //  -- Matches in prefix
-  //  - Return FALSE for the key, 'abe'
-  //  -- Matches in prefix by 'ab', and 'ab' does not have data in trie tree
-  //  -- Do not refer 'a' here.
-  //  - Return true for the key, 'ac'
-  //  -- Matches in prefix by 'a', and 'a' have data
-  bool LookUpPrefix(absl::string_view key, T *data, size_t *key_length,
-                    bool *fixed) const {
-    const FindResult res = FindSubTrie(key);
-    if (res.trie == nullptr) {
+  // Traverses the longest prefix of `key` that exists as a path in the trie and
+  // sets `*key_length` to that path's byte length:
+  // - If the reached node has data, copies it to `*data` and returns true.
+  //   `*fixed` is set to false when that node has children (longer keys in the
+  //   trie share the matched prefix, so the match is not yet unambiguous if
+  //   more input follows), and true when it is a leaf node
+  //   (`children.empty()`).
+  // - If the reached node has no data, leaves `*data` unchanged, sets `*fixed`
+  //   to true, and returns false without falling back to shorter prefixes
+  //   (unlike `LongestMatch`).
+  //
+  // For example, if a trie has data for 'abc', 'abd', and 'a':
+  //  - 'a'    -> true,  data='a',   key_length=1, fixed=false ('a' has child
+  //                                                            'b')
+  //  - 'ac'   -> true,  data='a',   key_length=1, fixed=false ('a' has child
+  //                                                            'b')
+  //  - 'abc'  -> true,  data='abc', key_length=3, fixed=true  ('abc' is a leaf)
+  //  - 'abcd' -> true,  data='abc', key_length=3, fixed=true  ('abc' is a leaf)
+  //  - 'abe'  -> false,             key_length=2, fixed=true  ('ab' has no
+  //                                                            data; does not
+  //                                                            refer to 'a')
+  bool LookUpPrefix(absl::string_view key, T* data, size_t* key_length,
+                    bool* fixed) const {
+    if (nodes_.empty()) {
       *key_length = 0;
-      if (data_.has_value()) {
-        *data = *data_;
-        *fixed = trie_.empty();
-        return true;
-      }
       *fixed = true;
       return false;
     }
-    const bool found =
-        res.trie->LookUpPrefix(res.rest, data, key_length, fixed);
-    const size_t first_char_len = key.size() - res.rest.size();
-    *key_length += first_char_len;
-    return found;
-  }
-
-  // If key's prefix matches to trie with data, return true and set data
-  // For example, if a trie has data for 'abc', 'abd', and 'a';
-  //  - Return true for the key, 'abc'
-  //  -- Matches in exact
-  //  - Return true for the key, 'abcd'
-  //  -- Matches in prefix
-  //  - Return TRUE for the key, 'abe'
-  //  -- Matches in prefix by 'a'.
-  //  - Return true for the key, 'ac'
-  //  -- Matches in prefix by 'a', and 'a' have data
-  bool LongestMatch(absl::string_view key, T *data, size_t *key_length) const {
-    const FindResult res = FindSubTrie(key);
-    if (res.trie == nullptr) {
-      *key_length = 0;
-      if (data_.has_value()) {
-        *data = *data_;
-        return true;
-      }
-      return false;
-    }
-
-    bool found = false;
-    if (data_.has_value()) {
-      *data = *data_;
-      found = true;
-    }
-
-    if (res.trie->LongestMatch(res.rest, data, key_length)) {
-      const size_t first_char_len = key.size() - res.rest.size();
-      *key_length += first_char_len;
-      return true;
-    }
-    return found;
-  }
-
-  // Return all result starts with key
-  // For example, if a trie has data for 'abc', 'abd', and 'a';
-  //  - Return 'abc', 'abd', 'a', for the key 'a'
-  //  - Return 'abc', 'abd' for the key 'ab'
-  //  - Return nothing for the key 'b'
-  void LookUpPredictiveAll(absl::string_view key,
-                           std::vector<T> *data_list) const {
-    DCHECK(data_list);
-    if (!key.empty()) {
-      if (const FindResult res = FindSubTrie(key); res.trie != nullptr) {
-        res.trie->LookUpPredictiveAll(res.rest, data_list);
-      }
-      return;
-    }
-
-    if (data_.has_value()) {
-      data_list->push_back(*data_);
-    }
-
-    for (auto &[unused, trie] : trie_) {
-      trie->LookUpPredictiveAll("", data_list);
-    }
-  }
-
-  bool HasSubTrie(absl::string_view key) const {
-    const FindResult res = FindSubTrie(key);
-    if (res.trie == nullptr) {
-      return false;
-    }
-    return res.rest.empty() || res.trie->HasSubTrie(res.rest);
-  }
-
-  void swap(Trie &other) noexcept(std::is_nothrow_swappable_v<SubTrie> &&
-                                  std::is_nothrow_swappable_v<T>) {
-    using std::swap;
-    swap(trie_, other.trie_);
-    swap(data_, other.data_);
-  }
-
-  friend void swap(Trie &lhs, Trie &rhs) noexcept(noexcept(lhs.swap(rhs))) {
-    lhs.swap(rhs);
-  }
-
- private:
-  struct FindResult {
-    Trie<T> *trie = nullptr;
+    const size_t initial_size = key.size();
+    uint32_t index = 0;
     char32_t first_char = 0;
     absl::string_view rest;
-  };
-
-  // Finds the subtrie that is reachable by the first UTF8 character of `key`.
-  // If `key` is empty or no such trie exists, `FindResult::trie` is set to
-  // nullptr. If `key` is nonempty, this method also sets the value of char32
-  // for the first character and the rest of strings regardless of the find
-  // result.
-  FindResult FindSubTrie(absl::string_view key) const {
-    FindResult res;
-    if (!key.empty()) {
-      Util::SplitFirstChar32(key, &res.first_char, &res.rest);
-      if (const auto it = trie_.find(res.first_char); it != trie_.end()) {
-        res.trie = it->second.get();
+    while (!key.empty() && Util::SplitFirstChar32(key, &first_char, &rest)) {
+      const auto it = nodes_[index].children.find(first_char);
+      if (it == nodes_[index].children.end()) {
+        break;
       }
+      index = it->second;
+      key = rest;
     }
-    return res;
+    *key_length = initial_size - key.size();
+    const Node& node = nodes_[index];
+    if (!node.data.has_value()) {
+      *fixed = true;
+      return false;
+    }
+    *data = *node.data;
+    *fixed = node.children.empty();
+    return true;
   }
 
-  SubTrie trie_;
-  std::optional<T> data_;
+  // Finds the longest prefix of `key` with an associated value (falling back to
+  // shorter prefixes when a deeper path has no value). If found, copies the
+  // value to `*data`, sets `*key_length` to the matched byte length, and
+  // returns true; otherwise sets `*key_length` to 0 and returns false.
+  //
+  // For example, if a trie has data for 'abc', 'abd', and 'a':
+  //  - 'abc'  -> true, data='abc', key_length=3
+  //  - 'abcd' -> true, data='abc', key_length=3
+  //  - 'abe'  -> true, data='a',   key_length=1
+  //  - 'ac'   -> true, data='a',   key_length=1
+  bool LongestMatch(absl::string_view key, T* data, size_t* key_length) const {
+    if (nodes_.empty()) {
+      *key_length = 0;
+      return false;
+    }
+    const size_t initial_size = key.size();
+    uint32_t index = 0;
+    const T* matched_data =
+        nodes_[0].data.has_value() ? &*nodes_[0].data : nullptr;
+    size_t matched_length = 0;
+    char32_t first_char = 0;
+    absl::string_view rest;
+    while (!key.empty() && Util::SplitFirstChar32(key, &first_char, &rest)) {
+      const auto it = nodes_[index].children.find(first_char);
+      if (it == nodes_[index].children.end()) {
+        break;
+      }
+      index = it->second;
+      key = rest;
+      if (nodes_[index].data.has_value()) {
+        matched_data = &*nodes_[index].data;
+        matched_length = initial_size - key.size();
+      }
+    }
+    if (matched_data == nullptr) {
+      *key_length = 0;
+      return false;
+    }
+    *data = *matched_data;
+    *key_length = matched_length;
+    return true;
+  }
+
+  // Appends to `*data_list` all values whose keys start with `key`.
+  // For example, if a trie has data for 'abc', 'abd', and 'a':
+  //  - 'a'  -> appends 'abc', 'abd', 'a'
+  //  - 'ab' -> appends 'abc', 'abd'
+  //  - 'b'  -> appends nothing
+  void LookUpPredictiveAll(absl::string_view key,
+                           std::vector<T>* data_list) const {
+    DCHECK(data_list);
+    const Node* root = FindNode(key);
+    if (root == nullptr) {
+      return;
+    }
+    if (root->data.has_value()) {
+      data_list->push_back(*root->data);
+    }
+    if (root->children.empty()) {
+      return;
+    }
+    absl::InlinedVector<const Node*, 16> stack;
+    stack.push_back(root);
+    while (!stack.empty()) {
+      const Node* node = stack.back();
+      stack.pop_back();
+      for (const auto& [unused_char, child_index] : node->children) {
+        const Node& child = nodes_[child_index];
+        if (child.data.has_value()) {
+          data_list->push_back(*child.data);
+        }
+        if (!child.children.empty()) {
+          stack.push_back(&child);
+        }
+      }
+    }
+  }
+
+  // Returns true if `key` is non-empty and matches a path in the trie.
+  bool HasSubTrie(absl::string_view key) const {
+    return !key.empty() && FindNode(key) != nullptr;
+  }
+
+  void swap(Trie& other) noexcept { nodes_.swap(other.nodes_); }
+
+  friend void swap(Trie& lhs, Trie& rhs) noexcept { lhs.swap(rhs); }
+
+ private:
+  using Children = absl::flat_hash_map<char32_t, uint32_t>;
+  static_assert(sizeof(typename Children::value_type) == 8,
+                "8-byte slot enables Abseil flat_hash_map inline SOO.");
+
+  struct Node {
+    Children children;
+    std::optional<T> data;
+  };
+
+  const Node* FindNode(absl::string_view key) const {
+    if (nodes_.empty()) {
+      return nullptr;
+    }
+    uint32_t index = 0;
+    char32_t first_char = 0;
+    absl::string_view rest;
+    while (!key.empty()) {
+      if (!Util::SplitFirstChar32(key, &first_char, &rest)) {
+        return nullptr;
+      }
+      const auto it = nodes_[index].children.find(first_char);
+      if (it == nodes_[index].children.end()) {
+        return nullptr;
+      }
+      index = it->second;
+      key = rest;
+    }
+    return &nodes_[index];
+  }
+
+  std::vector<Node> nodes_;
 };
 
 }  // namespace mozc

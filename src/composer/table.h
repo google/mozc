@@ -107,8 +107,6 @@ class Table final {
                                                    absl::string_view pending,
                                                    TableAttributes attributes);
 
-  void DeleteRule(absl::string_view input);
-
   bool LoadFromString(absl::string_view str);
   bool LoadFromFile(absl::string_view filepath);
 
