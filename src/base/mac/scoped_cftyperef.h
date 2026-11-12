@@ -33,14 +33,29 @@
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
 
+#include <utility>
+
 template <typename T>
 class scoped_cftyperef {
  public:
-  typedef T element_type;
+  using element_type = T;
+
   explicit scoped_cftyperef(T p = nullptr, bool do_retain = false) : ptr_(p) {
     if (do_retain && p != nullptr) {
       CFRetain(ptr_);
     }
+  }
+
+  scoped_cftyperef(const scoped_cftyperef&) = delete;
+  scoped_cftyperef& operator=(const scoped_cftyperef&) = delete;
+
+  scoped_cftyperef(scoped_cftyperef&& other) noexcept
+      : ptr_(std::exchange(other.ptr_, nullptr)) {}
+  scoped_cftyperef& operator=(scoped_cftyperef&& other) noexcept {
+    if (this != &other) {
+      reset(std::exchange(other.ptr_, nullptr));
+    }
+    return *this;
   }
 
   ~scoped_cftyperef() {
@@ -57,17 +72,15 @@ class scoped_cftyperef {
   }
 
   T get() const { return ptr_; }
+  explicit operator bool() const { return ptr_ != nullptr; }
 
-  bool Verify(CFTypeID type_id) {
+  bool Verify(CFTypeID type_id) const {
     return ptr_ != nullptr &&
            CFGetTypeID(reinterpret_cast<CFTypeRef>(ptr_)) == type_id;
   }
 
  private:
   T ptr_;
-  scoped_cftyperef(scoped_cftyperef const &);
-  scoped_cftyperef &operator=(scoped_cftyperef const &);
-  typedef scoped_cftyperef<T> this_type;
 };
 
 #endif  // __APPLE__

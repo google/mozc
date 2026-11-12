@@ -189,7 +189,7 @@ BackgroundFuture<R>::BackgroundFuture(F&& f, Args&&... args)
                                    std::forward<Args>(args)...)]() mutable {
         R r = std::invoke(std::move(f));
 
-        absl::MutexLock lock(&state.mutex);
+        absl::MutexLock lock(state.mutex);
         state.value = std::move(r);
       }) {}
 
@@ -205,7 +205,7 @@ BackgroundFuture<R>& BackgroundFuture<R>::operator=(BackgroundFuture&& other) {
 template <class R>
 const R& BackgroundFuture<R>::Get() const& {
   absl::MutexLock lock(
-      &state_->mutex,
+      state_->mutex,
       absl::Condition(
           +[](std::optional<R>* v) { return v->has_value(); }, &state_->value));
   return *state_->value;
@@ -214,7 +214,7 @@ const R& BackgroundFuture<R>::Get() const& {
 template <class R>
 R BackgroundFuture<R>::Get() && {
   absl::MutexLock lock(
-      &state_->mutex,
+      state_->mutex,
       absl::Condition(
           +[](std::optional<R>* v) { return v->has_value(); }, &state_->value));
   R r = *std::move(state_->value);
@@ -224,14 +224,14 @@ R BackgroundFuture<R>::Get() && {
 
 template <class R>
 bool BackgroundFuture<R>::Ready() const noexcept {
-  absl::MutexLock lock(&state_->mutex);
+  absl::MutexLock lock(state_->mutex);
   return state_->value.has_value();
 }
 
 template <class R>
 void BackgroundFuture<R>::Wait() const {
   absl::MutexLock lock(
-      &state_->mutex,
+      state_->mutex,
       absl::Condition(
           +[](std::optional<R>* v) { return v->has_value(); }, &state_->value));
 }

@@ -66,7 +66,7 @@ MacServer::MacServer(int argc, const char **argv) : argc_(argc), argv_(argv) {
 
 bool MacServer::AsyncExecCommand(absl::string_view proto_message) {
   {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     message_.assign(proto_message.data(), proto_message.size());
     ::pthread_cond_signal(&event_);
   }
@@ -82,7 +82,7 @@ bool MacServer::AsyncExecCommand(absl::string_view proto_message) {
 void MacServer::RunExecCommand() {
   std::string message;
   {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     message.swap(message_);
   }
   commands::RendererCommand command;

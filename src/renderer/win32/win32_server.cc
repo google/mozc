@@ -75,7 +75,7 @@ Win32Server::~Win32Server() { ::CloseHandle(event_); }
 void Win32Server::AsyncHide() {
   {
     // Cancel the remaining event
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     ::ResetEvent(event_);
   }
   window_manager_->AsyncHideAllWindows();
@@ -84,7 +84,7 @@ void Win32Server::AsyncHide() {
 void Win32Server::AsyncQuit() {
   {
     // Cancel the remaining event
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     ::ResetEvent(event_);
   }
   window_manager_->AsyncQuitAllWindows();
@@ -133,7 +133,7 @@ void Win32Server::SetSendCommandInterface(
 
 bool Win32Server::AsyncExecCommand(absl::string_view proto_message) {
   // Take the ownership of |proto_message|.
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   if (message_ == proto_message) {
     // This is exactly the same to the previous message. Theoretically it is
     // safe to do nothing here.
@@ -173,7 +173,7 @@ int Win32Server::StartMessageLoop() {
       // stored in "message_"
       std::string message;
       {
-        absl::MutexLock l(&mutex_);
+        absl::MutexLock l(mutex_);
         message.assign(message_);
         ::ResetEvent(event_);
       }

@@ -107,7 +107,7 @@ bool ProcessWatchDog::SignalControlOperation() {
 void ProcessWatchDog::ThreadMain() {
   while (true) {
     {
-      absl::MutexLock l(&mutex_);
+      absl::MutexLock l(mutex_);
       if (terminating_) {
         break;
       }
@@ -117,7 +117,7 @@ void ProcessWatchDog::ThreadMain() {
 
     // read the current ids
     {
-      absl::MutexLock l(&mutex_);
+      absl::MutexLock l(mutex_);
 
       if (pid_ != kUnknownProcessId) {
         process_handle.reset(::OpenProcess(SYNCHRONIZE, FALSE, pid_));

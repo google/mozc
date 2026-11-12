@@ -83,7 +83,7 @@ class SenderThread {
   void RequestQuit() { quit_event_.SetEvent(); }
 
   void UpdateCommand(const RendererCommand& new_command) {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     renderer_command_ = new_command;
     command_event_.SetEvent();
   }
@@ -127,7 +127,7 @@ class SenderThread {
       // handles[1], that is, renderer event is signaled.
       RendererCommand command;
       {
-        absl::MutexLock lock(&mutex_);
+        absl::MutexLock lock(mutex_);
         command.Swap(&renderer_command_);
         command_event_.ResetEvent();
       }
@@ -147,7 +147,7 @@ class SenderThread {
 static DWORD WINAPI ThreadProc(void* /*unused*/) {
   SenderThread* thread = nullptr;
   {
-    absl::MutexLock lock(&g_mutex);
+    absl::MutexLock lock(g_mutex);
     thread = g_sender_thread;
   }
   if (thread != nullptr) {
@@ -237,7 +237,7 @@ bool EnsureUIThreadInitialized() {
     return true;
   }
   {
-    absl::MutexLock lock(&g_mutex);
+    absl::MutexLock lock(g_mutex);
     ++g_ui_thread_count;
     if (g_ui_thread_count == 1) {
       g_sender_thread = CreateSenderThread();
@@ -275,7 +275,7 @@ void Win32RendererClient::OnUIThreadUninitialized() {
     return;
   }
   {
-    absl::MutexLock lock(&g_mutex);
+    absl::MutexLock lock(g_mutex);
     if (g_ui_thread_count > 0) {
       --g_ui_thread_count;
       if (g_ui_thread_count == 0 && g_sender_thread != nullptr) {
@@ -297,7 +297,7 @@ void Win32RendererClient::OnUpdated(const RendererCommand& command) {
   }
   SenderThread* thread = nullptr;
   {
-    absl::MutexLock lock(&g_mutex);
+    absl::MutexLock lock(g_mutex);
     thread = g_sender_thread;
   }
   if (thread != nullptr) {

@@ -41,7 +41,6 @@
 
 #include "absl/base/attributes.h"
 #include "absl/log/check.h"
-#include "base/port.h"
 #include "base/win32/hresult.h"
 #include "base/win32/hresultor_internal.h"
 
@@ -406,7 +405,7 @@ class [[nodiscard]] HResultOr {
   }
 
   union {
-    MOZC_NO_UNIQUE_ADDRESS_ATTRIBUTE Placeholder placeholder_;
+    ABSL_ATTRIBUTE_NO_UNIQUE_ADDRESS Placeholder placeholder_;
     T value_;
   };
   HRESULT hr_ = E_UNEXPECTED;
