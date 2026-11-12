@@ -29,7 +29,6 @@
 
 #include "composer/special_key.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -177,12 +176,9 @@ std::string DeleteSpecialKeys(absl::string_view input) {
 
   // Delete Unicode PUA characters converted from special keys.
   std::u32string codepoints = Util::Utf8ToUtf32(output);
-  auto last =
-      std::remove_if(codepoints.begin(), codepoints.end(), IsSpecialKey);
-  if (last == codepoints.end()) {
+  if (std::erase_if(codepoints, IsSpecialKey) == 0) {
     return output;
   }
-  codepoints.erase(last, codepoints.end());
   return Util::Utf32ToUtf8(codepoints);
 }
 

@@ -31,7 +31,6 @@
 
 #include "composer/key_parser.h"
 
-#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -254,8 +253,8 @@ std::string KeyParser::GetSpecialKeyString(KeyEvent::SpecialKey key) {
   // Transforms the enum value in string by removing '_' and using lower case.
   // e.g. "PAGE_UP" -> "pageup".
   std::string name = KeyEvent::SpecialKey_Name(key);
-  // Idiom to remove '_' from `name` (e.g. "PAGE_UP" -> "PAGEUP").
-  name.erase(std::remove(name.begin(), name.end(), '_'), name.end());
+  // Remove '_' from `name` (e.g. "PAGE_UP" -> "PAGEUP").
+  std::erase(name, '_');
   Util::LowerString(&name);
   return name;
 }

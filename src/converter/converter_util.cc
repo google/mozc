@@ -37,6 +37,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
@@ -388,10 +389,9 @@ std::vector<prediction::Result> MergePredictionResults(
 
   auto append_unique = [](prediction::Result res,
                           std::vector<prediction::Result>* dst) {
-    if (std::none_of(dst->begin(), dst->end(),
-                     [&res](const prediction::Result& r) {
-                       return r.value == res.value;
-                     })) {
+    if (absl::c_none_of(*dst, [&res](const prediction::Result& r) {
+          return r.value == res.value;
+        })) {
       dst->push_back(std::move(res));
     }
   };

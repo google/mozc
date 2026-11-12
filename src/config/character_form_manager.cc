@@ -38,6 +38,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/base/no_destructor.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
@@ -732,7 +733,7 @@ void CharacterFormManagerImpl::AddRule(const absl::string_view key,
   // use vector because set is slower.
   // group table is used in SaveCharacterFormToStorage and this will be called
   // every time user submits conversion.
-  std::sort(group.begin(), group.end());
+  absl::c_sort(group);
   group.erase(std::unique(group.begin(), group.end()), group.end());
 
   for (const char16_t ucs2 : group) {

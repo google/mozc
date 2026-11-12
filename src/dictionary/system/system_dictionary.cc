@@ -58,6 +58,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
 #include "absl/log/check.h"
@@ -263,10 +264,10 @@ class SystemDictionary::ReverseLookupCache {
   ReverseLookupCache& operator=(const ReverseLookupCache&) = delete;
 
   bool IsAvailable(const absl::btree_set<int>& id_set) const {
-    // std::all_of(x.begin(), x.end(), .. ) returns true if x is empty
-    // regardless of the condition.
-    return std::all_of(id_set.begin(), id_set.end(),
-                       [&](const int id) { return results.contains(id); });
+    // absl::c_all_of returns true if id_set is empty regardless of the
+    // condition.
+    return absl::c_all_of(id_set,
+                          [&](const int id) { return results.contains(id); });
   }
 
   absl::btree_multimap<int, ReverseLookupResult> results;

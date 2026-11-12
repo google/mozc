@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/random/random.h"
@@ -75,11 +76,10 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
     sorted_value.push_back(iter);
   }
 
-  std::sort(sorted_value.begin(), sorted_value.end(),
-            [](SerializedDictionary::const_iterator lhs,
-               SerializedDictionary::const_iterator rhs) {
-              return lhs.cost() < rhs.cost();
-            });
+  absl::c_sort(sorted_value, [](SerializedDictionary::const_iterator lhs,
+                                SerializedDictionary::const_iterator rhs) {
+    return lhs.cost() < rhs.cost();
+  });
 
   // after sorting the values by |cost|, adjacent candidates
   // will have the same value. It is almost OK to use std::unique to

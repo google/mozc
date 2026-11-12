@@ -29,7 +29,6 @@
 
 #include "dictionary/dictionary_impl.h"
 
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -38,6 +37,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/port/reversed_view.h"
 #include "base/util.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
@@ -191,10 +191,10 @@ bool DictionaryImpl::LookupComment(absl::string_view key,
                                    std::string* comment) const {
   auto dics = GetDictionaries(options.incognito_mode);
   // Access dics in reverse order to prefer UserDictionary (if not in incognito)
-  return std::any_of(dics.rbegin(), dics.rend(),
-                     [&](const DictionaryInterface* dic) {
-                       return dic->LookupComment(key, value, comment);
-                     });
+  return absl::c_any_of(port::reversed_view(dics),
+                        [&](const DictionaryInterface* dic) {
+                          return dic->LookupComment(key, value, comment);
+                        });
 }
 
 void DictionaryImpl::LookupPredictive(absl::string_view key,
@@ -229,10 +229,10 @@ bool DictionaryImpl::LookupComment(absl::string_view key,
                                    absl::string_view value,
                                    std::string* comment) const {
   // Access dics_ in reverse order to prefer UserDictionary
-  return std::any_of(dics_.rbegin(), dics_.rend(),
-                     [&](const DictionaryInterface* dic) {
-                       return dic->LookupComment(key, value, comment);
-                     });
+  return absl::c_any_of(port::reversed_view(dics_),
+                        [&](const DictionaryInterface* dic) {
+                          return dic->LookupComment(key, value, comment);
+                        });
 }
 
 void DictionaryImpl::PopulateReverseLookupCache(absl::string_view str) const {

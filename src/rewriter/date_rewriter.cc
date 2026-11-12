@@ -979,8 +979,8 @@ bool DateRewriter::RewriteDate(
     absl::Span<const std::string> extra_datetime_formats,
     size_t& num_done_out) {
   absl::string_view key = segment->key();
-  auto rit = std::find_if(std::begin(kDateData), std::end(kDateData),
-                          [&key](auto data) { return key == data.key; });
+  auto rit = absl::c_find_if(
+      kDateData, [&key](const DateData& data) { return key == data.key; });
   if (rit == std::end(kDateData)) {
     return false;
   }

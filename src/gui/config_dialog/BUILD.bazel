@@ -209,6 +209,7 @@ mozc_cc_qt_library(
         "//base:version",
         "//base:vlog",
         "//base/container:flat_map",
+        "//base/port:reversed_view",
         "//client",
         "//client:client_interface",
         "//composer:key_parser",

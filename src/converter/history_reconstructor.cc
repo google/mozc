@@ -36,6 +36,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
+#include "base/port/reversed_view.h"
 #include "base/util.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
@@ -89,11 +90,8 @@ bool ExtractLastTokenWithScriptType(const absl::string_view text,
   }
 
   *last_script_type = last_script_type_found;
-  // TODO(yukawa): Replace reverse_iterator with const_reverse_iterator when
-  //     build failure on Android is fixed.
-  for (std::vector<char32_t>::reverse_iterator it = reverse_last_token.rbegin();
-       it != reverse_last_token.rend(); ++it) {
-    Util::CodepointToUtf8Append(*it, last_token);
+  for (const char32_t codepoint : port::reversed_view(reverse_last_token)) {
+    Util::CodepointToUtf8Append(codepoint, last_token);
   }
   return true;
 }

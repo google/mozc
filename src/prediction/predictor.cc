@@ -319,12 +319,9 @@ std::vector<Result> Predictor::MixCandidates(
     // Standalone parenthesized weekday zero-query candidates (e.g., " (水)")
     // are dynamically computed from the calendar date by ZeroQueryDecoder and
     // must never be replayed from persistent user history.
-    user_history_results.erase(
-        std::remove_if(user_history_results.begin(), user_history_results.end(),
-                       [](const Result& r) {
-                         return IsStandaloneParenthesizedWeekday(r.value);
-                       }),
-        user_history_results.end());
+    std::erase_if(user_history_results, [](const Result& r) {
+      return IsStandaloneParenthesizedWeekday(r.value);
+    });
 
     const absl::string_view last_history_value =
         request.converter_history_value(1);
@@ -335,12 +332,9 @@ std::vector<Result> Predictor::MixCandidates(
         EndsWithWeekdayExpression(full_history_value) ||
         (last_history_value.empty() &&
          EndsWithWeekdayExpression(preceding_text))) {
-      dictionary_results.erase(
-          std::remove_if(dictionary_results.begin(), dictionary_results.end(),
-                         [](const Result& r) {
-                           return IsStandaloneParenthesizedWeekday(r.value);
-                         }),
-          dictionary_results.end());
+      std::erase_if(dictionary_results, [](const Result& r) {
+        return IsStandaloneParenthesizedWeekday(r.value);
+      });
     }
   }
 

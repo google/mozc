@@ -44,6 +44,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/port/reversed_view.h"
 #include "base/strings/unicode.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
@@ -142,8 +143,7 @@ std::string Lattice::DebugString() const {
 
   std::stringstream os;
   const Node* prev_node = nullptr;
-  for (auto it = node_vector.rbegin(); it != node_vector.rend(); ++it) {
-    const Node* node = *it;
+  for (const Node* node : port::reversed_view(node_vector)) {
     os << "[con:"
        << node->cost - (prev_node ? prev_node->cost : 0) - node->wcost << "]";
     os << "[lid:" << node->lid << "]";

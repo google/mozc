@@ -39,6 +39,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/port/reversed_view.h"
 #include "base/util.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
@@ -174,8 +175,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
             converter::Attribute::NO_VARIANTS_EXPANSION;
       }
 
-      if (expanded_t13n_candidates.find(original_candidate->value) !=
-          expanded_t13n_candidates.end()) {
+      if (expanded_t13n_candidates.contains(original_candidate->value)) {
         continue;
       }
 
@@ -201,12 +201,11 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
       }
       if (expanded) {
         CHECK(!variants.empty());
-        for (auto it = variants.rbegin(); it != variants.rend(); ++it) {
-          const std::string new_value =
-              absl::StrCat(*it, original_candidate->functional_value());
+        for (std::string& variant : port::reversed_view(variants)) {
+          std::string new_value =
+              absl::StrCat(variant, original_candidate->functional_value());
           expanded_t13n_candidates.insert(new_value);
-          if (original_candidates.find(new_value) !=
-              original_candidates.end()) {
+          if (original_candidates.contains(new_value)) {
             continue;
           }
           modified = true;
@@ -215,7 +214,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
           DCHECK(new_candidate);
           new_candidate->value = std::move(new_value);
           new_candidate->key = original_candidate->key;
-          new_candidate->content_value = std::move(*it);
+          new_candidate->content_value = std::move(variant);
           new_candidate->content_key = original_candidate->content_key;
           new_candidate->cost = original_candidate->cost;
           new_candidate->wcost = original_candidate->wcost;

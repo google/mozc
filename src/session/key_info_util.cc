@@ -29,13 +29,13 @@
 
 #include "session/key_info_util.h"
 
-#include <algorithm>
 #include <istream>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -88,7 +88,7 @@ std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
     }
   }
 
-  std::sort(result.begin(), result.end());
+  absl::c_sort(result);
   return result;
 }
 
@@ -128,7 +128,7 @@ bool KeyInfoUtil::ContainsKey(absl::Span<const KeyInformation> sorted_keys,
   if (!KeyEventUtil::GetKeyInformation(key_event, &key_info)) {
     return false;
   }
-  return std::binary_search(sorted_keys.begin(), sorted_keys.end(), key_info);
+  return absl::c_binary_search(sorted_keys, key_info);
 }
 
 }  // namespace mozc

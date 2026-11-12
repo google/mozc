@@ -105,6 +105,7 @@ mozc_cc_library(
         ":dictionary_token",
         ":pos_matcher",
         "//base:util",
+        "//base/port:reversed_view",
         "//protocol:config_cc_proto",
         "//request:options",
         "@com_google_absl//absl/algorithm:container",

@@ -33,12 +33,13 @@
 #include <cstdint>
 #include <cstdio>
 #include <optional>
-#include <set>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
+#include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
@@ -49,6 +50,7 @@
 #include "base/container/serialized_string_array.h"
 #include "base/japanese_util.h"
 #include "base/number_util.h"
+#include "base/port/reversed_view.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "config/character_form_manager.h"
@@ -285,7 +287,8 @@ void SetNumberInfoToExistingCandidates(
 // delete them.
 void FindEraseCandidates(absl::Span<const converter::Candidate> results,
                          int base_candidate_pos, RewriteType type,
-                         const Segment& seg, std::set<int>* erase_positions) {
+                         const Segment& seg,
+                         absl::btree_set<int>* erase_positions) {
   // Remember base candidate value
   const int start_pos = std::min<int>(
       base_candidate_pos + GetInsertOffset(type), seg.candidates_size() - 1);
@@ -384,10 +387,10 @@ void InsertConvertedCandidates(absl::Span<const converter::Candidate> results,
   {
     const absl::string_view base_value =
         seg->candidate(base_candidate_pos).value;
-    const auto itr = std::find_if(results.begin(), results.end(),
-                                  [&](const converter::Candidate& cand) {
-                                    return cand.value == base_value;
-                                  });
+    const auto itr =
+        absl::c_find_if(results, [&](const converter::Candidate& cand) {
+          return cand.value == base_value;
+        });
     if (itr != results.end() &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI_ARABIC) {
@@ -618,9 +621,8 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest& request,
       GetRewriteCandidateInfos(suffix_array_, *seg, pos_matcher_);
 
   bool modified = false;
-  std::set<int> erase_positions;  // Use std::set for deterministic order.
-  for (auto it = infos.rbegin(); it != infos.rend(); ++it) {
-    const RewriteCandidateInfo& info = *it;
+  absl::btree_set<int> erase_positions;  // Deterministic order.
+  for (const RewriteCandidateInfo& info : port::reversed_view(infos)) {
     if (info.candidate.content_value.size() > info.candidate.value.size()) {
       LOG(ERROR) << "Invalid content_value/value: ";
       break;
@@ -670,8 +672,8 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest& request,
     modified = true;
   }
 
-  for (auto it = erase_positions.rbegin(); it != erase_positions.rend(); ++it) {
-    seg->erase_candidate(*it);
+  for (const int pos : port::reversed_view(erase_positions)) {
+    seg->erase_candidate(pos);
   }
 
   return modified;

@@ -29,12 +29,13 @@
 
 #include "engine/data_loader.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -106,8 +107,8 @@ bool DataLoader::RegisterRequest(const EngineReloadRequest& request) {
 
   ++sequence_id_;
 
-  auto it = std::find_if(requests_.begin(), requests_.end(),
-                         [id](const RequestData& v) { return v.id == id; });
+  auto it = absl::c_find_if(
+      requests_, [id](const RequestData& v) { return v.id == id; });
   if (it != requests_.end()) {
     it->sequence_id = sequence_id_;
   } else {
@@ -117,12 +118,11 @@ bool DataLoader::RegisterRequest(const EngineReloadRequest& request) {
 
   // Sorts the requests so requests[0] stores the request with
   // the highest priority.
-  std::sort(requests_.begin(), requests_.end(),
-            [](const RequestData& lhs, const RequestData& rhs) {
-              return (lhs.request.priority() < rhs.request.priority() ||
-                      (lhs.request.priority() == rhs.request.priority() &&
-                       lhs.sequence_id > rhs.sequence_id));
-            });
+  absl::c_sort(requests_, [](const RequestData& lhs, const RequestData& rhs) {
+    return (lhs.request.priority() < rhs.request.priority() ||
+            (lhs.request.priority() == rhs.request.priority() &&
+             lhs.sequence_id > rhs.sequence_id));
+  });
 
   // Needs the reloading process only when requests[0] is different from
   // current_request_id_.
@@ -133,11 +133,8 @@ void DataLoader::ReportLoadFailure(const DataLoader::RequestData& request) {
   absl::WriterMutexLock lock(mutex_);
   LOG(ERROR) << "Failed to load data: " << request;
   const uint64_t id = request.id;
-  const auto it =
-      std::remove_if(requests_.begin(), requests_.end(),
-                     [id](const RequestData& v) { return v.id == id; });
-  if (it != requests_.end()) {
-    requests_.erase(it, requests_.end());
+  if (std::erase_if(requests_,
+                    [id](const RequestData& v) { return v.id == id; }) > 0) {
     unregistered_.emplace(id);
   }
 }

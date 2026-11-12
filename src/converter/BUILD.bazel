@@ -90,6 +90,7 @@ mozc_cc_library(
         ":segments",
         "//prediction:result",
         "//request:conversion_request",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
@@ -468,6 +469,7 @@ mozc_cc_library(
     deps = [
         ":node",
         ":node_allocator",
+        "//base/port:reversed_view",
         "//base/strings:unicode",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
@@ -720,6 +722,7 @@ mozc_cc_library(
         ":segments",
         "//base:japanese_util",
         "//base:util",
+        "//base/port:reversed_view",
         "//dictionary:pos_matcher",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/strings:string_view",

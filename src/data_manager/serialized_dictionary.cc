@@ -40,6 +40,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/container/btree_map.h"
 #include "absl/log/check.h"
 #include "absl/strings/str_split.h"
@@ -74,13 +75,13 @@ void LoadTokens(std::istream* ifs, std::map<std::string, TokenList>* dic) {
     (*dic)[key].push_back(std::move(token));
   }
 
-  for (auto& kv : *dic) {
-    std::sort(kv.second.begin(), kv.second.end(),
-              // Compare by cost.
-              [](const std::unique_ptr<CompilerToken>& t1,
-                 const std::unique_ptr<CompilerToken>& t2) {
-                return t1->cost < t2->cost;
-              });
+  for (auto& [_, token_list] : *dic) {
+    absl::c_sort(token_list,
+                 // Compare by cost.
+                 [](const std::unique_ptr<CompilerToken>& t1,
+                    const std::unique_ptr<CompilerToken>& t2) {
+                   return t1->cost < t2->cost;
+                 });
   }
 }
 

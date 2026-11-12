@@ -36,6 +36,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "storage/louds/bit_stream.h"
@@ -73,7 +74,7 @@ void LoudsTrieBuilder::Build() {
   CHECK(!built_);
 
   // Initialize for the build. Sort and de-dup the words.
-  std::sort(word_list_.begin(), word_list_.end());
+  absl::c_sort(word_list_);
   word_list_.erase(std::unique(word_list_.begin(), word_list_.end()),
                    word_list_.end());
   std::vector<Entry> entry_list;
@@ -168,11 +169,9 @@ void LoudsTrieBuilder::Build() {
     }
 
     // Remove all terminal strings.
-    entry_list.erase(std::remove_if(entry_list.begin(), entry_list.end(),
-                                    [&](const Entry& entry) {
-                                      return entry.word().length() < depth + 1;
-                                    }),
-                     entry_list.end());
+    std::erase_if(entry_list, [&](const Entry& entry) {
+      return entry.word().length() < depth + 1;
+    });
   }
 
   // Set 32-bits alignment.
@@ -202,8 +201,7 @@ int LoudsTrieBuilder::GetId(absl::string_view word) const {
   CHECK(built_);
 
   // Binary search the word.
-  const auto iter =
-      std::lower_bound(word_list_.begin(), word_list_.end(), word);
+  const auto iter = absl::c_lower_bound(word_list_, word);
   if (iter == word_list_.end() || *iter != word) {
     // Not found.
     return -1;

@@ -114,6 +114,7 @@ mozc_cc_library(
         "//dictionary/file:dictionary_file",
         "//storage/louds:bit_vector_based_array",
         "//storage/louds:louds_trie",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",

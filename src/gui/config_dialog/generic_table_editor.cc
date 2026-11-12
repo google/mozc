@@ -43,6 +43,7 @@
 #include "absl/log/check.h"
 #include "base/file_stream.h"
 #include "base/port.h"
+#include "base/port/reversed_view.h"
 #include "gui/base/util.h"
 
 namespace mozc {
@@ -159,8 +160,8 @@ void GenericTableEditorDialog::DeleteSelectedItems() {
   }
 
   // remove from the bottom
-  for (auto rit = rows.rbegin(); rit != rows.rend(); ++rit) {
-    editorTableWidget->removeRow(*rit);
+  for (const int row : port::reversed_view(rows)) {
+    editorTableWidget->removeRow(row);
   }
 
   UpdateMenuStatus();
