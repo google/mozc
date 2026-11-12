@@ -65,9 +65,9 @@ class ZeroBitIndexIterator {
     return *this;
   }
 
-  friend bool operator!=(const ZeroBitIndexIterator& x,
+  friend bool operator==(const ZeroBitIndexIterator& x,
                          const ZeroBitIndexIterator& y) {
-    return x.ptr_ != y.ptr_;
+    return x.ptr_ == y.ptr_;
   }
 
   int operator*() const {

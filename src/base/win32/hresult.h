@@ -113,6 +113,8 @@ class [[nodiscard]] HResult {
   // Converts the error code to a human-readable string.
   inline std::string ToString() const;
 
+  friend constexpr bool operator==(HResult, HResult) = default;
+
  private:
   std::string ToStringSlow() const;
 
@@ -130,14 +132,6 @@ inline std::string HResult::ToString() const {
     return "Success: S_OK";
   }
   return ToStringSlow();
-}
-
-constexpr bool operator==(const HResult& a, const HResult& b) {
-  return a.hr() == b.hr();
-}
-
-constexpr bool operator!=(const HResult& a, const HResult& b) {
-  return !(a == b);
 }
 
 inline std::ostream& operator<<(std::ostream& os, const HResult& hr) {

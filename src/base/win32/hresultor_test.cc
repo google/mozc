@@ -364,6 +364,16 @@ struct NotCopyableOrMovable {
   NotCopyableOrMovable& operator=(const NotCopyableOrMovable&) = delete;
 };
 
+struct AssignableFromHResultOrInt {
+  AssignableFromHResultOrInt() = default;
+  explicit AssignableFromHResultOrInt(int) {}
+  AssignableFromHResultOrInt& operator=(int) { return *this; }
+  AssignableFromHResultOrInt& operator=(const HResultOr<int>&) { return *this; }
+};
+
+static_assert(!std::is_assignable_v<HResultOr<AssignableFromHResultOrInt>&,
+                                    const HResultOr<int>&>);
+
 TEST(HResultOr, TypeAttributeTest) {
   TestHResultOrTypeAttributes<TriviallyCopyableNotTriviallyMovable>();
   TestHResultOrTypeAttributes<NotTriviallyDestructible>();

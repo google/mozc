@@ -32,6 +32,7 @@
 
 #include <winerror.h>
 
+#include <concepts>
 #include <type_traits>
 
 #include "base/win32/hresult.h"
@@ -43,53 +44,30 @@ class HResultOr;
 
 namespace hresultor_internal {
 
-// Tests if T is constructible from HResultOr<U>.
-template <typename T, typename U>
-using IsConstructibleFromHResultOr =
-    std::disjunction<std::is_constructible<T, HResultOr<U>&>,
-                     std::is_constructible<T, const HResultOr<U>&>,
-                     std::is_constructible<T, HResultOr<U>&&>,
-                     std::is_constructible<T, const HResultOr<U>&&>>;
-
-// Tests if HResultOr<U> is convertible to T.
-template <typename T, typename U>
-using IsConvertibleFromHResultOr =
-    std::disjunction<std::is_convertible<HResultOr<U>&, T>,
-                     std::is_convertible<const HResultOr<U>&, T>,
-                     std::is_convertible<HResultOr<U>&&, T>,
-                     std::is_convertible<const HResultOr<U>&&, T>>;
-
 // Tests if T is constructible or convertible from HResultOr<U>.
 template <typename T, typename U>
-using IsConstructibleOrConvertibleFromHResultOr =
-    std::disjunction<IsConstructibleFromHResultOr<T, U>,
-                     IsConvertibleFromHResultOr<T, U>>;
-
-template <typename T, typename U>
 inline constexpr bool IsConstructibleOrConvertibleFromHResultOrV =
-    IsConstructibleOrConvertibleFromHResultOr<T, U>::value;
+    std::constructible_from<T, HResultOr<U>&> ||
+    std::constructible_from<T, const HResultOr<U>&> ||
+    std::constructible_from<T, HResultOr<U>&&> ||
+    std::constructible_from<T, const HResultOr<U>&&> ||
+    std::convertible_to<HResultOr<U>&, T> ||
+    std::convertible_to<const HResultOr<U>&, T> ||
+    std::convertible_to<HResultOr<U>&&, T> ||
+    std::convertible_to<const HResultOr<U>&&, T>;
 
 // Tests if T is assignable from HResultOr<U>.
 template <typename T, typename U>
-using IsAssignableFromHResultOr =
-    std::disjunction<std::is_assignable<T&, HResultOr<U>&>,
-                     std::is_assignable<T&, const HResultOr<U>&>,
-                     std::is_assignable<T&, HResultOr<U>&&>,
-                     std::is_assignable<T&, const HResultOr<U>&&>>;
-
-template <typename T, typename U>
 inline constexpr bool IsAssignableFromHResultOrV =
-    IsAssignableFromHResultOr<T, U>::value;
+    std::is_assignable_v<T&, HResultOr<U>&> ||
+    std::is_assignable_v<T&, const HResultOr<U>&> ||
+    std::is_assignable_v<T&, HResultOr<U>&&> ||
+    std::is_assignable_v<T&, const HResultOr<U>&&>;
 
 // Tests if T is convertible to HResult or HRESULT.
 template <typename T>
-using IsConvertibleToHResultLike =
-    std::disjunction<std::is_convertible<T, HResult>,
-                     std::is_convertible<T, HRESULT>>;
-
-template <typename T>
 inline constexpr bool IsConvertibleToHResultLikeV =
-    IsConvertibleToHResultLike<T>::value;
+    std::convertible_to<T, HResult> || std::convertible_to<T, HRESULT>;
 
 }  // namespace hresultor_internal
 }  // namespace mozc::win32

@@ -200,11 +200,6 @@ class InnerSegments {
               data_.value_.size() == other.data_.value_.size());
     }
 
-    bool operator!=(const Iterator& other) const {
-      return (data_.key_.size() != other.data_.key_.size() ||
-              data_.value_.size() != other.data_.value_.size());
-    }
-
     friend class IteratorData;
     friend class InnerSegments;
 

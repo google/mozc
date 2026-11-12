@@ -69,9 +69,6 @@ struct Token {
 };
 
 bool operator==(const Token& lhs, const Token& rhs);
-inline bool operator!=(const Token& lhs, const Token& rhs) {
-  return !(lhs == rhs);
-}
 // Sort by keys first.  Key represents the reading of the token. If the keys are
 // equal, sorting keys are used.  Sorting keys are typically character encodings
 // like CP932, Unicode, etc. If the both keys are equal, values (encoded in

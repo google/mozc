@@ -33,6 +33,7 @@
 #include <memory>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 
 namespace mozc {
 // Constructs an object of type T by unpacking and flattening multiple
@@ -58,17 +59,13 @@ namespace mozc {
 
 namespace internal {
 
-template <typename T, typename = void>
-struct is_tuple_like : std::false_type {};
-
 template <typename T>
-struct is_tuple_like<T, std::void_t<decltype(std::tuple_size<T>::value)>>
-    : std::true_type {};
+concept TupleLike =
+    requires { typename std::tuple_size<std::remove_cvref_t<T>>::type; };
 
 template <typename T>
 decltype(auto) ensure_tuple(T&& t) {
-  if constexpr (is_tuple_like<
-                    std::remove_cv_t<std::remove_reference_t<T>>>::value) {
+  if constexpr (TupleLike<T>) {
     return std::forward<T>(t);
   } else {
     return std::forward_as_tuple(std::forward<T>(t));

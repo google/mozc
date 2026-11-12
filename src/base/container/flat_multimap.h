@@ -32,13 +32,12 @@
 
 #include <stddef.h>
 
-#include <algorithm>
 #include <array>
 #include <functional>
 #include <utility>
 
+#include "absl/algorithm/container.h"
 #include "absl/types/span.h"
-#include "base/container/flat_internal.h"
 
 namespace mozc {
 
@@ -51,10 +50,10 @@ class FlatMultimap {
   constexpr FlatMultimap(std::array<std::pair<K, V>, N> entries,
                          const CompareKey &cmp_key = {})
       : entries_(std::move(entries)), cmp_key_(cmp_key) {
-    std::sort(entries_.begin(), entries_.end(),
-              [&](const std::pair<K, V> &a, const std::pair<K, V> &b) {
-                return cmp_key_(a.first, b.first);
-              });
+    absl::c_sort(entries_,
+                 [&](const std::pair<K, V> &a, const std::pair<K, V> &b) {
+                   return cmp_key_(a.first, b.first);
+                 });
   }
 
   // Returns a span of entries with the given key.
@@ -62,13 +61,14 @@ class FlatMultimap {
   // IMPORTANT: The order of the returned span is not guaranteed to be the
   // same as the order of the entries given when the map was created.
   constexpr absl::Span<const std::pair<K, V>> EqualSpan(const K &key) const {
-    auto span = absl::MakeSpan(entries_);
-    auto lb = internal::FindFirst(span, [&](const std::pair<K, V> &e) {
-      return !cmp_key_(e.first, key);
-    });
-    auto ub = internal::FindFirst(
-        span, [&](const std::pair<K, V> &e) { return cmp_key_(key, e.first); });
-    return absl::MakeConstSpan(lb, ub);
+    const auto span = absl::MakeSpan(entries_);
+    const auto lb = absl::c_partition_point(
+        span, [&](const std::pair<K, V> &e) { return cmp_key_(e.first, key); });
+    const auto tail = span.subspan(lb - span.begin());
+    const auto ub = absl::c_partition_point(
+        tail,
+        [&](const std::pair<K, V> &e) { return !cmp_key_(key, e.first); });
+    return tail.first(ub - tail.begin());
   }
 
  private:

@@ -56,8 +56,7 @@ struct RGBColor {
   RGBColor();
   RGBColor(ValueType red, ValueType green, ValueType blue);
 
-  bool operator==(const RGBColor& that) const;
-  bool operator!=(const RGBColor& that) const;
+  bool operator==(const RGBColor& that) const = default;
   static const RGBColor kBlack;
   static const RGBColor kWhite;
 };
@@ -75,8 +74,7 @@ struct ARGBColor {
   ARGBColor(ValueType alpha, ValueType red, ValueType green, ValueType blue);
   ARGBColor(const RGBColor& color, ValueType alpha);
 
-  bool operator==(const ARGBColor& that) const;
-  bool operator!=(const ARGBColor& that) const;
+  bool operator==(const ARGBColor& that) const = default;
   static const ARGBColor kBlack;
   static const ARGBColor kWhite;
 };

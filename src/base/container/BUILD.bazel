@@ -85,6 +85,7 @@ mozc_cc_library(
     hdrs = ["flat_map.h"],
     deps = [
         ":flat_internal",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/base:nullability",
         "@com_google_absl//absl/types:span",
     ],
@@ -104,7 +105,7 @@ mozc_cc_library(
     name = "flat_multimap",
     hdrs = ["flat_multimap.h"],
     deps = [
-        ":flat_internal",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -124,6 +125,7 @@ mozc_cc_library(
     hdrs = ["flat_set.h"],
     deps = [
         ":flat_internal",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/types:span",
     ],
 )

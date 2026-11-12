@@ -184,10 +184,6 @@ class CharChunk final {
                     rhs.ambiguous_, rhs.transliterator_, rhs.attributes_);
   }
 
-  friend bool operator!=(const CharChunk& lhs, const CharChunk& rhs) {
-    return !(lhs == rhs);
-  }
-
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const CharChunk& chunk) {
     absl::Format(&sink,

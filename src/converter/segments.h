@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_SEGMENTS_H_
 #define MOZC_CONVERTER_SEGMENTS_H_
 
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -221,9 +222,9 @@ class Segments final {
     explicit Iterator(const InnerIterator& iterator) : iterator_(iterator) {}
 
     // Make `iterator` type convertible to `const_iterator`.
-    template <bool enable = is_const>
-    Iterator(typename std::enable_if_t<enable, const Iterator<inner_iterator>>
-                 iterator)
+    template <typename OtherIterator>
+      requires(is_const && std::same_as<OtherIterator, inner_iterator>)
+    Iterator(const Iterator<OtherIterator>& iterator)
         : iterator_(iterator.iterator_) {}
 
     reference operator*() const { return **iterator_; }
@@ -252,12 +253,7 @@ class Segments final {
       return iterator_ - other.iterator_;
     }
 
-    bool operator==(const Iterator& other) const {
-      return iterator_ == other.iterator_;
-    }
-    bool operator!=(const Iterator& other) const {
-      return iterator_ != other.iterator_;
-    }
+    bool operator==(const Iterator& other) const = default;
 
    private:
     friend class Iterator<inner_const_iterator, /*is_const=*/true>;

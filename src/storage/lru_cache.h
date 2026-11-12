@@ -83,9 +83,6 @@ class LruCache {
     bool operator==(const Iterator& other) const {
       return current_ == other.current_;
     }
-    bool operator!=(const Iterator& other) const {
-      return current_ != other.current_;
-    }
 
    private:
     pointer current_;

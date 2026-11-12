@@ -30,6 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_SERIALIZED_DICTIONARY_H_
 #define MOZC_DATA_MANAGER_SERIALIZED_DICTIONARY_H_
 
+#include <compare>
 #include <cstddef>
 #include <cstdint>
 #include <istream>
@@ -234,29 +235,9 @@ class SerializedDictionary {
       return x.token_ptr_ == y.token_ptr_;
     }
 
-    friend bool operator!=(iterator x, iterator y) {
+    friend std::strong_ordering operator<=>(iterator x, iterator y) {
       DCHECK_EQ(x.string_array_, y.string_array_);
-      return x.token_ptr_ != y.token_ptr_;
-    }
-
-    friend bool operator<(iterator x, iterator y) {
-      DCHECK_EQ(x.string_array_, y.string_array_);
-      return x.token_ptr_ < y.token_ptr_;
-    }
-
-    friend bool operator<=(iterator x, iterator y) {
-      DCHECK_EQ(x.string_array_, y.string_array_);
-      return x.token_ptr_ <= y.token_ptr_;
-    }
-
-    friend bool operator>(iterator x, iterator y) {
-      DCHECK_EQ(x.string_array_, y.string_array_);
-      return x.token_ptr_ > y.token_ptr_;
-    }
-
-    friend bool operator>=(iterator x, iterator y) {
-      DCHECK_EQ(x.string_array_, y.string_array_);
-      return x.token_ptr_ >= y.token_ptr_;
+      return x.token_ptr_ <=> y.token_ptr_;
     }
 
    private:

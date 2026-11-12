@@ -492,14 +492,6 @@ RGBColor::RGBColor() : r(ValueType()), g(ValueType()), b(ValueType()) {}
 RGBColor::RGBColor(ValueType red, ValueType green, ValueType blue)
     : r(red), g(green), b(blue) {}
 
-bool RGBColor::operator==(const RGBColor& that) const {
-  return r == that.r && g == that.g && b == that.b;
-}
-
-bool RGBColor::operator!=(const RGBColor& that) const {
-  return !(*this == that);
-}
-
 const RGBColor RGBColor::kBlack(0, 0, 0);
 const RGBColor RGBColor::kWhite(255, 255, 255);
 
@@ -511,14 +503,6 @@ ARGBColor::ARGBColor(ValueType alpha, ValueType red, ValueType green,
 
 ARGBColor::ARGBColor(const RGBColor& color, ValueType alpha)
     : a(alpha), r(color.r), g(color.g), b(color.b) {}
-
-bool ARGBColor::operator==(const ARGBColor& that) const {
-  return a == that.a && r == that.r && g == that.g && b == that.b;
-}
-
-bool ARGBColor::operator!=(const ARGBColor& that) const {
-  return !(*this == that);
-}
 
 const ARGBColor ARGBColor::kBlack(255, 0, 0, 0);
 const ARGBColor ARGBColor::kWhite(255, 255, 255, 255);

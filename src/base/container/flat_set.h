@@ -32,11 +32,11 @@
 
 #include <stddef.h>
 
-#include <algorithm>
 #include <array>
 #include <functional>
 #include <utility>
 
+#include "absl/algorithm/container.h"
 #include "absl/types/span.h"
 #include "base/container/flat_internal.h"
 
@@ -55,10 +55,9 @@ class FlatSet {
 
   // Returns if the given element is in the set.
   constexpr bool contains(const T &x) const {
-    auto span = absl::MakeSpan(elements_);
-    auto lb =
-        internal::FindFirst(span, [&](const T &e) { return !cmp_(e, x); });
-    return lb != span.end() && !cmp_(x, *lb);
+    const auto lb = absl::c_partition_point(
+        elements_, [&](const T &e) { return cmp_(e, x); });
+    return lb != elements_.end() && !cmp_(x, *lb);
   }
 
  private:

@@ -203,13 +203,8 @@ class Composition final {
   const CharChunkList& chunks() const { return chunks_; }
   Transliterators::Transliterator input_t12r() const { return input_t12r_; }
 
-  friend bool operator==(const Composition& lhs, const Composition& rhs) {
-    return std::tie(lhs.table_, lhs.chunks_, lhs.input_t12r_) ==
-           std::tie(rhs.table_, rhs.chunks_, rhs.input_t12r_);
-  }
-  friend bool operator!=(const Composition& lhs, const Composition& rhs) {
-    return !(lhs == rhs);
-  }
+  friend bool operator==(const Composition& lhs,
+                         const Composition& rhs) = default;
 
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const Composition& composition) {

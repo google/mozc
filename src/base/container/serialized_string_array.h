@@ -30,12 +30,13 @@
 #ifndef MOZC_BASE_CONTAINER_SERIALIZED_STRING_ARRAY_H_
 #define MOZC_BASE_CONTAINER_SERIALIZED_STRING_ARRAY_H_
 
+#include <compare>
+#include <concepts>
 #include <cstdint>
 #include <iterator>
 #include <memory>
 #include <new>
 #include <string>
-#include <type_traits>
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
@@ -120,36 +121,22 @@ class const_iterator {
     return x.index_ - y.index_;
   }
 
-  constexpr int compare(const const_iterator& other) const {
-    DCHECK_EQ(array_, other.array_);
-    return index_ - other.index_;
+  // The following comparison operators make sense only for iterators obtained
+  // from the same array.
+  friend constexpr bool operator==(const_iterator x, const_iterator y) {
+    DCHECK_EQ(x.array_, y.array_);
+    return x.index_ == y.index_;
+  }
+  friend constexpr std::strong_ordering operator<=>(const_iterator x,
+                                                    const_iterator y) {
+    DCHECK_EQ(x.array_, y.array_);
+    return x.index_ <=> y.index_;
   }
 
  private:
   const char* array_;
   difference_type index_;
 };
-
-// The following comparison operators make sense only for iterators obtained
-// from the same array.
-constexpr bool operator==(const_iterator x, const_iterator y) {
-  return x.compare(y) == 0;
-}
-constexpr bool operator!=(const_iterator x, const_iterator y) {
-  return x.compare(y) != 0;
-}
-constexpr bool operator<(const_iterator x, const_iterator y) {
-  return x.compare(y) < 0;
-}
-constexpr bool operator<=(const_iterator x, const_iterator y) {
-  return x.compare(y) <= 0;
-}
-constexpr bool operator>(const_iterator x, const_iterator y) {
-  return x.compare(y) > 0;
-}
-constexpr bool operator>=(const_iterator x, const_iterator y) {
-  return x.compare(y) >= 0;
-}
 
 }  // namespace serialized_string_array_internal
 
@@ -265,9 +252,9 @@ class SerializedStringArray {
       absl::Span<const absl::string_view> strs,
       std::unique_ptr<uint32_t[]>* buffer);
 
-  template <typename Container,
-            typename = std::enable_if_t<std::is_convertible_v<
-                const Container&, absl::Span<const std::string>>>>
+  template <typename Container>
+    requires std::convertible_to<const Container&,
+                                 absl::Span<const std::string>>
   static absl::string_view SerializeToBuffer(
       const Container& strs, std::unique_ptr<uint32_t[]>* buffer) {
     return SerializeStringsToBuffer(strs, buffer);

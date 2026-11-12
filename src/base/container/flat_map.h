@@ -32,11 +32,11 @@
 
 #include <stddef.h>
 
-#include <algorithm>
 #include <array>
 #include <functional>
 #include <utility>
 
+#include "absl/algorithm/container.h"
 #include "absl/base/nullability.h"
 #include "absl/types/span.h"
 #include "base/container/flat_internal.h"
@@ -61,11 +61,11 @@ class FlatMap {
 
   // Finds the value associated with the given key, or `nullptr` if not found.
   constexpr const V *absl_nullable FindOrNull(const K &key) const {
-    auto span = absl::MakeSpan(entries_);
-    auto lb = internal::FindFirst(span, [&](const std::pair<K, V> &e) {
-      return !cmp_key_(e.first, key);
-    });
-    return lb == span.end() || cmp_key_(key, lb->first) ? nullptr : &lb->second;
+    const auto lb = absl::c_partition_point(
+        entries_,
+        [&](const std::pair<K, V> &e) { return cmp_key_(e.first, key); });
+    return lb == entries_.end() || cmp_key_(key, lb->first) ? nullptr
+                                                            : &lb->second;
   }
 
  private:
