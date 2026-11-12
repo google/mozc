@@ -41,7 +41,6 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "base/strings/assign.h"
 #include "base/thread.h"
 #include "composer/composition_input.h"
 #include "composer/table.h"
@@ -150,28 +149,28 @@ class CharChunk final {
   absl::string_view raw() const { return raw_; }
   template <typename String>
   void set_raw(String&& raw) {
-    strings::Assign(raw_, std::forward<String>(raw));
+    raw_ = std::forward<String>(raw);
     local_length_cache_ = std::string::npos;
   }
 
   absl::string_view conversion() const { return conversion_; }
   template <typename String>
   void set_conversion(String&& conversion) {
-    strings::Assign(conversion_, std::forward<String>(conversion));
+    conversion_ = std::forward<String>(conversion);
     local_length_cache_ = std::string::npos;
   }
 
   absl::string_view pending() const { return pending_; }
   template <typename String>
   void set_pending(String&& pending) {
-    strings::Assign(pending_, std::forward<String>(pending));
+    pending_ = std::forward<String>(pending);
     local_length_cache_ = std::string::npos;
   }
 
   absl::string_view ambiguous() const { return ambiguous_; }
   template <typename String>
   void set_ambiguous(String&& ambiguous) {
-    strings::Assign(ambiguous_, std::forward<String>(ambiguous));
+    ambiguous_ = std::forward<String>(ambiguous);
     local_length_cache_ = std::string::npos;
   }
 

@@ -35,7 +35,6 @@
 
 #include "absl/strings/string_view.h"
 #include "base/protobuf/repeated_ptr_field.h"
-#include "base/strings/assign.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
 
@@ -72,14 +71,14 @@ class CompositionInput final {
   std::string* mutable_raw() { return &raw_; }
   template <typename String>
   void set_raw(String&& raw) {
-    strings::Assign(raw_, std::forward<String>(raw));
+    raw_ = std::forward<String>(raw);
   }
 
   absl::string_view conversion() const { return conversion_; }
   void clear_conversion() { conversion_.clear(); }
   template <typename String>
   void set_conversion(String&& conversion) {
-    strings::Assign(conversion_, std::forward<String>(conversion));
+    conversion_ = std::forward<String>(conversion);
   }
 
   const ProbableKeyEvents& probable_key_events() const {

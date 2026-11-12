@@ -45,7 +45,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
-#include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -118,8 +117,8 @@ bool IsSymbol(const absl::string_view key) {
 void ExpandSpace(Segment* segment) {
   auto insert_candidate = [segment](int base, absl::string_view value) {
     auto c = std::make_unique<converter::Candidate>(segment->candidate(base));
-    strings::Assign(c->value, value);
-    strings::Assign(c->content_value, value);
+    c->value = value;
+    c->content_value = value;
     // Boundary is invalidated and unnecessary for space.
     c->inner_segment_boundary.clear();
     segment->insert_candidate(base + 1, std::move(c));

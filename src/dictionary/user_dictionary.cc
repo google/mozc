@@ -61,7 +61,6 @@
 #include "base/protobuf/coded_stream.h"
 #include "base/protobuf/wire_format_lite.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
-#include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
 #include "base/thread.h"
@@ -176,8 +175,8 @@ class UserDictionary::TokensIndex {
                      UserDictionary::RequestType request_type,
                      PosMatcher pos_matcher,
                      mozc::dictionary::Token* token) const {
-    strings::Assign(token->key, user_pos_token.key());
-    strings::Assign(token->value, user_pos_token.value());
+    token->key = user_pos_token.key();
+    token->value = user_pos_token.value();
     token->lid = token->rid = user_pos_token.id();
     token->attributes = mozc::dictionary::Token::USER_DICTIONARY;
 
@@ -601,7 +600,7 @@ bool UserDictionary::LookupComment(absl::string_view key,
   for (auto [begin, end] = tokens->EqualRange(key); begin != end; ++begin) {
     const TokensIndex::Token token(*begin);
     if (token.value() == value && !token.comment().empty()) {
-      strings::Assign(*comment, token.comment());
+      *comment = token.comment();
       return true;
     }
   }

@@ -106,7 +106,6 @@ mozc_cc_library(
         "//base:number_util",
         "//base:util",
         "//base:vlog",
-        "//base/strings:assign",
         "//base/strings:unicode",
         "//dictionary:user_dictionary_util",
         "//protocol:user_dictionary_storage_cc_proto",

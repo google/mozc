@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/attribute.h"
@@ -124,7 +123,7 @@ void SingleKanjiDecoder::AppendResults(absl::string_view kanji_key,
     result.wcost = offset + results->size();
     result.attributes |= Attribute::SINGLE_KANJI;
     // Note: kanji_key is reused for all entries in kanji_list, so it is copied.
-    strings::Assign(result.key, kanji_key);
+    result.key = kanji_key;
     result.value = std::move(kanji);
     result.lid = general_symbol_id_;
     result.rid = general_symbol_id_;

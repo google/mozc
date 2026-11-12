@@ -45,7 +45,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/port.h"
-#include "base/strings/assign.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "base/version.h"
@@ -426,10 +425,10 @@ bool AddSegment(const absl::string_view key, const absl::string_view value,
   if (segment_type_mask & PREEDIT) {
     normalized_value = TextNormalizer::NormalizeText(value);
   } else if (segment_type_mask & CONVERSION) {
-    strings::Assign(normalized_value, value);
+    normalized_value = value;
   } else {
     LOG(WARNING) << "Unknown segment type" << segment_type_mask;
-    strings::Assign(normalized_value, value);
+    normalized_value = value;
   }
 
   if (normalized_value.empty()) {

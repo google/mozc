@@ -43,7 +43,6 @@
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/strings/assign.h"
 #include "base/version.h"
 #include "client/character_renderability.h"
 #include "client/client_interface.h"
@@ -162,7 +161,7 @@ class TestServerLauncher : public ServerLauncherInterface {
   }
 
   void set_product_version_after_start_server(const absl::string_view version) {
-    strings::Assign(product_version_after_start_server_, version);
+    product_version_after_start_server_ = version;
   }
 
  private:

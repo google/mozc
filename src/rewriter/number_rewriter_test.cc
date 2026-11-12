@@ -42,7 +42,6 @@
 #include "absl/strings/string_view.h"
 #include "base/container/tuple.h"
 #include "base/number_util.h"
-#include "base/strings/assign.h"
 #include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
@@ -97,8 +96,8 @@ Segment* SetupSegments(const PosMatcher& pos_matcher,
   converter::Candidate* candidate = segment->add_candidate();
   candidate->lid = pos_matcher.GetNumberId();
   candidate->rid = pos_matcher.GetNumberId();
-  strings::Assign(candidate->value, candidate_value);
-  strings::Assign(candidate->content_value, candidate_value);
+  candidate->value = candidate_value;
+  candidate->content_value = candidate_value;
   return segment;
 }
 
@@ -1144,15 +1143,15 @@ Segments PrepareNumberSegments(absl::string_view segment_key,
     seg->set_key(segment_key);
     for (int i = 0; i < base_pos; ++i) {
       converter::Candidate* c = seg->add_candidate();
-      strings::Assign(c->key, segment_key);
+      c->key = segment_key;
       c->content_key = c->key;
       c->value = absl::StrCat("placeholder", i);
       c->content_value = c->value;
     }
     converter::Candidate* c = seg->add_candidate();
-    strings::Assign(c->key, segment_key);
+    c->key = segment_key;
     c->content_key = c->key;
-    strings::Assign(c->value, number_value);
+    c->value = number_value;
     c->content_value = c->value;
     c->lid = pos_matcher.GetNumberId();
     c->rid = pos_matcher.GetNumberId();

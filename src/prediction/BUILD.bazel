@@ -357,7 +357,6 @@ mozc_cc_test(
         ":zero_query_dict",
         "//base:util",
         "//base/container:serialized_string_array",
-        "//base/strings:assign",
         "//composer",
         "//composer:query",
         "//composer:table",
@@ -404,7 +403,6 @@ mozc_cc_library(
     deps = [
         ":result",
         "//base:util",
-        "//base/strings:assign",
         "//composer",
         "//converter:attribute",
         "//dictionary:pos_matcher",
@@ -832,7 +830,6 @@ mozc_cc_library(
         ":result",
         "//base:util",
         "//base/container:flat_concurrent_cache",
-        "//base/strings:assign",
         "//converter:attribute",
         "//converter:converter_interface",
         "//converter:converter_util",

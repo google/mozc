@@ -46,7 +46,6 @@
 #include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/japanese_util.h"
-#include "base/strings/assign.h"
 #include "base/vlog.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
@@ -80,12 +79,12 @@ std::unique_ptr<converter::Candidate> CreateCandidate(
   candidate->lid = 0;
   candidate->rid = 0;
   candidate->cost = cost;
-  strings::Assign(candidate->value, value);
-  strings::Assign(candidate->content_value, value);
-  strings::Assign(candidate->key, key);
-  strings::Assign(candidate->content_key, key);
+  candidate->value = value;
+  candidate->content_value = value;
+  candidate->key = key;
+  candidate->content_key = key;
   if (description.empty()) {
-    strings::Assign(candidate->description, kEmoji);
+    candidate->description = kEmoji;
   } else {
     candidate->description = absl::StrCat(kEmoji, " ", description);
   }

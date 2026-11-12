@@ -35,7 +35,6 @@
 #include <optional>
 
 #include "absl/strings/string_view.h"
-#include "base/strings/assign.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "engine/engine.h"
@@ -55,9 +54,9 @@ void AddSegment(absl::string_view key, absl::string_view value,
   Segment* seg = segments->add_segment();
   converter::Candidate* candidate = seg->add_candidate();
   seg->set_key(key);
-  strings::Assign(candidate->content_key, key);
-  strings::Assign(candidate->value, value);
-  strings::Assign(candidate->content_value, value);
+  candidate->content_key = key;
+  candidate->value = value;
+  candidate->content_value = value;
 }
 
 void InitSegments(absl::string_view key, absl::string_view value,

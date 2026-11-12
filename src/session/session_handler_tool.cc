@@ -52,7 +52,6 @@
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
-#include "base/strings/assign.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
@@ -256,7 +255,7 @@ bool SessionHandlerTool::SyncData() {
 }
 
 void SessionHandlerTool::SetCallbackText(const absl::string_view text) {
-  strings::Assign(callback_text_, text);
+  callback_text_ = text;
 }
 
 bool SessionHandlerTool::ReloadSupplementalModel(absl::string_view model_path) {

@@ -49,7 +49,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/query.h"
@@ -270,8 +269,8 @@ Result CreateResult4(absl::string_view key, absl::string_view value,
                      PredictionTypes types,
                      Token::AttributesBitfield token_attrs) {
   Result result;
-  strings::Assign(result.key, key);
-  strings::Assign(result.value, value);
+  result.key = key;
+  result.value = value;
   result.SetTypesAndTokenAttributes(types, token_attrs);
   return result;
 }
@@ -280,8 +279,8 @@ Result CreateResult5(absl::string_view key, absl::string_view value, int wcost,
                      PredictionTypes types,
                      Token::AttributesBitfield token_attrs) {
   Result result;
-  strings::Assign(result.key, key);
-  strings::Assign(result.value, value);
+  result.key = key;
+  result.value = value;
   result.wcost = wcost;
   result.SetTypesAndTokenAttributes(types, token_attrs);
   return result;
@@ -291,8 +290,8 @@ Result CreateResult6(absl::string_view key, absl::string_view value, int wcost,
                      int cost, PredictionTypes types,
                      Token::AttributesBitfield token_attrs) {
   Result result;
-  strings::Assign(result.key, key);
-  strings::Assign(result.value, value);
+  result.key = key;
+  result.value = value;
   result.wcost = wcost;
   result.cost = cost;
   result.SetTypesAndTokenAttributes(types, token_attrs);
@@ -2055,8 +2054,8 @@ TEST_F(DictionaryPredictorTest, FilterNwpSuffixCandidates) {
     std::vector<Result> results;
     {
       Result result;
-      strings::Assign(result.key, "てすと");
-      strings::Assign(result.value, "テスト");
+      result.key = "てすと";
+      result.value = "テスト";
       result.attributes = prediction::SUFFIX;
       result.cost = 1000;
       result.lid = data_and_predictor->pos_matcher().GetGeneralNounId();

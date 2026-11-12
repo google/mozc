@@ -48,7 +48,6 @@
 #include "absl/synchronization/mutex.h"
 #include "absl/types/span.h"
 #include "base/number_util.h"
-#include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
@@ -683,7 +682,7 @@ bool CharacterFormManagerImpl::ConvertStringWithAlternative(
   output->clear();
   const bool is_consistent = TryConvertStringWithPreference(str, output);
   if (!is_consistent && require_consistent_conversion_) {
-    strings::Assign(*output, str);
+    *output = str;
   }
 
   if (alternative_output != nullptr) {

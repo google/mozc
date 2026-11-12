@@ -40,7 +40,6 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/strings/assign.h"
 #include "base/util.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"

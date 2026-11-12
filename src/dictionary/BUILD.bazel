@@ -145,7 +145,6 @@ mozc_cc_library(
         "//base/protobuf:coded_stream",
         "//base/protobuf:wire_format_lite",
         "//base/protobuf:zero_copy_stream_impl",
-        "//base/strings:assign",
         "//base/strings:japanese",
         "//base/strings:unicode",
         "//protocol:user_dictionary_storage_cc_proto",
@@ -399,7 +398,6 @@ mozc_cc_library(
     deps = [
         "//base:bits",
         "//base/container:serialized_string_array",
-        "//base/strings:assign",
         "//data_manager",
         "//protocol:user_dictionary_storage_cc_proto",
         "@com_google_absl//absl/base:core_headers",

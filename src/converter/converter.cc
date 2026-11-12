@@ -48,7 +48,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/strings/assign.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
@@ -624,10 +623,10 @@ void Converter::ApplyResultToSegments(const prediction::Result& result,
     } else {
       Candidate* cand = (pos == 0) ? segment->push_front_candidate()
                                    : segment->insert_candidate(pos);
-      strings::Assign(cand->key, inner_seg.GetKey());
-      strings::Assign(cand->value, inner_seg.GetValue());
-      strings::Assign(cand->content_key, inner_seg.GetContentKey());
-      strings::Assign(cand->content_value, inner_seg.GetContentValue());
+      cand->key = inner_seg.GetKey();
+      cand->value = inner_seg.GetValue();
+      cand->content_key = inner_seg.GetContentKey();
+      cand->content_value = inner_seg.GetContentValue();
       cand->lid = result.lid;
       cand->rid = result.rid;
       cand->wcost = result.wcost;

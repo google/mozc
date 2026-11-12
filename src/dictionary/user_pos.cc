@@ -47,7 +47,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
-#include "base/strings/assign.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -135,8 +134,8 @@ std::vector<UserPos::Token> UserPos::GetTokens(
   auto dest = tokens.begin();
 
   if (tokens.size() == 1) {  // no conjugation
-    strings::Assign(dest->key, key);
-    strings::Assign(dest->value, value);
+    dest->key = key;
+    dest->value = value;
     dest->id = first.conjugation_id;
     dest->set_pos_type(pos_type);
   } else {

@@ -41,7 +41,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/run_level.h"
-#include "base/strings/assign.h"
 #include "client/client_interface.h"
 #include "composer/key_event_util.h"
 #include "ipc/ipc.h"

@@ -44,7 +44,6 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "base/port.h"
-#include "base/strings/assign.h"
 #include "base/strings/unicode.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
@@ -210,9 +209,9 @@ converter::Candidate* AddCandidate(const absl::string_view key,
                                    const absl::string_view value,
                                    Segment* segment) {
   converter::Candidate* candidate = segment->add_candidate();
-  strings::Assign(candidate->key, key);
-  strings::Assign(candidate->content_key, key);
-  strings::Assign(candidate->value, value);
+  candidate->key = key;
+  candidate->content_key = key;
+  candidate->value = value;
   return candidate;
 }
 
@@ -220,9 +219,9 @@ converter::Candidate* AddMetaCandidate(const absl::string_view key,
                                        const absl::string_view value,
                                        Segment* segment) {
   converter::Candidate* candidate = segment->add_meta_candidate();
-  strings::Assign(candidate->key, key);
-  strings::Assign(candidate->content_key, key);
-  strings::Assign(candidate->value, value);
+  candidate->key = key;
+  candidate->content_key = key;
+  candidate->value = value;
   return candidate;
 }
 

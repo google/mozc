@@ -41,7 +41,6 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/strings/assign.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/inner_segment.h"
@@ -141,10 +140,10 @@ std::vector<prediction::Result> ConversionSegmentsToResults(
 
 prediction::Result CandidateToResult(const Candidate& candidate) {
   prediction::Result result;
-  strings::Assign(result.key, candidate.key);
-  strings::Assign(result.value, candidate.value);
-  strings::Assign(result.description, candidate.description);
-  strings::Assign(result.display_value, candidate.display_value);
+  result.key = candidate.key;
+  result.value = candidate.value;
+  result.description = candidate.description;
+  result.display_value = candidate.display_value;
   result.lid = candidate.lid;
   result.rid = candidate.rid;
   result.wcost = candidate.wcost;
@@ -195,10 +194,10 @@ Segments PrepareSegmentsFromRequest(const ConversionRequest& request) {
     seg->set_key(key);
     seg->set_segment_type(Segment::HISTORY);
     Candidate* candidate = seg->add_candidate();
-    strings::Assign(candidate->key, key);
-    strings::Assign(candidate->value, value);
-    strings::Assign(candidate->content_key, content_key);
-    strings::Assign(candidate->content_value, content_value);
+    candidate->key = key;
+    candidate->value = value;
+    candidate->content_key = content_key;
+    candidate->content_value = content_value;
   };
 
   for (const auto& iter : result.inner_segments()) {
@@ -359,10 +358,10 @@ void ApplyResultToSegmentsMultiSegment(const prediction::Result& result,
       Candidate* cand = (pos == 0 && target_segment->candidates_size() > 0)
                             ? target_segment->push_front_candidate()
                             : target_segment->insert_candidate(pos);
-      strings::Assign(cand->key, combined_key);
-      strings::Assign(cand->value, combined_value);
-      strings::Assign(cand->content_key, combined_content_key);
-      strings::Assign(cand->content_value, combined_content_value);
+      cand->key = combined_key;
+      cand->value = combined_value;
+      cand->content_key = combined_content_key;
+      cand->content_value = combined_content_value;
       cand->converted_segment_count = num_segs;
       cand->lid = result.lid;
       cand->rid = result.rid;

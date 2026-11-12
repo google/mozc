@@ -384,7 +384,6 @@ mozc_cc_library(
         "//engine:__subpackages__",
     ],
     deps = [
-        "//base/strings:assign",
         "//converter:attribute",
         "//converter:converter_interface",
         "//converter:segments",
@@ -520,7 +519,6 @@ mozc_cc_library(
         "//base:text_normalizer",
         "//base:util",
         "//base:version",
-        "//base/strings:assign",
         "//composer",
         "//converter:attribute",
         "//converter:segments",

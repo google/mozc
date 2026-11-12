@@ -36,7 +36,6 @@
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/strings/assign.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/converter_interface.h"
@@ -59,10 +58,10 @@ bool AddAsIsCandidate(const absl::string_view key, Segments* segments) {
 
   converter::Candidate* candidate = segment->push_back_candidate();
   DCHECK(candidate);
-  strings::Assign(candidate->content_key, key);
-  strings::Assign(candidate->content_value, key);
-  strings::Assign(candidate->key, key);
-  strings::Assign(candidate->value, key);
+  candidate->content_key = key;
+  candidate->content_value = key;
+  candidate->key = key;
+  candidate->value = key;
   candidate->lid = 0;
   candidate->rid = 0;
   candidate->wcost = 0;

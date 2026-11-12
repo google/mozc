@@ -43,7 +43,6 @@
 #include "absl/log/check.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
-#include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -427,7 +426,7 @@ class ConversionRequestBuilder {
   ConversionRequestBuilder& SetKey(absl::string_view key) {
     DCHECK_LE(stage_, 3);
     stage_ = 3;
-    strings::Assign(request_.key_, key);
+    request_.key_ = key;
     return *this;
   }
 

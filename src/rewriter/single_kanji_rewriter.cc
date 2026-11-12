@@ -38,7 +38,6 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/strings/assign.h"
 #include "base/vlog.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
@@ -88,10 +87,10 @@ void InsertNounPrefix(const PosMatcher& pos_matcher, Segment* segment,
     c->lid = pos_matcher.GetNounPrefixId();
     c->rid = pos_matcher.GetNounPrefixId();
     c->cost = 5000;
-    strings::Assign(c->content_value, iter.value());
+    c->content_value = iter.value();
     c->key = candidate_key;
     c->content_key = candidate_key;
-    strings::Assign(c->value, iter.value());
+    c->value = iter.value();
     c->attributes |= converter::Attribute::CONTEXT_SENSITIVE;
     c->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
   }
@@ -238,10 +237,10 @@ void SingleKanjiRewriter::FillCandidate(const absl::string_view key,
   cand->lid = single_kanji_id;
   cand->rid = single_kanji_id;
   cand->cost = cost;
-  strings::Assign(cand->content_key, key);
-  strings::Assign(cand->content_value, value);
-  strings::Assign(cand->key, key);
-  strings::Assign(cand->value, value);
+  cand->content_key = key;
+  cand->content_value = value;
+  cand->key = key;
+  cand->value = value;
   cand->attributes |= converter::Attribute::CONTEXT_SENSITIVE;
   cand->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
   single_kanji_dictionary_.GenerateDescription(value, &cand->description);

@@ -45,7 +45,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/container/arena.h"
-#include "base/strings/assign.h"
 #include "base/util.h"
 #include "converter/candidate.h"
 
@@ -84,7 +83,7 @@ class Segment final {
 
   template <typename T>
   void set_key(T&& key) {
-    strings::Assign(key_, std::forward<T>(key));
+    key_ = std::forward<T>(key);
     key_len_ = Util::CharsLen(key_);
   }
 

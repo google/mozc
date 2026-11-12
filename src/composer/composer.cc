@@ -49,7 +49,6 @@
 #include "base/clock.h"
 #include "base/container/flat_multimap.h"
 #include "base/japanese_util.h"
-#include "base/strings/assign.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -1396,7 +1395,7 @@ bool Composer::IsToggleable() const {
 }
 
 void Composer::set_source_text(const absl::string_view source_text) {
-  strings::Assign(source_text_, source_text);
+  source_text_ = source_text;
 }
 
 void Composer::SetInputFieldType(commands::Context::InputFieldType type) {

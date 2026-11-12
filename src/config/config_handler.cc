@@ -48,7 +48,6 @@
 #include "base/config_file_stream.h"
 #include "base/hash.h"
 #include "base/port.h"
-#include "base/strings/assign.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/version.h"
@@ -278,7 +277,7 @@ void ConfigHandlerImpl::SetConfigFileName(const absl::string_view filename) {
   {
     absl::WriterMutexLock lock(mutex_);
     MOZC_VLOG(1) << "set new config file name: " << filename;
-    strings::Assign(filename_, filename);
+    filename_ = filename;
   }
   Reload();
 }
