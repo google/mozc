@@ -30,22 +30,25 @@
 #ifndef MOZC_BASE_ANDROID_UTIL_H_
 #define MOZC_BASE_ANDROID_UTIL_H_
 
-#include <map>
-#include <set>
+#include <optional>
 #include <string>
+
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
 class AndroidUtil {
  public:
+  // Frequently used property names.
+  static constexpr absl::string_view kSystemPropertyOsVersion =
+      "ro.build.version.release";
+  static constexpr absl::string_view kSystemPropertyModel = "ro.product.model";
+  static constexpr absl::string_view kSystemPropertySdkVersion =
+      "ro.build.version.sdk";
+
   AndroidUtil() = delete;
   AndroidUtil(const AndroidUtil&) = delete;
   AndroidUtil& operator=(const AndroidUtil&) = delete;
-
-  // Frequently used property names.
-  static const char kSystemPropertyOsVersion[];
-  static const char kSystemPropertyModel[];
-  static const char kSystemPropertySdkVersion[];
 
   // Reads system property from file system.
   // Note that dynamic properties (e.g. ro.build.date)
@@ -58,29 +61,20 @@ class AndroidUtil {
   //     "Nexus One");
   // Note : Using ::popen("getprop [property name]", "r") is better solution
   // but currently popen seems to be unstable.
-  static std::string GetSystemProperty(const std::string& key,
-                                       const std::string& default_value);
+  static std::string GetSystemProperty(absl::string_view key,
+                                       absl::string_view default_value);
 
  private:
   friend class AndroidUtilTestPeer;
 
-  // Gets the property's value, which is read from file system.
-  // If successfully done, the result will be stored in |output| and
-  // returns true.
-  // If something goes wrong (e.g. file system error, non-existent property
-  // name), returns false. |output| is undefined.
-  static bool GetPropertyFromFile(const std::string& key, std::string* output);
+  // Reads the property's value from the file system, or returns std::nullopt
+  // on failure (e.g. file system error or non-existent property name).
+  static std::optional<std::string> GetPropertyFromFile(absl::string_view key);
 
-  // Parses the line.
-  // If the returned value is true, the property's key and value string are
-  // returned as |lhs| and |rhs| respectively.
-  // If false, |line| is malformed.
-  // In this case |lhs| and |rhs| are not modified.
-  static bool ParseLine(const std::string& line, std::string* lhs,
-                        std::string* rhs);
-
-  static std::map<std::string, std::string> property_cache;
-  static std::set<std::string> undefined_keys;
+  // Parses `line` into a key (`lhs`) and value (`rhs`) and returns true.
+  // If `line` is malformed, returns false without modifying `lhs` and `rhs`.
+  static bool ParseLine(absl::string_view line, std::string& lhs,
+                        std::string& rhs);
 };
 
 }  // namespace mozc

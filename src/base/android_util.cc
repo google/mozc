@@ -31,15 +31,15 @@
 
 #include <cstddef>
 #include <fstream>
-#include <map>
-#include <set>
+#include <optional>
 #include <string>
-#include <utility>
 
 #include "absl/base/const_init.h"
-#include "absl/log/check.h"
+#include "absl/base/no_destructor.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
-#include "base/util.h"
 
 namespace {
 constexpr char kBuildPropPath[] = "/system/build.prop";
@@ -47,69 +47,40 @@ constinit absl::Mutex sys_prop_mutex(absl::kConstInit);
 }  // namespace
 
 namespace mozc {
-std::map<std::string, std::string> AndroidUtil::property_cache;
-std::set<std::string> AndroidUtil::undefined_keys;
-constexpr char AndroidUtil::kSystemPropertyOsVersion[] =
-    "ro.build.version.release";
-constexpr char AndroidUtil::kSystemPropertyModel[] = "ro.product.model";
-constexpr char AndroidUtil::kSystemPropertySdkVersion[] =
-    "ro.build.version.sdk";
 
 // static
-std::string AndroidUtil::GetSystemProperty(const std::string& key,
-                                           const std::string& default_value) {
+std::string AndroidUtil::GetSystemProperty(absl::string_view key,
+                                           absl::string_view default_value) {
+  static absl::NoDestructor<
+      absl::flat_hash_map<std::string, std::optional<std::string>>>
+      property_cache;
   absl::MutexLock lock(sys_prop_mutex);
-  std::map<std::string, std::string>::iterator it = property_cache.find(key);
-  if (it != property_cache.end()) {
-    // Cache is found.
-    return it->second;
+  auto [it, inserted] = property_cache->try_emplace(key);
+  if (inserted) {
+    it->second = GetPropertyFromFile(key);
   }
-  if (undefined_keys.find(key) != undefined_keys.end()) {
-    // Found the key invalid in the |undefined_keys| cache.
-    return default_value;
-  }
-  // Cache is not found.
-  // We have not been passed |key| yet. It is the first time.
-  std::string value;
-  if (GetPropertyFromFile(key, &value)) {
-    // Successfully read from the property file.
-    // Update the cache and return the result.
-    property_cache[key] = value;
-    return value;
-  } else {
-    // Reading from the file is failed.
-    // Add |key| into |undefined_keys|.
-    // If the same |key| is passed to this method in future,
-    // GetPropertyFromFile() will not be invoked
-    // and |default_value| will be directly returned.
-    undefined_keys.insert(key);
-    return default_value;
-  }
+  return it->second.has_value() ? *it->second : std::string(default_value);
 }
 
 // static
-bool AndroidUtil::GetPropertyFromFile(const std::string& key,
-                                      std::string* output) {
+std::optional<std::string> AndroidUtil::GetPropertyFromFile(
+    absl::string_view key) {
   std::ifstream ifs(kBuildPropPath);
   if (!ifs) {
-    return false;
+    return std::nullopt;
   }
   std::string line;
-  bool found = false;
   std::string lhs;
   std::string rhs;
   while (std::getline(ifs, line)) {
-    if (!mozc::AndroidUtil::ParseLine(line, &lhs, &rhs)) {
+    if (!AndroidUtil::ParseLine(line, lhs, rhs)) {
       continue;
     }
     if (key == lhs) {
-      found = true;
-      *output = std::move(rhs);
-      break;
+      return rhs;
     }
   }
-  ifs.close();
-  return found;
+  return std::nullopt;
 }
 
 // Valid line's format : /[ \t]*([^#=][^=]*)=([^\r\n]*)[\r\n]*/
@@ -118,26 +89,21 @@ bool AndroidUtil::GetPropertyFromFile(const std::string& key,
 // android_util_test.cc has some samples.
 //
 // static
-bool AndroidUtil::ParseLine(const std::string& line, std::string* lhs,
-                            std::string* rhs) {
-  DCHECK(lhs);
-  DCHECK(rhs);
-  std::string tmp_line = line;
-  mozc::Util::ChopReturns(&tmp_line);
-  // Trim white spaces at the head.
-  size_t line_start = tmp_line.find_first_not_of(" \t");
-  if (line_start != std::string::npos) {
-    tmp_line = tmp_line.substr(line_start);
+bool AndroidUtil::ParseLine(absl::string_view line, std::string& lhs,
+                            std::string& rhs) {
+  while (!line.empty() && (line.back() == '\r' || line.back() == '\n')) {
+    line.remove_suffix(1);
   }
-  if (tmp_line.empty() || tmp_line.at(0) == '#') {
+  line = absl::StripLeadingAsciiWhitespace(line);
+  if (line.empty() || line.front() == '#') {
     return false;
   }
-  size_t delimiter_pos = tmp_line.find('=');
-  if (delimiter_pos == std::string::npos) {
+  const size_t delimiter_pos = line.find('=');
+  if (delimiter_pos == absl::string_view::npos || delimiter_pos == 0) {
     return false;
   }
-  *lhs = tmp_line.substr(0, delimiter_pos);
-  *rhs = tmp_line.substr(delimiter_pos + 1);
-  return !lhs->empty();
+  lhs = line.substr(0, delimiter_pos);
+  rhs = line.substr(delimiter_pos + 1);
+  return true;
 }
 }  // namespace mozc

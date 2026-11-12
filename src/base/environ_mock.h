@@ -30,9 +30,9 @@
 #ifndef MOZC_BASE_ENVIRON_MOCK_H_
 #define MOZC_BASE_ENVIRON_MOCK_H_
 
-#include <map>
 #include <string>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "base/environ.h"
 
@@ -46,16 +46,16 @@ class EnvironMock : public EnvironInterface {
   ~EnvironMock() override { Environ::SetMockForUnitTest(nullptr); }
 
   std::string GetEnv(absl::string_view env_var) override {
-    auto it = env_vars_.find({env_var.data(), env_var.size()});
-    return it != env_vars_.end() ? it->second.c_str() : "";
+    const auto it = env_vars_.find(env_var);
+    return it != env_vars_.end() ? it->second : std::string();
   }
 
   // This is not an override function.
-  void SetEnv(const std::string& env_var, const std::string& value) {
+  void SetEnv(absl::string_view env_var, absl::string_view value) {
     env_vars_[env_var] = value;
   }
 
-  std::map<std::string, std::string> env_vars_;
+  absl::flat_hash_map<std::string, std::string> env_vars_;
 };
 }  // namespace mozc
 

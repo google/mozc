@@ -424,6 +424,7 @@ mozc_cc_library(
     hdrs = ["environ_mock.h"],
     deps = [
         ":environ",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings:string_view",
     ],
 )
@@ -559,10 +560,10 @@ mozc_cc_library(
     hdrs = ["android_util.h"],
     visibility = ["//visibility:private"],
     deps = [
-        ":util",
-        "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -575,7 +576,6 @@ mozc_cc_test(
     deps = [
         ":android_util",
         ":port",
-        ":util",
         "//testing:gunit_main",
         "//testing:test_peer",
     ],

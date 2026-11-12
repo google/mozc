@@ -35,9 +35,10 @@
 #include <servers/bootstrap.h>
 
 #include <cstdint>
-#include <map>
+#include <string>
 
 #include "absl/base/no_destructor.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
@@ -165,10 +166,8 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
 class DefaultServerMachPortManager : public MachPortManagerInterface {
  public:
   ~DefaultServerMachPortManager() {
-    for (std::map<std::string, mach_port_t>::const_iterator it =
-             mach_ports_.begin();
-         it != mach_ports_.end(); ++it) {
-      mach_port_destroy(mach_task_self(), it->second);
+    for (const auto& entry : mach_ports_) {
+      mach_port_destroy(mach_task_self(), entry.second);
     }
     mach_ports_.clear();
   }
@@ -182,9 +181,7 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
 
     DLOG(INFO) << "port_name: \"" << port_name << "\"";
 
-    std::map<std::string, mach_port_t>::const_iterator it =
-        mach_ports_.find(port_name);
-    if (it != mach_ports_.end()) {
+    if (const auto it = mach_ports_.find(port_name); it != mach_ports_.end()) {
       *port = it->second;
       return true;
     }
@@ -205,7 +202,7 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
   virtual bool IsServerRunning(absl::string_view name) const { return true; }
 
  private:
-  std::map<std::string, mach_port_t> mach_ports_;
+  absl::flat_hash_map<std::string, mach_port_t> mach_ports_;
 };
 
 DefaultClientMachPortManager* GetDefaultClientMachPortManager() {

@@ -29,94 +29,72 @@
 
 #include "unix/ibus/message_translator.h"
 
-#include <cstddef>
-#include <iterator>
-#include <map>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "absl/log/check.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
-#include "base/util.h"
-
-namespace {
-
-struct TranslationMap {
-  const char* message;
-  const char* translated;
-};
-
-const TranslationMap kUTF8JapaneseMap[] = {
-    {"Direct input", "直接入力"},
-    {"Hiragana", "ひらがな"},
-    {"Katakana", "カタカナ"},
-    {"Latin", "半角英数"},
-    {"Wide Latin", "全角英数"},
-    {"Half width katakana", "半角カタカナ"},
-    {"Tools", "ツール"},
-    {"Properties", "プロパティ"},
-    {"Dictionary Tool", "辞書ツール"},
-    {"Add Word", "単語登録"},
-    {"Input Mode", "入力モード"},
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-    {"About Mozc", "Google 日本語入力について"},
-#else   // GOOGLE_JAPANESE_INPUT_BUILD
-    {"About Mozc", "Mozc について"},
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
-};
-
-}  // namespace
+#include "absl/strings/string_view.h"
+#include "base/container/flat_map.h"
 
 namespace mozc {
 namespace ibus {
+namespace {
+
+constexpr auto kUTF8JapaneseMap =
+    CreateFlatMap<absl::string_view, absl::string_view>({
+        {"Direct input", "直接入力"},
+        {"Hiragana", "ひらがな"},
+        {"Katakana", "カタカナ"},
+        {"Latin", "半角英数"},
+        {"Wide Latin", "全角英数"},
+        {"Half width katakana", "半角カタカナ"},
+        {"Tools", "ツール"},
+        {"Properties", "プロパティ"},
+        {"Dictionary Tool", "辞書ツール"},
+        {"Add Word", "単語登録"},
+        {"Input Mode", "入力モード"},
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+        {"About Mozc", "Google 日本語入力について"},
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
+        {"About Mozc", "Mozc について"},
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+    });
+
+}  // namespace
 
 MessageTranslatorInterface::~MessageTranslatorInterface() = default;
 
 NullMessageTranslator::NullMessageTranslator() = default;
 
 std::string NullMessageTranslator::MaybeTranslate(
-    const std::string& message) const {
-  return message;
+    absl::string_view message) const {
+  return std::string(message);
 }
 
 LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
-    const std::string& locale_name) {
+    absl::string_view locale_name) {
   // Currently we support ja_JP.UTF-8 and ja_JP.utf8 only.
-  std::vector<std::string> tokens =
+  const std::vector<absl::string_view> tokens =
       absl::StrSplit(locale_name, '.', absl::SkipEmpty());
-  if (tokens.size() != 2) {
+  if (tokens.size() != 2 || tokens[0] != "ja_JP") {
     return;
   }
-  const std::string& language_code = tokens[0];
-  if (language_code != "ja_JP") {
-    return;
-  }
-
-  Util::LowerString(&tokens[1]);
-  const std::string& lowser_char_set_name = tokens[1];
-  if (lowser_char_set_name != "utf-8" && lowser_char_set_name != "utf8") {
-    return;
-  }
-
-  for (size_t i = 0; i < std::size(kUTF8JapaneseMap); ++i) {
-    const TranslationMap& mapping = kUTF8JapaneseMap[i];
-    DCHECK(mapping.message);
-    DCHECK(mapping.translated);
-    utf8_japanese_map_.insert(
-        std::make_pair(mapping.message, mapping.translated));
-  }
+  is_japanese_locale_ = absl::EqualsIgnoreCase(tokens[1], "utf-8") ||
+                        absl::EqualsIgnoreCase(tokens[1], "utf8");
 }
 
 std::string LocaleBasedMessageTranslator::MaybeTranslate(
-    const std::string& message) const {
-  std::map<std::string, std::string>::const_iterator itr =
-      utf8_japanese_map_.find(message);
-  if (itr == utf8_japanese_map_.end()) {
-    return message;
+    absl::string_view message) const {
+  if (!is_japanese_locale_) {
+    return std::string(message);
   }
-
-  return itr->second;
+  if (const absl::string_view* translated =
+          kUTF8JapaneseMap.FindOrNull(message);
+      translated != nullptr) {
+    return std::string(*translated);
+  }
+  return std::string(message);
 }
 
 }  // namespace ibus

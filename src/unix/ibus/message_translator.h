@@ -30,8 +30,9 @@
 #ifndef MOZC_UNIX_IBUS_MESSAGE_TRANSLATOR_H_
 #define MOZC_UNIX_IBUS_MESSAGE_TRANSLATOR_H_
 
-#include <map>
 #include <string>
+
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace ibus {
@@ -45,7 +46,7 @@ class MessageTranslatorInterface {
 
   // Returns translated string if possible.
   // Returns |message| if fails to translate.
-  virtual std::string MaybeTranslate(const std::string& message) const = 0;
+  virtual std::string MaybeTranslate(absl::string_view message) const = 0;
 };
 
 // This class never translates messages actually.
@@ -56,7 +57,7 @@ class NullMessageTranslator : public MessageTranslatorInterface {
   NullMessageTranslator& operator=(const NullMessageTranslator&) = delete;
 
   // Always returns |message|.
-  std::string MaybeTranslate(const std::string& message) const override;
+  std::string MaybeTranslate(absl::string_view message) const override;
 };
 
 // Locale based translator. Currently only "ja_JP.UTF-8" is
@@ -66,11 +67,11 @@ class LocaleBasedMessageTranslator : public MessageTranslatorInterface {
   LocaleBasedMessageTranslator(const LocaleBasedMessageTranslator&) = delete;
   LocaleBasedMessageTranslator& operator=(const LocaleBasedMessageTranslator&) =
       delete;
-  explicit LocaleBasedMessageTranslator(const std::string& locale_name);
-  std::string MaybeTranslate(const std::string& message) const override;
+  explicit LocaleBasedMessageTranslator(absl::string_view locale_name);
+  std::string MaybeTranslate(absl::string_view message) const override;
 
  private:
-  std::map<std::string, std::string> utf8_japanese_map_;
+  bool is_japanese_locale_ = false;
 };
 
 }  // namespace ibus

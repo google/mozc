@@ -146,7 +146,7 @@ class LruCache {
   size_t Size() const { return table_.size(); }
   bool empty() const { return lru_head_ == nullptr; }
 
-  bool HasKey(const Key& key) const { return table_.find(key) != table_.end(); }
+  bool HasKey(const Key& key) const { return table_.contains(key); }
 
   // Returns the head of LRU list
   const Element* absl_nullable Head() const { return lru_head_; }

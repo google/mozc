@@ -29,16 +29,14 @@
 
 #import "mac/KeyCodeMap.h"
 
-#include <map>
-
 #import <Carbon/Carbon.h>
 
+#include "absl/log/log.h"
+#include "base/container/flat_map.h"
 #include "protocol/commands.pb.h"
 
 using mozc::commands::KeyEvent;
 
-#include "absl/base/call_once.h"
-#include "absl/log/log.h"
 #include "mac/init_kanamap.h"
 #include "mac/init_specialcharmap.h"
 #include "mac/init_specialkeymap.h"
@@ -60,13 +58,6 @@ static const unichar kYenMark = 0xA5;
 @synthesize inputMode = inputMode_;
 
 - (id)init {
-  absl::call_once(kOnceForKanaMap, &InitKanaMap);
-  absl::call_once(kOnceForSpecialKeyMap, &InitSpecialKeyMap);
-  absl::call_once(kOnceForSpecialCharMap, &InitSpecialCharMap);
-  if (kSpecialKeyMap == nullptr) {
-    self = nil;
-    return self;
-  }
   self = [super init];
   if (!self) {
     inputMode_ = ASCII;
@@ -161,15 +152,13 @@ static const unichar kYenMark = 0xA5;
   unsigned short keyCode = [event keyCode];
   unichar inputChar = [((nsModifiers == NSEventModifierFlagShift) ? inputString : inputStringRaw)
       characterAtIndex:0];
-  std::map<unsigned short, KeyEvent::SpecialKey>::const_iterator sp_iter =
-      kSpecialKeyMap->find(keyCode);
-  if (sp_iter != kSpecialKeyMap->end()) {
-    keyEvent->set_special_key(sp_iter->second);
+  if (const KeyEvent::SpecialKey *specialKey = kSpecialKeyMap.FindOrNull(keyCode);
+      specialKey != nullptr) {
+    keyEvent->set_special_key(*specialKey);
   } else {
-    std::map<unichar, KeyEvent::SpecialKey>::const_iterator spc_iter =
-        kSpecialCharMap->find(inputChar);
-    if (spc_iter != kSpecialCharMap->end()) {
-      keyEvent->set_special_key(spc_iter->second);
+    if (const KeyEvent::SpecialKey *specialChar = kSpecialCharMap.FindOrNull(inputChar);
+        specialChar != nullptr) {
+      keyEvent->set_special_key(*specialChar);
     } else if (isgraph(inputChar)) {
       keyEvent->set_key_code(inputChar);
     } else if (inputChar == kYenMark) {
@@ -178,12 +167,13 @@ static const unichar kYenMark = 0xA5;
 
     // fill kana "key_string" if mode is kana.
     if (inputMode_ == KANA && !keyEvent->has_special_key()) {
-      std::map<unsigned short, const char *>::const_iterator kana_iter;
-      if (nsModifiers == NSEventModifierFlagShift && kKanaMapShift &&
-          (kana_iter = kKanaMapShift->find(keyCode)) != kKanaMapShift->end()) {
-        keyEvent->set_key_string(kana_iter->second);
-      } else if (kKanaMap && (kana_iter = kKanaMap->find(keyCode)) != kKanaMap->end()) {
-        keyEvent->set_key_string(kana_iter->second);
+      const char *const *kana =
+          (nsModifiers == NSEventModifierFlagShift) ? kKanaMapShift.FindOrNull(keyCode) : nullptr;
+      if (kana == nullptr) {
+        kana = kKanaMap.FindOrNull(keyCode);
+      }
+      if (kana != nullptr) {
+        keyEvent->set_key_string(*kana);
       }
     }
   }

@@ -49,6 +49,7 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/test_peer.h"
 #include "transliteration/transliteration.h"
@@ -69,6 +70,7 @@ namespace {
 using ::mozc::commands::KeyEvent;
 using ::mozc::commands::Request;
 using ::mozc::config::CharacterFormManager;
+using ::testing::ElementsAre;
 using ::mozc::config::Config;
 
 bool InsertKey(const absl::string_view key_string, Composer* composer) {
@@ -492,15 +494,7 @@ TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
     const auto [base, expanded] = composer_->GetQueriesForPrediction();
     composer_->GetStringForPreedit();
     EXPECT_EQ(base, "う");
-    EXPECT_EQ(expanded.size(), 7);
-    // We can't use EXPECT_NE for iterator
-    EXPECT_TRUE(expanded.end() != expanded.find("s"));
-    EXPECT_TRUE(expanded.end() != expanded.find("っ"));
-    EXPECT_TRUE(expanded.end() != expanded.find("さ"));
-    EXPECT_TRUE(expanded.end() != expanded.find("し"));
-    EXPECT_TRUE(expanded.end() != expanded.find("す"));
-    EXPECT_TRUE(expanded.end() != expanded.find("せ"));
-    EXPECT_TRUE(expanded.end() != expanded.find("そ"));
+    EXPECT_THAT(expanded, ElementsAre("s", "さ", "し", "す", "せ", "そ", "っ"));
   }
 }
 
@@ -523,9 +517,7 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     const auto [base, expanded] = composer_->GetQueriesForPrediction();
     composer_->GetStringForPreedit();
     EXPECT_EQ(base, "い");
-    EXPECT_EQ(expanded.size(), 2);
-    EXPECT_TRUE(expanded.end() != expanded.find("と"));
-    EXPECT_TRUE(expanded.end() != expanded.find("ど"));
+    EXPECT_THAT(expanded, ElementsAre("と", "ど"));
   }
   {
     composer_->EditErase();
@@ -534,8 +526,7 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     const auto [base, expanded] = composer_->GetQueriesForPrediction();
     composer_->GetStringForPreedit();
     EXPECT_EQ(base, "い");
-    EXPECT_EQ(expanded.size(), 1);
-    EXPECT_TRUE(expanded.end() != expanded.find("ど"));
+    EXPECT_THAT(expanded, ElementsAre("ど"));
   }
   {
     composer_->EditErase();
@@ -544,8 +535,7 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     const auto [base, expanded] = composer_->GetQueriesForPrediction();
     composer_->GetStringForPreedit();
     EXPECT_EQ(base, "い");
-    EXPECT_EQ(expanded.size(), 1);
-    EXPECT_TRUE(expanded.end() != expanded.find("っ"));
+    EXPECT_THAT(expanded, ElementsAre("っ"));
   }
 }
 

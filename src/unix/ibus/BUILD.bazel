@@ -151,8 +151,7 @@ mozc_cc_library(
         'MOZC_IBUS_INSTALL_DIR=\\"' + IBUS_MOZC_INSTALL_DIR + '\\"',
     ],
     deps = [
-        "//base:util",
-        "@com_google_absl//absl/log:check",
+        "//base/container:flat_map",
         "@com_google_absl//absl/strings",
     ],
 )
