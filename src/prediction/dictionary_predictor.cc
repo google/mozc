@@ -375,9 +375,15 @@ std::vector<Result> DictionaryPredictor::AggregateResultsForDesktop(
 std::vector<Result>
 DictionaryPredictor::AggregateTypingCorrectedResultsForMixedConversion(
     const ConversionRequest& request) const {
-  constexpr int kMinTypingCorrectionKeyLen = 3;
-  if (!IsTypingCorrectionEnabled(request) ||
-      Util::CharsLen(request.key()) < kMinTypingCorrectionKeyLen) {
+  constexpr int kDefaultMinTypingCorrectionKeyLen = 3;
+  const int param_min_key_len = request.request()
+                                    .decoder_experiment_params()
+                                    .typing_correction_min_key_length();
+  const int min_key_len = param_min_key_len > 0
+                              ? param_min_key_len
+                              : kDefaultMinTypingCorrectionKeyLen;
+  const int key_len = Util::CharsLen(request.key());
+  if (!IsTypingCorrectionEnabled(request) || key_len < min_key_len) {
     return {};
   }
 
@@ -391,7 +397,17 @@ DictionaryPredictor::AggregateTypingCorrectedResultsForMixedConversion(
 
   bool number_added = false;
 
+  // Typing completions are not used for the keys shorter than the default
+  // minimum length, as they are less reliable than the corrections. They are
+  // filtered here rather than with typing_completion_start_length, which also
+  // affects UserHistoryPredictor. CorrectComposition() results are cached and
+  // shared with UserHistoryPredictor.
+  const bool is_short_key = key_len < kDefaultMinTypingCorrectionKeyLen;
+
   for (const auto& query : corrected.value()) {
+    if (is_short_key && (query.type & TypeCorrectedQuery::COMPLETION)) {
+      continue;
+    }
     absl::string_view key = query.correction;
 
     // Make ConversionRequest that uses conversion_segment(0).key() as typing

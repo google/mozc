@@ -226,6 +226,44 @@ TEST(ConversionRequestTest, IncognitoModeTest) {
   }
 }
 
+TEST(ConversionRequestTest, IsKanaModifierInsensitiveConversionTest) {
+  config::Config config;
+  config.set_use_kana_modifier_insensitive_conversion(true);
+  commands::Request request;
+  request.set_kana_modifier_insensitive_conversion(true);
+  {
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetConfig(config)
+                                          .SetRequest(request)
+                                          .Build();
+    EXPECT_TRUE(convreq.IsKanaModifierInsensitiveConversion());
+    EXPECT_TRUE(convreq.options().kana_modifier_insensitive_conversion);
+  }
+  {
+    ConversionRequest::Options options;
+    options.kana_modifier_insensitive_conversion = false;
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetConfig(config)
+                                          .SetRequest(request)
+                                          .SetOptions(std::move(options))
+                                          .Build();
+    EXPECT_FALSE(convreq.IsKanaModifierInsensitiveConversion());
+  }
+  {
+    request.mutable_decoder_experiment_params()
+        ->set_disable_kana_modifier_insensitive_dictionary_lookup(true);
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetConfig(config)
+                                          .SetRequest(request)
+                                          .Build();
+    // Only the dictionary lookup is disabled.
+    EXPECT_TRUE(convreq.IsKanaModifierInsensitiveConversion());
+    EXPECT_TRUE(convreq.options().kana_modifier_insensitive_conversion);
+    EXPECT_TRUE(
+        convreq.options().disable_kana_modifier_insensitive_dictionary_lookup);
+  }
+}
+
 TEST(ConversionRequestTest, GetSurroundingContextTest) {
   {
     commands::Context context;

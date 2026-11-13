@@ -106,6 +106,12 @@ struct ConversionOptions {
   // If true, enable kana modifier insensitive conversion.
   bool kana_modifier_insensitive_conversion = true;
 
+  // If true, the system dictionary does not expand the keys for the kana
+  // modifier insensitive conversion, i.e., no candidates with
+  // KEY_EXPANDED_IN_DICTIONARY are generated. The typing corrector is not
+  // affected. Populated from DecoderExperimentParams.
+  bool disable_kana_modifier_insensitive_dictionary_lookup = false;
+
   // If true, use conversion_segment(0).key() instead of ComposerData.
   // TODO(b/365909808): Create a new string field to store the key.
   bool use_already_typing_corrected_key = false;

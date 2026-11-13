@@ -83,6 +83,7 @@ mozc_cc_test(
         "//data_manager/testing:mock_data_manager",
         "//dictionary/system:system_dictionary",
         "//dictionary/system:value_dictionary",
+        "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//request:options",

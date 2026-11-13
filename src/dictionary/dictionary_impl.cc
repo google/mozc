@@ -124,8 +124,18 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
     return callback_->OnToken(key, actual_key, std::move(token));
   }
 
+  // Called by SystemDictionary::LookupPredictive() and LookupPrefix() to
+  // decide whether to expand the keys for the kana modifier insensitive
+  // lookup, e.g., "かつこう" also looks up "がっこう". The tokens found by the
+  // expansion get the spatial cost penalty and KEY_EXPANDED_IN_DICTIONARY (or
+  // Node::KEY_EXPANDED in the lattice). The expansion is disabled when the
+  // kana modifier insensitive conversion is disabled, or when only the
+  // dictionary lookup is disabled by
+  // `disable_kana_modifier_insensitive_dictionary_lookup`. The latter does not
+  // affect the kana modifier insensitive corrections of the typing corrector.
   bool IsKanaModifierInsensitiveConversion() const override {
-    return options_.kana_modifier_insensitive_conversion;
+    return options_.kana_modifier_insensitive_conversion &&
+           !options_.disable_kana_modifier_insensitive_dictionary_lookup;
   }
 
  private:

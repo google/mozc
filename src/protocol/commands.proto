@@ -555,7 +555,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 160
+// Next ID: 162
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -572,6 +572,20 @@ message DecoderExperimentParams {
   }
   // Bitmap of enabled variation character types.
   optional uint32 variation_character_types = 8 [default = 0];
+
+  // If true, the system dictionary does not expand the keys for the kana
+  // modifier insensitive lookup (e.g. "かつこう" -> "学校"), i.e., no
+  // candidates with KEY_EXPANDED_IN_DICTIONARY are generated. This does not
+  // change ConversionRequest::IsKanaModifierInsensitiveConversion() nor the
+  // kana modifier insensitive corrections of the typing corrector.
+  optional bool disable_kana_modifier_insensitive_dictionary_lookup = 160
+      [default = false];
+
+  // Minimum key length (in characters) to run the typing correction in mixed
+  // conversion. When zero or negative, 3 is used. For keys shorter than 3
+  // characters, only corrections are used, not completions (see also
+  // typing_completion_start_length).
+  optional int32 typing_correction_min_key_length = 161 [default = 0];
 
   // Enables final results reranking against literal results.
   // If zero, the previous implementation is used.

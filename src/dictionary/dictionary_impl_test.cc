@@ -47,6 +47,7 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "request/options.h"
@@ -258,6 +259,45 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq2.options(),
                                      &callback);
     EXPECT_TRUE(callback.found());
+  }
+}
+
+TEST_F(DictionaryImplTest, DisableKanaModifierInsensitiveDictionaryLookupTest) {
+  std::unique_ptr<DictionaryData> data = CreateDictionaryData();
+  DictionaryInterface* d = data->dictionary.get();
+
+  // "ぐーくる" is expanded to "ぐーぐる" by the kana modifier insensitive
+  // lookup.
+  constexpr absl::string_view kKey = "ぐーぐる";
+  constexpr absl::string_view kValue = "グーグル";
+
+  const LookupMethodAndQuery kTestPair[] = {
+      {&DictionaryInterface::LookupPrefix, "ぐーくるは"},
+      {&DictionaryInterface::LookupPredictive, "ぐーく"},
+  };
+
+  config_.set_use_kana_modifier_insensitive_conversion(true);
+  commands::Request request;
+  request.set_kana_modifier_insensitive_conversion(true);
+
+  const ConversionRequest convreq1 =
+      ConversionRequestBuilder().SetConfig(config_).SetRequest(request).Build();
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
+    CheckKeyValueExistenceCallback callback(kKey, kValue);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq1.options(),
+                                     &callback);
+    EXPECT_TRUE(callback.found());
+  }
+
+  request.mutable_decoder_experiment_params()
+      ->set_disable_kana_modifier_insensitive_dictionary_lookup(true);
+  const ConversionRequest convreq2 =
+      ConversionRequestBuilder().SetConfig(config_).SetRequest(request).Build();
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
+    CheckKeyValueExistenceCallback callback(kKey, kValue);
+    (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq2.options(),
+                                     &callback);
+    EXPECT_FALSE(callback.found());
   }
 }
 

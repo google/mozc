@@ -286,6 +286,10 @@ class ConversionRequestBuilder {
     request_.options_.incognito_mode = request_.incognito_mode();
     request_.options_.kana_modifier_insensitive_conversion =
         request_.IsKanaModifierInsensitiveConversion();
+    request_.options_.disable_kana_modifier_insensitive_dictionary_lookup =
+        request_.request()
+            .decoder_experiment_params()
+            .disable_kana_modifier_insensitive_dictionary_lookup();
     request_.options_.use_spelling_correction =
         request_.config().use_spelling_correction();
     request_.options_.use_zip_code_conversion =

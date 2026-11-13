@@ -1735,6 +1735,54 @@ TEST_F(DictionaryPredictorTest, AggregateTypingCorrectedResultsTest) {
   }
 }
 
+TEST_F(DictionaryPredictorTest, AggregateTypingCorrectedResultsMinKeyLength) {
+  auto supplemental_model = std::make_unique<engine::MockSupplementalModel>();
+  // CorrectComposition is called only when the key is long enough.
+  EXPECT_CALL(*supplemental_model, CorrectComposition(_))
+      .WillOnce(Return(std::vector<TypeCorrectedQuery>{
+          {"とうきょう", TypeCorrectedQuery::COMPLETION}}))
+      .WillOnce(Return(std::vector<TypeCorrectedQuery>{
+          {"とう", TypeCorrectedQuery::CORRECTION}}))
+      .WillOnce(Return(std::vector<TypeCorrectedQuery>{
+          {"とうきょう", TypeCorrectedQuery::COMPLETION}}));
+  auto data_and_predictor =
+      std::make_unique<MockDataAndPredictor>(std::move(supplemental_model));
+  EXPECT_CALL(*data_and_predictor->mutable_realtime_decoder(), Decode(_))
+      .WillRepeatedly(MockRealtimeDecoder::DecodeImpl);
+
+  config_->set_use_typing_correction(true);
+
+  DictionaryPredictorTestPeer predictor_peer =
+      data_and_predictor->predictor_peer();
+  auto aggregate = [&](absl::string_view key) {
+    return predictor_peer.AggregateTypingCorrectedResultsForMixedConversion(
+        CreateConversionRequest(ConversionRequest::PREDICTION, key));
+  };
+  auto set_min_key_length = [&](int length) {
+    request_->mutable_decoder_experiment_params()
+        ->set_typing_correction_min_key_length(length);
+  };
+
+  // Keys shorter than 3 characters are not corrected by default.
+  EXPECT_TRUE(aggregate("とあ").empty());
+
+  // Zero or negative values fall back to the default.
+  set_min_key_length(-1);
+  EXPECT_TRUE(aggregate("とあ").empty());
+
+  // Keys shorter than the minimum length are not corrected.
+  set_min_key_length(4);
+  EXPECT_TRUE(aggregate("とあき").empty());
+
+  set_min_key_length(2);
+  // Completions are not used for the keys shorter than 3 characters.
+  EXPECT_TRUE(aggregate("とあ").empty());
+  // Corrections are used for the keys shorter than 3 characters.
+  EXPECT_FALSE(aggregate("とあ").empty());
+  // Completions are used for the keys of 3 characters or longer.
+  EXPECT_FALSE(aggregate("とあき").empty());
+}
+
 TEST_F(DictionaryPredictorTest, Rescoring) {
   auto supplemental_model = std::make_unique<engine::MockSupplementalModel>();
   EXPECT_CALL(*supplemental_model, RescoreResults(_, _))
