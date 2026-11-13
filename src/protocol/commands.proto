@@ -663,7 +663,7 @@ message DecoderExperimentParams {
 
   // Transition cost bonus for particle omission (e.g. "さかなくう" ->
   // "魚食う"). This is used for experiments to improve core LM conversion.
-  optional int32 particle_omission_transition_cost_bonus = 150 [default = 0];
+  optional int32 particle_omission_transition_cost_bonus = 150 [default = 1000];
 
   // If true, suppresses calling the converter (ConverterInterface) in
   // RealtimeDecoder.

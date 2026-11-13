@@ -111,7 +111,7 @@ struct ConversionOptions {
   bool use_already_typing_corrected_key = false;
 
   // Transition cost bonus for particle omission.
-  int particle_omission_transition_cost_bonus = 0;
+  int particle_omission_transition_cost_bonus = 1000;
 
   // Input mode for key corrector.
   enum class InputMode {

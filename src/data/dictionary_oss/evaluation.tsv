@@ -23,7 +23,7 @@ OK:	ぶいぶいいわしている	ブイブイいわしている	Conversion Not
 OK:	せっかくのおさそいをむげにはできない	せっかくのお誘いを無下にはできない	Conversion Not Match	.*無碍.*	2.28.5050
 OK:	こんなときこそおちつかないと	こんなときこそ落ち着かないと	Conversion Not Match	婚.*	2.30.5432
 OK:	そういうわけだったのか	そういうわけだったのか	Conversion Not Match	そう言う.*	2.30.5432
-OK:	じろっとにらみつけた	ジロっと睨みつけた	Conversion Not Match	ジロット.*	2.31.5851
+OK:	じろっとにらみつけた	自ロット睨みつけた	Conversion Not Match	ジロット.*	3.35.6354
 OK:	このひぼくらはきんじょにいった	この日僕らは近所に行った	Conversion Not Match	.*被.*	2.30.5432
 OK:	こっちにこい	こっちに来い	Conversion Not Match	.*濃い	2.30.5544
 OK:	かみわざとしかいいようがない	神業としか言いようがない	Conversion Not Match	.*歯科.*	2.26.4423
@@ -31,7 +31,7 @@ OK:	しかってほしいときもある	叱ってほしいときもある	Conve
 OK:	しかられてないている	叱られて泣いている	Conversion Not Match	.*テイル	2.30.5432
 OK:	あれたしょうがっこうだ	荒れた小学校だ	Conversion Match	荒れた.*	2.30.5432
 OK:	もどかしいおもいです	もどかしい思いです	Conversion Not Match	.*重い.*	2.26.4423
-FAILED:	おれかかったえだをもとにもどす	俺か買った枝を下に戻す	Conversion Match	折れかかった.*	2.29.5268
+FAILED:	おれかかったえだをもとにもどす	俺かかった枝を下に戻す	Conversion Match	折れかかった.*	3.35.6354
 OK:	どんかんなのできづいてないようだ	鈍感なので気づいてないようだ	Conversion Match	.*ようだ	2.26.4423
 OK:	おばあちゃんのはなしはいつもながい	おばあちゃんの話はいつも長い	Conversion Match	.*話は.*	2.26.4423
 OK:	えんこーどってそんなにむつかしいか	エンコードってそんなに難しいか	Conversion Match	エンコード.*	2.26.4423
@@ -263,14 +263,14 @@ OK:	ばうんしゃ	馬運車	Conversion Expected	馬運車	2.28.5000
 OK:	しんしょかいふうざい	信書開封罪	Conversion Expected	信書開封罪	2.28.5000
 OK:	あいしんかくら	愛新覚羅	Conversion Expected	愛新覚羅	2.28.5000
 OK:	らのべ	ラノベ	Conversion Expected	ラノベ	2.28.5000
-FAILED:	なごやとばし	名古屋鳥羽市	Conversion Expected	名古屋飛ばし	2.30.5490
+OK:	なごやとばし	名古屋飛ばし	Conversion Expected	名古屋飛ばし	3.35.6354
 OK:	こんせ	今世	Conversion Expected 9	今世	2.28.5000
 OK:	こんぜ	今世	Conversion Expected 9	今世	2.28.5000
 OK:	こんせい	混成	Conversion Expected 9	今世	2.30.5490
 OK:	しんちょうにはこぶ	慎重に運ぶ	Conversion Expected	慎重に運ぶ	2.32.5981
 OK:	ぎろんになんしょくをしめす	議論に難色を示す	Conversion Expected	議論に難色を示す	2.32.5981
 OK:	おんどをおどる	音頭を踊る	Conversion Match	音頭を.*	2.32.5981
-OK:	かいぜんしとうぞんじます	改善しとう存じます	Conversion Match	改善しとう.*	3.33.6133
+FAILED:	かいぜんしとうぞんじます	改善死闘存じます	Conversion Match	改善しとう.*	3.35.6354
 FAILED:	ふくじょし	服女子	Conversion Expected 2	副助詞	2.30.5618
 FAILED:	らっぷ	ラップ	Conversion Expected 9	乱舞	2.28.4990
 OK:	こきゅう	呼吸	Conversion Expected 9	枯朽	2.28.5000
@@ -473,7 +473,7 @@ FAILED:	めのまえ	眼の前	Conversion Expected	目の前	2.30.5618
 OK:	ひとこない	人来ない	Conversion Expected	人来ない	2.30.5618
 FAILED:	いいごえん	良い五円	Conversion Expected	いいご縁	2.30.5618
 OK:	まいとしこうれい	毎年恒例	Conversion Expected	毎年恒例	2.30.5618
-FAILED:	まんがよんだり	マンが読んだり	Conversion Expected	漫画読んだり	2.30.5618
+OK:	まんがよんだり	漫画読んだり	Conversion Expected	漫画読んだり	3.35.6354
 FAILED:	じんこうにかいしゃする	人口にかいしゃする	Conversion Expected	人口に膾炙する	3.33.6133
 FAILED:	いいごえんがあれば	いい御縁があれば	Conversion Expected	いいご縁があれば	2.30.5618
 FAILED:	にせんえんさつ	にせん円札	Conversion Expected	二千円札	2.30.5618
@@ -498,7 +498,7 @@ FAILED:	さんけん	三件	Conversion Expected 9	産繭	2.31.5712
 FAILED:	おんらいんしょっぴんぐ	オンライン・ショッピング	Conversion Expected	オンラインショッピング	2.31.5712
 FAILED:	おやどだい	親土台	Conversion Expected	お宿代	2.31.5712
 FAILED:	あしたはなにする	明日花にする	Conversion Expected	明日は何する	2.31.5712
-FAILED:	かねはらって	兼原って	Conversion Expected	金払って	2.31.5712
+OK:	かねはらって	金払って	Conversion Expected	金払って	3.35.6354
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
@@ -515,7 +515,7 @@ OK:	しょうがいぐらんどすらむ	生涯グランドスラム	Conversion 
 OK:	しょうじき	正直	Conversion Expected	正直	2.26.4695
 OK:	かいます	買います	Conversion Expected	買います	2.26.4695
 OK:	みておくれ	見ておくれ	Conversion Expected	見ておくれ	2.29.5268
-FAILED:	たちきえ	たち消え	Conversion Expected	立ち消え	2.26.4695
+OK:	たちきえ	立ち消え	Conversion Expected	立ち消え	3.35.6354
 OK:	たちぎえ	立ち消え	Conversion Expected	立ち消え	2.26.4695
 OK:	みつけしだい	見つけ次第	Conversion Expected	見つけ次第	2.26.4695
 OK:	かってに	勝手に	Conversion Expected	勝手に	2.26.4695
@@ -534,7 +534,7 @@ FAILED:	おおすにいく	大洲に行く	Conversion Expected	大須に行く	2
 OK:	たいじんかんけい	対人関係	Conversion Expected	対人関係	2.30.5520
 OK:	たいじんすきる	対人スキル	Conversion Expected	対人スキル	2.30.5520
 FAILED:	ねおちつうわ	値落ち通話	Conversion Expected	寝落ち通話	2.30.5544
-FAILED:	おきてねがおみてた	起きて音がお見てた	Conversion Expected	起きて寝顔見てた	2.30.5544
+OK:	おきてねがおみてた	起きて寝顔見てた	Conversion Expected	起きて寝顔見てた	3.35.6354
 OK:	ほかのようじもできた	他の用事もできた	Conversion Expected	他の用事もできた	3.33.6089
 FAILED:	きょうきゅうりょうび！	供給量日！	Conversion Expected	今日給料日！	3.33.6089
 OK:	みたことないとりいる	見たことない鳥いる	Conversion Expected	見たことない鳥いる	2.30.5544
@@ -572,7 +572,7 @@ OK:	たなからぼたもち	店からぼたもち	Conversion Expected 2	棚か�
 OK:	たなからぼたもち	店からぼたもち	Conversion Expected 2	棚からぼた餅	3.33.6089
 OK:	ふこうちゅうのさいわい	不幸中の幸い	Conversion Expected	不幸中の幸い	3.33.6089
 OK:	まったなし	待ったなし	Conversion Expected	待ったなし	3.33.6089
-FAILED:	こうかふこうか	効果不効果	Conversion Expected	幸か不幸か	3.33.6089
+FAILED:	こうかふこうか	効果ふこうか	Conversion Expected	幸か不幸か	3.35.6354
 FAILED:	こともなげに	こともなげに	Conversion Expected	事もなげに	3.33.6089
 FAILED:	やぶからぼうに	ヤブから棒に	Conversion Expected	藪から棒に	3.33.6089
 FAILED:	にっちもさっちも	にっちもさっちも	Conversion Expected 2	二進も三進も	3.33.6089
@@ -586,7 +586,7 @@ FAILED:	かこつ	過去つ	Conversion Expected	仮骨	3.33.6089
 OK:	ねんのため	念の為	Conversion Expected 3	念のため	3.33.6089
 FAILED:	えらんだかさ	選ん高さ	Conversion Expected	選んだ傘	3.33.6133
 FAILED:	そういういみなの	そういう諱の	Conversion Expected	そういう意味なの	3.33.6239
-FAILED:	おさとうとおす	お砂糖と押す	Conversion Expected	お砂糖とお酢	3.33.6239
+FAILED:	おさとうとおす	お砂糖通す	Conversion Expected	お砂糖とお酢	3.35.6354
 FAILED:	こちらいえにつきました	こちら言えにつきました	Conversion Expected	こちら家に着きました	3.33.6239
 FAILED:	あのたなにあります	あの店にあります	Conversion Expected	あの棚にあります	3.33.6239
 FAILED:	せいをだす	性を出す	Conversion Expected	精を出す	3.33.6239
@@ -610,11 +610,11 @@ OK:	くるじゃん	来るじゃん	Conversion Expected	来るじゃん	3.34.623
 FAILED:	もうかくわぁ	もうかくわぁ	Conversion Expected	もう書くわぁ	3.34.6239
 FAILED:	もうつくさぁ	もう尽くさぁ	Conversion Expected	もう着くさぁ	3.34.6239
 OK:	あしたまつぞぉ	明日待つぞぉ	Conversion Expected	明日待つぞぉ	3.34.6239
-FAILED:	さかなくう	魚空	Prediction Expected 2	魚食う	3.34.6239
+OK:	さかなくう	魚食う	Prediction Expected 2	魚食う	3.35.6354
 OK:	めしたべる	飯食べる	Prediction Expected 2	飯食べる	3.34.6239
 OK:	しぶやいく	渋谷行く	Prediction Expected 2	渋谷行く	3.34.6239
 OK:	いえかえる	家変える	Prediction Expected 2	家帰る	3.34.6239
-FAILED:	くつはく	靴泊	Prediction Expected 2	靴履く	3.34.6239
+OK:	くつはく	靴履く	Prediction Expected 2	靴履く	3.35.6354
 FAILED:	ぼうしかぶる	防止被る	Prediction Expected 2	帽子かぶる	3.34.6239
 OK:	ふくきる	服切る	Prediction Expected 2	服着る	3.34.6239
 OK:	ふくぬぐ	服脱ぐ	Prediction Expected 2	服脱ぐ	3.34.6239
@@ -622,62 +622,63 @@ OK:	くつぬぐ	靴脱ぐ	Prediction Expected 2	靴脱ぐ	3.34.6239
 OK:	ぺーじやぶれた	ページ敗れた	Prediction Expected 2	ページ破れた	3.34.6239
 OK:	みずこぼれた	水こぼれた	Prediction Expected 2	水こぼれた	3.34.6239
 OK:	ゆかよごれた	床汚れた	Prediction Expected 2	床汚れた	3.34.6239
-FAILED:	むししんだ	無視心だ	Prediction Expected 2	虫死んだ	3.34.6239
-FAILED:	くさはえる	草は得る	Prediction Expected 2	草生える	3.34.6239
+OK:	むししんだ	無視死んだ	Prediction Expected 2	虫死んだ	3.35.6354
+OK:	くさはえる	草映える	Prediction Expected 2	草生える	3.35.6354
 OK:	めしできる	飯できる	Prediction Expected 2	飯できる	3.34.6239
 OK:	しごとおわる	仕事終わる	Prediction Expected 2	仕事終わる	3.34.6239
-FAILED:	いらすとかく	イラスト書く	Prediction Expected 2	イラスト描く	3.34.6239
+OK:	いらすとかく	イラスト書く	Prediction Expected 2	イラスト描く	3.35.6354
 OK:	ぱんかう	パン買う	Prediction Expected 2	パン買う	3.34.6239
 OK:	やさいいためる	野菜炒める	Prediction Expected 2	野菜炒める	3.34.6239
 OK:	とりにくきる	鶏肉切る	Prediction Expected 2	鶏肉切る	3.34.6239
 FAILED:	ぼたんとめる	ボタン止める	Prediction Expected 2	ボタン留める	3.34.6239
 FAILED:	usbさす	usb指す	Prediction Expected 2	USB挿す	3.34.6239
-OK:	ぼたんおす	ボタンオス	Prediction Expected 2	ボタン押す	3.34.6239
+OK:	ぼたんおす	ボタン押す	Prediction Expected 2	ボタン押す	3.35.6354
 OK:	どああける	ドア開ける	Prediction Expected 2	ドア開ける	3.34.6239
 OK:	といれいく	トイレ行く	Prediction Expected 2	トイレ行く	3.34.6239
-OK:	へやはいる	部屋はいる	Prediction Expected 2	部屋入る	3.34.6239
-FAILED:	あぶらはねる	油は寝る	Prediction Expected 2	油はねる	3.34.6239
+OK:	へやはいる	部屋入る	Prediction Expected 2	部屋入る	3.35.6354
+OK:	あぶらはねる	油跳ねる	Prediction Expected 2	油はねる	3.35.6354
 OK:	そとはしる	外走る	Prediction Expected 2	外走る	3.34.6239
 OK:	ふろでて	風呂出て	Prediction Expected 2	風呂出て	3.34.6239
-OK:	ふろはいる	風呂はいる	Prediction Expected 2	風呂入る	3.34.6239
+OK:	ふろはいる	風呂入る	Prediction Expected 2	風呂入る	3.35.6354
 OK:	どこいく	どこ行く	Prediction Expected 2	どこ行く	3.34.6239
 OK:	なにたべる	何食べる	Prediction Expected 2	なに食べる	3.35.6354
 OK:	いまかえる	今変える	Prediction Expected 2	今帰る	3.34.6239
-FAILED:	でんしゃまつ	電車末	Prediction Expected 2	電車待つ	3.34.6239
+OK:	でんしゃまつ	電車待つ	Prediction Expected 2	電車待つ	3.35.6354
 OK:	ばすおくれる	バス遅れる	Prediction Expected 2	バス遅れる	3.34.6239
 FAILED:	みちこむ	満ちこむ	Prediction Expected 2	道混む	3.34.6239
 FAILED:	はしもつ	橋持つ	Prediction Expected 2	箸もつ	3.34.6239
 OK:	すぷーんおとす	スプーン落とす	Prediction Expected 2	スプーン落とす	3.34.6239
 OK:	たんいおとす	単位落とす	Prediction Expected 2	単位落とす	3.34.6239
 OK:	しゅうでんのがす	終電のガス	Prediction Expected 2	終電逃す	3.34.6239
-FAILED:	かみのびる	上のビル	Prediction Expected 2	髪伸びる	3.34.6239
+FAILED:	かみのびる	上伸びる	Prediction Expected 2	髪伸びる	3.35.6354
 OK:	びーるのむ	ビール飲む	Prediction Expected 2	ビール飲む	3.34.6239
 FAILED:	せきのく	関野区	Prediction Expected 2	席退く	3.34.6239
 FAILED:	せきどく	関戸区	Prediction Expected 2	席退く	3.34.6239
-OK:	びーるにがい	ビールに外	Prediction Expected 2	ビール苦い	3.34.6239
+OK:	びーるにがい	ビール苦い	Prediction Expected 2	ビール苦い	3.35.6354
 OK:	じっかとおい	実家遠い	Prediction Expected 2	実家遠い	3.34.6239
 FAILED:	てきにくい	てきにくい	Prediction Expected 2	敵憎い	3.35.6354
 FAILED:	こんびによる	コンビによる	Prediction Expected 2	コンビニ寄る	3.34.6239
-OK:	めがねかける	目金欠流	Prediction Expected 2	眼鏡かける	3.34.6239
+OK:	めがねかける	メガネかける	Prediction Expected 2	眼鏡かける	3.35.6354
 FAILED:	かささす	傘指す	Prediction Expected 2	傘さす	3.34.6239
 OK:	てあらう	て洗う	Prediction Expected 2	手洗う	3.34.6239
 OK:	しゃしんとる	写真取る	Prediction Expected 2	写真撮る	3.34.6239
 OK:	しごといく	仕事行く	Prediction Expected 2	仕事行く	3.34.6239
 OK:	いすすわる	椅子座る	Prediction Expected 2	椅子座る	3.34.6239
-FAILED:	おなかすいた	お腹吹田	Prediction Expected 2	お腹すいた	3.34.6239
-OK:	あめふる	雨フル	Prediction Expected 2	雨降る	3.34.6239
-FAILED:	はみがく	は磨く	Prediction Expected 2	歯磨く	3.34.6239
+OK:	おなかすいた	お腹空いた	Prediction Expected 2	お腹すいた	3.35.6354
+OK:	あめふる	雨降る	Prediction Expected 2	雨降る	3.35.6354
+OK:	はみがく	は磨く	Prediction Expected 2	歯磨く	3.35.6354
 OK:	かおあらう	顔洗う	Prediction Expected 2	顔洗う	3.34.6239
 OK:	みずのむ	水飲む	Prediction Expected 2	水飲む	3.34.6239
 OK:	でんきつける	電気つける	Prediction Expected 2	電気つける	3.34.6239
-OK:	ごみだす	ごミダス	Prediction Expected 2	ゴミ出す	3.34.6239
+OK:	ごみだす	ゴミ出す	Prediction Expected 2	ゴミ出す	3.35.6354
 OK:	ふとんしく	布団敷く	Prediction Expected 2	布団敷く	3.34.6239
 FAILED:	ひげそる	ヒゲソル	Prediction Expected 2	髭剃る	3.34.6239
 OK:	くすりのむ	薬飲む	Prediction Expected 2	薬飲む	3.34.6239
-OK:	あたまいたい	頭遺体	Prediction Expected 2	頭痛い	3.34.6239
+OK:	あたまいたい	頭痛い	Prediction Expected 2	頭痛い	3.35.6354
 OK:	ねつでた	熱出た	Prediction Expected 2	熱出た	3.34.6239
 FAILED:	かぎしめる	鍵占める	Prediction Expected 2	鍵閉める	3.34.6239
 FAILED:	こてでかーるする	コテデカールする	Conversion Expected	コテでカールする	3.34.6239
 FAILED:	ちょいのり	チョイノリ	Conversion Expected	ちょい乗り	3.34.6239
 OK:	どらいぶするー	ドライブスルー	Conversion Expected	ドライブスルー	3.35.6354
 FAILED:	あいすきゅーぶ	アイス・キューブ	Conversion Expected	アイスキューブ	3.35.6354
+FAILED:	かきわすれた	下記忘れた	Conversion Expected	書き忘れた	3.35.6354
