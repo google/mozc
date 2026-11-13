@@ -29,8 +29,11 @@
 
 #include "dictionary/file/codec.h"
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <ios>
+#include <limits>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -141,6 +144,45 @@ TEST_F(CodecTest, RandomizedCodecTest) {
   ASSERT_TRUE(FindSection(codec, sections, "Section 1", &index));
   ASSERT_EQ(1, index);
   EXPECT_TRUE(CheckValue(sections[index], "Value 1 test test"));
+}
+
+TEST_F(CodecTest, ReadSectionsRejectsInvalidDataSize) {
+  const DictionaryFileCodec codec;
+  {
+    std::vector<DictionaryFileSection> empty_sections;
+    OutputFileStream ofs;
+    ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
+    codec.WriteSections(empty_sections, &ofs);
+  }
+  absl::StatusOr<std::string> header_buf =
+      FileUtil::GetContents(test_file_.path());
+  ASSERT_OK(header_buf);
+  ASSERT_EQ(header_buf->size(), 12);
+
+  // Extract filemagic and seed written by DictionaryFileCodec.
+  int32_t header_words[2] = {};
+  std::copy_n(header_buf->data(), sizeof(header_words),
+              reinterpret_cast<char*>(header_words));
+
+  for (const int32_t invalid_size :
+       {-24, -12, -8, -1, std::numeric_limits<int32_t>::min(), 0x7ffffffd,
+        std::numeric_limits<int32_t>::max()}) {
+    alignas(uint32_t) int32_t words[6] = {
+        header_words[0],  // filemagic
+        header_words[1],  // seed
+        invalid_size,     // section 0 data_size
+        0,                // fingerprint[0..3]
+        0,                // fingerprint[4..7]
+        0,                // trailing end marker
+    };
+    const absl::string_view image(reinterpret_cast<const char*>(words),
+                                  sizeof(words));
+    std::vector<DictionaryFileSection> sections;
+    const absl::Status status = codec.ReadSections(image, &sections);
+    EXPECT_TRUE(absl::IsOutOfRange(status))
+        << "invalid_size=" << invalid_size << " status=" << status;
+    EXPECT_TRUE(sections.empty());
+  }
 }
 
 }  // namespace

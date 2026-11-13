@@ -57,8 +57,8 @@ void WriteInt32(int32_t value, std::ostream* ofs) {
   ofs->write(reinterpret_cast<const char*>(&value), sizeof(value));
 }
 
-int RoundUp4(int length) {
-  const int rem = (length % 4);
+size_t RoundUp4(size_t length) {
+  const size_t rem = (length % 4);
   return length + ((4 - rem) % 4);
 }
 
@@ -174,16 +174,24 @@ absl::Status DictionaryFileCodec::ReadSections(
     if (data_size == 0) {  // The end marker written in WriteSections().
       break;
     }
-    // Calculate the section end pointer.  Note that |ptr| currently points to
-    // the beginning of fingerprint.
-    constexpr size_t kFingerprintByteLength = 8;
-    const auto padded_data_size = filecodec_util::RoundUp4(data_size);
-    const auto* section_end = ptr + kFingerprintByteLength + padded_data_size;
-    if (section_end > image_end) {
+    if (data_size < 0) {
       return absl::OutOfRangeError(absl::StrCat(
           "codec.cc: Section ", section_index,
-          ": Read pointer will pass the end: offset=",
-          section_end - image.data(), ", image_size=", image.size()));
+          ": Negative data_size = ", data_size));
+    }
+    // Validate remaining bytes before advancing pointers. Note that |ptr|
+    // currently points to the beginning of fingerprint.
+    constexpr size_t kFingerprintByteLength = 8;
+    const size_t remaining = static_cast<size_t>(image_end - ptr);
+    const size_t padded_data_size =
+        filecodec_util::RoundUp4(static_cast<size_t>(data_size));
+    if (remaining < kFingerprintByteLength ||
+        padded_data_size > remaining - kFingerprintByteLength) {
+      return absl::OutOfRangeError(absl::StrCat(
+          "codec.cc: Section ", section_index,
+          ": Read pointer will pass the end: required_size=",
+          static_cast<uint64_t>(kFingerprintByteLength) + padded_data_size,
+          ", remaining=", remaining, ", image_size=", image.size()));
     }
     const std::string fingerprint(ptr, kFingerprintByteLength);
     ptr += kFingerprintByteLength;
