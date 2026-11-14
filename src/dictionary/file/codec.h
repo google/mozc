@@ -52,14 +52,14 @@ class DictionaryFileCodec {
   DictionaryFileCodec() = default;
   DictionaryFileCodec(const DictionaryFileCodec&) = delete;
   DictionaryFileCodec& operator=(const DictionaryFileCodec&) = delete;
-  virtual ~DictionaryFileCodec() {}
+  ~DictionaryFileCodec() = default;
 
-  virtual void WriteSections(absl::Span<const DictionaryFileSection> sections,
-                             std::ostream* ofs) const;
-  virtual absl::Status ReadSections(
+  void WriteSections(absl::Span<const DictionaryFileSection> sections,
+                     std::ostream* ofs) const;
+  absl::Status ReadSections(
       absl::string_view image,
       std::vector<DictionaryFileSection>* sections) const;
-  virtual std::string GetSectionName(absl::string_view name) const;
+  std::string GetSectionName(absl::string_view name) const;
 
  private:
   void WriteHeader(std::ostream* ofs) const;

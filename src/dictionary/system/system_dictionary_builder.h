@@ -62,13 +62,7 @@ class SystemDictionaryBuilder final {
     std::vector<TokenInfo> tokens;
   };
 
-  SystemDictionaryBuilder()
-      : codec_(std::make_unique<const SystemDictionaryCodec>()),
-        file_codec_(std::make_unique<const DictionaryFileCodec>()) {}
-
-  SystemDictionaryBuilder(std::unique_ptr<const SystemDictionaryCodec> codec,
-                          std::unique_ptr<const DictionaryFileCodec> file_codec)
-      : codec_(std::move(codec)), file_codec_(std::move(file_codec)) {}
+  SystemDictionaryBuilder() = default;
 
   SystemDictionaryBuilder(const SystemDictionaryBuilder&) = delete;
   SystemDictionaryBuilder& operator=(const SystemDictionaryBuilder&) = delete;
@@ -112,8 +106,8 @@ class SystemDictionaryBuilder final {
   // mapping from {left_id, right_id} to POS index (0--255)
   std::map<uint32_t, int> frequent_pos_;
 
-  std::unique_ptr<const SystemDictionaryCodec> codec_;
-  std::unique_ptr<const DictionaryFileCodec> file_codec_;
+  const SystemDictionaryCodec codec_;
+  const DictionaryFileCodec file_codec_;
 };
 
 }  // namespace dictionary

@@ -139,8 +139,7 @@ class SystemDictionary : public DictionaryInterface {
   class ReverseLookupIndex;
   struct PredictiveLookupSearchState;
 
-  SystemDictionary(std::unique_ptr<const SystemDictionaryCodec> codec,
-                   std::unique_ptr<const DictionaryFileCodec> file_codec);
+  SystemDictionary();
 
   bool OpenDictionaryFile(bool enable_reverse_lookup_index);
 
@@ -170,8 +169,8 @@ class SystemDictionary : public DictionaryInterface {
   storage::louds::LoudsTrie value_trie_;
   storage::louds::BitVectorBasedArray token_array_;
   absl::Span<const uint32_t> frequent_pos_;
-  std::unique_ptr<const SystemDictionaryCodec> codec_;
-  std::unique_ptr<const DictionaryFileCodec> file_codec_;
+  const SystemDictionaryCodec codec_;
+  const DictionaryFileCodec file_codec_;
   KeyExpansionTable hiragana_expansion_table_;
   std::unique_ptr<DictionaryFile> dictionary_file_;
   mutable AtomicSharedPtr<ReverseLookupCache> reverse_lookup_cache_;

@@ -33,7 +33,6 @@
 #include <vector>
 
 #include "base/coordinates.h"
-#include "renderer/table_layout_interface.h"
 
 namespace mozc {
 namespace renderer {
@@ -107,25 +106,25 @@ namespace renderer {
 //     11111
 //     .....
 
-class TableLayout : public TableLayoutInterface {
+class TableLayout {
  public:
   TableLayout();
   TableLayout(const TableLayout&) = delete;
   TableLayout& operator=(const TableLayout&) = delete;
 
   // Reset layout freeze and initialize the number of rows and columns.
-  void Initialize(int num_rows, int num_columns) override;
+  void Initialize(int num_rows, int num_columns);
 
   // Set layout element.
-  void SetVScrollBar(int width_in_pixels) override;
-  void SetWindowBorder(int width_in_pixels) override;
-  void SetRowRectPadding(int width_pixels) override;
+  void SetVScrollBar(int width_in_pixels);
+  void SetWindowBorder(int width_in_pixels);
+  void SetRowRectPadding(int width_pixels);
 
   // Ensure the cell size is same to or larger than the specified size.
   // - size.width affects cells within the specified column.
   // - size.height affects all cells.
   // You should not call this function when the layout is frozen.
-  void EnsureCellSize(int column, const Size& size) override;
+  void EnsureCellSize(int column, const Size& size);
 
   // Ensure the total width from "from_column" to "to_width" is at
   // least "width" or larger.  If total width is smaller than the
@@ -134,45 +133,45 @@ class TableLayout : public TableLayoutInterface {
   // will be used.  Note that "to_column" should be bigger than
   // "from_column".  Otherwise, the call will be ignored.  If you
   // want to ensure a cell width, you should use EnsureCellSize instead.
-  void EnsureColumnsWidth(int from_column, int to_column, int width) override;
+  void EnsureColumnsWidth(int from_column, int to_column, int width);
 
   // Ensure the size of header/footer is same to or larger than the
   // specified size.
   // You should not call this function when the layout is frozen.
-  void EnsureFooterSize(const Size& size_in_pixels) override;
-  void EnsureHeaderSize(const Size& size_in_pixels) override;
+  void EnsureFooterSize(const Size& size_in_pixels);
+  void EnsureHeaderSize(const Size& size_in_pixels);
 
   // Fix the layout and calculate the total size.
-  void FreezeLayout() override;
-  bool IsLayoutFrozen() const override;
+  void FreezeLayout();
+  bool IsLayoutFrozen() const;
 
   // Get the rect which is bounding the specified cell.
   // This rect does not include RowRectPadding.
   // You should call FreezeLayout prior to this function.
-  Rect GetCellRect(int row, int column) const override;
+  Rect GetCellRect(int row, int column) const;
 
   // Get specified component rect.
   // You should call FreezeLayout prior to these function.
-  Size GetTotalSize() const override;
-  Rect GetHeaderRect() const override;
-  Rect GetFooterRect() const override;
-  Rect GetVScrollBarRect() const override;
+  Size GetTotalSize() const;
+  Rect GetHeaderRect() const;
+  Rect GetFooterRect() const;
+  Rect GetVScrollBarRect() const;
   Rect GetVScrollIndicatorRect(int begin_index, int end_index,
-                               int candidates_total) const override;
+                               int candidates_total) const;
 
   // Get the rect which is bounding the specified row.
   // This rect includes RowRectPadding.
   // You should call FreezeLayout prior to these function.
-  Rect GetRowRect(int row) const override;
+  Rect GetRowRect(int row) const;
 
   // Get specified row rect.
   // This rect includes RowRectPadding.
   // You should call FreezeLayout prior to these function.
-  Rect GetColumnRect(int column) const override;
+  Rect GetColumnRect(int column) const;
 
   // Parameter getters
-  int number_of_rows() const override;
-  int number_of_columns() const override;
+  int number_of_rows() const;
+  int number_of_columns() const;
 
  private:
   std::vector<int> column_width_list_;

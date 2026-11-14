@@ -45,53 +45,53 @@ struct TokenInfo;
 
 class SystemDictionaryCodec {
  public:
-  virtual ~SystemDictionaryCodec() {}
+  ~SystemDictionaryCodec() = default;
 
   // Return section name for key trie
-  virtual absl::string_view GetSectionNameForKey() const;
+  absl::string_view GetSectionNameForKey() const;
 
   // Return section name for value trie
-  virtual absl::string_view GetSectionNameForValue() const;
+  absl::string_view GetSectionNameForValue() const;
 
   // Return section name for tokens array
-  virtual absl::string_view GetSectionNameForTokens() const;
+  absl::string_view GetSectionNameForTokens() const;
 
   // Return section name for frequent pos map
-  virtual absl::string_view GetSectionNameForPos() const;
+  absl::string_view GetSectionNameForPos() const;
 
   // Compresses key string into small bytes.
-  virtual std::string EncodeKey(absl::string_view src) const;
+  std::string EncodeKey(absl::string_view src) const;
 
   // Decompress key string
-  virtual std::string DecodeKey(absl::string_view src) const;
+  std::string DecodeKey(absl::string_view src) const;
 
   // Returns the length of encoded key string.
-  virtual size_t GetEncodedKeyLength(absl::string_view src) const;
+  size_t GetEncodedKeyLength(absl::string_view src) const;
 
   // Returns the length of decoded key string.
-  virtual size_t GetDecodedKeyLength(absl::string_view src) const;
+  size_t GetDecodedKeyLength(absl::string_view src) const;
 
   // Compresses value string into small bytes.
-  virtual std::string EncodeValue(absl::string_view src) const;
+  std::string EncodeValue(absl::string_view src) const;
 
   // Decompress value string
-  virtual std::string DecodeValue(absl::string_view src) const;
+  std::string DecodeValue(absl::string_view src) const;
 
   // Compress tokens
-  virtual std::string EncodeTokens(absl::Span<const TokenInfo> tokens) const;
+  std::string EncodeTokens(absl::Span<const TokenInfo> tokens) const;
 
   // Decompress a token.
-  virtual bool DecodeToken(const uint8_t* ptr, TokenInfo* token_info,
-                           int* read_bytes) const;
+  bool DecodeToken(const uint8_t* ptr, TokenInfo* token_info,
+                   int* read_bytes) const;
 
   // Read a token for reverse lookup
   // If the token have value id, assign it to |id_in_value_trie|
   // otherwise assign -1
   // Return false if a token is the last token for a certain key
-  virtual bool ReadTokenForReverseLookup(const uint8_t* ptr, int* value_id,
-                                         int* read_bytes) const;
+  bool ReadTokenForReverseLookup(const uint8_t* ptr, int* value_id,
+                                 int* read_bytes) const;
 
-  virtual uint8_t GetTokensTerminationFlag() const;
+  uint8_t GetTokensTerminationFlag() const;
 
  private:
   std::string EncodeToken(absl::Span<const TokenInfo> tokens, int index) const;

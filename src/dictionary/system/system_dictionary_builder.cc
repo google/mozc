@@ -126,17 +126,17 @@ void SystemDictionaryBuilder::WriteToStream(
   std::vector<DictionaryFileSection> sections;
   DictionaryFileSection value_trie_section(
       value_trie_builder_.image(),
-      file_codec_->GetSectionName(codec_->GetSectionNameForValue()));
+      file_codec_.GetSectionName(codec_.GetSectionNameForValue()));
   sections.push_back(value_trie_section);
 
   DictionaryFileSection key_trie_section(
       key_trie_builder_.image(),
-      file_codec_->GetSectionName(codec_->GetSectionNameForKey()));
+      file_codec_.GetSectionName(codec_.GetSectionNameForKey()));
   sections.push_back(key_trie_section);
 
   DictionaryFileSection token_array_section(
       token_array_builder_.image(),
-      file_codec_->GetSectionName(codec_->GetSectionNameForTokens()));
+      file_codec_.GetSectionName(codec_.GetSectionNameForTokens()));
 
   sections.push_back(token_array_section);
   uint32_t frequent_pos_array[256] = {0};
@@ -146,7 +146,7 @@ void SystemDictionaryBuilder::WriteToStream(
   DictionaryFileSection frequent_pos_section(
       absl::string_view(reinterpret_cast<const char*>(frequent_pos_array),
                         sizeof frequent_pos_array),
-      file_codec_->GetSectionName(codec_->GetSectionNameForPos()));
+      file_codec_.GetSectionName(codec_.GetSectionNameForPos()));
   sections.push_back(frequent_pos_section);
 
   if (absl::GetFlag(FLAGS_preserve_intermediate_dictionary) &&
@@ -162,7 +162,7 @@ void SystemDictionaryBuilder::WriteToStream(
   }
 
   LOG(INFO) << "Start writing dictionary file.";
-  file_codec_->WriteSections(sections, output_stream);
+  file_codec_.WriteSections(sections, output_stream);
   LOG(INFO) << "Start writing dictionary file... done.";
 }
 
@@ -309,7 +309,7 @@ void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList& key_info_list) {
         // These values will be stored in token array as flags
         continue;
       }
-      std::string value_str = codec_->EncodeValue(token_info.token->value);
+      std::string value_str = codec_.EncodeValue(token_info.token->value);
       value_trie_builder_.Add(std::move(value_str));
     }
   }
@@ -320,7 +320,7 @@ void SystemDictionaryBuilder::SetIdForValue(KeyInfoList* key_info_list) const {
   for (KeyInfo& key_info : *key_info_list) {
     for (TokenInfo& token_info : key_info.tokens) {
       const std::string value_str =
-          codec_->EncodeValue(token_info.token->value);
+          codec_.EncodeValue(token_info.token->value);
       token_info.id_in_value_trie = value_trie_builder_.GetId(value_str);
     }
   }
@@ -429,7 +429,7 @@ void SystemDictionaryBuilder::SetValueType(KeyInfoList* key_info_list) const {
 
 void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoList& key_info_list) {
   for (const KeyInfo& key_info : key_info_list) {
-    key_trie_builder_.Add(codec_->EncodeKey(key_info.key));
+    key_trie_builder_.Add(codec_.EncodeKey(key_info.key));
   }
   key_trie_builder_.Build();
 }
@@ -437,7 +437,7 @@ void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoList& key_info_list) {
 void SystemDictionaryBuilder::SetIdForKey(KeyInfoList* key_info_list) const {
   for (KeyInfo& key_info : *key_info_list) {
     key_info.id_in_key_trie =
-        key_trie_builder_.GetId(codec_->EncodeKey(key_info.key));
+        key_trie_builder_.GetId(codec_.EncodeKey(key_info.key));
   }
 }
 
@@ -454,11 +454,11 @@ void SystemDictionaryBuilder::BuildTokenArray(
     }
 
     for (const KeyInfo* key_info : id_to_keyinfo_table) {
-      token_array_builder_.Add(codec_->EncodeTokens(key_info->tokens));
+      token_array_builder_.Add(codec_.EncodeTokens(key_info->tokens));
     }
   }
 
-  token_array_builder_.Add(std::string(1, codec_->GetTokensTerminationFlag()));
+  token_array_builder_.Add(std::string(1, codec_.GetTokensTerminationFlag()));
   token_array_builder_.Build();
 }
 

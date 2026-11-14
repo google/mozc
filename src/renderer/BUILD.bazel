@@ -154,10 +154,7 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "table_layout",
-    srcs = [
-        "table_layout.cc",
-        "table_layout_interface.h",
-    ],
+    srcs = ["table_layout.cc"],
     hdrs = ["table_layout.h"],
     visibility = ["//renderer:__subpackages__"],
     deps = [
@@ -170,10 +167,7 @@ mozc_cc_library(
 mozc_cc_test(
     name = "table_layout_test",
     size = "small",
-    srcs = [
-        "table_layout_interface.h",
-        "table_layout_test.cc",
-    ],
+    srcs = ["table_layout_test.cc"],
     tags = ["noandroid"],
     deps = [
         ":table_layout",
