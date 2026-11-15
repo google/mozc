@@ -106,8 +106,6 @@ TEST_F(TableTest, LookUp) {
   InitTable(&table);
 
   for (const TestCase& test : test_cases) {
-    std::string output;
-    std::string pending;
     const Entry* entry;
     entry = table.LookUp(test.input);
 

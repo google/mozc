@@ -502,8 +502,6 @@ TEST(UtilTest, Utf8SubString3) {
 }
 
 TEST(UtilTest, StripUtf8Bom) {
-  std::string line;
-
   // Should be stripped.
   EXPECT_EQ(Util::StripUtf8Bom("\xef\xbb\xbf"
                                "abc"),

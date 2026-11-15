@@ -1698,7 +1698,6 @@ void EngineConverter::FillCandidateWindow(
 
   // The position to display the candidate window.
   size_t position = 0;
-  std::string conversion;
   for (size_t i = 0; i < segment_index_; i += GetSegmentSpan(i)) {
     position += Util::CharsLen(GetSelectedCandidate(i).value);
   }

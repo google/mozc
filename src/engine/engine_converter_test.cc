@@ -2819,9 +2819,6 @@ TEST_F(EngineConverterTest, Clone) {
   auto mock_converter = std::make_shared<MockConverter>();
   EngineConverter src(mock_converter, request_, config_);
 
-  const std::string kKamabokono = "かまぼこの";
-  const std::string kInbou = "いんぼう";
-  const std::string kInbouKanji = "陰謀";
 
   {  // create source converter
     Segments segments;

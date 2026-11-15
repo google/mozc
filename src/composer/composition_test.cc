@@ -159,7 +159,6 @@ bool TestGetChunkAt(Composition& comp,
     EXPECT_TRUE(expected_it == it);
     EXPECT_EQ(inner_position, expected_inner_position);
   } else {
-    std::string result, expected_result;
     EXPECT_EQ(it->conversion(), expected_it->conversion());
     EXPECT_EQ(it->pending(), expected_it->pending());
     EXPECT_EQ(it->raw(), expected_it->raw());
