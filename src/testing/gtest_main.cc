@@ -32,6 +32,8 @@
 #include <crtdbg.h>
 #endif  // _WIN32
 
+#include <string>
+
 #include "absl/flags/flag.h"
 #include "base/init_mozc.h"
 #include "testing/benchmark.h"
@@ -47,9 +49,14 @@ int main(int argc, char** argv) {
 #else   // !GTEST_HAS_ABSL
   const char* usage = argv[0];
 #endif  // GTEST_HAS_ABSL
+  // Require an explicit --benchmark_filter flag to run benchmarks; Google
+  // Benchmark treats an empty filter in RunSpecifiedBenchmarks() as ".".
+  // Initialize benchmark flags first so they are stripped from argv before
+  // InitMozc() rejects unknown command-line flags.
+  benchmark::SetBenchmarkFilter("");
+  benchmark::Initialize(&argc, argv);
   mozc::InitMozc(usage, &argc, &argv);
   testing::InitGoogleTest(&argc, argv);
-  benchmark::Initialize(&argc, argv);
 
 #ifdef _WIN32
   _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
@@ -64,7 +71,9 @@ int main(int argc, char** argv) {
   if (result != 0) {
     return result;
   }
-  benchmark::RunSpecifiedBenchmarks();
+  if (!benchmark::GetBenchmarkFilter().empty()) {
+    benchmark::RunSpecifiedBenchmarks();
+  }
   return 0;
 }
 
