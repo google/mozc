@@ -200,5 +200,179 @@ TEST(ConnectorTest, GetTransitionCost_TwoByteCost) {
   EXPECT_EQ(connector->GetTransitionCost(1, 1), 200);
 }
 
+TEST(ConnectorTest, OutOfBoundsPosIdsReturnInvalidCost) {
+  alignas(uint32_t) static constexpr uint8_t kData[] = {
+      0xAB,
+      0xCD,  // magic
+      0x01,
+      0x00,  // resolution = 1
+      0x02,
+      0x00,
+      0x02,
+      0x00,  // rsize = 2, lsize = 2
+      0x64,
+      0x00,
+      0xC8,
+      0x00,  // mode values: 100, 200
+      // rid 0
+      0x04,
+      0x00,
+      0x04,
+      0x00,  // compact_bits_size = 4, values_size = 4
+      0x01,
+      0x00,
+      0x00,
+      0x00,  // chunk bits
+      0x02,
+      0x00,
+      0x00,
+      0x00,  // compact bits
+      0x30,
+      0x75,
+      0x00,
+      0x00,  // values
+      // rid 1
+      0x04,
+      0x00,
+      0x04,
+      0x00,  // compact_bits_size = 4, values_size = 4
+      0x01,
+      0x00,
+      0x00,
+      0x00,  // chunk bits
+      0x01,
+      0x00,
+      0x00,
+      0x00,  // compact bits
+      0x80,
+      0x02,
+      0x00,
+      0x00,  // values
+  };
+  absl::StatusOr<Connector> connector = Connector::Create(
+      absl::string_view(reinterpret_cast<const char*>(kData), sizeof(kData)));
+  ASSERT_OK(connector);
+
+  for (int trial = 0; trial < 2; ++trial) {
+    EXPECT_EQ(connector->GetTransitionCost(2, 0), Connector::kInvalidCost);
+    EXPECT_EQ(connector->GetTransitionCost(0, 2), Connector::kInvalidCost);
+    EXPECT_EQ(connector->GetTransitionCost(2, 2), Connector::kInvalidCost);
+    EXPECT_EQ(connector->GetTransitionCost(65535, 65535),
+              Connector::kInvalidCost);
+  }
+}
+
+TEST(ConnectorTest, RejectsInconsistentRowBitAndValueSizes) {
+  // chunk_bits has 1 chunk set, but compact_bits_size is 0.
+  {
+    alignas(uint32_t) static constexpr uint8_t kTooSmallCompactBits[] = {
+        0xAB,
+        0xCD,  // magic
+        0x40,
+        0x00,  // resolution = 64
+        0x01,
+        0x00,
+        0x01,
+        0x00,  // rsize = 1, lsize = 1
+        0x64,
+        0x00,
+        0x00,
+        0x00,  // mode values: 100 (+ padding)
+        // rid 0
+        0x00,
+        0x00,
+        0x00,
+        0x00,  // compact_bits_size = 0, values_size = 0
+        0x01,
+        0x00,
+        0x00,
+        0x00,  // chunk bits: 1 chunk set
+    };
+    absl::StatusOr<Connector> connector = Connector::Create(
+        absl::string_view(reinterpret_cast<const char*>(kTooSmallCompactBits),
+                          sizeof(kTooSmallCompactBits)));
+    EXPECT_FALSE(connector.ok());
+  }
+
+  // compact_bits has 5 bits set with 1-byte costs, but values_size is 4.
+  {
+    alignas(uint32_t) static constexpr uint8_t kTooSmallOneByteValues[] = {
+        0xAB,
+        0xCD,  // magic
+        0x40,
+        0x00,  // resolution = 64 (1-byte values)
+        0x01,
+        0x00,
+        0x01,
+        0x00,  // rsize = 1, lsize = 1
+        0x64,
+        0x00,
+        0x00,
+        0x00,  // mode values: 100 (+ padding)
+        // rid 0
+        0x04,
+        0x00,
+        0x04,
+        0x00,  // compact_bits_size = 4, values_size = 4
+        0x01,
+        0x00,
+        0x00,
+        0x00,  // chunk bits: 1 chunk set
+        0x1F,
+        0x00,
+        0x00,
+        0x00,  // compact bits: 5 values set
+        0x01,
+        0x02,
+        0x03,
+        0x04,  // values: only 4 bytes available
+    };
+    absl::StatusOr<Connector> connector = Connector::Create(
+        absl::string_view(reinterpret_cast<const char*>(kTooSmallOneByteValues),
+                          sizeof(kTooSmallOneByteValues)));
+    EXPECT_FALSE(connector.ok());
+  }
+
+  // compact_bits has 3 bits set with 2-byte costs (needs 6 bytes), but
+  // values_size is 4.
+  {
+    alignas(uint32_t) static constexpr uint8_t kTooSmallTwoByteValues[] = {
+        0xAB,
+        0xCD,  // magic
+        0x01,
+        0x00,  // resolution = 1 (2-byte values)
+        0x01,
+        0x00,
+        0x01,
+        0x00,  // rsize = 1, lsize = 1
+        0x64,
+        0x00,
+        0x00,
+        0x00,  // mode values: 100 (+ padding)
+        // rid 0
+        0x04,
+        0x00,
+        0x04,
+        0x00,  // compact_bits_size = 4, values_size = 4
+        0x01,
+        0x00,
+        0x00,
+        0x00,  // chunk bits: 1 chunk set
+        0x07,
+        0x00,
+        0x00,
+        0x00,  // compact bits: 3 values set
+        0x01,
+        0x00,
+        0x02,
+        0x00,  // values: only 4 bytes available
+    };
+    absl::StatusOr<Connector> connector = Connector::Create(
+        absl::string_view(reinterpret_cast<const char*>(kTooSmallTwoByteValues),
+                          sizeof(kTooSmallTwoByteValues)));
+    EXPECT_FALSE(connector.ok());
+  }
+}
+
 }  // namespace
 }  // namespace mozc

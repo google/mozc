@@ -29,6 +29,7 @@
 
 #include "converter/connector.h"
 
+#include <algorithm>
 #include <atomic>
 #include <bit>
 #include <cstddef>
@@ -113,12 +114,11 @@ absl::StatusOr<Metadata> ParseMetadata(const char* connection_data,
         "connector.cc: At least ", Metadata::kByteSize,
         " bytes expected.  Bytes: '", data, "' (", connection_size, " bytes)"));
   }
-  const uint16_t* data = reinterpret_cast<const uint16_t*>(connection_data);
   Metadata metadata;
-  metadata.magic = data[0];
-  metadata.resolution = data[1];
-  metadata.rsize = data[2];
-  metadata.lsize = data[3];
+  metadata.magic = LoadUnaligned<uint16_t>(connection_data);
+  metadata.resolution = LoadUnaligned<uint16_t>(connection_data + 2);
+  metadata.rsize = LoadUnaligned<uint16_t>(connection_data + 4);
+  metadata.lsize = LoadUnaligned<uint16_t>(connection_data + 6);
 
   if (metadata.magic != kConnectorMagicNumber) {
     return absl::FailedPreconditionError(absl::StrCat(
@@ -288,6 +288,48 @@ absl::Status Connector::Init(absl::string_view connection_data) {
     VALIDATE_ALIGNMENT(values);
     ptr += values_size;
 
+    // RankBitVector accesses compact_bits in 32-bit Word units, so
+    // compact_bits_size must be a multiple of 4 bytes.
+    if (compact_bits_size % sizeof(uint32_t) != 0) {
+      return absl::FailedPreconditionError(
+          absl::StrCat("connector.cc:", __LINE__, ": ", gen_debug_info(ptr),
+                       ": compact_bits_size (", compact_bits_size,
+                       ") must be a multiple of 4 at row ", i));
+    }
+
+    // Each set bit in chunk_bits corresponds to kChunkWidth (8) bits in
+    // compact_bits; verify compact_bits is large enough to prevent
+    // out-of-bounds reads in RankBitVector::Rank1IfSet().
+    size_t num_chunks = 0;
+    for (size_t offset = 0; offset < chunk_bits_size;
+         offset += sizeof(uint32_t)) {
+      num_chunks += std::popcount(LoadUnaligned<uint32_t>(chunk_bits + offset));
+    }
+    if (num_chunks * kChunkWidth > static_cast<size_t>(compact_bits_size) * 8) {
+      return absl::FailedPreconditionError(absl::StrCat(
+          "connector.cc:", __LINE__, ": ", gen_debug_info(ptr),
+          ": compact_bits_size (", compact_bits_size, ") is too small for ",
+          num_chunks, " chunks at row ", i));
+    }
+
+    // Each set bit in compact_bits indexes one entry in values (1 or 2 bytes);
+    // verify values_size is large enough to prevent out-of-bounds reads in
+    // Row::GetValue().
+    size_t num_values = 0;
+    for (size_t offset = 0; offset < compact_bits_size;
+         offset += sizeof(uint32_t)) {
+      num_values +=
+          std::popcount(LoadUnaligned<uint32_t>(compact_bits + offset));
+    }
+    const size_t required_values_size =
+        num_values * (use_1byte_value_ ? sizeof(uint8_t) : sizeof(uint16_t));
+    if (required_values_size > values_size) {
+      return absl::FailedPreconditionError(
+          absl::StrCat("connector.cc:", __LINE__, ": ", gen_debug_info(ptr),
+                       ": values_size (", values_size, ") is too small for ",
+                       num_values, " values at row ", i));
+    }
+
     rows_[i].Init(absl::MakeConstSpan(chunk_bits, chunk_bits_size),
                   absl::MakeConstSpan(compact_bits, compact_bits_size),
                   absl::MakeConstSpan(values, values_size));
@@ -340,6 +382,11 @@ int Connector::GetTransitionCost(uint16_t rid, uint16_t lid) const {
 }
 
 int Connector::LookupCost(uint16_t rid, uint16_t lid) const {
+  // rid and lid come from dictionary tokens rather than connection_data, so
+  // they are not covered by Connector::Init's load-time validation.
+  if (std::max(rid, lid) >= rows_.size()) [[unlikely]] {
+    return kInvalidCost;
+  }
   std::optional<uint16_t> value = rows_[rid].GetValue(lid, use_1byte_value_);
   if (!value.has_value()) {
     return default_cost_[rid];
