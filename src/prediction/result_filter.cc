@@ -42,6 +42,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/japanese.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "converter/attribute.h"
 #include "converter/connector.h"
@@ -256,23 +257,20 @@ size_t GetMissSpelledPosition(const absl::string_view key,
   }
 
   // Find the first position of character where miss spell occurs.
-  int position = 0;
-  ConstChar32Iterator key_iter(key);
-  for (ConstChar32Iterator hiragana_iter(hiragana_value);
-       !hiragana_iter.Done() && !key_iter.Done();
-       hiragana_iter.Next(), key_iter.Next(), ++position) {
-    if (hiragana_iter.Get() != key_iter.Get()) {
+  size_t position = 0;
+  const Utf8AsChars32 key_chars(key);
+  const Utf8AsChars32 value_chars(hiragana_value);
+  auto key_iter = key_chars.begin();
+  for (auto hiragana_iter = value_chars.begin();
+       hiragana_iter != value_chars.end() && key_iter != key_chars.end();
+       ++hiragana_iter, ++key_iter, ++position) {
+    if (*hiragana_iter != *key_iter) {
       return position;
     }
   }
 
   // not find. return the length of key.
-  while (!key_iter.Done()) {
-    ++position;
-    key_iter.Next();
-  }
-
-  return position;
+  return position + std::distance(key_iter, key_chars.end());
 }
 
 void RemoveRedundantResults(std::vector<Result>* results) {

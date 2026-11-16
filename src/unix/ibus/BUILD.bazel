@@ -213,6 +213,7 @@ mozc_cc_library(
         "//base:util",
         "//base:vlog",
         "//base/container:flat_map",
+        "//base/strings:unicode",
         "//client",
         "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",

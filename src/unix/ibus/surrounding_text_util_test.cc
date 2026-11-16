@@ -157,6 +157,19 @@ TEST(SurroundingTextUtilTest, GetAnchorPosFromSelection) {
   EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("あいう", "あい",
                                                              2, &anchor_pos));
   EXPECT_EQ(anchor_pos, 0);
+
+  // Truncated or ill-formed UTF-8 in surrounding_text or selected_text must
+  // safely return false without out-of-bounds reads or mid-codepoint matches.
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection("\xE3", "a", 1,
+                                                              &anchor_pos));
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection("abc\xE3", "a", 4,
+                                                              &anchor_pos));
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
+      "あ", "\xE3\x81", 0, &anchor_pos));
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
+      "あ", "\xE3\x81", 1, &anchor_pos));
+  EXPECT_FALSE(SurroundingTextUtil::GetAnchorPosFromSelection(
+      "\xED\xA0\x80", "\xED\xA0\x80", 0, &anchor_pos));
 }
 
 }  // namespace ibus

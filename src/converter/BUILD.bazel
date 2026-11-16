@@ -725,7 +725,7 @@ mozc_cc_library(
         ":segments",
         "//base:japanese_util",
         "//base:util",
-        "//base/port:reversed_view",
+        "//base/strings:unicode",
         "//dictionary:pos_matcher",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/strings:string_view",
@@ -760,7 +760,7 @@ mozc_cc_library(
     deps = [
         ":immutable_converter_interface",
         ":segments",
-        "//base:util",
+        "//base/strings:unicode",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/log",

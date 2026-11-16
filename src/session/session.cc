@@ -45,6 +45,7 @@
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/port.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/key_event_util.h"
@@ -1223,12 +1224,12 @@ bool Session::ConvertReverse(commands::Command* command) {
   const std::string& composition = command->input().command().text();
 
   // Validate before requesting reverse conversion
-  if (!Util::IsValidUtf8(composition)) {
+  if (!strings::IsValidUtf8(composition)) {
     DLOG(INFO) << "Input is not valid text as utf8";
     return DoNothing(command);
   }
-  for (ConstChar32Iterator iter(composition); !iter.Done(); iter.Next()) {
-    if (!Util::IsAcceptableCharacterAsCandidate(iter.Get())) {
+  for (const char32_t codepoint : Utf8AsChars32(composition)) {
+    if (!Util::IsAcceptableCharacterAsCandidate(codepoint)) {
       DLOG(INFO)
           << "Input contains characters not suitable for reverse conversion";
       return DoNothing(command);

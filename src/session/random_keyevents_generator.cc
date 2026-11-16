@@ -43,7 +43,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/japanese_util.h"
-#include "base/util.h"
+#include "base/strings/unicode.h"
 #include "base/vlog.h"
 #include "protocol/commands.pb.h"
 #include "session/session_stress_test_data.h"
@@ -98,8 +98,7 @@ void RandomKeyEventsGenerator::PrepareForMemoryLeakTest() {
 void RandomKeyEventsGenerator::TypeRawKeys(
     absl::string_view romaji, bool create_probable_key_events,
     std::vector<commands::KeyEvent>* keys) {
-  for (ConstChar32Iterator iter(romaji); !iter.Done(); iter.Next()) {
-    const uint32_t codepoint = iter.Get();
+  for (const uint32_t codepoint : Utf8AsChars32(romaji)) {
     if (codepoint < 0x20 || codepoint > 0x7F) {
       continue;
     }

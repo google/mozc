@@ -58,6 +58,7 @@ mozc_cc_library(
         "//base:clock",
         "//base:port",
         "//base:util",
+        "//base/strings:unicode",
         "//composer",
         "//composer:key_event_util",
         "//composer:table",
@@ -414,8 +415,8 @@ mozc_cc_library(
     deps = [
         ":keymap",
         "//base:japanese_util",
-        "//base:util",
         "//base:vlog",
+        "//base/strings:unicode",
         "//composer:key_parser",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/base",

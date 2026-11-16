@@ -33,6 +33,7 @@
 
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -76,8 +77,7 @@ bool CollocationUtil::IsNumber(char32_t c) {
 void CollocationUtil::RemoveExtraCharacters(const absl::string_view input,
                                             bool remove_number,
                                             std::string* output) {
-  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    const char32_t codepoint = iter.Get();
+  for (const char32_t codepoint : Utf8AsChars32(input)) {
     if (((Util::GetScriptType(codepoint) != Util::UNKNOWN_SCRIPT) &&
          (!remove_number || !IsNumber(codepoint))) ||
         codepoint == 0x3005 ||                         // "々"

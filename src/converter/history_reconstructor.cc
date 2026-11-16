@@ -31,12 +31,10 @@
 
 #include <cstdint>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
-#include "base/port/reversed_view.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
@@ -56,43 +54,39 @@ namespace {
 //   - "C60" -> "60" / NUMBER
 //   - "200x" -> "x" / ALPHABET
 //   (currently only NUMBER and ALPHABET are supported)
-bool ExtractLastTokenWithScriptType(const absl::string_view text,
+bool ExtractLastTokenWithScriptType(absl::string_view text,
                                     std::string* last_token,
                                     Util::ScriptType* last_script_type) {
   last_token->clear();
   *last_script_type = Util::SCRIPT_TYPE_SIZE;
 
-  ConstChar32ReverseIterator iter(text);
-  if (iter.Done()) {
+  // Allow one whitespace at the end.
+  if (text.ends_with(' ')) {
+    text.remove_suffix(1);
+    if (text.ends_with(' ')) {
+      return false;
+    }
+  }
+  if (text.empty()) {
     return false;
   }
 
-  // Allow one whitespace at the end.
-  if (iter.Get() == ' ') {
-    iter.Next();
-    if (iter.Done()) {
-      return false;
-    }
-    if (iter.Get() == ' ') {
-      return false;
-    }
-  }
-
-  std::vector<char32_t> reverse_last_token;
-  Util::ScriptType last_script_type_found = Util::GetScriptType(iter.Get());
-  for (; !iter.Done(); iter.Next()) {
-    const char32_t codepoint = iter.Get();
-    if ((codepoint == ' ') ||
-        (Util::GetScriptType(codepoint) != last_script_type_found)) {
+  absl::string_view rest = text;
+  const UnicodeChar last_ch = Utf8AsUnicodeChar(rest).back();
+  const Util::ScriptType token_script_type =
+      Util::GetScriptType(last_ch.char32());
+  rest.remove_suffix(last_ch.utf8().size());
+  while (!rest.empty()) {
+    const UnicodeChar ch = Utf8AsUnicodeChar(rest).back();
+    if (ch.char32() == ' ' ||
+        Util::GetScriptType(ch.char32()) != token_script_type) {
       break;
     }
-    reverse_last_token.push_back(codepoint);
+    rest.remove_suffix(ch.utf8().size());
   }
 
-  *last_script_type = last_script_type_found;
-  for (const char32_t codepoint : port::reversed_view(reverse_last_token)) {
-    Util::CodepointToUtf8Append(codepoint, last_token);
-  }
+  *last_script_type = token_script_type;
+  last_token->assign(text.data() + rest.size(), text.size() - rest.size());
   return true;
 }
 }  // namespace

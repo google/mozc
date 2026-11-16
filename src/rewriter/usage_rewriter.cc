@@ -42,6 +42,7 @@
 #include "absl/strings/string_view.h"
 #include "base/bits.h"
 #include "base/container/serialized_string_array.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/candidate.h"
@@ -105,13 +106,11 @@ UsageRewriter::UsageRewriter(absl::string_view base_conjugation_suffix_data,
 // "合いました" => "合い"
 std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
     const absl::string_view word) {
-  // TODO(hidehiko): Refactor more based on ConstChar32Iterator.
   std::string result;
   int pos = 0;
   bool has_kanji = false;
   bool has_hiragana = false;
-  for (ConstChar32Iterator iter(word); !iter.Done(); iter.Next()) {
-    const char32_t codepoint = iter.Get();
+  for (const char32_t codepoint : Utf8AsChars32(word)) {
     const Util::ScriptType s = Util::GetScriptType(codepoint);
     if (pos == 0 && s != Util::KANJI) {
       return "";

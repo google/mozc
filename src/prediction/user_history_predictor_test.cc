@@ -2568,15 +2568,7 @@ std::string RemoveLastCodepointCharacter(absl::string_view input) {
   if (codepoint_count == 0) {
     return "";
   }
-
-  size_t codepoint_processed = 0;
-  std::string output;
-  for (ConstChar32Iterator iter(input);
-       !iter.Done() && (codepoint_processed < codepoint_count - 1);
-       iter.Next(), ++codepoint_processed) {
-    Util::CodepointToUtf8Append(iter.Get(), &output);
-  }
-  return output;
+  return std::string(strings::Utf8Substring(input, 0, codepoint_count - 1));
 }
 
 struct PrivacySensitiveTestData {

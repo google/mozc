@@ -49,6 +49,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
@@ -147,8 +148,7 @@ bool IsZipCodeRequest(const absl::string_view key) {
   }
 
   int num_chars = 0;
-  for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
-    const char32_t c = iter.Get();
+  for (const char32_t c : Utf8AsChars32(key)) {
     if (!('0' <= c && c <= '9') && (c != '-')) {
       return false;
     }

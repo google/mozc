@@ -1239,8 +1239,7 @@ bool Composer::TransformCharactersForNumbers(std::string* query) {
   // flags to determine whether continue to the next step.
   bool has_symbols = false;
   bool has_alphanumerics = false;
-  for (ConstChar32Iterator iter(*query); !iter.Done(); iter.Next()) {
-    const char32_t one_char = iter.Get();
+  for (const char32_t one_char : Utf8AsChars32(*query)) {
     switch (one_char) {
       case 0x30FC:  // "ー"
         has_symbols = true;
@@ -1297,7 +1296,7 @@ bool Composer::TransformCharactersForNumbers(std::string* query) {
   bool transformed = false;
   size_t i = 0;
   std::string append_char;
-  for (ConstChar32Iterator iter(*query); !iter.Done(); iter.Next(), ++i) {
+  for (const char32_t codepoint : Utf8AsChars32(*query)) {
     append_char.clear();
     switch (char_scripts[i]) {
       case JA_HYPHEN: {
@@ -1368,12 +1367,13 @@ bool Composer::TransformCharactersForNumbers(std::string* query) {
 
     if (append_char.empty()) {
       // Append one character.
-      Util::CodepointToUtf8Append(iter.Get(), &transformed_query);
+      Util::CodepointToUtf8Append(codepoint, &transformed_query);
     } else {
       // Append the transformed character.
       transformed_query.append(append_char);
       transformed = true;
     }
+    ++i;
   }
   if (!transformed) {
     return false;

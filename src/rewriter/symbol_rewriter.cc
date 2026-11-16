@@ -46,6 +46,7 @@
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/strings/japanese.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/attribute.h"
@@ -104,8 +105,7 @@ std::string GetDescription(const absl::string_view value,
 
 // return true key has no-hiragana
 bool IsSymbol(const absl::string_view key) {
-  for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
-    const char32_t codepoint = iter.Get();
+  for (const char32_t codepoint : Utf8AsChars32(key)) {
     if (codepoint >= 0x3041 && codepoint <= 0x309F) {  // hiragana
       return false;
     }

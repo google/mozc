@@ -35,7 +35,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
-#include "base/util.h"
+#include "base/strings/unicode.h"
 #include "converter/candidate.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
@@ -51,19 +51,19 @@ namespace converter {
 bool TryNormalizingKeyAsMathExpression(const absl::string_view s,
                                        std::string* key) {
   key->reserve(s.size());
-  for (ConstChar32Iterator iter(s); !iter.Done(); iter.Next()) {
+  for (const char32_t codepoint : Utf8AsChars32(s)) {
     // Half-width arabic numbers.
-    if ('0' <= iter.Get() && iter.Get() <= '9') {
-      key->append(1, static_cast<char>(iter.Get()));
+    if ('0' <= codepoint && codepoint <= '9') {
+      key->append(1, static_cast<char>(codepoint));
       continue;
     }
     // Full-width arabic numbers ("０" -- "９")
-    if (0xFF10 <= iter.Get() && iter.Get() <= 0xFF19) {
-      const char c = iter.Get() - 0xFF10 + '0';
+    if (0xFF10 <= codepoint && codepoint <= 0xFF19) {
+      const char c = codepoint - 0xFF10 + '0';
       key->append(1, c);
       continue;
     }
-    switch (iter.Get()) {
+    switch (codepoint) {
       case 0x002B:
       case 0xFF0B:  // "+", "＋"
         key->append(1, '+');

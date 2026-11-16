@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
@@ -46,6 +47,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/bits.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/attribute.h"
@@ -114,12 +116,7 @@ enum SegmentLookupType {
 
 // returns true if the given string contains number including Kanji.
 bool ContainsNumber(const absl::string_view str) {
-  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    if (CollocationUtil::IsNumber(iter.Get())) {
-      return true;
-    }
-  }
-  return false;
+  return absl::c_any_of(Utf8AsChars32(str), CollocationUtil::IsNumber);
 }
 
 // Returns true if value matches the pattern XXXPPPYYY, where XXX is a Kanji

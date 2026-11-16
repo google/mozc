@@ -7945,14 +7945,20 @@ TEST_F(SessionTest, ConvertReverseFails) {
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
-  constexpr absl::string_view kKanjiContainsNewline = "改行\n禁止";
-  commands::Command command;
-  SetupCommandForReverseConversion(kKanjiContainsNewline,
-                                   command.mutable_input());
+  for (const absl::string_view invalid_input : {
+           absl::string_view("改行\n禁止"),
+           // Out-of-range 4-byte sequence (U+110000).
+           absl::string_view("\xF4\x90\x80\x80"),
+           // CESU-8 unpaired surrogate (U+D800).
+           absl::string_view("\xED\xA0\x80"),
+       }) {
+    commands::Command command;
+    SetupCommandForReverseConversion(invalid_input, command.mutable_input());
 
-  EXPECT_TRUE(session.SendCommand(&command));
-  EXPECT_TRUE(command.output().consumed());
-  EXPECT_FALSE(command.output().has_candidate_window());
+    EXPECT_TRUE(session.SendCommand(&command));
+    EXPECT_TRUE(command.output().consumed());
+    EXPECT_FALSE(command.output().has_candidate_window());
+  }
 }
 
 TEST_F(SessionTest, ConvertReverse) {

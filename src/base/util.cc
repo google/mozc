@@ -720,26 +720,15 @@ bool Util::IsBracketPairText(absl::string_view input) {
   // themselves but they also have bracket-like usages by doubling, or coupling
   // with the corresponding characters. (e.g. "", '', <>, ``)
   // This function considers such character sequences as "bracket pairs".
-  static const std::array<absl::string_view, 4> kAdditionalBracketPairs{
+  static constexpr std::array<absl::string_view, 4> kAdditionalBracketPairs{
       "\"\"", "''", "<>", "``"};  // sorted
-  const auto iter0 = std::lower_bound(kAdditionalBracketPairs.begin(),
-                                      kAdditionalBracketPairs.end(), input);
-  if (iter0 != kAdditionalBracketPairs.end() && *iter0 == input) {
-    return true;
-  }
-
-  const auto iter1 =
-      std::lower_bound(kSortedBrackets.begin(), kSortedBrackets.end(), input);
-  if (iter1 != kSortedBrackets.end() && *iter1 == input) {
-    return true;
-  }
-
-  return false;
+  return absl::c_binary_search(kAdditionalBracketPairs, input) ||
+         absl::c_binary_search(kSortedBrackets, input);
 }
 
 bool Util::IsFullWidthSymbolInHalfWidthKatakana(absl::string_view input) {
-  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    switch (iter.Get()) {
+  for (const char32_t codepoint : Utf8AsChars32(input)) {
+    switch (codepoint) {
       case 0x3002:  // FULLSTOP "。"
       case 0x300C:  // LEFT CORNER BRACKET "「"
       case 0x300D:  // RIGHT CORNER BRACKET "」"
@@ -757,8 +746,8 @@ bool Util::IsFullWidthSymbolInHalfWidthKatakana(absl::string_view input) {
 }
 
 bool Util::IsHalfWidthKatakanaSymbol(absl::string_view input) {
-  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    switch (iter.Get()) {
+  for (const char32_t codepoint : Utf8AsChars32(input)) {
+    switch (codepoint) {
       case 0xFF61:  // FULLSTOP "｡"
       case 0xFF62:  // LEFT CORNER BRACKET "｢"
       case 0xFF63:  // RIGHT CORNER BRACKET "｣"
@@ -776,8 +765,8 @@ bool Util::IsHalfWidthKatakanaSymbol(absl::string_view input) {
 }
 
 bool Util::IsKanaSymbolContained(absl::string_view input) {
-  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    switch (iter.Get()) {
+  for (const char32_t codepoint : Utf8AsChars32(input)) {
+    switch (codepoint) {
       case 0x3002:  // FULLSTOP "。"
       case 0x300C:  // LEFT CORNER BRACKET "「"
       case 0x300D:  // RIGHT CORNER BRACKET "」"
@@ -1002,25 +991,18 @@ Util::ScriptType Util::GetScriptTypeWithoutSymbols(absl::string_view str) {
 
 // return true if all script_type in str is "type"
 bool Util::IsScriptType(absl::string_view str, Util::ScriptType type) {
-  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    const char32_t codepoint = iter.Get();
+  return absl::c_all_of(Utf8AsChars32(str), [type](const char32_t codepoint) {
     // Exception: 30FC (PROLONGEDSOUND MARK is categorized as HIRAGANA as well)
-    if (type != GetScriptType(codepoint) &&
-        (codepoint != 0x30FC || type != HIRAGANA)) {
-      return false;
-    }
-  }
-  return true;
+    return type == GetScriptType(codepoint) ||
+           (codepoint == 0x30FC && type == HIRAGANA);
+  });
 }
 
 // return true if the string contains script_type char
 bool Util::ContainsScriptType(absl::string_view str, ScriptType type) {
-  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    if (type == GetScriptType(iter.Get())) {
-      return true;
-    }
-  }
-  return false;
+  return absl::c_any_of(Utf8AsChars32(str), [type](const char32_t codepoint) {
+    return type == GetScriptType(codepoint);
+  });
 }
 
 // return the Form Type of string
@@ -1028,8 +1010,8 @@ Util::FormType Util::GetFormType(absl::string_view str) {
   // TODO(hidehiko): get rid of using FORM_TYPE_SIZE.
   FormType result = FORM_TYPE_SIZE;
 
-  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    const FormType type = GetFormType(iter.Get());
+  for (const char32_t codepoint : Utf8AsChars32(str)) {
+    const FormType type = GetFormType(codepoint);
     if (type == UNKNOWN_FORM || (result != FORM_TYPE_SIZE && type != result)) {
       return UNKNOWN_FORM;
     }

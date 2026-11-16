@@ -140,8 +140,8 @@ void InsertCorrectedNodes(size_t pos, absl::string_view key,
 bool IsNumber(const char c) { return c >= '0' && c <= '9'; }
 
 bool ContainsWhiteSpacesOnly(const absl::string_view s) {
-  for (ConstChar32Iterator iter(s); !iter.Done(); iter.Next()) {
-    switch (iter.Get()) {
+  for (const char32_t codepoint : Utf8AsChars32(s)) {
+    switch (codepoint) {
       case 0x09:    // TAB
       case 0x20:    // Half-width space
       case 0x3000:  // Full-width space

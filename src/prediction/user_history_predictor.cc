@@ -61,6 +61,7 @@
 #include "base/clock.h"
 #include "base/container/trie.h"
 #include "base/japanese_util.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
@@ -674,8 +675,7 @@ bool UserHistoryPredictor::MaybeRomanMisspelledKey(absl::string_view key) {
   int num_alpha = 0;
   int num_hiragana = 0;
   int num_unknown = 0;
-  for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
-    const char32_t codepoint = iter.Get();
+  for (const char32_t codepoint : Utf8AsChars32(key)) {
     const Util::ScriptType type = Util::GetScriptType(codepoint);
     if (type == Util::HIRAGANA || codepoint == 0x30FC) {  // "ー".
       ++num_hiragana;

@@ -160,15 +160,7 @@ bool NumberUtil::IsArabicNumber(absl::string_view input_string) {
   if (input_string.empty()) {
     return false;
   }
-  for (ConstChar32Iterator iter(input_string); !iter.Done(); iter.Next()) {
-    if (!IsArabicDecimalChar32(iter.Get())) {
-      // Found non-Arabic decimal character.
-      return false;
-    }
-  }
-
-  // All characters are numbers.
-  return true;
+  return absl::c_all_of(Utf8AsChars32(input_string), IsArabicDecimalChar32);
 }
 
 bool NumberUtil::IsDecimalInteger(absl::string_view str) {

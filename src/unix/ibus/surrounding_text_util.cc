@@ -36,6 +36,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -65,44 +66,6 @@ bool SurroundingTextUtil::GetSafeDelta(uint from, uint to, int32_t* delta) {
 
 namespace {
 
-// Moves |iter| with |skip_count| characters.
-// Returns false if |iter| reaches to the end before skipping
-// |skip_count| characters.
-bool Skip(ConstChar32Iterator* iter, size_t skip_count) {
-  for (size_t i = 0; i < skip_count; ++i) {
-    if (iter->Done()) {
-      return false;
-    }
-    iter->Next();
-  }
-  return true;
-}
-
-// Returns true if |prefix_iter| is the prefix of |iter|.
-// Returns false if |prefix_iter| is an empty sequence.
-// Otherwise returns false.
-// This function receives ConstChar32Iterator as pointer because
-// ConstChar32Iterator is defined as non-copyable.
-bool StartsWith(ConstChar32Iterator* iter, ConstChar32Iterator* prefix_iter) {
-  if (iter->Done() || prefix_iter->Done()) {
-    return false;
-  }
-
-  while (true) {
-    if (iter->Get() != prefix_iter->Get()) {
-      return false;
-    }
-    prefix_iter->Next();
-    if (prefix_iter->Done()) {
-      return true;
-    }
-    iter->Next();
-    if (iter->Done()) {
-      return false;
-    }
-  }
-}
-
 // Returns true if |surrounding_text| contains |selected_text|
 // from |cursor_pos| to |*anchor_pos|.
 // Otherwise returns false.
@@ -110,14 +73,8 @@ bool SearchAnchorPosForward(absl::string_view surrounding_text,
                             absl::string_view selected_text,
                             size_t selected_chars_len, uint cursor_pos,
                             uint* anchor_pos) {
-  ConstChar32Iterator iter(surrounding_text);
-  // Move |iter| to cursor pos.
-  if (!Skip(&iter, cursor_pos)) {
-    return false;
-  }
-
-  ConstChar32Iterator sel_iter(selected_text);
-  if (!StartsWith(&iter, &sel_iter)) {
+  if (!Util::Utf8SubString(surrounding_text, cursor_pos)
+           .starts_with(selected_text)) {
     return false;
   }
   *anchor_pos = cursor_pos + selected_chars_len;
@@ -135,19 +92,12 @@ bool SearchAnchorPosBackward(absl::string_view surrounding_text,
     return false;
   }
 
-  ConstChar32Iterator iter(surrounding_text);
-  // Skip |iter| to (potential) anchor pos.
   const uint skip_count = cursor_pos - selected_chars_len;
-  DCHECK_LE(skip_count, cursor_pos);
-  if (!Skip(&iter, skip_count)) {
+  if (!Util::Utf8SubString(surrounding_text, skip_count)
+           .starts_with(selected_text)) {
     return false;
   }
-
-  ConstChar32Iterator sel_iter(selected_text);
-  if (!StartsWith(&iter, &sel_iter)) {
-    return false;
-  }
-  *anchor_pos = cursor_pos - selected_chars_len;
+  *anchor_pos = skip_count;
   return true;
 }
 
@@ -158,11 +108,12 @@ bool SurroundingTextUtil::GetAnchorPosFromSelection(
     uint cursor_pos, uint* anchor_pos) {
   DCHECK(anchor_pos);
 
-  if (surrounding_text.empty()) {
+  if (surrounding_text.empty() || selected_text.empty()) {
     return false;
   }
 
-  if (selected_text.empty()) {
+  if (!strings::IsValidUtf8(surrounding_text) ||
+      !strings::IsValidUtf8(selected_text)) {
     return false;
   }
 
