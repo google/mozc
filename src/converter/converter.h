@@ -32,13 +32,13 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <limits>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
+#include "absl/functional/function_ref.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -62,15 +62,15 @@ namespace converter {
 class Converter final : public ConverterInterface {
  public:
   using ImmutableConverterFactory =
-      std::function<std::unique_ptr<const ImmutableConverterInterface>(
+      absl::FunctionRef<std::unique_ptr<const ImmutableConverterInterface>(
           const engine::Modules& modules)>;
 
   using PredictorFactory =
-      std::function<std::unique_ptr<prediction::PredictorInterface>(
+      absl::FunctionRef<std::unique_ptr<prediction::PredictorInterface>(
           const engine::Modules& modules, const ConverterInterface& converter,
           const ImmutableConverterInterface& immutable_converter)>;
 
-  using RewriterFactory = std::function<std::unique_ptr<RewriterInterface>(
+  using RewriterFactory = absl::FunctionRef<std::unique_ptr<RewriterInterface>(
       const engine::Modules& modules)>;
 
   // Converter is initialized with the factory methods of ImmutableConverter,
@@ -78,9 +78,9 @@ class Converter final : public ConverterInterface {
   // same resources and modules. Converter creates these sub modules and holds
   // their ownership.
   Converter(std::unique_ptr<engine::Modules> modules,
-            const ImmutableConverterFactory& immutable_converter_factory,
-            const PredictorFactory& predictor_factory,
-            const RewriterFactory& rewriter_factory);
+            ImmutableConverterFactory immutable_converter_factory,
+            PredictorFactory predictor_factory,
+            RewriterFactory rewriter_factory);
   Converter() = delete;
 
   [[nodiscard]]

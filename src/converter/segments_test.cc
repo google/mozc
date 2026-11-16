@@ -38,6 +38,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -848,6 +849,29 @@ TEST(SegmentTest, IteratorRange) {
   EXPECT_THAT(ToKeys(segments.all().subrange(4, 2)), ElementsAre("4"));
   EXPECT_THAT(ToKeys(segments.all().subrange(5, 2)), ElementsAre());
   EXPECT_THAT(ToKeys(segments.all().subrange(6, 2)), ElementsAre());
+}
+
+TEST(SegmentsTest, DebugStringAndAbslStringify) {
+  Segments segments;
+  Segment* seg = segments.add_segment();
+  seg->set_key("てすと");
+  seg->set_segment_type(Segment::FREE);
+  Candidate* cand = seg->add_candidate();
+  cand->key = "てすと";
+  cand->value = "テスト";
+  Candidate* meta = seg->add_meta_candidate();
+  meta->key = "てすと";
+  meta->value = "TEST";
+
+  EXPECT_EQ(absl::StrCat(*seg), seg->DebugString());
+  EXPECT_THAT(seg->DebugString(), ::testing::HasSubstr("key=てすと"));
+  EXPECT_THAT(seg->DebugString(), ::testing::HasSubstr("cand -1 "));
+  EXPECT_THAT(seg->DebugString(), ::testing::HasSubstr("val=TEST"));
+  EXPECT_THAT(seg->DebugString(), ::testing::HasSubstr("cand 0 "));
+  EXPECT_THAT(seg->DebugString(), ::testing::HasSubstr("val=テスト"));
+
+  EXPECT_EQ(absl::StrCat(segments), segments.DebugString());
+  EXPECT_THAT(segments.DebugString(), ::testing::HasSubstr("seg 0 "));
 }
 }  // namespace converter
 }  // namespace mozc

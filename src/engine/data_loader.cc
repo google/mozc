@@ -235,8 +235,9 @@ bool DataLoader::StartNewDataBuildTask(const EngineReloadRequest& request,
 
   if (!IsRunning()) {
     // Restarts StartReloadLoop from scratch when the thread is not running.
-    // Needs to copy the `callback` as the callback is executed in other thread.
-    load_.Schedule([this, callback]() { StartReloadLoop(callback); });
+    load_.Schedule([this, callback = std::move(callback)]() mutable {
+      StartReloadLoop(std::move(callback));
+    });
   }
 
   return true;

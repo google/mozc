@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "absl/strings/ascii.h"
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "dictionary/pos_id_map.h"
@@ -54,14 +53,14 @@ struct Pattern {
     if (exact_match) {
       return pos_string == value;
     }
-    return absl::StartsWith(pos_string, value);
+    return pos_string.starts_with(value);
   }
 };
 
 Pattern ParsePattern(absl::string_view pattern_str) {
   Pattern pattern;
   pattern_str = absl::StripAsciiWhitespace(pattern_str);
-  if (absl::EndsWith(pattern_str, "$")) {
+  if (pattern_str.ends_with('$')) {
     pattern.exact_match = true;
     pattern_str.remove_suffix(1);
   }

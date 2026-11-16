@@ -10406,8 +10406,8 @@ TEST_F(SessionTest, MultiSegmentSelectionFocusRightAndLeft) {
   command.Clear();
   session.Commit(&command);
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_TRUE(
-      absl::StartsWith(command.output().result().value(), "私の名前は"));
+  EXPECT_THAT(command.output().result().value(),
+              ::testing::StartsWith("私の名前は"));
 }
 
 TEST_F(SessionTest, MultiSegmentSelectionCommitDirect) {
@@ -10448,8 +10448,8 @@ TEST_F(SessionTest, MultiSegmentSelectionCommitDirect) {
   command.Clear();
   session.Commit(&command);
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_TRUE(
-      absl::StartsWith(command.output().result().value(), "私の名前は"));
+  EXPECT_THAT(command.output().result().value(),
+              ::testing::StartsWith("私の名前は"));
 }
 
 TEST_F(SessionTest, MultiSegmentSelectionCancel) {

@@ -473,6 +473,7 @@ mozc_cc_library(
         "//base/strings:unicode",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -485,6 +486,7 @@ mozc_cc_test(
         ":lattice",
         ":node",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -628,6 +630,7 @@ mozc_cc_library(
         "//rewriter:rewriter_interface",
         "//transliteration",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/functional:function_ref",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/random",

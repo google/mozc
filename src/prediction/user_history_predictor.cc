@@ -150,13 +150,13 @@ bool IsAndroidPuaEmoji(absl::string_view s) {
 
 bool StartsWithPunctuation(absl::string_view value) {
   return absl::c_any_of(kPunctuations, [&value](absl::string_view x) {
-    return absl::StartsWith(value, x);
+    return value.starts_with(x);
   });
 }
 
 bool EndsWithPunctuation(absl::string_view value) {
   return absl::c_any_of(kPunctuations, [&value](absl::string_view x) {
-    return absl::EndsWith(value, x);
+    return value.ends_with(x);
   });
 }
 
@@ -537,7 +537,7 @@ bool UserHistoryPredictor::ClearHistoryEntry(absl::string_view key,
   auto maybe_normalize_prefix_space =
       [](absl::string_view str, std::string& buffer) -> absl::string_view {
     for (absl::string_view space : {kPrefixFullSpace, kPrefixHalfSpace}) {
-      if (absl::StartsWith(str, space)) {
+      if (str.starts_with(space)) {
         buffer = absl::StrCat(kPrefixZeroSpace, str.substr(space.size()));
         return buffer;
       }
@@ -956,7 +956,7 @@ bool UserHistoryPredictor::GetKeyValueForPartialMatch(
     uint32_t& result_attribute,
     converter::InnerSegmentBoundary& result_inner_segment_boundary,
     EntryPriorityQueue& entry_queue) const {
-  if (!absl::StartsWith(request_key, entry.key()) ||
+  if (!request_key.starts_with(entry.key()) ||
       entry.key().size() >= request_key.size()) {
     return false;
   }
@@ -1689,8 +1689,7 @@ void UserHistoryPredictor::MaybeRewritePrefixSpace(
   // Serialized entry uses kPrefixZeroSpace to normalize the space.
   for (absl::string_view prefix :
        {kPrefixZeroSpace, kPrefixFullSpace, kPrefixHalfSpace}) {
-    if (absl::StartsWith(result.key, prefix) &&
-        absl::StartsWith(result.value, prefix)) {
+    if (result.key.starts_with(prefix) && result.value.starts_with(prefix)) {
       result_space_prefix = prefix;
       break;
     }
@@ -2161,7 +2160,7 @@ UserHistoryPredictor::MakeLearningSegments(
   auto get_space_prefix = [&]() -> absl::string_view {
     absl::string_view preceding_text = request.context().preceding_text();
     for (absl::string_view space_char : {kPrefixHalfSpace, kPrefixFullSpace}) {
-      if (absl::EndsWith(preceding_text, space_char)) {
+      if (preceding_text.ends_with(space_char)) {
         return space_char;
       }
     }
@@ -2210,7 +2209,7 @@ UserHistoryPredictor::MakeLearningSegments(
     preceding_text.remove_suffix(space_prefix.size());
 
     ConstEntrySnapshot head_entry = storage_.Head();
-    if (!head_entry || !absl::EndsWith(preceding_text, head_entry->value())) {
+    if (!head_entry || !preceding_text.ends_with(head_entry->value())) {
       return {std::move(segments), !kHasPrefixSpace};
     }
 
@@ -2219,7 +2218,7 @@ UserHistoryPredictor::MakeLearningSegments(
     // TODO(taku): Better to use inner boundary information.
     ConstEntrySnapshot head_next_entry = storage_.HeadNext();
     if (head_next_entry &&
-        absl::StartsWith(head_entry->value(), head_next_entry->value())) {
+        head_entry->value().starts_with(head_next_entry->value())) {
       return {std::move(segments), !kHasPrefixSpace};
     }
 
@@ -2618,7 +2617,7 @@ int32_t UserHistoryPredictor::GuessRevertedValueOffset(
     bool removed = false;
     // Includes full width whitespace.
     for (absl::string_view suffix : {"\r", "\n", "\t", " ", "　"}) {
-      if (absl::EndsWith(left_context, suffix)) {
+      if (left_context.ends_with(suffix)) {
         left_context.remove_suffix(suffix.size());
         removed = true;
         break;
@@ -2633,7 +2632,7 @@ int32_t UserHistoryPredictor::GuessRevertedValueOffset(
 
   // Strip the last character one-by-one, emulating the backspace key.
   while (Util::SplitLastChar32(value, &remain, &last_char)) {
-    if (absl::EndsWith(left_context, value)) {
+    if (left_context.ends_with(value)) {
       return value.size();
     }
     value = remain;

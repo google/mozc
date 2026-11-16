@@ -186,6 +186,11 @@ class Candidate {
 
   std::string DebugString() const;
 
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const Candidate& candidate) {
+    sink.Append(candidate.DebugString());
+  }
+
   friend std::ostream& operator<<(std::ostream& os,
                                   const Candidate& candidate) {
     return os << candidate.DebugString();

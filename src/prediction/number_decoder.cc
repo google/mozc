@@ -41,7 +41,6 @@
 #include "absl/base/no_destructor.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
@@ -137,17 +136,17 @@ bool IsValidTokenBoundary(absl::string_view token, absl::string_view rest) {
       "ゃ", "ゅ", "ょ", "ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゎ", "ー",
   };
   for (absl::string_view kana : kInvalidStartKana) {
-    if (absl::StartsWith(rest, kana)) {
+    if (rest.starts_with(kana)) {
       return false;
     }
   }
-  if (absl::StartsWith(rest, "っ")) {
+  if (rest.starts_with("っ")) {
     // Allow "よっか" / "よっかかん" (4日 / 4日間, 14日, 24日).
-    if (!(token == "よ" && absl::StartsWith(rest, "っか"))) {
+    if (!(token == "よ" && rest.starts_with("っか"))) {
       return false;
     }
   }
-  if (absl::StartsWith(rest, "う")) {
+  if (rest.starts_with("う")) {
     // Prevent splitting long vowels like "ごうかく" (ご+うかく) or "ようかい"
     // (よ+うかい).
     if (token == "ぜろ" || token == "よ" || token == "ご") {
@@ -167,7 +166,7 @@ bool StartsWithSmallDigitKey(absl::string_view key) {
       "びゃく", "びゃっ", "ぴゃく", "ぴゃっ", "せん",   "ぜん",
   };
   for (absl::string_view small_digit_key : kSmallDigitKeys) {
-    if (absl::StartsWith(key, small_digit_key)) {
+    if (key.starts_with(small_digit_key)) {
       return true;
     }
   }
@@ -252,7 +251,7 @@ void DecodeWagoNumberSuffixes(absl::string_view key,
   }
 
   for (const WagoPrefixEntry& prefix : kWagoPrefixes) {
-    if (!absl::StartsWith(key, prefix.reading)) {
+    if (!key.starts_with(prefix.reading)) {
       continue;
     }
     const absl::string_view rem = key.substr(prefix.reading.size());
@@ -301,7 +300,7 @@ void MaybeAppendResult(const State& state,
     if (!state.consumed_keys.empty() &&
         (state.consumed_keys.back() == "じゅう" ||
          state.consumed_keys.back() == "じゅー") &&
-        absl::StartsWith(rem, "かい")) {
+        rem.starts_with("かい")) {
       // "10回" / "10階" requires sokuon ("じゅっかい" / "じっかい"), not
       // "じゅうかい" (which conflicts with "重解", "十戒", etc.).
       return;

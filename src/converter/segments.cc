@@ -36,8 +36,6 @@
 #include <iterator>
 #include <memory>
 #include <numeric>
-#include <ostream>
-#include <sstream>  // For DebugString()
 #include <string>
 #include <utility>
 #include <vector>
@@ -251,8 +249,8 @@ void Segment::DeepCopyCandidates(const std::deque<Candidate*>& candidates) {
 }
 
 std::string Segment::DebugString() const {
-  std::stringstream os;
-  os << "[segtype=" << segment_type() << " key=" << key() << std::endl;
+  std::string result = absl::StrCat(
+      "[segtype=", static_cast<int>(segment_type()), " key=", key(), "\n");
   const int size = static_cast<int>(candidates_size() + meta_candidates_size());
   for (int l = 0; l < size; ++l) {
     int j = 0;
@@ -261,10 +259,10 @@ std::string Segment::DebugString() const {
     } else {
       j = l - meta_candidates_size();
     }
-    os << "    cand " << j << " " << candidate(j).DebugString();
+    absl::StrAppend(&result, "    cand ", j, " ", candidate(j));
   }
-  os << "]" << std::endl;
-  return os.str();
+  absl::StrAppend(&result, "]\n");
+  return result;
 }
 
 Segments::Segments(const Segments& x)
@@ -574,13 +572,12 @@ std::string Segments::history_value(int size) const {
 }
 
 std::string Segments::DebugString() const {
-  std::stringstream os;
-  os << "{" << std::endl;
+  std::string result = "{\n";
   for (size_t i = 0; i < segments_size(); ++i) {
-    os << "  seg " << i << " " << segment(i).DebugString();
+    absl::StrAppend(&result, "  seg ", i, " ", segment(i));
   }
-  os << "}" << std::endl;
-  return os.str();
+  absl::StrAppend(&result, "}\n");
+  return result;
 }
 
 }  // namespace converter

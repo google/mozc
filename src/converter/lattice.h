@@ -109,6 +109,11 @@ class Lattice {
   // Dump the best path and the path that contains the designated string.
   std::string DebugString() const;
 
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const Lattice& lattice) {
+    sink.Append(lattice.DebugString());
+  }
+
  private:
   // clear all lattice and nodes allocated with NewNode method
   // Only called via Setkey().

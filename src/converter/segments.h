@@ -145,6 +145,11 @@ class Segment final {
 
   std::string DebugString() const;
 
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const Segment& segment) {
+    sink.Append(segment.DebugString());
+  }
+
   friend std::ostream& operator<<(std::ostream& os, const Segment& segment) {
     return os << segment.DebugString();
   }
@@ -431,6 +436,11 @@ class Segments final {
   // Resize the segments starting from `start_index` with the given `new_sizes`.
   // Returns true if the segments are resized.
   bool Resize(size_t start_index, absl::Span<const uint8_t> new_sizes);
+
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const Segments& segments) {
+    sink.Append(segments.DebugString());
+  }
 
   friend std::ostream& operator<<(std::ostream& os, const Segments& segments) {
     return os << segments.DebugString();

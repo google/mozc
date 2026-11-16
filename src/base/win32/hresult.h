@@ -115,6 +115,11 @@ class [[nodiscard]] HResult {
 
   friend constexpr bool operator==(HResult, HResult) = default;
 
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const HResult& hr) {
+    sink.Append(hr.ToString());
+  }
+
  private:
   std::string ToStringSlow() const;
 

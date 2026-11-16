@@ -37,7 +37,6 @@
 #include <vector>
 
 #include "absl/random/random.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -1775,7 +1774,7 @@ TEST_F(NumberDecoderTest, Random) {
     const ConversionRequest request =
         ConversionRequestBuilder().SetKey(key).Build();
     for (const Result& result : decoder.Decode(request)) {
-      EXPECT_TRUE(absl::StartsWith(key, result.key));
+      EXPECT_TRUE(key.starts_with(result.key));
       if (result.rid == pos_matcher().GetCounterSuffixWordId()) {
         // Counter suffix / Wago candidates always consume the whole key.
         EXPECT_EQ(result.key, key);

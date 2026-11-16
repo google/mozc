@@ -30,11 +30,11 @@
 #ifndef MOZC_DICTIONARY_DICTIONARY_INTERFACE_H_
 #define MOZC_DICTIONARY_DICTIONARY_INTERFACE_H_
 
-#include <functional>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/functional/any_invocable.h"
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_token.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -233,11 +233,11 @@ class DictionaryInterface {
 class InlineCallback : public DictionaryInterface::Callback {
  public:
   using ResultType = DictionaryInterface::Callback::ResultType;
-  using KeyHandler = std::function<ResultType(absl::string_view)>;
+  using KeyHandler = absl::AnyInvocable<ResultType(absl::string_view)>;
   using ActualKeyHandler =
-      std::function<ResultType(absl::string_view, absl::string_view, int)>;
-  using TokenHandler =
-      std::function<ResultType(absl::string_view, absl::string_view, Token)>;
+      absl::AnyInvocable<ResultType(absl::string_view, absl::string_view, int)>;
+  using TokenHandler = absl::AnyInvocable<ResultType(
+      absl::string_view, absl::string_view, Token)>;
 
   InlineCallback() = default;
 

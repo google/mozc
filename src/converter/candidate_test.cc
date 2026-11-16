@@ -32,9 +32,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
 #include "converter/inner_segment.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -194,6 +196,30 @@ TEST(CandidateTest, EffectiveConvertedSegmentCount) {
 
   candidate.converted_segment_count = 10;
   EXPECT_EQ(candidate.effective_converted_segment_count(), 10);
+}
+
+TEST(CandidateTest, DebugStringAndAbslStringify) {
+  Candidate candidate;
+  candidate.key = "testfoobar";
+  candidate.content_key = "test";
+  candidate.value = "redgreenblue";
+  candidate.content_value = "red";
+  candidate.cost = 100;
+  candidate.prefix = "[";
+  candidate.suffix = "]";
+  candidate.description = "desc";
+  candidate.display_value = "disp";
+  candidate.inner_segment_boundary = BuildInnerSegmentBoundary(
+      {{4, 3, 4, 3}, {6, 9, 3, 5}}, candidate.key, candidate.value);
+
+  const std::string debug_str = candidate.DebugString();
+  EXPECT_EQ(absl::StrCat(candidate), debug_str);
+  EXPECT_THAT(debug_str, ::testing::HasSubstr("key=testfoobar"));
+  EXPECT_THAT(debug_str, ::testing::HasSubstr("prefix=["));
+  EXPECT_THAT(debug_str, ::testing::HasSubstr("suffix=]"));
+  EXPECT_THAT(debug_str, ::testing::HasSubstr("description=desc"));
+  EXPECT_THAT(debug_str, ::testing::HasSubstr("display_value=disp"));
+  EXPECT_THAT(debug_str, ::testing::HasSubstr("segbdd=<4,3,4,3><6,9,3,5>"));
 }
 
 }  // namespace converter

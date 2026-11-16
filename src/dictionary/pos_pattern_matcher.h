@@ -50,7 +50,7 @@ namespace mozc::dictionary {
 //
 // Pattern syntax for each pattern:
 // - Prefix matching by default:
-//   Patterns match POS strings starting with the pattern (absl::StartsWith).
+//   Patterns match POS strings starting with the pattern (`starts_with`).
 //   For example, "名詞,一般," matches any POS string starting with
 //   "名詞,一般,". Similarly, "動詞,自立,*,*,五段" matches
 //   "動詞,自立,*,*,五段・カ行促音便,..." naturally because "五段" prefixes

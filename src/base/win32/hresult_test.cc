@@ -34,6 +34,7 @@
 #include <sstream>
 #include <utility>
 
+#include "absl/strings/str_cat.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -93,6 +94,9 @@ TEST(HResultTest, ToString) {
   EXPECT_EQ(ss.str(),
             "Failure: Cannot create a file when that file already "
             "exists. (0x800700b7)");
+  EXPECT_EQ(absl::StrCat(HResultOk()), "Success: S_OK");
+  EXPECT_EQ(absl::StrCat(HResultFail()), "Failure: E_FAIL");
+  EXPECT_EQ(absl::StrCat(hr), ss.str());
 }
 
 }  // namespace

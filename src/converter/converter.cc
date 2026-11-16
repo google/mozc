@@ -155,11 +155,10 @@ bool IsValidSegments(const ConversionRequest& request,
 
 }  // namespace
 
-Converter::Converter(
-    std::unique_ptr<engine::Modules> modules,
-    const ImmutableConverterFactory& immutable_converter_factory,
-    const PredictorFactory& predictor_factory,
-    const RewriterFactory& rewriter_factory)
+Converter::Converter(std::unique_ptr<engine::Modules> modules,
+                     ImmutableConverterFactory immutable_converter_factory,
+                     PredictorFactory predictor_factory,
+                     RewriterFactory rewriter_factory)
     : modules_(std::move(modules)),
       immutable_converter_(immutable_converter_factory(*modules_)),
       pos_matcher_(modules_->GetPosMatcher()),

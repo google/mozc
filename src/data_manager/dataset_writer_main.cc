@@ -51,7 +51,6 @@
 #include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/strings/escaping.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/file_stream.h"
@@ -84,11 +83,12 @@ int main(int argc, char** argv) {
   std::vector<Input> inputs;
   for (int i = 1; i < argc; ++i) {
     // InitMozc doesn't remove flags from argv, so ignore flags here.
-    if (absl::StartsWith(argv[i], "--")) {
+    const absl::string_view arg(argv[i]);
+    if (arg.starts_with("--")) {
       continue;
     }
     std::vector<std::string> params =
-        absl::StrSplit(argv[i], ':', absl::SkipEmpty());
+        absl::StrSplit(arg, ':', absl::SkipEmpty());
     CHECK_EQ(3, params.size()) << "Unexpected arg[" << i << "] = " << argv[i];
     inputs.emplace_back(params[0], mozc::NumberUtil::SimpleAtoi(params[1]),
                         params[2]);

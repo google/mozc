@@ -33,22 +33,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <ostream>
-#include <sstream>  // For DebugString()
 #include <string>
 #include <tuple>
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/number_util.h"
 #include "converter/inner_segment.h"
-
-#ifdef MOZC_CANDIDATE_DEBUG
-#include "absl/strings/str_cat.h"
-#endif  // MOZC_CANDIDATE_DEBUG
 
 namespace mozc {
 namespace converter {
@@ -89,35 +84,35 @@ void Candidate::Dlog(absl::string_view filename, int line,
 #endif  // MOZC_CANDIDATE_DEBUG
 
 std::string Candidate::DebugString() const {
-  std::stringstream os;
-  os << "(key=" << key << " ckey=" << content_key << " val=" << value
-     << " cval=" << content_value << " cost=" << cost
-     << " scost=" << structure_cost << " wcost=" << wcost << " lid=" << lid
-     << " rid=" << rid << " attributes=" << std::bitset<16>(attributes)
-     << " consumed_key_size=" << consumed_key_size
-     << " converted_segment_count=" << converted_segment_count;
+  std::string result = absl::StrFormat(
+      "(key=%s ckey=%s val=%s cval=%s cost=%d scost=%d wcost=%d lid=%d rid=%d"
+      " attributes=%s consumed_key_size=%u converted_segment_count=%u",
+      key, content_key, value, content_value, cost, structure_cost, wcost, lid,
+      rid, std::bitset<16>(attributes).to_string(), consumed_key_size,
+      converted_segment_count);
   if (!prefix.empty()) {
-    os << " prefix=" << prefix;
+    absl::StrAppend(&result, " prefix=", prefix);
   }
   if (!suffix.empty()) {
-    os << " suffix=" << suffix;
+    absl::StrAppend(&result, " suffix=", suffix);
   }
   if (!description.empty()) {
-    os << " description=" << description;
+    absl::StrAppend(&result, " description=", description);
   }
   if (!display_value.empty()) {
-    os << " display_value=" << display_value;
+    absl::StrAppend(&result, " display_value=", display_value);
   }
   if (!inner_segment_boundary.empty()) {
-    os << " segbdd=";
+    absl::StrAppend(&result, " segbdd=");
     for (const auto& iter : inner_segments()) {
-      os << absl::StreamFormat(
-          "<%d,%d,%d,%d>", iter.GetKey().size(), iter.GetValue().size(),
-          iter.GetContentKey().size(), iter.GetContentValue().size());
+      absl::StrAppendFormat(
+          &result, "<%d,%d,%d,%d>", iter.GetKey().size(),
+          iter.GetValue().size(), iter.GetContentKey().size(),
+          iter.GetContentValue().size());
     }
   }
-  os << ")" << std::endl;
-  return os.str();
+  absl::StrAppend(&result, ")\n");
+  return result;
 }
 
 }  // namespace converter

@@ -37,7 +37,6 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/const.h"
@@ -356,8 +355,8 @@ bool MacUtil::IsSuppressSuggestionWindow(const std::string &name, const std::str
   // of IMKStateSetting Protocol is not called when the user changes the
   // browsing tab.
   return (("Google Chrome" == owner) || ("Safari" == owner)) &&
-         (("Google" == name) || absl::EndsWith(name, " - Google 検索") ||
-          absl::EndsWith(name, " - Google Search"));
+         (("Google" == name) || name.ends_with(" - Google 検索") ||
+          name.ends_with(" - Google Search"));
 }
 #endif  // TARGET_OS_IPHONE
 

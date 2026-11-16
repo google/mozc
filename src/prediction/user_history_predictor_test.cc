@@ -48,7 +48,6 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/random/random.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -3070,7 +3069,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupExact) {
   for (absl::string_view entry_key : kTestData) {
     entry.set_key(entry_key);
     for (absl::string_view query_key : kTestData) {
-      const bool expecetd = absl::StartsWith(entry_key, query_key);
+      const bool expecetd = entry_key.starts_with(query_key);
       EXPECT_EQ(
           predictor_peer.LookupEntry(convreq, query_key, query_key, nullptr,
                                      entry, nullptr, !kExactMatchOnly, results),
@@ -5572,8 +5571,8 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     auto add_segment = [&](absl::string_view key, absl::string_view value,
                            absl::string_view content_key,
                            absl::string_view content_value) {
-      ASSERT_TRUE(absl::StartsWith(key, content_key));
-      ASSERT_TRUE(absl::StartsWith(value, content_value));
+      ASSERT_TRUE(key.starts_with(content_key));
+      ASSERT_TRUE(value.starts_with(content_value));
       absl::StrAppend(&result.key, key);
       absl::StrAppend(&result.value, value);
       result.inner_segment_boundary.emplace_back(
@@ -5632,7 +5631,7 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
 
     results = suggest_with_context("さとう", "佐藤さんは京都大学を");
     EXPECT_FALSE(results.empty());
-    EXPECT_TRUE(absl::StartsWith(results[0].value, "佐藤さん"));
+    EXPECT_THAT(results[0].value, ::testing::StartsWith("佐藤さん"));
 
     EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
     EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
@@ -5770,7 +5769,7 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
 
     results = suggest_with_context("さとう", "佐藤さんは京都大学を \n\r　");
     EXPECT_FALSE(results.empty());
-    EXPECT_TRUE(absl::StartsWith(results[0].value, "佐藤さん"));
+    EXPECT_THAT(results[0].value, ::testing::StartsWith("佐藤さん"));
 
     EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
     EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));

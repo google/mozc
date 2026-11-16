@@ -31,13 +31,13 @@
 #define MOZC_ENGINE_DATA_LOADER_H_
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
@@ -66,7 +66,7 @@ class DataLoader {
   };
 
   using ReloadedCallback =
-      std::function<absl::Status(std::unique_ptr<Response> response)>;
+      absl::AnyInvocable<absl::Status(std::unique_ptr<Response> response)>;
 
   // Start a new data build and reload task. Returns true the `request` is
   // accepted. This method returns immediately. Actual data-loading task is

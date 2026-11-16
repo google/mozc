@@ -33,15 +33,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <ostream>
-#include <sstream>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
-#include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/port/reversed_view.h"
@@ -141,20 +139,19 @@ std::string Lattice::DebugString() const {
     node_vector.push_back(node);
   }
 
-  std::stringstream os;
+  std::string result;
   const Node* prev_node = nullptr;
   for (const Node* node : port::reversed_view(node_vector)) {
-    os << "[con:"
-       << node->cost - (prev_node ? prev_node->cost : 0) - node->wcost << "]";
-    os << "[lid:" << node->lid << "]";
-    os << "\"" << node->value << "\"";
-    os << "[wcost:" << node->wcost << "]";
-    os << "[cost:" << node->cost << "]";
-    os << "[rid:" << node->rid << "]";
+    const int con_cost =
+        node->cost - (prev_node ? prev_node->cost : 0) - node->wcost;
+    absl::StrAppendFormat(&result,
+                          "[con:%d][lid:%d]\"%s\"[wcost:%d][cost:%d][rid:%d]",
+                          con_cost, node->lid, node->value, node->wcost,
+                          node->cost, node->rid);
     prev_node = node;
   }
 
-  return os.str();
+  return result;
 }
 
 Lattice& Lattice::GetThreadLocal() {

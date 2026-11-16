@@ -36,7 +36,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -277,8 +276,8 @@ TEST_F(PosPatternMatcherTest, GetId) {
   const PosPatternMatcher noun_matcher("名詞,", pos_id_map_);
   EXPECT_TRUE(noun_matcher.GetId().has_value());
   EXPECT_TRUE(noun_matcher.Match(noun_matcher.GetId().value()));
-  EXPECT_TRUE(absl::StartsWith(
-      pos_id_map_.GetPosString(noun_matcher.GetId().value()), "名詞,"));
+  EXPECT_TRUE(pos_id_map_.GetPosString(noun_matcher.GetId().value())
+                  .starts_with("名詞,"));
 
   // Pattern with no matches
   const PosPatternMatcher no_match_matcher("存在しない品詞,", pos_id_map_);
@@ -338,7 +337,7 @@ TEST_F(PosPatternMatcherTest, ComprehensiveRuleMatching) {
        ++pos_id_idx) {
     const uint16_t pos_id = static_cast<uint16_t>(pos_id_idx);
     const absl::string_view pos_str = pos_id_map_.GetPosString(pos_id);
-    if (absl::StartsWith(pos_str, "名詞,固有名詞,人名,名,")) {
+    if (pos_str.starts_with("名詞,固有名詞,人名,名,")) {
       EXPECT_TRUE(first_name_matcher.Match(pos_id));
       found_first_name = true;
     }
@@ -346,12 +345,11 @@ TEST_F(PosPatternMatcherTest, ComprehensiveRuleMatching) {
       EXPECT_TRUE(general_noun_matcher.Match(pos_id));
       found_general_noun = true;
     }
-    if (absl::StartsWith(pos_str, "助詞,") ||
-        absl::StartsWith(pos_str, "助動詞,")) {
+    if (pos_str.starts_with("助詞,") || pos_str.starts_with("助動詞,")) {
       EXPECT_TRUE(functional_matcher.Match(pos_id));
       found_functional = true;
     }
-    if (absl::StartsWith(pos_str, "動詞,自立,*,*,五段・")) {
+    if (pos_str.starts_with("動詞,自立,*,*,五段・")) {
       EXPECT_TRUE(content_word_matcher.Match(pos_id));
       found_content_word = true;
     }

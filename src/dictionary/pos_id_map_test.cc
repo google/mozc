@@ -35,7 +35,6 @@
 #include <sstream>
 #include <string>
 
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -62,7 +61,7 @@ TEST(PosIdMapTest, LoadFromGeneratedBinary) {
   // Verify that some known POS string exists and matches.
   bool found_noun_general = false;
   for (size_t pos_id = 0; pos_id < pos_id_map.GetPosIdCount(); ++pos_id) {
-    if (absl::StartsWith(pos_id_map.GetPosString(pos_id), "名詞,一般")) {
+    if (pos_id_map.GetPosString(pos_id).starts_with("名詞,一般")) {
       found_noun_general = true;
       break;
     }

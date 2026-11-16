@@ -31,7 +31,9 @@
 
 #include <string>
 
+#include "absl/strings/str_cat.h"
 #include "converter/node.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -95,6 +97,31 @@ TEST(LatticeTest, GetThreadLocalTest) {
   lattice1.SetKey("test");
   EXPECT_TRUE(lattice1.has_lattice());
   EXPECT_EQ(lattice1.key(), "test");
+}
+
+TEST(LatticeTest, DebugStringAndAbslStringify) {
+  Lattice lattice;
+  EXPECT_EQ(lattice.DebugString(), "");
+  EXPECT_EQ(absl::StrCat(lattice), "");
+
+  lattice.SetKey("test");
+  Node* node = lattice.NewNode();
+  node->key = "test";
+  node->value = "テスト";
+  node->lid = 10;
+  node->rid = 20;
+  node->wcost = 100;
+  lattice.Insert(0, node);
+  node->cost = 150;
+  node->prev = lattice.bos_node();
+  lattice.eos_node()->cost = 160;
+  lattice.eos_node()->prev = node;
+
+  const std::string debug_str = lattice.DebugString();
+  EXPECT_EQ(absl::StrCat(lattice), debug_str);
+  EXPECT_THAT(debug_str,
+              ::testing::HasSubstr("[con:50][lid:10]\"テスト\"[wcost:100]"
+                                   "[cost:150][rid:20]"));
 }
 
 }  // namespace mozc

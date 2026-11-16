@@ -265,45 +265,45 @@ constexpr size_t kOffsetFromUpperToLower = 0x0020;
 }
 
 void Util::LowerString(std::string* str) {
+  if (IsAscii(*str)) {
+    absl::AsciiStrToLower(str);
+    return;
+  }
+  std::string buf;
+  buf.reserve(str->size());
   for (const UnicodeChar ch : Utf8AsUnicodeChar(*str)) {
-    char32_t codepoint = ch.char32();
+    const char32_t codepoint = ch.char32();
     // ('A' <= codepoint && codepoint <= 'Z') ||
     // ('Ａ' <= codepoint && codepoint <= 'Ｚ')
     if ((0x0041 <= codepoint && codepoint <= 0x005A) ||
         (0xFF21 <= codepoint && codepoint <= 0xFF3A)) {
-      codepoint += kOffsetFromUpperToLower;
-      const std::string utf8 = CodepointToUtf8(codepoint);
-      // The size of upper case character must be equal to the source
-      // lower case character.  The following check asserts it.
-      if (utf8.size() != ch.utf8().size()) {
-        LOG(ERROR) << "The generated size differs from the source.";
-        return;
-      }
-      const size_t pos = ch.utf8().data() - str->data();
-      str->replace(pos, ch.utf8().size(), utf8);
+      strings::StrAppendChar32(&buf, codepoint + kOffsetFromUpperToLower);
+    } else {
+      buf.append(ch.utf8().data(), ch.utf8().size());
     }
   }
+  *str = std::move(buf);
 }
 
 void Util::UpperString(std::string* str) {
+  if (IsAscii(*str)) {
+    absl::AsciiStrToUpper(str);
+    return;
+  }
+  std::string buf;
+  buf.reserve(str->size());
   for (const UnicodeChar ch : Utf8AsUnicodeChar(*str)) {
-    char32_t codepoint = ch.char32();
+    const char32_t codepoint = ch.char32();
     // ('a' <= codepoint && codepoint <= 'z') ||
     // ('ａ' <= codepoint && codepoint <= 'ｚ')
     if ((0x0061 <= codepoint && codepoint <= 0x007A) ||
         (0xFF41 <= codepoint && codepoint <= 0xFF5A)) {
-      codepoint -= kOffsetFromUpperToLower;
-      const std::string utf8 = CodepointToUtf8(codepoint);
-      // The size of upper case character must be equal to the source
-      // lower case character.  The following check asserts it.
-      if (utf8.size() != ch.utf8().size()) {
-        LOG(ERROR) << "The generated size differs from the source.";
-        return;
-      }
-      const size_t pos = ch.utf8().data() - str->data();
-      str->replace(pos, ch.utf8().size(), utf8);
+      strings::StrAppendChar32(&buf, codepoint - kOffsetFromUpperToLower);
+    } else {
+      buf.append(ch.utf8().data(), ch.utf8().size());
     }
   }
+  *str = std::move(buf);
 }
 
 void Util::CapitalizeString(std::string* str) {
@@ -632,13 +632,9 @@ absl::string_view Util::StripUtf8Bom(absl::string_view line) {
 }
 
 bool Util::IsUtf16Bom(absl::string_view line) {
-  static constexpr char kUtf16LeBom[] = "\xff\xfe";
-  static constexpr char kUtf16BeBom[] = "\xfe\xff";
-  if (line.size() >= 2 &&
-      (line.substr(0, 2) == kUtf16LeBom || line.substr(0, 2) == kUtf16BeBom)) {
-    return true;
-  }
-  return false;
+  static constexpr absl::string_view kUtf16LeBom = "\xff\xfe";
+  static constexpr absl::string_view kUtf16BeBom = "\xfe\xff";
+  return line.starts_with(kUtf16LeBom) || line.starts_with(kUtf16BeBom);
 }
 
 bool Util::ChopReturns(std::string* line) {
