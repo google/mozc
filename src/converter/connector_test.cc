@@ -166,6 +166,7 @@ TEST(ConnectorTest, GetTransitionCost_OneByteCost) {
       absl::string_view(reinterpret_cast<const char*>(kData), sizeof(kData)));
   ASSERT_OK(connector);
   EXPECT_EQ(connector->GetResolution(), 64);
+  EXPECT_EQ(connector->GetTransitionCost(0, 0), 100);
   EXPECT_EQ(connector->GetTransitionCost(0, 1), Connector::kInvalidCost);
   EXPECT_EQ(connector->GetTransitionCost(1, 0), 640);
   EXPECT_EQ(connector->GetTransitionCost(1, 1), 200);
@@ -195,9 +196,22 @@ TEST(ConnectorTest, GetTransitionCost_TwoByteCost) {
       absl::string_view(reinterpret_cast<const char*>(kData), sizeof(kData)));
   ASSERT_OK(connector);
   EXPECT_EQ(connector->GetResolution(), 1);
+  EXPECT_EQ(connector->GetTransitionCost(0, 0), 100);
   EXPECT_EQ(connector->GetTransitionCost(0, 1), Connector::kInvalidCost);
   EXPECT_EQ(connector->GetTransitionCost(1, 0), 640);
   EXPECT_EQ(connector->GetTransitionCost(1, 1), 200);
+}
+
+TEST(ConnectorTest, EmptyMatrixReturnsInvalidCostForZeroZero) {
+  alignas(uint32_t) static constexpr uint8_t kEmptyMatrix[] = {
+      0xAB, 0xCD,              // magic
+      0x01, 0x00,              // resolution = 1
+      0x00, 0x00, 0x00, 0x00,  // rsize = 0, lsize = 0
+  };
+  absl::StatusOr<Connector> connector = Connector::Create(absl::string_view(
+      reinterpret_cast<const char*>(kEmptyMatrix), sizeof(kEmptyMatrix)));
+  ASSERT_OK(connector);
+  EXPECT_EQ(connector->GetTransitionCost(0, 0), Connector::kInvalidCost);
 }
 
 TEST(ConnectorTest, OutOfBoundsPosIdsReturnInvalidCost) {

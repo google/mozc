@@ -196,6 +196,12 @@ absl::StatusOr<Connector> Connector::Create(absl::string_view connection_data) {
 
 absl::Status Connector::Init(absl::string_view connection_data) {
   cache_ = std::make_unique<cache_t>(kCacheSize);
+  // Zero-initialized cache slots have lower 32-bit key 0, which collides only
+  // with (rid=0, lid=0) in bucket 0. Seed bucket 0 with key 0xffffffffu, which
+  // hashes to a non-zero bucket and therefore never matches in bucket 0.
+  static_assert(((3 * uint32_t{0xffff} + uint32_t{0xffff}) & kCacheHashMask) !=
+                0);
+  (*cache_)[0].store(~uint64_t{0}, std::memory_order_relaxed);
 
   absl::StatusOr<Metadata> metadata =
       ParseMetadata(connection_data.data(), connection_data.size());
