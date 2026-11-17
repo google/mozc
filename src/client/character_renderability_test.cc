@@ -229,7 +229,7 @@ TEST(CharacterRenderabilityTest, LinuxVersions) {
 }
 
 TEST(CharacterRenderabilityTest, CurrentPlatformLinux) {
-  if constexpr (!port::IsLinux()) {
+  if constexpr (!port::IsLinuxBase()) {
     GTEST_SKIP();
   }
   const std::vector<Request::AdditionalRenderableCharacterGroup> groups =

@@ -182,7 +182,11 @@ CharacterRenderability::GetSupportedGroups() {
     return GetSupportedGroupsForMac(os_version.first, os_version.second);
   }
 #else   // _WIN32, __APPLE__
-  if constexpr (port::IsLinux()) {
+  // IsLinuxBase() is used to cover both Linux desktop and non-application
+  // builds, so this is also intentionally tested on Android and ChromeOS
+  // environments. However, in Android and ChromeOS environments, supported
+  // emojis are specified via other mechanisms.
+  if constexpr (port::IsLinuxBase()) {
     return GetSupportedGroupsForLinux();
   }
   return {};

@@ -41,7 +41,7 @@ namespace internal {
 // PlatformType represents a mutually exclusive list of target platforms.
 enum class PlatformType {
   kWindows,   // Windows
-  kLinux,     // Linux, excluding Android (different from target_is_linux)
+  kLinux,     // Linux, excluding Android and ChromeOS
   kMacos,     // macOS
   kAndroid,   // Android
   kIos,       // iOS Devices or Simulator
@@ -117,14 +117,16 @@ constexpr bool IsWindows() {
   return internal::kTargetPlatform == internal::PlatformType::kWindows;
 }
 
-// The build target is Linux, including Android and ChromeOS.
+// The build target is Linux, including Android, ChromeOS, and non-application
+// builds.
 constexpr bool IsLinuxBase() {
   return internal::kTargetPlatform == internal::PlatformType::kLinux ||
          internal::kTargetPlatform == internal::PlatformType::kAndroid ||
          internal::kTargetPlatform == internal::PlatformType::kChromeos;
 }
 
-// The build target is Linux, excluding Android and ChromeOS.
+// The build target is Linux desktop, excluding Android, ChromeOS, and
+// non-application builds.
 constexpr bool IsLinux() {
   return internal::kTargetPlatform == internal::PlatformType::kLinux;
 }
@@ -158,6 +160,13 @@ constexpr bool IsWasm() {
 // The build target is ChromeOS.
 constexpr bool IsChromeos() {
   return internal::kTargetPlatform == internal::PlatformType::kChromeos;
+}
+
+// The build target is a client application. In non-application builds,
+// IsLinuxBase() is true while specific platform predicates such as IsLinux()
+// are false.
+constexpr bool IsApplicationBuild() {
+  return true;
 }
 
 }  // namespace port

@@ -46,6 +46,7 @@ static_assert(!port::IsMacos());
 static_assert(!port::IsIos());
 static_assert(!port::IsWasm());
 static_assert(!port::IsChromeos());
+static_assert(port::IsApplicationBuild());
 #endif  // _WIN32
 
 #if defined(__APPLE__)
@@ -56,6 +57,7 @@ static_assert(!port::IsAndroid());
 static_assert(port::IsAppleBase());
 static_assert(!port::IsWasm());
 static_assert(!port::IsChromeos());
+static_assert(port::IsApplicationBuild());
 #if TARGET_OS_OSX
 static_assert(port::IsMacos());
 static_assert(!port::IsIos());
@@ -75,19 +77,20 @@ static_assert(!port::IsWasm());
 #if defined(__ANDROID__)
 static_assert(!port::IsLinux());
 static_assert(port::IsAndroid());
-#else   // __ANDROID__
-static_assert(port::IsLinux());
-static_assert(!port::IsAndroid());
-#endif  // !__ANDROID__
-#endif  // !__linux__
-
-#ifdef OS_CHROMEOS
-static_assert(!port::IsLinux());
-static_assert(port::IsLinuxBase());
-static_assert(port::IsChromeos());
-#else   // OS_CHROMEOS
 static_assert(!port::IsChromeos());
+static_assert(port::IsApplicationBuild());
+#elif defined(OS_CHROMEOS)  // __ANDROID__
+static_assert(!port::IsLinux());
+static_assert(!port::IsAndroid());
+static_assert(port::IsChromeos());
+static_assert(port::IsApplicationBuild());
+#else                                        // OS_CHROMEOS
+static_assert(!port::IsAndroid());
+static_assert(!port::IsChromeos());
+static_assert(port::IsLinux());
+static_assert(port::IsApplicationBuild());
 #endif  // !OS_CHROMEOS
+#endif  // !__linux__
 
 #if defined(__wasm__)
 static_assert(!port::IsWindows());
@@ -99,6 +102,7 @@ static_assert(!port::IsMacos());
 static_assert(!port::IsIos());
 static_assert(port::IsWasm());
 static_assert(!port::IsChromeos());
+static_assert(port::IsApplicationBuild());
 #endif  // __wasm__
 
 }  // namespace
