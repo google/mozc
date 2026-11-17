@@ -47,6 +47,7 @@
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
+#include "base/port.h"
 #include "config/config_handler.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -56,8 +57,8 @@
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "protocol/engine_builder.pb.h"
 #include "session/keymap.h"
-#include "session/session_handler.h"
 #include "session/session_handler_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -70,6 +71,14 @@ ABSL_DECLARE_FLAG(int32_t, last_command_timeout);
 ABSL_DECLARE_FLAG(int32_t, last_create_session_timeout);
 
 namespace mozc {
+
+class EngineReloadAccessorTestPeer : public testing::TestPeer<SessionHandler> {
+ public:
+  explicit EngineReloadAccessorTestPeer(SessionHandler& handler)
+      : testing::TestPeer<SessionHandler>(handler) {}
+
+  PEER_METHOD(IsEngineReloadPathAllowed);
+};
 
 class KeyMapManagerAccessorTestPeer : public testing::TestPeer<SessionHandler> {
  public:
@@ -623,6 +632,8 @@ TEST_F(SessionHandlerTest, SyncDataTest) {
 
 // Tests the interaction with DataLoader for successful Engine reload event.
 TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
+  handler_->SetAllowedEngineReloadPaths(
+      {SessionHandler::kAllowAllEngineReloadPaths});
   ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
             EngineReloadResponse::ACCEPTED);
 
@@ -652,6 +663,8 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
 
 // Tests situations to handle multiple new requests.
 TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
+  handler_->SetAllowedEngineReloadPaths(
+      {SessionHandler::kAllowAllEngineReloadPaths});
   // engine_id = 1
   ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
             EngineReloadResponse::ACCEPTED);
@@ -673,6 +686,8 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
 // Tests the interaction with DataLoader in the situation where requested data
 // is broken.
 TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
+  handler_->SetAllowedEngineReloadPaths(
+      {SessionHandler::kAllowAllEngineReloadPaths});
   const absl::string_view initial_version = handler_->GetDataVersion();
 
   ASSERT_EQ(SendMockEngineReloadRequest(*handler_, invalid_path_request_),
@@ -703,6 +718,8 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
 
 // Tests the rollback scenario
 TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
+  handler_->SetAllowedEngineReloadPaths(
+      {SessionHandler::kAllowAllEngineReloadPaths});
   // Sends multiple requests three times.
   ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
             EngineReloadResponse::ACCEPTED);
@@ -726,6 +743,8 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
 // Tests the interaction with DataLoader in the situation where
 // sessions exist in create session event.
 TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
+  handler_->SetAllowedEngineReloadPaths(
+      {SessionHandler::kAllowAllEngineReloadPaths});
   const absl::string_view initial_version = handler_->engine().GetDataVersion();
 
   const EngineInterface* old_engine_ptr = &(handler_->engine());
@@ -781,6 +800,8 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
       .WillRepeatedly(Return(data_version));
 
   SessionHandler handler(std::move(engine));
+  handler.SetAllowedEngineReloadPaths(
+      {SessionHandler::kAllowAllEngineReloadPaths});
   EXPECT_NE(handler.GetDataVersion(), mock_version_);
 
   ASSERT_EQ(SendMockEngineReloadRequest(handler, mock_request_),
@@ -790,6 +811,205 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
   uint64_t id = 0;
   ASSERT_TRUE(CreateSession(handler, &id));
   EXPECT_EQ(handler.GetDataVersion(), mock_version_);
+}
+
+namespace {
+class ReloadMockEngine : public MockEngine {
+ public:
+  MOCK_METHOD(bool, SendEngineReloadRequest,
+              (const EngineReloadRequest& request), (override));
+  MOCK_METHOD(bool, SendSupplementalModelReloadRequest,
+              (const EngineReloadRequest& request), (override));
+};
+}  // namespace
+
+TEST_F(SessionHandlerTest, EngineReloadDefaultPlatformBehavior) {
+  auto engine = std::make_unique<::testing::StrictMock<ReloadMockEngine>>();
+  constexpr bool kAllowsReloadByDefault = port::IsAndroid() || port::IsIos();
+  if constexpr (kAllowsReloadByDefault) {
+    EXPECT_CALL(*engine, SendEngineReloadRequest(::testing::Property(
+                             &EngineReloadRequest::file_path,
+                             mock_request_.file_path())))
+        .WillOnce(Return(true));
+    EXPECT_CALL(*engine, SendSupplementalModelReloadRequest(::testing::Property(
+                             &EngineReloadRequest::file_path,
+                             mock_request_.file_path())))
+        .WillOnce(Return(true));
+  } else {
+    EXPECT_CALL(*engine, SendEngineReloadRequest).Times(0);
+    EXPECT_CALL(*engine, SendSupplementalModelReloadRequest).Times(0);
+  }
+
+  SessionHandler handler(std::move(engine));
+  EXPECT_EQ(EngineReloadAccessorTestPeer(handler).IsEngineReloadPathAllowed(
+                mock_request_.file_path()),
+            kAllowsReloadByDefault);
+
+  commands::Command reload_command;
+  reload_command.mutable_input()->set_id(42);
+  reload_command.mutable_input()->set_type(
+      commands::Input::SEND_ENGINE_RELOAD_REQUEST);
+  *reload_command.mutable_input()->mutable_engine_reload_request() =
+      mock_request_;
+  EXPECT_TRUE(handler.EvalCommand(&reload_command));
+  EXPECT_EQ(reload_command.output().id(), 42);
+  if constexpr (kAllowsReloadByDefault) {
+    EXPECT_EQ(reload_command.output().engine_reload_response().status(),
+              EngineReloadResponse::ACCEPTED);
+  } else {
+    EXPECT_FALSE(reload_command.output().has_error_code());
+    EXPECT_FALSE(reload_command.output().has_engine_reload_response());
+  }
+
+  commands::Command supplemental_command;
+  supplemental_command.mutable_input()->set_id(99);
+  supplemental_command.mutable_input()->set_type(
+      commands::Input::RELOAD_SUPPLEMENTAL_MODEL);
+  *supplemental_command.mutable_input()->mutable_engine_reload_request() =
+      mock_request_;
+  EXPECT_TRUE(handler.EvalCommand(&supplemental_command));
+  EXPECT_EQ(supplemental_command.output().id(), 99);
+  if constexpr (kAllowsReloadByDefault) {
+    EXPECT_EQ(supplemental_command.output().engine_reload_response().status(),
+              EngineReloadResponse::ACCEPTED);
+  } else {
+    EXPECT_FALSE(supplemental_command.output().has_error_code());
+    EXPECT_FALSE(supplemental_command.output().has_engine_reload_response());
+  }
+}
+
+TEST_F(SessionHandlerTest, EngineReloadPathValidationAndErrorHandling) {
+  auto engine = std::make_unique<::testing::StrictMock<ReloadMockEngine>>();
+  ReloadMockEngine* engine_ptr = engine.get();
+  SessionHandler handler(std::move(engine));
+
+  // Missing engine_reload_request fails before path checking.
+  commands::Command missing_reload;
+  missing_reload.mutable_input()->set_id(10);
+  missing_reload.mutable_input()->set_type(
+      commands::Input::SEND_ENGINE_RELOAD_REQUEST);
+  EXPECT_TRUE(handler.EvalCommand(&missing_reload));
+  EXPECT_EQ(missing_reload.output().id(), 0);
+  EXPECT_EQ(missing_reload.output().error_code(),
+            commands::Output::SESSION_FAILURE);
+
+  commands::Command missing_supplemental;
+  missing_supplemental.mutable_input()->set_id(11);
+  missing_supplemental.mutable_input()->set_type(
+      commands::Input::RELOAD_SUPPLEMENTAL_MODEL);
+  EXPECT_TRUE(handler.EvalCommand(&missing_supplemental));
+  EXPECT_EQ(missing_supplemental.output().id(), 0);
+  EXPECT_EQ(missing_supplemental.output().error_code(),
+            commands::Output::SESSION_FAILURE);
+
+  // Empty allow-list makes reload requests no-ops without invoking
+  // EngineInterface.
+  handler.SetAllowedEngineReloadPaths({});
+  EXPECT_FALSE(EngineReloadAccessorTestPeer(handler).IsEngineReloadPathAllowed(
+      mock_request_.file_path()));
+
+  commands::Command rejected_reload;
+  rejected_reload.mutable_input()->set_id(12);
+  rejected_reload.mutable_input()->set_type(
+      commands::Input::SEND_ENGINE_RELOAD_REQUEST);
+  *rejected_reload.mutable_input()->mutable_engine_reload_request() =
+      mock_request_;
+  EXPECT_TRUE(handler.EvalCommand(&rejected_reload));
+  EXPECT_EQ(rejected_reload.output().id(), 12);
+  EXPECT_FALSE(rejected_reload.output().has_error_code());
+  EXPECT_FALSE(rejected_reload.output().has_engine_reload_response());
+
+  commands::Command rejected_supplemental;
+  rejected_supplemental.mutable_input()->set_id(13);
+  rejected_supplemental.mutable_input()->set_type(
+      commands::Input::RELOAD_SUPPLEMENTAL_MODEL);
+  *rejected_supplemental.mutable_input()->mutable_engine_reload_request() =
+      mock_request_;
+  EXPECT_TRUE(handler.EvalCommand(&rejected_supplemental));
+  EXPECT_EQ(rejected_supplemental.output().id(), 13);
+  EXPECT_FALSE(rejected_supplemental.output().has_error_code());
+  EXPECT_FALSE(rejected_supplemental.output().has_engine_reload_response());
+
+  // Specific allowed paths accept only matching paths and reject others.
+  handler.SetAllowedEngineReloadPaths({mock_request_.file_path()});
+  EXPECT_TRUE(EngineReloadAccessorTestPeer(handler).IsEngineReloadPathAllowed(
+      mock_request_.file_path()));
+  EXPECT_FALSE(EngineReloadAccessorTestPeer(handler).IsEngineReloadPathAllowed(
+      "disallowed_path"));
+
+  commands::Command unallowed_path_command;
+  unallowed_path_command.mutable_input()->set_id(14);
+  unallowed_path_command.mutable_input()->set_type(
+      commands::Input::SEND_ENGINE_RELOAD_REQUEST);
+  unallowed_path_command.mutable_input()
+      ->mutable_engine_reload_request()
+      ->set_file_path("disallowed_path");
+  EXPECT_TRUE(handler.EvalCommand(&unallowed_path_command));
+  EXPECT_EQ(unallowed_path_command.output().id(), 14);
+  EXPECT_FALSE(unallowed_path_command.output().has_error_code());
+  EXPECT_FALSE(unallowed_path_command.output().has_engine_reload_response());
+
+  EXPECT_CALL(*engine_ptr,
+              SendEngineReloadRequest(::testing::Property(
+                  &EngineReloadRequest::file_path, mock_request_.file_path())))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
+  EXPECT_CALL(*engine_ptr,
+              SendSupplementalModelReloadRequest(::testing::Property(
+                  &EngineReloadRequest::file_path, mock_request_.file_path())))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
+
+  commands::Command accepted_reload;
+  accepted_reload.mutable_input()->set_id(20);
+  accepted_reload.mutable_input()->set_type(
+      commands::Input::SEND_ENGINE_RELOAD_REQUEST);
+  *accepted_reload.mutable_input()->mutable_engine_reload_request() =
+      mock_request_;
+  EXPECT_TRUE(handler.EvalCommand(&accepted_reload));
+  EXPECT_EQ(accepted_reload.output().id(), 20);
+  EXPECT_EQ(accepted_reload.output().engine_reload_response().status(),
+            EngineReloadResponse::ACCEPTED);
+
+  commands::Command failed_reload = accepted_reload;
+  failed_reload.mutable_output()->Clear();
+  EXPECT_TRUE(handler.EvalCommand(&failed_reload));
+  EXPECT_EQ(failed_reload.output().id(), 0);
+  EXPECT_EQ(failed_reload.output().error_code(),
+            commands::Output::SESSION_FAILURE);
+
+  commands::Command accepted_supplemental;
+  accepted_supplemental.mutable_input()->set_id(21);
+  accepted_supplemental.mutable_input()->set_type(
+      commands::Input::RELOAD_SUPPLEMENTAL_MODEL);
+  *accepted_supplemental.mutable_input()->mutable_engine_reload_request() =
+      mock_request_;
+  EXPECT_TRUE(handler.EvalCommand(&accepted_supplemental));
+  EXPECT_EQ(accepted_supplemental.output().id(), 21);
+  EXPECT_EQ(accepted_supplemental.output().engine_reload_response().status(),
+            EngineReloadResponse::ACCEPTED);
+
+  commands::Command failed_supplemental = accepted_supplemental;
+  failed_supplemental.mutable_output()->Clear();
+  EXPECT_TRUE(handler.EvalCommand(&failed_supplemental));
+  EXPECT_EQ(failed_supplemental.output().id(), 0);
+  EXPECT_EQ(failed_supplemental.output().error_code(),
+            commands::Output::SESSION_FAILURE);
+
+  // Replacing allowed paths clears previously allowed entries.
+  handler.SetAllowedEngineReloadPaths({"other_allowed_path"});
+  EXPECT_FALSE(EngineReloadAccessorTestPeer(handler).IsEngineReloadPathAllowed(
+      mock_request_.file_path()));
+  EXPECT_TRUE(EngineReloadAccessorTestPeer(handler).IsEngineReloadPathAllowed(
+      "other_allowed_path"));
+
+  // Wildcard kAllowAllEngineReloadPaths allows any path.
+  handler.SetAllowedEngineReloadPaths(
+      {SessionHandler::kAllowAllEngineReloadPaths});
+  EXPECT_TRUE(EngineReloadAccessorTestPeer(handler).IsEngineReloadPathAllowed(
+      mock_request_.file_path()));
+  EXPECT_TRUE(EngineReloadAccessorTestPeer(handler).IsEngineReloadPathAllowed(
+      "arbitrary_path"));
 }
 
 TEST_F(SessionHandlerTest, AddUserHistory) {
