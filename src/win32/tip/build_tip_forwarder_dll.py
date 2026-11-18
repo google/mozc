@@ -301,6 +301,14 @@ def build_on_windows(args: argparse.Namespace) -> None:
             '/largeaddressaware',
             '/dynamicbase',
             '/highentropyva',
+            # '/dependentloadflag:0x100' sets LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
+            # (0x100) as the default load flag used by Windows when resolving
+            # dependent DLLs (including forwarded exports) of this DLL, so that
+            # forwarded exports are resolved from the directory where this DLL
+            # exists no matter how it is loaded.
+            # https://learn.microsoft.com/en-us/cpp/build/reference/dependentloadflag
+            # https://github.com/google/mozc/issues/1627
+            '/dependentloadflag:0x100',
             '/ignore:4104',
             '/defArm64Native:mozc_arm64.def',
             '/def:mozc_x64.def',
