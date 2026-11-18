@@ -45,6 +45,7 @@ struct TokenInfo;
 
 class SystemDictionaryCodec {
  public:
+  SystemDictionaryCodec() = default;
   ~SystemDictionaryCodec() = default;
 
   // Return section name for key trie
