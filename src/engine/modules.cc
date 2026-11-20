@@ -141,9 +141,12 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   }
   connector_ = *std::move(status_or_connector);
 
-  segmenter_ =
-      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
-  RETURN_IF_NULL(segmenter_);
+  absl::StatusOr<std::unique_ptr<Segmenter>> status_or_segmenter =
+      Segmenter::Create(data_manager_->GetSegmenterData());
+  if (!status_or_segmenter.ok()) {
+    return std::move(status_or_segmenter).status();
+  }
+  segmenter_ = *std::move(status_or_segmenter);
 
   pos_group_ = std::make_unique<PosGroup>(data_manager_->GetPosGroupData());
   RETURN_IF_NULL(pos_group_);

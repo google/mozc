@@ -33,7 +33,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <tuple>
 
+#include "absl/status/statusor.h"
 #include "absl/types/span.h"
 #include "converter/node.h"
 
@@ -41,12 +43,28 @@ namespace mozc {
 
 class Segmenter {
  public:
-  // This class does not take the ownership of pointer parameters.
-  Segmenter(size_t l_num_elements, size_t r_num_elements,
-            absl::Span<const uint16_t> l_table,
-            absl::Span<const uint16_t> r_table,
-            absl::Span<const char> bitarray_data,
-            absl::Span<const uint16_t> boundary_data);
+  // Validates segmenter table dimensions and entries, returning a Segmenter on
+  // success or FailedPreconditionError on malformed data. Does not take
+  // ownership of the underlying buffers referenced by the spans; callers must
+  // ensure they outlive the returned Segmenter.
+  static absl::StatusOr<std::unique_ptr<Segmenter>> Create(
+      size_t l_num_elements, size_t r_num_elements,
+      absl::Span<const uint16_t> l_table, absl::Span<const uint16_t> r_table,
+      absl::Span<const char> bitarray_data,
+      absl::Span<const uint16_t> boundary_data);
+
+  // Convenience overload unpacking `data` (e.g., from
+  // `DataManager::GetSegmenterData()`) and delegating to `Create` above.
+  static absl::StatusOr<std::unique_ptr<Segmenter>> Create(
+      std::tuple<size_t,                      // l_num_elements
+                 size_t,                      // r_num_elements
+                 absl::Span<const uint16_t>,  // l_table
+                 absl::Span<const uint16_t>,  // r_table
+                 absl::Span<const char>,      // bitarray_data
+                 absl::Span<const uint16_t>   // boundary_data
+                 >
+          data);
+
   Segmenter(const Segmenter&) = delete;
   Segmenter& operator=(const Segmenter&) = delete;
 
@@ -57,6 +75,13 @@ class Segmenter {
   int32_t GetSuffixPenalty(uint16_t rid) const;
 
  private:
+  // This class does not take the ownership of pointer parameters.
+  Segmenter(size_t l_num_elements, size_t r_num_elements,
+            absl::Span<const uint16_t> l_table,
+            absl::Span<const uint16_t> r_table,
+            absl::Span<const char> bitarray_data,
+            absl::Span<const uint16_t> boundary_data);
+
   const size_t l_num_elements_ = 0;
   const size_t r_num_elements_ = 0;
   const absl::Span<const uint16_t> l_table_;

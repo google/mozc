@@ -43,7 +43,6 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "base/container/tuple.h"
 #include "base/file_stream.h"
 #include "base/util.h"
 #include "converter/connector.h"
@@ -77,8 +76,10 @@ DataManagerTestBase::DataManagerTestBase(
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides
   // the expected boundary rule.
-  auto segmenter =
-      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
+  absl::StatusOr<std::unique_ptr<Segmenter>> status_or_segmenter =
+      Segmenter::Create(data_manager_->GetSegmenterData());
+  ASSERT_TRUE(status_or_segmenter.ok()) << status_or_segmenter.status();
+  std::unique_ptr<Segmenter> segmenter = *std::move(status_or_segmenter);
   for (size_t rid = 0; rid < lsize_; ++rid) {
     for (size_t lid = 0; lid < rsize_; ++lid) {
       EXPECT_EQ(is_boundary_(rid, lid), segmenter->IsBoundary(rid, lid))
@@ -88,8 +89,10 @@ void DataManagerTestBase::SegmenterTest_SameAsInternal() {
 }
 
 void DataManagerTestBase::SegmenterTest_LNodeTest() {
-  auto segmenter =
-      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
+  absl::StatusOr<std::unique_ptr<Segmenter>> status_or_segmenter =
+      Segmenter::Create(data_manager_->GetSegmenterData());
+  ASSERT_TRUE(status_or_segmenter.ok()) << status_or_segmenter.status();
+  std::unique_ptr<Segmenter> segmenter = *std::move(status_or_segmenter);
 
   // lnode is BOS
   Node lnode, rnode;
@@ -106,8 +109,10 @@ void DataManagerTestBase::SegmenterTest_LNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_RNodeTest() {
-  auto segmenter =
-      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
+  absl::StatusOr<std::unique_ptr<Segmenter>> status_or_segmenter =
+      Segmenter::Create(data_manager_->GetSegmenterData());
+  ASSERT_TRUE(status_or_segmenter.ok()) << status_or_segmenter.status();
+  std::unique_ptr<Segmenter> segmenter = *std::move(status_or_segmenter);
 
   // rnode is EOS
   Node lnode, rnode;
@@ -124,8 +129,10 @@ void DataManagerTestBase::SegmenterTest_RNodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_NodeTest() {
-  auto segmenter =
-      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
+  absl::StatusOr<std::unique_ptr<Segmenter>> status_or_segmenter =
+      Segmenter::Create(data_manager_->GetSegmenterData());
+  ASSERT_TRUE(status_or_segmenter.ok()) << status_or_segmenter.status();
+  std::unique_ptr<Segmenter> segmenter = *std::move(status_or_segmenter);
 
   Node lnode, rnode;
   lnode.node_type = Node::NOR_NODE;
@@ -142,8 +149,10 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
 }
 
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
-  auto segmenter =
-      make_unique_from_tuples<Segmenter>(data_manager_->GetSegmenterData());
+  absl::StatusOr<std::unique_ptr<Segmenter>> status_or_segmenter =
+      Segmenter::Create(data_manager_->GetSegmenterData());
+  ASSERT_TRUE(status_or_segmenter.ok()) << status_or_segmenter.status();
+  std::unique_ptr<Segmenter> segmenter = *std::move(status_or_segmenter);
   const PosMatcher pos_matcher(data_manager_->GetPosMatcherData());
 
   Node lnode, rnode;

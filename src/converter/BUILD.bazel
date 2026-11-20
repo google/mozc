@@ -455,7 +455,23 @@ mozc_cc_library(
     deps = [
         ":node",
         "//base/container:bitarray",
-        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "segmenter_test",
+    size = "small",
+    srcs = ["segmenter_test.cc"],
+    deps = [
+        ":node",
+        ":segmenter",
+        "//base/container:bitarray",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/types:span",
     ],
 )
