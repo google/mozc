@@ -39,6 +39,7 @@
 #include "renderer/win32/candidate_window.h"
 #include "renderer/win32/indicator_window.h"
 #include "renderer/win32/infolist_window.h"
+#include "renderer/win32/text_renderer.h"
 #include "renderer/win32/win32_renderer_util.h"
 
 namespace mozc {
@@ -48,7 +49,8 @@ namespace win32 {
 // This class is the controller of the candidate windows.
 class WindowManager {
  public:
-  WindowManager();
+  // Does not take ownership of |text_renderer|, which must outlive this object.
+  explicit WindowManager(TextRenderer* text_renderer);
   WindowManager(const WindowManager&) = delete;
   WindowManager& operator=(const WindowManager&) = delete;
   ~WindowManager();
@@ -64,6 +66,7 @@ class WindowManager {
   void PreTranslateMessage(const MSG& message);
 
  private:
+  TextRenderer* text_renderer_;  // Not owned.
   std::unique_ptr<CandidateWindow> main_window_;
   std::unique_ptr<CandidateWindow> cascading_window_;
   std::unique_ptr<IndicatorWindow> indicator_window_;

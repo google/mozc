@@ -77,11 +77,11 @@ void FillSolidRect(HDC dc, const RECT* rect, COLORREF color) {
 // InfolistWindow
 // ------------------------------------------------------------------------
 
-InfolistWindow::InfolistWindow()
+InfolistWindow::InfolistWindow(TextRenderer* text_renderer)
     : send_command_interface_(nullptr),
       candidate_window_(new commands::CandidateWindow),
       dpi_(::GetDpiForSystem()),
-      text_renderer_(TextRenderer::Create(dpi_)),
+      text_renderer_(text_renderer),
       style_(new RendererStyle),
       metrics_changed_(false),
       visible_(false) {
@@ -96,7 +96,6 @@ void InfolistWindow::UpdateDpi(uint32_t dpi) {
   }
   dpi_ = dpi;
   *style_ = GetScaledRendererStyle(dpi_);
-  text_renderer_->OnDpiChanged(dpi_);
 }
 
 void InfolistWindow::OnDestroy() {

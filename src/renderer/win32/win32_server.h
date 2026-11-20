@@ -39,6 +39,7 @@
 #include "absl/synchronization/mutex.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
+#include "renderer/win32/text_renderer.h"
 #include "renderer/win32/window_manager.h"
 
 namespace mozc {
@@ -75,6 +76,9 @@ class Win32Server : public RendererServer, public RendererInterface {
   std::string message_;
   absl::Mutex mutex_;
   HANDLE event_;
+  // 'text_renderer_' must be declared before 'window_manager_'.
+  // TODO(https://github.com/google/mozc/issues/1612): Simplify the init-order.
+  std::unique_ptr<TextRenderer> text_renderer_;
   std::unique_ptr<WindowManager> window_manager_;
 };
 

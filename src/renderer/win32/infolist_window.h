@@ -73,7 +73,8 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   MESSAGE_HANDLER(WM_TIMER, OnTimer)
   END_MSG_MAP()
 
-  InfolistWindow();
+  // Does not take ownership of |text_renderer|, which must outlive this window.
+  explicit InfolistWindow(TextRenderer* text_renderer);
   InfolistWindow(const InfolistWindow&) = delete;
   InfolistWindow& operator=(const InfolistWindow&) = delete;
   ~InfolistWindow();
@@ -85,10 +86,9 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
   void OnTimer(UINT_PTR nIDEvent);
 
-  // If |dpi| differs from the cached DPI, updates the cached DPI, re-scales
-  // |style_|, and flags the text renderer for refresh on the next
-  // UpdateLayout. Idempotent — safe to call unconditionally before
-  // UpdateLayout.
+  // If |dpi| differs from the cached DPI, updates the cached DPI and re-scales
+  // |style_|. Idempotent — safe to call unconditionally before UpdateLayout.
+  // The shared TextRenderer is updated by WindowManager.
   void UpdateDpi(uint32_t dpi);
 
   void UpdateLayout(const commands::CandidateWindow& candidates);
@@ -144,7 +144,7 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   client::SendCommandInterface* send_command_interface_;
   std::unique_ptr<commands::CandidateWindow> candidate_window_;
   uint32_t dpi_;
-  std::unique_ptr<TextRenderer> text_renderer_;
+  TextRenderer* text_renderer_;  // Not owned.
   std::unique_ptr<renderer::RendererStyle> style_;
   bool metrics_changed_;
   bool visible_;
