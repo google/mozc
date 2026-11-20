@@ -146,6 +146,7 @@ mozc_cc_library(
     srcs = ["serialized_string_array.cc"],
     hdrs = ["serialized_string_array.h"],
     deps = [
+        "//base:bits",
         "//base:file_util",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/log",
@@ -161,6 +162,7 @@ mozc_cc_test(
     srcs = ["serialized_string_array_test.cc"],
     deps = [
         ":serialized_string_array",
+        "//base:bits",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
     ],

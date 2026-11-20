@@ -30,8 +30,8 @@
 #include "base/container/serialized_string_array.h"
 
 #include <bit>
+#include <cstddef>
 #include <cstdint>
-#include <cstring>
 #include <memory>
 #include <string>
 
@@ -40,6 +40,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/bits.h"
 #include "base/file_util.h"
 
 namespace mozc {
@@ -64,35 +65,34 @@ void SerializedStringArray::Set(
 }
 
 bool SerializedStringArray::VerifyData(absl::string_view data) {
-  if (data.size() < 4) {
+  if (data.size() < sizeof(uint32_t)) {
     LOG(ERROR) << "Array size is missing";
     return false;
   }
-  const uint32_t* u32_array = reinterpret_cast<const uint32_t*>(data.data());
-  const size_type size = u32_array[0];
+  const uint32_t size = LoadUnaligned<uint32_t>(data.data());
 
-  const size_type min_required_data_size = 4 + (4 + 4) * size;
+  const uint64_t min_required_data_size = EntryByteOffset(size);
   if (data.size() < min_required_data_size) {
     LOG(ERROR) << "Lack of data.  At least " << min_required_data_size
                << " bytes are required";
     return false;
   }
 
-  difference_type prev_str_end = min_required_data_size;
-  for (difference_type i = 0; i < size; ++i) {
-    const difference_type offset = u32_array[2 * i + 1];
-    const difference_type len = u32_array[2 * i + 2];
+  uint64_t prev_str_end = min_required_data_size;
+  for (uint32_t i = 0; i < size; ++i) {
+    const uint64_t offset = OffsetAt(data.data(), i);
+    const uint64_t len = LengthAt(data.data(), i);
     if (offset < prev_str_end) {
       LOG(ERROR) << "Invalid offset for string " << i << ": len = " << len
                  << ", offset = " << offset;
       return false;
     }
-    if (len >= data.size() || offset > data.size() - len) {
+    if (len >= data.size() || offset >= data.size() - len) {
       LOG(ERROR) << "Invalid length for string " << i << ": len = " << len
                  << ", offset = " << offset << ", " << data.size();
       return false;
     }
-    if (data[offset + len] != '\0') {
+    if (data[static_cast<size_t>(offset + len)] != '\0') {
       LOG(ERROR) << "string[" << i << "] is not null-terminated";
       return false;
     }
@@ -102,19 +102,16 @@ bool SerializedStringArray::VerifyData(absl::string_view data) {
   return true;
 }
 
-namespace {
-
 template <typename T>
-absl::string_view SerializeToBufferImpl(absl::Span<const T> strs,
-                                        std::unique_ptr<uint32_t[]>* buffer) {
-  const SerializedStringArray::size_type header_byte_size =
-      4 * (1 + 2 * strs.size());
+absl::string_view SerializedStringArray::SerializeToBufferImpl(
+    absl::Span<const T> strs, std::unique_ptr<uint32_t[]>* buffer) {
+  const size_t header_byte_size =
+      static_cast<size_t>(EntryByteOffset(strs.size()));
 
   // Calculate the offsets of each string.
   auto offsets = std::make_unique<uint32_t[]>(strs.size());
-  SerializedStringArray::difference_type current_offset =
-      header_byte_size;  // The offset for first string.
-  for (SerializedStringArray::difference_type i = 0; i < strs.size(); ++i) {
+  size_t current_offset = header_byte_size;  // The offset for first string.
+  for (size_t i = 0; i < strs.size(); ++i) {
     offsets[i] = static_cast<uint32_t>(current_offset);
     // The next string is written after terminating '\0', so increment one byte
     // in addition to the string byte length.
@@ -126,7 +123,7 @@ absl::string_view SerializeToBufferImpl(absl::Span<const T> strs,
   *buffer = std::make_unique<uint32_t[]>((current_offset + 3) / 4);
 
   (*buffer)[0] = static_cast<uint32_t>(strs.size());
-  for (SerializedStringArray::difference_type i = 0; i < strs.size(); ++i) {
+  for (size_t i = 0; i < strs.size(); ++i) {
     // Fill offset and length.
     (*buffer)[2 * i + 1] = offsets[i];
     (*buffer)[2 * i + 2] = static_cast<uint32_t>(strs[i].size());
@@ -141,8 +138,6 @@ absl::string_view SerializeToBufferImpl(absl::Span<const T> strs,
   return absl::string_view(reinterpret_cast<const char*>(buffer->get()),
                            current_offset);
 }
-
-}  // namespace
 
 absl::string_view SerializedStringArray::SerializeToBuffer(
     const absl::Span<const absl::string_view> strs,

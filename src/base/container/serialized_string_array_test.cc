@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -136,6 +137,65 @@ TEST(SerializedStringArrayTest, Iterator) {
   EXPECT_TRUE(std::binary_search(a.begin(), a.end(), "Mozc"));
   EXPECT_TRUE(std::binary_search(a.begin(), a.end(), "google"));
   EXPECT_FALSE(std::binary_search(a.begin(), a.end(), "Japan"));
+}
+
+TEST(SerializedStringArrayTest, VerifyDataRejectsMalformedImages) {
+  // Missing array size (< 4 bytes).
+  EXPECT_FALSE(SerializedStringArray::VerifyData(""));
+  EXPECT_FALSE(SerializedStringArray::VerifyData("abc"));
+
+  // 32-bit header size wraparound: 4 + 8 * 0x20000000 wraps to 4 in uint32_t.
+  {
+    std::string overflow_header(16, '\0');
+    StoreUnaligned<uint32_t>(0x20000000u, overflow_header.begin());
+    EXPECT_FALSE(SerializedStringArray::VerifyData(overflow_header));
+  }
+
+  // 32-bit offset + length wraparound: 0xFFFFFFFF + 1 wraps to 0 in uint32_t.
+  {
+    std::string offset_len_overflow(16, '\0');
+    auto iter =
+        StoreUnaligned<uint32_t>(uint32_t{1}, offset_len_overflow.begin());
+    iter = StoreUnaligned<uint32_t>(0xFFFFFFFFu, iter);
+    StoreUnaligned<uint32_t>(uint32_t{1}, iter);
+    EXPECT_FALSE(SerializedStringArray::VerifyData(offset_len_overflow));
+  }
+
+  // String reaching exact end of buffer without room for terminating '\0'.
+  {
+    std::string missing_terminator_space(14, '\0');
+    auto iter =
+        StoreUnaligned<uint32_t>(uint32_t{1}, missing_terminator_space.begin());
+    iter = StoreUnaligned<uint32_t>(uint32_t{12}, iter);
+    iter = StoreUnaligned<uint32_t>(uint32_t{2}, iter);
+    missing_terminator_space[12] = 'a';
+    missing_terminator_space[13] = 'b';
+    EXPECT_FALSE(SerializedStringArray::VerifyData(missing_terminator_space));
+  }
+
+  // Empty string at exact end of buffer (offset = 12, len = 0 in 12-byte buf).
+  {
+    std::string zero_len_at_end(12, '\0');
+    auto iter = StoreUnaligned<uint32_t>(uint32_t{1}, zero_len_at_end.begin());
+    iter = StoreUnaligned<uint32_t>(uint32_t{12}, iter);
+    StoreUnaligned<uint32_t>(uint32_t{0}, iter);
+    EXPECT_FALSE(SerializedStringArray::VerifyData(zero_len_at_end));
+  }
+
+  // String not null-terminated at offset + len.
+  {
+    std::string non_null_terminated(kTestData);
+    non_null_terminated.back() = 'x';
+    EXPECT_FALSE(SerializedStringArray::VerifyData(non_null_terminated));
+  }
+
+  // Overlapping / non-monotonic string offset.
+  {
+    std::string overlapping_offset(kTestData);
+    // Overwrite string[1] offset (bytes 12..15) with string[0]'s offset (28).
+    StoreUnaligned<uint32_t>(uint32_t{28}, overlapping_offset.begin() + 12);
+    EXPECT_FALSE(SerializedStringArray::VerifyData(overlapping_offset));
+  }
 }
 
 }  // namespace

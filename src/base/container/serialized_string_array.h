@@ -32,34 +32,19 @@
 
 #include <compare>
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
-#include <new>
 #include <string>
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/bits.h"
 
 namespace mozc {
 namespace serialized_string_array_internal {
-
-inline const uint32_t* GetOffsetArray(const char* data) {
-  return std::launder(reinterpret_cast<const uint32_t*>(data)) + 1;
-}
-
-inline uint32_t OffsetAt(const char* data, uint32_t index) {
-  return GetOffsetArray(data)[index * 2];
-}
-
-inline uint32_t LengthAt(const char* data, uint32_t index) {
-  return GetOffsetArray(data)[index * 2 + 1];
-}
-
-inline absl::string_view DataAt(const char* data, uint32_t index) {
-  return absl::string_view(data + OffsetAt(data, index), LengthAt(data, index));
-}
 
 class const_iterator {
  public:
@@ -74,10 +59,8 @@ class const_iterator {
       : array_(array), index_(index) {}
 
   constexpr difference_type index() const { return index_; }
-  value_type operator*() const { return DataAt(array_, index_); }
-  value_type operator[](difference_type n) const {
-    return DataAt(array_, index_ + n);
-  }
+  value_type operator*() const { return (*this)[0]; }
+  value_type operator[](difference_type n) const;
 
   const_iterator& operator++() {
     ++index_;
@@ -225,13 +208,13 @@ class SerializedStringArray {
   size_type size() const {
     // The first 4 bytes of data stores the number of elements in this array in
     // little endian order.
-    if (data_.empty()) return 0;
-    return *std::launder(reinterpret_cast<const uint32_t*>(data_.data()));
+    if (data_.empty()) {
+      return 0;
+    }
+    return LoadUnaligned<uint32_t>(data_.data());
   }
 
-  value_type operator[](difference_type i) const {
-    return serialized_string_array_internal::DataAt(data_.data(), i);
-  }
+  value_type operator[](size_type i) const { return DataAt(data_.data(), i); }
 
   bool empty() const { return size() == 0; }
   absl::string_view data() const { return data_; }
@@ -264,11 +247,52 @@ class SerializedStringArray {
                               const std::string& filepath);
 
  private:
+  friend class serialized_string_array_internal::const_iterator;
+
+  // Returns the byte offset of the [offset, length] metadata entry for `index`
+  // (or the total header byte size when `index` equals the element count).
+  // Header layout in uint32_t words: 1 word for the element count, followed by
+  // 2 words (offset, length) per entry. Computed in uint64_t to prevent 32-bit
+  // integer overflow even on 32-bit targets.
+  static constexpr uint64_t EntryByteOffset(uint64_t index) {
+    constexpr uint64_t kElementCountWords = 1;
+    constexpr uint64_t kWordsPerEntry = 2;
+    return sizeof(uint32_t) * (kElementCountWords + kWordsPerEntry * index);
+  }
+
+  static uint64_t OffsetAt(const char* data, uint32_t index) {
+    return LoadUnaligned<uint32_t>(data +
+                                   static_cast<size_t>(EntryByteOffset(index)));
+  }
+
+  static uint64_t LengthAt(const char* data, uint32_t index) {
+    return LoadUnaligned<uint32_t>(
+        data + static_cast<size_t>(EntryByteOffset(index)) + sizeof(uint32_t));
+  }
+
+  static absl::string_view DataAt(const char* data, uint32_t index) {
+    return absl::string_view(data + static_cast<size_t>(OffsetAt(data, index)),
+                             static_cast<size_t>(LengthAt(data, index)));
+  }
+
+  template <typename T>
+  static absl::string_view SerializeToBufferImpl(
+      absl::Span<const T> strs, std::unique_ptr<uint32_t[]>* buffer);
+
   static absl::string_view SerializeStringsToBuffer(
       absl::Span<const std::string> strs, std::unique_ptr<uint32_t[]>* buffer);
 
   absl::string_view data_;
 };
+
+namespace serialized_string_array_internal {
+
+inline const_iterator::value_type const_iterator::operator[](
+    difference_type n) const {
+  return SerializedStringArray::DataAt(array_, index_ + n);
+}
+
+}  // namespace serialized_string_array_internal
 
 }  // namespace mozc
 
