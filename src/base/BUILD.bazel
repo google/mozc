@@ -377,6 +377,7 @@ mozc_cc_library(
         "//:__subpackages__",
     ],
     deps = [
+        ":port",
         ":util",
         "//base/strings:pfchar",
         "@com_google_absl//absl/base:core_headers",

@@ -41,10 +41,6 @@
 #include "absl/types/span.h"
 #include "base/strings/pfchar.h"
 
-#ifdef __APPLE__
-#include <TargetConditionals.h>  // for TARGET_OS_IPHONE
-#endif                           // __APPLE__
-
 #ifdef _WIN32
 #include <wil/resource.h>
 #include <windows.h>
@@ -357,38 +353,28 @@ void Mmap::Close() {
   adjust_ = 0;
 }
 
-// Define a macro (MOZC_HAVE_MLOCK) to indicate mlock support.
-
-#if defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE) || \
-    defined(_WIN32)
-#define MOZC_HAVE_MLOCK 0
-#else  // __ANDROID__ || TARGET_OS_IPHONE || _WIN32
-#define MOZC_HAVE_MLOCK 1
-#endif  // __ANDROID__ || TARGET_OS_IPHONE || _WIN32
-
-
-#ifndef MOZC_HAVE_MLOCK
-#error "MOZC_HAVE_MLOCK is not defined"
-#endif  // MOZC_HAVE_MLOCK
-
-#if MOZC_HAVE_MLOCK
-bool Mmap::IsMLockSupported() { return true; }
-
-int Mmap::MaybeMLock(const void* addr, size_t len) { return mlock(addr, len); }
-
-int Mmap::MaybeMUnlock(const void* addr, size_t len) {
-  return munlock(addr, len);
+int Mmap::MaybeMLock(const void* addr, size_t len) {
+  if constexpr (!IsMLockSupported()) {
+    return -1;
+  } else {
+#ifdef _WIN32
+    return -1;  // mlock is not defined on Windows.
+#else           // _WIN32
+    return mlock(addr, len);
+#endif          // _WIN32
+  }
 }
 
-#else   // MOZC_HAVE_MLOCK
-
-bool Mmap::IsMLockSupported() { return false; }
-
-int Mmap::MaybeMLock(const void* addr, size_t len) { return -1; }
-
-int Mmap::MaybeMUnlock(const void* addr, size_t len) { return -1; }
-#endif  // MOZC_HAVE_MLOCK
-
-#undef MOZC_HAVE_MLOCK
+int Mmap::MaybeMUnlock(const void* addr, size_t len) {
+  if constexpr (!IsMLockSupported()) {
+    return -1;
+  } else {
+#ifdef _WIN32
+    return -1;  // munlock is not defined on Windows.
+#else           // _WIN32
+    return munlock(addr, len);
+#endif          // _WIN32
+  }
+}
 
 }  // namespace mozc

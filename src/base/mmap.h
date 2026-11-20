@@ -36,6 +36,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/port.h"
 
 namespace mozc {
 
@@ -83,7 +84,9 @@ class Mmap final {
   // On Linux, in the kernel version >= 2.6.9, user process can mlock. In older
   // kernel, it fails if the process is running in user privilege.
   // TODO(team): Check if mlock is really necessary for Mac.
-  static bool IsMLockSupported();
+  static constexpr bool IsMLockSupported() {
+    return !port::IsWindows() && !port::IsAndroid() && !port::IsIos();
+  }
   static int MaybeMLock(const void* addr, size_t len);
   static int MaybeMUnlock(const void* addr, size_t len);
 
