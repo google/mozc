@@ -36,8 +36,9 @@ Examples:
     --config=oss_linux \
     --output_dir=/tmp/mozc_vendor
 
-  # Extract the vendor archive for an offline build:
+  # Extract the vendor archive and optionally verify input checksums:
   tar -xzf /tmp/mozc_vendor/bazel_vendor.tar.gz -C /tmp/mozc_vendor
+  shasum -a 256 -c /tmp/mozc_vendor/vendor_dir/vendor_inputs.sha256
 
   # Copy MODULE.bazel.lock to the workspace root because Bazel always reads
   # <workspace_root>/MODULE.bazel.lock (no flag overrides its path), and
@@ -59,6 +60,7 @@ Examples:
 import argparse
 from collections.abc import Sequence
 import gzip
+import hashlib
 import os
 import pathlib
 import platform
@@ -73,6 +75,7 @@ ABS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 ABS_MOZC_SRC_DIR = ABS_SCRIPT_PATH.parents[1]
 
 DEFAULT_CONFIG = 'oss_linux'
+VENDOR_INPUTS_SHA256_FILENAME = 'vendor_inputs.sha256'
 
 DEFAULT_VENDOR_BAZEL_HEADER = (
     '#######################################################################'
@@ -663,6 +666,7 @@ def create_vendor_archive(args: argparse.Namespace) -> None:
       lockfile_path.unlink()
 
   pin_vendored_repos(vendor_dir)
+  write_vendor_inputs_checksums(vendor_dir, mozc_src_dir)
 
   if not args.no_archive:
     archive_path.parent.mkdir(parents=True, exist_ok=True)
@@ -744,6 +748,47 @@ def pin_vendored_repos(vendor_dir: pathlib.Path) -> Sequence[str]:
     lines.append(')')
   vendor_bazel_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
   return repo_names
+
+
+def write_vendor_inputs_checksums(
+    vendor_dir: pathlib.Path, mozc_src_dir: pathlib.Path
+) -> pathlib.Path:
+  """Writes vendor_inputs.sha256 for MODULE.bazel and bazel/ overlays.
+
+  Because pinning repositories in VENDOR.bazel skips Bazel's .marker checks,
+  recording SHA-256 checksums allows CI and release builds to verify inputs
+  with `shasum -a 256 -c`.
+
+  Args:
+    vendor_dir: Path to the Bazel vendor directory.
+    mozc_src_dir: Path to the Mozc src directory.
+
+  Returns:
+    Path to the written vendor_inputs.sha256 file.
+
+  Raises:
+    FileNotFoundError: If MODULE.bazel does not exist in mozc_src_dir.
+  """
+  module_path = mozc_src_dir / 'MODULE.bazel'
+  if not module_path.is_file():
+    raise FileNotFoundError(f'MODULE.bazel not found in {mozc_src_dir}')
+
+  bazel_dir = mozc_src_dir / 'bazel'
+  extra_paths: list[pathlib.Path] = []
+  if bazel_dir.is_dir():
+    extra_paths.extend(sorted(bazel_dir.glob('*.patch')))
+    extra_paths.extend(sorted(bazel_dir.glob('BUILD.*.bazel')))
+
+  input_paths = [module_path, *extra_paths]
+  checksum_lines = [
+      f'{hashlib.sha256(path.read_bytes()).hexdigest()}  '
+      f'{path.relative_to(mozc_src_dir).as_posix()}\n'
+      for path in input_paths
+      if path.is_file()
+  ]
+  checksum_path = vendor_dir / VENDOR_INPUTS_SHA256_FILENAME
+  checksum_path.write_text(''.join(checksum_lines), encoding='utf-8')
+  return checksum_path
 
 
 def main() -> None:

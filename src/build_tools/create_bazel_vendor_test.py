@@ -28,6 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import hashlib
 import pathlib
 
 from absl.testing import absltest
@@ -61,6 +62,46 @@ class CreateBazelVendorTest(absltest.TestCase):
     self.assertIn('"@@+http_archive+ja_usage_dict",', vendor_bazel)
     self.assertIn('"@@rules_cc+",', vendor_bazel)
     self.assertNotIn('_registries', vendor_bazel)
+
+  def test_write_vendor_inputs_checksums_records_module_patches_and_builds(
+      self,
+  ):
+    temp_dir = pathlib.Path(self.create_tempdir().full_path)
+    src_dir = temp_dir / 'src'
+    bazel_dir = src_dir / 'bazel'
+    bazel_dir.mkdir(parents=True)
+    vendor_dir = temp_dir / 'vendor_dir'
+    vendor_dir.mkdir()
+
+    module_bytes = b'module(name = "mozc")\n'
+    patch_bytes = b'--- a/foo\n+++ b/foo\n'
+    build_bytes = b'package(default_visibility = ["//visibility:public"])\n'
+    (src_dir / 'MODULE.bazel').write_bytes(module_bytes)
+    (bazel_dir / 'sample.patch').write_bytes(patch_bytes)
+    (bazel_dir / 'BUILD.ext.bazel').write_bytes(build_bytes)
+    (bazel_dir / 'unrelated.bzl').write_text('# ignored\n', encoding='utf-8')
+
+    checksum_path = create_bazel_vendor.write_vendor_inputs_checksums(
+        vendor_dir, src_dir
+    )
+
+    expected = (
+        f'{hashlib.sha256(module_bytes).hexdigest()}  MODULE.bazel\n'
+        f'{hashlib.sha256(patch_bytes).hexdigest()}  bazel/sample.patch\n'
+        f'{hashlib.sha256(build_bytes).hexdigest()}  bazel/BUILD.ext.bazel\n'
+    )
+    self.assertEqual(checksum_path, vendor_dir / 'vendor_inputs.sha256')
+    self.assertEqual(checksum_path.read_text(encoding='utf-8'), expected)
+
+  def test_write_vendor_inputs_checksums_raises_when_module_bazel_missing(self):
+    temp_dir = pathlib.Path(self.create_tempdir().full_path)
+    src_dir = temp_dir / 'src'
+    src_dir.mkdir()
+    vendor_dir = temp_dir / 'vendor_dir'
+    vendor_dir.mkdir()
+
+    with self.assertRaises(FileNotFoundError):
+      create_bazel_vendor.write_vendor_inputs_checksums(vendor_dir, src_dir)
 
 
 if __name__ == '__main__':
