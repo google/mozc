@@ -456,6 +456,7 @@ mozc_cc_test(
     deps = [
         ":random_keyevents_generator",
         ":session_handler_tool",
+        "//base:port",
         "//engine:engine_factory",
         "//protocol:commands_cc_proto",
         "//request:request_test_util",

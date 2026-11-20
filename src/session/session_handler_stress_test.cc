@@ -38,6 +38,7 @@
 
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
+#include "base/port.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "request/request_test_util.h"
@@ -54,7 +55,7 @@ ABSL_FLAG(bool, set_mobile_request, false,
 namespace mozc::session {
 namespace {
 
-constexpr size_t kTotalEventSize = 2500;
+constexpr size_t kTotalEventSize = port::IsApplicationBuild() ? 2500 : 10000;
 
 constexpr size_t kShardCount = 32;
 constexpr size_t kEventsPerShard = kTotalEventSize / kShardCount;
