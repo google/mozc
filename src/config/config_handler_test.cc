@@ -306,6 +306,11 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
     EXPECT_TRUE(output.general_config().upload_usage_stats());
   }
 #endif  // CHANNEL_DEV
+
+  constexpr bool kExpectedEmojiConversion =
+      port::IsApplicationBuild() && !port::IsAndroid();
+  EXPECT_EQ(output.has_use_emoji_conversion(), kExpectedEmojiConversion);
+  EXPECT_EQ(output.use_emoji_conversion(), kExpectedEmojiConversion);
 }
 
 TEST_F(ConfigHandlerTest, DefaultConfig) {

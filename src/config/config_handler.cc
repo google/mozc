@@ -70,13 +70,10 @@ void AddCharacterFormRule(const absl::string_view group,
   rule->set_conversion_character_form(conversion_form);
 }
 
-bool GetPlatformSpecificDefaultEmojiSetting() {
-  // Disable Unicode emoji conversion by default on specific platforms.
-  bool use_emoji_conversion_default = true;
-  if constexpr (port::IsAndroid()) {
-    use_emoji_conversion_default = false;
-  }
-  return use_emoji_conversion_default;
+constexpr bool GetPlatformSpecificDefaultEmojiSetting() {
+  // Disable Unicode emoji conversion by default on Android and non-application
+  // builds.
+  return port::IsApplicationBuild() && !port::IsAndroid();
 }
 
 Config CreateDefaultConfig() {
