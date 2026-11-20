@@ -206,10 +206,25 @@ TEST(CalculatorTest, UnaryMinusAndPower) {
   VerifyCalculation(calculator, "2^-3^2=", "0.001953125");
   VerifyCalculation(calculator, "-2^-2=", "-0.25");
 
+  // Trailing multiplicative and additive operators bind looser than '^' and
+  // unary signs.
+  VerifyCalculation(calculator, "2^-3*4=", "0.5");
+  VerifyCalculation(calculator, "2^-2/4=", "0.0625");
+  VerifyCalculation(calculator, "2^-3+1=", "1.125");
+  VerifyCalculation(calculator, "-3^2+10=", "1");
+
   // Parentheses still make the sign part of the base.
   VerifyCalculation(calculator, "(-3)^2=", "9");
   VerifyCalculation(calculator, "1-3^2=", "-8");
   VerifyCalculation(calculator, "2^3^2=", "512");
+
+  // Non-finite power results (e.g., fractional power of a parenthesized
+  // negative base) and incomplete or malformed power expressions are rejected.
+  VerifyRejection(calculator, "(-2)^0.5=");
+  VerifyRejection(calculator, "0^-1=");
+  VerifyRejection(calculator, "2^=");
+  VerifyRejection(calculator, "2^-=");
+  VerifyRejection(calculator, "2^*3=");
 }
 
 // Test large number of queries.  Test data is located at

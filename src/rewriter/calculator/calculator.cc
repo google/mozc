@@ -73,21 +73,30 @@ struct ParserContext {
 // 1. Precedence (from lowest to highest):
 //    Expression : '+' | '-'               (Left-associative)
 //    Term       : '*' | '/' | '%'         (Left-associative)
-//    Factor     : '^'                     (Right-associative)
 //    Unary      : '+' | '-'               (Prefix, right-associative)
+//    Factor     : '^'                     (Right-associative)
 //    Primary    : Integer | Function | '(' Expression ')'
+//
+//    Note: Factor := Primary ('^' Unary)?. '^' binds tighter than a unary sign
+//    on its left (e.g., -3^2 = -(3^2)), while its right operand accepts Unary
+//    for signed exponents (e.g., 2^-3^2 = 2^(-(3^2))).
 //
 // -----------------------------------------------------------------------------
 // 2. Behavior of right-associativity vs left-associativity:
 //    - '+' and '-' (binary) are parsed using loop evaluation:
 //        A + B + C is processed as (A + B) + C.
 //    - '^' is right-associative:
-//        A ^ B ^ C is processed as A ^ (B ^ C) via direct recursive calls.
+//        A ^ B ^ C is processed as A ^ (B ^ C) via recursive calls
+//        (ParseFactor -> ParseUnary -> ParseFactor).
 //
 // -----------------------------------------------------------------------------
 // 3. Mutual Recursion:
-//    - ParsePrimary handles parentheses '( Expression )' and functions.
-//    - Minimum forward-declaration is required below to allow this cycle.
+//    - ParsePrimary <-> ParseExpression: handles parentheses '( Expression )'
+//      and function arguments.
+//    - ParseFactor <-> ParseUnary: allows signed exponents on the right of '^'
+//      while keeping '^' higher precedence than a unary sign on its left.
+//    - Forward declarations are used below only where required for these
+//      cycles.
 //    - Recursive calls are guarded by the operation count limit
 //      (kMaxOperations) to prevent stack overflow.
 // -----------------------------------------------------------------------------
