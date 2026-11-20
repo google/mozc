@@ -72,7 +72,7 @@ class TipLangBar {
 
   // Represents the input mode button, which is shown in the taskbar as the IME
   // mode icon on Windows 8 and later.
-  wil::com_ptr_nothrow<TipLangBarToggleButton> input_mode_button_for_win8_;
+  wil::com_ptr_nothrow<TipLangBarButton> input_mode_button_for_win8_;
 };
 
 }  // namespace tsf

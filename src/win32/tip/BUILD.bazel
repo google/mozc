@@ -391,8 +391,6 @@ mozc_cc_library(
         "//base/win32:com_implements",
         "//bazel/win32:user32",
         "//win32/base:tsf_profile",
-        "@com_google_absl//absl/base",
-        "@com_google_absl//absl/base:core_headers",
         "@com_microsoft_wil//:wil",
     ],
 )
