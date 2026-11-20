@@ -1,0 +1,67 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import pathlib
+
+from absl.testing import absltest
+from build_tools import create_bazel_vendor
+
+
+class CreateBazelVendorTest(absltest.TestCase):
+
+  def test_pin_vendored_repos_writes_pins_and_cleans_markers(self):
+    temp_dir = pathlib.Path(self.create_tempdir().full_path)
+    vendor_dir = temp_dir / 'vendor_dir'
+    (vendor_dir / 'rules_cc+').mkdir(parents=True)
+    (vendor_dir / '+http_archive+ja_usage_dict').mkdir(parents=True)
+    (vendor_dir / '_registries').mkdir(parents=True)
+    (vendor_dir / '@rules_cc+.marker').write_text('hash\n', encoding='utf-8')
+    (vendor_dir / 'bazel-external').symlink_to(temp_dir)
+    (vendor_dir / 'VENDOR.bazel').write_text(
+        '# Custom header\n', encoding='utf-8'
+    )
+
+    pinned = create_bazel_vendor.pin_vendored_repos(vendor_dir)
+
+    self.assertSequenceEqual(
+        pinned,
+        ('+http_archive+ja_usage_dict', 'rules_cc+'),
+    )
+    self.assertFalse((vendor_dir / '@rules_cc+.marker').exists())
+    self.assertFalse((vendor_dir / 'bazel-external').is_symlink())
+    vendor_bazel = (vendor_dir / 'VENDOR.bazel').read_text(encoding='utf-8')
+    self.assertIn('# Custom header', vendor_bazel)
+    self.assertIn('"@@+http_archive+ja_usage_dict",', vendor_bazel)
+    self.assertIn('"@@rules_cc+",', vendor_bazel)
+    self.assertNotIn('_registries', vendor_bazel)
+
+
+if __name__ == '__main__':
+  absltest.main()

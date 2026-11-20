@@ -171,6 +171,21 @@ mozc_py_binary(
     srcs = ["build_diskimage_mac.py"],
 )
 
+mozc_py_library(
+    name = "create_bazel_vendor_lib",
+    srcs = ["create_bazel_vendor.py"],
+)
+
+py_test(
+    name = "create_bazel_vendor_test",
+    size = "small",
+    srcs = ["create_bazel_vendor_test.py"],
+    deps = [
+        ":create_bazel_vendor_lib",
+        "@abseil-py//absl/testing:absltest",
+    ],
+)
+
 bzl_library(
     name = "embed_file_bzl",
     srcs = ["embed_file.bzl"],

@@ -57,6 +57,7 @@ Examples:
 """
 
 import argparse
+from collections.abc import Sequence
 import gzip
 import os
 import pathlib
@@ -72,6 +73,29 @@ ABS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 ABS_MOZC_SRC_DIR = ABS_SCRIPT_PATH.parents[1]
 
 DEFAULT_CONFIG = 'oss_linux'
+
+DEFAULT_VENDOR_BAZEL_HEADER = (
+    '#######################################################################'
+    '########\n'
+    '# This file is used to configure how external repositories are handled '
+    'in vendor mode.\n'
+    '# ONLY the two following functions can be used:\n'
+    '#\n'
+    "# ignore('@@<canonical repo name>', ...) is used to completely ignore "
+    'this repo from vendoring.\n'
+    '# Bazel will use the normal external cache and fetch process for this '
+    'repo.\n'
+    '#\n'
+    "# pin('@@<canonical repo name>', ...) is used to pin the contents of "
+    'this repo under the vendor\n'
+    '# directory as if there is a --override_repository flag for this repo.\n'
+    '# Note that Bazel will NOT update the vendored source for this repo '
+    'while running vendor command\n'
+    "# unless it's unpinned. The user can modify and maintain the vendored "
+    'source for this repo manually.\n'
+    '#######################################################################'
+    '########'
+)
 
 SUPPORTED_CONFIGS = (
     'oss_linux',
@@ -638,9 +662,7 @@ def create_vendor_archive(args: argparse.Namespace) -> None:
     elif lockfile_path.exists():
       lockfile_path.unlink()
 
-  bazel_external_link = vendor_dir / 'bazel-external'
-  if bazel_external_link.is_symlink():
-    bazel_external_link.unlink()
+  pin_vendored_repos(vendor_dir)
 
   if not args.no_archive:
     archive_path.parent.mkdir(parents=True, exist_ok=True)
@@ -659,6 +681,69 @@ def create_vendor_archive(args: argparse.Namespace) -> None:
       tmp_archive_path.unlink(missing_ok=True)
       raise
     print(f'Created {archive_path}')
+
+
+def pin_vendored_repos(vendor_dir: pathlib.Path) -> Sequence[str]:
+  """Pins all vendored repositories in VENDOR.bazel and cleans host markers.
+
+  Bazel hashes the host JVM's os.name, os.arch, and repository rule environment
+  into @<repo>.marker files. When a vendor archive is generated on one host
+  (e.g. Linux amd64) and consumed on another (e.g. macOS), unpinned
+  repositories fail the marker check and attempt network downloads. Pinning
+  all vendored repositories in VENDOR.bazel instructs Bazel to use the vendored
+  directories directly without marker validation, while local SDK repositories
+  not present in vendor_dir (@qt_mac, local_config_xcode, etc.) still run
+  normally on the target host.
+
+  Args:
+    vendor_dir: Path to the populated Bazel vendor directory.
+
+  Returns:
+    Sorted sequence of pinned canonical repository directory names.
+  """
+  for entry in list(vendor_dir.iterdir()):
+    if (
+        entry.is_file()
+        and not entry.is_symlink()
+        and entry.name.startswith('@')
+        and entry.name.endswith('.marker')
+    ):
+      entry.unlink()
+    elif entry.is_symlink() and entry.name == 'bazel-external':
+      entry.unlink()
+
+  repo_names = tuple(
+      sorted(
+          entry.name
+          for entry in vendor_dir.iterdir()
+          if entry.is_dir()
+          and not entry.is_symlink()
+          and entry.name != '_registries'
+      )
+  )
+
+  vendor_bazel_path = vendor_dir / 'VENDOR.bazel'
+  if vendor_bazel_path.is_file():
+    header_lines = [
+        line
+        for line in vendor_bazel_path.read_text(encoding='utf-8').splitlines()
+        if line.strip().startswith('#')
+    ]
+    header = (
+        '\n'.join(header_lines) if header_lines else DEFAULT_VENDOR_BAZEL_HEADER
+    )
+  else:
+    header = DEFAULT_VENDOR_BAZEL_HEADER
+
+  lines = [header]
+  if repo_names:
+    lines.append('')
+    lines.append('pin(')
+    for repo_name in repo_names:
+      lines.append(f'    "@@{repo_name}",')
+    lines.append(')')
+  vendor_bazel_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+  return repo_names
 
 
 def main() -> None:
