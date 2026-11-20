@@ -119,15 +119,15 @@ NINJA_WIN_ARM64 = ArchiveInfo(
 )
 
 LLVM_WIN = ArchiveInfo(
-    url='https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.1/clang+llvm-20.1.1-x86_64-pc-windows-msvc.tar.xz',
-    size=939286624,
-    sha256='f8114cb674317e8a303731b1f9d22bf37b8c571b64f600abe528e92275ed4ace',
+    url='https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.6/clang+llvm-23.1.6-x86_64-pc-windows-msvc.tar.xz',
+    size=901284676,
+    sha256='16af05919cf36958dfb4ddaa4fc4d9d4ff577f5daeb76bc112ea49cd8ced82b2',
 )
 
 LLVM_WIN_ARM64 = ArchiveInfo(
-    url='https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.1/clang+llvm-20.1.1-aarch64-pc-windows-msvc.tar.xz',
-    size=900502024,
-    sha256='6ee4c1a8c51cf081e19a7225d802d160cc888cdc3a8da07dcbdb5768e3160244',
+    url='https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.6/clang+llvm-23.1.6-aarch64-pc-windows-msvc.tar.xz',
+    size=760067264,
+    sha256='fa5a25df6a1405fdfb9942f4d5cc73bfc3b8b31cfd43ee2fbd43bd2e3168be01',
 )
 
 MSYS2 = ArchiveInfo(

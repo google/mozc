@@ -81,7 +81,7 @@ python build_tools/update_deps.py
 
 In this step, additional build dependencies will be downloaded, including:
 
-*   [LLVM 20.1.1](https://github.com/llvm/llvm-project/releases/tag/llvmorg-20.1.1)
+*   [LLVM 23.1.6](https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.6)
 *   [MSYS2 2025-02-21](https://github.com/msys2/msys2-installer/releases/tag/2025-02-21)
 *   [Ninja 1.11.0](https://github.com/ninja-build/ninja/releases/tag/v1.11.0)
 *   [Qt 6.9.1](https://download.qt.io/archive/qt/6.9/6.9.1/submodules/qtbase-everywhere-src-6.9.1.tar.xz)
