@@ -40,6 +40,7 @@
 #include "absl/flags/flag.h"
 #include "absl/flags/reflection.h"
 #include "absl/log/check.h"
+#include "base/port.h"
 #include "config/character_form_manager.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
@@ -99,16 +100,15 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
   const ConversionRequest request;
   Segment* seg = segments.push_back_segment();
 
+  constexpr bool kHasCommandRewriter =
+      port::IsApplicationBuild() && !port::IsAndroid() && !port::IsIos();
+
   {
     converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("こまんど");
     candidate->value = "コマンド";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
-#ifdef __ANDROID__
-    EXPECT_EQ(CommandCandidatesSize(*seg), 0);
-#else  // __ANDROID__
-    EXPECT_EQ(CommandCandidatesSize(*seg), 2);
-#endif  // __ANDROID__
+    EXPECT_EQ(CommandCandidatesSize(*seg), kHasCommandRewriter ? 2 : 0);
     seg->clear_candidates();
   }
 
@@ -117,11 +117,7 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
     seg->set_key("さじぇすと");
     candidate->value = "サジェスト";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
-#ifdef __ANDROID__
-    EXPECT_EQ(CommandCandidatesSize(*seg), 0);
-#else  // __ANDROID__
-    EXPECT_EQ(CommandCandidatesSize(*seg), 1);
-#endif  // __ANDROID__
+    EXPECT_EQ(CommandCandidatesSize(*seg), kHasCommandRewriter ? 1 : 0);
     seg->clear_candidates();
   }
 }

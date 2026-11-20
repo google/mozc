@@ -33,6 +33,7 @@
 
 #include "absl/flags/flag.h"
 #include "base/container/tuple.h"
+#include "base/port.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
@@ -42,13 +43,16 @@
 #include "rewriter/a11y_description_rewriter.h"
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/collocation_rewriter.h"
+#include "rewriter/command_rewriter.h"
 #include "rewriter/correction_rewriter.h"
+#include "rewriter/date_rewriter.h"
 #include "rewriter/dice_rewriter.h"
 #include "rewriter/emoji_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "rewriter/english_variants_rewriter.h"
 #include "rewriter/environmental_filter_rewriter.h"
 #include "rewriter/focus_candidate_rewriter.h"
+#include "rewriter/fortune_rewriter.h"
 #include "rewriter/ivs_variants_rewriter.h"
 #include "rewriter/language_aware_rewriter.h"
 #include "rewriter/number_rewriter.h"
@@ -60,71 +64,20 @@
 #include "rewriter/transliteration_rewriter.h"
 #include "rewriter/unicode_rewriter.h"
 #include "rewriter/user_boundary_history_rewriter.h"
+#include "rewriter/user_dictionary_rewriter.h"
 #include "rewriter/user_segment_history_rewriter.h"
 #include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
 #include "rewriter/zipcode_rewriter.h"
 
-#ifdef __APPLE__
-#include <TargetConditionals.h>  // for TARGET_OS_IPHONE
-#endif                           // __APPLE__
-
-
-// CommandRewriter is not tested well on Android or iOS.
-// So we temporarily disable it.
-// TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
-#if !(defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE))
-#define MOZC_COMMAND_REWRITER
-#endif  // !(__ANDROID__ || TARGET_OS_IPHONE)
-
-// DateRewriter may return the date information that is possibly different from
-// the user's environment.
-#define MOZC_DATE_REWRITER
-
-// FortuneRewriter changes the result when invoked in another day but it also
-// suffers from the inconsistency of locale between server and user's
-// environment.
-#define MOZC_FORTUNE_REWRITER
-
-// UsageRewriter is not used by non application build.
 #ifndef NO_USAGE_REWRITER
-#define MOZC_USAGE_REWRITER
+#include "rewriter/usage_rewriter.h"
 #endif  // NO_USAGE_REWRITER
 
-// UserDictionaryRewriter is only for application build because it will
-// access to the local files per user.
-#define MOZC_USER_DICTIONARY_REWRITER
-
-// HistoryRewriter is used only for application build because it will
-// access to the local files at the initialization timing.
-#define MOZC_USER_HISTORY_REWRITER
-
-
-#ifdef MOZC_COMMAND_REWRITER
-#include "rewriter/command_rewriter.h"
-#endif  // MOZC_COMMAND_REWRITER
-
-#ifdef MOZC_DATE_REWRITER
-#include "rewriter/date_rewriter.h"
-#endif  // MOZC_DATE_REWRITER
-
-#ifdef MOZC_FORTUNE_REWRITER
-#include "rewriter/fortune_rewriter.h"
-#endif  // MOZC_FORTUNE_REWRITER
-
-#ifdef MOZC_USAGE_REWRITER
-#include "rewriter/usage_rewriter.h"
-#endif  // MOZC_USAGE_REWRITER
-
-#ifdef MOZC_USER_DICTIONARY_REWRITER
-#include "rewriter/user_dictionary_rewriter.h"
-#endif  // MOZC_USER_DICTIONARY_REWRITER
-
-#ifdef MOZC_USER_HISTORY_REWRITER
-ABSL_FLAG(bool, use_history_rewriter, true, "Use history rewriter or not.");
-#else   // MOZC_USER_HISTORY_REWRITER
-ABSL_FLAG(bool, use_history_rewriter, false, "Use history rewriter or not.");
-#endif  // MOZC_USER_HISTORY_REWRITER
+// HistoryRewriter is used only for application builds because it accesses
+// local files at initialization time.
+ABSL_FLAG(bool, use_history_rewriter, mozc::port::IsApplicationBuild(),
+          "Use history rewriter or not.");
 
 namespace mozc {
 
@@ -136,9 +89,11 @@ Rewriter::Rewriter(const engine::Modules& modules) {
   const dictionary::SingleKanjiDictionary& single_kanji_dictionary =
       modules.GetSingleKanjiDictionary();
 
-#ifdef MOZC_USER_DICTIONARY_REWRITER
-  AddRewriter(std::make_unique<UserDictionaryRewriter>());
-#endif  // MOZC_USER_DICTIONARY_REWRITER
+  if constexpr (port::IsApplicationBuild()) {
+    // UserDictionaryRewriter is only for application builds because it accesses
+    // local files per user.
+    AddRewriter(std::make_unique<UserDictionaryRewriter>());
+  }
 
   AddRewriter(make_unique_from_tuples<FocusCandidateRewriter>(
       data_manager.GetCounterSuffixSortedArray(), pos_matcher));
@@ -174,22 +129,31 @@ Rewriter::Rewriter(const engine::Modules& modules) {
     AddRewriter(std::make_unique<UserBoundaryHistoryRewriter>());
   }
 
-#ifdef MOZC_DATE_REWRITER
-  AddRewriter(std::make_unique<DateRewriter>(dictionary));
-#endif  // MOZC_DATE_REWRITER
+  if constexpr (port::IsApplicationBuild()) {
+    // DateRewriter may return date information that is possibly different from
+    // the user's environment.
+    AddRewriter(std::make_unique<DateRewriter>(dictionary));
+    // FortuneRewriter changes the result when invoked on another day and also
+    // suffers from locale inconsistency between the server and the user's
+    // environment.
+    AddRewriter(std::make_unique<FortuneRewriter>());
+  }
 
-#ifdef MOZC_FORTUNE_REWRITER
-  AddRewriter(std::make_unique<FortuneRewriter>());
-#endif  // MOZC_FORTUNE_REWRITER
+  // CommandRewriter is not tested well on Android or iOS, so we temporarily
+  // disable it.
+  // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
+  if constexpr (port::IsApplicationBuild() && !port::IsAndroid() &&
+                !port::IsIos()) {
+    AddRewriter(std::make_unique<CommandRewriter>());
+  }
 
-#ifdef MOZC_COMMAND_REWRITER
-  AddRewriter(std::make_unique<CommandRewriter>());
-#endif  // MOZC_COMMAND_REWRITER
-
-#ifdef MOZC_USAGE_REWRITER
-  AddRewriter(make_unique_from_tuples<UsageRewriter>(
-      data_manager.GetUsageRewriterData(), dictionary, pos_matcher));
-#endif  // MOZC_USAGE_REWRITER
+#ifndef NO_USAGE_REWRITER
+  if constexpr (port::IsApplicationBuild()) {
+    // UsageRewriter is not used by non-application builds.
+    AddRewriter(make_unique_from_tuples<UsageRewriter>(
+        data_manager.GetUsageRewriterData(), dictionary, pos_matcher));
+  }
+#endif  // NO_USAGE_REWRITER
 
   AddRewriter(std::make_unique<VersionRewriter>(data_manager.GetDataVersion()));
   AddRewriter(make_unique_from_tuples<CorrectionRewriter>(

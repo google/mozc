@@ -1558,6 +1558,7 @@ mozc_cc_library(
         ":variants_rewriter",
         ":version_rewriter",
         ":zipcode_rewriter",
+        "//base:port",
         "//base/container:tuple",
         "//converter:converter_interface",
         "//data_manager",
@@ -1581,6 +1582,7 @@ mozc_cc_test(
     deps = [
         "rewriter",
         ":rewriter_interface",
+        "//base:port",
         "//config:character_form_manager",
         "//converter:attribute",
         "//converter:inner_segment",
