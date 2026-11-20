@@ -105,6 +105,7 @@ mozc_cc_library(
         "//base:bits",
         "//base:japanese_util",
         "//base:mmap",
+        "//base:port",
         "//base:thread",
         "//base:util",
         "//base/strings:unicode",

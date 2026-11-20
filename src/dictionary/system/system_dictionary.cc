@@ -47,6 +47,7 @@
 #include "dictionary/system/system_dictionary.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <iterator>
@@ -72,6 +73,7 @@
 #include "base/bits.h"
 #include "base/japanese_util.h"
 #include "base/mmap.h"
+#include "base/port.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "dictionary/dictionary_interface.h"
@@ -100,14 +102,17 @@ constexpr int kMinTokenArrayBlobSize = 4;
 // lb1/select1 may improve performance.
 constexpr size_t kKeyTrieLb0CacheSize = 1 * 1024;
 constexpr size_t kKeyTrieLb1CacheSize = 1 * 1024;
-constexpr size_t kKeyTrieSelect0CacheSize = 4 * 1024;
-constexpr size_t kKeyTrieSelect1CacheSize = 4 * 1024;
+constexpr size_t kKeyTrieSelect0CacheSize =
+    port::IsApplicationBuild() ? 4 * 1024 : 16 * 1024;
+constexpr size_t kKeyTrieSelect1CacheSize =
+    port::IsApplicationBuild() ? 4 * 1024 : 16 * 1024;
 constexpr size_t kKeyTrieTermvecCacheSize = 1 * 1024;
 
 constexpr size_t kValueTrieLb0CacheSize = 1 * 1024;
 constexpr size_t kValueTrieLb1CacheSize = 1 * 1024;
 constexpr size_t kValueTrieSelect0CacheSize = 1 * 1024;
-constexpr size_t kValueTrieSelect1CacheSize = 16 * 1024;
+constexpr size_t kValueTrieSelect1CacheSize =
+    port::IsApplicationBuild() ? 16 * 1024 : 64 * 1024;
 constexpr size_t kValueTrieTermvecCacheSize = 4 * 1024;
 
 // Expansion table format:
