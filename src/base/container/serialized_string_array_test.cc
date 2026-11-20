@@ -30,8 +30,10 @@
 #include "base/container/serialized_string_array.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -198,5 +200,52 @@ TEST(SerializedStringArrayTest, VerifyDataRejectsMalformedImages) {
   }
 }
 
+TEST(SerializedStringArrayTest, OutOfBoundsAccessReturnsEmptyStringView) {
+  SerializedStringArray default_array;
+  EXPECT_EQ(default_array[-1], "");
+  EXPECT_EQ(default_array[0], "");
+  EXPECT_EQ(default_array[100], "");
+  EXPECT_EQ(*default_array.begin(), "");
+  EXPECT_EQ(default_array.begin()[5], "");
+
+  SerializedStringArray truncated_init;
+  EXPECT_FALSE(truncated_init.Init("abc"));
+  EXPECT_EQ(truncated_init.size(), 0);
+  EXPECT_EQ(truncated_init.begin(), truncated_init.end());
+  EXPECT_EQ(*truncated_init.begin(), "");
+  EXPECT_EQ(truncated_init[0], "");
+
+#ifdef NDEBUG
+  SerializedStringArray truncated_set;
+  truncated_set.Set("abc");
+  EXPECT_EQ(truncated_set.size(), 0);
+  EXPECT_EQ(truncated_set.begin(), truncated_set.end());
+  EXPECT_EQ(*truncated_set.begin(), "");
+  EXPECT_EQ(truncated_set[0], "");
+#endif  // NDEBUG
+
+  alignas(uint32_t) constexpr char kEmptyDataArray[] = "\x00\x00\x00\x00";
+  SerializedStringArray empty_array;
+  ASSERT_TRUE(empty_array.Init(absl::string_view(kEmptyDataArray, 4)));
+  EXPECT_EQ(empty_array[-1], "");
+  EXPECT_EQ(empty_array[0], "");
+  EXPECT_EQ(*empty_array.begin(), "");
+
+  SerializedStringArray array;
+  ASSERT_TRUE(array.Init(kTestData));
+  ASSERT_EQ(array.size(), 3);
+  EXPECT_EQ(array[-1], "");
+  EXPECT_EQ(array[3], "");
+  EXPECT_EQ(array[1000], "");
+  EXPECT_EQ(array[uint32_t{0x80000000u}], "");
+  EXPECT_EQ(array[std::numeric_limits<uint32_t>::max()], "");
+  if constexpr (sizeof(size_t) > sizeof(uint32_t)) {
+    EXPECT_EQ(array[static_cast<size_t>(uint64_t{1} << 32)], "");
+  }
+  EXPECT_EQ(array[std::numeric_limits<size_t>::max()], "");
+  EXPECT_EQ(*array.end(), "");
+  EXPECT_EQ(array.begin()[-1], "");
+  EXPECT_EQ(array.begin()[3], "");
+}
 }  // namespace
 }  // namespace mozc

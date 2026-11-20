@@ -208,13 +208,13 @@ class SerializedStringArray {
   size_type size() const {
     // The first 4 bytes of data stores the number of elements in this array in
     // little endian order.
-    if (data_.empty()) {
+    if (data_.size() < sizeof(uint32_t)) [[unlikely]] {
       return 0;
     }
     return LoadUnaligned<uint32_t>(data_.data());
   }
 
-  value_type operator[](size_type i) const { return DataAt(data_.data(), i); }
+  value_type operator[](size_t i) const { return DataAt(data_.data(), i); }
 
   bool empty() const { return size() == 0; }
   absl::string_view data() const { return data_; }
@@ -270,9 +270,14 @@ class SerializedStringArray {
         data + static_cast<size_t>(EntryByteOffset(index)) + sizeof(uint32_t));
   }
 
-  static absl::string_view DataAt(const char* data, uint32_t index) {
-    return absl::string_view(data + static_cast<size_t>(OffsetAt(data, index)),
-                             static_cast<size_t>(LengthAt(data, index)));
+  static absl::string_view DataAt(const char* data, size_t index) {
+    if (data == nullptr || index >= LoadUnaligned<uint32_t>(data))
+        [[unlikely]] {
+      return absl::string_view();
+    }
+    const uint32_t i = static_cast<uint32_t>(index);
+    return absl::string_view(data + static_cast<size_t>(OffsetAt(data, i)),
+                             static_cast<size_t>(LengthAt(data, i)));
   }
 
   template <typename T>
@@ -282,6 +287,7 @@ class SerializedStringArray {
   static absl::string_view SerializeStringsToBuffer(
       absl::Span<const std::string> strs, std::unique_ptr<uint32_t[]>* buffer);
 
+  // Invariant: data_.data() == nullptr or data_.size() >= sizeof(uint32_t).
   absl::string_view data_;
 };
 
@@ -289,7 +295,11 @@ namespace serialized_string_array_internal {
 
 inline const_iterator::value_type const_iterator::operator[](
     difference_type n) const {
-  return SerializedStringArray::DataAt(array_, index_ + n);
+  const int64_t target = static_cast<int64_t>(index_) + n;
+  if (target < 0) [[unlikely]] {
+    return absl::string_view();
+  }
+  return SerializedStringArray::DataAt(array_, static_cast<size_t>(target));
 }
 
 }  // namespace serialized_string_array_internal

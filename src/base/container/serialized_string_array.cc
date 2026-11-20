@@ -61,6 +61,10 @@ bool SerializedStringArray::Init(
 void SerializedStringArray::Set(
     absl::string_view data_aligned_at_4byte_boundary) {
   DCHECK(VerifyData(data_aligned_at_4byte_boundary));
+  if (data_aligned_at_4byte_boundary.size() < sizeof(uint32_t)) [[unlikely]] {
+    clear();
+    return;
+  }
   data_ = data_aligned_at_4byte_boundary;
 }
 
