@@ -63,14 +63,9 @@ UsageRewriter::UsageRewriter(absl::string_view base_conjugation_suffix_data,
                              absl::string_view string_array_data,
                              const dictionary::DictionaryInterface& dictionary,
                              dictionary::PosMatcher pos_matcher)
-    : dictionary_(dictionary), pos_matcher_(std::move(pos_matcher)) {
-  base_conjugation_suffix_ =
-      reinterpret_cast<const uint32_t*>(base_conjugation_suffix_data.data());
-  const uint32_t* conjugation_suffix =
-      reinterpret_cast<const uint32_t*>(conjugation_suffix_data.data());
-  const uint32_t* conjugation_suffix_data_index =
-      reinterpret_cast<const uint32_t*>(conjugation_index_data.data());
-
+    : dictionary_(dictionary),
+      pos_matcher_(std::move(pos_matcher)),
+      base_conjugation_suffix_data_(base_conjugation_suffix_data) {
   if (SerializedStringArray::VerifyData(string_array_data)) {
     string_array_.Set(string_array_data);
   } else {
@@ -80,18 +75,36 @@ UsageRewriter::UsageRewriter(absl::string_view base_conjugation_suffix_data,
 
   absl::Span<const UsageDictItem> tokens =
       MakeAlignedConstSpan<UsageDictItem>(usage_items_data);
+  const size_t num_conj_indices =
+      conjugation_index_data.size() / sizeof(uint32_t);
+  const size_t num_conj_suffix =
+      conjugation_suffix_data.size() / (2 * sizeof(uint32_t));
 
   // TODO(taku): To reduce memory footprint, better to replace it with
   // binary search over the conjugation_suffix_data directly.
   for (const UsageDictItem& token : tokens) {
+    if (static_cast<uint64_t>(token.conjugation_id) + 1 >= num_conj_indices) {
+      continue;
+    }
+    const size_t conj_index_offset =
+        static_cast<size_t>(token.conjugation_id) * sizeof(uint32_t);
+    const uint32_t suffix_begin = LoadUnaligned<uint32_t>(
+        conjugation_index_data.data() + conj_index_offset);
+    const uint32_t suffix_end = LoadUnaligned<uint32_t>(
+        conjugation_index_data.data() + conj_index_offset + sizeof(uint32_t));
+    if (suffix_begin > suffix_end || suffix_end > num_conj_suffix) {
+      continue;
+    }
     const absl::string_view key = string_array_[token.key_index];
     const absl::string_view value = string_array_[token.value_index];
-    for (size_t i = conjugation_suffix_data_index[token.conjugation_id];
-         i < conjugation_suffix_data_index[token.conjugation_id + 1]; ++i) {
-      const absl::string_view key_suffix =
-          string_array_[conjugation_suffix[2 * i + 1]];
-      const absl::string_view value_suffix =
-          string_array_[conjugation_suffix[2 * i]];
+    for (size_t i = suffix_begin; i < suffix_end; ++i) {
+      const size_t suffix_offset = 2 * i * sizeof(uint32_t);
+      const uint32_t value_suffix_idx = LoadUnaligned<uint32_t>(
+          conjugation_suffix_data.data() + suffix_offset);
+      const uint32_t key_suffix_idx = LoadUnaligned<uint32_t>(
+          conjugation_suffix_data.data() + suffix_offset + sizeof(uint32_t));
+      const absl::string_view key_suffix = string_array_[key_suffix_idx];
+      const absl::string_view value_suffix = string_array_[value_suffix_idx];
       const StrPair key_value1(absl::StrCat(key, key_suffix),
                                absl::StrCat(value, value_suffix));
       key_value_usageitem_map_[key_value1] = &token;
@@ -229,8 +242,15 @@ bool UsageRewriter::Rewrite(const ConversionRequest& request,
         DCHECK(candidate);
         candidate->usage_id = token->usage_id;
 
-        const absl::string_view value_suffix =
-            string_array_[base_conjugation_suffix_[2 * token->conjugation_id]];
+        absl::string_view value_suffix;
+        const uint64_t base_suffix_offset =
+            uint64_t{2} * token->conjugation_id * sizeof(uint32_t);
+        if (base_suffix_offset + sizeof(uint32_t) <=
+            base_conjugation_suffix_data_.size()) {
+          const uint32_t suffix_idx = LoadUnaligned<uint32_t>(
+              base_conjugation_suffix_data_.data() + base_suffix_offset);
+          value_suffix = string_array_[suffix_idx];
+        }
         candidate->usage_title.assign(string_array_[token->value_index].data(),
                                       string_array_[token->value_index].size());
         candidate->usage_title.append(value_suffix.data(), value_suffix.size());

@@ -30,10 +30,14 @@
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter.h"
 
+#include <cstdint>
+#include <initializer_list>
 #include <memory>
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
+#include "base/container/serialized_string_array.h"
 #include "base/container/tuple.h"
 #include "config/config_handler.h"
 #include "converter/candidate.h"
@@ -365,6 +369,80 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
       segments.conversion_segment(0).candidate(1);
   EXPECT_EQ(cand1.usage_title, "アルパカ");
   EXPECT_EQ(cand1.usage_description, "アルパカコメント");
+}
+
+TEST_F(UsageRewriterTest, MalformedUsageDataIsIgnoredSafely) {
+  std::unique_ptr<uint32_t[]> str_buf;
+  const absl::string_view string_array =
+      SerializedStringArray::SerializeToBuffer(
+          {"よみ", "表記", "意味", "", "除外1", "除外2", "接尾", "有効2"},
+          &str_buf);
+
+  auto pack_u32 = [](std::initializer_list<uint32_t> vals) {
+    std::string out(vals.size() * sizeof(uint32_t), '\0');
+    auto it = out.begin();
+    for (const uint32_t v : vals) {
+      it = StoreUnaligned<uint32_t>(v, it);
+    }
+    return out;
+  };
+
+  // conj_index is 22 bytes -> num_conj_indices == 5 ({1, 2, 3, 0, 1}),
+  // conj_suffix is 20 bytes -> num_conj_suffix == 2:
+  //   id 0 -> [1, 2) (valid; exact suffix_end == num_conj_suffix)
+  //   id 1 -> [2, 3) (rejected; suffix_end == num_conj_suffix + 1)
+  //   id 2 -> [3, 0) (rejected; suffix_begin > suffix_end)
+  //   id 3 -> [0, 1) (valid; exact id + 1 == num_conj_indices - 1)
+  //   id 4 -> [1, 2) in backing (rejected; exact id + 1 == num_conj_indices)
+  const std::string conj_index_backing = pack_u32({1, 2, 3, 0, 1, 2});
+  const absl::string_view conj_index =
+      absl::string_view(conj_index_backing).substr(0, 22);
+  const std::string conj_suffix_backing = pack_u32({99, 99, 3, 3, 3, 3});
+  const absl::string_view conj_suffix =
+      absl::string_view(conj_suffix_backing).substr(0, 20);
+  const std::string base_suffix_backing = pack_u32({6, 0, 0, 0, 0, 0, 6, 0});
+  const absl::string_view base_suffix =
+      absl::string_view(base_suffix_backing).substr(0, 4);
+  const std::string items = pack_u32({
+      1, 5, 5, 4, 2,   // OOB conjugation_id = 4 (4 + 1 == num_conj_indices)
+      2, 0, 1, 0, 99,  // Valid conjugation_id = 0, OOB meaning_index = 99
+      3, 4, 4, 1, 2,   // OOB suffix_end = 3 > num_conj_suffix = 2
+      4, 2, 2, 2, 2,   // Inverted suffix_begin = 3 > suffix_end = 0
+      5, 7, 7, 3, 2,   // Valid conjugation_id = 3 (3 + 1 == num_conj_indices-1)
+  });
+
+  UsageRewriter rewriter(base_suffix, conj_suffix, conj_index, items,
+                         string_array, user_dictionary_, pos_matcher_);
+
+  Segments segments;
+  Segment* seg0 = segments.push_back_segment();
+  seg0->set_key("よみ");
+  AddCandidate("よみ", "表記", "よみ", "表記", seg0);
+
+  Segment* seg_valid2 = segments.push_back_segment();
+  seg_valid2->set_key("有効2");
+  AddCandidate("有効2", "有効2", "有効2", "有効2", seg_valid2);
+
+  constexpr absl::string_view kIgnoredWords[] = {"除外1", "意味", "除外2"};
+  for (const absl::string_view word : kIgnoredWords) {
+    Segment* seg = segments.push_back_segment();
+    seg->set_key(word);
+    AddCandidate(word, word, word, word, seg);
+  }
+
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title,
+            "表記接尾");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(1).candidate(0).usage_title, "有効2");
+  EXPECT_EQ(segments.conversion_segment(1).candidate(0).usage_description,
+            "意味");
+  for (int i = 2; i <= 4; ++i) {
+    EXPECT_EQ(segments.conversion_segment(i).candidate(0).usage_title, "");
+    EXPECT_EQ(segments.conversion_segment(i).candidate(0).usage_description,
+              "");
+  }
 }
 
 }  // namespace mozc

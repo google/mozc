@@ -77,6 +77,25 @@ mozc_cc_library(
     ],
 )
 
+mozc_cc_test(
+    name = "data_manager_test",
+    size = "small",
+    srcs = ["data_manager_test.cc"],
+    deps = [
+        ":data_manager",
+        ":dataset_writer",
+        "//base:bits",
+        "//base:version",
+        "//base/container:serialized_string_array",
+        "//protocol:segmenter_data_cc_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
 mozc_cc_library(
     name = "data_manager_test_base",
     testonly = True,
@@ -285,6 +304,7 @@ mozc_cc_test(
     srcs = ["serialized_dictionary_test.cc"],
     deps = [
         ":serialized_dictionary",
+        "//base:bits",
         "//base/container:serialized_string_array",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",

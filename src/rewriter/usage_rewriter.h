@@ -98,7 +98,7 @@ class UsageRewriter : public RewriterInterface {
   absl::flat_hash_map<StrPair, const UsageDictItem*> key_value_usageitem_map_;
   const dictionary::DictionaryInterface& dictionary_;
   const dictionary::PosMatcher pos_matcher_;
-  const uint32_t* base_conjugation_suffix_ = nullptr;
+  absl::string_view base_conjugation_suffix_data_;
   SerializedStringArray string_array_;
 
  private:

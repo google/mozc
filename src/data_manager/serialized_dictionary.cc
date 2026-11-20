@@ -219,14 +219,13 @@ bool SerializedDictionary::VerifyData(absl::string_view token_array_data,
   if (!string_array.Init(string_array_data)) {
     return false;
   }
-  for (const char* ptr = token_array_data.data();
-       ptr != token_array_data.data() + token_array_data.size();
-       ptr += kTokenByteLength) {
-    const uint32_t* u32_ptr = reinterpret_cast<const uint32_t*>(ptr);
-    if (u32_ptr[0] >= string_array.size() ||
-        u32_ptr[1] >= string_array.size() ||
-        u32_ptr[2] >= string_array.size() ||
-        u32_ptr[3] >= string_array.size()) {
+  for (size_t offset = 0; offset < token_array_data.size();
+       offset += kTokenByteLength) {
+    const char* ptr = token_array_data.data() + offset;
+    if (LoadUnaligned<uint32_t>(ptr) >= string_array.size() ||
+        LoadUnaligned<uint32_t>(ptr + 4) >= string_array.size() ||
+        LoadUnaligned<uint32_t>(ptr + 8) >= string_array.size() ||
+        LoadUnaligned<uint32_t>(ptr + 12) >= string_array.size()) {
       return false;
     }
   }

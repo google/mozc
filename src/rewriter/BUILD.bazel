@@ -1396,6 +1396,8 @@ mozc_cc_test(
     deps = [
         ":rewriter_interface",
         ":usage_rewriter",
+        "//base:bits",
+        "//base/container:serialized_string_array",
         "//base/container:tuple",
         "//config:config_handler",
         "//converter:segments",

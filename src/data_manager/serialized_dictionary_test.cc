@@ -29,6 +29,7 @@
 
 #include "data_manager/serialized_dictionary.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <sstream>
@@ -36,6 +37,7 @@
 #include <utility>
 
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "testing/gunit.h"
 
@@ -180,6 +182,23 @@ TEST_F(SerializedDictionaryTest, EqualRange) {
   {
     auto range = dic.equal_range("mozc");
     EXPECT_EQ(range.first, range.second);
+  }
+}
+
+TEST_F(SerializedDictionaryTest, VerifyData) {
+  EXPECT_TRUE(
+      SerializedDictionary::VerifyData(token_array_data_, string_array_data_));
+  EXPECT_FALSE(SerializedDictionary::VerifyData(
+      token_array_data_.substr(0, token_array_data_.size() - 1),
+      string_array_data_));
+  EXPECT_FALSE(SerializedDictionary::VerifyData(token_array_data_, "abc"));
+
+  constexpr size_t kFieldOffsets[] = {0, 4, 8, 12};
+  for (const size_t field_offset : kFieldOffsets) {
+    std::string bad_tokens(token_array_data_);
+    StoreUnaligned<uint32_t>(uint32_t{10}, bad_tokens.begin() + field_offset);
+    EXPECT_FALSE(
+        SerializedDictionary::VerifyData(bad_tokens, string_array_data_));
   }
 }
 
