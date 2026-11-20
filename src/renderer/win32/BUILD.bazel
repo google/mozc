@@ -59,11 +59,13 @@ mozc_win32_cc_prod_binary(
         "//win32/installer:__subpackages__",  # Scheuklappen: keep
     ],
     deps = [
+        ":text_renderer",
         ":win32_renderer_main_resources",
         ":win32_server",
         "//base/win32:scoped_com",
         "//base/win32:winmain",
         "//renderer:init_mozc_renderer",
+        "@com_google_absl//absl/log",
     ],
 )
 

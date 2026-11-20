@@ -36,7 +36,6 @@
 #include <dwrite.h>
 #include <objbase.h>
 #include <wil/com.h>
-#include <wil/resource.h>
 
 #include <algorithm>
 #include <cmath>
@@ -177,99 +176,6 @@ DWORD GetGdiDrawTextStyle(TextRenderer::FONT_TYPE type) {
       return 0;
   }
 }
-
-class GdiTextRenderer : public TextRenderer {
- public:
-  explicit GdiTextRenderer(uint32_t dpi)
-      : render_info_(SIZE_OF_FONT_TYPE),
-        mem_dc_(::CreateCompatibleDC(nullptr)),
-        dpi_(dpi) {
-    OnThemeChanged();
-  }
-
- private:
-  struct RenderInfo {
-    RenderInfo() : color(0), style(0) {}
-    COLORREF color;
-    DWORD style;
-    wil::unique_hfont font;
-  };
-
-  // TextRenderer overrides:
-  void OnThemeChanged() override {
-    // delete old fonts
-    for (size_t i = 0; i < SIZE_OF_FONT_TYPE; ++i) {
-      if (render_info_[i].font.is_valid()) {
-        render_info_[i].font.reset();
-      }
-    }
-
-    for (size_t i = 0; i < SIZE_OF_FONT_TYPE; ++i) {
-      const auto font_type = static_cast<FONT_TYPE>(i);
-      const auto& log_font = GetLogFont(font_type, dpi_);
-      render_info_[i].style = GetGdiDrawTextStyle(font_type);
-      render_info_[i].font.reset(::CreateFontIndirectW(&log_font));
-      render_info_[i].color = GetTextColor(font_type, dpi_);
-    }
-  }
-
-  void OnDpiChanged(uint32_t dpi) override {
-    if (dpi == dpi_) {
-      return;
-    }
-    dpi_ = dpi;
-    OnThemeChanged();
-  }
-
-  Size MeasureString(FONT_TYPE font_type,
-                     const std::wstring_view str) const override {
-    CRect rect;
-    {
-      const auto previous_font =
-          wil::SelectObject(mem_dc_.get(), render_info_[font_type].font.get());
-      ::DrawTextW(mem_dc_.get(), str.data(), str.length(), &rect,
-                  DT_NOPREFIX | DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
-    }
-    return Size(rect.Width(), rect.Height());
-  }
-
-  Size MeasureStringMultiLine(FONT_TYPE font_type, const std::wstring_view str,
-                              const int width) const override {
-    CRect rect(0, 0, width, 0);
-    {
-      const auto previous_font =
-          wil::SelectObject(mem_dc_.get(), render_info_[font_type].font.get());
-      ::DrawTextW(mem_dc_.get(), str.data(), str.length(), &rect,
-                  DT_NOPREFIX | DT_LEFT | DT_WORDBREAK | DT_CALCRECT);
-    }
-    return Size(rect.Width(), rect.Height());
-  }
-
-  void RenderText(HDC dc, const std::wstring_view text, const Rect& rect,
-                  FONT_TYPE font_type) const override {
-    std::vector<TextRenderingInfo> infolist;
-    infolist.emplace_back(std::wstring(text), rect);
-    RenderTextList(dc, infolist, font_type);
-  }
-
-  void RenderTextList(HDC dc,
-                      const absl::Span<const TextRenderingInfo> display_list,
-                      FONT_TYPE font_type) const override {
-    const auto& render_info = render_info_[font_type];
-    const auto old_font = wil::SelectObject(dc, render_info.font.get());
-    const auto previous_color = ::SetTextColor(dc, render_info.color);
-    for (const TextRenderingInfo& info : display_list) {
-      CRect rect = ToCRect(info.rect);
-      ::DrawTextW(dc, info.text.data(), info.text.size(), &rect,
-                  render_info.style);
-    }
-    ::SetTextColor(dc, previous_color);
-  }
-
-  std::vector<RenderInfo> render_info_;
-  wil::unique_hdc mem_dc_;
-  uint32_t dpi_;
-};
 
 class DirectWriteTextRenderer : public TextRenderer {
  public:
@@ -545,12 +451,7 @@ class DirectWriteTextRenderer : public TextRenderer {
 
 // static
 std::unique_ptr<TextRenderer> TextRenderer::Create(uint32_t dpi) {
-  std::unique_ptr<TextRenderer> dwrite_text_renderer =
-      DirectWriteTextRenderer::Create(dpi);
-  if (dwrite_text_renderer != nullptr) {
-    return dwrite_text_renderer;
-  }
-  return std::make_unique<GdiTextRenderer>(dpi);
+  return DirectWriteTextRenderer::Create(dpi);
 }
 
 }  // namespace win32
