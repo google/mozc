@@ -590,7 +590,9 @@ mozc_cc_library(
     ],
     visibility = ["//:__subpackages__"],
     deps = [
+        ":const",
         ":file_util",
+        ":port",
         ":system_util",
         ":vlog",
         "//base/strings:pfchar",
@@ -600,7 +602,6 @@ mozc_cc_library(
     ] + mozc_select(
         macos = ["//base/mac:mac_process"],
         windows = [
-            ":const",
             "//base/win32:wide_char",
             "@com_microsoft_wil//:wil",
         ],

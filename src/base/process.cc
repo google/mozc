@@ -41,7 +41,9 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/const.h"
 #include "base/file_util.h"
+#include "base/port.h"
 #include "base/strings/pfchar.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
@@ -50,7 +52,6 @@
 #include <wil/resource.h>
 #include <windows.h>
 
-#include "base/const.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32
@@ -379,26 +380,15 @@ bool Process::LaunchErrorMessageDialog(absl::string_view error_type) {
   }
 #endif  // __APPLE__
 
-#ifdef _WIN32
-  const std::string arg =
-      absl::StrCat("--mode=error_message_dialog --error_type=", error_type);
-  size_t pid = 0;
-  if (!Process::SpawnProcess(SystemUtil::GetToolPath(), arg, &pid)) {
-    LOG(ERROR) << "cannot launch " << kMozcTool;
-    return false;
+  if constexpr (port::IsWindows() || port::IsLinux()) {
+    const std::string arg =
+        absl::StrCat("--mode=error_message_dialog --error_type=", error_type);
+    size_t pid = 0;
+    if (!Process::SpawnProcess(SystemUtil::GetToolPath(), arg, &pid)) {
+      LOG(ERROR) << "cannot launch " << kMozcTool;
+      return false;
+    }
   }
-#endif  // _WIN32
-
-#if defined(__linux__) && !defined(__ANDROID__)
-  constexpr char kMozcTool[] = "mozc_tool";
-  const std::string arg =
-      absl::StrCat("--mode=error_message_dialog --error_type=", error_type);
-  size_t pid = 0;
-  if (!Process::SpawnProcess(SystemUtil::GetToolPath(), arg, &pid)) {
-    LOG(ERROR) << "cannot launch " << kMozcTool;
-    return false;
-  }
-#endif  // __linux__ && !__ANDROID__
 
   return true;
 }
