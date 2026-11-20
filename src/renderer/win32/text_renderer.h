@@ -55,7 +55,7 @@ struct TextRenderingInfo {
 };
 
 // An interface which manages text rendering for Windows. This class
-// is currently implemented with Win32 GDI and Direct2D.
+// is currently implemented with Direct2D and DirectWrite.
 class TextRenderer {
  public:
   // Text rendering styles for a candidate window
@@ -77,7 +77,8 @@ class TextRenderer {
   TextRenderer& operator=(TextRenderer&&) = default;
   virtual ~TextRenderer() = default;
 
-  // Returns an instance of TextRenderer.
+  // Returns an instance of TextRenderer, or nullptr if Direct2D or DirectWrite
+  // cannot be initialized.
   static std::unique_ptr<TextRenderer> Create(uint32_t dpi);
 
   // Updates font cache.

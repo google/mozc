@@ -29,9 +29,15 @@
 
 // Mozc renderer process for win32.
 
+#include <windows.h>
+
+#include <memory>
+
+#include "absl/log/log.h"
 #include "base/win32/scoped_com.h"
 #include "base/win32/winmain.h"
 #include "renderer/init_mozc_renderer.h"
+#include "renderer/win32/text_renderer.h"
 #include "renderer/win32/win32_server.h"
 
 int main(int argc, char* argv[]) {
@@ -39,7 +45,19 @@ int main(int argc, char* argv[]) {
 
   mozc::ScopedCOMInitializer com_initializer;
 
-  mozc::renderer::win32::Win32Server server;
+  // The text renderer is shared among all the windows, and needs to outlive
+  // |server|.
+  const std::unique_ptr<mozc::renderer::win32::TextRenderer> text_renderer =
+      mozc::renderer::win32::TextRenderer::Create(::GetDpiForSystem());
+  if (text_renderer == nullptr) {
+    // Direct2D and DirectWrite are supposed to be always available on the
+    // supported versions of Windows. There is nothing we can render without
+    // them.
+    LOG(ERROR) << "Failed to initialize the text renderer";
+    return -1;
+  }
+
+  mozc::renderer::win32::Win32Server server(text_renderer.get());
   server.SetRendererInterface(&server);
   return server.StartServer();
 }
