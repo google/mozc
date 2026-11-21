@@ -196,6 +196,17 @@ class ConversionRequest {
            request_->is_incognito_mode();
   }
 
+  // Returns the effective history learning level. Most code need to check this
+  // instead of Config::history_learning_level(), as the focused input field can
+  // restrict the learning level via Context::history_learning_level() (e.g. a
+  // field marked with the IS_PRIVATE input scope on Windows).
+  config::Config::HistoryLearningLevel effective_history_learning_level()
+      const {
+    // The stricter level wins. Note that a stricter level has a larger value.
+    return std::max(config_->history_learning_level(),
+                    context_->history_learning_level());
+  }
+
   absl::string_view key() const ABSL_ATTRIBUTE_LIFETIME_BOUND { return key_; }
 
   // Takes the last `size` history key. return all value when size = -1.

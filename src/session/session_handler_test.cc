@@ -1029,6 +1029,16 @@ TEST_F(SessionHandlerTest, AddUserHistory) {
   EXPECT_EQ(add_command.output().error_code(),
             commands::Output::SESSION_SUCCESS);
 
+  // When the context restricts the learning level, AddUserHistory is rejected.
+  commands::Command restricted_command = add_command;
+  restricted_command.mutable_output()->Clear();
+  restricted_command.mutable_input()
+      ->mutable_context()
+      ->set_history_learning_level(config::Config::READ_ONLY);
+  EXPECT_TRUE(handler.EvalCommand(&restricted_command));
+  EXPECT_EQ(restricted_command.output().error_code(),
+            commands::Output::SESSION_FAILURE);
+
   // When history_learning_level is NO_HISTORY, AddUserHistory is rejected.
   commands::Command config_command;
   config_command.mutable_input()->set_type(commands::Input::SET_CONFIG);
