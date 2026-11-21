@@ -130,6 +130,20 @@ LLVM_WIN_ARM64 = ArchiveInfo(
     sha256='fa5a25df6a1405fdfb9942f4d5cc73bfc3b8b31cfd43ee2fbd43bd2e3168be01',
 )
 
+# Zstandard variants of LLVM_WIN and LLVM_WIN_ARM64, which are much smaller but
+# require Python 3.14+ to be extracted.
+LLVM_WIN_ZSTD = ArchiveInfo(
+    url='https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.6/clang+llvm-23.1.6-x86_64-pc-windows-msvc.tar.zst',
+    size=276226344,
+    sha256='7623f582089983c1cb51030cf1996514b19464e5669099571b399e8543770155',
+)
+
+LLVM_WIN_ARM64_ZSTD = ArchiveInfo(
+    url='https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.6/clang+llvm-23.1.6-aarch64-pc-windows-msvc.tar.zst',
+    size=251603265,
+    sha256='d3f65e879cd4b1524a0c85c871e0fc26164644b28e618fc341fac7850d48ea38',
+)
+
 MSYS2 = ArchiveInfo(
     url='https://github.com/msys2/msys2-installer/releases/download/2025-02-21/msys2-base-x86_64-20250221.tar.xz',
     size=50089256,
@@ -319,6 +333,36 @@ class StatefulLLVMExtractionFilter:
     return member.replace(name=new_path, deep=False)
 
 
+def supports_zstd() -> bool:
+  """Returns true if tarfile can read Zstandard archives."""
+  try:
+    # compression.zstd is available in Python 3.14+.
+    # See https://peps.python.org/pep-0784/ for details.
+    from compression import zstd  # pylint: disable=g-import-not-at-top,unused-import
+  except ImportError:
+    return False
+  return True
+
+
+def open_llvm_archive(path: pathlib.Path) -> tarfile.TarFile:
+  """Opens the LLVM archive for reading.
+
+  Args:
+    path: Local path to the LLVM archive.
+  Returns:
+    TarFile to read the specified archive.
+  """
+  if path.suffix != '.zst':
+    return tarfile.open(path, mode='r|xz')
+
+  from compression import zstd  # pylint: disable=g-import-not-at-top
+
+  # LLVM's Zstandard archives use a 1 GiB window (--long=30), which exceeds the
+  # default limit of the decompressor (128 MiB).
+  param = zstd.DecompressionParameter.window_log_max
+  return tarfile.open(path, mode='r:zst', options={param: param.bounds()[1]})
+
+
 def extract_llvm(archive: ArchiveInfo, dryrun: bool = False) -> None:
   """Extract LLVM archive.
 
@@ -342,7 +386,7 @@ def extract_llvm(archive: ArchiveInfo, dryrun: bool = False) -> None:
     print(f'dryrun: Extracting {src} into {dest}')
   else:
     dest.mkdir(parents=True)
-    with tarfile.open(src, mode='r|xz') as f:
+    with open_llvm_archive(src) as f:
       # tarfile.data_filter is available in Python 3.12+.
       # See https://peps.python.org/pep-0706/ for details.
       if getattr(tarfile, 'data_filter', None):
@@ -614,9 +658,11 @@ def main():
   if is_windows():
     if not args.nollvm:
       if platform.machine().lower() == 'arm64':
-        archives.append(LLVM_WIN_ARM64)
+        archives.append(
+            LLVM_WIN_ARM64_ZSTD if supports_zstd() else LLVM_WIN_ARM64
+        )
       else:
-        archives.append(LLVM_WIN)
+        archives.append(LLVM_WIN_ZSTD if supports_zstd() else LLVM_WIN)
     if not args.nomsys2:
       archives.append(MSYS2)
 
@@ -626,7 +672,12 @@ def main():
   if args.cache_only:
     return
 
-  for llvm in [LLVM_WIN, LLVM_WIN_ARM64]:
+  for llvm in [
+      LLVM_WIN,
+      LLVM_WIN_ARM64,
+      LLVM_WIN_ZSTD,
+      LLVM_WIN_ARM64_ZSTD,
+  ]:
     if llvm in archives:
       extract_llvm(llvm, args.dryrun)
       break
