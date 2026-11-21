@@ -41,21 +41,9 @@ namespace louds {
 // This is simple(naive) C++ implementation of succinct bit vector.
 class SimpleSuccinctBitVectorIndex {
  public:
-  // The default chunk_size is 32.
   SimpleSuccinctBitVectorIndex()
       : data_(nullptr),
         length_(0),
-        chunk_size_(32),
-        lb0_cache_increment_(1),
-        lb1_cache_increment_(1) {}
-
-  // chunk_size is in bytes, and must be greater than or equal to 4
-  // and power of 2, at the moment, although we may relax the restriction
-  // in future if necessary.
-  explicit SimpleSuccinctBitVectorIndex(int chunk_size)
-      : data_(nullptr),
-        length_(0),
-        chunk_size_(chunk_size),
         lb0_cache_increment_(1),
         lb1_cache_increment_(1) {}
 
@@ -105,7 +93,6 @@ class SimpleSuccinctBitVectorIndex {
   // The order of members is optimized to minimize the padding size.
   const uint8_t* data_;
   int length_;
-  int chunk_size_;
   std::vector<int> index_;
   std::vector<const int*> lb0_cache_;
   int lb0_cache_increment_;
