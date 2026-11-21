@@ -138,7 +138,7 @@ genrule(
     srcs = [
         "//base:mozc_version_txt",
     ],
-    outs = ["mozc_tip64x.dll" if BRANDING == "Mozc" else "GoogleIMEJaTIP64X.msi"],
+    outs = ["mozc_tip64x.dll" if BRANDING == "Mozc" else "GoogleIMEJaTIP64X.dll"],
     cmd = " ".join([
         "$(location :build_tip_forwarder_dll)",
         "--output=$@",
