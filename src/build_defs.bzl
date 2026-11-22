@@ -260,17 +260,19 @@ def _append_if_absent(target_list, item):
         return target_list
     return target_list + [item]
 
-def _remove_if_present(target_list, item):
-    """Remove the given item if exists.
+def _set_feature(features, name, enabled):
+    """Explicitly enable or disable the given feature.
 
     Args:
-      target_list: a String list to be checked.
-      item: a String item that is to be made sure to not exist in the list.
+      features: a String list of features, where "-" prefix means disabling.
+      name: a String name of the feature without the "-" prefix.
+      enabled: True to enable the feature. False to disable it.
     Returns:
-      list: target_list itself or a new list, where the given item does not
-            exist.
+      list: a new list, where the given feature appears exactly once in the
+            specified state.
     """
-    return [x for x in target_list if x != item]
+    features = [x for x in features if x not in (name, "-" + name)]
+    return features + [name if enabled else "-" + name]
 
 def _win_executable_transition_impl(
         settings,
@@ -280,12 +282,10 @@ def _win_executable_transition_impl(
 
     features = _append_if_absent(features, "generate_pdb_file")
 
-    if attr.static_crt:
-        features = _remove_if_present(features, "dynamic_link_msvcrt")
-        features = _append_if_absent(features, "static_link_msvcrt")
-    else:
-        features = _remove_if_present(features, "static_link_msvcrt")
-        features = _append_if_absent(features, "dynamic_link_msvcrt")
+    # Removing a feature from the list does not disable it when the toolchain
+    # enables it by default. Explicitly enable one and disable the other.
+    features = _set_feature(features, "static_link_msvcrt", attr.static_crt)
+    features = _set_feature(features, "dynamic_link_msvcrt", not attr.static_crt)
 
     if attr.platform:
         platforms = [attr.platform]
