@@ -765,7 +765,8 @@ TEST_F(UserDictionaryTest, ConsecutiveReloadTest) {
     }
 
     // Wait briefly so that the new file gets a distinct modification timestamp
-    // on Windows, where the filesystem timestamp resolution is ~15.6 ms.
+    // on Windows, where the ~15.6 ms timestamp resolution comes from the time
+    // source used by the I/O subsystem rather than a filesystem limitation.
     absl::SleepFor(absl::Milliseconds(20));
 
     const std::string tmp_filename = absl::StrCat(filename, ".tmp");
