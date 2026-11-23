@@ -144,8 +144,11 @@ genrule(
         "--output=$@",
         "--version_file=$(location //base:mozc_version_txt)",
         "--branding=" + BRANDING,
+        "--clang_cl=\"$(CC)\"",
+        "--lld_link=\"$(LD)\"",
     ]),
     target_compatible_with = ["@platforms//os:windows"],
+    toolchains = ["@rules_cc//cc:current_cc_toolchain"],
     tools = [
         ":build_tip_forwarder_dll",
     ],

@@ -219,18 +219,35 @@ def build_on_windows(args: argparse.Namespace) -> None:
     empty_cc = pathlib.Path(work_dir).joinpath('empty.cc')
     empty_cc.touch()
 
-    cl = shutil.which('cl.exe', path=env['PATH'])
-    link = shutil.which('link.exe', path=env['PATH'])
+    # Absolute paths are needed as the tools run in work_dir.
+    clang_cl = str(pathlib.Path(args.clang_cl).absolute())
+    lld_link = str(pathlib.Path(args.lld_link).absolute())
     rc = shutil.which('rc.exe', path=env['PATH'])
+    if rc is None:
+      raise FileNotFoundError('Could not find rc.exe.')
 
     exec_command(
-        [cl, '/nologo', '/c', '/Foempty_arm64.obj', 'empty.cc'],  # pyrefly: ignore[bad-argument-type]
+        [
+            clang_cl,
+            '/nologo',
+            '/c',
+            '--target=aarch64-pc-windows-msvc',
+            '/Foempty_arm64.obj',
+            'empty.cc',
+        ],
         cwd=work_dir,
         env=env,
         dryrun=args.dryrun,
     )
     exec_command(
-        [cl, '/nologo', '/c', '/arm64EC', '/Foempty_x64.obj', 'empty.cc'],  # pyrefly: ignore[bad-argument-type]
+        [
+            clang_cl,
+            '/nologo',
+            '/c',
+            '--target=arm64ec-pc-windows-msvc',
+            '/Foempty_x64.obj',
+            'empty.cc',
+        ],
         cwd=work_dir,
         env=env,
         dryrun=args.dryrun,
@@ -242,8 +259,8 @@ def build_on_windows(args: argparse.Namespace) -> None:
     )
 
     exec_command(
-        [  # pyrefly: ignore[bad-argument-type]
-            link,
+        [
+            lld_link,
             '/lib',
             '/nologo',
             '/machine:arm64EC',
@@ -260,8 +277,8 @@ def build_on_windows(args: argparse.Namespace) -> None:
         info.get_def_file_content_for_arm64(), encoding='utf-8', newline='\r\n'
     )
     exec_command(
-        [  # pyrefly: ignore[bad-argument-type]
-            link,
+        [
+            lld_link,
             '/lib',
             '/nologo',
             '/machine:arm64',
@@ -283,16 +300,18 @@ def build_on_windows(args: argparse.Namespace) -> None:
     # Previously this was passed as '/8', which is an invalid option for rc.exe
     # (fatal error RC1106: invalid option: /8) on Windows 11 SDK (10.0.22621.0).
     exec_command(
-        [rc, '/nologo', '/r', '/c65001', str(rc_file)],  # pyrefly: ignore[bad-argument-type]
+        [rc, '/nologo', '/r', '/c65001', str(rc_file)],
         cwd=work_dir,
         env=env,
         dryrun=args.dryrun,
     )
 
     forwarder_filename = pathlib.Path(info.forwarder_dll_name).name
+    # lld-link sets DependentLoadFlags in both the ARM64 and x64 views, while
+    # MSVC link.exe (as of 14.52) sets it only in the ARM64 view.
     exec_command(
-        [  # pyrefly: ignore[bad-argument-type]
-            link,
+        [
+            lld_link,
             '/dll',
             '/nologo',
             '/noentry',
@@ -352,6 +371,18 @@ def parse_args() -> argparse.Namespace:
       '--output',
       dest='output',
       help='the path of the generated forwarder DLL file',
+  )
+  parser.add_argument(
+      '--clang_cl',
+      dest='clang_cl',
+      required=True,
+      help='the path to clang-cl.exe',
+  )
+  parser.add_argument(
+      '--lld_link',
+      dest='lld_link',
+      required=True,
+      help='the path to lld-link.exe',
   )
 
   return parser.parse_args()
