@@ -32,7 +32,6 @@
 
 #include <ctfutb.h>
 #include <msctf.h>
-#include <rpcsal.h>
 #include <unknwn.h>
 #include <wil/com.h>
 #include <windows.h>
@@ -53,16 +52,6 @@ template <>
 bool IsIIDOf<ITfLangBarItemButton>(REFIID riid);
 
 namespace tsf {
-
-// MIDL_INTERFACE expects a string literal rather than a constant array of
-// characters.
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-#define IIDSTR_IMozcLangBarItem "C6057858-8A94-4B40-8C99-D1C4B4A0B9DB"
-#define IIDSTR_IMozcLangBarToggleItem "72B4C4E3-B9F3-478A-B8A8-753AFF37EB94"
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
-#define IIDSTR_IMozcLangBarItem "75B2153A-504B-48C9-9257-BA8D60E523E6"
-#define IIDSTR_IMozcLangBarToggleItem "9ABF0C3B-4AC6-4DED-9EF6-97E728852CF3"
-#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
 enum TipLangBarItemFlags {
   kTipLangBarItemTypeDefault = 0,
@@ -87,7 +76,6 @@ struct TipLangBarMenuData {
   UINT item_id_;
   UINT text_id_;
   UINT icon_id_;
-  int length_;
   wchar_t text_[TF_LBI_DESC_MAXLEN];
 };
 
@@ -103,30 +91,17 @@ class TipLangBarMenuDataArray {
   std::vector<TipLangBarMenuData> data_;
 };
 
-MIDL_INTERFACE(IIDSTR_IMozcLangBarItem)
-IMozcLangBarItem : public IUnknown {
-  // Sets the status of this language bar menu.
-  virtual STDMETHODIMP SetEnabled(bool enabled) = 0;
-
-  virtual ~IMozcLangBarItem() = default;
-};
-
-MIDL_INTERFACE(IIDSTR_IMozcLangBarToggleItem)
-IMozcLangBarToggleItem : public IUnknown {
-  // Selects a menu item which has the given |menu_id|.
-  virtual STDMETHODIMP SelectMenuItem(UINT menu_id) = 0;
-  virtual ~IMozcLangBarToggleItem() = default;
-};
-
-// Represents the common operations for a button-menu item in the language bar.
-class TipLangBarButton : public TipComImplements<ITfLangBarItemButton,
-                                                 ITfSource, IMozcLangBarItem> {
+// Represents the input mode button, which is shown in the taskbar as the IME
+// mode icon. Left click toggles the IME open/close status and right click
+// shows the context menu.
+class TipLangBarButton
+    : public TipComImplements<ITfLangBarItemButton, ITfSource> {
  public:
-  TipLangBarButton(wil::com_ptr_nothrow<TipLangBarCallback> lang_bar_callback,
-                   const GUID& guid, bool is_menu, bool show_in_tray);
+  explicit TipLangBarButton(
+      wil::com_ptr_nothrow<TipLangBarCallback> lang_bar_callback);
 
   // The ITfLangBarItem interface methods
-  STDMETHODIMP GetInfo(TF_LANGBARITEMINFO* item_info) override = 0;
+  STDMETHODIMP GetInfo(TF_LANGBARITEMINFO* item_info) override;
   STDMETHODIMP GetStatus(DWORD* status) override;
   STDMETHODIMP Show(BOOL show) override;
   STDMETHODIMP GetTooltipString(BSTR* tooltip) override;
@@ -134,9 +109,9 @@ class TipLangBarButton : public TipComImplements<ITfLangBarItemButton,
   // The ITfLangBarItemButton interface methods
   STDMETHODIMP OnClick(TfLBIClick click, POINT point,
                        const RECT* rect) override;
-  STDMETHODIMP InitMenu(ITfMenu* menu) override = 0;
-  STDMETHODIMP OnMenuSelect(UINT menu_id) override = 0;
-  STDMETHODIMP GetIcon(HICON* icon) override = 0;
+  STDMETHODIMP InitMenu(ITfMenu* menu) override;
+  STDMETHODIMP OnMenuSelect(UINT menu_id) override;
+  STDMETHODIMP GetIcon(HICON* icon) override;
   STDMETHODIMP GetText(BSTR* text) override;
 
   // The ITfSource interface methods
@@ -144,20 +119,22 @@ class TipLangBarButton : public TipComImplements<ITfLangBarItemButton,
                           DWORD* cookie) override;
   STDMETHODIMP UnadviseSink(DWORD cookie) override;
 
-  // The IMozcLangBarItem interface method
-  STDMETHODIMP SetEnabled(bool enabled) override;
-
-  // Initializes an ImeButtonMenu instance.
-  // This function allocates resources for an ImeButtonMenu instance.
+  // Initializes a TipLangBarButton instance.
+  // This function allocates resources for a TipLangBarButton instance.
   HRESULT Init(HINSTANCE instance, int string_id,
-               const TipLangBarMenuItem* menu, int count);
+               const TipLangBarMenuItem* menu, int count,
+               const TipLangBarMenuItem& menu_for_disabled);
 
+  // Selects a menu item which has the given |menu_id|.
+  HRESULT SelectMenuItem(UINT menu_id);
+
+  // Sets the status of this language bar button.
+  HRESULT SetEnabled(bool enabled);
+
+ private:
   // Notifies the language bar of a change in a language bar item.
-  STDMETHODIMP OnUpdate(DWORD update_flag);
+  HRESULT OnUpdate(DWORD update_flag);
 
-  virtual ~TipLangBarButton() = default;
-
- protected:
   // Update the item description. The caller is also responsible for calling
   // OnUpdate method to notify the change to the system.
   void SetDescription(const std::wstring& description);
@@ -169,76 +146,19 @@ class TipLangBarButton : public TipComImplements<ITfLangBarItemButton,
   // Returns the size of the language bar menu.
   size_t menu_data_size() const;
 
-  // Returns the item information for langbar menu.
-  const TF_LANGBARITEMINFO* item_info() const;
-
-  // Returns true if the attribute is menu button.
-  bool IsMenuButton() const;
-
-  // Sets if context menu is enabled or not. Is setting affects only when
-  // IsMenuButton() returns false.
-  void SetContextMenuEnabled(bool enabled);
-
   wil::com_ptr_nothrow<ITfLangBarItemSink> item_sink_;
   // Save the TipLangBarCallback object that owns this button to prevent the
   // object from being deleted.
   wil::com_ptr_nothrow<TipLangBarCallback> lang_bar_callback_;
 
- private:
   // Represents the information of an instance copied to the TSF manager.
   // The TSF manager uses this information to identifies an instance as
-  // a menu button.
+  // a button.
   TF_LANGBARITEMINFO item_info_;
 
   // Represents the data possessed by the language bar menu.
   TipLangBarMenuDataArray menu_data_;
 
-  // Records TF_LBI_STATUS_* bits and represents the status of the this langbar
-  // menu.
-  DWORD status_;
-
-  // Represents if context menu is enabled or not. This flag is not used when
-  // IsMenuButton() returns true.
-  bool context_menu_enabled_;
-};
-
-// Represents the common operations for a toggle button-menu item in the
-// language bar.
-class TipLangBarToggleButton : public TipLangBarButton,
-                               public IMozcLangBarToggleItem {
- public:
-  TipLangBarToggleButton(TipLangBarCallback* langbar_callback, const GUID& guid,
-                         bool is_menu, bool show_in_tray);
-
-  // The IUnknown interface methods
-  // TODO(yuryu): Directly derive from TipLangBarButton and remove these
-  // overrides.
-  STDMETHODIMP_(ULONG) AddRef() override { return TipLangBarButton::AddRef(); }
-  STDMETHODIMP_(ULONG) Release() override {
-    return TipLangBarButton::Release();
-  }
-  STDMETHODIMP QueryInterface(REFIID guid, void** object) override;
-
-  // The IMozcLangBarToggleItem interface methods
-  STDMETHODIMP SelectMenuItem(UINT menu_id) override;
-
-  // The IMozcLangBarItem interface method
-  // Overridden from TipLangBarButton.
-  STDMETHODIMP SetEnabled(bool enabled) override;
-
-  STDMETHODIMP GetInfo(TF_LANGBARITEMINFO* item_info) override;
-
-  STDMETHODIMP InitMenu(ITfMenu* menu) override;
-  STDMETHODIMP OnMenuSelect(UINT menu_id) override;
-  STDMETHODIMP GetIcon(HICON* icon) override;
-
-  // Initializes an ImeButtonMenu instance.
-  // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance, int string_id,
-               const TipLangBarMenuItem* menu, int count,
-               const TipLangBarMenuItem& menu_for_disabled);
-
- private:
   // Represents the index of the selected menu item.
   UINT menu_selected_;
   bool disabled_;

@@ -30,7 +30,6 @@
 #include "win32/tip/tip_lang_bar.h"
 
 #include <ctfutb.h>
-#include <guiddef.h>
 #include <wil/com.h>
 #include <windows.h>
 
@@ -50,8 +49,6 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 namespace {
-
-constexpr bool kShowInTaskbar = true;
 
 TipLangBarCallback::ItemId GetItemId(DWORD composition_mode) {
   switch (composition_mode) {
@@ -125,9 +122,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback* text_service) {
         {kTipLangBarItemTypeDefault, TipLangBarCallback::kHelp, IDS_HELP, 0},
     };
 
-    constexpr bool kNonMenuButton = false;
-    auto input_mode_menu = MakeComPtr<TipLangBarToggleButton>(
-        text_service, GUID_LBI_INPUTMODE, kNonMenuButton, kShowInTaskbar);
+    auto input_mode_menu = MakeComPtr<TipLangBarButton>(text_service);
     if (input_mode_menu == nullptr) {
       return E_OUTOFMEMORY;
     }
