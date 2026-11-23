@@ -43,7 +43,9 @@ namespace louds {
 
 class LoudsTrie {
  public:
-  // The max depth of the trie.
+  // The max depth of the trie that RestoreKeyString() can restore, which also
+  // determines the size of the buffer passed to it. Note that neither the LOUDS
+  // trie format nor LoudsTrieBuilder has such a limit.
   static constexpr size_t kMaxDepth = 256;
 
   // This class stores a traversal state.
