@@ -55,7 +55,8 @@ namespace win32 {
 // Actual window management is delegated to WindowManager class.
 class Win32Server : public RendererServer, public RendererInterface {
  public:
-  Win32Server();
+  // Does not take ownership of |text_renderer|, which must outlive this object.
+  explicit Win32Server(TextRenderer* text_renderer);
 
   Win32Server(const Win32Server&) = delete;
   Win32Server& operator=(const Win32Server&) = delete;
@@ -76,9 +77,6 @@ class Win32Server : public RendererServer, public RendererInterface {
   std::string message_;
   absl::Mutex mutex_;
   HANDLE event_;
-  // 'text_renderer_' must be declared before 'window_manager_'.
-  // TODO(https://github.com/google/mozc/issues/1612): Simplify the init-order.
-  std::unique_ptr<TextRenderer> text_renderer_;
   std::unique_ptr<WindowManager> window_manager_;
 };
 
