@@ -31,6 +31,12 @@ jobs:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
+      # update_deps.py needs Python 3.14+ to use the smaller Zstandard archives.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: '3.14'
+
       - name: Install Dependencies
         shell: pwsh
         working-directory: .\src
@@ -83,6 +89,12 @@ jobs:
         with:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      # update_deps.py needs Python 3.14+ to use the smaller Zstandard archives.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: '3.14'
 
       - name: Install Dependencies
         shell: pwsh
@@ -137,6 +149,12 @@ jobs:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
+      # update_deps.py needs Python 3.14+ to use the smaller Zstandard archives.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: '3.14'
+
       - name: Install Dependencies
         shell: pwsh
         working-directory: .\src
@@ -190,6 +208,12 @@ jobs:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
+      # update_deps.py needs Python 3.14+ to use the smaller Zstandard archives.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: '3.14'
+
       - name: Install Dependencies
         shell: pwsh
         working-directory: .\src
@@ -237,6 +261,12 @@ jobs:
         with:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      # update_deps.py needs Python 3.14+ to use the smaller Zstandard archives.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: '3.14'
 
       - name: Install Dependencies
         shell: pwsh
@@ -289,6 +319,12 @@ jobs:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
+      # update_deps.py needs Python 3.14+ to use the smaller Zstandard archives.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: '3.14'
+
       - name: Install Dependencies
         shell: pwsh
         working-directory: .\src
@@ -316,6 +352,12 @@ jobs:
         with:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      # update_deps.py needs Python 3.14+ to use the smaller Zstandard archives.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: '3.14'
 
       - name: Install Dependencies
         shell: pwsh
