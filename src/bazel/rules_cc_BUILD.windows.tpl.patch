@@ -24,7 +24,7 @@
          "@platforms//os:windows",
          "@rules_cc//cc/private/toolchain:clang-cl",
      ],
-@@ -671,6 +672,74 @@
+@@ -671,6 +672,79 @@
  )
  
  cc_toolchain(
@@ -79,6 +79,11 @@
 +    dbg_mode_debug_flag = "%{clang_cl_dbg_mode_debug_flag_x86}",
 +    fastbuild_mode_debug_flag = "%{clang_cl_fastbuild_mode_debug_flag_x86}",
 +    supports_parse_showincludes = %{clang_cl_parse_showincludes_x86},
++    all_compile_flags = [%{all_compile_flags}],
++    conly_flags = [%{conly_flags}],
++    cxx_flags = [%{cxx_flags}],
++    link_flags = [%{link_flags}],
++%{win32_winnt_flag}
 +)
 +
 +toolchain(
@@ -99,7 +104,7 @@
      name = "cc-compiler-arm64_windows-clang-cl",
      toolchain_identifier = "clang_cl_arm64",
      toolchain_config = ":clang_cl_arm64",
-@@ -717,6 +786,7 @@
+@@ -717,6 +791,7 @@
          "strip": "wrapper/bin/msvc_nop.bat",
      },
      archiver_flags = ["/MACHINE:ARM64"],
