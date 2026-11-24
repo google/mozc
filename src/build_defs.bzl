@@ -692,6 +692,7 @@ def mozc_objc_test(
         name,
         bundle_id = None,
         size = None,
+        timeout = "moderate",
         visibility = None,
         tags = [],
         **kwargs):
@@ -705,6 +706,8 @@ def mozc_objc_test(
       bundle_id: optional. Test bundle id for macos_unit_test. The default value is
           MACOS_BUNDLE_ID_PREFIX.package.name.CamelCasedName.
       size: optional. passed to macos_unit_test.
+      timeout: optional. passed to macos_unit_test. Defaults to "moderate" to
+          absorb xcodebuild startup overhead.
       visibility: optional. Visibility for the unit test target.
       tags: optional. Tags for both the library and unit test targets.
       **kwargs: other arguments passed to mozc_objc_library.
@@ -729,9 +732,10 @@ def mozc_objc_test(
         bundle_id = bundle_id or default_bundle_id,
         deps = [lib_name],
         size = size,
+        timeout = timeout,
         visibility = visibility,
         target_compatible_with = ["@platforms//os:macos"],
-        tags = MOZC_TAGS.MAC_ONLY + tags,
+        tags = MOZC_TAGS.MAC_ONLY + ["exclusive-if-local"] + tags,
     )
 
 register_extension_info(
