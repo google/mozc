@@ -99,11 +99,9 @@ Config CreateDefaultConfig() {
   AddCharacterFormRule("<>=+-/*", kFullWidth, kLastForm, &config);
   AddCharacterFormRule("?!", kFullWidth, kLastForm, &config);
 
-#ifdef CHANNEL_DEV
-  if constexpr (port::IsAndroid()) {
+  if constexpr (port::IsChannelDev() && port::IsAndroid()) {
     config.mutable_general_config()->set_upload_usage_stats(true);
   }
-#endif  // CHANNEL_DEV
 
   if (GetPlatformSpecificDefaultEmojiSetting()) {
     config.set_use_emoji_conversion(true);
@@ -138,11 +136,9 @@ void NormalizeConfig(Config* config) {
     config->set_session_keymap(ConfigHandler::GetDefaultKeyMap());
   }
 
-#ifdef CHANNEL_DEV
-  if constexpr (port::IsAndroid()) {
+  if constexpr (port::IsChannelDev() && port::IsAndroid()) {
     config->mutable_general_config()->set_upload_usage_stats(true);
   }
-#endif  // CHANNEL_DEV
 
   if (GetPlatformSpecificDefaultEmojiSetting() &&
       !config->has_use_emoji_conversion()) {

@@ -112,25 +112,27 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_EQ(absl::StrCat(output), absl::StrCat(input));
   EXPECT_EQ(absl::StrCat(output2), absl::StrCat(input));
 
-#ifdef CHANNEL_DEV
-  if constexpr (port::IsAndroid()) {
-    input.Clear();
-    EXPECT_FALSE(input.general_config().has_upload_usage_stats());
-    ConfigHandler::SetConfig(input);
-    output = ConfigHandler::GetCopiedConfig();
-    EXPECT_TRUE(output.general_config().has_upload_usage_stats());
-    EXPECT_TRUE(output.general_config().upload_usage_stats());
+  constexpr bool kExpectedUploadUsageStats =
+      port::IsChannelDev() && port::IsAndroid();
 
-    input.Clear();
-    input.mutable_general_config()->set_upload_usage_stats(false);
-    EXPECT_TRUE(input.general_config().has_upload_usage_stats());
-    EXPECT_FALSE(input.general_config().upload_usage_stats());
-    ConfigHandler::SetConfig(input);
-    output = ConfigHandler::GetCopiedConfig();
-    EXPECT_TRUE(output.general_config().has_upload_usage_stats());
-    EXPECT_TRUE(output.general_config().upload_usage_stats());
-  }
-#endif  // CHANNEL_DEV
+  input.Clear();
+  EXPECT_FALSE(input.general_config().has_upload_usage_stats());
+  ConfigHandler::SetConfig(input);
+  output = ConfigHandler::GetCopiedConfig();
+  EXPECT_EQ(output.general_config().has_upload_usage_stats(),
+            kExpectedUploadUsageStats);
+  EXPECT_EQ(output.general_config().upload_usage_stats(),
+            kExpectedUploadUsageStats);
+
+  input.Clear();
+  input.mutable_general_config()->set_upload_usage_stats(false);
+  EXPECT_TRUE(input.general_config().has_upload_usage_stats());
+  EXPECT_FALSE(input.general_config().upload_usage_stats());
+  ConfigHandler::SetConfig(input);
+  output = ConfigHandler::GetCopiedConfig();
+  EXPECT_TRUE(output.general_config().has_upload_usage_stats());
+  EXPECT_EQ(output.general_config().upload_usage_stats(),
+            kExpectedUploadUsageStats);
 }
 
 TEST_F(ConfigHandlerTest, SetMetadata) {
@@ -300,12 +302,12 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
               kTestCases[i].conversion_character_form);
   }
 
-#ifdef CHANNEL_DEV
-  if constexpr (port::IsAndroid()) {
-    EXPECT_TRUE(output.general_config().has_upload_usage_stats());
-    EXPECT_TRUE(output.general_config().upload_usage_stats());
-  }
-#endif  // CHANNEL_DEV
+  constexpr bool kExpectedUploadUsageStats =
+      port::IsChannelDev() && port::IsAndroid();
+  EXPECT_EQ(output.general_config().has_upload_usage_stats(),
+            kExpectedUploadUsageStats);
+  EXPECT_EQ(output.general_config().upload_usage_stats(),
+            kExpectedUploadUsageStats);
 
   constexpr bool kExpectedEmojiConversion =
       port::IsApplicationBuild() && !port::IsAndroid();
