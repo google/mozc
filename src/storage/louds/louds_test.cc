@@ -230,6 +230,47 @@ TEST(LoudsStructureValidationTest, ValidatesTreeDegreePrefixAndMaxDepth) {
   EXPECT_FALSE(louds.IsValidNode(Louds::Node()));
 }
 
+TEST(LoudsMalformedBitVectorTest, MoveToParentTerminatesOnNonDecreasingParent) {
+  Louds empty_louds;
+  Louds::Node node;
+  empty_louds.InitNodeFromNodeId(1, &node);
+  EXPECT_FALSE(empty_louds.IsValidNode(node));
+  EXPECT_EQ(node.node_id(), 0);
+
+  // Root-only tree ("10 0", num_nodes == 1): test InitNodeFromNodeId bounds and
+  // MoveToParent when parent_id > num_nodes.
+  const std::vector<uint8_t> kRootOnly = MakeSequence("10 0 00000");
+  Louds root_only;
+  root_only.Init(kRootOnly.data(), kRootOnly.size(), 0, 0, 0, 0);
+  root_only.InitNodeFromNodeId(0, &node);
+  EXPECT_FALSE(root_only.IsValidNode(node));
+  root_only.InitNodeFromNodeId(1, &node);
+  EXPECT_TRUE(root_only.IsRoot(node));
+  EXPECT_TRUE(root_only.IsValidNode(node));
+  root_only.InitNodeFromNodeId(2, &node);
+  EXPECT_FALSE(root_only.IsValidNode(node));
+  EXPECT_EQ(node.node_id(), 0);
+  Louds::MoveToNextSibling(&node);
+  Louds::MoveToNextSibling(&node);
+  Louds::MoveToNextSibling(&node);
+  root_only.MoveToParent(&node);
+  EXPECT_FALSE(root_only.IsValidNode(node));
+  EXPECT_EQ(node.node_id(), 0);
+
+  // Too many early 0-bits ("10 000 1110") cause edge_index >= 2 * node_id - 1,
+  // which would compute parent_id >= node_id without the monotonicity guard.
+  const std::vector<uint8_t> kMalformed = MakeSequence("10 000 1110");
+  Louds louds;
+  louds.Init(kMalformed.data(), kMalformed.size(), 0, 0, 0, 0);
+
+  louds.InitNodeFromNodeId(2, &node);
+  EXPECT_EQ(node.node_id(), 2);
+
+  louds.MoveToParent(&node);
+  EXPECT_FALSE(louds.IsValidNode(node));
+  EXPECT_EQ(node.node_id(), 0);
+}
+
 }  // namespace
 }  // namespace louds
 }  // namespace storage

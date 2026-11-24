@@ -110,10 +110,25 @@ class Louds {
   // Initializes a Node instance from node ID.
   // Note: to get the root node, just allocate a default Node instance.
   void InitNodeFromNodeId(int node_id, Node* node) const {
+    if (node_id <= 1) {
+      if (node_id == 1 && index_.GetNum1Bits() >= 1) {
+        *node = Node();
+      } else {
+        SetInvalidNode(node);
+      }
+      return;
+    }
+    if (static_cast<size_t>(node_id) < select1_cache_size_) {
+      node->node_id_ = node_id;
+      node->edge_index_ = select1_cache_ptr_[node_id];
+      return;
+    }
+    if (node_id > index_.GetNum1Bits()) {
+      SetInvalidNode(node);
+      return;
+    }
     node->node_id_ = node_id;
-    node->edge_index_ = node_id < select1_cache_size_
-                            ? select1_cache_ptr_[node_id]
-                            : index_.Select1(node_id);
+    node->edge_index_ = index_.Select1(node_id);
   }
 
   // Returns true if the given node is the root.
@@ -152,10 +167,26 @@ class Louds {
   //   * node 5 -> node 3
   // REQUIRES: |node| is valid and not root.
   void MoveToParent(Node* node) const {
-    node->node_id_ = node->edge_index_ - node->node_id_ + 1;
-    node->edge_index_ = node->node_id_ < select1_cache_size_
-                            ? select1_cache_ptr_[node->node_id_]
-                            : index_.Select1(node->node_id_);
+    const int parent_id = node->edge_index_ - node->node_id_ + 1;
+    if (parent_id < 1 || parent_id >= node->node_id_) {
+      SetInvalidNode(node);
+      return;
+    }
+    if (parent_id == 1) {
+      *node = Node();
+      return;
+    }
+    if (static_cast<size_t>(parent_id) < select1_cache_size_) {
+      node->node_id_ = parent_id;
+      node->edge_index_ = select1_cache_ptr_[parent_id];
+      return;
+    }
+    if (parent_id > index_.GetNum1Bits()) {
+      SetInvalidNode(node);
+      return;
+    }
+    node->node_id_ = parent_id;
+    node->edge_index_ = index_.Select1(parent_id);
   }
 
   // Returns true if |node| is in a valid state.

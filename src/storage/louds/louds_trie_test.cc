@@ -29,6 +29,7 @@
 
 #include "storage/louds/louds_trie.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -741,6 +742,84 @@ TEST(LoudsTrieOpenValidationTest, EnforcesMaxDepthAndKeyIdBounds) {
     too_deep_builder.Build();
     EXPECT_FALSE(trie.Open(too_deep_builder.image()));
   }
+}
+
+TEST(LoudsTrieRestoreKeyBoundsTest, DeepTrieDoesNotUnderflowBuffer) {
+  constexpr size_t kDeepLength = LoudsTrie::kMaxDepth + 44;
+  LoudsTrieBuilder deep_builder;
+  deep_builder.Add(std::string(kDeepLength, 'x'));
+  deep_builder.Build();
+
+  LoudsTrie trie;
+  EXPECT_FALSE(trie.Open(deep_builder.image()));
+
+  LoudsTrieBuilder builder;
+  builder.Add(std::string(LoudsTrie::kMaxDepth, 'x'));
+  builder.Build();
+  ASSERT_TRUE(trie.Open(builder.image()));
+
+  struct GuardedBuffer {
+    char guard_before[64];
+    char buffer[LoudsTrie::kMaxDepth + 1];
+    char guard_after[64];
+  } guarded;
+  std::fill_n(guarded.guard_before, sizeof(guarded.guard_before), 0x5a);
+  std::fill_n(guarded.buffer, sizeof(guarded.buffer), 0);
+  std::fill_n(guarded.guard_after, sizeof(guarded.guard_after), 0x5a);
+
+  const absl::string_view restored = trie.RestoreKeyString(0, guarded.buffer);
+  EXPECT_EQ(restored.size(), LoudsTrie::kMaxDepth);
+  EXPECT_EQ(restored, std::string(LoudsTrie::kMaxDepth, 'x'));
+  for (const char c : guarded.guard_before) {
+    EXPECT_EQ(c, 0x5a);
+  }
+  for (const char c : guarded.guard_after) {
+    EXPECT_EQ(c, 0x5a);
+  }
+
+  // Out-of-range key IDs produce invalid nodes and empty restored views within
+  // the caller-supplied buffer.
+  EXPECT_FALSE(trie.IsValidNode(trie.GetTerminalNodeFromKeyId(-1)));
+  EXPECT_FALSE(trie.IsValidNode(trie.GetTerminalNodeFromKeyId(1)));
+  EXPECT_FALSE(trie.IsValidNode(trie.GetTerminalNodeFromKeyId(1000)));
+  EXPECT_EQ(trie.RestoreKeyString(-1, guarded.buffer), "");
+  EXPECT_EQ(trie.RestoreKeyString(1, guarded.buffer), "");
+  EXPECT_EQ(trie.RestoreKeyString(1000, guarded.buffer), "");
+
+  // Root and invalid traversal nodes (past leaf or past last sibling) restore
+  // to "".
+  guarded.buffer[LoudsTrie::kMaxDepth] = 'z';
+  EXPECT_EQ(trie.RestoreKeyString(LoudsTrie::Node(), guarded.buffer), "");
+  EXPECT_EQ(guarded.buffer[LoudsTrie::kMaxDepth], '\0');
+
+  const LoudsTrie::Node leaf_node = trie.GetTerminalNodeFromKeyId(0);
+  ASSERT_TRUE(trie.IsValidNode(leaf_node));
+  EXPECT_EQ(trie.RestoreKeyString(leaf_node, guarded.buffer),
+            std::string(LoudsTrie::kMaxDepth, 'x'));
+  const LoudsTrie::Node invalid_child = trie.MoveToFirstChild(leaf_node);
+  EXPECT_FALSE(trie.IsValidNode(invalid_child));
+  EXPECT_EQ(trie.RestoreKeyString(invalid_child, guarded.buffer), "");
+
+  const LoudsTrie::Node first_child = trie.MoveToFirstChild(LoudsTrie::Node());
+  ASSERT_TRUE(trie.IsValidNode(first_child));
+  EXPECT_EQ(trie.RestoreKeyString(first_child, guarded.buffer), "x");
+  const LoudsTrie::Node invalid_sibling = trie.MoveToNextSibling(first_child);
+  EXPECT_FALSE(trie.IsValidNode(invalid_sibling));
+  EXPECT_EQ(trie.RestoreKeyString(invalid_sibling, guarded.buffer), "");
+
+  // Nodes from a larger trie whose edge_index exceeds a smaller or closed
+  // trie's bit vector must short-circuit before indexing into louds_.
+  LoudsTrieBuilder small_builder;
+  small_builder.Add("a");
+  small_builder.Build();
+  ASSERT_TRUE(trie.Open(small_builder.image()));
+  EXPECT_EQ(trie.RestoreKeyString(leaf_node, guarded.buffer), "");
+  EXPECT_EQ(trie.RestoreKeyString(invalid_child, guarded.buffer), "");
+
+  trie.Close();
+  EXPECT_EQ(trie.RestoreKeyString(0, guarded.buffer), "");
+  EXPECT_EQ(trie.RestoreKeyString(leaf_node, guarded.buffer), "");
+  EXPECT_EQ(trie.RestoreKeyString(invalid_child, guarded.buffer), "");
 }
 
 }  // namespace

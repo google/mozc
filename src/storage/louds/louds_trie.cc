@@ -170,19 +170,27 @@ int LoudsTrie::ExactSearch(absl::string_view key) const {
   return -1;
 }
 
-absl::string_view LoudsTrie::RestoreKeyString(Node node, char* buf) const {
+absl::string_view LoudsTrie::RestoreKeyStringFromValidatedNode(
+    Node node, char* buf) const {
   // Ensure the returned string view is null-terminated.
   char* const buf_end = buf + kMaxDepth;
   *buf_end = '\0';
 
-  // Climb up the trie to the root and fill |buf| backward.
+  // Climb up the trie to the root and fill |buf| backward. Cap backward writes
+  // at kMaxDepth as defense-in-depth so |buf| cannot underflow.
   char* ptr = buf_end;
-  if (IsValidNode(node)) {
-    for (; !louds_.IsRoot(node); louds_.MoveToParent(&node)) {
-      *--ptr = GetEdgeLabelToParentNode(node);
-    }
+  for (; node.node_id() > 1 && ptr > buf; louds_.MoveToParent(&node)) {
+    *--ptr = GetEdgeLabelToParentNode(node);
   }
   return absl::string_view(ptr, buf_end - ptr);
+}
+
+absl::string_view LoudsTrie::RestoreKeyString(Node node, char* buf) const {
+  if (node.node_id() <= 1 || node.node_id() > louds_.num_nodes() ||
+      !IsValidNode(node)) {
+    node = Node();
+  }
+  return RestoreKeyStringFromValidatedNode(node, buf);
 }
 
 }  // namespace louds

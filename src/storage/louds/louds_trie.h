@@ -145,7 +145,8 @@ class LoudsTrie {
   // |buf|.
   // REQUIRES: |buf| is longer than kMaxDepth + 1.
   absl::string_view RestoreKeyString(int key_id, char* buf) const {
-    return RestoreKeyString(GetTerminalNodeFromKeyId(key_id), buf);
+    return RestoreKeyStringFromValidatedNode(GetTerminalNodeFromKeyId(key_id),
+                                             buf);
   }
 
   // Methods for moving node exported from Louds class; see louds.h.
@@ -211,6 +212,9 @@ class LoudsTrie {
   }
 
  private:
+  absl::string_view RestoreKeyStringFromValidatedNode(Node node,
+                                                      char* buf) const;
+
   Louds louds_;  // Tree structure representation by LOUDS.
 
   // Bit-vector to represent whether each node in LOUDS tree is terminal.
