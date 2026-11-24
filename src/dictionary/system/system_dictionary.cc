@@ -452,8 +452,7 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
     return false;
   }
 
-  if (!key_trie_.Open(reinterpret_cast<const uint8_t*>(key_image->data()),
-                      kKeyTrieLb0CacheSize, kKeyTrieLb1CacheSize,
+  if (!key_trie_.Open(*key_image, kKeyTrieLb0CacheSize, kKeyTrieLb1CacheSize,
                       kKeyTrieSelect0CacheSize, kKeyTrieSelect1CacheSize,
                       kKeyTrieTermvecCacheSize)) {
     LOG(ERROR) << "cannot open key trie";
@@ -462,9 +461,9 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   BuildHiraganaExpansionTable(codec_, &hiragana_expansion_table_);
 
-  if (!value_trie_.Open(reinterpret_cast<const uint8_t*>(value_image->data()),
-                        kValueTrieLb0CacheSize, kValueTrieLb1CacheSize,
-                        kValueTrieSelect0CacheSize, kValueTrieSelect1CacheSize,
+  if (!value_trie_.Open(*value_image, kValueTrieLb0CacheSize,
+                        kValueTrieLb1CacheSize, kValueTrieSelect0CacheSize,
+                        kValueTrieSelect1CacheSize,
                         kValueTrieTermvecCacheSize)) {
     LOG(ERROR) << "can not open value trie";
     return false;

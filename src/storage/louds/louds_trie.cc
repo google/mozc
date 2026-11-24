@@ -31,9 +31,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
-#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/bits.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
@@ -41,9 +42,14 @@
 namespace mozc {
 namespace storage {
 namespace louds {
+namespace {
 
-bool LoudsTrie::Open(const uint8_t *image, size_t louds_lb0_cache_size,
-                     size_t louds_lb1_cache_size,
+alignas(uint32_t) constexpr uint8_t kEmptyTerminalImage[4] = {0, 0, 0, 0};
+
+}  // namespace
+
+bool LoudsTrie::Open(absl::Span<const uint8_t> image,
+                     size_t louds_lb0_cache_size, size_t louds_lb1_cache_size,
                      size_t louds_select0_cache_size,
                      size_t louds_select1_cache_size,
                      size_t termvec_lb1_cache_size) {
@@ -69,35 +75,74 @@ bool LoudsTrie::Open(const uint8_t *image, size_t louds_lb0_cache_size,
   //   [3]
   // In this case, [0] and [1] are not terminal (as the original words contains
   // neither "" nor "a"), and [2] and [3] are terminal.
-  const int louds_size = LoadUnalignedAdvance<uint32_t>(image);
-  const int terminal_size = LoadUnalignedAdvance<uint32_t>(image);
-  const int num_character_bits = LoadUnalignedAdvance<uint32_t>(image);
-  const int edge_character_size = LoadUnalignedAdvance<uint32_t>(image);
-  CHECK_EQ(num_character_bits, 8);
-  CHECK_GT(edge_character_size, 0);
+  Close();
+  constexpr size_t kHeaderSize = 4 * sizeof(uint32_t);
+  if (image.size() < kHeaderSize) {
+    return false;
+  }
+  const uint8_t* ptr = image.data();
+  const uint32_t louds_size = LoadUnalignedAdvance<uint32_t>(ptr);
+  const uint32_t terminal_size = LoadUnalignedAdvance<uint32_t>(ptr);
+  const uint32_t num_character_bits = LoadUnalignedAdvance<uint32_t>(ptr);
+  const uint32_t edge_character_size = LoadUnalignedAdvance<uint32_t>(ptr);
 
-  const uint8_t *louds_image = image;
-  const uint8_t *terminal_image = louds_image + louds_size;
-  const uint8_t *edge_character = terminal_image + terminal_size;
+  // SimpleSuccinctBitVectorIndex computes bit counts as `8 * length_` in `int`,
+  // reads bit vectors in 4-byte words, and evaluates `chunk_size_ * 8 *
+  // chunk_length` (`256 * ceil(length / 32)`) in `int` at its sentinel chunk.
+  // Aligning the limit down to a 32-byte chunk boundary keeps both computations
+  // strictly within `int`.
+  constexpr uint32_t kMaxBitVectorByteLength =
+      static_cast<uint32_t>((std::numeric_limits<int>::max() / 8) & ~int{31});
+  const auto is_valid_bit_vector_size = [](uint32_t byte_size) {
+    return byte_size > 0 && byte_size <= kMaxBitVectorByteLength &&
+           (byte_size % sizeof(uint32_t) == 0);
+  };
+  if (!is_valid_bit_vector_size(louds_size) ||
+      !is_valid_bit_vector_size(terminal_size) || num_character_bits != 8) {
+    return false;
+  }
+  const uint64_t required_payload_size =
+      static_cast<uint64_t>(louds_size) + static_cast<uint64_t>(terminal_size) +
+      static_cast<uint64_t>(edge_character_size);
+  if (required_payload_size > image.size() - kHeaderSize) {
+    return false;
+  }
 
-  louds_.Init(louds_image, louds_size, louds_lb0_cache_size,
+  const uint8_t* louds_image = ptr;
+  const uint8_t* terminal_image = louds_image + louds_size;
+  const uint8_t* edge_character = terminal_image + terminal_size;
+
+  louds_.Init(louds_image, static_cast<int>(louds_size), louds_lb0_cache_size,
               louds_lb1_cache_size, louds_select0_cache_size,
               louds_select1_cache_size);
-  terminal_bit_vector_.Init(terminal_image, terminal_size,
+  const int num_nodes = louds_.num_nodes();
+  if (!louds_.IsValidStructure(kMaxDepth) ||
+      static_cast<uint64_t>(terminal_size) * 8 <
+          static_cast<uint64_t>(num_nodes) ||
+      edge_character_size < static_cast<uint32_t>(num_nodes)) {
+    Close();
+    return false;
+  }
+  terminal_bit_vector_.Init(terminal_image, static_cast<int>(terminal_size),
                             0,  // Select0 is not carried out.
                             termvec_lb1_cache_size);
-  edge_character_ = reinterpret_cast<const char *>(edge_character);
+  if (terminal_bit_vector_.Rank1(num_nodes) !=
+      terminal_bit_vector_.GetNum1Bits()) {
+    Close();
+    return false;
+  }
+  edge_character_ = reinterpret_cast<const char*>(edge_character);
 
   return true;
 }
 
 void LoudsTrie::Close() {
   louds_.Reset();
-  terminal_bit_vector_.Reset();
-  edge_character_ = nullptr;
+  terminal_bit_vector_.Init(kEmptyTerminalImage, sizeof(kEmptyTerminalImage));
+  edge_character_ = reinterpret_cast<const char*>(kEmptyTerminalImage);
 }
 
-bool LoudsTrie::MoveToChildByLabel(char label, Node *node) const {
+bool LoudsTrie::MoveToChildByLabel(char label, Node* node) const {
   MoveToFirstChild(node);
   while (IsValidNode(*node)) {
     if (GetEdgeLabelToParentNode(*node) == label) {
@@ -108,7 +153,7 @@ bool LoudsTrie::MoveToChildByLabel(char label, Node *node) const {
   return false;
 }
 
-bool LoudsTrie::Traverse(absl::string_view key, Node *node) const {
+bool LoudsTrie::Traverse(absl::string_view key, Node* node) const {
   for (auto iter = key.begin(); iter != key.end(); ++iter) {
     if (!MoveToChildByLabel(*iter, node)) {
       return false;
@@ -125,15 +170,17 @@ int LoudsTrie::ExactSearch(absl::string_view key) const {
   return -1;
 }
 
-absl::string_view LoudsTrie::RestoreKeyString(Node node, char *buf) const {
+absl::string_view LoudsTrie::RestoreKeyString(Node node, char* buf) const {
   // Ensure the returned string view is null-terminated.
-  char *const buf_end = buf + kMaxDepth;
+  char* const buf_end = buf + kMaxDepth;
   *buf_end = '\0';
 
   // Climb up the trie to the root and fill |buf| backward.
-  char *ptr = buf_end;
-  for (; !louds_.IsRoot(node); louds_.MoveToParent(&node)) {
-    *--ptr = GetEdgeLabelToParentNode(node);
+  char* ptr = buf_end;
+  if (IsValidNode(node)) {
+    for (; !louds_.IsRoot(node); louds_.MoveToParent(&node)) {
+      *--ptr = GetEdgeLabelToParentNode(node);
+    }
   }
   return absl::string_view(ptr, buf_end - ptr);
 }

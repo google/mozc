@@ -31,9 +31,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "storage/louds/louds_trie_builder.h"
 #include "testing/gunit.h"
 
@@ -41,6 +44,12 @@ namespace mozc {
 namespace storage {
 namespace louds {
 namespace {
+
+template <size_t N>
+absl::Span<const uint8_t> AsByteSpan(const uint32_t (&words)[N]) {
+  return absl::MakeConstSpan(reinterpret_cast<const uint8_t*>(words),
+                             sizeof(words));
+}
 
 class RecordCallbackArgs {
  public:
@@ -137,10 +146,10 @@ TEST_P(LoudsTrieTest, NodeBasedApis) {
 
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()),
-            param.louds_lb0_cache_size, param.louds_lb1_cache_size,
-            param.louds_select0_cache_size, param.louds_select1_cache_size,
-            param.termvec_lb1_cache_size);
+  ASSERT_TRUE(
+      trie.Open(builder.image(), param.louds_lb0_cache_size,
+                param.louds_lb1_cache_size, param.louds_select0_cache_size,
+                param.louds_select1_cache_size, param.termvec_lb1_cache_size));
 
   char buf[LoudsTrie::kMaxDepth + 1];  // for RestoreKeyString().
 
@@ -355,10 +364,10 @@ TEST_P(LoudsTrieTest, HasKey) {
 
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()),
-            param.louds_lb0_cache_size, param.louds_lb1_cache_size,
-            param.louds_select0_cache_size, param.louds_select1_cache_size,
-            param.termvec_lb1_cache_size);
+  ASSERT_TRUE(
+      trie.Open(builder.image(), param.louds_lb0_cache_size,
+                param.louds_lb1_cache_size, param.louds_select0_cache_size,
+                param.louds_select1_cache_size, param.termvec_lb1_cache_size));
 
   EXPECT_TRUE(trie.HasKey("a"));
   EXPECT_TRUE(trie.HasKey("abc"));
@@ -391,7 +400,7 @@ TEST(LoudsTrieTest, ExactSearch) {
 
   builder.Build();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()));
+  ASSERT_TRUE(trie.Open(builder.image()));
 
   EXPECT_EQ(trie.ExactSearch("a"), builder.GetId("a"));
   EXPECT_EQ(trie.ExactSearch("abc"), builder.GetId("abc"));
@@ -428,10 +437,10 @@ TEST_P(LoudsTrieTest, PrefixSearch) {
 
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()),
-            param.louds_lb0_cache_size, param.louds_lb1_cache_size,
-            param.louds_select0_cache_size, param.louds_select1_cache_size,
-            param.termvec_lb1_cache_size);
+  ASSERT_TRUE(
+      trie.Open(builder.image(), param.louds_lb0_cache_size,
+                param.louds_lb1_cache_size, param.louds_select0_cache_size,
+                param.louds_select1_cache_size, param.termvec_lb1_cache_size));
   {
     const absl::string_view kKey = "abc";
     std::vector<RecordCallbackArgs::CallbackArgs> actual;
@@ -508,10 +517,10 @@ TEST_P(LoudsTrieTest, RestoreKeyString) {
 
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()),
-            param.louds_lb0_cache_size, param.louds_lb1_cache_size,
-            param.louds_select0_cache_size, param.louds_select1_cache_size,
-            param.termvec_lb1_cache_size);
+  ASSERT_TRUE(
+      trie.Open(builder.image(), param.louds_lb0_cache_size,
+                param.louds_lb1_cache_size, param.louds_select0_cache_size,
+                param.louds_select1_cache_size, param.termvec_lb1_cache_size));
 
   char buffer[LoudsTrie::kMaxDepth + 1];
   EXPECT_EQ(trie.RestoreKeyString(builder.GetId("aa"), buffer), "aa");
@@ -528,6 +537,211 @@ TEST_P(LoudsTrieTest, RestoreKeyString) {
   trie.Close();
 }
 INSTANTIATE_TEST_CASE(GenRestoreKeyStringTest);
+
+TEST(LoudsTrieOpenValidationTest, QueriesAreSafeWhenClosedOrReopenFails) {
+  const auto expect_empty_closed_state = [](const LoudsTrie& trie) {
+    EXPECT_EQ(trie.num_keys(), 0);
+    EXPECT_FALSE(trie.IsValidNode(LoudsTrie::Node()));
+    EXPECT_FALSE(trie.IsValidNode(trie.MoveToFirstChild(LoudsTrie::Node())));
+    EXPECT_FALSE(trie.IsValidNode(trie.GetTerminalNodeFromKeyId(0)));
+    EXPECT_FALSE(trie.IsValidNode(trie.GetTerminalNodeFromKeyId(-1)));
+    EXPECT_FALSE(trie.HasKey(""));
+    EXPECT_FALSE(trie.HasKey("abc"));
+    EXPECT_EQ(trie.ExactSearch(""), -1);
+    EXPECT_EQ(trie.ExactSearch("abc"), -1);
+    char buffer[LoudsTrie::kMaxDepth + 1];
+    EXPECT_EQ(trie.RestoreKeyString(LoudsTrie::Node(), buffer), "");
+    EXPECT_EQ(trie.RestoreKeyString(0, buffer), "");
+    EXPECT_EQ(trie.RestoreKeyString(-1, buffer), "");
+  };
+
+  LoudsTrie trie;
+  expect_empty_closed_state(trie);
+
+  LoudsTrieBuilder builder;
+  builder.Add("abc");
+  builder.Build();
+  ASSERT_TRUE(trie.Open(builder.image()));
+  EXPECT_EQ(trie.num_keys(), 1);
+  EXPECT_TRUE(trie.HasKey("abc"));
+
+  // A failed re-Open at header validation must reset previously opened state.
+  EXPECT_FALSE(trie.Open(absl::string_view("short")));
+  expect_empty_closed_state(trie);
+
+  // A failed re-Open after louds_.Init (structural check failure) must also
+  // reset louds_ to the empty closed state.
+  ASSERT_TRUE(trie.Open(builder.image()));
+  alignas(uint32_t) const uint32_t kTooFewEdges[8] = {
+      4, 4, 8, 2, 0x0000001du, 0x00000000u, 0x00006100u, 0u};
+  EXPECT_FALSE(trie.Open(AsByteSpan(kTooFewEdges)));
+  expect_empty_closed_state(trie);
+
+  // A failed re-Open after terminal_bit_vector_.Init (padding 1-bit check
+  // failure) must also reset the trie to the empty closed state.
+  ASSERT_TRUE(trie.Open(builder.image()));
+  alignas(uint32_t) const uint32_t kTrailingTerminalBit[8] = {
+      4, 4, 8, 4, 0x00000005u, 0x80000002u, 0x00006100u, 0u};
+  EXPECT_FALSE(trie.Open(AsByteSpan(kTrailingTerminalBit)));
+  expect_empty_closed_state(trie);
+
+  ASSERT_TRUE(trie.Open(builder.image()));
+  EXPECT_TRUE(trie.HasKey("abc"));
+  trie.Close();
+  expect_empty_closed_state(trie);
+}
+
+TEST(LoudsTrieOpenValidationTest, RejectsMalformedHeadersAndTruncatedImages) {
+  LoudsTrieBuilder builder;
+  builder.Add("abc");
+  builder.Build();
+  const absl::string_view valid_image = builder.image();
+
+  const auto write_u32 = [](std::string& img, size_t byte_offset,
+                            uint32_t value) {
+    std::memcpy(img.data() + byte_offset, &value, sizeof(value));
+  };
+
+  LoudsTrie trie;
+  EXPECT_FALSE(trie.Open(absl::string_view()));
+  EXPECT_FALSE(trie.Open(absl::Span<const uint8_t>()));
+  EXPECT_FALSE(trie.Open(valid_image.substr(0, 15)));
+  EXPECT_FALSE(trie.Open(valid_image.substr(0, 16)));
+  EXPECT_FALSE(trie.Open(valid_image.substr(0, valid_image.size() - 1)));
+
+  // Header claiming a louds_size larger than the buffer.
+  {
+    alignas(uint32_t) uint32_t raw[8] = {
+        4096,  // louds_size (exceeds 32-byte buffer)
+        4,     // terminal_size
+        8,     // num_character_bits
+        1,     // edge_character_size
+    };
+    EXPECT_FALSE(trie.Open(AsByteSpan(raw)));
+  }
+
+  // Sizes exceeding the 32-byte chunk-aligned bit-vector limit (268435424) or
+  // large uint32_t sizes (>= 0x80000000) that must not wrap around as signed.
+  {
+    alignas(uint32_t) uint32_t above_chunk_max[8] = {268435428u, 4, 8, 1};
+    EXPECT_FALSE(trie.Open(AsByteSpan(above_chunk_max)));
+    alignas(uint32_t) uint32_t negative_size[8] = {0x80000000u, 4, 8, 1};
+    EXPECT_FALSE(trie.Open(AsByteSpan(negative_size)));
+    alignas(uint32_t) uint32_t wraparound_edge_size[8] = {
+        4096u, 4u, 8u, 0xfffff000u, 0x00000005u, 0u, 0u, 0u};
+    EXPECT_FALSE(trie.Open(AsByteSpan(wraparound_edge_size)));
+  }
+
+  // Unaligned louds_size or terminal_size (not a multiple of 4).
+  {
+    alignas(uint32_t) uint32_t raw_louds[16] = {33, 4, 8, 1};
+    EXPECT_FALSE(trie.Open(AsByteSpan(raw_louds)));
+    alignas(uint32_t) uint32_t raw_term[16] = {4, 6, 8, 1};
+    EXPECT_FALSE(trie.Open(AsByteSpan(raw_term)));
+  }
+
+  // Mutate individual header fields on an otherwise valid image so each header
+  // predicate is exercised independently.
+  {
+    std::string bad_louds_zero(valid_image);
+    write_u32(bad_louds_zero, 0, 0);
+    EXPECT_FALSE(trie.Open(bad_louds_zero));
+
+    std::string bad_term_zero(valid_image);
+    write_u32(bad_term_zero, 4, 0);
+    EXPECT_FALSE(trie.Open(bad_term_zero));
+
+    std::string bad_char_bits_low(valid_image);
+    write_u32(bad_char_bits_low, 8, 7);
+    EXPECT_FALSE(trie.Open(bad_char_bits_low));
+
+    std::string bad_char_bits_high(valid_image);
+    write_u32(bad_char_bits_high, 8, 16);
+    EXPECT_FALSE(trie.Open(bad_char_bits_high));
+
+    std::string bad_edge_zero(valid_image);
+    write_u32(bad_edge_zero, 12, 0);
+    EXPECT_FALSE(trie.Open(bad_edge_zero));
+  }
+
+  // Malformed LOUDS bit vectors and inconsistent section counts.
+  {
+    alignas(uint32_t) uint32_t all_ones_louds[8] = {
+        4, 4, 8, 4, 0xffffffffu, 0x00000000u, 0x61616100u, 0u};
+    EXPECT_FALSE(trie.Open(AsByteSpan(all_ones_louds)));
+
+    alignas(uint32_t) uint32_t all_zeros_louds[8] = {
+        4, 4, 8, 4, 0x00000000u, 0x00000000u, 0x61616100u, 0u};
+    EXPECT_FALSE(trie.Open(AsByteSpan(all_zeros_louds)));
+
+    // Exact boundary num_0bits == num_1bits == 16 ("10" + 15 ones + 15 zeros),
+    // followed by a zero terminal word.
+    alignas(uint32_t) uint32_t equal_ones_and_zeros[12] = {
+        4, 4, 8, 16, 0x0001fffdu, 0x00000000u, 0u, 0u, 0u, 0u, 0u, 0u};
+    EXPECT_FALSE(trie.Open(AsByteSpan(equal_ones_and_zeros)));
+
+    // Violates LOUDS prefix invariant Select1(2) < Select0(2):
+    // bit 0 = 1, bits 1..29 = 0, bit 30 = 1, bit 31 = 0.
+    alignas(uint32_t) uint32_t late_one_louds[8] = {
+        4, 4, 8, 4, 0x40000001u, 0x00000002u, 0x00006100u, 0u};
+    EXPECT_FALSE(trie.Open(AsByteSpan(late_one_louds)));
+
+    // Violates LOUDS prefix invariant (parent self-loop at node 2):
+    // bit 0 = 1, bits 1..2 = 0, bit 3 = 1, bits 4..31 = 0.
+    alignas(uint32_t) uint32_t self_loop_louds[8] = {
+        4, 4, 8, 4, 0x00000009u, 0x00000002u, 0x00006100u, 0u};
+    EXPECT_FALSE(trie.Open(AsByteSpan(self_loop_louds)));
+
+    // Super-root "10" followed by 3 child edges "1110" -> 4 nodes total, while
+    // edge_character_size is only 2.
+    alignas(uint32_t) uint32_t too_few_edges[8] = {
+        4, 4, 8, 2, 0x0000001du, 0x00000000u, 0x00006100u, 0u};
+    EXPECT_FALSE(trie.Open(AsByteSpan(too_few_edges)));
+
+    // Valid 33-node LOUDS (root + 32 leaf children -> 33 nodes), sufficient
+    // edge_character_size (36 >= 33), but terminal_size is only 4 bytes (32
+    // bits < 33 nodes).
+    alignas(uint32_t) uint32_t too_few_terminal_bits[18] = {
+        12, 4, 8, 36, 0xfffffffdu, 0x00000003u, 0x00000000u, 0x00000000u};
+    EXPECT_FALSE(trie.Open(AsByteSpan(too_few_terminal_bits)));
+
+    // Valid 2-node LOUDS ("10 10 0" = 0x00000005), but terminal_image has a
+    // 1-bit in trailing padding at bit 2 (>= num_nodes == 2).
+    alignas(uint32_t) uint32_t non_zero_terminal_padding[8] = {
+        4, 4, 8, 2, 0x00000005u, 0x00000006u, 0x00006100u, 0u};
+    EXPECT_FALSE(trie.Open(AsByteSpan(non_zero_terminal_padding)));
+  }
+}
+
+TEST(LoudsTrieOpenValidationTest, EnforcesMaxDepthAndKeyIdBounds) {
+  LoudsTrie trie;
+
+  // Exactly kMaxDepth is accepted and restores cleanly into a kMaxDepth + 1
+  // buffer.
+  {
+    LoudsTrieBuilder max_builder;
+    const std::string max_key(LoudsTrie::kMaxDepth, 'x');
+    max_builder.Add(max_key);
+    max_builder.Build();
+    ASSERT_TRUE(trie.Open(max_builder.image()));
+    EXPECT_EQ(trie.num_keys(), 1);
+
+    char buffer[LoudsTrie::kMaxDepth + 1];
+    EXPECT_EQ(trie.RestoreKeyString(0, buffer), max_key);
+    EXPECT_FALSE(trie.IsValidNode(trie.GetTerminalNodeFromKeyId(-1)));
+    EXPECT_FALSE(trie.IsValidNode(trie.GetTerminalNodeFromKeyId(1)));
+    EXPECT_EQ(trie.RestoreKeyString(-1, buffer), "");
+    EXPECT_EQ(trie.RestoreKeyString(1, buffer), "");
+  }
+
+  // Depth kMaxDepth + 1 is rejected at Open() time.
+  {
+    LoudsTrieBuilder too_deep_builder;
+    too_deep_builder.Add(std::string(LoudsTrie::kMaxDepth + 1, 'x'));
+    too_deep_builder.Build();
+    EXPECT_FALSE(trie.Open(too_deep_builder.image()));
+  }
+}
 
 }  // namespace
 }  // namespace louds

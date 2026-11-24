@@ -62,8 +62,8 @@ mozc_cc_library(
         ":louds",
         ":simple_succinct_bit_vector_index",
         "//base:bits",
-        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -89,6 +89,7 @@ mozc_cc_test(
         ":louds_trie_builder",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

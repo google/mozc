@@ -34,6 +34,7 @@
 #include <cstdint>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
@@ -51,7 +52,7 @@ class LoudsTrie {
   // This class stores a traversal state.
   typedef Louds::Node Node;
 
-  LoudsTrie() = default;
+  LoudsTrie() { Close(); }
 
   LoudsTrie(const LoudsTrie&) = delete;
   LoudsTrie& operator=(const LoudsTrie&) = delete;
@@ -59,17 +60,30 @@ class LoudsTrie {
   LoudsTrie(LoudsTrie&&) = default;
   LoudsTrie& operator=(LoudsTrie&&) = default;
 
-  // Opens the binary image and constructs the data structure.  The first four
-  // cache sizes are passed to the underlying LOUDS.  See louds.h for more
-  // information of cache size.  The last one is passed to the underlying
-  // terminal bit vector.  This class doesn't own the "data", so it is caller's
-  // responsibility to keep the data alive until Close is invoked.  See .cc file
-  // for the detailed format of the binary image.
-  bool Open(const uint8_t* image, size_t louds_lb0_cache_size,
-            size_t louds_lb1_cache_size, size_t louds_select0_cache_size,
-            size_t louds_select1_cache_size, size_t termvec_lb1_cache_size);
+  // Opens the binary image and constructs the data structure. Header section
+  // sizes are validated against |image.size()|.
+  // The first four cache sizes are passed to the underlying LOUDS. See louds.h
+  // for more information on cache size. The last one is passed to the
+  // underlying terminal bit vector. This class doesn't own the "data", so it is
+  // caller's responsibility to keep the data alive until Close is invoked. See
+  // .cc file for the detailed format of the binary image.
+  bool Open(absl::Span<const uint8_t> image, size_t louds_lb0_cache_size = 0,
+            size_t louds_lb1_cache_size = 0,
+            size_t louds_select0_cache_size = 0,
+            size_t louds_select1_cache_size = 0,
+            size_t termvec_lb1_cache_size = 0);
 
-  bool Open(const uint8_t* data) { return Open(data, 0, 0, 0, 0, 0); }
+  bool Open(absl::string_view image, size_t louds_lb0_cache_size = 0,
+            size_t louds_lb1_cache_size = 0,
+            size_t louds_select0_cache_size = 0,
+            size_t louds_select1_cache_size = 0,
+            size_t termvec_lb1_cache_size = 0) {
+    return Open(
+        absl::MakeConstSpan(reinterpret_cast<const uint8_t*>(image.data()),
+                            image.size()),
+        louds_lb0_cache_size, louds_lb1_cache_size, louds_select0_cache_size,
+        louds_select1_cache_size, termvec_lb1_cache_size);
+  }
 
   // Destructs the internal data structure explicitly (the destructor will do
   // clean up too).
@@ -101,6 +115,10 @@ class LoudsTrie {
   // Initializes a node corresponding to |key_id|.
   // REQUIRES: |key_id| is a valid ID.
   void GetTerminalNodeFromKeyId(int key_id, Node* node) const {
+    if (key_id < 0 || key_id >= terminal_bit_vector_.GetNum1Bits()) {
+      Louds::SetInvalidNode(node);
+      return;
+    }
     const int node_id = terminal_bit_vector_.Select1(key_id + 1) + 1;
     louds_.InitNodeFromNodeId(node_id, node);
   }
@@ -110,6 +128,9 @@ class LoudsTrie {
     GetTerminalNodeFromKeyId(key_id, &node);
     return node;
   }
+
+  // Returns the number of terminal keys stored in the trie.
+  int num_keys() const { return terminal_bit_vector_.GetNum1Bits(); }
 
   // Restores the key string that reaches to |node|.  The caller is
   // responsible for allocating a buffer for the result string view, which needs
@@ -124,9 +145,7 @@ class LoudsTrie {
   // |buf|.
   // REQUIRES: |buf| is longer than kMaxDepth + 1.
   absl::string_view RestoreKeyString(int key_id, char* buf) const {
-    // TODO(noriyukit): Check if it's necessary to handle negative IDs.
-    return key_id < 0 ? absl::string_view()
-                      : RestoreKeyString(GetTerminalNodeFromKeyId(key_id), buf);
+    return RestoreKeyString(GetTerminalNodeFromKeyId(key_id), buf);
   }
 
   // Methods for moving node exported from Louds class; see louds.h.

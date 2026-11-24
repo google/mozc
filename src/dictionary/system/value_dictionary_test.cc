@@ -29,7 +29,6 @@
 
 #include "dictionary/system/value_dictionary.h"
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -79,8 +78,7 @@ class ValueDictionaryTest : public ::testing::Test {
 
   ValueDictionary* BuildValueDictionary() {
     louds_trie_builder_->Build();
-    louds_trie_->Open(
-        reinterpret_cast<const uint8_t*>(louds_trie_builder_->image().data()));
+    louds_trie_->Open(louds_trie_builder_->image());
     return new ValueDictionary(pos_matcher_, *louds_trie_);
   }
 

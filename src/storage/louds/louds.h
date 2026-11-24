@@ -32,6 +32,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 
 #include "storage/louds/simple_succinct_bit_vector_index.h"
@@ -82,7 +83,7 @@ class Louds {
     friend class Louds;
   };
 
-  Louds() = default;
+  Louds() { Reset(); }
 
   Louds(const Louds&) = delete;
   Louds& operator=(const Louds&) = delete;
@@ -162,12 +163,30 @@ class Louds {
     return index_.Get(node.edge_index_) != 0;
   }
 
+  // Marks |node| invalid so IsValidNode(*node) returns false without adding
+  // bounds checks to IsValidNode(). Bit 1 is always 0 in both valid LOUDS
+  // images (super-root "10") and the reset sentinel image.
+  static void SetInvalidNode(Node* node) {
+    node->edge_index_ = 1;
+    node->node_id_ = 0;
+  }
+
+  int num_nodes() const { return index_.GetNum1Bits(); }
+
+  // Validates the LOUDS tree structure (super-root "10", BFS prefix invariant
+  // Select1(k) < Select0(k), zero trailing padding, and depth <= |max_depth|)
+  // so downward and upward traversals are memory-safe without per-lookup bounds
+  // checks.
+  bool IsValidStructure(
+      size_t max_depth = std::numeric_limits<size_t>::max()) const;
+
  private:
   SimpleSuccinctBitVectorIndex index_;
   size_t select0_cache_size_ = 0;
   size_t select1_cache_size_ = 0;
   std::unique_ptr<int[]> select_cache_;
-  int* select1_cache_ptr_;  // = select_cache_.get() + select0_cache_size_
+  int* select1_cache_ptr_ =
+      nullptr;  // = select_cache_.get() + select0_cache_size_
 };
 
 }  // namespace louds

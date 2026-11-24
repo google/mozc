@@ -32,11 +32,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+
 namespace mozc {
 namespace storage {
 namespace louds {
+namespace {
 
-void Louds::Init(const uint8_t *image, int length, size_t bitvec_lb0_cache_size,
+alignas(uint32_t) constexpr uint8_t kEmptyLoudsImage[4] = {0, 0, 0, 0};
+
+}  // namespace
+
+void Louds::Init(const uint8_t* image, int length, size_t bitvec_lb0_cache_size,
                  size_t bitvec_lb1_cache_size, size_t select0_cache_size,
                  size_t select1_cache_size) {
   index_.Init(image, length, bitvec_lb0_cache_size, bitvec_lb1_cache_size);
@@ -81,10 +87,44 @@ void Louds::Init(const uint8_t *image, int length, size_t bitvec_lb0_cache_size,
 }
 
 void Louds::Reset() {
-  index_.Reset();
+  index_.Init(kEmptyLoudsImage, sizeof(kEmptyLoudsImage));
   select_cache_.reset();
   select0_cache_size_ = 0;
   select1_cache_size_ = 0;
+}
+
+bool Louds::IsValidStructure(size_t max_depth) const {
+  const int num_1bits = index_.GetNum1Bits();
+  const int num_0bits = index_.GetNum0Bits();
+  if (num_0bits <= num_1bits) {
+    return false;
+  }
+  // Super-root must be encoded as "10" (single root node with node_id = 1).
+  if (index_.Get(0) != 1 || index_.Get(1) != 0) {
+    return false;
+  }
+
+  int level_end_node = 1;  // Last node_id at the current BFS `depth`.
+  size_t depth = 0;
+
+  // All nodes in `(prev_level_end, level_end_node]` already appeared as 1-bits
+  // in earlier BFS levels, so `nodes_seen >= level_end_node >= parent_id` holds
+  // throughout the level. Jumping to the `(level_end_node + 1)`-th 0-bit (where
+  // bit 1 is the super-root's 0-bit) advances one full BFS level per Select0
+  // query, enforcing `Select1(k) < Select0(k)` for all k in [1, num_1bits] and
+  // ensuring no 1-bits remain in trailing padding.
+  while (level_end_node < num_1bits) {
+    const int nodes_seen = index_.Select0(level_end_node + 1) - level_end_node;
+    if (nodes_seen == level_end_node) {
+      return false;
+    }
+    ++depth;
+    if (depth > max_depth) {
+      return false;
+    }
+    level_end_node = nodes_seen;
+  }
+  return true;
 }
 
 }  // namespace louds
