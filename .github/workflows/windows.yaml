@@ -32,27 +32,27 @@ jobs:
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
       - name: Install Dependencies
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         # This command uses src/third_party_cache as the download cache.
         run: |
           python build_tools/update_deps.py
 
       - name: Build Qt
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         run: |
           python build_tools/build_qt.py --release --confirm_license
 
       # This is needed only for GitHub Actions where free disk space is quite limited.
       - name: Delete Qt src to save disk space
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         run: |
-          rmdir third_party\qt_src /s /q
+          Remove-Item third_party\qt_src -Recurse -Force
 
       - name: build artifacts
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         env:
           ANDROID_NDK_HOME: ""
@@ -85,27 +85,27 @@ jobs:
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
       - name: Install Dependencies
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         # This command uses src/third_party_cache as the download cache.
         run: |
           python build_tools/update_deps.py
 
       - name: Build Qt
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         run: |
           python build_tools/build_qt.py --release --confirm_license
 
       # This is needed only for GitHub Actions where free disk space is quite limited.
       - name: Delete Qt src to save disk space
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         run: |
-          rmdir third_party\qt_src /s /q
+          Remove-Item third_party\qt_src -Recurse -Force
 
       - name: build artifacts
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         env:
           ANDROID_NDK_HOME: ""
@@ -138,27 +138,27 @@ jobs:
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
       - name: Install Dependencies
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         # This command uses src/third_party_cache as the download cache.
         run: |
           python build_tools/update_deps.py
 
       - name: Build Qt
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         run: |
           python build_tools/build_qt.py --release --confirm_license
 
       # This is needed only for GitHub Actions where free disk space is quite limited.
       - name: Delete Qt src to save disk space
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         run: |
-          rmdir third_party\qt_src /s /q
+          Remove-Item third_party\qt_src -Recurse -Force
 
       - name: build artifacts
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         env:
           ANDROID_NDK_HOME: ""
@@ -191,14 +191,14 @@ jobs:
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
       - name: Install Dependencies
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         # This command uses src/third_party_cache as the download cache.
         run: |
           python build_tools/update_deps.py
 
       - name: runtests
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         env:
           ANDROID_NDK_HOME: ""
@@ -207,10 +207,10 @@ jobs:
 
       - name: Collect failing test logs
         if: failure()
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         run: |
-          python build_tools\collect_test_logs.py --bep bep.jsonl --out "%GITHUB_WORKSPACE%\test_logs"
+          python build_tools\collect_test_logs.py --bep bep.jsonl --out "$env:GITHUB_WORKSPACE\test_logs"
 
       - name: Upload failing test logs
         if: failure()
@@ -239,14 +239,14 @@ jobs:
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
       - name: Install Dependencies
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         # This command uses src/third_party_cache as the download cache.
         run: |
           python build_tools/update_deps.py
 
       - name: runtests
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         env:
           ANDROID_NDK_HOME: ""
@@ -255,10 +255,10 @@ jobs:
 
       - name: Collect failing test logs
         if: failure()
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         run: |
-          python build_tools\collect_test_logs.py --bep bep.jsonl --out "%GITHUB_WORKSPACE%\test_logs"
+          python build_tools\collect_test_logs.py --bep bep.jsonl --out "$env:GITHUB_WORKSPACE\test_logs"
 
       - name: Upload failing test logs
         if: failure()
@@ -290,7 +290,7 @@ jobs:
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
       - name: Install Dependencies
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         # This command uses src/third_party_cache as the download cache.
         run: |
@@ -318,7 +318,7 @@ jobs:
           key: update_deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
       - name: Install Dependencies
-        shell: cmd
+        shell: pwsh
         working-directory: .\src
         # This command uses src/third_party_cache as the download cache.
         run: |
