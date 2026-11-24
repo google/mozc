@@ -722,16 +722,16 @@ TEST(EngineOutputTest, FillFooter) {
   EXPECT_TRUE(output::FillFooter(commands::SUGGESTION, &candidate_window));
   EXPECT_TRUE(candidate_window.has_footer());
 
-#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
-  EXPECT_FALSE(candidate_window.footer().has_label());
-  EXPECT_TRUE(candidate_window.footer().has_sub_label());
-  EXPECT_EQ(candidate_window.footer().sub_label().find("build "), 0);
-#else   // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
-  EXPECT_TRUE(candidate_window.footer().has_label());
-  EXPECT_FALSE(candidate_window.footer().has_sub_label());
-  constexpr char kLabel[] = "Tabキーで選択";
-  EXPECT_EQ(candidate_window.footer().label(), kLabel);
-#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
+  if constexpr (port::IsChannelDev() && port::IsGoogleOfficialBuild()) {
+    EXPECT_FALSE(candidate_window.footer().has_label());
+    EXPECT_TRUE(candidate_window.footer().has_sub_label());
+    EXPECT_EQ(candidate_window.footer().sub_label().find("build "), 0);
+  } else {
+    EXPECT_TRUE(candidate_window.footer().has_label());
+    EXPECT_FALSE(candidate_window.footer().has_sub_label());
+    constexpr char kLabel[] = "Tabキーで選択";
+    EXPECT_EQ(candidate_window.footer().label(), kLabel);
+  }
 
   EXPECT_FALSE(candidate_window.footer().index_visible());
   EXPECT_FALSE(candidate_window.footer().logo_visible());
@@ -784,12 +784,14 @@ TEST(EngineOutputTest, FillFooter) {
       } else {
         EXPECT_EQ(candidate_window.footer().label(), "Ctrl+Delで履歴から削除");
       }
-#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
-    } else {
+    } else if constexpr (port::IsChannelDev() &&
+                         port::IsGoogleOfficialBuild()) {
       EXPECT_FALSE(candidate_window.footer().has_label());
       EXPECT_TRUE(candidate_window.footer().has_sub_label());
       EXPECT_EQ(candidate_window.footer().sub_label().find("build "), 0);
-#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
+    } else {
+      EXPECT_FALSE(candidate_window.footer().has_label());
+      EXPECT_FALSE(candidate_window.footer().has_sub_label());
     }
   }
 }

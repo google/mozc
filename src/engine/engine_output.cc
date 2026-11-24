@@ -408,9 +408,9 @@ bool FillFooter(const commands::Category category,
   // Show the build number on the footer label for debugging when the build
   // configuration is official dev channel.
   if (show_build_number) {
-#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
-    FillSubLabel(footer);
-#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
+    if constexpr (port::IsChannelDev() && port::IsGoogleOfficialBuild()) {
+      FillSubLabel(footer);
+    }
   }
 
   return true;

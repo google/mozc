@@ -46,6 +46,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/port.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -1704,9 +1705,9 @@ void EngineConverter::FillCandidateWindow(
 
   // Temporarily added to see if this condition is really satisfied in the
   // real world or not.
-#ifdef CHANNEL_DEV
-  CHECK_LT(0, segments_.conversion_segments_size());
-#endif  // CHANNEL_DEV
+  if constexpr (port::IsChannelDev()) {
+    CHECK_LT(0, segments_.conversion_segments_size());
+  }
   if (segment_index_ >= segments_.conversion_segments_size()) {
     LOG(WARNING) << "Invalid segment_index_: " << segment_index_
                  << ", segments_size: " << segments_.conversion_segments_size();
