@@ -169,6 +169,33 @@ constexpr bool IsApplicationBuild() {
   return true;
 }
 
+// The build target is the Dev channel.
+constexpr bool IsChannelDev() {
+#ifdef CHANNEL_DEV
+  return true;
+#else   // CHANNEL_DEV
+  return false;
+#endif  // CHANNEL_DEV
+}
+
+// The build target is an official Google Japanese Input build.
+constexpr bool IsGoogleOfficialBuild() {
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+  return true;
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
+  return false;
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+}
+
+// The build target is a debug build (NDEBUG is not defined).
+constexpr bool IsDebugBuild() {
+#ifdef NDEBUG
+  return false;
+#else   // NDEBUG
+  return true;
+#endif  // NDEBUG
+}
+
 }  // namespace port
 }  // namespace mozc
 

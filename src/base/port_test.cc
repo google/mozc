@@ -105,5 +105,23 @@ static_assert(!port::IsChromeos());
 static_assert(port::IsApplicationBuild());
 #endif  // __wasm__
 
+#ifdef CHANNEL_DEV
+static_assert(port::IsChannelDev());
+#else   // CHANNEL_DEV
+static_assert(!port::IsChannelDev());
+#endif  // CHANNEL_DEV
+
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+static_assert(port::IsGoogleOfficialBuild());
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
+static_assert(!port::IsGoogleOfficialBuild());
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+
+#ifdef NDEBUG
+static_assert(!port::IsDebugBuild());
+#else   // NDEBUG
+static_assert(port::IsDebugBuild());
+#endif  // NDEBUG
+
 }  // namespace
 }  // namespace mozc
