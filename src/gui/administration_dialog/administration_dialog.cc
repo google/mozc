@@ -31,6 +31,7 @@
 
 #include <QMessageBox>
 
+#include "base/port.h"
 #include "gui/base/util.h"
 
 #ifdef _WIN32
@@ -62,9 +63,9 @@ AdministrationDialog::AdministrationDialog()
 
 #ifdef _WIN32
 
-#ifdef CHANNEL_DEV
-  usageStatsCheckBox->setEnabled(false);
-#endif  // CHANNEL_DEV
+  if constexpr (port::IsChannelDev()) {
+    usageStatsCheckBox->setEnabled(false);
+  }
 
   usageStatsCheckBox->setChecked(StatsConfigUtil::IsEnabled());
 
@@ -151,9 +152,9 @@ void AdministrationDialog::clicked(QAbstractButton* button) {
 bool AdministrationDialog::eventFilter(QObject* obj, QEvent* event) {
   if (event->type() == QEvent::MouseButtonRelease) {
     if (obj == usageStatsMessage) {
-#ifndef CHANNEL_DEV
-      usageStatsCheckBox->toggle();
-#endif  // CHANNEL_DEV
+      if constexpr (!port::IsChannelDev()) {
+        usageStatsCheckBox->toggle();
+      }
     }
   }
   return QObject::eventFilter(obj, event);

@@ -52,11 +52,12 @@
 #include "base/system_util.h"
 #endif  // __APPLE__
 
+#include "base/port.h"
+
 namespace mozc {
 namespace gui {
 namespace {
 
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 #ifdef _WIN32
 
 constexpr wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
@@ -76,48 +77,46 @@ class WinStatsConfigUtilImpl {
 };
 
 bool WinStatsConfigUtilImpl::IsEnabled() {
-#ifdef CHANNEL_DEV
-  return true;
-#else   // CHANNEL_DEV
-  constexpr REGSAM sam_desired = KEY_QUERY_VALUE | KEY_WOW64_32KEY;
-  // Like the crash handler, check the "ClientStateMedium" key first.
-  // Then we check "ClientState" key.
-  {
-    ATL::CRegKey key_medium;
-    LONG result = key_medium.Open(HKEY_LOCAL_MACHINE, kOmahaUsageKeyForEveryone,
-                                  sam_desired);
-    if (result == ERROR_SUCCESS && key_medium) {
-      DWORD value = 0;
-      result = key_medium.QueryDWORDValue(kSendStatsName, value);
-      if (result == ERROR_SUCCESS) {
-        return (value != 0);
+  if constexpr (port::IsChannelDev()) {
+    return true;
+  } else {
+    constexpr REGSAM sam_desired = KEY_QUERY_VALUE | KEY_WOW64_32KEY;
+    // Like the crash handler, check the "ClientStateMedium" key first.
+    // Then we check "ClientState" key.
+    {
+      ATL::CRegKey key_medium;
+      LONG result = key_medium.Open(HKEY_LOCAL_MACHINE,
+                                    kOmahaUsageKeyForEveryone, sam_desired);
+      if (result == ERROR_SUCCESS && key_medium) {
+        DWORD value = 0;
+        result = key_medium.QueryDWORDValue(kSendStatsName, value);
+        if (result == ERROR_SUCCESS) {
+          return (value != 0);
+        }
       }
-    }
-  }  // Close |key_medium|
+    }  // Close |key_medium|
 
-  ATL::CRegKey key;
-  LONG result = key.Open(HKEY_LOCAL_MACHINE, kOmahaUsageKey, sam_desired);
-  if (result != ERROR_SUCCESS || !key) {
-    return false;
+    ATL::CRegKey key;
+    LONG result = key.Open(HKEY_LOCAL_MACHINE, kOmahaUsageKey, sam_desired);
+    if (result != ERROR_SUCCESS || !key) {
+      return false;
+    }
+    DWORD value = 0;
+    result = key.QueryDWORDValue(kSendStatsName, value);
+    if (result != ERROR_SUCCESS) {
+      return false;
+    }
+    return (value != 0);
   }
-  DWORD value = 0;
-  result = key.QueryDWORDValue(kSendStatsName, value);
-  if (result != ERROR_SUCCESS) {
-    return false;
-  }
-  return (value != 0);
-#endif  // CHANNEL_DEV
 }
 
 bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
-#ifdef CHANNEL_DEV
-  // On Dev channel, usage stats and crash report should be always sent.
-  val = true;
+  if constexpr (port::IsChannelDev()) {
+    // On Dev channel, usage stats and crash report should be always sent.
+    val = true;
+  }
   // We always returns true in DevChannel.
-  constexpr bool kReturnCodeInError = true;
-#else   // CHANNEL_DEV
-  constexpr bool kReturnCodeInError = false;
-#endif  // CHANNEL_DEV
+  constexpr bool kReturnCodeInError = port::IsChannelDev();
 
   ATL::CRegKey key;
   constexpr REGSAM sam_desired = KEY_WRITE | KEY_WOW64_32KEY;
@@ -152,84 +151,86 @@ class MacStatsConfigUtilImpl {
 };
 
 bool MacStatsConfigUtilImpl::IsEnabled() {
-#ifdef CHANNEL_DEV
-  return true;
-#else   // CHANNEL_DEV
-  absl::MutexLock l(g_mutex);
-  constexpr bool kDefaultValue = false;
+  if constexpr (port::IsChannelDev()) {
+    return true;
+  } else {
+    absl::MutexLock l(g_mutex);
+    constexpr bool kDefaultValue = false;
 
-  const std::string config_file = GetConfigFilePath();
-  std::ifstream ifs(config_file.c_str(), std::ios::binary | std::ios::in);
+    const std::string config_file = GetConfigFilePath();
+    std::ifstream ifs(config_file.c_str(), std::ios::binary | std::ios::in);
 
-  if (!ifs.is_open()) {
-    return kDefaultValue;
+    if (!ifs.is_open()) {
+      return kDefaultValue;
+    }
+
+    uint32_t value = kDefaultValue;
+    if (!ifs.read(reinterpret_cast<char*>(&value), sizeof(value))) {
+      return kDefaultValue;
+    }
+
+    // The value of usage stats is a 32-bit int and 1 (true) means
+    // "sending the usage stats to Google".  When the meaning of the
+    // value changed, we should fix mac/ActivatePane.m too.
+    // TODO(mukai): export MacStatsConfigUtilImpl and share the code
+    // among them.
+    return static_cast<bool>(value);
   }
-
-  uint32_t value = kDefaultValue;
-  if (!ifs.read(reinterpret_cast<char*>(&value), sizeof(value))) {
-    return kDefaultValue;
-  }
-
-  // The value of usage stats is a 32-bit int and 1 (true) means
-  // "sending the usage stats to Google".  When the meaning of the
-  // value changed, we should fix mac/ActivatePane.m too.
-  // TODO(mukai): export MacStatsConfigUtilImpl and share the code
-  // among them.
-  return static_cast<bool>(value);
-#endif  // CHANNEL_DEV
 }
 
 bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
-#ifdef CHANNEL_DEV
-  return true;
-#else   // CHANNEL_DEV
-  absl::MutexLock l(g_mutex);
-  const uint32_t value = static_cast<uint32_t>(val);
+  if constexpr (port::IsChannelDev()) {
+    return true;
+  } else {
+    absl::MutexLock l(g_mutex);
+    const uint32_t value = static_cast<uint32_t>(val);
 
-  const std::string config_file = GetConfigFilePath();
-  if (FileUtil::FileExists(config_file).ok()) {
-    ::chmod(config_file.c_str(), S_IRUSR | S_IWUSR);  // read/write
+    const std::string config_file = GetConfigFilePath();
+    if (FileUtil::FileExists(config_file).ok()) {
+      ::chmod(config_file.c_str(), S_IRUSR | S_IWUSR);  // read/write
+    }
+    std::ofstream ofs(config_file,
+                      std::ios::binary | std::ios::out | std::ios::trunc);
+    if (!ofs) {
+      return false;
+    }
+    ofs.write(reinterpret_cast<const char*>(&value), sizeof(value));
+    if (!ofs.good()) {
+      return false;
+    }
+    return 0 == ::chmod(config_file.c_str(), S_IRUSR);  // read only
   }
-  std::ofstream ofs(config_file,
-                    std::ios::binary | std::ios::out | std::ios::trunc);
-  if (!ofs) {
-    return false;
-  }
-  ofs.write(reinterpret_cast<const char*>(&value), sizeof(value));
-  if (!ofs.good()) {
-    return false;
-  }
-  return 0 == ::chmod(config_file.c_str(), S_IRUSR);  // read only
-#endif  // CHANNEL_DEV
 }
-#endif  // MACOSX
-
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
-
-class NullStatsConfigUtilImpl {
- public:
-  static bool IsEnabled() { return false; }
-  static bool SetEnabled(bool val) { return true; }
-};
-
-#if !defined(GOOGLE_JAPANESE_INPUT_BUILD)
-// For non-official build, use null implementation.
-typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
-#elif defined(_WIN32)
-typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
-#elif defined(__APPLE__)
-typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
-#else   // Platforms
-// Fall back mode.  Use null implementation.
-typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
-#endif  // Platforms
+#endif  // __APPLE__
 
 }  // namespace
 
-bool StatsConfigUtil::IsEnabled() { return DefaultConfigUtilImpl::IsEnabled(); }
+bool StatsConfigUtil::IsEnabled() {
+  if constexpr (!port::IsGoogleOfficialBuild()) {
+    return false;
+  } else {
+#ifdef _WIN32
+    return WinStatsConfigUtilImpl::IsEnabled();
+#elif defined(__APPLE__)
+    return MacStatsConfigUtilImpl::IsEnabled();
+#else   // _WIN32 || __APPLE__
+    return false;
+#endif  // _WIN32 || __APPLE__
+  }
+}
 
 bool StatsConfigUtil::SetEnabled(bool val) {
-  return DefaultConfigUtilImpl::SetEnabled(val);
+  if constexpr (!port::IsGoogleOfficialBuild()) {
+    return true;
+  } else {
+#ifdef _WIN32
+    return WinStatsConfigUtilImpl::SetEnabled(val);
+#elif defined(__APPLE__)
+    return MacStatsConfigUtilImpl::SetEnabled(val);
+#else   // _WIN32 || __APPLE__
+    return true;
+#endif  // _WIN32 || __APPLE__
+  }
 }
 
 }  // namespace gui

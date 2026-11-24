@@ -214,7 +214,9 @@ mozc_cc_library(
     name = "stats_config_util",
     srcs = ["stats_config_util.cc"],
     hdrs = ["stats_config_util.h"],
-    deps = mozc_select(
+    deps = [
+        "//base:port",
+    ] + mozc_select(
         apple = [
             "@com_google_absl//absl/strings",
             "@com_google_absl//absl/synchronization",

@@ -272,8 +272,10 @@ class SingleThreadedRegistryEmulator {
 };
 }  // namespace
 
-#if defined(CHANNEL_DEV)
 TEST(StatsConfigUtilTestWin, IsEnabledIgnoresRegistrySettings) {
+  if constexpr (!port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In dev channel, settings in the registry are simply ignored and
   // StatsConfigUtil::IsEnabled always returns true.
   SingleThreadedRegistryEmulator test;
@@ -329,6 +331,9 @@ TEST(StatsConfigUtilTestWin, IsEnabledIgnoresRegistrySettings) {
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHighInDevChannel) {
+  if constexpr (!port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In dev channel, StatsConfigUtil::SetEnabled always returns true.
   SingleThreadedRegistryEmulator test;
   test.SetRunLevel(kRunLevelHigh);
@@ -352,6 +357,9 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHighInDevChannel) {
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
+  if constexpr (!port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In dev channel, StatsConfigUtil::SetEnabled always returns true.
   SingleThreadedRegistryEmulator test;
   test.SetRunLevel(kRunLevelMedium);
@@ -407,6 +415,9 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
+  if constexpr (!port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In dev channel, StatsConfigUtil::SetEnabled always returns true.
   SingleThreadedRegistryEmulator test;
   test.SetRunLevel(kRunLevelLow);
@@ -462,6 +473,9 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelMedium) {
+  if constexpr (!port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In dev channel, StatsConfigUtil::SetEnabled does not update the
   // the registry but always returns true.
   SingleThreadedRegistryEmulator test;
@@ -471,6 +485,9 @@ TEST(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelMedium) {
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelLow) {
+  if constexpr (!port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In dev channel, StatsConfigUtil::SetEnabled does not update the
   // the registry but always returns true.
   SingleThreadedRegistryEmulator test;
@@ -478,10 +495,11 @@ TEST(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelLow) {
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
 }
-#endif  // CHANNEL_DEV
 
-#if !defined(CHANNEL_DEV)
 TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
+  if constexpr (port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In beta and stable channel, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   SingleThreadedRegistryEmulator test;
@@ -508,6 +526,9 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
+  if constexpr (port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In beta and stable channels, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   SingleThreadedRegistryEmulator test;
@@ -564,6 +585,9 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
+  if constexpr (port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In beta and stable channels, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   SingleThreadedRegistryEmulator test;
@@ -622,6 +646,9 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
 }
 
 TEST(StatsConfigUtilTestWin, IsEnabled) {
+  if constexpr (port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   SingleThreadedRegistryEmulator test;
   test.SetRunLevel(kRunLevelHigh);
 
@@ -673,7 +700,6 @@ TEST(StatsConfigUtilTestWin, IsEnabled) {
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
 }
-#endif  // !CHANNEL_DEV
 #endif  // _WIN32
 
 #ifdef TARGET_OS_OSX
@@ -685,8 +711,10 @@ class StatsConfigUtilTestMac : public ::mozc::testing::TestWithTempUserProfile {
   }
 };
 
-#ifdef CHANNEL_DEV
 TEST_F(StatsConfigUtilTestMac, IsEnabledIsAlwaysTrueInDevChannel) {
+  if constexpr (!port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In dev channel, IsEnabled always returns true regardless of the file's
   // state.
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
@@ -696,32 +724,47 @@ TEST_F(StatsConfigUtilTestMac, IsEnabledIsAlwaysTrueInDevChannel) {
 }
 
 TEST_F(StatsConfigUtilTestMac, SetEnabledNeverWritesFileInDevChannel) {
+  if constexpr (!port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // In dev channel, SetEnabled must not touch the on-disk config file.
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
   EXPECT_FALSE(FileUtil::FileExists(ConfigFilePath()).ok());
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
   EXPECT_FALSE(FileUtil::FileExists(ConfigFilePath()).ok());
 }
-#else   // !CHANNEL_DEV
+
 TEST_F(StatsConfigUtilTestMac, IsEnabledDefaultsToFalse) {
+  if constexpr (port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   // Without a config file, IsEnabled returns false.
   ASSERT_FALSE(FileUtil::FileExists(ConfigFilePath()).ok());
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
 
 TEST_F(StatsConfigUtilTestMac, SetEnabledTrueRoundTrip) {
+  if constexpr (port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
   EXPECT_TRUE(FileUtil::FileExists(ConfigFilePath()).ok());
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
 }
 
 TEST_F(StatsConfigUtilTestMac, SetEnabledFalseRoundTrip) {
+  if constexpr (port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
   EXPECT_TRUE(FileUtil::FileExists(ConfigFilePath()).ok());
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
 
 TEST_F(StatsConfigUtilTestMac, SetEnabledOverwritesPreviousValue) {
+  if constexpr (port::IsChannelDev()) {
+    GTEST_SKIP();
+  }
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
@@ -729,7 +772,6 @@ TEST_F(StatsConfigUtilTestMac, SetEnabledOverwritesPreviousValue) {
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
 }
-#endif  // CHANNEL_DEV
 #endif  // TARGET_OS_OSX
 
 TEST(StatsConfigUtilTestLinux, DefaultValueTest) {

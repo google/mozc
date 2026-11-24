@@ -29,17 +29,6 @@
 
 #include "gui/base/util.h"
 
-#include "absl/base/no_destructor.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/log/check.h"
-#include "absl/strings/string_view.h"
-
-// Show the build number on the title for debugging when the build
-// configuration is official dev channel.
-#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
-#define MOZC_SHOW_BUILD_NUMBER_ON_TITLE
-#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
-
 #include <QAbstractButton>
 #include <QApplication>
 #include <QFont>
@@ -51,23 +40,26 @@
 #include <string>
 #include <utility>
 
+#include "absl/base/no_destructor.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 #include "base/port.h"
-
-#ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #include "gui/base/window_title_modifier.h"
-#endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 
 namespace mozc {
 namespace gui {
 
 namespace {
 void InstallEventFilter() {
-#ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
-  static WindowTitleModifier window_title_modifier;
-  // Install WindowTitleModifier for official dev channel
-  // append a special footer (Dev x.x.x) to the all Windows.
-  qApp->installEventFilter(&window_title_modifier);
-#endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
+  // Show the build number on the title for debugging when the build
+  // configuration is official dev channel.
+  if constexpr (port::IsChannelDev() && port::IsGoogleOfficialBuild()) {
+    static absl::NoDestructor<WindowTitleModifier> window_title_modifier;
+    // Install WindowTitleModifier for official dev channel
+    // append a special footer (Dev x.x.x) to the all Windows.
+    qApp->installEventFilter(window_title_modifier.get());
+  }
 }
 
 void InstallDefaultTranslator() {

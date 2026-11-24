@@ -77,6 +77,7 @@ mozc_cc_qt_library(
         ":uic_administration_dialog",
     ],
     deps = [
+        "//base:port",
         "//base:system_util",
         "//gui/base:gui_base",
     ] + mozc_select(windows = [
