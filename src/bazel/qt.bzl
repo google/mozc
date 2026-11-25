@@ -175,7 +175,6 @@ def mozc_macos_qt_application(name, bundle_name, deps, strings = []):
             oss = [
                 "@qt_mac//:QtCore_mac",
                 "@qt_mac//:QtGui_mac",
-                "@qt_mac//:QtPrintSupport_mac",
                 "@qt_mac//:QtWidgets_mac",
             ],
         ),

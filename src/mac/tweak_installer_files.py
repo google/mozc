@@ -60,7 +60,7 @@ def ParseArguments() -> argparse.Namespace:
 
 def RemoveQtFrameworks(app_dir: str, app_name: str) -> None:
   """Change the references to the Qt frameworks."""
-  frameworks = ['QtCore', 'QtGui', 'QtPrintSupport', 'QtWidgets']
+  frameworks = ['QtCore', 'QtGui', 'QtWidgets']
   host_dir = '@executable_path/../../../ConfigDialog.app/Contents/Frameworks'
   app_file = os.path.join(app_dir, f'Contents/MacOS/{app_name}')
 
@@ -80,7 +80,7 @@ def RemoveQtFrameworks(app_dir: str, app_name: str) -> None:
 
 def SymlinkQtFrameworks(app_dir: str) -> None:
   """Create symbolic links of Qt frameworks."""
-  frameworks = ['QtCore', 'QtGui', 'QtPrintSupport', 'QtWidgets']
+  frameworks = ['QtCore', 'QtGui', 'QtWidgets']
   for framework in frameworks:
     # Creates the following symbolic links.
     #   QtCore.framwwork/QtCore@ -> Versions/A/QtCore

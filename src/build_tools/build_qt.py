@@ -93,6 +93,7 @@ QT_CONFIGURE_COMMON = (
     '-no-feature-effects',
     '-no-feature-fontcombobox',
     '-no-feature-fontdialog',
+    '-no-feature-freetype',
     '-no-feature-identityproxymodel',
     '-no-feature-image_heuristic_mask',
     '-no-feature-imageformatplugin',
@@ -104,7 +105,9 @@ QT_CONFIGURE_COMMON = (
     '-no-feature-mimetype',
     '-no-feature-movie',
     '-no-feature-network',
+    '-no-feature-permissions',
     '-no-feature-poll-exit-on-error',
+    '-no-feature-printsupport',
     '-no-feature-qmake',
     '-no-feature-sha3-fast',
     '-no-feature-sharedmemory',
@@ -438,8 +441,6 @@ def make_host_configure_options(args: argparse.Namespace) -> list[str]:
     ]
   elif is_windows():
     qt_configure_options += [
-        '-no-freetype',
-        '-no-harfbuzz',
         '-platform',
         'win32-msvc',
     ]
@@ -491,8 +492,6 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
     qt_configure_options += [
         '-force-debug-info',
         '-ltcg',  # Note: ignored in debug build
-        '-no-freetype',
-        '-no-harfbuzz',
         '-platform',
         'win32-msvc',
     ]
@@ -723,7 +722,7 @@ def build_on_mac(
       exec_command(install_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
 
       # Copy installed framework headers into include/<Module> as well.
-      for include in ('QtCore', 'QtGui', 'QtPrintSupport', 'QtWidgets'):
+      for include in ('QtCore', 'QtGui', 'QtWidgets'):
         src = qt_dest_dir.joinpath('lib', f'{include}.framework', 'Headers')
         dest = qt_dest_dir.joinpath('include', include)
         if args.dryrun:

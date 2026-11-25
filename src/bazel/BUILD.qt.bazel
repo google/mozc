@@ -110,17 +110,6 @@ apple_dynamic_framework_import(
 )
 
 apple_dynamic_framework_import(
-    name = "QtPrintSupport_mac",
-    framework_imports = glob(
-        include = ["lib/QtPrintSupport.framework/**"],
-        exclude = [
-            "lib/QtPrintSupport.framework/Headers/**",
-            "lib/QtPrintSupport.framework/Versions/A/Headers/**",
-        ],
-    ),
-)
-
-apple_dynamic_framework_import(
     name = "QtWidgets_mac",
     framework_imports = glob(
         include = ["lib/QtWidgets.framework/**"],

@@ -310,7 +310,6 @@ def create_qt_mac_placeholder(
       'plugins/platforms',
       'lib/QtCore.framework/Headers',
       'lib/QtGui.framework/Headers',
-      'lib/QtPrintSupport.framework',
       'lib/QtWidgets.framework/Headers',
   )
   for subdir in subdirs:
@@ -326,7 +325,6 @@ def create_qt_mac_placeholder(
       'lib/QtCore.framework/Headers/placeholder.h',
       'lib/QtGui.framework/QtGui',
       'lib/QtGui.framework/Headers/placeholder.h',
-      'lib/QtPrintSupport.framework/QtPrintSupport',
       'lib/QtWidgets.framework/QtWidgets',
       'lib/QtWidgets.framework/Headers/placeholder.h',
   )
