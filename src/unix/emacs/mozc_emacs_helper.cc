@@ -41,7 +41,7 @@
 #include "absl/strings/string_view.h"
 #include "base/init_mozc.h"
 #include "base/version.h"
-#include "client/client.h"
+#include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "unix/emacs/client_pool.h"
@@ -97,7 +97,7 @@ void ProcessLoop() {
         client_pool.DeleteClient(session_id);
         break;
       case commands::Input::SEND_KEY: {
-        std::shared_ptr<client::Client> client =
+        std::shared_ptr<client::ClientInterface> client =
             client_pool.GetClient(session_id);
         CHECK(client.get());
         if (!client->SendKey(command.input().key(), command.mutable_output())) {

@@ -33,6 +33,9 @@
 
 #include <memory>
 
+#include "client/client.h"
+#include "client/client_interface.h"
+
 namespace mozc {
 namespace emacs {
 namespace {
@@ -51,19 +54,20 @@ int ClientPool::CreateClient() {
       next_id_ = 1;  // Keep next_id_ to be a positive 28-bit integer.
     }
   }
-  lru_cache_.Insert(next_id_, std::make_shared<Client>());
+  lru_cache_.Insert(next_id_, client::ClientFactory::NewClient());
   return next_id_++;
 }
 
 void ClientPool::DeleteClient(int id) { lru_cache_.Erase(id); }
 
-std::shared_ptr<ClientPool::Client> ClientPool::GetClient(int id) {
-  const std::shared_ptr<Client>* value = lru_cache_.Lookup(id);
+std::shared_ptr<client::ClientInterface> ClientPool::GetClient(int id) {
+  const std::shared_ptr<client::ClientInterface>* value = lru_cache_.Lookup(id);
   if (value) {
     lru_cache_.Insert(id, *value);  // Put id at the head of LRU.
     return *value;
   } else {
-    auto client_ptr = std::make_shared<Client>();
+    std::shared_ptr<client::ClientInterface> client_ptr =
+        client::ClientFactory::NewClient();
     lru_cache_.Insert(id, client_ptr);
     return client_ptr;
   }

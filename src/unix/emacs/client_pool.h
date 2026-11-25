@@ -34,7 +34,7 @@
 
 #include <memory>
 
-#include "client/client.h"
+#include "client/client_interface.h"
 #include "storage/lru_cache.h"
 
 namespace mozc {
@@ -42,8 +42,6 @@ namespace emacs {
 
 class ClientPool final {
  public:
-  using Client = ::mozc::client::Client;
-
   ClientPool();
   ClientPool(const ClientPool&) = delete;
   ClientPool& operator=(const ClientPool&) = delete;
@@ -55,12 +53,12 @@ class ClientPool final {
   // does nothing.
   void DeleteClient(int id);
 
-  // Returns a Client instance.  If the specified session ID is not in this
-  // pool, creates a new Client and returns it.
-  std::shared_ptr<Client> GetClient(int id);
+  // Returns a ClientInterface instance.  If the specified session ID is not in
+  // this pool, creates a new ClientInterface and returns it.
+  std::shared_ptr<client::ClientInterface> GetClient(int id);
 
  private:
-  storage::LruCache<int, std::shared_ptr<Client>> lru_cache_;
+  storage::LruCache<int, std::shared_ptr<client::ClientInterface>> lru_cache_;
   int next_id_;
 };
 

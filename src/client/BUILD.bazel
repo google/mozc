@@ -44,6 +44,7 @@ mozc_cc_library(
         "//mac:__pkg__",
         "//renderer:__subpackages__",
         "//session:__pkg__",
+        "//unix:__subpackages__",
         "//visibility:public",
         "//win32:__subpackages__",
     ],
