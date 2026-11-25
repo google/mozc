@@ -55,6 +55,7 @@ import os
 import pathlib
 import platform
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -231,6 +232,65 @@ class StatefulQtExtractionFilter:
       return None
     self.printer.print_line('extracting ' + new_path)
     return member.replace(name=new_path, deep=False)
+
+
+def _make_writable(path: str) -> None:
+  """Ensures a non-symlink path is writable (and traversable if a directory)."""
+  if os.path.islink(path):
+    return
+  st_mode = os.stat(path).st_mode
+  extra_bits = stat.S_IRWXU if stat.S_ISDIR(st_mode) else stat.S_IWRITE
+  os.chmod(path, st_mode | extra_bits)
+
+
+def remove_tree(path: pathlib.Path, dryrun: bool = False) -> None:
+  """Removes a directory tree or symlink if it exists, handling read-only files."""
+  if path.is_symlink():
+    if dryrun:
+      print(f'dryrun: unlink({path})')
+    else:
+      path.unlink()
+    return
+  if not path.exists():
+    return
+  if dryrun:
+    print(f'dryrun: shutil.rmtree({path})')
+    return
+
+  root = os.path.abspath(path)
+
+  def _handle_remove_readonly(func: Any, target_path: str, exc: Any) -> None:
+    del exc  # Unused.
+    _make_writable(target_path)
+    parent = os.path.dirname(os.path.abspath(target_path))
+    if parent == root or parent.startswith(root + os.sep):
+      _make_writable(parent)
+    func(target_path)
+
+  if sys.version_info >= (3, 12):
+    shutil.rmtree(path, onexc=_handle_remove_readonly)
+  else:
+    # pylint: disable=deprecated-argument
+    shutil.rmtree(path, onerror=_handle_remove_readonly)
+    # pylint: enable=deprecated-argument
+
+
+def _prepare_build_dir(
+    qt_src_dir: pathlib.Path,
+    target_dir: pathlib.Path,
+    suffix: str,
+    dryrun: bool,
+) -> pathlib.Path:
+  """Creates and returns a clean out-of-source build directory when possible."""
+  if qt_src_dir == target_dir:
+    return qt_src_dir
+  build_dir = qt_src_dir.parent.joinpath(f'{qt_src_dir.name}_{suffix}')
+  remove_tree(build_dir, dryrun)
+  if dryrun:
+    print(f'dryrun: mkdir {build_dir}')
+  else:
+    build_dir.mkdir(parents=True, exist_ok=True)
+  return build_dir
 
 
 @dataclasses.dataclass
@@ -561,8 +621,6 @@ def build_host_on_mac(args: argparse.Namespace) -> None:
   Raises:
     FileNotFoundError: when any required file is not found.
   """
-  extract_qt_src(args)
-
   qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
   qt_host_dir = pathlib.Path(args.qt_host_dir).resolve()
 
@@ -576,25 +634,29 @@ def build_host_on_mac(args: argparse.Namespace) -> None:
   if ninja_dir:
     env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
 
-  configure_cmds = ['./configure'] + make_host_configure_options(args)
+  configure_cmds = [
+      str(qt_src_dir.joinpath('configure'))
+  ] + make_host_configure_options(args)
   cmake = str(shutil.which('cmake', path=env['PATH']))
   build_cmds = [cmake, '--build', '.', '--parallel']
   install_cmds = [cmake, '--install', '.']
 
-  exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
-  exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+  build_dir = _prepare_build_dir(
+      qt_src_dir, qt_host_dir, 'build_host', args.dryrun
+  )
+  try:
+    exec_command(configure_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
+    exec_command(build_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
 
-  if qt_src_dir == qt_host_dir:
-    # No need to run 'install' command.
-    return
+    if qt_src_dir == qt_host_dir:
+      # No need to run 'install' command.
+      return
 
-  if qt_host_dir.exists():
-    if args.dryrun:
-      print(f'dryrun: delete {qt_host_dir}')
-    else:
-      shutil.rmtree(qt_host_dir)
-
-  exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+    remove_tree(qt_host_dir, args.dryrun)
+    exec_command(install_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
+  finally:
+    if build_dir != qt_src_dir:
+      remove_tree(build_dir, args.dryrun)
 
 
 def build_on_mac(args: argparse.Namespace) -> None:
@@ -606,8 +668,6 @@ def build_on_mac(args: argparse.Namespace) -> None:
   Raises:
     FileNotFoundError: when any required file is not found.
   """
-  extract_qt_src(args)
-
   qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
   qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()
   qt_host_dir = pathlib.Path(args.qt_host_dir).resolve()
@@ -624,44 +684,44 @@ def build_on_mac(args: argparse.Namespace) -> None:
 
   env['QT_HOST_PATH'] = str(qt_host_dir)
 
-  configure_cmds = ['./configure'] + make_configure_options(args)
+  configure_cmds = [
+      str(qt_src_dir.joinpath('configure'))
+  ] + make_configure_options(args)
   cmake = str(shutil.which('cmake', path=env['PATH']))
   build_cmds = [cmake, '--build', '.', '--parallel']
   install_cmds = [cmake, '--install', '.']
 
-  exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
-  exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+  build_dir = _prepare_build_dir(
+      qt_src_dir, qt_dest_dir, 'build_target', args.dryrun
+  )
+  try:
+    exec_command(configure_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
+    exec_command(build_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
 
-  if qt_src_dir != qt_dest_dir:
-    if qt_dest_dir.exists():
-      if args.dryrun:
-        print(f'dryrun: delete {qt_dest_dir}')
-      else:
-        shutil.rmtree(qt_dest_dir)
+    if qt_src_dir != qt_dest_dir:
+      remove_tree(qt_dest_dir, args.dryrun)
+      exec_command(install_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
 
-    exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+      # Copy installed framework headers into include/<Module> as well.
+      for include in ('QtCore', 'QtGui', 'QtPrintSupport', 'QtWidgets'):
+        src = qt_dest_dir.joinpath('lib', f'{include}.framework', 'Headers')
+        dest = qt_dest_dir.joinpath('include', include)
+        if args.dryrun:
+          print(f'dryrun: copy {src} => {dest}')
+        else:
+          shutil.copytree(src=src.resolve(), dst=dest)
 
-    # Copy include files.
-    for include in ['QtCore', 'QtGui', 'QtPrintSupport', 'QtWidgets']:
-      src = qt_src_dir.joinpath('include').joinpath(include)
-      dest = qt_dest_dir.joinpath('include').joinpath(include)
+    for tool in ('moc', 'rcc', 'uic'):
+      src = qt_host_dir.joinpath('libexec', tool)
+      dest = qt_dest_dir.joinpath('libexec', tool)
       if args.dryrun:
         print(f'dryrun: copy {src} => {dest}')
       else:
-        shutil.copytree(src=src, dst=dest)
-
-  for tool in ['moc', 'rcc', 'uic']:
-    src = qt_host_dir.joinpath('libexec').joinpath(tool)
-    dest = qt_dest_dir.joinpath('libexec').joinpath(tool)
-    if args.dryrun:
-      print(f'dryrun: copy {src} => {dest}')
-    else:
-      shutil.copy2(src=src, dst=dest)
-
-  if args.dryrun:
-    print(f'dryrun: shutil.rmtree({qt_host_dir})')
-  else:
-    shutil.rmtree(qt_host_dir)
+        shutil.copy2(src=src, dst=dest)
+    remove_tree(qt_host_dir, args.dryrun)
+  finally:
+    if build_dir != qt_src_dir:
+      remove_tree(build_dir, args.dryrun)
 
 
 def exec_command(
@@ -699,8 +759,6 @@ def build_host_on_windows(args: argparse.Namespace) -> None:
   Raises:
     FileNotFoundError: when any required file is not found.
   """
-  extract_qt_src(args)
-
   qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
   qt_host_dir = pathlib.Path(args.qt_host_dir).resolve()
 
@@ -721,28 +779,31 @@ def build_host_on_windows(args: argparse.Namespace) -> None:
 
   cmd = str(shutil.which('cmd.exe', path=env['PATH']))
 
-  configure_cmds = [cmd, '/C', 'configure.bat'] + make_host_configure_options(
-      args
-  )
-  exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
-
+  configure_cmds = [
+      cmd,
+      '/C',
+      str(qt_src_dir.joinpath('configure.bat')),
+  ] + make_host_configure_options(args)
   cmake = str(shutil.which('cmake.exe', path=env['PATH']))
   build_cmds = [cmake, '--build', '.', '--parallel']
   install_cmds = [cmake, '--install', '.']
 
-  exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+  build_dir = _prepare_build_dir(
+      qt_src_dir, qt_host_dir, 'build_host', args.dryrun
+  )
+  try:
+    exec_command(configure_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
+    exec_command(build_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
 
-  if qt_src_dir == qt_host_dir:
-    # No need to run 'install' command.
-    return
+    if qt_src_dir == qt_host_dir:
+      # No need to run 'install' command.
+      return
 
-  if qt_host_dir.exists():
-    if args.dryrun:
-      print(f'dryrun: shutil.rmtree({qt_host_dir})')
-    else:
-      shutil.rmtree(qt_host_dir)
-
-  exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+    remove_tree(qt_host_dir, args.dryrun)
+    exec_command(install_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
+  finally:
+    if build_dir != qt_src_dir:
+      remove_tree(build_dir, args.dryrun)
 
 
 def normalize_win_arch(arch: str) -> str:
@@ -776,8 +837,6 @@ def build_on_windows(args: argparse.Namespace) -> None:
   Raises:
     FileNotFoundError: when any required file is not found.
   """
-  extract_qt_src(args)
-
   qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
   qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()
   qt_host_dir = pathlib.Path(args.qt_host_dir).resolve()
@@ -803,45 +862,46 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   env['QT_HOST_PATH'] = str(qt_host_dir)
 
-  configure_cmds = [cmd, '/C', 'configure.bat'] + make_configure_options(args)
-
-  exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
-
+  configure_cmds = [
+      cmd,
+      '/C',
+      str(qt_src_dir.joinpath('configure.bat')),
+  ] + make_configure_options(args)
   cmake = str(shutil.which('cmake.exe', path=env['PATH']))
   build_cmds = [cmake, '--build', '.', '--parallel']
   install_cmds = [cmake, '--install', '.']
 
-  exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+  build_dir = _prepare_build_dir(
+      qt_src_dir, qt_dest_dir, 'build_target', args.dryrun
+  )
+  try:
+    exec_command(configure_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
+    exec_command(build_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
 
-  if qt_src_dir != qt_dest_dir:
-    if qt_dest_dir.exists():
+    if qt_src_dir != qt_dest_dir:
+      remove_tree(qt_dest_dir, args.dryrun)
+      exec_command(install_cmds, cwd=build_dir, env=env, dryrun=args.dryrun)
+
+      # When both '--debug' and '--release' are specified for Qt6, we need to
+      # run the command again with '--config debug' option to install debug
+      # DLLs.
+      if args.debug and args.release:
+        debug_install_cmds = install_cmds + ['--config', 'debug']
+        exec_command(
+            debug_install_cmds, cwd=build_dir, env=env, dryrun=args.dryrun
+        )
+
+    for tool in ('moc.exe', 'rcc.exe', 'uic.exe'):
+      src = qt_host_dir.joinpath('bin', tool)
+      dest = qt_dest_dir.joinpath('bin', tool)
       if args.dryrun:
-        print(f'dryrun: shutil.rmtree({qt_dest_dir})')
+        print(f'dryrun: copy {src} => {dest}')
       else:
-        shutil.rmtree(qt_dest_dir)
-
-    exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
-
-    # When both '--debug' and '--release' are specified for Qt6, we need to run
-    # the command again with '--config debug' option to install debug DLLs.
-    if args.debug and args.release:
-      debug_install_cmds = install_cmds + ['--config', 'debug']
-      exec_command(
-          debug_install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun
-      )
-
-  for tool in ['moc.exe', 'rcc.exe', 'uic.exe']:
-    src = qt_host_dir.joinpath('bin').joinpath(tool)
-    dest = qt_dest_dir.joinpath('bin').joinpath(tool)
-    if args.dryrun:
-      print(f'dryrun: copy {src} => {dest}')
-    else:
-      shutil.copy2(src=src, dst=dest)
-
-  if args.dryrun:
-    print(f'dryrun: shutil.rmtree({qt_host_dir})')
-  else:
-    shutil.rmtree(qt_host_dir)
+        shutil.copy2(src=src, dst=dest)
+    remove_tree(qt_host_dir, args.dryrun)
+  finally:
+    if build_dir != qt_src_dir:
+      remove_tree(build_dir, args.dryrun)
 
 
 def extract_qt_src(args: argparse.Namespace) -> None:
@@ -851,11 +911,7 @@ def extract_qt_src(args: argparse.Namespace) -> None:
     args: build options to be used to customize configure options of Qt.
   """
   qt_src_dir = pathlib.Path(args.qt_src_dir).absolute()
-  if qt_src_dir.exists():
-    if args.dryrun:
-      print(f'dryrun: delete {qt_src_dir}')
-    else:
-      shutil.rmtree(qt_src_dir)
+  remove_tree(qt_src_dir, args.dryrun)
 
   if args.dryrun:
     print(f'dryrun: extracting {args.qt_archive_path} to {qt_src_dir}')
@@ -911,6 +967,8 @@ def main() -> None:
   if not (args.debug or args.release):
     print('neither --release nor --debug is specified.')
     sys.exit(1)
+
+  extract_qt_src(args)
 
   if is_mac():
     build_host_on_mac(args)
