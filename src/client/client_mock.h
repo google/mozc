@@ -30,13 +30,9 @@
 #ifndef MOZC_CLIENT_CLIENT_MOCK_H_
 #define MOZC_CLIENT_CLIENT_MOCK_H_
 
-#include <memory>
-#include <string>
-
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "client/client_interface.h"
-#include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gmock.h"
@@ -46,11 +42,6 @@ namespace client {
 
 class ClientMock : public client::ClientInterface {
  public:
-  MOCK_METHOD(void, SetIPCClientFactory,
-              (IPCClientFactoryInterface * client_factory), (override));
-  MOCK_METHOD(void, SetServerLauncher,
-              (std::unique_ptr<ServerLauncherInterface> server_launcher),
-              (override));
   MOCK_METHOD(bool, IsValidRunLevel, (), (const, override));
   MOCK_METHOD(bool, EnsureConnection, (), (override));
   MOCK_METHOD(bool, EnsureSession, (), (override));

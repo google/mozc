@@ -46,6 +46,7 @@
 #include "base/version.h"
 #include "client/character_renderability.h"
 #include "client/client_interface.h"
+#include "client/server_launcher.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"

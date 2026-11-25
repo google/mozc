@@ -32,66 +32,19 @@
 #ifndef MOZC_CLIENT_CLIENT_INTERFACE_H_
 #define MOZC_CLIENT_CLIENT_INTERFACE_H_
 
-#include <cstdint>
 #include <memory>
-#include <string>
 
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-#include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 
 namespace mozc {
-
 namespace client {
-class ClientInterface;
-
-class ServerLauncherInterface {
- public:
-  enum ServerErrorType {
-    SERVER_TIMEOUT,
-    SERVER_BROKEN_MESSAGE,
-    SERVER_VERSION_MISMATCH,
-    SERVER_SHUTDOWN,
-    SERVER_FATAL,
-  };
-
-  virtual ~ServerLauncherInterface() = default;
-
-  virtual bool StartServer(ClientInterface* client) = 0;
-
-  // terminate the server.
-  // You should not call this method unless protocol version mismatch happens.
-  virtual bool ForceTerminateServer(absl::string_view name) = 0;
-
-  // Wait server until it terminates
-  virtual bool WaitServer(uint32_t pid) = 0;
-
-  // called when fatal error occurred.
-  virtual void OnFatal(ServerErrorType type) = 0;
-
-  // return the full path of server program
-  // This is used for making IPC connection.
-  virtual std::string server_program() const = 0;
-
-  // Sets the flag of error dialog suppression.
-  virtual void set_suppress_error_dialog(bool suppress) = 0;
-};
 
 class ClientInterface {
  public:
   virtual ~ClientInterface() = default;
-
-  // NOTE: Client class does NOT take the ownership of client_factory
-  virtual void SetIPCClientFactory(
-      IPCClientFactoryInterface* client_factory) = 0;
-
-  // set ServerLauncher.
-  // ServerLauncher is used as default.
-  // NOTE: Client class takes the ownership of start_server_handler.
-  virtual void SetServerLauncher(
-      std::unique_ptr<ServerLauncherInterface> server_launcher) = 0;
 
   // return true if the current thread is running
   // inside valid run level.

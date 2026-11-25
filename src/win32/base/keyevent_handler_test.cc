@@ -47,6 +47,7 @@
 #include "base/version.h"
 #include "client/client.h"
 #include "client/client_interface.h"
+#include "client/server_launcher.h"
 #include "composer/key_event_util.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
@@ -212,7 +213,7 @@ class MockState {
  public:
   MockState() : client_(nullptr), launcher_(nullptr) {}
   explicit MockState(const Output& mock_response)
-      : client_(client::ClientFactory::NewClient()), launcher_(nullptr) {
+      : client_(std::make_unique<client::Client>()), launcher_(nullptr) {
     client_factory_.SetConnection(true);
     client_factory_.SetResult(true);
     client_factory_.SetServerProductVersion(Version::GetMozcVersion());
@@ -237,7 +238,7 @@ class MockState {
 
  private:
   IPCClientFactoryMock client_factory_;
-  std::unique_ptr<client::ClientInterface> client_;
+  std::unique_ptr<client::Client> client_;
   TestServerLauncher* launcher_;
 };
 

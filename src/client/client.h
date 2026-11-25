@@ -42,6 +42,7 @@
 #include "absl/time/time.h"
 #include "base/run_level.h"
 #include "client/client_interface.h"
+#include "client/server_launcher.h"
 #include "composer/key_event_util.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
@@ -56,34 +57,6 @@
 namespace mozc {
 namespace client {
 
-// default ServerLauncher implementation.
-// This class uses fork&exec (linux/mac) and CreateProcess() (Windows)
-// to launch server process
-class ServerLauncher : public ServerLauncherInterface {
- public:
-  ServerLauncher();
-  ~ServerLauncher() override;
-
-  bool StartServer(ClientInterface* client) override;
-
-  bool ForceTerminateServer(absl::string_view name) override;
-
-  bool WaitServer(uint32_t pid) override;
-
-  void OnFatal(ServerLauncherInterface::ServerErrorType type) override;
-
-  // return server program
-  std::string server_program() const override;
-
-  // Sets the flag of error dialog suppression.
-  void set_suppress_error_dialog(bool suppress) override {
-    suppress_error_dialog_ = suppress;
-  }
-
- private:
-  bool suppress_error_dialog_;
-};
-
 class Client : public ClientInterface {
  public:
   Client();
@@ -93,15 +66,15 @@ class Client : public ClientInterface {
   // This function should be called before EnsureSession.
   void InitRequestForSvsJapanese(bool use_svs);
 
-  void SetIPCClientFactory(IPCClientFactoryInterface* client_factory) override {
+  // NOTE: Client class does NOT take the ownership of client_factory.
+  void SetIPCClientFactory(IPCClientFactoryInterface* client_factory) {
     client_factory_ = client_factory;
   }
 
-  // set ServerLauncher.
-  // ServerLauncher is used as default
-  // NOTE: Client class takes the owership of start_server_handler.
+  // Sets ServerLauncher. ServerLauncher is used by default.
+  // NOTE: Client class takes the ownership of server_launcher.
   void SetServerLauncher(
-      std::unique_ptr<ServerLauncherInterface> server_launcher) override {
+      std::unique_ptr<ServerLauncherInterface> server_launcher) {
     server_launcher_ = std::move(server_launcher);
   }
 

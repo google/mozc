@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "client/server_launcher.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -42,7 +44,6 @@
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
-#include "client/client.h"
 #include "client/client_interface.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"

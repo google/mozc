@@ -48,7 +48,6 @@ mozc_cc_library(
         "//win32:__subpackages__",
     ],
     deps = [
-        "//ipc",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/strings",
@@ -78,10 +77,39 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
+    name = "server_launcher",
+    srcs = ["server_launcher.cc"],
+    hdrs = ["server_launcher.h"],
+    visibility = [
+        "//win32/base:__pkg__",
+    ],
+    deps = [
+        ":client_interface",
+        "//base:const",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:process",
+        "//base:system_util",
+        "//base:vlog",
+        "//ipc",
+        "//ipc:named_event",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+    ] + mozc_select(
+        apple = [
+            "//base/mac:mac_util",
+        ],
+        windows = [
+            "//base/win32:win_sandbox",
+        ],
+    ),
+)
+
+mozc_cc_library(
     name = "client",
     srcs = [
         "client.cc",
-        "server_launcher.cc",
     ],
     hdrs = [
         "client.h",
@@ -101,6 +129,7 @@ mozc_cc_library(
     deps = [
         ":character_renderability",
         ":client_interface",
+        ":server_launcher",
         "//base:const",
         "//base:file_stream",
         "//base:file_util",
@@ -113,7 +142,6 @@ mozc_cc_library(
         "//composer:key_event_util",
         "//config:config_handler",
         "//ipc",
-        "//ipc:named_event",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session:key_info_util",
@@ -124,11 +152,10 @@ mozc_cc_library(
     ] + mozc_select(
         apple = [
             "//base/mac:mac_process",
-            "//base/mac:mac_util",
         ],
         windows = [
             "//base/win32:wide_char",
-            "//base/win32:win_sandbox",
+            "//base/win32:win_util",
         ],
     ),
 )
@@ -141,6 +168,7 @@ mozc_cc_test(
         ":character_renderability",
         ":client",
         ":client_interface",
+        ":server_launcher",
         "//base:number_util",
         "//base:port",
         "//base:version",
@@ -184,7 +212,6 @@ mozc_cc_library(
     ],
     deps = [
         ":client_interface",
-        "//ipc",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit",
