@@ -570,6 +570,34 @@ mozc_cc_test(
     ]),
 )
 
+mozc_cc_test(
+    name = "session_handler_benchmark_test",
+    size = "small",
+    srcs = ["session_handler_benchmark_test.cc"],
+    stamp = 1,  # for deterministic absl::BitGen
+    tags = [
+        "manual",
+        "noandroid",
+    ],
+    deps = [
+        ":random_keyevents_generator",
+        ":session_handler_tool",
+        "//base:system_util",
+        "//base/file:temp_dir",
+        "//config:config_handler",
+        "//engine",
+        "//engine:oss_engine_factory",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//request:request_test_util",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
 mozc_cc_library(
     name = "ime_context",
     srcs = ["ime_context.cc"],

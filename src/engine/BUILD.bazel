@@ -352,7 +352,10 @@ mozc_cc_library(
 mozc_cc_library(
     name = "oss_engine_factory",
     hdrs = ["oss_engine_factory.h"],
-    visibility = ["//evaluation:__subpackages__"],
+    visibility = [
+        "//evaluation:__subpackages__",
+        "//session:__pkg__",
+    ],
     deps = [
         ":engine",
         "//data_manager/oss:oss_data_manager",
@@ -393,6 +396,27 @@ mozc_cc_library(
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "engine_benchmark_test",
+    srcs = ["engine_benchmark_test.cc"],
+    data = [
+        "//data_manager/oss:mozc.data",
+    ],
+    tags = ["manual"],
+    deps = [
+        ":engine",
+        "//base:system_util",
+        "//base/file:temp_dir",
+        "//data_manager",
+        "//data_manager/oss:oss_data_manager",
+        "//data_manager/testing:mock_data_manager",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

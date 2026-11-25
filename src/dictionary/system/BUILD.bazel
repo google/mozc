@@ -232,6 +232,29 @@ mozc_cc_test(
     ],
 )
 
+mozc_cc_test(
+    name = "system_dictionary_benchmark",
+    srcs = [
+        "system_dictionary_benchmark.cc",
+    ],
+    data = [
+        "//data_manager/oss:mozc_dataset_for_oss@dictionary",
+    ],
+    tags = ["manual"],
+    deps = [
+        ":system_dictionary",
+        "//base:file_util",
+        "//base/strings:unicode",
+        "//dictionary:dictionary_test_util",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 mozc_cc_library(
     name = "key_expansion_table",
     hdrs = ["key_expansion_table.h"],

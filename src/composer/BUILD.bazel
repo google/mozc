@@ -238,6 +238,26 @@ mozc_cc_test(
     ],
 )
 
+mozc_cc_test(
+    name = "composer_benchmark_test",
+    size = "small",
+    srcs = ["composer_benchmark_test.cc"],
+    stamp = 1,
+    tags = ["manual"],
+    deps = [
+        ":composer",
+        ":key_parser",
+        ":table",
+        "//config:character_form_manager",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:distributions",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 mozc_cc_library(
     name = "char_chunk",
     srcs = [
