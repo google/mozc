@@ -32,6 +32,12 @@
 #ifndef MOZC_CLIENT_CLIENT_INTERFACE_H_
 #define MOZC_CLIENT_CLIENT_INTERFACE_H_
 
+// LINT.IfChange
+#if (defined(_MSVC_LANG) ? _MSVC_LANG : __cplusplus) < 202002L
+#error "Mozc requires C++20 or later."
+#endif  // (defined(_MSVC_LANG) ? _MSVC_LANG : __cplusplus) < 202002L
+// LINT.ThenChange(//base/port.h)
+
 #include <memory>
 
 #include "absl/strings/string_view.h"

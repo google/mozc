@@ -30,6 +30,13 @@
 #ifndef MOZC_BASE_PORT_H_
 #define MOZC_BASE_PORT_H_
 
+// LINT.IfChange
+#if (defined(_MSVC_LANG) ? _MSVC_LANG : __cplusplus) < 202002L
+#error "Mozc requires C++20 or later."
+#endif  // (defined(_MSVC_LANG) ? _MSVC_LANG : __cplusplus) < 202002L
+// LINT.ThenChange(
+//     //client/client_interface.h)
+
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif  // __APPLE__
