@@ -52,8 +52,23 @@ IbusTextWrapper ComposePreeditText(const commands::Preedit& preedit) {
   int end = 0;
   for (int i = 0; i < preedit.segment_size(); ++i) {
     const commands::Preedit::Segment& segment = preedit.segment(i);
+#if IBUS_CHECK_VERSION(1, 5, 33)
+    // IBus's semantic pre-edit style name is since 1.5.33, which is necessary
+    // to use pre-edit style under Wayland session.
+    IBusAttrPreedit hint = IBUS_ATTR_PREEDIT_WHOLE;
+#else  // libibus (>=1.5.33)
     IBusAttrUnderline attr = IBUS_ATTR_UNDERLINE_ERROR;
+#endif  // !libibus (>=1.5.33)
     switch (segment.annotation()) {
+#if IBUS_CHECK_VERSION(1, 5, 33)
+      case commands::Preedit::Segment::NONE:
+      case commands::Preedit::Segment::UNDERLINE:
+        // Do nothing; use IBUS_ATTR_PREEDIT_WHOLE.
+        break;
+      case commands::Preedit::Segment::HIGHLIGHT:
+        hint = IBUS_ATTR_PREEDIT_SELECTION;
+        break;
+#else  // libibus (>=1.5.33)
       case commands::Preedit::Segment::NONE:
         attr = IBUS_ATTR_UNDERLINE_NONE;
         break;
@@ -63,11 +78,15 @@ IbusTextWrapper ComposePreeditText(const commands::Preedit& preedit) {
       case commands::Preedit::Segment::HIGHLIGHT:
         attr = IBUS_ATTR_UNDERLINE_DOUBLE;
         break;
+#endif  // !libibus (>=1.5.33)
       default:
         LOG(ERROR) << "unknown annotation:" << segment.annotation();
         break;
     }
     end += segment.value_length();
+#if IBUS_CHECK_VERSION(1, 5, 33)
+    text.AppendAttribute(IBUS_ATTR_TYPE_HINT, hint, start, end);
+#else  // libibus (>=1.5.33)
     text.AppendAttribute(IBUS_ATTR_TYPE_UNDERLINE, attr, start, end);
 
     // Many applications show a single underline regardless of using
@@ -84,6 +103,7 @@ IbusTextWrapper ComposePreeditText(const commands::Preedit& preedit) {
       text.AppendAttribute(IBUS_ATTR_TYPE_FOREGROUND, kForegroundColor, start,
                            end);
     }
+#endif  // !libibus (>=1.5.33)
     start = end;
   }
 
