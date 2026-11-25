@@ -45,7 +45,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/version.h"
-#include "client/client.h"
+#include "client/client_impl.h"
 #include "client/client_interface.h"
 #include "client/server_launcher.h"
 #include "composer/key_event_util.h"
@@ -213,7 +213,7 @@ class MockState {
  public:
   MockState() : client_(nullptr), launcher_(nullptr) {}
   explicit MockState(const Output& mock_response)
-      : client_(std::make_unique<client::Client>()), launcher_(nullptr) {
+      : client_(std::make_unique<client::ClientImpl>()), launcher_(nullptr) {
     client_factory_.SetConnection(true);
     client_factory_.SetResult(true);
     client_factory_.SetServerProductVersion(Version::GetMozcVersion());
@@ -238,7 +238,7 @@ class MockState {
 
  private:
   IPCClientFactoryMock client_factory_;
-  std::unique_ptr<client::Client> client_;
+  std::unique_ptr<client::ClientImpl> client_;
   TestServerLauncher* launcher_;
 };
 

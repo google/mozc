@@ -265,7 +265,7 @@ mozc_cc_test(
         ":keyboard",
         ":keyevent_handler",
         "//base:version",
-        "//client",
+        "//client:client_impl",
         "//client:client_interface",
         "//client:server_launcher",
         "//composer:key_event_util",

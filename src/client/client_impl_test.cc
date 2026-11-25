@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "client/client.h"
+#include "client/client_impl.h"
 
 #include <cstdint>
 #include <memory>
@@ -60,9 +60,10 @@
 namespace mozc {
 namespace client {
 
-class ClientTestPeer : public testing::TestPeer<Client> {
+class ClientImplTestPeer : public testing::TestPeer<ClientImpl> {
  public:
-  explicit ClientTestPeer(Client& client) : testing::TestPeer<Client>(client) {}
+  explicit ClientImplTestPeer(ClientImpl& client)
+      : testing::TestPeer<ClientImpl>(client) {}
 
   PEER_METHOD(GetHistoryInputs);
 };
@@ -178,15 +179,15 @@ class TestServerLauncher : public ServerLauncherInterface {
   absl::flat_hash_map<int, int> error_map_;
 };
 
-class ClientTest : public testing::TestWithTempUserProfile {
+class ClientImplTest : public testing::TestWithTempUserProfile {
  protected:
-  ClientTest() : version_diff_(0) {}
-  ClientTest(const ClientTest&) = delete;
-  ClientTest& operator=(const ClientTest&) = delete;
+  ClientImplTest() : version_diff_(0) {}
+  ClientImplTest(const ClientImplTest&) = delete;
+  ClientImplTest& operator=(const ClientImplTest&) = delete;
 
   void SetUp() override {
     client_factory_ = std::make_unique<IPCClientFactoryMock>();
-    client_ = std::make_unique<Client>();
+    client_ = std::make_unique<ClientImpl>();
     client_->SetIPCClientFactory(client_factory_.get());
 
     auto server_launcher =
@@ -235,12 +236,12 @@ class ClientTest : public testing::TestWithTempUserProfile {
   }
 
   std::unique_ptr<IPCClientFactoryMock> client_factory_;
-  std::unique_ptr<Client> client_;
+  std::unique_ptr<ClientImpl> client_;
   TestServerLauncher* server_launcher_;
   int version_diff_;
 };
 
-TEST_F(ClientTest, ConnectionError) {
+TEST_F(ClientImplTest, ConnectionError) {
   client_factory_->SetConnection(false);
   server_launcher_->set_start_server_result(false);
   EXPECT_FALSE(client_->EnsureConnection());
@@ -258,7 +259,7 @@ TEST_F(ClientTest, ConnectionError) {
   EXPECT_FALSE(client_->SendCommand(command, &output));
 }
 
-TEST_F(ClientTest, SendKey) {
+TEST_F(ClientImplTest, SendKey) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -280,7 +281,7 @@ TEST_F(ClientTest, SendKey) {
   EXPECT_EQ(input.type(), commands::Input::SEND_KEY);
 }
 
-TEST_F(ClientTest, SendKeyWithContext) {
+TEST_F(ClientImplTest, SendKeyWithContext) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -310,7 +311,7 @@ TEST_F(ClientTest, SendKeyWithContext) {
   EXPECT_EQ(input.context().suppress_suggestion(), kSuppressSuggestion);
 }
 
-TEST_F(ClientTest, TestSendKey) {
+TEST_F(ClientImplTest, TestSendKey) {
   const int mock_id = 512;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -333,7 +334,7 @@ TEST_F(ClientTest, TestSendKey) {
   EXPECT_EQ(input.type(), commands::Input::TEST_SEND_KEY);
 }
 
-TEST_F(ClientTest, TestSendKeyWithContext) {
+TEST_F(ClientImplTest, TestSendKeyWithContext) {
   const int mock_id = 512;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -364,7 +365,7 @@ TEST_F(ClientTest, TestSendKeyWithContext) {
   EXPECT_EQ(input.context().suppress_suggestion(), kSuppressSuggestion);
 }
 
-TEST_F(ClientTest, SendCommand) {
+TEST_F(ClientImplTest, SendCommand) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -385,7 +386,7 @@ TEST_F(ClientTest, SendCommand) {
   EXPECT_EQ(input.type(), commands::Input::SEND_COMMAND);
 }
 
-TEST_F(ClientTest, SendCommandWithContext) {
+TEST_F(ClientImplTest, SendCommandWithContext) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -415,7 +416,7 @@ TEST_F(ClientTest, SendCommandWithContext) {
   EXPECT_EQ(input.context().suppress_suggestion(), kSuppressSuggestion);
 }
 
-TEST_F(ClientTest, IsDirectModeCommandPresetTest) {
+TEST_F(ClientImplTest, IsDirectModeCommandPresetTest) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -492,7 +493,7 @@ TEST_F(ClientTest, IsDirectModeCommandPresetTest) {
   }
 }
 
-TEST_F(ClientTest, IsDirectModeCommandDefaultTest) {
+TEST_F(ClientImplTest, IsDirectModeCommandDefaultTest) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -535,7 +536,7 @@ TEST_F(ClientTest, IsDirectModeCommandDefaultTest) {
   }
 }
 
-TEST_F(ClientTest, IsDirectModeCommandFailureTest) {
+TEST_F(ClientImplTest, IsDirectModeCommandFailureTest) {
   // As SetupConnection is not called, SetConfig fails to update the config.
 
   config::Config config = config::ConfigHandler::DefaultConfig();
@@ -557,7 +558,7 @@ TEST_F(ClientTest, IsDirectModeCommandFailureTest) {
   }
 }
 
-TEST_F(ClientTest, IsDirectModeCommandCustomTest) {
+TEST_F(ClientImplTest, IsDirectModeCommandCustomTest) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -611,7 +612,7 @@ TEST_F(ClientTest, IsDirectModeCommandCustomTest) {
   }
 }
 
-TEST_F(ClientTest, SetConfig) {
+TEST_F(ClientImplTest, SetConfig) {
   const int mock_id = 0;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -619,7 +620,7 @@ TEST_F(ClientTest, SetConfig) {
   EXPECT_TRUE(client_->SetConfig(config));
 }
 
-TEST_F(ClientTest, GetConfig) {
+TEST_F(ClientImplTest, GetConfig) {
   const int mock_id = 0;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -636,7 +637,7 @@ TEST_F(ClientTest, GetConfig) {
   EXPECT_EQ(config.incognito_mode(), true);
 }
 
-TEST_F(ClientTest, EnableCascadingWindow) {
+TEST_F(ClientImplTest, EnableCascadingWindow) {
   const int mock_id = 0;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -670,7 +671,7 @@ TEST_F(ClientTest, EnableCascadingWindow) {
   EXPECT_TRUE(input.config().has_use_cascading_window());
 }
 
-TEST_F(ClientTest, VersionMismatch) {
+TEST_F(ClientImplTest, VersionMismatch) {
   const int mock_id = 123;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -691,7 +692,7 @@ TEST_F(ClientTest, VersionMismatch) {
                    ServerLauncherInterface::SERVER_VERSION_MISMATCH));
 }
 
-TEST_F(ClientTest, ProtocolUpdate) {
+TEST_F(ClientImplTest, ProtocolUpdate) {
   server_launcher_->set_start_server_result(true);
 
   const int mock_id = 0;
@@ -716,7 +717,7 @@ TEST_F(ClientTest, ProtocolUpdate) {
   EXPECT_TRUE(server_launcher_->force_terminate_server_called());
 }
 
-TEST_F(ClientTest, ProtocolUpdateFailSameBinary) {
+TEST_F(ClientImplTest, ProtocolUpdateFailSameBinary) {
   server_launcher_->set_start_server_result(true);
 
   const int mock_id = 0;
@@ -746,7 +747,7 @@ TEST_F(ClientTest, ProtocolUpdateFailSameBinary) {
                    ServerLauncherInterface::SERVER_BROKEN_MESSAGE));
 }
 
-TEST_F(ClientTest, ProtocolUpdateFailOnTerminate) {
+TEST_F(ClientImplTest, ProtocolUpdateFailOnTerminate) {
   server_launcher_->set_start_server_result(true);
 
   const int mock_id = 0;
@@ -776,7 +777,7 @@ TEST_F(ClientTest, ProtocolUpdateFailOnTerminate) {
                    ServerLauncherInterface::SERVER_BROKEN_MESSAGE));
 }
 
-TEST_F(ClientTest, ServerUpdate) {
+TEST_F(ClientImplTest, ServerUpdate) {
   SetupProductVersion(-1);  // old version
   server_launcher_->set_start_server_result(true);
 
@@ -800,7 +801,7 @@ TEST_F(ClientTest, ServerUpdate) {
   EXPECT_TRUE(server_launcher_->start_server_called());
 }
 
-TEST_F(ClientTest, ServerUpdateToNewer) {
+TEST_F(ClientImplTest, ServerUpdateToNewer) {
   SetupProductVersion(1);  // new version
   server_launcher_->set_start_server_result(true);
 
@@ -818,7 +819,7 @@ TEST_F(ClientTest, ServerUpdateToNewer) {
   EXPECT_FALSE(server_launcher_->start_server_called());
 }
 
-TEST_F(ClientTest, ServerUpdateFail) {
+TEST_F(ClientImplTest, ServerUpdateFail) {
   SetupProductVersion(-1);  // old
   server_launcher_->set_start_server_result(true);
 
@@ -842,33 +843,38 @@ TEST_F(ClientTest, ServerUpdateFail) {
                    ServerLauncherInterface::SERVER_BROKEN_MESSAGE));
 }
 
-TEST_F(ClientTest, TranslateProtoBufToMozcToolArgTest) {
+TEST_F(ClientImplTest, TranslateProtoBufToMozcToolArgTest) {
   commands::Output output;
   std::string mode = "";
 
   // If no value is set, we expect to return false
-  EXPECT_FALSE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_FALSE(
+      client::ClientImpl::TranslateProtoBufToMozcToolArg(output, &mode));
   EXPECT_EQ(mode, "");
 
   // If NO_TOOL is set, we  expect to return false
   output.set_launch_tool_mode(commands::Output::NO_TOOL);
-  EXPECT_FALSE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_FALSE(
+      client::ClientImpl::TranslateProtoBufToMozcToolArg(output, &mode));
   EXPECT_EQ(mode, "");
 
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
-  EXPECT_TRUE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_TRUE(
+      client::ClientImpl::TranslateProtoBufToMozcToolArg(output, &mode));
   EXPECT_EQ(mode, "config_dialog");
 
   output.set_launch_tool_mode(commands::Output::DICTIONARY_TOOL);
-  EXPECT_TRUE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_TRUE(
+      client::ClientImpl::TranslateProtoBufToMozcToolArg(output, &mode));
   EXPECT_EQ(mode, "dictionary_tool");
 
   output.set_launch_tool_mode(commands::Output::WORD_REGISTER_DIALOG);
-  EXPECT_TRUE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_TRUE(
+      client::ClientImpl::TranslateProtoBufToMozcToolArg(output, &mode));
   EXPECT_EQ(mode, "word_register_dialog");
 }
 
-TEST_F(ClientTest, DefaultRequestHasRenderableCharacterGroupsTest) {
+TEST_F(ClientImplTest, DefaultRequestHasRenderableCharacterGroupsTest) {
   const int mock_id = 1;
   EXPECT_TRUE(SetupConnection(mock_id));
   EXPECT_TRUE(client_->EnsureSession());
@@ -880,7 +886,7 @@ TEST_F(ClientTest, DefaultRequestHasRenderableCharacterGroupsTest) {
             CharacterRenderability::GetSupportedGroups().size());
 }
 
-TEST_F(ClientTest, InitRequestForSvsJapaneseTest) {
+TEST_F(ClientImplTest, InitRequestForSvsJapaneseTest) {
   const int mock_id = 1;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -895,7 +901,7 @@ TEST_F(ClientTest, InitRequestForSvsJapaneseTest) {
       commands::DecoderExperimentParams::SVS_JAPANESE);
 }
 
-TEST_F(ClientTest, NoInitRequestForSvsJapaneseTest) {
+TEST_F(ClientImplTest, NoInitRequestForSvsJapaneseTest) {
   const int mock_id = 1;
   EXPECT_TRUE(SetupConnection(mock_id));
 
@@ -970,7 +976,7 @@ class SessionPlaybackTest : public ::testing::Test {
   void SetUp() override {
     ipc_client_factory_ = std::make_unique<IPCClientFactoryMock>();
     ipc_client_ = ipc_client_factory_->NewClient("");
-    client_ = std::make_unique<Client>();
+    client_ = std::make_unique<ClientImpl>();
     client_->SetIPCClientFactory(ipc_client_factory_.get());
     auto server_launcher = std::make_unique<SessionPlaybackTestServerLauncher>(
         ipc_client_factory_.get());
@@ -1004,11 +1010,11 @@ class SessionPlaybackTest : public ::testing::Test {
     ipc_client_factory_->SetMockResponse(response);
   }
 
-  ClientTestPeer client_peer() { return ClientTestPeer(*client_); }
+  ClientImplTestPeer client_peer() { return ClientImplTestPeer(*client_); }
 
   std::unique_ptr<IPCClientFactoryMock> ipc_client_factory_;
   std::unique_ptr<IPCClientInterface> ipc_client_;
-  std::unique_ptr<Client> client_;
+  std::unique_ptr<ClientImpl> client_;
   SessionPlaybackTestServerLauncher* server_launcher_;
 };
 

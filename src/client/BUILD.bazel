@@ -109,16 +109,8 @@ mozc_cc_library(
 
 mozc_cc_library(
     name = "client",
-    srcs = [
-        "client.cc",
-    ],
-    hdrs = [
-        "client.h",
-    ],
-    local_defines = mozc_select(
-        linux = ["MOZC_USE_SVS_JAPANESE"],
-        oss = ["MOZC_USE_SVS_JAPANESE"],
-    ),
+    srcs = ["client.cc"],
+    hdrs = ["client.h"],
     visibility = [
         "//gui:__subpackages__",
         "//mac:__pkg__",
@@ -126,6 +118,27 @@ mozc_cc_library(
         "//unix:__subpackages__",
         "//visibility:public",
         "//win32:__subpackages__",
+    ],
+    deps = [
+        ":client_impl",
+        ":client_interface",
+    ],
+)
+
+mozc_cc_library(
+    name = "client_impl",
+    srcs = [
+        "client_impl.cc",
+    ],
+    hdrs = [
+        "client_impl.h",
+    ],
+    local_defines = mozc_select(
+        linux = ["MOZC_USE_SVS_JAPANESE"],
+        oss = ["MOZC_USE_SVS_JAPANESE"],
+    ),
+    visibility = [
+        "//win32/base:__pkg__",
     ],
     deps = [
         ":character_renderability",
@@ -162,12 +175,12 @@ mozc_cc_library(
 )
 
 mozc_cc_test(
-    name = "client_test",
+    name = "client_impl_test",
     size = "small",
-    srcs = ["client_test.cc"],
+    srcs = ["client_impl_test.cc"],
     deps = [
         ":character_renderability",
-        ":client",
+        ":client_impl",
         ":client_interface",
         ":server_launcher",
         "//base:number_util",
