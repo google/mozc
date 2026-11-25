@@ -23,7 +23,6 @@ common:prod_windows_dev --noenable_platform_specific_config --config=windows_env
 
 common:android      --noenable_platform_specific_config --config=android_env --define TARGET=oss_android
 common:oss_android  --noenable_platform_specific_config --config=android_env --define TARGET=oss_android
-common:prod_android --noenable_platform_specific_config --config=android_env --define TARGET=prod_android
 
 ## Build channels
 build:dev_channel    --define CHANNEL=dev

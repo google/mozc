@@ -51,14 +51,6 @@ package_group(
     packages = ["//..."],
 )
 
-config_setting(
-    name = "opt",
-    values = {
-        "compilation_mode": "opt",
-    },
-    visibility = ["//visibility:private"],
-)
-
 # CHANNEL=dev is used to build Dev channel binaries.
 # Dev channel is a kind of beta release that can be used by external users.
 # The version number of Dev channel should end with 10x (e.g. 100 for Windows, 101 for macOS).
@@ -149,12 +141,10 @@ cc_library(
         android = [
         ],
         chromiumos = [
-            "MOZC_USE_MOZC_TESTING",
         ],
         default = [
         ],
         ios = [
-            "MOZC_USE_MOZC_TESTING",
         ],
         linux = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
@@ -197,8 +187,6 @@ cc_library(
             "_ATL_CSTRING_EXPLICIT_CONSTRUCTORS",
             "_ATL_NO_AUTOMATIC_NAMESPACE",
             "_ATL_NO_HOSTING",
-            "ID_TRACE_LEVEL=1",
-            "_MIDL_USE_GUIDDEF_",
             "NO_SHLWAPI_STRFCNS",
             "PSAPI_VERSION=2",
             "UNICODE",

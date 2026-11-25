@@ -673,8 +673,6 @@ run_binary(
             "@zip_code_ken_all//:KEN_ALL.CSV",
             "@zip_code_jigyosyo//:JIGYOSYO.CSV",
         ],
-        prod = [
-        ],
     ),
     outs = ["zip_code.tsv"],
     args = [
