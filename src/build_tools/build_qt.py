@@ -48,7 +48,7 @@ or so.
 """
 
 import argparse
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator, Sequence
 import dataclasses
 import functools
 import os
@@ -75,7 +75,7 @@ ABS_QT6_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
     'third_party_cache', 'qtbase-everywhere-src-6.9.1.tar.xz'
 )
 ABS_DEFAULT_NINJA_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'ninja')
-QT_CONFIGURE_COMMON = [
+QT_CONFIGURE_COMMON = (
     '-opensource',
     '-c++std',
     'c++20',
@@ -139,7 +139,7 @@ QT_CONFIGURE_COMMON = [
     'examples',
     '-nomake',
     'tests',
-]
+)
 
 
 def is_windows() -> bool:
@@ -158,7 +158,7 @@ def is_linux() -> bool:
 
 
 def qt_extract_filter(
-    members: Iterator[tarfile.TarInfo],
+    members: Iterable[tarfile.TarInfo],
 ) -> Iterator[tarfile.TarInfo]:
   """Custom extract filter for the Qt Tar file.
 
@@ -212,7 +212,7 @@ class StatefulQtExtractionFilter:
       member: tarfile.TarInfo,
       dest_path: Union[str, pathlib.Path],
   ) -> Union[tarfile.TarInfo, None]:
-    data = tarfile.data_filter(member, dest_path)
+    data = tarfile.data_filter(member, str(dest_path))
     if data is None:
       return data
 
@@ -295,6 +295,37 @@ def get_qt_version(args: argparse.Namespace) -> QtVersion:
   )
 
 
+def resolve_macos_cpus(args: argparse.Namespace) -> list[str]:
+  """Resolves target CPU architectures for macOS builds.
+
+  Args:
+    args: build options to be used to customize configure options of Qt.
+
+  Returns:
+    Ordered list of target macOS CPU architectures.
+
+  Raises:
+    ValueError: When --macos_cpus=arm64 is set on Intel64 mac.
+  """
+  # Set the target CPUs for macOS
+  # Host: arm64  -> Targets: --macos_cpus or ["x86_64", "arm64"]
+  # Host: x86_64 -> Targets: --macos_cpus or ["x86_64"]
+  host_arch = os.uname().machine
+  macos_cpus = ['x86_64', 'arm64'] if host_arch == 'arm64' else ['x86_64']
+  macos_cpus_arg = getattr(args, 'macos_cpus', None)
+  if macos_cpus_arg:
+    macos_cpus = [cpu for cpu in macos_cpus_arg.split(',') if cpu]
+    if host_arch == 'x86_64' and macos_cpus == ['arm64']:
+      # Haven't figured out how to make this work...
+      raise ValueError('--macos_cpus=arm64 on Intel64 mac is not supported.')
+    # 'x86_64' needs to be the first entry if exists.
+    # https://doc-snapshots.qt.io/qt6-6.5/macos-building.html#step-2-build-the-qt-library
+    if 'x86_64' in macos_cpus and macos_cpus[0] != 'x86_64':
+      macos_cpus.remove('x86_64')
+      macos_cpus = ['x86_64'] + macos_cpus
+  return macos_cpus
+
+
 def make_host_configure_options(args: argparse.Namespace) -> list[str]:
   """Makes necessary configure options to build Qt host tools based on args.
 
@@ -312,7 +343,8 @@ def make_host_configure_options(args: argparse.Namespace) -> list[str]:
   if qt_version.major != 6:
     raise ValueError(f'Only Qt6 is supported but specified {qt_version}.')
 
-  qt_configure_options = QT_CONFIGURE_COMMON + [
+  qt_configure_options = [
+      *QT_CONFIGURE_COMMON,
       '-no-accessibility',
       '-no-gui',
       '-no-widgets',
@@ -369,7 +401,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   if qt_version.major != 6:
     raise ValueError(f'Only Qt6 is supported but specified {qt_version}.')
 
-  qt_configure_options = QT_CONFIGURE_COMMON
+  qt_configure_options = list(QT_CONFIGURE_COMMON)
   cmake_options = []
 
   if is_mac():
@@ -379,22 +411,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
         '-qt-libpng',
         '-qt-pcre',
     ]
-
-    # Set the target CPUs for macOS
-    # Host: arm64  -> Targets: --macos_cpus or ["x86_64", "arm64"]
-    # Host: x86_64 -> Targets: --macos_cpus or ["x86_64"]
-    host_arch = os.uname().machine
-    macos_cpus = ['x86_64', 'arm64'] if host_arch == 'arm64' else ['x86_64']
-    if args.macos_cpus:
-      macos_cpus = args.macos_cpus.split(',')
-      if host_arch == 'x86_64' and macos_cpus == ['arm64']:
-        # Haven't figured out how to make this work...
-        raise ValueError('--macos_cpus=arm64 on Intel64 mac is not supported.')
-      # 'x86_64' needs to be the first entry if exists.
-      # https://doc-snapshots.qt.io/qt6-6.5/macos-building.html#step-2-build-the-qt-library
-      if 'x86_64' in macos_cpus and macos_cpus[0] != 'x86_64':
-        macos_cpus.remove('x86_64')
-        macos_cpus = ['x86_64'] + macos_cpus
+    macos_cpus = resolve_macos_cpus(args)
     cmake_options += [
         '-DCMAKE_OSX_ARCHITECTURES:STRING=' + ';'.join(macos_cpus),
     ]
@@ -434,7 +451,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   )
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: Union[Sequence[str], None] = None) -> argparse.Namespace:
   """Parse command line options."""
   parser = argparse.ArgumentParser()
   parser.add_argument(
@@ -509,7 +526,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default=None,
     )
-  return parser.parse_args()
+  return parser.parse_args(argv)
 
 
 def get_ninja_dir(args: argparse.Namespace) -> Union[pathlib.Path, None]:
@@ -808,8 +825,10 @@ def build_on_windows(args: argparse.Namespace) -> None:
     # When both '--debug' and '--release' are specified for Qt6, we need to run
     # the command again with '--config debug' option to install debug DLLs.
     if args.debug and args.release:
-      install_cmds += ['--config', 'debug']
-      exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+      debug_install_cmds = install_cmds + ['--config', 'debug']
+      exec_command(
+          debug_install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun
+      )
 
   for tool in ['moc.exe', 'rcc.exe', 'uic.exe']:
     src = qt_host_dir.joinpath('bin').joinpath(tool)
@@ -846,8 +865,8 @@ def extract_qt_src(args: argparse.Namespace) -> None:
       # tarfile.data_filter is available in Python 3.12+.
       # See https://peps.python.org/pep-0706/ for details.
       if getattr(tarfile, 'data_filter', None):
-        with StatefulQtExtractionFilter() as filter:
-          f.extractall(path=qt_src_dir, filter=filter)
+        with StatefulQtExtractionFilter() as extract_filter:
+          f.extractall(path=qt_src_dir, filter=extract_filter)
       else:
         f.extractall(path=qt_src_dir, members=qt_extract_filter(f))
   # TODO: https://github.com/google/mozc/issues/1457 - Remove this.
@@ -882,7 +901,7 @@ def apply_patch_to_qt_src(
   qyieldcpu_h.write_text(content, encoding='utf-8')
 
 
-def main():
+def main() -> None:
   if is_linux():
     print('On Linux, please use shared library provided by distributions.')
     sys.exit(1)
