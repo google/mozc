@@ -386,6 +386,17 @@ def resolve_macos_cpus(args: argparse.Namespace) -> list[str]:
   return macos_cpus
 
 
+def needs_separate_host_build(args: argparse.Namespace) -> bool:
+  """Returns True when a separate host-tools build (QT_HOST_PATH) is needed."""
+  if is_mac():
+    return resolve_macos_cpus(args) != [os.uname().machine]
+  if is_windows():
+    host_arch = normalize_win_arch(platform.uname().machine)
+    target_arch = normalize_win_arch(args.target_arch)
+    return (host_arch != target_arch) or (args.debug and not args.release)
+  return False
+
+
 def make_host_configure_options(args: argparse.Namespace) -> list[str]:
   """Makes necessary configure options to build Qt host tools based on args.
 
@@ -659,11 +670,15 @@ def build_host_on_mac(args: argparse.Namespace) -> None:
       remove_tree(build_dir, args.dryrun)
 
 
-def build_on_mac(args: argparse.Namespace) -> None:
+def build_on_mac(
+    args: argparse.Namespace,
+    use_separate_host: bool = True,
+) -> None:
   """Build Qt from the source code on Mac.
 
   Args:
     args: build options to be used to customize configure options of Qt.
+    use_separate_host: True to use prebuilt host tools in qt_host_dir.
 
   Raises:
     FileNotFoundError: when any required file is not found.
@@ -682,7 +697,12 @@ def build_on_mac(args: argparse.Namespace) -> None:
   if ninja_dir:
     env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
 
-  env['QT_HOST_PATH'] = str(qt_host_dir)
+  if use_separate_host:
+    env['QT_HOST_PATH'] = str(qt_host_dir)
+  else:
+    env.pop('QT_HOST_PATH', None)
+    if os.uname().machine == 'arm64':
+      env.setdefault('CMAKE_APPLE_SILICON_PROCESSOR', 'arm64')
 
   configure_cmds = [
       str(qt_src_dir.joinpath('configure'))
@@ -711,14 +731,15 @@ def build_on_mac(args: argparse.Namespace) -> None:
         else:
           shutil.copytree(src=src.resolve(), dst=dest)
 
-    for tool in ('moc', 'rcc', 'uic'):
-      src = qt_host_dir.joinpath('libexec', tool)
-      dest = qt_dest_dir.joinpath('libexec', tool)
-      if args.dryrun:
-        print(f'dryrun: copy {src} => {dest}')
-      else:
-        shutil.copy2(src=src, dst=dest)
-    remove_tree(qt_host_dir, args.dryrun)
+    if use_separate_host:
+      for tool in ('moc', 'rcc', 'uic'):
+        src = qt_host_dir.joinpath('libexec', tool)
+        dest = qt_dest_dir.joinpath('libexec', tool)
+        if args.dryrun:
+          print(f'dryrun: copy {src} => {dest}')
+        else:
+          shutil.copy2(src=src, dst=dest)
+      remove_tree(qt_host_dir, args.dryrun)
   finally:
     if build_dir != qt_src_dir:
       remove_tree(build_dir, args.dryrun)
@@ -828,11 +849,15 @@ def normalize_win_arch(arch: str) -> str:
   return normalized
 
 
-def build_on_windows(args: argparse.Namespace) -> None:
+def build_on_windows(
+    args: argparse.Namespace,
+    use_separate_host: bool = True,
+) -> None:
   """Build Qt from the source code on Windows.
 
   Args:
     args: build options to be used to customize configure options of Qt.
+    use_separate_host: True to use prebuilt host tools in qt_host_dir.
 
   Raises:
     FileNotFoundError: when any required file is not found.
@@ -860,7 +885,10 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   cmd = str(shutil.which('cmd.exe', path=env['PATH']))
 
-  env['QT_HOST_PATH'] = str(qt_host_dir)
+  if use_separate_host:
+    env['QT_HOST_PATH'] = str(qt_host_dir)
+  else:
+    env.pop('QT_HOST_PATH', None)
 
   configure_cmds = [
       cmd,
@@ -891,14 +919,15 @@ def build_on_windows(args: argparse.Namespace) -> None:
             debug_install_cmds, cwd=build_dir, env=env, dryrun=args.dryrun
         )
 
-    for tool in ('moc.exe', 'rcc.exe', 'uic.exe'):
-      src = qt_host_dir.joinpath('bin', tool)
-      dest = qt_dest_dir.joinpath('bin', tool)
-      if args.dryrun:
-        print(f'dryrun: copy {src} => {dest}')
-      else:
-        shutil.copy2(src=src, dst=dest)
-    remove_tree(qt_host_dir, args.dryrun)
+    if use_separate_host:
+      for tool in ('moc.exe', 'rcc.exe', 'uic.exe'):
+        src = qt_host_dir.joinpath('bin', tool)
+        dest = qt_dest_dir.joinpath('bin', tool)
+        if args.dryrun:
+          print(f'dryrun: copy {src} => {dest}')
+        else:
+          shutil.copy2(src=src, dst=dest)
+      remove_tree(qt_host_dir, args.dryrun)
   finally:
     if build_dir != qt_src_dir:
       remove_tree(build_dir, args.dryrun)
@@ -969,13 +998,16 @@ def main() -> None:
     sys.exit(1)
 
   extract_qt_src(args)
+  use_separate_host = needs_separate_host_build(args)
 
   if is_mac():
-    build_host_on_mac(args)
-    build_on_mac(args)
+    if use_separate_host:
+      build_host_on_mac(args)
+    build_on_mac(args, use_separate_host=use_separate_host)
   elif is_windows():
-    build_host_on_windows(args)
-    build_on_windows(args)
+    if use_separate_host:
+      build_host_on_windows(args)
+    build_on_windows(args, use_separate_host=use_separate_host)
 
 
 if __name__ == '__main__':

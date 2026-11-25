@@ -110,8 +110,17 @@ def mozc_qt_uic(name, srcs, outs):
         tools = mozc_select(
             default = ["//third_party/qt/qt6:uic"],
             oss_linux = ["@qt_linux//:libexec/uic"],
-            oss_macos = ["@qt_mac//:libexec/uic"],
-            oss_windows = ["@qt_win//:bin/uic.exe"],
+            # Single-pass native builds in build_qt.py dynamically link uic
+            # against QtCore (unlike moc, which links static Bootstrap), so
+            # include the QtCore runtime files in the genrule sandbox.
+            oss_macos = [
+                "@qt_mac//:libexec/uic",
+                "@qt_mac//:qt_core_framework_files",
+            ],
+            oss_windows = [
+                "@qt_win//:bin/uic.exe",
+                "@qt_win//:qt_core_dlls",
+            ],
         ),
     )
 
@@ -129,8 +138,17 @@ def mozc_qt_rcc(name, qrc_name, qrc_file, srcs, outs):
         tools = mozc_select(
             default = ["//third_party/qt/qt6:rcc"],
             oss_linux = ["@qt_linux//:libexec/rcc"],
-            oss_macos = ["@qt_mac//:libexec/rcc"],
-            oss_windows = ["@qt_win//:bin/rcc.exe"],
+            # Single-pass native builds in build_qt.py dynamically link rcc
+            # against QtCore, so include the QtCore runtime files in the
+            # genrule sandbox.
+            oss_macos = [
+                "@qt_mac//:libexec/rcc",
+                "@qt_mac//:qt_core_framework_files",
+            ],
+            oss_windows = [
+                "@qt_win//:bin/rcc.exe",
+                "@qt_win//:qt_core_dlls",
+            ],
         ),
     )
 

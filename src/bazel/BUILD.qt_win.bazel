@@ -75,3 +75,11 @@ exports_files([
     "bin/rcc.exe",
     "bin/Qt6Core.dll",
 ])
+
+filegroup(
+    name = "qt_core_dlls",
+    srcs = glob(
+        ["bin/Qt6Core*.dll"],
+        allow_empty = True,
+    ),
+)

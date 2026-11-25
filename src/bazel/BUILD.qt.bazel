@@ -132,6 +132,11 @@ apple_dynamic_framework_import(
 )
 
 filegroup(
+    name = "qt_core_framework_files",
+    srcs = glob(["lib/QtCore.framework/**"]),
+)
+
+filegroup(
     name = "libqcocoa",
     srcs = ["plugins/platforms/libqcocoa.dylib"],
 )
