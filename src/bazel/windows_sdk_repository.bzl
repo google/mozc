@@ -100,7 +100,7 @@ def _windows_sdk_impl(repo_ctx):
         repo_ctx.file("BUILD.bazel", "")
         repo_ctx.template(
             "windows_sdk_rules.bzl",
-            repo_ctx.path(Label("@//bazel:windows_sdk_rules.noop.template.bzl")),
+            repo_ctx.path(Label("//bazel:windows_sdk_rules.noop.template.bzl")),
             executable = False,
         )
         return
@@ -110,7 +110,7 @@ def _windows_sdk_impl(repo_ctx):
         repo_ctx.file("BUILD.bazel", "")
         repo_ctx.template(
             "windows_sdk_rules.bzl",
-            repo_ctx.path(Label("@//bazel:windows_sdk_rules.noop.template.bzl")),
+            repo_ctx.path(Label("//bazel:windows_sdk_rules.noop.template.bzl")),
             executable = False,
         )
         return
@@ -126,7 +126,7 @@ def _windows_sdk_impl(repo_ctx):
         repo_ctx.file("BUILD.bazel", "")
         repo_ctx.template(
             "windows_sdk_rules.bzl",
-            repo_ctx.path(Label("@//bazel:windows_sdk_rules.noop.template.bzl")),
+            repo_ctx.path(Label("//bazel:windows_sdk_rules.noop.template.bzl")),
             executable = False,
         )
         return
@@ -137,7 +137,7 @@ def _windows_sdk_impl(repo_ctx):
     repo_ctx.symlink(winsdk_path.get_child("lib/" + winsdk_ver), "lib")
     repo_ctx.template(
         "BUILD.bazel",
-        repo_ctx.path(Label("@//bazel:BUILD.winsdk.bazel")),
+        repo_ctx.path(Label("//bazel:BUILD.winsdk.bazel")),
         executable = False,
     )
 
@@ -149,7 +149,7 @@ def _windows_sdk_impl(repo_ctx):
 
     repo_ctx.template(
         "windows_sdk_rules.bzl",
-        repo_ctx.path(Label("@//bazel:windows_sdk_rules.win32.template.bzl")),
+        repo_ctx.path(Label("//bazel:windows_sdk_rules.win32.template.bzl")),
         executable = False,
     )
 

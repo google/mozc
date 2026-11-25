@@ -40,12 +40,12 @@ def _qt_mac_repository_impl(repo_ctx):
         qt_path = repo_ctx.path(qt_path_str)
     else:
         # Resolve relative path against the workspace root.
-        workspace_root = repo_ctx.path(Label("@//:MODULE.bazel")).dirname
+        workspace_root = repo_ctx.path(Label("//:MODULE.bazel")).dirname
         qt_path = workspace_root.get_child(qt_path_str)
     repo_ctx.symlink(qt_path.get_child("lib"), "lib")
     repo_ctx.symlink(qt_path.get_child("libexec"), "libexec")
     repo_ctx.symlink(qt_path.get_child("plugins"), "plugins")
-    repo_ctx.template("BUILD.bazel", repo_ctx.path(Label("@//bazel:BUILD.qt.bazel")))
+    repo_ctx.template("BUILD.bazel", repo_ctx.path(Label("//bazel:BUILD.qt.bazel")))
 
 qt_mac_repository = repository_rule(
     implementation = _qt_mac_repository_impl,

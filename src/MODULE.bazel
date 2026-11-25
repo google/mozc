@@ -198,13 +198,17 @@ single_version_override(
 android_ndk_repository_extension = use_extension(
     "@rules_android_ndk//:extension.bzl",
     "android_ndk_repository_extension",
+    dev_dependency = True,
 )
 android_ndk_repository_extension.configure(
     path = "$WORKSPACE_ROOT/third_party/ndk/android-ndk-r30",
 )
 use_repo(android_ndk_repository_extension, "androidndk")
 
-register_toolchains("@androidndk//:all")
+register_toolchains(
+    "@androidndk//:all",
+    dev_dependency = True,
+)
 
 new_local_repository = use_repo_rule(
     "@bazel_tools//tools/build_defs/repo:local.bzl",
@@ -212,7 +216,7 @@ new_local_repository = use_repo_rule(
 )
 
 pkg_config_repository = use_repo_rule(
-    "@//bazel:pkg_config_repository.bzl",
+    "//bazel:pkg_config_repository.bzl",
     "pkg_config_repository",
 )
 
@@ -239,7 +243,7 @@ pkg_config_repository(
 )
 
 # Qt for macOS
-qt_mac_repository = use_repo_rule("@//bazel:qt_mac_repository.bzl", "qt_mac_repository")
+qt_mac_repository = use_repo_rule("//bazel:qt_mac_repository.bzl", "qt_mac_repository")
 
 QT_PATH = "third_party/qt"
 
@@ -251,13 +255,13 @@ qt_mac_repository(
 # Qt for Windows
 new_local_repository(
     name = "qt_win",
-    build_file = "@//bazel:BUILD.qt_win.bazel",
+    build_file = "//bazel:BUILD.qt_win.bazel",
     path = QT_PATH,  # Windows build requires the Qt source code to be in QT_PATH.
 )
 
 # Windows SDK
 windows_sdk_repository = use_repo_rule(
-    "@//bazel:windows_sdk_repository.bzl",
+    "//bazel:windows_sdk_repository.bzl",
     "windows_sdk_repository",
 )
 
@@ -267,7 +271,7 @@ windows_sdk_repository(
 
 # dotnet tool repository (to load "wix")
 dotnet_tool_repository = use_repo_rule(
-    "@//bazel:dotnet_tool_repository.bzl",
+    "//bazel:dotnet_tool_repository.bzl",
     "dotnet_tool_repository",
 )
 
@@ -343,7 +347,7 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 # https://github.com/microsoft/wil/
 http_archive(
     name = "com_microsoft_wil",
-    build_file = "@//bazel:BUILD.wil.bazel",
+    build_file = "//bazel:BUILD.wil.bazel",
     sha256 = "f116af6cd96b8404d5e3cd6ef18853f7baa9c7d96930e741591fea8b5a3ef919",
     strip_prefix = "wil-1.0.230629.1",
     url = "https://github.com/microsoft/wil/archive/refs/tags/v1.0.230629.1.zip",
@@ -356,9 +360,9 @@ GTM_GIT_SHA = "8fbaae947b87c1e66c0934493168fc6d583ed889"
 
 http_archive(
     name = "google_toolbox_for_mac",
-    build_file = "@//bazel:BUILD.google_toolbox_for_mac.bazel",
+    build_file = "//bazel:BUILD.google_toolbox_for_mac.bazel",
     patch_args = ["-p2"],
-    patches = ["@//bazel:google_toolbox_for_mac.patch"],
+    patches = ["//bazel:google_toolbox_for_mac.patch"],
     sha256 = "424bca6571778496efa5328ffcca26edf083e282da7074d30b3e980516cea2a4",
     strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
     urls = [
