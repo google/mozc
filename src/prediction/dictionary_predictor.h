@@ -133,8 +133,8 @@ class DictionaryPredictor : public PredictorInterface {
   //   remain selectable alongside corrected candidates.
   // - If a candidate with the same value comes from typing correction (e.g.,
   //   "びっぐばん" => "ビッグバン"), it is added to |same_value_index| so that
-  //   the redundant SPELLING_CORRECTION candidate is removed and typing
-  //   correction takes precedence without SPELLING_CORRECTION annotations.
+  //   the redundant READING_CORRECTION candidate is removed and typing
+  //   correction takes precedence without READING_CORRECTION annotations.
   static void RemoveMissSpelledCandidates(const ConversionRequest& request,
                                           absl::Span<Result> results);
 

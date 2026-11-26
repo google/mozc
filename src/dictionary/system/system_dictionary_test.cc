@@ -175,8 +175,8 @@ bool SystemDictionaryTest::CompareTokensForLookup(const Token& a,
   if (!comp_cost) {
     return false;
   }
-  const bool spelling_match = (a.attributes & Token::SPELLING_CORRECTION) ==
-                              (b.attributes & Token::SPELLING_CORRECTION);
+  const bool spelling_match = (a.attributes & Token::READING_CORRECTION) ==
+                              (b.attributes & Token::READING_CORRECTION);
   if (!spelling_match) {
     return false;
   }
@@ -638,7 +638,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
       {"ああああああ", "ああああああ", 32000, 1, 2, Token::NONE},
       // token[5] will be encoded into 3 bytes.
       {"いいいいいい", "いいいいいい", 32000, 1, 1, Token::NONE},
-      {"どらえもん", "ドラえもん", 1, 2, 3, Token::SPELLING_CORRECTION},
+      {"どらえもん", "ドラえもん", 1, 2, 3, Token::READING_CORRECTION},
       {"こんさーと", "コンサート", 1, 1, 1, Token::NONE},
       {"ばーじょん", "バージョン", 1, 1, 1, Token::NONE},
   };
@@ -669,8 +669,8 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
       }
     }
 
-    if ((source_token.attributes & Token::SPELLING_CORRECTION) ==
-        Token::SPELLING_CORRECTION) {
+    if ((source_token.attributes & Token::READING_CORRECTION) ==
+        Token::READING_CORRECTION) {
       EXPECT_FALSE(found) << "Spelling correction token was retrieved:"
                           << PrintToken(source_token);
       if (found) {
@@ -768,9 +768,9 @@ TEST_F(SystemDictionaryTest, LookupReverseWithCache) {
 
 TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
   std::vector<Token> tokens = {
-      {"あぼがど", "アボカド", 1, 0, 2, Token::SPELLING_CORRECTION},
+      {"あぼがど", "アボカド", 1, 0, 2, Token::READING_CORRECTION},
       {"しゅみれーしょん", "シミュレーション", 1, 100, 3,
-       Token::SPELLING_CORRECTION},
+       Token::READING_CORRECTION},
       {"あきはばら", "秋葉原", 1000, 1, 2, Token::NONE},
   };
 

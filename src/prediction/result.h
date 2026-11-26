@@ -132,7 +132,7 @@ struct Result {
       dictionary::Token::AttributesBitfield token_attr);
 
   // Returns only the behavioral/semantic attributes (e.g. USER_DICTIONARY,
-  // SPELLING_CORRECTION) by masking out the prediction-specific flags.
+  // READING_CORRECTION) by masking out the prediction-specific flags.
   // This corresponds to the legacy 'candidate_attributes' field.
   // TODO(b/493100712): This function is a temporary helper to maintain the
   // historical sorting priority key in TiebreakLess. We should eventually

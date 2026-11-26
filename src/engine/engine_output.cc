@@ -118,8 +118,7 @@ void FillCandidateWord(const converter::Candidate& segment_candidate,
       candidate_word_proto->add_attributes(commands::DELETABLE);
     }
   }
-  if (segment_candidate.attributes &
-      converter::Attribute::SPELLING_CORRECTION) {
+  if (segment_candidate.attributes & converter::Attribute::READING_CORRECTION) {
     candidate_word_proto->add_attributes(commands::SPELLING_CORRECTION);
   }
   if (segment_candidate.attributes & converter::Attribute::TYPING_CORRECTION) {

@@ -192,8 +192,8 @@ void NBestGenerator<TConnector>::MakeCandidate(
       //  b) compound-based reranking.
       candidate.attributes |= Attribute::CONTEXT_SENSITIVE;
     }
-    if (node->attributes & Node::SPELLING_CORRECTION) {
-      candidate.attributes |= Attribute::SPELLING_CORRECTION;
+    if (node->attributes & Node::READING_CORRECTION) {
+      candidate.attributes |= Attribute::READING_CORRECTION;
     }
     if (node->attributes & Node::NO_VARIANTS_EXPANSION) {
       candidate.attributes |= Attribute::NO_VARIANTS_EXPANSION;

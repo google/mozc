@@ -1015,7 +1015,7 @@ void SystemDictionary::RegisterReverseLookupTokensForT13N(
       key_trie_, value_trie_, token_array_, codec_, frequent_pos_,
       hiragana_value, encoded_key, callback, [&](const TokenInfo& token_info) {
         // Skip spelling corrections.
-        if (token_info.token->attributes & Token::SPELLING_CORRECTION) {
+        if (token_info.token->attributes & Token::READING_CORRECTION) {
           return false;
         }
         if (token_info.value_type != TokenInfo::AS_IS_HIRAGANA &&
@@ -1093,7 +1093,7 @@ void SystemDictionary::RegisterReverseLookupResults(
                encoded_tokens_ptr + reverse_result.tokens_offset);
            !iter.Done(); iter.Next()) {
         const TokenInfo& token_info = iter.Get();
-        if (token_info.token->attributes & Token::SPELLING_CORRECTION ||
+        if (token_info.token->attributes & Token::READING_CORRECTION ||
             token_info.id_in_value_trie != value_id) {
           continue;
         }

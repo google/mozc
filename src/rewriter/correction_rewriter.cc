@@ -135,7 +135,7 @@ void CorrectionRewriter::SetCandidate(
     const ReadingCorrectionItem& item,
     commands::Request::DisplayValueCapability capability,
     Candidate* candidate) const {
-  candidate->attributes |= Attribute::SPELLING_CORRECTION;
+  candidate->attributes |= Attribute::READING_CORRECTION;
 
   // Assigns display_value when the client supports it.
   // Try Katakana diff first so Katakana entries in reading_correction.tsv
@@ -237,7 +237,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
 
       // Handles the spelling correction defined in the system dictionary.
       // mostly they are Katakana to Katakana correction.
-      if (candidate.attributes & Attribute::SPELLING_CORRECTION) {
+      if (candidate.attributes & Attribute::READING_CORRECTION) {
         // Sets empty correction item.
         SetCandidate(ReadingCorrectionItem{"", "", ""}, capability,
                      segment.mutable_candidate(j));
@@ -267,13 +267,13 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
     // `segment`. Ensure each correction for `top_candidate.content_key` is
     // placed within `kInsertPosition` without duplicating an existing
     // candidate:
-    // - If a SPELLING_CORRECTION candidate with the same value already exists
+    // - If a READING_CORRECTION candidate with the same value already exists
     //   at a lower rank, promote it to `kInsertPosition`.
-    // - If a non-SPELLING_CORRECTION candidate with the same value already
+    // - If a non-READING_CORRECTION candidate with the same value already
     //   exists (e.g., from typing correction), keep it as-is without
-    //   duplicating or adding SPELLING_CORRECTION annotations.
+    //   duplicating or adding READING_CORRECTION annotations.
     // - If no candidate with the same value exists in `segment`, insert a new
-    //   SPELLING_CORRECTION candidate at `kInsertPosition`.
+    //   READING_CORRECTION candidate at `kInsertPosition`.
     for (const ReadingCorrectionItem& result : results) {
       const std::string value =
           absl::StrCat(result.value, top_candidate.functional_value());
@@ -286,7 +286,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
       }
       if (existing_index >= 0) {
         if ((segment.candidate(existing_index).attributes &
-             Attribute::SPELLING_CORRECTION) &&
+             Attribute::READING_CORRECTION) &&
             existing_index > kInsertPosition) {
           segment.move_candidate(existing_index, kInsertPosition);
           modified = true;

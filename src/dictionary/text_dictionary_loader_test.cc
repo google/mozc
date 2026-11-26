@@ -179,7 +179,7 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     EXPECT_TRUE(loader_peer.RewriteSpecialToken(&token, "SPELLING_CORRECTION"));
     EXPECT_EQ(token.lid, 100);
     EXPECT_EQ(token.rid, 200);
-    EXPECT_EQ(token.attributes, Token::SPELLING_CORRECTION);
+    EXPECT_EQ(token.attributes, Token::READING_CORRECTION);
   }
 
   {

@@ -496,7 +496,7 @@ TEST_F(EngineConverterTest, ConvertWithSpellingCorrection) {
     FillT13Ns(&segments, composer_.get());
     segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes |=
 
-        converter::Attribute::SPELLING_CORRECTION;
+        converter::Attribute::READING_CORRECTION;
     EXPECT_CALL(*mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
@@ -2818,7 +2818,6 @@ TEST_F(EngineConverterTest, GetAndSetSegments) {
 TEST_F(EngineConverterTest, Clone) {
   auto mock_converter = std::make_shared<MockConverter>();
   EngineConverter src(mock_converter, request_, config_);
-
 
   {  // create source converter
     Segments segments;

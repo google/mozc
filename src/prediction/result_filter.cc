@@ -162,7 +162,7 @@ bool ResultFilter::ShouldRemove(const Result& result, int added_num) {
 
   // User input: "おーすとり" (len = 5)
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
-  if ((result.attributes & Attribute::SPELLING_CORRECTION) &&
+  if ((result.attributes & Attribute::READING_CORRECTION) &&
       result.key != request_key_ &&
       request_key_len_ <=
           GetMissSpelledPosition(result.key, result.value) + 1) {

@@ -132,7 +132,7 @@ class DictionaryImplTest : public ::testing::Test {
       // Read-only inspection; std::move is not used because token is only
       // checked and not stored.
       if (token.key == key_ && token.value == value_ &&
-          (token.attributes & Token::SPELLING_CORRECTION)) {
+          (token.attributes & Token::READING_CORRECTION)) {
         found_ = true;
         return TRAVERSE_DONE;
       }

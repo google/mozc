@@ -174,7 +174,7 @@ class UserHistoryPredictor : public PredictorInterface {
     BIGRAM_BOOST = 1,
 
     // Needs to populate spelling correction information from Entry to Result.
-    SPELLING_CORRECTION = 2,
+    READING_CORRECTION = 2,
 
     // This candidate should be placed below the default top candidate.
     // Its confidence score is low.

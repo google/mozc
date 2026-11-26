@@ -514,7 +514,7 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
             {
                 {"かぷりちょーざ", "カプリチョーザ"},
             },
-            Token::SPELLING_CORRECTION});
+            Token::READING_CORRECTION});
 
     // user dictionary entry
     EXPECT_CALL(*mock, LookupPredictive(StrEq("ゆーざー"), _, _))
@@ -611,7 +611,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
   {
     std::vector<Result> results = {
         CreateResult4("ばっく", "バッグ", prediction::UNIGRAM,
-                      Token::SPELLING_CORRECTION),
+                      Token::READING_CORRECTION),
         CreateResult4("ばっぐ", "バッグ", prediction::UNIGRAM, Token::NONE),
         CreateResult4("ばっく", "バッく", prediction::UNIGRAM, Token::NONE),
     };
@@ -629,7 +629,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
   {
     std::vector<Result> results = {
         CreateResult4("ばっく", "バッグ", prediction::UNIGRAM,
-                      Token::SPELLING_CORRECTION),
+                      Token::READING_CORRECTION),
         CreateResult4("てすと", "テスト", prediction::UNIGRAM, Token::NONE),
     };
     DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(
@@ -644,7 +644,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
   {
     std::vector<Result> results = {
         CreateResult4("ばっく", "バッグ", prediction::UNIGRAM,
-                      Token::SPELLING_CORRECTION),
+                      Token::READING_CORRECTION),
         CreateResult4("ばっく", "バック", prediction::UNIGRAM, Token::NONE),
     };
     DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(
@@ -657,7 +657,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
   {
     std::vector<Result> results = {
         CreateResult4("ばっく", "バッグ", prediction::UNIGRAM,
-                      Token::SPELLING_CORRECTION),
+                      Token::READING_CORRECTION),
         CreateResult4("ばっく", "バック", prediction::UNIGRAM, Token::NONE),
     };
     DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(
@@ -813,7 +813,7 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   EXPECT_CALL(*aggregator, AggregateResultsForDesktop(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
-                        Token::SPELLING_CORRECTION),
+                        Token::READING_CORRECTION),
           CreateResult5("あぼがど", "アボガド", 500, prediction::UNIGRAM,
                         Token::NONE)}));
 
@@ -832,7 +832,7 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
   EXPECT_CALL(*aggregator, AggregateResultsForDesktop(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
-                        Token::SPELLING_CORRECTION),
+                        Token::READING_CORRECTION),
           CreateResult5("あぼがど", "アボガド", 500, prediction::UNIGRAM,
                         Token::NONE),
       }));
@@ -844,12 +844,12 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
   EXPECT_FALSE(FindCandidateByValue(results, "アボカド"));
 
   // Also verify on mobile (mixed conversion) that predictive
-  // SPELLING_CORRECTION is removed before reaching the misspelled position.
+  // READING_CORRECTION is removed before reaching the misspelled position.
   request_test_util::FillMobileRequest(request_.get());
   EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
-                        Token::SPELLING_CORRECTION),
+                        Token::READING_CORRECTION),
           CreateResult5("あぼがど", "アボガド", 500, prediction::UNIGRAM,
                         Token::NONE),
       }));
@@ -1001,13 +1001,13 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_EQ(c.inner_segment_boundary.size(), 2);
   }
   {
-    // SPELLING_CORRECTION
+    // READING_CORRECTION
     Result result = CreateResult5("てすと", "SPELLING_CORRECTION", 300, UNIGRAM,
-                                  Token::SPELLING_CORRECTION);
+                                  Token::READING_CORRECTION);
 
     EXPECT_TRUE(get_top_result(result, UNIGRAM, &c));
     EXPECT_EQ(c.value, "SPELLING_CORRECTION");
-    EXPECT_EQ(c.GetBehavioralAttributes(), Attribute::SPELLING_CORRECTION);
+    EXPECT_EQ(c.GetBehavioralAttributes(), Attribute::READING_CORRECTION);
   }
   {
     // TYPING_CORRECTION
@@ -3767,7 +3767,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
   predictor_peer.AggregateUnigram(convreq1, &results, &min_unigram_key_len);
   ASSERT_FALSE(results.empty());
   EXPECT_TRUE(results[0].attributes &
-              Attribute::SPELLING_CORRECTION);  // From unigram
+              Attribute::READING_CORRECTION);  // From unigram
 
   results.clear();
 
@@ -3782,7 +3782,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
     result.key = kKeyWithDe;
     result.value = kExpectedSuggestionValueWithDe;
     result.attributes =
-        Attribute::REALTIME_CONVERSION | Attribute::SPELLING_CORRECTION;
+        Attribute::REALTIME_CONVERSION | Attribute::READING_CORRECTION;
     EXPECT_CALL(*realtime_decoder,
                 Decode(Truly([&kKeyWithDe](const ConversionRequest& request) {
                   return request.key() == kKeyWithDe;
@@ -3795,7 +3795,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
   predictor_peer.AggregateRealtime(convreq2, 1, false, &results);
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].GetPredictionTypesForTesting(), REALTIME);
-  EXPECT_NE(0, (results[0].attributes & Attribute::SPELLING_CORRECTION));
+  EXPECT_NE(0, (results[0].attributes & Attribute::READING_CORRECTION));
   EXPECT_EQ(results[0].value, kExpectedSuggestionValueWithDe);
 }
 
@@ -4298,14 +4298,14 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidatesOnMobile) {
 
   MockAggregator* aggregator = data_and_predictor->mutable_aggregator();
   // When typing correction generates the same value ("ビッグバン"), the
-  // SPELLING_CORRECTION candidate is removed so typing correction takes
+  // READING_CORRECTION candidate is removed so typing correction takes
   // precedence, while literal same-key candidates ("ビックバン") are kept.
   EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("びっくばん", "ビックバン", 7800, prediction::UNIGRAM,
                         Token::NONE),
           CreateResult5("びっくばん", "ビッグバン", 8200, prediction::UNIGRAM,
-                        Token::SPELLING_CORRECTION),
+                        Token::READING_CORRECTION),
           CreateResult5("びっぐばん", "ビッグバン", 7000,
                         prediction::REALTIME | prediction::TYPING_CORRECTION,
                         Token::NONE),
@@ -4324,7 +4324,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidatesOnMobile) {
   EXPECT_EQ(results[0].key, "びっぐばん");
   EXPECT_EQ(results[0].value, "ビッグバン");
   EXPECT_EQ(results[0].cost, 7000);
-  EXPECT_FALSE(results[0].attributes & Attribute::SPELLING_CORRECTION);
+  EXPECT_FALSE(results[0].attributes & Attribute::READING_CORRECTION);
   EXPECT_TRUE(results[0].attributes & Attribute::TYPING_CORRECTION);
   EXPECT_EQ(results[1].key, "びっくばん");
   EXPECT_EQ(results[1].value, "ビックバン");
@@ -4334,7 +4334,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidatesOnMobile) {
   // When typing correction does NOT generate the corrected candidate (e.g.,
   // voiced-to-unvoiced "びっぐかめら" -> "ビックカメラ" or transposition
   // "しゅみれーしょん" -> "シミュレーション"), both the literal candidate and
-  // the SPELLING_CORRECTION candidate are preserved on mobile (even if an
+  // the READING_CORRECTION candidate are preserved on mobile (even if an
   // already-removed candidate shares the same value).
   Result removed_same_value = CreateResult5(
       "びっくかめら", "ビックカメラ", 7000, prediction::UNIGRAM, Token::NONE);
@@ -4344,7 +4344,7 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidatesOnMobile) {
           CreateResult5("びっぐかめら", "ビッグカメラ", 7500,
                         prediction::UNIGRAM, Token::NONE),
           CreateResult5("びっぐかめら", "ビックカメラ", 7814,
-                        prediction::UNIGRAM, Token::SPELLING_CORRECTION),
+                        prediction::UNIGRAM, Token::READING_CORRECTION),
           removed_same_value,
       }));
   const ConversionRequest convreq2 =
@@ -4353,17 +4353,17 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidatesOnMobile) {
   ASSERT_EQ(results2.size(), 2);
   EXPECT_EQ(results2[0].key, "びっぐかめら");
   EXPECT_EQ(results2[0].value, "ビッグカメラ");
-  EXPECT_FALSE(results2[0].attributes & Attribute::SPELLING_CORRECTION);
+  EXPECT_FALSE(results2[0].attributes & Attribute::READING_CORRECTION);
   EXPECT_EQ(results2[1].key, "びっぐかめら");
   EXPECT_EQ(results2[1].value, "ビックカメラ");
-  EXPECT_TRUE(results2[1].attributes & Attribute::SPELLING_CORRECTION);
+  EXPECT_TRUE(results2[1].attributes & Attribute::READING_CORRECTION);
 
   EXPECT_CALL(*aggregator, AggregateResultsForMixedConversion(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("しゅみれーしょん", "シュミレーション", 6015,
                         prediction::UNIGRAM, Token::NONE),
           CreateResult5("しゅみれーしょん", "シミュレーション", 6175,
-                        prediction::UNIGRAM, Token::SPELLING_CORRECTION),
+                        prediction::UNIGRAM, Token::READING_CORRECTION),
       }));
   const ConversionRequest convreq3 = CreateConversionRequest(
       ConversionRequest::PREDICTION, "しゅみれーしょん");
@@ -4371,10 +4371,10 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidatesOnMobile) {
   ASSERT_EQ(results3.size(), 2);
   EXPECT_EQ(results3[0].key, "しゅみれーしょん");
   EXPECT_EQ(results3[0].value, "シュミレーション");
-  EXPECT_FALSE(results3[0].attributes & Attribute::SPELLING_CORRECTION);
+  EXPECT_FALSE(results3[0].attributes & Attribute::READING_CORRECTION);
   EXPECT_EQ(results3[1].key, "しゅみれーしょん");
   EXPECT_EQ(results3[1].value, "シミュレーション");
-  EXPECT_TRUE(results3[1].attributes & Attribute::SPELLING_CORRECTION);
+  EXPECT_TRUE(results3[1].attributes & Attribute::READING_CORRECTION);
 }
 
 }  // namespace

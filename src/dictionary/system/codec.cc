@@ -274,7 +274,7 @@ uint8_t GetFlagsForToken(absl::Span<const TokenInfo> tokens, int index) {
   const Token* token = token_info.token;
 
   // Special treatment for spelling correction.
-  if (token->attributes & Token::SPELLING_CORRECTION) {
+  if (token->attributes & Token::READING_CORRECTION) {
     flags |= kSpellingCorrectionFlag;
   }
 
@@ -724,7 +724,7 @@ bool SystemDictionaryCodec::DecodeToken(const uint8_t* ptr,
 
   const uint8_t flags = ReadFlags(ptr[0]);
   if (flags & kSpellingCorrectionFlag) {
-    token_info->token->attributes = Token::SPELLING_CORRECTION;
+    token_info->token->attributes = Token::READING_CORRECTION;
   }
 
   int offset = 1;

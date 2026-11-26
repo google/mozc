@@ -1577,7 +1577,7 @@ void EngineConverter::AppendCandidateList() {
     // always display the candidate to let user know the
     // miss spelled candidate.
     if (i < 10 && (segment.candidate(i).attributes &
-                   converter::Attribute::SPELLING_CORRECTION)) {
+                   converter::Attribute::READING_CORRECTION)) {
       candidate_list_visible_ = true;
     }
   }

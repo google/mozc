@@ -193,7 +193,7 @@ bool IsPrecedingNumber(const ConversionRequest& request) {
 // provided at an appropriate timing and context.
 absl::string_view GetDescription(const Result& result) {
   if (result.attributes &
-      (Attribute::SPELLING_CORRECTION | Attribute::TYPING_CORRECTION |
+      (Attribute::READING_CORRECTION | Attribute::TYPING_CORRECTION |
        Attribute::AUTO_PARTIAL_SUGGESTION)) {
     return "";
   }
@@ -796,7 +796,7 @@ bool UserHistoryPredictor::RomanFuzzyLookupEntry(
   Entry* result = entry_queue.NewEntry();
   DCHECK(result);
   *result = entry;
-  SetAttribute(*result, Attribute::SPELLING_CORRECTION);
+  SetAttribute(*result, Attribute::READING_CORRECTION);
   entry_queue.Push(result);
 
   return true;
@@ -1836,8 +1836,8 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
       absl::c_copy(result_entry->inner_segment_boundary(),
                    std::back_inserter(result.inner_segment_boundary));
     }
-    if (result_entry->attributes() & Attribute::SPELLING_CORRECTION) {
-      result.attributes |= converter::Attribute::SPELLING_CORRECTION;
+    if (result_entry->attributes() & Attribute::READING_CORRECTION) {
+      result.attributes |= converter::Attribute::READING_CORRECTION;
     }
     if (result_entry->attributes() & Attribute::WEAK_CANDIDATE) {
       result.attributes |= converter::Attribute::WEAK_USER_HISTORY_PREDICTION;

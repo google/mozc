@@ -128,7 +128,7 @@ bool TextDictionaryLoader::RewriteSpecialToken(Token* token,
     return true;
   }
   if (label.starts_with("SPELLING_CORRECTION")) {
-    token->attributes = Token::SPELLING_CORRECTION;
+    token->attributes = Token::READING_CORRECTION;
     return true;
   }
   if (label.starts_with("ZIP_CODE")) {
@@ -265,7 +265,7 @@ TextDictionaryLoader::LoadReadingCorrectionTokens(
     token->lid = max_cost_token->lid;
     token->rid = max_cost_token->rid;
     token->cost = max_cost_token->cost + kCostPenalty;
-    // We don't set SPELLING_CORRECTION. The entries in reading_correction
+    // We don't set READING_CORRECTION. The entries in reading_correction
     // data are also stored in rewriter/correction_rewriter.cc.
     // reading_correction_rewriter annotates the spelling correction
     // notations.

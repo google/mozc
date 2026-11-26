@@ -53,7 +53,7 @@ struct Node {
     USER_DICTIONARY = 1 << 1,        // User dictionary
     NO_VARIANTS_EXPANSION = 1 << 2,  // No need to expand full/half
     STARTS_WITH_PARTICLE = 1 << 4,   // User input starts with particle
-    SPELLING_CORRECTION = 1 << 5,    // "Did you mean"
+    READING_CORRECTION = 1 << 5,     // "Did you mean"
     // PARTIALY_KEY_CONSUMED is deleted.
     // SUFFIX_DICTIONARY (1 << 8) is deleted.
     KEY_EXPANDED = 1 << 9,  // Keys are expanded.
@@ -128,8 +128,8 @@ struct Node {
     wcost = token.cost;
     cost = 0;
     attributes = 0;
-    if (token.attributes & dictionary::Token::SPELLING_CORRECTION) {
-      attributes |= SPELLING_CORRECTION;
+    if (token.attributes & dictionary::Token::READING_CORRECTION) {
+      attributes |= READING_CORRECTION;
     }
     if (token.attributes & dictionary::Token::USER_DICTIONARY) {
       attributes |= USER_DICTIONARY;

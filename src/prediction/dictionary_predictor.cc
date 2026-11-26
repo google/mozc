@@ -661,7 +661,7 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
       result.attributes |= Attribute::AUTO_PARTIAL_SUGGESTION;
     }
 
-    if ((!(result.attributes & Attribute::SPELLING_CORRECTION) &&
+    if ((!(result.attributes & Attribute::READING_CORRECTION) &&
          request_util::IsLatinInputMode(request)) ||
         (result.attributes & Attribute::SUFFIX_DICTIONARY)) {
       result.attributes |= Attribute::NO_VARIANTS_EXPANSION;
@@ -999,12 +999,12 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
   for (size_t i = 0; i < results.size(); ++i) {
     Result& result = results[i];
     if (result.removed ||
-        !(result.attributes & Attribute::SPELLING_CORRECTION)) {
+        !(result.attributes & Attribute::READING_CORRECTION)) {
       continue;
     }
 
     // Only checks at most 5 spelling corrections to avoid the case
-    // like all candidates have SPELLING_CORRECTION.
+    // like all candidates have READING_CORRECTION.
     if (--spelling_correction_size == 0) {
       return;
     }
@@ -1016,7 +1016,7 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
       }
       const Result& target_result = results[j];
       if (target_result.removed ||
-          (target_result.attributes & Attribute::SPELLING_CORRECTION)) {
+          (target_result.attributes & Attribute::READING_CORRECTION)) {
         continue;
       }
       if (target_result.key == result.key) {

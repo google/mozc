@@ -126,8 +126,8 @@ void Result::SetTypesAndTokenAttributes(PredictionTypes prediction_types,
   if (attributes & Attribute::REALTIME_TOP) {
     attributes |= Attribute::NO_VARIANTS_EXPANSION;
   }
-  if (token_attr & Token::SPELLING_CORRECTION) {
-    attributes |= Attribute::SPELLING_CORRECTION;
+  if (token_attr & Token::READING_CORRECTION) {
+    attributes |= Attribute::READING_CORRECTION;
   }
   if (token_attr & Token::USER_DICTIONARY) {
     attributes |= (Attribute::USER_DICTIONARY | Attribute::NO_MODIFICATION |

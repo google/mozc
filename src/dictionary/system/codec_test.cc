@@ -264,7 +264,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
       if (n == 0) {
         source_tokens_[i].token->attributes = Token::NONE;
       } else if (n == 1) {
-        source_tokens_[i].token->attributes = Token::SPELLING_CORRECTION;
+        source_tokens_[i].token->attributes = Token::READING_CORRECTION;
       }
     }
   }

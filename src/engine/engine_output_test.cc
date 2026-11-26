@@ -382,7 +382,7 @@ TEST(EngineOutputTest, FillAllCandidateWords_Attributes) {
       converter::Attribute::USER_HISTORY_PREDICTION |
       converter::Attribute::NO_VARIANTS_EXPANSION;
   segment.mutable_candidate(3)->attributes =
-      converter::Attribute::SPELLING_CORRECTION |
+      converter::Attribute::READING_CORRECTION |
       converter::Attribute::NO_EXTRA_DESCRIPTION;
   segment.mutable_candidate(4)->attributes =
       converter::Attribute::TYPING_CORRECTION |

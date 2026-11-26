@@ -133,7 +133,7 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
   AddCandidate("gekkyokuwo", "GEKKYOKUwo", "gekkyoku", "GEKKYOKU", segment);
   converter::Candidate* candidate2 =
       AddCandidate("かびばら", "かびばら", "カピバラ", "カピバラ", segment);
-  candidate2->attributes |= converter::Attribute::SPELLING_CORRECTION;
+  candidate2->attributes |= converter::Attribute::READING_CORRECTION;
 
   config.set_use_spelling_correction(false);
 
@@ -147,7 +147,7 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
   // candidate 0
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).attributes,
             (converter::Attribute::RERANKED |
-             converter::Attribute::SPELLING_CORRECTION));
+             converter::Attribute::READING_CORRECTION));
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).description,
             "<もしかして: tsukigime>");
 
@@ -158,7 +158,7 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
 
   // candidate 2
   EXPECT_EQ(segments.conversion_segment(0).candidate(2).attributes,
-            converter::Attribute::SPELLING_CORRECTION);
+            converter::Attribute::READING_CORRECTION);
   EXPECT_EQ(segments.conversion_segment(0).candidate(2).description,
             "<もしかして>");
   // "TSUKIGIMEwo" already exists at index 0, so no duplicate is inserted.
@@ -194,14 +194,14 @@ TEST_F(CorrectionRewriterTest, InsertOrPromoteCorrectionCandidateTest) {
     EXPECT_EQ(segments.conversion_segment(0).candidate(1).content_value,
               "サイゼリヤ");
     EXPECT_TRUE(segments.conversion_segment(0).candidate(1).attributes &
-                converter::Attribute::SPELLING_CORRECTION);
+                converter::Attribute::READING_CORRECTION);
   }
 
   {
     // Corrected candidate already exists at index 4 (> kInsertPosition = 3)
     // from typing correction (with key "さいぜりやを" != error "さいぜりあ"):
     // do not insert a duplicate, do not promote to kInsertPosition, and do not
-    // attach SPELLING_CORRECTION annotations.
+    // attach READING_CORRECTION annotations.
     Segments segments;
     Segment* segment = AddSegment("さいぜりあを", &segments);
     AddCandidate("さいぜりあを", "サイゼリアを", "さいぜりあ", "サイゼリア",
@@ -231,7 +231,7 @@ TEST_F(CorrectionRewriterTest, InsertOrPromoteCorrectionCandidateTest) {
                      .candidate(4)
                      .inner_segment_boundary.empty());
     EXPECT_FALSE(segments.conversion_segment(0).candidate(4).attributes &
-                 converter::Attribute::SPELLING_CORRECTION);
+                 converter::Attribute::READING_CORRECTION);
     EXPECT_TRUE(
         segments.conversion_segment(0).candidate(4).display_value.empty());
   }
@@ -253,7 +253,7 @@ TEST_F(CorrectionRewriterTest, InsertOrPromoteCorrectionCandidateTest) {
     ASSERT_EQ(segments.conversion_segment(0).candidates_size(), 5);
     EXPECT_EQ(segments.conversion_segment(0).candidate(3).value, "サイゼリヤ");
     EXPECT_TRUE(segments.conversion_segment(0).candidate(3).attributes &
-                converter::Attribute::SPELLING_CORRECTION);
+                converter::Attribute::READING_CORRECTION);
   }
 }
 
@@ -336,14 +336,14 @@ TEST_F(CorrectionRewriterTest,
   }
 
   {
-    // Even if SPELLING_CORRECTION is already set from the system dictionary,
+    // Even if READING_CORRECTION is already set from the system dictionary,
     // reading_correction.tsv entry still populates the reading correction
     // display_value and preserves functional_value().
     Segments segments;
     Segment* segment = AddSegment("すくつを", &segments);
     converter::Candidate* candidate =
         AddCandidate("すくつを", "巣窟を", "すくつ", "巣窟", segment);
-    candidate->attributes |= converter::Attribute::SPELLING_CORRECTION;
+    candidate->attributes |= converter::Attribute::READING_CORRECTION;
     commands::Request request;
     request.set_display_value_capability(commands::Request::PLAIN_TEXT);
     EXPECT_TRUE(rewriter->Rewrite(ConvReq(config, request), &segments));

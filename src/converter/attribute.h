@@ -53,7 +53,7 @@ class Attribute {
     // learn it with left/right context
     CONTEXT_SENSITIVE = 1 << 4,
     // has "did you mean"
-    SPELLING_CORRECTION = 1 << 5,
+    READING_CORRECTION = 1 << 5,
     // No need to have full/half width expansion
     NO_VARIANTS_EXPANSION = 1 << 6,
     // No need to have extra descriptions

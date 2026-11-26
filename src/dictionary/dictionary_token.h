@@ -43,7 +43,7 @@ struct Token {
 
   enum Attribute {
     NONE = 0,
-    SPELLING_CORRECTION = 1,
+    READING_CORRECTION = 1,
     LABEL_SIZE = 2,
     // * CAUTION *
     // If you are going to add new attributes, make sure that they have larger

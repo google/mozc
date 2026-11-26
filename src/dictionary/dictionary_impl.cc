@@ -105,7 +105,7 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
                      Token token) override {
     if (!(token.attributes & Token::USER_DICTIONARY)) {
       if (!options_.use_spelling_correction &&
-          (token.attributes & Token::SPELLING_CORRECTION)) {
+          (token.attributes & Token::READING_CORRECTION)) {
         return TRAVERSE_CONTINUE;
       }
       if (!options_.use_zip_code_conversion &&
