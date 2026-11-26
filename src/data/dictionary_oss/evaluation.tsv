@@ -12,7 +12,7 @@ OK:	にほんちーむのえんぎはこのあとすぐです	日本チームの
 OK:	ぼーりんぐじょうのちかくです	ボーリング場の近くです	Conversion Match	ボーリング場.*	2.30.5618
 OK:	しょっぱいあじがした	しょっぱい味がした	Conversion Not Match	.*下	2.26.4423
 OK:	とんでもないやつがあらわれた	とんでもないやつが現れた	Conversion Not Match	.*洗われた	2.26.4423
-OK:	さるのなきごえがすごい	猿の鳴き声がすごい	Conversion Not Match	申.*	2.29.5268
+OK:	さるのなきごえがすごい	サルの鳴き声がすごい	Conversion Not Match	申.*	3.35.6354
 FAILED:	ほしゅてきなめんもあるね	保守的な麺もあるね	Conversion Not Match	.*麺.*	2.26.4423
 OK:	ひまわりがさいている	ひまわりが咲いている	Conversion Not Match	.*最低.*	2.30.5432
 OK:	いがもたれる	いが持たれる	Conversion Not Match	伊賀.*	2.26.4423
@@ -84,7 +84,7 @@ OK:	ぜんくつ	前屈	Conversion Expected	前屈	2.26.4479
 OK:	じゅうりょうせい	従量制	Conversion Expected 2	従量制	2.26.4479
 OK:	いやがおうでも	否が応でも	Conversion Expected 2	否が応でも	2.26.4479
 OK:	れっきとした	れっきとした	Conversion Expected 2	歴とした	3.34.6239
-OK:	はばかります	憚ります	Conversion Expected 2	憚ります	3.33.6133
+OK:	はばかります	はばかります	Conversion Expected 2	憚ります	3.35.6354
 OK:	こうれい	高齢	Conversion Expected 9	降霊	2.26.4479
 OK:	とわ	永遠	Conversion Expected 9	永遠	2.29.5268
 OK:	りょうあんじ	龍安寺	Conversion Expected 2	龍安寺	2.26.4479
@@ -92,7 +92,7 @@ OK:	はやまるな	早まるな	Conversion Not Match	葉山.*	2.26.4479
 OK:	うきついちばん	浮津一番	Conversion Expected	浮津一番	2.28.5050
 OK:	うつだ	鬱だ	Conversion Expected	鬱だ	2.30.5618
 OK:	うつだ	鬱だ	Conversion Expected 9	欝だ	2.30.5618
-FAILED:	このいやほんはていおんすくなめときいている	このイヤホンは低温少なめと聞いている	Conversion Expected	このイヤホンは低音少なめと聞いている	3.33.6133
+OK:	このいやほんはていおんすくなめときいている	このイヤホンは低音少なめと聞いている	Conversion Expected	このイヤホンは低音少なめと聞いている	3.35.6354
 OK:	てんさいとしかいいようがない	天才としか言いようがない	Conversion Match	.*としか言いようがない	2.26.4479
 OK:	そのあとどうなるかは	その後どうなるかは	Conversion Match	.*どうなるかは	2.26.4479
 OK:	ばくそうする	爆走する	Conversion Expected	爆走する	2.26.4479
@@ -128,16 +128,16 @@ OK:	こうかんじょうほう	交換情報	Conversion Expected	交換情報	2.
 OK:	ちゅうもんじきにもよるけど	注文時期にもよるけど	Conversion Expected	注文時期にもよるけど	2.26.4520
 FAILED:	しあげはあしたにしよう	仕上げは明日に使用	Conversion Expected	仕上げは明日にしよう	2.26.4520
 FAILED:	あせをすいそうなので	汗を水槽なので	Conversion Expected	汗を吸いそうなので	2.26.4520
-FAILED:	ひびきがゆたかになる	響が豊かになる	Conversion Expected	響きが豊かになる	3.33.6133
+OK:	ひびきがゆたかになる	響きが豊かになる	Conversion Expected	響きが豊かになる	3.35.6354
 OK:	そういうはなしができるじきがきたら	そういう話ができる時期が来たら	Conversion Match	そういう話ができる時期が.*	2.26.4520
 OK:	むこうのかんがえもよくきいてくれ	向こうの考えもよく聞いてくれ	Conversion Expected	向こうの考えもよく聞いてくれ	2.26.4520
 FAILED:	こうつうりょうだってそっちのほうがおおい	交通量だってそっちのほうが多い	Conversion Expected	交通量だってそっちの方が多い	2.26.4520
 OK:	なんしゅうもおくれてしまったので	何周も遅れてしまったので	Conversion Match	何.*	2.26.4520
-OK:	つきあっていちねんはんで	付き合って１年半で	Conversion Match	.*年半で	2.29.5268
-OK:	いちねんはんほどつきあった	１年半ほど付き合った	Conversion Match	.*年半ほど付き合った	2.29.5268
+OK:	つきあっていちねんはんで	付き合って一年半で	Conversion Match	.*年半で	3.35.6354
+OK:	いちねんはんほどつきあった	一年半ほど付き合った	Conversion Match	.*年半ほど付き合った	3.35.6354
 OK:	ちょうれいのあとはかいぎだ	朝礼のあとは会議だ	Conversion Match	.*会議だ	2.26.4520
-OK:	さんねんはんの	３年半の	Conversion Match	.*年半の	2.29.5268
-OK:	ごねんはんの	５年半の	Conversion Match	.*年半の	2.29.5268
+FAILED:	さんねんはんの	三年版の	Conversion Match	.*年半の	3.35.6354
+FAILED:	ごねんはんの	五年版の	Conversion Match	.*年半の	3.35.6354
 OK:	かってにぐちって	勝手に愚痴って	Conversion Not Match	支ってに.*	2.26.4520
 FAILED:	さりぎわがかっこいい	さり際がかっこいい	Conversion Match	去り際が.*	2.30.5520
 OK:	しはいよくがおおきいひとだ	支配欲が大きい人だ	Conversion Expected	支配欲が大きい人だ	2.26.4520
@@ -153,7 +153,7 @@ OK:	このみによるとしかいいようがない	好みによるとしか言
 OK:	みにゅうりょくのもじを	未入力の文字を	Conversion Expected	未入力の文字を	2.26.4520
 FAILED:	このしょうひんをかいたい	この商品を解体	Conversion Expected	この商品を買いたい	2.30.5432
 OK:	ひとのひょうかをきにするな	人の評価を気にするな	Conversion Expected	人の評価を気にするな	2.26.4520
-FAILED:	よくえいぎょうびはっそうに	よく営業日発送に	Conversion Expected	翌営業日発送に	3.33.6133
+OK:	よくえいぎょうびはっそうに	翌営業日発送に	Conversion Expected	翌営業日発送に	3.35.6354
 OK:	おおもとのじしょでは	大本の辞書では	Conversion Expected	大本の辞書では	2.30.5544
 OK:	さいりようしてください	再利用してください	Conversion Expected	再利用してください	2.26.4520
 OK:	さいちぇっくしてください	再チェックしてください	Conversion Expected	再チェックしてください	2.26.4520
@@ -209,16 +209,16 @@ FAILED:	いっぴょう	一瓢	Conversion Expected 2	一票	2.28.4880
 FAILED:	いっぴょう	一瓢	Conversion Expected 9	1票	2.32.5981
 OK:	きそう	競う	Conversion Expected 9	寄贈	2.28.4880
 OK:	なぞめいてて	謎めいてて	Conversion Expected	謎めいてて	2.29.5268
-OK:	しょくじをしたにもかかわらず	食事をしたにもかかわらず	Conversion Match	食事をした.*	2.31.5851
-FAILED:	さんぜんえん	産前円	Conversion Expected 2	三千円	2.28.5050
-FAILED:	さんぜんえん	産前円	Conversion Expected 99	3千円	2.32.5981
-FAILED:	さんぜんえん	産前円	Conversion Expected 99	3000円	2.32.5981
-OK:	はっせんえん	ハッ千円	Conversion Expected 2	八千円	2.30.5618
-OK:	はっせんえん	ハッ千円	Conversion Expected 99	8千円	2.32.5981
-FAILED:	はっせんえん	ハッ千円	Conversion Expected 99	8000円	2.32.5981
-FAILED:	きゅうせんえん	旧千円	Conversion Expected 2	九千円	2.28.4880
-FAILED:	きゅうせんえん	旧千円	Conversion Expected 99	9千円	2.32.5981
-FAILED:	きゅうせんえん	旧千円	Conversion Expected 99	9000円	2.32.5981
+FAILED:	しょくじをしたにもかかわらず	食事を下にもかかわらず	Conversion Match	食事をした.*	3.35.6354
+OK:	さんぜんえん	三千円	Conversion Expected 2	三千円	3.35.6354
+FAILED:	さんぜんえん	三千円	Conversion Expected 99	3千円	3.35.6354
+OK:	さんぜんえん	三千円	Conversion Expected 99	3000円	3.35.6354
+OK:	はっせんえん	八千円	Conversion Expected 2	八千円	3.35.6354
+FAILED:	はっせんえん	八千円	Conversion Expected 99	8千円	3.35.6354
+OK:	はっせんえん	八千円	Conversion Expected 99	8000円	3.35.6354
+OK:	きゅうせんえん	九千円	Conversion Expected 2	九千円	3.35.6354
+FAILED:	きゅうせんえん	九千円	Conversion Expected 99	9千円	3.35.6354
+OK:	きゅうせんえん	九千円	Conversion Expected 99	9000円	3.35.6354
 OK:	ひらぶんでおくる	平文で送る	Conversion Expected	平文で送る	2.28.4880
 FAILED:	ごかんそう	ご乾燥	Conversion Expected	ご感想	2.28.4830
 OK:	うっぷんばらし	鬱憤晴らし	Conversion Expected 2	鬱憤晴らし	2.28.4880
@@ -237,21 +237,21 @@ OK:	うらめん	裏面	Conversion Match	裏面	2.28.4880
 OK:	にだんかいうせつ	二段階右折	Conversion Expected	二段階右折	2.28.4830
 OK:	にだんかいにんしょう	二段階認証	Conversion Expected	二段階認証	2.28.4830
 OK:	ひともうけ	一儲け	Conversion Expected	一儲け	2.28.4880
-OK:	ひゃっきん	百均	Conversion Expected	百均	2.28.4880
+FAILED:	ひゃっきん	１００均	Conversion Expected	百均	3.35.6354
 OK:	あわのくに	阿波国	Conversion Expected 2	阿波国	2.30.5618
 OK:	うぜん	羽前	Conversion Expected 9	羽前	2.30.5520
-FAILED:	おきのくに	沖の区に	Conversion Expected	隠岐国	2.30.5618
+OK:	おきのくに	隠岐国	Conversion Expected	隠岐国	3.35.6354
 OK:	ごきはちどう	五畿八道	Conversion Expected	五畿八道	2.30.5520
 OK:	びんごのくに	備後国	Conversion Expected	備後国	2.30.5520
-OK:	りくおう	陸王	Conversion Expected 9	陸奥	2.30.5618
+OK:	りくおう	陸奥	Conversion Expected 9	陸奥	3.35.6354
 OK:	すげかえれば	すげ替えれば	Conversion Expected 2	挿げ替えれば	2.29.5268
 OK:	こうじょ	控除	Conversion Expected 19	扣除	2.28.5000
 OK:	りゅうこうごたいしょう	流行語大賞	Conversion Expected	流行語大賞	2.28.5000
 OK:	たんろくでんち	単６電池	Conversion Expected 2	単6電池	2.29.5268
 OK:	もうご	もう五	Conversion Expected 9	妄語	2.28.5029
-FAILED:	おんじゅ	オンジュ	Conversion Expected 9	飲酒	2.29.5268
+OK:	おんじゅ	飲酒	Conversion Expected 9	飲酒	3.35.6354
 OK:	ふもうご	不妄語	Conversion Expected 9	不妄語	2.28.5000
-FAILED:	ふおんじゅ	不穏樹	Conversion Expected 9	不飲酒	2.30.5618
+OK:	ふおんじゅ	不飲酒	Conversion Expected 9	不飲酒	3.35.6354
 OK:	ぜんざいさん	全財産	Conversion Expected	全財産	2.28.5000
 OK:	あんぜんせいのこうじょう	安全性の向上	Conversion Expected	安全性の向上	2.32.5981
 FAILED:	きこう	機構	Conversion Expected 9	貴行	2.28.4990
@@ -271,23 +271,23 @@ OK:	しんちょうにはこぶ	慎重に運ぶ	Conversion Expected	慎重に運
 OK:	ぎろんになんしょくをしめす	議論に難色を示す	Conversion Expected	議論に難色を示す	2.32.5981
 OK:	おんどをおどる	音頭を踊る	Conversion Match	音頭を.*	2.32.5981
 FAILED:	かいぜんしとうぞんじます	改善死闘存じます	Conversion Match	改善しとう.*	3.35.6354
-FAILED:	ふくじょし	服女子	Conversion Expected 2	副助詞	2.30.5618
+OK:	ふくじょし	副助詞	Conversion Expected 2	副助詞	3.35.6354
 FAILED:	らっぷ	ラップ	Conversion Expected 9	乱舞	2.28.4990
 OK:	こきゅう	呼吸	Conversion Expected 9	枯朽	2.28.5000
 OK:	こうばいりょくへいか	購買力平価	Conversion Expected	購買力平価	2.28.5000
 FAILED:	ろーまじぶんをかく	ローマ字分を書く	Conversion Expected	ローマ字文を書く	2.32.5981
 FAILED:	かんじかなまじりぶん	感じかな混じり分	Conversion Match	.*文	2.32.5981
-FAILED:	にせんえんさつ	にせん円札	Conversion Expected 2	二千円札	2.32.5981
-FAILED:	ごせんえんさつ	互選円札	Conversion Expected 2	五千円札	2.32.5981
-FAILED:	ごひゃくえんさつ	御百円札	Conversion Expected 2	五百円札	2.32.5981
-FAILED:	にせんえんさつ	にせん円札	Conversion Expected 9	2千円札	2.32.5981
-FAILED:	ごせんえんさつ	互選円札	Conversion Expected 9	5千円札	2.32.5981
-FAILED:	ごひゃくえんさつ	御百円札	Conversion Expected 9	5百円札	2.32.5981
+OK:	にせんえんさつ	二千円札	Conversion Expected 2	二千円札	3.35.6354
+OK:	ごせんえんさつ	五千円札	Conversion Expected 2	五千円札	3.35.6354
+OK:	ごひゃくえんさつ	五百円札	Conversion Expected 2	五百円札	3.35.6354
+FAILED:	にせんえんさつ	二千円札	Conversion Expected 9	2千円札	3.35.6354
+FAILED:	ごせんえんさつ	五千円札	Conversion Expected 9	5千円札	3.35.6354
+FAILED:	ごひゃくえんさつ	五百円札	Conversion Expected 9	5百円札	3.35.6354
 FAILED:	たいをなす	タイをなす	Conversion Match	体を.*	2.32.5981
 OK:	じゅうまん	充満	Conversion Expected 9	十万	2.32.5981
-FAILED:	じゅうまん	充満	Conversion Expected 9	10万	2.32.5981
-OK:	じゅうまんえん	充満園	Conversion Expected 9	十万円	2.32.5981
-FAILED:	じゅうまんえん	充満園	Conversion Expected 9	10万円	2.32.5981
+OK:	じゅうまん	充満	Conversion Expected 9	10万	3.35.6354
+OK:	じゅうまんえん	十万円	Conversion Expected 9	十万円	3.35.6354
+FAILED:	じゅうまんえん	十万円	Conversion Expected 9	10万円	3.35.6354
 OK:	たいせつ	大切	Conversion Expected 9	堆雪	2.28.4960
 OK:	はいせつ	排泄	Conversion Expected 9	排雪	2.28.4960
 OK:	りねーむ	リネーム	Conversion Expected	リネーム	2.28.4960
@@ -321,13 +321,13 @@ OK:	かいていこう	書いていこう	Conversion Expected 2	改訂稿	3.33.6
 OK:	けっていこう	決定稿	Conversion Expected	決定稿	2.29.5135
 OK:	さいしゅうこう	最終稿	Conversion Expected	最終稿	2.30.5618
 OK:	しゅうせいこう	修正稿	Conversion Expected	修正稿	2.30.5618
-FAILED:	さんじゅっぷん	三拾分	Conversion Expected 9	三十分	2.32.5981
-OK:	じゅうごふん	中五分	Conversion Expected 9	十五分	2.32.5981
-OK:	にじゅうごびょう	二重五秒	Conversion Expected 9	二十五秒	2.32.5981
+OK:	さんじゅっぷん	三十分	Conversion Expected 9	三十分	3.35.6354
+OK:	じゅうごふん	十五分	Conversion Expected 9	十五分	3.35.6354
+OK:	にじゅうごびょう	二十五秒	Conversion Expected 9	二十五秒	3.35.6354
 OK:	ごじゅうにち	五十日	Conversion Expected 9	五十日	2.32.5981
-OK:	じゅうはちねん	中八年	Conversion Expected 9	十八年	2.32.5981
-FAILED:	さんがつはつか	３月は柄	Conversion Expected 9	三月二十日	2.32.5981
-FAILED:	さんがつはつか	３月は柄	Conversion Expected 9	三月二〇日	2.32.5981
+OK:	じゅうはちねん	十八年	Conversion Expected 9	十八年	3.35.6354
+OK:	さんがつはつか	３月二十日	Conversion Expected 9	三月二十日	3.35.6354
+FAILED:	さんがつはつか	３月二十日	Conversion Expected 9	三月二〇日	3.35.6354
 FAILED:	とりそこなって	鳥損なって	Conversion Expected	取り損なって	2.30.5618
 OK:	ごかい	誤解	Conversion Expected 9	誤解	3.33.6089
 OK:	ごかいする	誤解する	Conversion Expected 2	誤解する	2.30.5432
@@ -412,7 +412,7 @@ FAILED:	そく	足	Conversion Expected 999	聀	2.30.5544
 FAILED:	しょく	色	Conversion Expected 999	𫟉	2.30.5544
 FAILED:	しき	指揮	Conversion Expected 999	𫟉	2.30.5618
 FAILED:	そく	足	Conversion Expected 999	𫟉	2.30.5544
-FAILED:	いちおく	一尾区	Conversion Expected	一億	2.30.5544
+OK:	いちおく	一億	Conversion Expected	一億	3.35.6354
 FAILED:	もがく	もがく	Conversion Expected	踠く	2.30.5544
 FAILED:	もがいて	もがいて	Conversion Expected	踠いて	2.30.5544
 OK:	むしょう	無償	Conversion Expected 9	無床	2.30.5544
@@ -437,7 +437,7 @@ OK:	しなごは	シナ語派	Conversion Expected 9	シナ語派	2.30.5544
 OK:	しゅかい	珠海	Conversion Expected 99	珠海	2.30.5618
 OK:	きご	季語	Conversion Expected 99	徽語	2.30.5544
 OK:	びんご	ビンゴ	Conversion Expected 99	閩語	2.30.5544
-FAILED:	ほせんご	保線後	Conversion Expected 99	莆仙語	2.30.5618
+OK:	ほせんご	莆仙語	Conversion Expected 99	莆仙語	3.35.6354
 OK:	ぴんいん	拼音	Conversion Expected 9	拼音	2.30.5618
 OK:	ごうしかいしゃ	合資会社	Conversion Expected	合資会社	2.30.5544
 OK:	きかんせっけい	機関設計	Conversion Expected	機関設計	3.33.6089
@@ -470,26 +470,26 @@ FAILED:	じょうきょうをちゅうしする	状況を中止する	Conversion
 OK:	とくにはございません	特にはございません	Conversion Expected	特にはございません	2.30.5618
 OK:	とくにはありません	特にはありません	Conversion Expected	特にはありません	2.30.5618
 FAILED:	めのまえ	眼の前	Conversion Expected	目の前	2.30.5618
-OK:	ひとこない	人来ない	Conversion Expected	人来ない	2.30.5618
+FAILED:	ひとこない	人庫内	Conversion Expected	人来ない	3.35.6354
 FAILED:	いいごえん	良い五円	Conversion Expected	いいご縁	2.30.5618
 OK:	まいとしこうれい	毎年恒例	Conversion Expected	毎年恒例	2.30.5618
 OK:	まんがよんだり	漫画読んだり	Conversion Expected	漫画読んだり	3.35.6354
-FAILED:	じんこうにかいしゃする	人口にかいしゃする	Conversion Expected	人口に膾炙する	3.33.6133
+FAILED:	じんこうにかいしゃする	人口に会社する	Conversion Expected	人口に膾炙する	3.35.6354
 FAILED:	いいごえんがあれば	いい御縁があれば	Conversion Expected	いいご縁があれば	2.30.5618
-FAILED:	にせんえんさつ	にせん円札	Conversion Expected	二千円札	2.30.5618
-FAILED:	ごせんえんさつ	互選円札	Conversion Expected	五千円札	2.30.5618
-FAILED:	いちまんえんさつ	糸満円札	Conversion Expected	一万円札	2.30.5618
-OK:	いちまん	一万	Conversion Expected	一万	2.31.5851
+OK:	にせんえんさつ	二千円札	Conversion Expected	二千円札	3.35.6354
+OK:	ごせんえんさつ	五千円札	Conversion Expected	五千円札	3.35.6354
+OK:	いちまんえんさつ	一万円札	Conversion Expected	一万円札	3.35.6354
+FAILED:	いちまん	一萬	Conversion Expected	一万	3.35.6354
 OK:	ていせいぶん	訂正文	Conversion Expected 9	訂正分	2.31.5851
 OK:	ていせいぶん	訂正文	Conversion Expected 9	訂正文	2.31.5851
 FAILED:	もどりちのかた	戻り値の方	Conversion Expected	戻り値の型	2.31.5712
 FAILED:	あちらがわ	あちらがわ	Conversion Expected	あちら側	3.33.6089
 FAILED:	こちらがわ	こちらがわ	Conversion Expected	こちら側	3.33.6089
-FAILED:	さんじゅっぷん	三拾分	Conversion Expected	三十分	2.31.5712
+OK:	さんじゅっぷん	三十分	Conversion Expected	三十分	3.35.6354
 OK:	ぷらちなでびっと	プラチナデビット	Conversion Expected	プラチナデビット	2.31.5712
 OK:	あいこんかえるか	アイコン変えるか	Conversion Expected	アイコン変えるか	2.31.5712
 FAILED:	だいせいか	第せいか	Conversion Expected	大成果	2.31.5712
-FAILED:	たな	店	Conversion Expected	棚	2.31.5712
+OK:	たな	棚	Conversion Expected	棚	3.35.6354
 FAILED:	びよういんだい	美容院台	Conversion Expected	美容院代	2.31.5712
 OK:	きしょう	気象	Conversion Expected 9	起床	2.31.5712
 OK:	おとまり	お泊り	Conversion Expected 3	お泊まり	2.31.5712
@@ -546,8 +546,8 @@ OK:	にじ	二時	Conversion Expected 99	2時	2.31.5810
 FAILED:	にじ	二時	Conversion Expected 99	虹	2.31.5810
 OK:	さんしゅう	三周	Conversion Expected 99	3週	2.31.5810
 OK:	さんしゅう	三周	Conversion Expected 99	参集	2.31.5810
-OK:	よじ	よじ	Conversion Expected 99	4時	2.31.5810
-OK:	よじ	よじ	Conversion Expected 99	余事	2.31.5810
+OK:	よじ	余事	Conversion Expected 99	4時	3.35.6354
+OK:	よじ	余事	Conversion Expected 99	余事	3.35.6354
 OK:	ごかい	誤解	Conversion Expected 99	5階	3.33.6089
 OK:	ごかい	誤解	Conversion Expected 99	誤解	3.33.6089
 OK:	ろくが	録画	Conversion Expected 99	6が	2.31.5810
@@ -563,32 +563,32 @@ OK:	せんこうとともに	選考とともに	Conversion Expected 99	閃光と
 OK:	おふろはいりません	お風呂入りません	Conversion Expected	お風呂入りません	2.31.5851
 FAILED:	おちゃはいりません	お茶入りません	Conversion Expected	お茶はいりません	2.31.5851
 OK:	きいてください	聞いてください	Conversion Expected 9	聞いてください	2.31.5851
-FAILED:	おきにめしたなら	起きに召したなら	Conversion Expected	お気に召したなら	3.33.6089
-FAILED:	ことここにいたる	ことここに至る	Conversion Expected	事ここに至る	3.33.6089
+OK:	おきにめしたなら	お気に召したなら	Conversion Expected	お気に召したなら	3.35.6354
+OK:	ことここにいたる	事ここに至る	Conversion Expected	事ここに至る	3.35.6354
 OK:	みもふたもない	身も蓋もない	Conversion Expected	身も蓋もない	3.33.6089
-FAILED:	にのくがつげない	二の句が告げない	Conversion Expected	二の句が継げない	3.33.6089
+OK:	にのくがつげない	二の句が継げない	Conversion Expected	二の句が継げない	3.35.6354
 OK:	けがのこうみょう	怪我の功名	Conversion Expected	怪我の功名	3.33.6089
-OK:	たなからぼたもち	店からぼたもち	Conversion Expected 2	棚からぼたもち	3.33.6089
-OK:	たなからぼたもち	店からぼたもち	Conversion Expected 2	棚からぼた餅	3.33.6089
+OK:	たなからぼたもち	棚からぼた餅	Conversion Expected 2	棚からぼたもち	3.35.6354
+OK:	たなからぼたもち	棚からぼた餅	Conversion Expected 2	棚からぼた餅	3.35.6354
 OK:	ふこうちゅうのさいわい	不幸中の幸い	Conversion Expected	不幸中の幸い	3.33.6089
 OK:	まったなし	待ったなし	Conversion Expected	待ったなし	3.33.6089
-FAILED:	こうかふこうか	効果ふこうか	Conversion Expected	幸か不幸か	3.35.6354
+OK:	こうかふこうか	幸か不幸か	Conversion Expected	幸か不幸か	3.35.6354
 FAILED:	こともなげに	こともなげに	Conversion Expected	事もなげに	3.33.6089
-FAILED:	やぶからぼうに	ヤブから棒に	Conversion Expected	藪から棒に	3.33.6089
-FAILED:	にっちもさっちも	にっちもさっちも	Conversion Expected 2	二進も三進も	3.33.6089
-FAILED:	のるかそるか	乗る過疎るか	Conversion Expected	のるかそるか	3.33.6089
+OK:	やぶからぼうに	藪から棒に	Conversion Expected	藪から棒に	3.35.6354
+OK:	にっちもさっちも	にっちもさっちも	Conversion Expected 2	二進も三進も	3.35.6354
+OK:	のるかそるか	のるかそるか	Conversion Expected	のるかそるか	3.35.6354
 OK:	おしもおされもせぬ	押しも押されもせぬ	Conversion Expected	押しも押されもせぬ	3.33.6133
 OK:	おしもおされぬ	押しも押されぬ	Conversion Expected	押しも押されぬ	3.33.6089
 OK:	ぬきさしならぬ	抜き差しならぬ	Conversion Expected	抜き差しならぬ	3.33.6089
 OK:	へんむてき	片務的	Conversion Expected	片務的	3.33.6089
 FAILED:	そうむてき	総務的	Conversion Expected	双務的	3.33.6089
 FAILED:	かこつ	過去つ	Conversion Expected	仮骨	3.33.6089
-OK:	ねんのため	念の為	Conversion Expected 3	念のため	3.33.6089
-FAILED:	えらんだかさ	選ん高さ	Conversion Expected	選んだ傘	3.33.6133
+OK:	ねんのため	年のため	Conversion Expected 3	念のため	3.35.6354
+OK:	えらんだかさ	選んだ傘	Conversion Expected	選んだ傘	3.35.6354
 FAILED:	そういういみなの	そういう諱の	Conversion Expected	そういう意味なの	3.33.6239
 FAILED:	おさとうとおす	お砂糖通す	Conversion Expected	お砂糖とお酢	3.35.6354
 FAILED:	こちらいえにつきました	こちら言えにつきました	Conversion Expected	こちら家に着きました	3.33.6239
-FAILED:	あのたなにあります	あの店にあります	Conversion Expected	あの棚にあります	3.33.6239
+OK:	あのたなにあります	あの棚にあります	Conversion Expected	あの棚にあります	3.35.6354
 FAILED:	せいをだす	性を出す	Conversion Expected	精を出す	3.33.6239
 FAILED:	びーるはいた	ビールはいた	Conversion Expected	ビール吐いた	3.33.6239
 FAILED:	くつはいた	靴はいた	Conversion Expected	靴履いた	3.33.6239
@@ -601,16 +601,16 @@ FAILED:	きのうはどのくらいねましたか	機能はどのくらい寝�
 OK:	こんどのしゅじゅつはいつですか	今度の手術はいつですか	Conversion Expected	今度の手術はいつですか	3.34.6239
 FAILED:	けんかをしてしまったのであやまりたい	喧嘩をしてしまったので誤りたい	Conversion Expected	喧嘩をしてしまったので謝りたい	3.34.6239
 OK:	きょうはたのしいわー	今日は楽しいわー	Conversion Expected	今日は楽しいわー	3.34.6239
-FAILED:	くるわぁ	くるわぁ	Conversion Expected	来るわぁ	3.34.6239
+OK:	くるわぁ	来るわぁ	Conversion Expected	来るわぁ	3.35.6354
 FAILED:	あしたからいくさー	明日から戦ー	Conversion Expected	明日から行くさー	3.34.6239
 OK:	これからいくさぁ	これから行くさぁ	Conversion Expected	これから行くさぁ	3.34.6239
 OK:	これからいくぞー	これから行くぞー	Conversion Expected	これから行くぞー	3.34.6239
 OK:	ぜったいかつぞぉ	絶対勝つぞぉ	Conversion Expected	絶対勝つぞぉ	3.34.6239
-OK:	くるじゃん	来るじゃん	Conversion Expected	来るじゃん	3.34.6239
+FAILED:	くるじゃん	クルジャン	Conversion Expected	来るじゃん	3.35.6354
 FAILED:	もうかくわぁ	もうかくわぁ	Conversion Expected	もう書くわぁ	3.34.6239
 FAILED:	もうつくさぁ	もう尽くさぁ	Conversion Expected	もう着くさぁ	3.34.6239
 OK:	あしたまつぞぉ	明日待つぞぉ	Conversion Expected	明日待つぞぉ	3.34.6239
-OK:	さかなくう	魚食う	Prediction Expected 2	魚食う	3.35.6354
+OK:	さかなくう	魚空	Prediction Expected 2	魚食う	3.35.6354
 OK:	めしたべる	飯食べる	Prediction Expected 2	飯食べる	3.34.6239
 OK:	しぶやいく	渋谷行く	Prediction Expected 2	渋谷行く	3.34.6239
 OK:	いえかえる	家変える	Prediction Expected 2	家帰る	3.34.6239
@@ -622,7 +622,7 @@ OK:	くつぬぐ	靴脱ぐ	Prediction Expected 2	靴脱ぐ	3.34.6239
 OK:	ぺーじやぶれた	ページ敗れた	Prediction Expected 2	ページ破れた	3.34.6239
 OK:	みずこぼれた	水こぼれた	Prediction Expected 2	水こぼれた	3.34.6239
 OK:	ゆかよごれた	床汚れた	Prediction Expected 2	床汚れた	3.34.6239
-OK:	むししんだ	無視死んだ	Prediction Expected 2	虫死んだ	3.35.6354
+OK:	むししんだ	虫死んだ	Prediction Expected 2	虫死んだ	3.35.6354
 OK:	くさはえる	草映える	Prediction Expected 2	草生える	3.35.6354
 OK:	めしできる	飯できる	Prediction Expected 2	飯できる	3.34.6239
 OK:	しごとおわる	仕事終わる	Prediction Expected 2	仕事終わる	3.34.6239
@@ -665,18 +665,18 @@ OK:	しゃしんとる	写真取る	Prediction Expected 2	写真撮る	3.34.6239
 OK:	しごといく	仕事行く	Prediction Expected 2	仕事行く	3.34.6239
 OK:	いすすわる	椅子座る	Prediction Expected 2	椅子座る	3.34.6239
 OK:	おなかすいた	お腹空いた	Prediction Expected 2	お腹すいた	3.35.6354
-OK:	あめふる	雨降る	Prediction Expected 2	雨降る	3.35.6354
-OK:	はみがく	は磨く	Prediction Expected 2	歯磨く	3.35.6354
+OK:	あめふる	雨振る	Prediction Expected 2	雨降る	3.35.6354
+FAILED:	はみがく	は磨く	Prediction Expected 2	歯磨く	3.35.6354
 OK:	かおあらう	顔洗う	Prediction Expected 2	顔洗う	3.34.6239
 OK:	みずのむ	水飲む	Prediction Expected 2	水飲む	3.34.6239
 OK:	でんきつける	電気つける	Prediction Expected 2	電気つける	3.34.6239
 OK:	ごみだす	ゴミ出す	Prediction Expected 2	ゴミ出す	3.35.6354
 OK:	ふとんしく	布団敷く	Prediction Expected 2	布団敷く	3.34.6239
-FAILED:	ひげそる	ヒゲソル	Prediction Expected 2	髭剃る	3.34.6239
+FAILED:	ひげそる	ひげソル	Prediction Expected 2	髭剃る	3.35.6354
 OK:	くすりのむ	薬飲む	Prediction Expected 2	薬飲む	3.34.6239
 OK:	あたまいたい	頭痛い	Prediction Expected 2	頭痛い	3.35.6354
 OK:	ねつでた	熱出た	Prediction Expected 2	熱出た	3.34.6239
-FAILED:	かぎしめる	鍵占める	Prediction Expected 2	鍵閉める	3.34.6239
+OK:	かぎしめる	鍵占める	Prediction Expected 2	鍵閉める	3.35.6354
 FAILED:	こてでかーるする	コテデカールする	Conversion Expected	コテでカールする	3.34.6239
 FAILED:	ちょいのり	チョイノリ	Conversion Expected	ちょい乗り	3.34.6239
 OK:	どらいぶするー	ドライブスルー	Conversion Expected	ドライブスルー	3.35.6354
