@@ -583,6 +583,47 @@ TEST_F(MozcImkInputControllerTest, commitText) {
   EXPECT_EQ([controller_ replacementRange].location, NSNotFound);
 }
 
+NSEvent *LeftMouseDownEvent() {
+  return [NSEvent mouseEventWithType:NSEventTypeLeftMouseDown
+                            location:NSMakePoint(0, 0)
+                       modifierFlags:0
+                           timestamp:0
+                        windowNumber:0
+                             context:nil
+                         eventNumber:0
+                          clickCount:1
+                            pressure:1.0];
+}
+
+void SetComposition(MozcImkInputController *controller, const char *value) {
+  commands::Preedit preedit;
+  commands::Preedit::Segment *segment = preedit.add_segment();
+  segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
+  segment->set_value(value);
+  segment->set_value_length(strlen(value));
+  [controller updateComposedString:&preedit];
+}
+
+TEST_F(MozcImkInputControllerTest, MouseDownCommitsPreedit) {
+  SetComposition(controller_, "abc");
+  EXPECT_CALL(*mock_mozc_client_,
+              SendCommandWithContext(Type(commands::SessionCommand::SUBMIT), _, NotNull()))
+      .WillOnce(Return(true));
+
+  // Returns NO so that the client can move its own caret.
+  EXPECT_FALSE([controller_ handleEvent:LeftMouseDownEvent() client:mock_client_]);
+  EXPECT_EQ([mock_client_ getCounter:"insertText:replacementRange:"], 1);
+  EXPECT_TRUE([@"abc" isEqualToString:mock_client_.insertedText]);
+  EXPECT_EQ([[controller_ composedString:nil] length], 0);
+}
+
+TEST_F(MozcImkInputControllerTest, MouseDownWithoutCompositionDoesNothing) {
+  EXPECT_CALL(*mock_mozc_client_, SendCommandWithContext(_, _, _)).Times(0);
+
+  EXPECT_FALSE([controller_ handleEvent:LeftMouseDownEvent() client:mock_client_]);
+  EXPECT_EQ([mock_client_ getCounter:"insertText:replacementRange:"], 0);
+}
+
 TEST_F(MozcImkInputControllerTest, handleConfig) {
   // Does not support multiple-calculation
   config::Config config;

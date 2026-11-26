@@ -323,8 +323,9 @@ bool CanSurroundingText(absl::string_view bundle_id) {
 
 - (NSUInteger)recognizedEvents:(id)sender {
   // Because we want to handle single Shift key pressing later, now I
-  // turned on NSFlagsChanged also.
-  return NSEventMaskKeyDown | NSEventMaskFlagsChanged;
+  // turned on NSFlagsChanged also.  NSEventMaskLeftMouseDown is for
+  // committing the composition on a mouse click in |handleEvent:client:|.
+  return NSEventMaskKeyDown | NSEventMaskFlagsChanged | NSEventMaskLeftMouseDown;
 }
 
 // This method is called when a user changes the input mode.
@@ -844,6 +845,15 @@ bool CanSurroundingText(absl::string_view bundle_id) {
     [[self client] setMarkedText:composedString_
                   selectionRange:[self selectionRange]
                 replacementRange:replacementRange_];
+    return NO;
+  }
+  if ([event type] == NSEventTypeLeftMouseDown) {
+    // IMKit commits the composition on a click by itself only for input
+    // methods whose |recognizedEvents:| returns just NSEventMaskKeyDown.
+    // Commits even when the click is inside of the composition because
+    // clients end the marked text and move the caret there anyway.
+    [self commitComposition:sender];
+    // Returns NO to let the client move its own caret to the clicked position.
     return NO;
   }
   if ([event type] != NSEventTypeKeyDown && [event type] != NSEventTypeFlagsChanged) {
