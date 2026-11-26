@@ -396,7 +396,8 @@ def needs_separate_host_build(args: argparse.Namespace) -> bool:
   if is_windows():
     host_arch = normalize_win_arch(platform.uname().machine)
     target_arch = normalize_win_arch(args.target_arch)
-    return (host_arch != target_arch) or (args.debug and not args.release)
+    has_release_abi = args.release or args.fastbuild
+    return (host_arch != target_arch) or (args.debug and not has_release_abi)
   return False
 
 
@@ -489,9 +490,12 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
     ]
 
   elif is_windows():
+    if not args.fastbuild:
+      qt_configure_options += [
+          '-force-debug-info',
+          '-ltcg',  # Note: ignored in debug build
+      ]
     qt_configure_options += [
-        '-force-debug-info',
-        '-ltcg',  # Note: ignored in debug build
         '-platform',
         'win32-msvc',
     ]
@@ -505,7 +509,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
     qt_configure_options += ['-debug-and-release']
   elif args.debug:
     qt_configure_options += ['-debug']
-  elif args.release:
+  elif args.release or args.fastbuild:
     qt_configure_options += ['-release']
 
   if args.release:
@@ -537,6 +541,16 @@ def parse_args(argv: Union[Sequence[str], None] = None) -> argparse.Namespace:
       default=False,
       action='store_true',
       help='make release build',
+  )
+  parser.add_argument(
+      '--fastbuild',
+      dest='fastbuild',
+      default=False,
+      action='store_true',
+      help=(
+          'make fast release-ABI build without shipping-only options '
+          '(-ltcg, -force-debug-info, and -optimize-size)'
+      ),
   )
   parser.add_argument(
       '--qt_src_dir',
@@ -596,7 +610,10 @@ def parse_args(argv: Union[Sequence[str], None] = None) -> argparse.Namespace:
         type=str,
         default=None,
     )
-  return parser.parse_args(argv)
+  args = parser.parse_args(argv)
+  if args.fastbuild and (args.debug or args.release):
+    parser.error('--fastbuild cannot be combined with --debug or --release.')
+  return args
 
 
 def get_ninja_dir(args: argparse.Namespace) -> Union[pathlib.Path, None]:
@@ -992,8 +1009,8 @@ def main() -> None:
 
   args = parse_args()
 
-  if not (args.debug or args.release):
-    print('neither --release nor --debug is specified.')
+  if not (args.debug or args.release or args.fastbuild):
+    print('none of --release, --debug, or --fastbuild is specified.')
     sys.exit(1)
 
   extract_qt_src(args)
