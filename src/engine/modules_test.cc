@@ -29,9 +29,14 @@
 
 #include "engine/modules.h"
 
+#include <cstdint>
 #include <memory>
 #include <utility>
+#include <vector>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/types/span.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
@@ -129,6 +134,41 @@ TEST(ModulesTest, SupplementalModelTest) {
       Modules::Create(std::make_unique<testing::MockDataManager>()));
   EXPECT_EQ(&modules1->GetSupplementalModel(),
             &modules4->GetSupplementalModel());
+}
+
+TEST(ModulesTest, RejectsInvalidPosMatcherData) {
+  class BrokenPosMatcherDataManager : public testing::MockDataManager {
+   public:
+    explicit BrokenPosMatcherDataManager(std::vector<uint16_t> data)
+        : data_(std::move(data)) {}
+
+    absl::Span<const uint16_t> GetPosMatcherData() const override {
+      return data_;
+    }
+
+   private:
+    std::vector<uint16_t> data_;
+  };
+
+  const absl::StatusOr<std::unique_ptr<Modules>> empty_result = Modules::Create(
+      std::make_unique<BrokenPosMatcherDataManager>(std::vector<uint16_t>{}));
+  EXPECT_EQ(empty_result.status().code(), absl::StatusCode::kDataLoss);
+
+  const absl::StatusOr<std::unique_ptr<Modules>> truncated_result =
+      Modules::Create(std::make_unique<BrokenPosMatcherDataManager>(
+          std::vector<uint16_t>{0}));
+  EXPECT_EQ(truncated_result.status().code(), absl::StatusCode::kDataLoss);
+}
+
+TEST(ModulesTest, RejectsEmptyPosGroupData) {
+  class EmptyPosGroupDataManager : public testing::MockDataManager {
+   public:
+    absl::Span<const uint8_t> GetPosGroupData() const override { return {}; }
+  };
+
+  const absl::StatusOr<std::unique_ptr<Modules>> result =
+      Modules::Create(std::make_unique<EmptyPosGroupDataManager>());
+  EXPECT_EQ(result.status().code(), absl::StatusCode::kDataLoss);
 }
 
 }  // namespace engine

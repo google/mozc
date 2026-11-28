@@ -189,6 +189,9 @@ mozc_cc_test(
         "//dictionary:pos_id_map",
         "//dictionary:pos_matcher",
         "//testing:gunit_main",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/types:span",
     ] + mozc_select_enable_supplemental_model([
         "//supplemental_model:supplemental_model_factory",
         "//supplemental_model:supplemental_model_registration",

@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_POS_GROUP_H_
 #define MOZC_DICTIONARY_POS_GROUP_H_
 
+#include <cstddef>
 #include <cstdint>
 
 #include "absl/types/span.h"
@@ -42,15 +43,24 @@ namespace dictionary {
 // value like string_view.
 class PosGroup {
  public:
+  // Callers should validate the binary data with VerifyData() first. Even on
+  // unverified (e.g., empty) data, GetPosGroup() safely returns 0 for
+  // out-of-bounds |lid|.
   explicit PosGroup(absl::Span<const uint8_t> lid_group)
       : lid_group_(lid_group) {}
 
   PosGroup(const PosGroup&) = default;
 
+  // Verifies that |lid_group| is non-empty.
+  static constexpr bool VerifyData(absl::Span<const uint8_t> lid_group) {
+    return !lid_group.empty();
+  }
+
   // Returns grouped pos id based on an array pre-generated from
-  // data/rules/user_segment_history_pos_group.def.
+  // data/rules/user_segment_history_pos_group.def, or 0 if |lid| is out of
+  // bounds.
   inline uint8_t GetPosGroup(const uint16_t lid) const {
-    return lid_group_[lid];
+    return static_cast<size_t>(lid) < lid_group_.size() ? lid_group_[lid] : 0;
   }
 
  private:

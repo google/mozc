@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_POS_MATCHER_H_
 #define MOZC_DICTIONARY_POS_MATCHER_H_
 
+#include <cstddef>
 #include <cstdint>
 
 #include "absl/types/span.h"
@@ -94,26 +95,71 @@ namespace mozc::dictionary {
 class PosMatcher {
  public:
   PosMatcher() = delete;
+  // Callers should validate the binary data with VerifyData() first. Even on
+  // unverified data, Get*Id() safely falls back to 0 and Is*() safely falls
+  // back to false when bounds are exceeded.
   explicit PosMatcher(absl::Span<const uint16_t> data) : data_(data) {}
 
   PosMatcher(const PosMatcher&) = default;
   PosMatcher& operator=(const PosMatcher&) = default;
 
+  static constexpr size_t num_rules();
+  // Verifies that |data| matches the binary layout emitted by
+  // gen_pos_matcher_code.py: a 2 * num_rules() header followed by strictly
+  // contiguous, non-overlapping 0xFFFF-terminated range lists in rule order
+  // with no trailing data.
+  static constexpr bool VerifyData(absl::Span<const uint16_t> data);
+
  private:
+  static constexpr uint16_t kRangeTableSentinel = 0xFFFFu;
+
   // Used in pos_matcher_impl.inc.
-  constexpr bool IsRuleInTable(int index, uint16_t id) const;
+  constexpr bool IsRuleInTable(size_t index, uint16_t id) const;
 
   absl::Span<const uint16_t> data_;
 
 #include "dictionary/pos_matcher_impl.inc"  // IWYU pragma: export
 };
 
-constexpr bool PosMatcher::IsRuleInTable(const int index,
+constexpr size_t PosMatcher::num_rules() { return kLidTableSize; }
+
+constexpr bool PosMatcher::VerifyData(absl::Span<const uint16_t> data) {
+  constexpr size_t kMinHeaderSize = 2 * kLidTableSize;
+  if (data.size() < kMinHeaderSize) {
+    return false;
+  }
+  size_t expected_pos = kMinHeaderSize;
+  for (size_t i = 0; i < kLidTableSize; ++i) {
+    if (data[kLidTableSize + i] != expected_pos) {
+      return false;
+    }
+    size_t pos = expected_pos;
+    if (pos >= data.size()) {
+      return false;
+    }
+    while (data[pos] != kRangeTableSentinel) {
+      pos += 2;
+      if (pos >= data.size()) {
+        return false;
+      }
+    }
+    expected_pos = pos + 1;
+  }
+  return expected_pos == data.size();
+}
+
+constexpr bool PosMatcher::IsRuleInTable(const size_t index,
                                          const uint16_t id) const {
-  // kLidTableSize is defined in pos_matcher_impl.inc.
-  const uint16_t offset = data_[kLidTableSize + index];
-  for (const uint16_t* ptr = data_.data() + offset; *ptr != 0xFFFFu; ptr += 2) {
-    if (id >= *ptr && id <= *(ptr + 1)) {
+  const size_t offset_index = kLidTableSize + index;
+  if (offset_index >= data_.size()) {
+    return false;
+  }
+  for (size_t pos = data_[offset_index];
+       pos < data_.size() && data_[pos] != kRangeTableSentinel; pos += 2) {
+    if (pos + 1 >= data_.size()) {
+      return false;
+    }
+    if (id >= data_[pos] && id <= data_[pos + 1]) {
       return true;
     }
   }

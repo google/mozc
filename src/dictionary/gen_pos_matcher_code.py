@@ -78,7 +78,7 @@ def OutputPosMatcherHeader(pos_matcher, output):
   def _GenerateGetMethod(rule_name, index):
     return (
         '  constexpr uint16_t Get%(rule_name)sId() const {\n'
-        '    return data_[%(index)d];\n'
+        '    return size_t{%(index)d} < data_.size() ? data_[%(index)d] : 0;\n'
         '  }'
         % {
             'rule_name': rule_name,
@@ -119,7 +119,7 @@ def OutputPosMatcherHeader(pos_matcher, output):
   output.write(
       '\n'
       ' private:\n'
-      '  static constexpr int kLidTableSize = %(lid_table_size)d;\n'
+      '  static constexpr size_t kLidTableSize = %(lid_table_size)d;\n'
       % {
           'lid_table_size': lid_table_size,
       }

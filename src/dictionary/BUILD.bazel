@@ -251,6 +251,16 @@ mozc_cc_library(
     deps = ["@com_google_absl//absl/types:span"],
 )
 
+mozc_cc_test(
+    name = "pos_group_test",
+    size = "small",
+    srcs = ["pos_group_test.cc"],
+    deps = [
+        ":pos_group",
+        "//testing:gunit_main",
+    ],
+)
+
 mozc_py_binary(
     name = "gen_pos_map",
     srcs = ["gen_pos_map.py"],
@@ -474,6 +484,18 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "pos_matcher_test",
+    size = "small",
+    srcs = ["pos_matcher_test.cc"],
+    deps = [
+        ":pos_matcher",
+        "//data_manager/testing:mock_data_manager",
+        "//testing:gunit_main",
         "@com_google_absl//absl/types:span",
     ],
 )

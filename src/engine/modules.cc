@@ -38,6 +38,7 @@
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/container/tuple.h"
@@ -88,8 +89,13 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   data_manager_ = std::move(data_manager);
 
   if (!pos_matcher_) {
-    pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
-        data_manager_->GetPosMatcherData());
+    const absl::Span<const uint16_t> pos_matcher_data =
+        data_manager_->GetPosMatcherData();
+    if (!dictionary::PosMatcher::VerifyData(pos_matcher_data)) {
+      return absl::DataLossError(absl::StrCat(
+          "POS matcher data is broken: size = ", pos_matcher_data.size()));
+    }
+    pos_matcher_ = std::make_unique<dictionary::PosMatcher>(pos_matcher_data);
     RETURN_IF_NULL(pos_matcher_);
   }
 
@@ -148,7 +154,12 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   }
   segmenter_ = *std::move(status_or_segmenter);
 
-  pos_group_ = std::make_unique<PosGroup>(data_manager_->GetPosGroupData());
+  const absl::Span<const uint8_t> pos_group_data =
+      data_manager_->GetPosGroupData();
+  if (!PosGroup::VerifyData(pos_group_data)) {
+    return absl::DataLossError("POS group data is empty");
+  }
+  pos_group_ = std::make_unique<PosGroup>(pos_group_data);
   RETURN_IF_NULL(pos_group_);
 
   {
