@@ -144,6 +144,23 @@ LLVM_WIN_ARM64_ZSTD = ArchiveInfo(
     sha256='d3f65e879cd4b1524a0c85c871e0fc26164644b28e618fc341fac7850d48ea38',
 )
 
+# LLVM tools to be extracted into third_party/llvm/bin.
+# Some of these tools are not directly used to build Mozc but for for developers
+# and coding agents to inspect what the build produces without relying on Visual
+# Studio.
+LLVM_WIN_TOOLS = frozenset([
+    'clang-cl.exe',  # C++ compiler compatible with cl.exe
+    'lld-link.exe',  # Linker compatible with link.exe
+    'llvm-lib.exe',  # Librarian compatible with lib.exe
+    'llvm-nm.exe',   # symbols in object files and libraries
+    'llvm-objdump.exe',  # disassembly
+    'llvm-pdbutil.exe',  # PDB files
+    'llvm-rc.exe',  # resource compiler
+    'llvm-readobj.exe',  # PE/COFF headers, imports, exports and resources
+    'llvm-symbolizer.exe',  # addresses to function names and source lines
+    'llvm-undname.exe',  # MSVC symbol name demangler
+])
+
 MSYS2 = ArchiveInfo(
     url='https://github.com/msys2/msys2-installer/releases/download/2025-02-21/msys2-base-x86_64-20250221.tar.xz',
     size=50089256,
@@ -277,7 +294,7 @@ def llvm_extract_filter(
       if (
           len(paths) == 3
           and paths[1] == 'bin'
-          and paths[2] in ['clang-cl.exe', 'llvm-lib.exe', 'lld-link.exe']
+          and paths[2] in LLVM_WIN_TOOLS
       ):
         skipping = False
       elif len(paths) >= 2 and paths[1] in ['include', 'lib']:
@@ -319,7 +336,7 @@ class StatefulLLVMExtractionFilter:
     if (
         len(paths) == 3
         and paths[1] == 'bin'
-        and paths[2] in ['clang-cl.exe', 'llvm-lib.exe', 'lld-link.exe']
+        and paths[2] in LLVM_WIN_TOOLS
     ):
       skipping = False
     elif len(paths) >= 2 and paths[1] in ['include', 'lib']:
