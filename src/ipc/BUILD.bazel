@@ -43,12 +43,13 @@ package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "ipc",
-    srcs = [
-        "ipc.cc",
-        "mach_ipc.cc",
-        "unix_ipc.cc",
-        "win32_ipc.cc",
-    ],
+    srcs = ["ipc.cc"] + mozc_select(
+        default = ["unix_ipc.cc"],
+        ios = [],
+        macos = ["mach_ipc.cc"],
+        wasm = [],
+        windows = ["win32_ipc.cc"],
+    ),
     hdrs = ["ipc.h"],
     visibility = [
         "//client:__pkg__",
@@ -60,26 +61,32 @@ mozc_cc_library(
     ],
     deps = [
         ":ipc_path_manager",
-        "//base:const",
-        "//base:file_util",
-        "//base:system_util",
         "//base:thread",
-        "//base:util",
         "//base:vlog",
         "@com_google_absl//absl/base:no_destructor",
-        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ] + mozc_select(
-        apple = ["//base/mac:mac_util"],
+        default = [
+            "@com_google_absl//absl/status",
+            "@com_google_absl//absl/strings:str_format",
+            "//base:file_util",
+        ],
+        ios = [],
+        macos = [
+            "@com_google_absl//absl/container:flat_hash_map",
+            "//base/mac:mac_util",
+        ],
+        wasm = [],
         windows = [
-            "//base/win32:win_sandbox",
+            "//base:const",
+            "//base:system_util",
+            "//base:util",
             "//base/win32:wide_char",
+            "//base/win32:win_sandbox",
             "@com_microsoft_wil//:wil",
         ],
     ),

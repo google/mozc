@@ -28,7 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // The IPC implementation using core Mach APIs.
-#ifdef __APPLE__
 
 #include <launch.h>
 #include <mach/mach.h>
@@ -513,5 +512,3 @@ void IPCServer::Terminate() {
 }
 
 }  // namespace mozc
-
-#endif  // __APPLE__

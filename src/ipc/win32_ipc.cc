@@ -27,9 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// skip all unless _WIN32
-#ifdef _WIN32
-
 // clang-format off
 #include <windows.h>
 #include <sddl.h>  // needs to be after windows.h
@@ -778,5 +775,3 @@ bool IPCClient::Call(absl::string_view request, std::string *response,
 }
 
 }  // namespace mozc
-
-#endif  // _WIN32

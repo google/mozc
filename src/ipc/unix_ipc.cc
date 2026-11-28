@@ -27,9 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// __linux__ only. Note that __ANDROID__/__wasm__ don't reach here.
-#if defined(__linux__)
-
 #include <fcntl.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -480,5 +477,3 @@ void IPCServer::Terminate() {
 }
 
 }  // namespace mozc
-
-#endif  // __linux__
