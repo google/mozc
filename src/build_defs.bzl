@@ -225,6 +225,7 @@ def mozc_win32_resource_from_template(
     _mozc_gen_win32_resource_file(
         generated_rc_file,
         src = src,
+        utf8 = True,
     )
     _rc_defines = {
         "Mozc": ["MOZC_BUILD"],
@@ -234,6 +235,7 @@ def mozc_win32_resource_from_template(
     mozc_win32_resource(
         name = name,
         rc_files = [":" + generated_rc_file],
+        codepage = 65001,  # UTF-8
         manifests = manifests,
         resources = resources,
         defines = _rc_defines,
