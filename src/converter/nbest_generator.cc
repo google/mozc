@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "absl/base/nullability.h"
+#include "absl/container/inlined_vector.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
@@ -286,7 +287,9 @@ NBestGenerator<TConnector>::MakeCandidateFromElement(
     const ConversionOptions& options, absl::string_view original_key,
     const typename NBestGenerator<TConnector>::QueueElement& element,
     Candidate& candidate) {
-  std::vector<const Node* absl_nonnull> nodes;
+  // A candidate rarely spans more than a few nodes, so the list fits in the
+  // inline storage and the heap allocation is avoided in the common case.
+  absl::InlinedVector<const Node* absl_nonnull, 16> nodes;
 
   if (element.next == nullptr) {
     return CandidateFilter::BAD_CANDIDATE;
