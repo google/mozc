@@ -264,6 +264,59 @@ TEST(ConversionRequestTest, IsKanaModifierInsensitiveConversionTest) {
   }
 }
 
+TEST(ConversionRequestTest, EffectiveHistoryLearningLevelTest) {
+  {
+    const ConversionRequest convreq = ConversionRequestBuilder().Build();
+    EXPECT_EQ(convreq.effective_history_learning_level(),
+              config::Config::DEFAULT_HISTORY);
+  }
+  {
+    // The focused input field restricts the learning level to READ_ONLY.
+    commands::Context context;
+    context.set_history_learning_level(config::Config::READ_ONLY);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetContext(context).Build();
+    EXPECT_EQ(convreq.effective_history_learning_level(),
+              config::Config::READ_ONLY);
+  }
+  {
+    // The focused input field can also restrict the learning level to
+    // NO_HISTORY.
+    config::Config config;
+    config.set_history_learning_level(config::Config::READ_ONLY);
+    commands::Context context;
+    context.set_history_learning_level(config::Config::NO_HISTORY);
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetConfig(config)
+                                          .SetContext(context)
+                                          .Build();
+    EXPECT_EQ(convreq.effective_history_learning_level(),
+              config::Config::NO_HISTORY);
+  }
+  {
+    config::Config config;
+    config.set_history_learning_level(config::Config::READ_ONLY);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetConfig(config).Build();
+    EXPECT_EQ(convreq.effective_history_learning_level(),
+              config::Config::READ_ONLY);
+  }
+  {
+    // NO_HISTORY in the config is stricter than the restriction by the
+    // context.
+    config::Config config;
+    config.set_history_learning_level(config::Config::NO_HISTORY);
+    commands::Context context;
+    context.set_history_learning_level(config::Config::READ_ONLY);
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetConfig(config)
+                                          .SetContext(context)
+                                          .Build();
+    EXPECT_EQ(convreq.effective_history_learning_level(),
+              config::Config::NO_HISTORY);
+  }
+}
+
 TEST(ConversionRequestTest, GetSurroundingContextTest) {
   {
     commands::Context context;

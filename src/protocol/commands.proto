@@ -536,6 +536,18 @@ message Context {
   // should update the revision whenever the input focus is changed.
   optional int32 revision = 5 [default = 0];
 
+  // The history learning level that the input field being focused expects.
+  // This can only restrict Config::history_learning_level, that is, the
+  // stricter of the two takes effect. For instance, READ_ONLY tells the IME
+  // not to update any personalized data with the user's input, e.g. the user
+  // conversion history. Unlike incognito mode, reading personalized data to
+  // perform conversion is still allowed with READ_ONLY. Converter modules need
+  // to check ConversionRequest::effective_history_learning_level() instead of
+  // this value directly, as the effective learning level can be set in other
+  // ways.
+  optional mozc.config.Config.HistoryLearningLevel history_learning_level = 6
+      [default = DEFAULT_HISTORY];
+
   // Repeated fields to be used for experimental features.
   repeated string experimental_features = 100;
 }
